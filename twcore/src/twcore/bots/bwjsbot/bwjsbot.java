@@ -96,6 +96,7 @@ public class bwjsbot extends SubspaceBot {
     private static final int WBDUEL = 2;
     private static final int JAVDUEL = 3;
     private static final int SPIDDUEL = 4;
+    private static final long LAGOUT_TIME = 10 * Tools.TimeInMillis.SECOND;
     
     public bwjsbot(BotAction botAction) {
         super(botAction);
@@ -405,6 +406,11 @@ public class bwjsbot extends SubspaceBot {
             else if (message.startsWith("!off"))
                 cmd_off(event);
         }
+        
+        if (m_botAction.getOperatorList().isModerator(messager)) {
+            if (message.startsWith("!setcaptain "))
+                cmd_setCaptain(event);
+        }
     }
     
     private void cmd_add(Message event) {
@@ -669,6 +675,11 @@ public class bwjsbot extends SubspaceBot {
             help.add("!die                      -- disconnects the bot");       
         }
         
+        if (m_botAction.getOperatorList().isModerator(name)) {
+            help.add("MOD commands:");
+            help.add("!setcaptain <teamname>:<player>   -- disconnects the bot");        
+        }
+        
         String[] spam = help.toArray(new String[help.size()]);
         m_botAction.privateMessageSpam(name, spam);
     }
@@ -677,6 +688,8 @@ public class bwjsbot extends SubspaceBot {
         if (state == ADDING_PLAYERS || state == GAME_IN_PROGRESS) {
             String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
             int teamNumber = getTeamNumber(name);
+            long currentTime = System.currentTimeMillis();
+            long lagoutTime;
             
             //Check if player is in
             if (teamNumber == -1)
@@ -687,8 +700,17 @@ public class bwjsbot extends SubspaceBot {
                 return;
             
             if (team[teamNumber].players.get(name).p_state == LAGOUT ||
-                    team[teamNumber].players.get(name).p_state == LAGOUT_OUT)
+                    team[teamNumber].players.get(name).p_state == LAGOUT_OUT) {
+                //Check if enough time has passed
+                lagoutTime = team[teamNumber].players.get(name).p_lagoutTime;
+                if ((currentTime - lagoutTime) < LAGOUT_TIME) {
+                    m_botAction.sendPrivateMessage(name, 
+                            "You must wait for " + (LAGOUT_TIME - (currentTime - lagoutTime))/Tools.TimeInMillis.SECOND
+                            + " more seconds before you can return into the game.");
+                    return;
+                }    
                 team[teamNumber].players.get(name).lagin();
+            }
         }
     }
     
@@ -768,8 +790,10 @@ public class bwjsbot extends SubspaceBot {
             
             if (state > ADDING_PLAYERS && state < GAME_OVER) {
                 if (team[teamNumber].players.containsKey(name)) {
-                    m_botAction.sendArenaMessage(name + " has been removed from the game. (not playing)");
-                    team[teamNumber].players.get(name).out();
+                    if (team[teamNumber].players.get(name).p_state < SUBBED) {
+                        m_botAction.sendArenaMessage(name + " has been removed from the game. (not playing)");
+                        team[teamNumber].players.get(name).out();
+                    }
                 }
             }
             
@@ -835,6 +859,38 @@ public class bwjsbot extends SubspaceBot {
     private void cmd_removecap(Message event) {
         if (state > OFF && state < GAME_OVER)
             team[getTeamNumber(m_botAction.getPlayerName(event.getPlayerID()))].removeCap();
+    }
+    
+    private void cmd_setCaptain(Message event) {
+        String message = event.getMessage();
+        String messager = m_botAction.getPlayerName(event.getPlayerID());
+        
+        if (message.length() < 13) {
+            m_botAction.sendPrivateMessage(messager, "Error: !setcaptain <team>:<name>");
+            return;
+        }
+        
+        String[] messageSplit = event.getMessage().substring(12).split(":");
+        
+        //Check if command is properly used
+        if (messageSplit.length < 2) {
+            m_botAction.sendPrivateMessage(messager, "Error: !setcaptain <teamname>:<name>");
+            return;
+        }
+        
+        Player p = m_botAction.getFuzzyPlayer(messageSplit[1]);
+        
+        if (p == null) {
+            m_botAction.sendPrivateMessage(messager, "Player not found");
+            return;
+        }
+        
+        if (team[ONE].name.equalsIgnoreCase(messageSplit[0]))        
+            setCaptain(p.getPlayerName(), ONE);
+        else if (team[TWO].name.equalsIgnoreCase(messageSplit[0]))        
+            setCaptain(p.getPlayerName(), TWO);
+        else
+            m_botAction.sendPrivateMessage(messager, "Specify correct teamname");
     }
     
     private void cmd_start(Message event) {
@@ -1602,6 +1658,7 @@ public class bwjsbot extends SubspaceBot {
         private int p_state;
         private int p_maxDeaths;
         private int p_lagouts;
+        private long p_lagoutTime;
         private int p_frequency;
         private int p_ships[][];
         private int p_outOfBorderTime;
@@ -1942,6 +1999,7 @@ public class bwjsbot extends SubspaceBot {
         
         private void lagout() {
             p_state = LAGOUT;
+            p_lagoutTime = System.currentTimeMillis();
             if (state == GAME_IN_PROGRESS) { 
                 p_lagouts++;
                 p_ships[p_currentShip][DEATHS]++;
