@@ -919,6 +919,12 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
+            //Check if player is on the notplaying list
+            if (listNotplaying.contains(playerTwo.getPlayerName().toLowerCase())) {
+                m_botAction.sendPrivateMessage(name, "Error: " + playerTwo.getPlayerName() + " is set to not playing.");
+                return;
+            }
+            
             //Check if subtitute is available
             if (team[otherTeamNumber(teamNumber)].players.containsKey(playerTwo.getPlayerName().toLowerCase())) {
                 m_botAction.sendPrivateMessage(name, "Substitute is already on the other team.");
@@ -929,7 +935,7 @@ public class bwjsbot extends SubspaceBot {
             if (team[teamNumber].players.containsKey(playerTwo.getPlayerName().toLowerCase())) {
                 int tmp_state = team[teamNumber].players.get(playerTwo.getPlayerName().toLowerCase()).p_state;
                 if (cfg.gameType != BASE || tmp_state < SUBBED) {
-                    m_botAction.sendPrivateMessage(name, "Substitute is/was already playing for you team.");
+                    m_botAction.sendPrivateMessage(name, "Substitute is/was already playing for your team.");
                     return;
                 }
             }
