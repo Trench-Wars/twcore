@@ -224,7 +224,7 @@ public class forumbot extends SubspaceBot {
     }
     
     private void cmdLogin(String name, String message) {
-        message = message.substring(7);
+        message = message.substring(6).trim();
         
         String user, password;
         
