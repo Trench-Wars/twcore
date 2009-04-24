@@ -132,6 +132,9 @@ public class bwjsbot extends SubspaceBot {
         /* Other */
         lastGame = false;
         
+        /* Prevent people from spamming the bot */
+        m_botAction.setMessageLimit(10, true);
+        
         requestEvents();        
     }
     
