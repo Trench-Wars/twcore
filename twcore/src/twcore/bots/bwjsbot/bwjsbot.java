@@ -410,6 +410,12 @@ public class bwjsbot extends SubspaceBot {
         if (m_botAction.getOperatorList().isModerator(messager)) {
             if (message.startsWith("!setcaptain "))
                 cmd_setCaptain(event);
+            else if (message.startsWith("!removecapaccess "))
+                cmd_removeCapAccess(event);
+            else if (message.startsWith("!grantcapaccess "))
+                cmd_grantCapAccess(event);
+            else if (message.startsWith("!listremovedcapaccess"))
+                cmd_listRemovedCapAccess(event);
         }
     }
     
@@ -527,6 +533,14 @@ public class bwjsbot extends SubspaceBot {
             int teamNumber = getTeamNumber(messager);
             String message = event.getMessage();
             
+            //People who are removed from captain acces
+            for (int i = 0; i < cfg.removedCapList.length; i++) {
+                if (cfg.removedCapList[i].equalsIgnoreCase(messager)) {
+                    msgCaps(messager);
+                    return;
+                }
+            }
+            
             //People on not playing list cannot get captain spot.
             if (listNotplaying.contains(messager.toLowerCase())) {
                 msgCaps(messager);
@@ -576,6 +590,36 @@ public class bwjsbot extends SubspaceBot {
                 setCaptain(messager, teamNumber);
                 return;
             }
+        }
+    }
+    
+    private void cmd_removeCapAccess(Message event) {
+        String messager = m_botAction.getPlayerName(event.getPlayerID());
+        try
+        {
+            BotSettings botSettings = m_botAction.getBotSettings();
+            String name = event.getMessage().substring(17).toLowerCase();
+            String removedCapAccessList = botSettings.getString("RemovedCapAccess");
+            
+            if (!(removedCapAccessList.trim().equals("")))
+                removedCapAccessList = removedCapAccessList + ":";
+            removedCapAccessList = removedCapAccessList + name;
+            botSettings.put("RemovedCapAccess", removedCapAccessList);
+            botSettings.save();
+            m_botAction.sendPrivateMessage(messager, name + " has been added to the removed captain access list");
+            
+            cfg.readRemovedCapList();
+            
+            
+            if (isCaptain(name)) {
+                int teamNumber = getTeamNumber(name);
+                team[teamNumber].removeCap();
+            }
+                
+        }
+        catch (Exception e)
+        {
+            m_botAction.sendPrivateMessage(messager, "!removecapaccess <playername>");
         }
     }
     
@@ -630,6 +674,43 @@ public class bwjsbot extends SubspaceBot {
         }
     }
     
+    private void cmd_grantCapAccess(Message event) {
+        String messager = m_botAction.getPlayerName(event.getPlayerID());
+        try
+        {
+            BotSettings botSettings = m_botAction.getBotSettings();
+            String name = event.getMessage().substring(16).toLowerCase();
+            String removedCapAccessList = botSettings.getString("RemovedCapAccess");
+            
+            int cutFrom = removedCapAccessList.indexOf(name);
+            if (cutFrom != -1)
+            {
+                int cutTo = removedCapAccessList.indexOf(":", cutFrom);
+                if (cutTo == -1)
+                    cutTo = removedCapAccessList.length();
+                if (cutFrom == 0)
+                {
+                    cutFrom = 1;
+                    cutTo += 1;
+                }
+                if (cutTo > removedCapAccessList.length())
+                    cutTo = removedCapAccessList.length();
+                removedCapAccessList = removedCapAccessList.substring(0, cutFrom - 1) +
+                        removedCapAccessList.substring(cutTo);
+                botSettings.put("RemovedCapAccess", removedCapAccessList);
+                botSettings.save();
+                m_botAction.sendPrivateMessage(messager, 
+                        name + " has been removed from the removed captain access list");
+                
+                cfg.readRemovedCapList();
+            }
+        }
+        catch (Exception e)
+        {
+            m_botAction.sendPrivateMessage(messager, "!grantcapaccess <playername>");
+        }
+    }
+    
     private void cmd_help(Message event) {
         String name = m_botAction.getPlayerName(event.getPlayerID());
         ArrayList<String> help = new ArrayList<String>();
@@ -677,7 +758,10 @@ public class bwjsbot extends SubspaceBot {
         
         if (m_botAction.getOperatorList().isModerator(name)) {
             help.add("MOD commands:");
-            help.add("!setcaptain <teamname>:<player>   -- disconnects the bot");        
+            help.add("!setcaptain <teamname>:<player>   -- disconnects the bot");
+            help.add("!removecapaccess <name>   -- Adds <name> to the Removed Captain Access List");
+            help.add("!grantcapaccess <name>    -- Removes <name> from the Removed Captain Access List");
+            help.add("!listremovedcapaccess>    -- Lists all the names in the Removed Captain Access List");
         }
         
         String[] spam = help.toArray(new String[help.size()]);
@@ -735,6 +819,23 @@ public class bwjsbot extends SubspaceBot {
             
             String[] spam = list.toArray(new String[list.size()]);
             m_botAction.privateMessageSpam(name, spam);
+        }
+    }
+    
+    private void cmd_listRemovedCapAccess(Message event) {
+        String messager = m_botAction.getPlayerName(event.getPlayerID());
+        
+        cfg.readRemovedCapList();
+        
+        if(cfg.removedCapList == null){
+            m_botAction.sendSmartPrivateMessage(messager, "Removed Captain Access List could not be found.");
+            return;
+        }
+        
+        m_botAction.sendPrivateMessage(messager, "Removed Captain Access List:");
+        
+        for (int i = 0; i < cfg.removedCapList.length; i++){
+            m_botAction.sendPrivateMessage(messager, cfg.removedCapList[i]);
         }
     }
     
@@ -1544,6 +1645,7 @@ public class bwjsbot extends SubspaceBot {
     
     /* Game Classes */
     private class BWJSConfig {
+        private BotSettings botSettings;
         private int gameType;
         private boolean allowZoner;
         private boolean announceShipType;
@@ -1565,9 +1667,10 @@ public class bwjsbot extends SubspaceBot {
         private String arena;
         private String chats;
         private String gameTypeString;
+        private String[] removedCapList; 
         
         private BWJSConfig() {
-            BotSettings botSettings = m_botAction.getBotSettings();
+            botSettings = m_botAction.getBotSettings();
             int botNumber = m_botAction.getBotNumber();
             int tmpAnnounceShipCounter; 
             String[] maxShipsString;
@@ -1655,6 +1758,17 @@ public class bwjsbot extends SubspaceBot {
             else
                 inBase = false;
             outOfBorderTime = botSettings.getInt("OutOfBorderTime" + gameType);
+            
+            //Removed Captain Access List
+            readRemovedCapList();
+        }
+        
+        public void readRemovedCapList() {
+            removedCapList = Tools.stringChopper(m_botAction.getBotSettings().getString("RemovedCapAccess"), ':');
+            if (removedCapList != null) {
+                for (int i = 1; i < removedCapList.length; i++)
+                    removedCapList[i] = removedCapList[i].substring(1);
+                }
         }
     }
     
