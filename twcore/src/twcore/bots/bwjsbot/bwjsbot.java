@@ -2141,8 +2141,11 @@ public class bwjsbot extends SubspaceBot {
             p_lagoutTime = System.currentTimeMillis();
             if (state == GAME_IN_PROGRESS) { 
                 p_lagouts++;
-                p_ships[p_currentShip][DEATHS]++;
-                m_botAction.sendArenaMessage(p_name + " lagged out or specced. (+1 death)");
+                if (cfg.gameType != BASE) {
+                    p_ships[p_currentShip][DEATHS]++;
+                    m_botAction.sendArenaMessage(p_name + " lagged out or specced. (+1 death)");
+                } else
+                    m_botAction.sendArenaMessage(p_name + " lagged out or specced.");
             
                 if ((cfg.maxLagouts != -1) && p_lagouts >= cfg.maxLagouts) {
                     out();
