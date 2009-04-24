@@ -967,6 +967,14 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
+            //Check if player is already out and thus cannot be subbed
+            if (cfg.gameType != BASE) {
+                if (!(playerOne.p_state < SUBBED)) {
+                    m_botAction.sendPrivateMessage(name, "Cannot subsitute players who are already out.");
+                    return;
+                }
+            }
+            
             Player playerTwo = m_botAction.getFuzzyPlayer(message[1]);
             
             //Check if player two can be found
