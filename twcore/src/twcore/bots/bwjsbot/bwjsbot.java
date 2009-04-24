@@ -384,11 +384,11 @@ public class bwjsbot extends SubspaceBot {
             
             if (message.startsWith("!add"))
                 cmd_add(event);
-            else if (message.startsWith("!ready"))
+            else if (message.equals("!ready"))
                 cmd_ready(event);
             else if (message.startsWith("!remove "))
                 cmd_remove(event);
-            else if (message.startsWith("!removecap"))
+            else if (message.equals("!removecap"))
                 cmd_removecap(event);
             else if (message.startsWith("!sub "))
                 cmd_sub(event);
@@ -397,28 +397,28 @@ public class bwjsbot extends SubspaceBot {
         //Player commands
         if (message.startsWith("!cap"))
             cmd_cap(event);
-        else if (message.startsWith("!help"))
+        else if (message.equals("!help"))
             cmd_help(event);
-        else if (message.startsWith("!lagout"))
+        else if (message.equals("!lagout"))
             cmd_lagout(event);
-        else if (message.startsWith("!list"))
+        else if (message.equals("!list"))
             cmd_list(event);
-        else if (message.startsWith("!myfreq"))
+        else if (message.equals("!myfreq"))
             cmd_myfreq(event);
         else if (message.equals("!mvp"))
             cmd_mvp(event);
-        else if (message.startsWith("!notplaying"))
+        else if (message.equals("!notplaying"))
             cmd_notplaying(event);
-        else if (message.startsWith("!status"))
+        else if (message.equals("!status"))
             cmd_status(messager);
-        else if (message.startsWith("!subscribe"))
+        else if (message.equals("!subscribe"))
             cmd_subscribe(event);
         
         //Staff Commands
         if (m_botAction.getOperatorList().isER(messager)) {
-            if (message.startsWith("!start"))
+            if (message.equals("!start"))
                 cmd_start(event);
-            else if (message.startsWith("!stop"))
+            else if (message.equals("!stop"))
                 cmd_stop(event);
             else if (message.startsWith("!setcaptain "))
                 cmd_setCaptain(event);
@@ -429,11 +429,11 @@ public class bwjsbot extends SubspaceBot {
                 cmd_removeCapAccess(event);
             else if (message.startsWith("!grantcapaccess "))
                 cmd_grantCapAccess(event);
-            else if (message.startsWith("!listremovedcapaccess"))
+            else if (message.equals("!listremovedcapaccess"))
                 cmd_listRemovedCapAccess(event);
-            else if (message.startsWith("!die"))
+            else if (message.equals("!die"))
                 m_botAction.die();
-            else if (message.startsWith("!off"))
+            else if (message.equals("!off"))
                 cmd_off(event);
         }
     }
