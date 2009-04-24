@@ -750,6 +750,7 @@ public class bwjsbot extends SubspaceBot {
             help.add("!lagout                   -- Puts you back into the game if you have lagged out.");
             help.add("!list                     -- Lists all players on this team");
             help.add("!myfreq                   -- Puts you on your team's frequency");
+            help.add("!mvp                      -- Displays the current mvp");
             if (state == ADDING_PLAYERS && isCaptain(name)) { 
                 help.add("!ready                    -- Use this when you're done setting your lineup");
                 help.add("!remove <player>          -- Removes specified player)");
