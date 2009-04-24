@@ -775,7 +775,7 @@ public class bwjsbot extends SubspaceBot {
         
         if (m_botAction.getOperatorList().isModerator(name)) {
             help.add("MOD commands:");
-            help.add("!setcaptain <teamname>:<player>   -- disconnects the bot");
+            help.add("!setcaptain <teamname>:<player>   -- Sets <player> as captain for <teamname>");
             help.add("!removecapaccess <name>   -- Adds <name> to the Removed Captain Access List");
             help.add("!grantcapaccess <name>    -- Removes <name> from the Removed Captain Access List");
             help.add("!listremovedcapaccess>    -- Lists all the names in the Removed Captain Access List");
