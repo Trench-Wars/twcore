@@ -364,7 +364,7 @@ public class bwjsbot extends SubspaceBot {
         
         //Prevent bot spamming
         if (listTimeCommandIssued.containsKey(messager.toLowerCase())) {
-            if ((System.currentTimeMillis() - listTimeCommandIssued.get(messager.toLowerCase())) < 3000) {
+            if ((System.currentTimeMillis() - listTimeCommandIssued.get(messager.toLowerCase())) < 2000) {
                 m_botAction.sendPrivateMessage(messager, "Please do not spam the bot! (command ignored)");
                 return;
             }
@@ -405,6 +405,8 @@ public class bwjsbot extends SubspaceBot {
             cmd_list(event);
         else if (message.startsWith("!myfreq"))
             cmd_myfreq(event);
+        else if (message.equals("!mvp"))
+            cmd_mvp(event);
         else if (message.startsWith("!notplaying"))
             cmd_notplaying(event);
         else if (message.startsWith("!status"))
@@ -776,9 +778,9 @@ public class bwjsbot extends SubspaceBot {
         if (m_botAction.getOperatorList().isModerator(name)) {
             help.add("MOD commands:");
             help.add("!setcaptain <teamname>:<player>   -- Sets <player> as captain for <teamname>");
-            help.add("!removecapaccess <name>   -- Adds <name> to the Removed Captain Access List");
-            help.add("!grantcapaccess <name>    -- Removes <name> from the Removed Captain Access List");
-            help.add("!listremovedcapaccess>    -- Lists all the names in the Removed Captain Access List");
+            help.add("!removecapaccess <name>           -- Adds <name> to the Removed Captain Access List");
+            help.add("!grantcapaccess <name>            -- Removes <name> from the Removed Captain Access List");
+            help.add("!listremovedcapaccess             -- Lists all the names in the Removed Captain Access List");
         }
         
         String[] spam = help.toArray(new String[help.size()]);
@@ -820,18 +822,23 @@ public class bwjsbot extends SubspaceBot {
             String name = m_botAction.getPlayerName(event.getPlayerID());
             int teamNumber = getTeamNumber(name);
             ArrayList<String> list = new ArrayList<String>();
-            
             if (teamNumber == -1) {
                 for (int i = 0; i < 2; i++) {
                     list.add(team[i].name + " (captain: " + team[i].captainName + ")");
+                    list.add(Tools.formatString("Name:", 23) + " - " +
+                            Tools.formatString("Ship:", 10) + " - " + "Status:");
                     for (BWJSPlayer p : team[i].players.values()) 
-                        list.add(p.p_name + " - " + Tools.shipName(p.p_currentShip) + " - " + p.getStatus());
-                    list.add("");
+                        list.add(Tools.formatString(p.p_name, 23) + " - " 
+                                + Tools.formatString(Tools.shipName(p.p_currentShip), 10) + " - " + p.getStatus());
+                    list.add(" ");
                 }
             } else {
                 list.add(team[teamNumber].name + " (captain: " + team[teamNumber].captainName + ")");
+                list.add(Tools.formatString("Name:", 23) + " - " +
+                        Tools.formatString("Ship:", 10) + " - " + "Status:");
                 for (BWJSPlayer p : team[teamNumber].players.values()) 
-                    list.add(p.p_name + " - " + Tools.shipName(p.p_currentShip) + " - " + p.getStatus());
+                    list.add(Tools.formatString(p.p_name, 23) + " - " 
+                            + Tools.formatString(Tools.shipName(p.p_currentShip), 10) + " - " + p.getStatus());
             }
             
             String[] spam = list.toArray(new String[list.size()]);
@@ -853,6 +860,12 @@ public class bwjsbot extends SubspaceBot {
         
         for (int i = 0; i < cfg.removedCapList.length; i++){
             m_botAction.sendPrivateMessage(messager, cfg.removedCapList[i]);
+        }
+    }
+    
+    private void cmd_mvp(Message event) {
+        if (state == GAME_IN_PROGRESS) {
+           m_botAction.sendPrivateMessage(event.getPlayerID(), "Current MVP: " + getMVP());
         }
     }
     
@@ -1283,7 +1296,7 @@ public class bwjsbot extends SubspaceBot {
         
         announceMVPTimer = new TimerTask() {
             public void run() {
-                m_botAction.sendArenaMessage("MVP: " + getMVP() + "!");
+                m_botAction.sendArenaMessage("MVP: " + getMVP() + "!", Tools.Sound.INCONCEIVABLE);
             }
         };
         
@@ -1315,7 +1328,7 @@ public class bwjsbot extends SubspaceBot {
             
             if (teamNumber != -1) {
                 if (team[teamNumber].players.size() != cfg.maxPlayers) {
-                    m_botAction.sendArenaMessage(team[teamNumber].captainName + " pick a player!", Tools.Sound.BEEP3);
+                    m_botAction.sendArenaMessage(team[teamNumber].captainName + " pick a player!", Tools.Sound.BEEP2);
                     team[teamNumber].pickingTurn = true;
                 }
             }
@@ -2131,7 +2144,7 @@ public class bwjsbot extends SubspaceBot {
         }
         
         private void lagin() {
-            m_botAction.sendArenaMessage(p_name + " returned from his or her lagout.");
+            m_botAction.sendArenaMessage(p_name + " returned from lagout.");
             m_botAction.cancelTask(p_lagoutTimer);
             addPlayer();
         }
@@ -2234,7 +2247,8 @@ public class bwjsbot extends SubspaceBot {
                         " is in for team " + name + ".");
             
             if (!players.containsKey(player.getPlayerName().toLowerCase()))
-                players.put(player.getPlayerName().toLowerCase(), new BWJSPlayer(player.getPlayerName(), shipType, cfg.maxDeaths, frequency));
+                players.put(player.getPlayerName().toLowerCase(), 
+                        new BWJSPlayer(player.getPlayerName(), shipType, cfg.maxDeaths, frequency));
             else {
                 players.get(player.getPlayerName().toLowerCase()).p_currentShip = shipType;
                 players.get(player.getPlayerName().toLowerCase()).addPlayer();
