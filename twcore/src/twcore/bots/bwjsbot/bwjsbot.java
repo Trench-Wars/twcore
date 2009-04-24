@@ -415,26 +415,26 @@ public class bwjsbot extends SubspaceBot {
             cmd_subscribe(event);
         
         //Staff Commands
-        if (m_botAction.getOperatorList().isSmod(messager)) {
+        if (m_botAction.getOperatorList().isER(messager)) {
             if (message.startsWith("!start"))
                 cmd_start(event);
             else if (message.startsWith("!stop"))
                 cmd_stop(event);
-            else if (message.startsWith("!die"))
-                m_botAction.die();
-            else if (message.startsWith("!off"))
-                cmd_off(event);
+            else if (message.startsWith("!setcaptain "))
+                cmd_setCaptain(event);
         }
         
         if (m_botAction.getOperatorList().isModerator(messager)) {
-            if (message.startsWith("!setcaptain "))
-                cmd_setCaptain(event);
-            else if (message.startsWith("!removecapaccess "))
+            if (message.startsWith("!removecapaccess "))
                 cmd_removeCapAccess(event);
             else if (message.startsWith("!grantcapaccess "))
                 cmd_grantCapAccess(event);
             else if (message.startsWith("!listremovedcapaccess"))
                 cmd_listRemovedCapAccess(event);
+            else if (message.startsWith("!die"))
+                m_botAction.die();
+            else if (message.startsWith("!off"))
+                cmd_off(event);
         }
     }
     
@@ -767,20 +767,20 @@ public class bwjsbot extends SubspaceBot {
             help.add("!subscribe                -- Toggles alerts in private messages.");
         }
         
-        if (m_botAction.getOperatorList().isSmod(name)) {
-            help.add("SMOD commands:");
-            help.add("!start                    -- starts the bot");
-            help.add("!stop                     -- stops the bot");
-            help.add("!off                      -- stops the bot after the current game");
-            help.add("!die                      -- disconnects the bot");       
-        }
-        
         if (m_botAction.getOperatorList().isModerator(name)) {
             help.add("MOD commands:");
+            help.add("!off                      -- stops the bot after the current game");
+            help.add("!die                      -- disconnects the bot");
+            help.add("!removecapaccess <name>   -- Adds <name> to the Removed Captain Access List");
+            help.add("!grantcapaccess <name>    -- Removes <name> from the Removed Captain Access List");
+            help.add("!listremovedcapaccess     -- Lists all the names in the Removed Captain Access List");
+        }
+        
+        if (m_botAction.getOperatorList().isER(name)) {
+            help.add("ER commands:");
+            help.add("!start                            -- starts the bot");
+            help.add("!stop                             -- stops the bot");
             help.add("!setcaptain <teamname>:<player>   -- Sets <player> as captain for <teamname>");
-            help.add("!removecapaccess <name>           -- Adds <name> to the Removed Captain Access List");
-            help.add("!grantcapaccess <name>            -- Removes <name> from the Removed Captain Access List");
-            help.add("!listremovedcapaccess             -- Lists all the names in the Removed Captain Access List");
         }
         
         String[] spam = help.toArray(new String[help.size()]);
@@ -1211,8 +1211,16 @@ public class bwjsbot extends SubspaceBot {
         
         addingTimer = new AddingTimer();
         
-        m_botAction.sendArenaMessage("Captains you have 5 minutes to set up your lineup correctly!", Tools.Sound.BEEP2);
-        m_botAction.scheduleTask(addingTimer, 5 * Tools.TimeInMillis.MINUTE);
+        
+        if (cfg.gameType == BASE) {
+            m_botAction.sendArenaMessage("Captains you have 10 minutes to set up your lineup correctly!", 
+                    Tools.Sound.BEEP2);
+            m_botAction.scheduleTask(addingTimer, 10 * Tools.TimeInMillis.MINUTE);
+        } else {
+            m_botAction.sendArenaMessage("Captains you have 5 minutes to set up your lineup correctly!", 
+                    Tools.Sound.BEEP2);
+            m_botAction.scheduleTask(addingTimer, 5 * Tools.TimeInMillis.MINUTE);
+        }
         
         newGameAlert();
         
