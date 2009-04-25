@@ -1180,6 +1180,11 @@ public class bwjsbot extends SubspaceBot {
                 }
             }
             
+            //Extra check if player should be subbed
+            if (cfg.maxDeaths != 0 && playerOne.getDeaths() == cfg.maxDeaths) {
+                m_botAction.sendPrivateMessage(name, "Cannot sub a player who is already out.");
+                return;
+            }
             team[teamNumber].sub(playerOne, playerTwo);
         }
     }
@@ -1959,7 +1964,7 @@ public class bwjsbot extends SubspaceBot {
         }
         
         private void checkOut() {
-            if (p_maxDeaths == getDeaths() && p_countDeaths)
+            if (p_maxDeaths <= getDeaths() && p_countDeaths)
                 out();
         }
         
@@ -2219,11 +2224,13 @@ public class bwjsbot extends SubspaceBot {
                     p_ships[p_currentShip][DEATHS]++;
                     m_botAction.sendOpposingTeamMessageByFrequency(p_frequency, p_name + " lagged out or specced. " +
                     		"(+1 death)");
+                    checkOut();
                 } else
                     m_botAction.sendOpposingTeamMessageByFrequency(p_frequency, p_name + " lagged out or specced.");
             
                 if ((cfg.maxLagouts != -1) && p_lagouts >= cfg.maxLagouts) {
-                    out();
+                    if (p_state < OUT)
+                        out();
                 } else {
                     m_botAction.sendPrivateMessage(p_name, "PM me \"!lagout\" to get back in.");
                 }
@@ -2587,7 +2594,7 @@ public class bwjsbot extends SubspaceBot {
             }
             m_botAction.sendPrivateMessage(playerTwo.getPlayerID(), "You are subbed in the game.");
             
-            if (maxDeaths == 0)
+            if (cfg.maxDeaths == 0)
                 m_botAction.sendArenaMessage(playerOne.p_name + " has been substituted by " +
                         playerTwo.getPlayerName());
             else 
