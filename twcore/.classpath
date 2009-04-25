@@ -3,7 +3,7 @@
 	<classpathentry excluding="data/maps/|data/Rules/examples/|data/Rules/Other/|data/Rules/TWD/|data/Rules/TWL/|data/Rules/unused/" kind="src" path="src"/>
 	<classpathentry kind="lib" path="lib/aim.jar"/>
 	<classpathentry kind="lib" path="lib/googleapi.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.5.0_12"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.0.7-bin.jar"/>
 	<classpathentry kind="lib" path="lib/mail.jar"/>
 	<classpathentry kind="output" path="bin"/>
