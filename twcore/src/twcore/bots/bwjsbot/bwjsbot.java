@@ -730,7 +730,7 @@ public class bwjsbot extends SubspaceBot {
             help.add("!myfreq                   -- Puts you on your team's frequency");
             help.add("!mvp                      -- Displays the current mvp");
             help.add("!rating <player>          -- Displays your/<playername> current rating");
-            help.add("!score                    -- Displays your/<playername> current score");
+            help.add("!score <player>           -- Displays your/<playername> current score");
             if (state == ADDING_PLAYERS && isCaptain(name)) { 
                 help.add("!ready                    -- Use this when you're done setting your lineup");
                 help.add("!remove <player>          -- Removes specified player)");
