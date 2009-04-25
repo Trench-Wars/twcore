@@ -990,7 +990,7 @@ public class bwjsbot extends SubspaceBot {
             team[getTeamNumber(m_botAction.getPlayerName(event.getPlayerID()))].removeCap();
     }
     
-    private void cmd_score(Message event) {
+    private void cmd_scorePlayer(Message event) {
         if (state == GAME_IN_PROGRESS) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
             String message = event.getMessage();
@@ -1012,7 +1012,7 @@ public class bwjsbot extends SubspaceBot {
         }
     }
     
-    private void cmd_scorePlayer(Message event) {
+    private void cmd_score(Message event) {
         if (state == GAME_IN_PROGRESS) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
             int teamNumber = getTeamNumber(name);
