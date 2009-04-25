@@ -43,6 +43,7 @@ public class bwjsbot extends SubspaceBot {
     /* Lists */
     private ArrayList<String> listAlert;
     private ArrayList<String> listNotplaying;
+    private ArrayList<String> listEnoughUsage;
     private TreeMap<String, Long> listTimeCommandIssued; 
     
     /* Locks */
@@ -83,6 +84,7 @@ public class bwjsbot extends SubspaceBot {
     
     /* Other */
     private Objset scoreboard;
+    private String enoughUsageCurrentName;
     
     /* Some Constants */
     private static final int ZONER_WAIT_TIME = 15;
@@ -110,9 +112,11 @@ public class bwjsbot extends SubspaceBot {
         
         /* Lists */
         listAlert = new ArrayList<String>();
+        listEnoughUsage = new ArrayList<String>();
         listNotplaying = new ArrayList<String>();
         listNotplaying.add(m_botAction.getBotName().toLowerCase());
         listTimeCommandIssued = new TreeMap<String, Long>();
+        
         
         /* Spy */
         racismWatcher = new Spy(m_botAction);
@@ -230,10 +234,19 @@ public class bwjsbot extends SubspaceBot {
         
         /* Arena Lock-O-Matic */
         if (event.getMessageType() == Message.ARENA_MESSAGE) {
-            if (event.getMessage().equals("Arena UNLOCKED") && lockArena)
+            String message = event.getMessage();
+            if (message.equals("Arena UNLOCKED") && lockArena)
                 m_botAction.toggleLocked();
-            if (event.getMessage().equals("Arena LOCKED") && !lockArena)
+            if (message.equals("Arena LOCKED") && !lockArena)
                 m_botAction.toggleLocked();
+            
+
+            //Feed the enough usage list
+            if (message.startsWith("IP:"))
+                enoughUsageCurrentName = message.split("  ")[3].substring(10);
+            if (message.startsWith("TIME:")) {
+                retrieveUsage(message);
+            }
         }
         
         /* Handle Commands */
@@ -259,8 +272,13 @@ public class bwjsbot extends SubspaceBot {
     }
     
     public void handleEvent(PlayerEntered event) {
+        String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
+        
+        //Feed the list with people who have enough usage to get captain
+        if (!listEnoughUsage.contains(name))
+            m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), "*info");
+        
         if (state > OFF) {
-            String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
             
             //Welcome incoming player and send status message
             m_botAction.sendPrivateMessage(name, "Welcome to " + cfg.gameTypeString);
@@ -569,13 +587,16 @@ public class bwjsbot extends SubspaceBot {
             int teamNumber = getTeamNumber(messager);
             String message = event.getMessage();
             
-            //People who are removed from captain acces
-            for (int i = 0; i < cfg.removedCapList.length; i++) {
-                if (cfg.removedCapList[i].equalsIgnoreCase(messager)) {
-                    msgCaps(messager);
-                    return;
+            //Check for people who don't have enough usage to claim captain
+            if (!listEnoughUsage.contains(messager.toLowerCase())) {
+                if (team[ONE].captainName.equals("[nobody]") || team[TWO].captainName.equals("[nobody]")) {
+                    m_botAction.sendPrivateMessage(messager, "You need atleast " + cfg.capUsage + 
+                            " hours of usage in order to claim captain.");
                 }
+                msgCaps(messager);
+                return;
             }
+                
             
             //People on not playing list cannot get captain spot.
             if (listNotplaying.contains(messager.toLowerCase())) {
@@ -1451,6 +1472,17 @@ public class bwjsbot extends SubspaceBot {
         return -1;
     }
     
+    private void retrieveUsage(String message) {
+        try {
+            int beginIndex = message.indexOf("Total:") + 6;
+            int endIndex = message.indexOf("  Created:");
+            int usage = Integer.parseInt(message.substring(beginIndex, endIndex).trim().split(":")[0]);
+            
+            if (usage > cfg.capUsage)
+                listEnoughUsage.add(enoughUsageCurrentName.toLowerCase());
+        } catch (Exception e) {}
+    }
+    
     /**
      * Check if playerID is captain or not
      * 
@@ -1717,6 +1749,7 @@ public class bwjsbot extends SubspaceBot {
         private boolean allowZoner;
         private boolean announceShipType;
         private boolean inBase;
+        private int capUsage;
         private int defaultShipType;
         private int maxDeaths;
         private int maxLagouts;
@@ -1733,8 +1766,7 @@ public class bwjsbot extends SubspaceBot {
         private int yborder;
         private String arena;
         private String chats;
-        private String gameTypeString;
-        private String[] removedCapList; 
+        private String gameTypeString; 
         
         private BWJSConfig() {
             botSettings = m_botAction.getBotSettings();
@@ -1826,16 +1858,8 @@ public class bwjsbot extends SubspaceBot {
                 inBase = false;
             outOfBorderTime = botSettings.getInt("OutOfBorderTime" + gameType);
             
-            //Removed Captain Access List
-            readRemovedCapList();
-        }
-        
-        public void readRemovedCapList() {
-            removedCapList = Tools.stringChopper(m_botAction.getBotSettings().getString("RemovedCapAccess"), ':');
-            if (removedCapList != null) {
-                for (int i = 1; i < removedCapList.length; i++)
-                    removedCapList[i] = removedCapList[i].substring(1);
-                }
+            //Captain usage
+            capUsage = botSettings.getInt("CaptainUsage" + gameType);
         }
     }
     
