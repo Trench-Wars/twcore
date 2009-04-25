@@ -1180,7 +1180,6 @@ public class bwjsbot extends SubspaceBot {
             }
             
             team[teamNumber].sub(playerOne, playerTwo);
-            m_botAction.sendPrivateMessage(name, "Your substitute has been taking into progress.");
         }
     }
     
