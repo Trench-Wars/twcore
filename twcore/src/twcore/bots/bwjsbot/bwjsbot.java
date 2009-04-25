@@ -242,10 +242,11 @@ public class bwjsbot extends SubspaceBot {
             
 
             //Feed the enough usage list
-            if (message.startsWith("IP:"))
-                enoughUsageCurrentName = message.split("  ")[3].substring(10);
-            if (message.startsWith("TIME:")) {
-                retrieveUsage(message);
+            if (cfg.capUsage != 0) {
+                if (message.startsWith("IP:"))
+                    enoughUsageCurrentName = message.split("  ")[3].substring(10);
+                if (message.startsWith("TIME:"))
+                    retrieveUsage(message);
             }
         }
         
@@ -275,7 +276,7 @@ public class bwjsbot extends SubspaceBot {
         String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
         
         //Feed the list with people who have enough usage to get captain
-        if (!listEnoughUsage.contains(name))
+        if (!listEnoughUsage.contains(name) && cfg.capUsage != 0)
             m_botAction.sendUnfilteredPrivateMessage(event.getPlayerID(), "*info");
         
         if (state > OFF) {
@@ -588,7 +589,7 @@ public class bwjsbot extends SubspaceBot {
             String message = event.getMessage();
             
             //Check for people who don't have enough usage to claim captain
-            if (!listEnoughUsage.contains(messager.toLowerCase())) {
+            if (!listEnoughUsage.contains(messager.toLowerCase())  && cfg.capUsage != 0) {
                 if (team[ONE].captainName.equals("[nobody]") || team[TWO].captainName.equals("[nobody]")) {
                     m_botAction.sendPrivateMessage(messager, "You need atleast " + cfg.capUsage + 
                             " hours of usage in order to claim captain.");
