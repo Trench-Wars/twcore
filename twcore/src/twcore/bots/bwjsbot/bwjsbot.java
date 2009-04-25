@@ -1373,9 +1373,14 @@ public class bwjsbot extends SubspaceBot {
         if (!lastGame)
             m_botAction.scheduleTask(newGameTimer, 15 * Tools.TimeInMillis.SECOND);
         else {
-            m_botAction.sendArenaMessage("Bot has been shutdown.", Tools.Sound.GAME_SUCKS);
-            reset();
-            unlockArena();
+            TimerTask shutdownTimer = new TimerTask() {
+                public void run() {
+                    m_botAction.sendArenaMessage("Bot has been shutdown.", Tools.Sound.GAME_SUCKS);
+                    reset();
+                    unlockArena();
+                }
+            };
+            m_botAction.scheduleTask(shutdownTimer, 8 * Tools.TimeInMillis.SECOND);
         }
     }
     
