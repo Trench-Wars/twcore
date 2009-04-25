@@ -2232,7 +2232,8 @@ public class bwjsbot extends SubspaceBot {
                     if (p_state < OUT)
                         out();
                 } else {
-                    m_botAction.sendPrivateMessage(p_name, "PM me \"!lagout\" to get back in.");
+                    if (p_state != OUT)
+                        m_botAction.sendPrivateMessage(p_name, "PM me \"!lagout\" to get back in.");
                 }
             } else {
                 m_botAction.sendArenaMessage(p_name + " lagged out or specced.");
