@@ -44,7 +44,6 @@ public class bwjsbot extends SubspaceBot {
     private ArrayList<String> listAlert;
     private ArrayList<String> listNotplaying;
     private ArrayList<String> listEnoughUsage;
-    private TreeMap<String, Long> listTimeCommandIssued; 
     
     /* Locks */
     private boolean lastGame;
@@ -115,7 +114,6 @@ public class bwjsbot extends SubspaceBot {
         listEnoughUsage = new ArrayList<String>();
         listNotplaying = new ArrayList<String>();
         listNotplaying.add(m_botAction.getBotName().toLowerCase());
-        listTimeCommandIssued = new TreeMap<String, Long>();
         
         
         /* Spy */
@@ -305,10 +303,6 @@ public class bwjsbot extends SubspaceBot {
             String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
             final int teamNumber = getTeamNumber(name);
             
-            //Remove player from the listTimeCommandIssued list, to prevent this from growing out of hand
-            if (listTimeCommandIssued.containsKey(name.toLowerCase()))
-                    listTimeCommandIssued.remove(name.toLowerCase());
-            
             //If player was in neither of the teams, do nothing
             if (teamNumber == -1)
                 return;
@@ -393,17 +387,6 @@ public class bwjsbot extends SubspaceBot {
     private void handleCommand(Message event) {
         String message = event.getMessage().toLowerCase();
         String messager = m_botAction.getPlayerName(event.getPlayerID());
-        
-        //Prevent bot spamming
-        if (listTimeCommandIssued.containsKey(messager.toLowerCase())) {
-            if ((System.currentTimeMillis() - listTimeCommandIssued.get(messager.toLowerCase())) < 2000) {
-                m_botAction.sendPrivateMessage(messager, "Please do not spam the bot! (command ignored)");
-                return;
-            }
-        }
-        
-        if (!m_botAction.getOperatorList().isModerator(messager))
-            listTimeCommandIssued.put(messager.toLowerCase(), System.currentTimeMillis());
         
         //Captain commands
         if (isCaptain(messager)) {
