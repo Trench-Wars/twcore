@@ -2540,7 +2540,7 @@ public class bwjsbot extends SubspaceBot {
         private int sizeIN() {
             int size = 0;
             for (BWJSPlayer i : players.values()) {
-                if (i.p_state < SUBBED)
+                if (i.p_state != SUBBED)
                     size++;
             }
             return size;
