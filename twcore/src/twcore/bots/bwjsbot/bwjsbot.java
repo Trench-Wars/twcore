@@ -2327,9 +2327,18 @@ public class bwjsbot extends SubspaceBot {
         
         private int getDeaths() {
             int deaths = 0;
+            int counter = 0;
+            int playersNotHere;
             
-            for (BWJSPlayer i : players.values())
+            for (BWJSPlayer i : players.values()) {
                 deaths += i.getDeaths();
+                counter++;
+            }
+            
+            playersNotHere = cfg.maxPlayers - counter;
+            
+            if (playersNotHere > 0)
+                deaths += cfg.maxDeaths * playersNotHere;
             
             return deaths;
         }
