@@ -2569,8 +2569,11 @@ public class bwjsbot extends SubspaceBot {
             
             //Adding substitute
             if (cfg.gameType == BASE) {
-                if (players.containsKey(playerTwo.getPlayerName().toLowerCase()))
-                    players.get(playerTwo.getPlayerName().toLowerCase()).addPlayer();
+                if (players.containsKey(playerTwo.getPlayerName().toLowerCase())) {
+                    BWJSPlayer p = players.get(playerTwo.getPlayerName().toLowerCase());
+                    p.p_currentShip = shipType;
+                    p.addPlayer();
+                }
                 else
                     players.put(playerTwo.getPlayerName().toLowerCase(), 
                             new BWJSPlayer(playerTwo.getPlayerName(), shipType, maxDeaths, frequency));
