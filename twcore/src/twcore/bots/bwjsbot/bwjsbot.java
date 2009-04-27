@@ -687,6 +687,12 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
+            //Check if shiptype is already the same as the players current shiptype
+            if (player.p_currentShip == shipType) {
+                m_botAction.sendPrivateMessage(name, "Player is already in that type of ship.");
+                return;
+            }
+            
             player.change(shipType);
         }
     }
