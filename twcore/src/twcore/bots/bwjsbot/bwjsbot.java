@@ -527,7 +527,7 @@ public class bwjsbot extends SubspaceBot {
                 //Check if player is already on the team
                 //With exception of BASE games where a subbed player can be re-added.
                 if (team[teamNumber].players.containsKey(playerName)) {
-                    if (team[teamNumber].players.get(playerName).p_state < SUBBED || 
+                    if (team[teamNumber].players.get(playerName).p_state < OUT_BUT_SUBABLE || 
                             cfg.gameType != BASE) {
                         m_botAction.sendPrivateMessage(messager, "Player already on your team, check !list.");
                         return;
@@ -664,7 +664,7 @@ public class bwjsbot extends SubspaceBot {
             }
             
             //Check if player is already out
-            if (!(player.p_state < SUBBED)) {
+            if (!(player.p_state < OUT_BUT_SUBABLE)) {
                 m_botAction.sendPrivateMessage(name, "Cannot change ship of a player that is already out.");
                 return;
             }
@@ -1153,7 +1153,7 @@ public class bwjsbot extends SubspaceBot {
             //Check if subtitute is available 
             if (team[teamNumber].players.containsKey(playerTwo.getPlayerName().toLowerCase())) {
                 int tmp_state = team[teamNumber].players.get(playerTwo.getPlayerName().toLowerCase()).p_state;
-                if (cfg.gameType != BASE || tmp_state < SUBBED) {
+                if (cfg.gameType != BASE || tmp_state < OUT_BUT_SUBABLE) {
                     m_botAction.sendPrivateMessage(name, "Substitute is/was already playing for your team.");
                     return;
                 }
@@ -1211,7 +1211,7 @@ public class bwjsbot extends SubspaceBot {
             }
 
             //Check if player is already out or subbed
-            if (!(playerOne.p_state < SUBBED) || !(playerTwo.p_state < SUBBED)) {
+            if (!(playerOne.p_state < OUT_BUT_SUBABLE) || !(playerTwo.p_state < OUT_BUT_SUBABLE)) {
                 m_botAction.sendPrivateMessage(name, "Cannot switch a player that is already out.");
                 return;
             }
