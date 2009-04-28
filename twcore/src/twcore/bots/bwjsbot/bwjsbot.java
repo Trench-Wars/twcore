@@ -92,8 +92,9 @@ public class bwjsbot extends SubspaceBot {
     private static final int IN = 0;
     private static final int LAGOUT = 1;
     private static final int LAGOUT_OUT = 2; //Still sub-able, but out
-    private static final int SUBBED = 3;
-    private static final int OUT = 4;
+    private static final int OUT_BUT_SUBABLE = 3;
+    private static final int SUBBED = 4;
+    private static final int OUT = 5;
     private static final int BASE = 1;
     private static final int WBDUEL = 2;
     private static final int JAVDUEL = 3;
@@ -874,6 +875,7 @@ public class bwjsbot extends SubspaceBot {
                     if (team[teamNumber].players.get(name).p_state < SUBBED) {
                         m_botAction.sendArenaMessage(name + " has been removed from the game. (not playing)");
                         team[teamNumber].players.get(name).out();
+                        team[teamNumber].players.get(name).p_state = OUT_BUT_SUBABLE;
                     }
                 }
             }
@@ -1110,7 +1112,7 @@ public class bwjsbot extends SubspaceBot {
             
             //Check if team has any substitutes left
             if (team[teamNumber].substitutesLeft == 0) {
-                m_botAction.sendPrivateMessage(name, "Could not sub, you have 0 subtitutes left.");
+                m_botAction.sendPrivateMessage(name, "Could not sub, you have 0 substitutes left.");
                 return;
             }
             
@@ -1123,8 +1125,8 @@ public class bwjsbot extends SubspaceBot {
             }
             
             //Check if player is already out and thus cannot be subbed
-            if (!(playerOne.p_state < SUBBED)) {
-                m_botAction.sendPrivateMessage(name, "Cannot subsitute a player that is already out.");
+            if (playerOne.p_state >= SUBBED) {
+                m_botAction.sendPrivateMessage(name, "Cannot substitute a player that is already out.");
                 return;
             }
             
@@ -1132,7 +1134,7 @@ public class bwjsbot extends SubspaceBot {
             
             //Check if player two can be found
             if (playerTwo == null) {
-                m_botAction.sendPrivateMessage(name, "Substitute could not be found, try again.");
+                m_botAction.sendPrivateMessage(name, "substitute could not be found, try again.");
                 return;
             }
             
@@ -1158,8 +1160,8 @@ public class bwjsbot extends SubspaceBot {
             }
             
             //Extra check if player should be subbed
-            if (cfg.maxDeaths != 0 && playerOne.getDeaths() == cfg.maxDeaths) {
-                m_botAction.sendPrivateMessage(name, "Cannot sub a player who is already out.");
+            if (cfg.maxDeaths != 0 && playerOne.getDeaths() >= cfg.maxDeaths) {
+                m_botAction.sendPrivateMessage(name, "Cannot sub a player that is already out.");
                 return;
             }
             team[teamNumber].sub(playerOne, playerTwo);
@@ -1722,7 +1724,7 @@ public class bwjsbot extends SubspaceBot {
                 m_botAction.specWithoutLock(id);
             if (listNotplaying.contains(i.getPlayerName().toLowerCase()) && freq != FREQ_NOTPLAYING)
                 m_botAction.setFreq(id, FREQ_NOTPLAYING);
-            else if (freq != FREQ_SPEC && freq != FREQ_NOTPLAYING) {
+            else if (freq != FREQ_SPEC && !listNotplaying.contains(i.getPlayerName().toLowerCase())) {
                 m_botAction.setShip(id, 1);
                 m_botAction.specWithoutLock(id);
             }
@@ -1853,7 +1855,6 @@ public class bwjsbot extends SubspaceBot {
     private class BWJSPlayer {
         /* Variables */
         private String p_name;
-        private boolean p_countDeaths;
         private int p_currentShip;
         private int p_state;
         private int p_maxDeaths;
@@ -1900,11 +1901,6 @@ public class bwjsbot extends SubspaceBot {
             p_outOfBorderWarning = false;
             p_lagouts = 0;
             
-            if (p_maxDeaths == 0)
-                p_countDeaths = false;
-            else
-                p_countDeaths = true;
-            
             m_botAction.scoreReset(p_name);
             addPlayer();
         }
@@ -1938,7 +1934,7 @@ public class bwjsbot extends SubspaceBot {
                     p_outOfBorderWarning = true;
                 }
                 else if (p_outOfBorderTime == 0) {
-                    if (p_countDeaths)
+                    if (cfg.maxDeaths != 0)
                         p_ships[p_currentShip][DEATHS] = cfg.maxDeaths;
                     out();
                 }
@@ -1946,7 +1942,7 @@ public class bwjsbot extends SubspaceBot {
         }
         
         private void checkOut() {
-            if (p_maxDeaths <= getDeaths() && p_countDeaths)
+            if (p_maxDeaths <= getDeaths() && cfg.maxDeaths != 0)
                 out();
         }
         
@@ -2148,6 +2144,7 @@ public class bwjsbot extends SubspaceBot {
                 case (LAGOUT_OUT) : return "LAGGED OUT";
                 case (SUBBED) : return "SUBSTITUTED";
                 case (OUT) : return "OUT";
+                case (OUT_BUT_SUBABLE) : return "OUT (still substitutable)";
             }
             return "";
         }
@@ -2247,13 +2244,16 @@ public class bwjsbot extends SubspaceBot {
             if (p_outOfBorderTime == 0 && cfg.yborder != -1) 
                 m_botAction.sendArenaMessage(p_name + " is out, (too long outside of base). " + 
                         getKills() + " wins " + getDeaths() + " losses");
-            else if ((cfg.maxLagouts != -1) && p_lagouts >= cfg.maxLagouts && getDeaths() != cfg.maxDeaths)
+            else if ((cfg.maxLagouts != -1) && p_lagouts >= cfg.maxLagouts && getDeaths() != cfg.maxDeaths) {
                 m_botAction.sendArenaMessage(p_name+ " is out, (too many lagouts). " + 
                         getKills() + " wins " + getDeaths() + " losses. (NOTICE: player can still be subbed)");
-            else if (getDeaths() != p_maxDeaths && p_countDeaths)
+                p_state = OUT_BUT_SUBABLE;
+            } else if (getDeaths() != p_maxDeaths && cfg.maxDeaths != 0) {
                 m_botAction.sendArenaMessage(p_name + " is out. " + 
                         getKills() + " wins " + getDeaths() + " losses. (NOTICE: player can still be subbed)");
-            else
+                p_state = OUT_BUT_SUBABLE;
+            }
+            else if (cfg.maxDeaths != 0) 
                 m_botAction.sendArenaMessage(p_name + " is out. " + 
                         getKills() + " wins " + getDeaths() + " losses");
         }
@@ -2266,7 +2266,8 @@ public class bwjsbot extends SubspaceBot {
             p_state = SUBBED;
             if (m_botAction.getPlayer(p_name) != null) {
                 m_botAction.specWithoutLock(p_name);
-                m_botAction.setFreq(p_name, p_frequency);
+                if (!listNotplaying.contains(p_name.toLowerCase()))
+                    m_botAction.setFreq(p_name, p_frequency);
             }
         }
     }
