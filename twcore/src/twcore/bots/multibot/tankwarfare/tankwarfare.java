@@ -254,6 +254,9 @@ public class tankwarfare extends MultiModule {
             Flag flagOne = m_botAction.getFlag(FLAG_ONE);
             Flag flagTwo = m_botAction.getFlag(FLAG_TWO);
             
+            if (flagOne == null || flagTwo == null)
+                return;
+            
             if (!flagOne.carried() && !flagTwo.carried())
                 return;
             
@@ -410,7 +413,6 @@ public class tankwarfare extends MultiModule {
     private void cmd_displayRules() {
         String rules = RULES;
         while (!rules.isEmpty()) {
-            System.out.println(rules.length());
             int endIndex = 0;
             if (rules.length() < 100)
                 endIndex = rules.length();
@@ -436,7 +438,6 @@ public class tankwarfare extends MultiModule {
     private void cmd_pmRules(String messager) {
         String rules = RULES;
         while (!rules.isEmpty()) {
-            System.out.println(rules.length());
             int endIndex = 0;
             if (rules.length() < 100)
                 endIndex = rules.length();
@@ -596,6 +597,10 @@ public class tankwarfare extends MultiModule {
     
     private boolean isInFlagroom(int flagID) {
         Flag flag = m_botAction.getFlag(flagID);
+        
+        if (flag == null)
+            return false;
+        
         int coord_x;
         int coord_y;
         if (flag.carried()) {
@@ -610,6 +615,7 @@ public class tankwarfare extends MultiModule {
             if (coord_y < coords[flagID][1][0] && coord_y > coords[flagID][1][1])
                 return true;
         }
+        
         return false;
     }
     
