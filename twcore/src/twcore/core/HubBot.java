@@ -5,8 +5,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.TimerTask;
-import java.util.TreeMap;
 
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.ArenaJoined;
@@ -116,7 +116,8 @@ public class HubBot extends SubspaceBot {
     private void autoSpawnBots(boolean checkAlreadySpawned) {
         try {
             BufferedReader reader = new BufferedReader( new FileReader( m_botAction.getCoreCfg( "autoload.cfg" ) ) );
-            TreeMap<String, Integer> autoLoads = new TreeMap<String, Integer>();
+            LinkedHashMap<String, Integer> autoLoads = new LinkedHashMap<String, Integer>();
+            // using LinkedHashMap implementation so the order of autoload.cfg is used when spawning bots
             
             String line = "";
             
