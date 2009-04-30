@@ -41,7 +41,7 @@ public class scramble extends MultiModule {
     public int m_timeQuestion = 2000, m_timeHint = 15000, m_timeAnswer = 15000, m_timeNext = 5000;
     
     public double giveTime, answerSpeed;
-    public String m_prec = "-- ";
+    public String m_prec = "--|-- ";
     public String t_definition, t_word, s_word;
     boolean difficulty = true;
     
