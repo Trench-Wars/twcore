@@ -191,6 +191,10 @@ public class elim extends SubspaceBot {
 				"| !scorereset   - Resets your arena score card to zero. No going back. (!sr) |",
 
 		};List<String> reg = Arrays.asList(reghelp);
+		String[] modHelp = {
+		        "+=============================== MOD MENU ===================================+",
+		        "| !remove <name> - Removes <name> from the game                              |",
+		};List<String> mod = Arrays.asList(modHelp);
 		String[] smodhelp = {
 				"+=============================== SMOD MENU ==================================+",
 				"| !zone         - Toggles whether or not the bot should zone for games.      |",
@@ -201,6 +205,8 @@ public class elim extends SubspaceBot {
 				"| !die          - Causes the bot to disconnect.                              |",
 		};List<String> smod = Arrays.asList(smodhelp);				
 		help.addAll(reg);
+		if(opList.isModerator(name))
+		    help.addAll(mod);
 		if(opList.isSmod(name))
 			help.addAll(smod);
 		if(opList.isSysop(name)) {
@@ -257,6 +263,8 @@ public class elim extends SubspaceBot {
 		
 		if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE){
 			handleCommands(name, message);
+			if (opList.isModerator(name))
+			    handleModeratorCommands(name, message);
 			if(opList.isSmod(name))
 				handleSmodCommands(name, message);
 			if(opList.isSysop(name))
@@ -302,6 +310,11 @@ public class elim extends SubspaceBot {
     		cmd_stats(name, cmd.substring(7));
     	else if(cmd.startsWith("!rank "))
     		cmd_rank(name, cmd.substring(6));
+    }
+    
+    public void handleModeratorCommands(String name, String cmd) {
+        if(cmd.startsWith("!remove "))
+            cmd_remove(name, cmd.substring(8));
     }
     
     public void handleSmodCommands(String name, String cmd){
@@ -450,6 +463,31 @@ public class elim extends SubspaceBot {
     	}catch(SQLException e){
     		m_botAction.sendSmartPrivateMessage( name, "Error retrieving record. Please try again later. If problem persists contact a staff member.");
     	}
+    }
+    
+    public void cmd_remove(String name, String target) {
+        boolean spec = true;
+        String clone = m_botAction.getFuzzyPlayerName(target);
+        
+        if (clone == null) {
+            clone = target;
+            spec = false;
+        }
+        
+        if(!elimPlayers.containsKey(clone) && !lagouts.containsKey(clone)) {
+            m_botAction.sendPrivateMessage(name, clone + " could not be found in the playing players list.");
+            return;
+        }
+        
+        if (elimPlayers.containsKey(clone))
+            losers.put(clone, elimPlayers.remove(clone));
+        else if (lagouts.containsKey(clone))
+            losers.put(clone, lagouts.remove(clone));
+        
+        if (spec)
+            m_botAction.specWithoutLock(clone);
+        
+        m_botAction.sendPrivateMessage(name, clone + " has been removed from the game.");
     }
     
     public void cmd_lagout(String name){
