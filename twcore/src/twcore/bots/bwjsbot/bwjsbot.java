@@ -89,16 +89,22 @@ public class bwjsbot extends SubspaceBot {
     private static final int ZONER_WAIT_TIME = 15;
     private static final int FREQ_SPEC = 9999;
     private static final int FREQ_NOTPLAYING = 666;
+    
+    //Ship states
     private static final int IN = 0;
     private static final int LAGOUT = 1;
     private static final int LAGOUT_OUT = 2; //Still sub-able, but out
     private static final int OUT_BUT_SUBABLE = 3;
     private static final int SUBBED = 4;
     private static final int OUT = 5;
+    
+    //Game Types
     private static final int BASE = 1;
     private static final int WBDUEL = 2;
     private static final int JAVDUEL = 3;
     private static final int SPIDDUEL = 4;
+    
+    //Time between lagout use
     private static final long LAGOUT_TIME = 10 * Tools.TimeInMillis.SECOND;
     
     public bwjsbot(BotAction botAction) {
@@ -834,7 +840,6 @@ public class bwjsbot extends SubspaceBot {
                     m_botAction.setFreq(name, team[teamNumber].frequency);
             } else if (team[teamNumber].captainName.equalsIgnoreCase(name))
                 m_botAction.setFreq(name, team[teamNumber].frequency);
-                
         }
     }
     
@@ -2227,7 +2232,8 @@ public class bwjsbot extends SubspaceBot {
              */
             p_lagoutTimer = new TimerTask() {
                 public void run() {
-                    p_state = LAGOUT_OUT;
+                    if (p_state == LAGOUT)
+                        p_state = LAGOUT_OUT;
                 }
             };
             if (p_state != OUT)
