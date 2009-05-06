@@ -125,7 +125,7 @@ public class trivia extends MultiModule {
     }
 
     public void doStartGame( String name, String message ) {
-        if( m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) && gameProgress == -1 ) {
+        if( m_botAction.getOperatorList().isER( name ) || accessList.containsKey( name ) && gameProgress == -1 ) {
             curLeader = 0;
             questionNumber = 1;
             toWin = 10;
@@ -157,7 +157,7 @@ public class trivia extends MultiModule {
     /****************************************************************/
 
     public void doCancelGame( String name, String message) {
-        if( (m_botAction.getOperatorList().isModerator( name ) || accessList.containsKey( name ) ) && gameProgress != -1 ){
+        if( (m_botAction.getOperatorList().isER( name ) || accessList.containsKey( name ) ) && gameProgress != -1 ){
             gameProgress = -1;
             m_botAction.sendChatMessage( 1, m_prec + "This game of Trivia has been canceled." );
             m_botAction.sendArenaMessage( m_prec + "This game of Trivia has been canceled." );
@@ -286,7 +286,7 @@ public class trivia extends MultiModule {
     }
 
     public void doHelp( String name, String message ){
-        if( m_botAction.getOperatorList().isModerator( name ) ){
+        if( m_botAction.getOperatorList().isER( name ) ){
             m_botAction.remotePrivateMessageSpam( name, opmsg );
         }
 
