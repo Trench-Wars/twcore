@@ -700,9 +700,17 @@ public class elim extends SubspaceBot {
     public void doWaitingForPlayers(){
     	game.state = GameStatus.WAITING_FOR_PLAYERS;
     	int neededPlayers = cfg_minPlayers - elimPlayers.size();
-    	if(neededPlayers <= 0)
-    		game.moveOn();
-    	else
+    	if(neededPlayers <= 0) {
+    	    if(cfg_zone == ON)doElimZoner();
+    	    for(int i=1;i<=10;i++)
+                m_botAction.sendChatMessage(i, "Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play");
+    	    TimerTask wait10Seconds = new TimerTask() {
+    	        public void run() {
+    	            game.moveOn();
+    	        }
+    	    };
+    	    m_botAction.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
+    	} else
     		m_botAction.sendArenaMessage("A new elimination match will begin when " + neededPlayers + " more player(s) enter.");
     }
     
@@ -710,9 +718,6 @@ public class elim extends SubspaceBot {
     	game.state = GameStatus.VOTING_ON_SHIP;
     	shipType = cfg_defaultShip;
     	shrap = OFF;
-    	for(int i=1;i<=10;i++)
-    		m_botAction.sendChatMessage(i, "Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play");
-    	if(cfg_zone == ON)doElimZoner();
     	Iterator<String> it = enabled.iterator();
     	while( it.hasNext() )
     		doWarpIntoElim(it.next());
@@ -939,7 +944,7 @@ public class elim extends SubspaceBot {
     	}catch(SQLException e){
     		Tools.printStackTrace(e);
     	}
-    	game.moveOn(30 * Tools.TimeInMillis.SECOND);
+    	game.moveOn(20 * Tools.TimeInMillis.SECOND);
     }
     
     public void vote(String name, String message){
