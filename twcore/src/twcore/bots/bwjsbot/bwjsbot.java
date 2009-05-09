@@ -1150,7 +1150,8 @@ public class bwjsbot extends SubspaceBot {
             }
             
             //Check if subtitute is available
-            if (team[otherTeamNumber(teamNumber)].players.containsKey(playerTwo.getPlayerName().toLowerCase())) {
+            if (team[otherTeamNumber(teamNumber)].players.containsKey(playerTwo.getPlayerName().toLowerCase()) || 
+                    team[otherTeamNumber(teamNumber)].captainName.equalsIgnoreCase(playerTwo.getPlayerName())) {
                 m_botAction.sendPrivateMessage(name, "Substitute is already on the other team.");
                 return;
             }
