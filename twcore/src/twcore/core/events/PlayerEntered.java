@@ -12,8 +12,8 @@ import twcore.core.util.ByteArray;
  * | 2       1       Accepts Audio  |
  * | 3       20      Player Name    |
  * | 23      20      Squad Name     |
- * | 43      4       Flag Points    |
- * | 47      4       Kill Points    |
+ * | 43      4       Kill Points    |
+ * | 47      4       Flag Points    |
  * | 51      2       Player ID      |
  * | 53      2       Frequency      |
  * | 55      2       Wins           |
@@ -55,8 +55,8 @@ public class PlayerEntered extends SubspaceEvent {
         m_acceptsAudio = array.readByte( 2 ) == 1;
         m_playerName = array.readString( 3, 20 );
         m_squadName = array.readString( 23,20 );
-        m_flagPoints = array.readLittleEndianInt( 43 );
-        m_killPoints = array.readLittleEndianInt( 47 );
+        m_killPoints = array.readLittleEndianInt( 43 );
+        m_flagPoints = array.readLittleEndianInt( 47 );
         m_playerID = array.readLittleEndianShort( 51 );
         m_team = array.readLittleEndianShort( 53 );
         m_wins = array.readLittleEndianShort( 55 );
