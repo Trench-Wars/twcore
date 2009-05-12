@@ -1,8 +1,10 @@
 package twcore.bots.multibot.scramble;
 
 import java.sql.ResultSet;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimerTask;
@@ -53,10 +55,11 @@ public class scramble extends MultiModule {
             "!pm            -- the bot will pm you for easier play.",
             "!stats         -- will display your statistics.",
             "!stats <name>  -- displays <name>'s statistics.",
-            "!topten        -- displays top ten player stats."
+            "!topten        -- displays top ten player stats.",
+            "!rules         -- displays the rules."
     };
     public String[] opmsg = {
-            "Moderator Commands:",
+            "ER Commands:",
             "!start         -- Starts a game of scramble to 10.",
             "!start <num>   -- Starts a game to <num> (1-25).",
             "!cancel        -- Cancels a game of scramble.",
@@ -71,7 +74,7 @@ public class scramble extends MultiModule {
             "-Note: You must have at least 100 possible points to gain Top Ten status."
     };
     public String[] oprules = {
-            "Moderator Rules:",
+            "ER Rules:",
             "-Only start games to (1-25).",
             "-!showanswer will prohibit you from answering that round.",
             "-Do not abuse !showanswer by giving other players or moderators the answer.",
@@ -100,7 +103,10 @@ public class scramble extends MultiModule {
     public void requestEvents(ModuleEventRequester events) {}
     
     public String[] getModHelpMessage() {
-        return opmsg;
+        List<String> both = new ArrayList<String>();
+        Collections.addAll(both, opmsg);
+        Collections.addAll(both, helpmsg);
+        return both.toArray(new String[] {});
     }
     
     public boolean isUnloadable() {
@@ -142,7 +148,7 @@ public class scramble extends MultiModule {
     /** ************************************************************* */
     
     public void doRules(String name, String message) {
-        if (m_botAction.getOperatorList().isModerator(name)) {
+        if (m_botAction.getOperatorList().isER(name)) {
             m_botAction.smartPrivateMessageSpam(name, oprules);
         }
         
@@ -153,20 +159,21 @@ public class scramble extends MultiModule {
     /** * Toggles difficulty level. ** */
     /** ************************************************************* */
     public void doDifficulty(String name, String message) {
-        if (gameProgress != -1) {
-            if (difficulty)
-                m_botAction.sendArenaMessage("The difficulty has been changed to nerd mode.");
-            else
-                m_botAction.sendArenaMessage("The difficulty has been changed to normal mode.");
+        if (m_botAction.getOperatorList().isER(name) || accessList.containsKey(name)) {
+            if (gameProgress != -1) {
+                if (difficulty)
+                    m_botAction.sendArenaMessage("The difficulty has been changed to nerd mode.");
+                else
+                    m_botAction.sendArenaMessage("The difficulty has been changed to normal mode.");
+            }
+            if (difficulty) {
+                difficulty = false;
+                m_botAction.sendSmartPrivateMessage(name, "Difficulty set to nerd mode.");
+            } else {
+                difficulty = true;
+                m_botAction.sendSmartPrivateMessage(name, "Difficulty set to normal mode.");
+            }
         }
-        if (difficulty) {
-            difficulty = false;
-            m_botAction.sendSmartPrivateMessage(name, "Difficulty set to nerd mode.");
-        } else {
-            difficulty = true;
-            m_botAction.sendSmartPrivateMessage(name, "Difficulty set to normal mode.");
-        }
-        
     }
     
     /** ************************************************************* */
@@ -174,7 +181,7 @@ public class scramble extends MultiModule {
     /** ************************************************************* */
     
     public void doStartGame(String name, String message) {
-        if (m_botAction.getOperatorList().isModerator(name) || accessList.containsKey(name) && gameProgress == -1) {
+        if (m_botAction.getOperatorList().isER(name) || accessList.containsKey(name) && gameProgress == -1) {
             curLeader = 0;
             scrambleNumber = 1;
             toWin = 10;
@@ -206,7 +213,7 @@ public class scramble extends MultiModule {
     /** ************************************************************* */
     
     public void doCancelGame(String name, String message) {
-        if ((m_botAction.getOperatorList().isModerator(name) || accessList.containsKey(name)) && gameProgress != -1) {
+        if ((m_botAction.getOperatorList().isER(name) || accessList.containsKey(name)) && gameProgress != -1) {
             gameProgress = -1;
             m_botAction.sendArenaMessage(m_prec + "This game of Scramble has been canceled.");
             playerMap.clear();
@@ -263,7 +270,7 @@ public class scramble extends MultiModule {
     /** * Shows the answer(Operator Access) ** */
     /** ************************************************************* */
     public void doShowAnswer(String name, String message) {
-        if (m_botAction.getOperatorList().isModerator(name) || accessList.containsKey(name)) {
+        if (m_botAction.getOperatorList().isER(name) || accessList.containsKey(name)) {
             m_botAction.sendSmartPrivateMessage(name, "The un-scrambled word is " + t_word + ".");
             cantPlay.add(name);
         }
