@@ -415,6 +415,17 @@ public class dangerous extends MultiModule {
                 m_botAction.sendArenaMessage( "Every kill extends your life, while every death reduces it.");
                 m_botAction.sendArenaMessage( "It does not matter how much you die.  When your timer reaches 0, you will cease to exist.", 2);
 
+            } else if ( message.startsWith( "!remove " )) {
+                if(isRunning == true) {
+                    PlayerInfo player = m_players.get( message.substring(8) );
+                    if( player != null ) {
+                        player.spec();
+                    } else {
+                        m_botAction.sendPrivateMessage( name, "Player not found." );
+                    }
+                } else {
+                    m_botAction.sendPrivateMessage( name, "Game is not currently running." );
+                }
             }
         }
     }
@@ -508,7 +519,8 @@ public class dangerous extends MultiModule {
             "                      killtime  = time gained for killing someone",
             "                      deathtime = time lost for being killed",
             "!stop               - Stops the Most Dangerous Game.",
-            "!rules              - Displays basic rules to the arena." };
+            "!rules              - Displays basic rules to the arena.",
+            "!remove <name>      - Removes player from the game." };
         return DangerousHelp;
     }
 
