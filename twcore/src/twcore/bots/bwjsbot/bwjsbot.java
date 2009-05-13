@@ -205,8 +205,12 @@ public class bwjsbot extends SubspaceBot {
             if (teamNumber != -1) {
                 if (team[teamNumber].players.containsKey(name)) {
                     if (team[teamNumber].players.get(name).p_state == IN &&
-                            event.getFrequency() != team[teamNumber].frequency)
+                            event.getFrequency() != team[teamNumber].frequency) {
                         team[teamNumber].players.get(name).lagout();
+                        //Check if captain is in the arena
+                        if ( m_botAction.getPlayerID( team[teamNumber].captainName ) != -1 && !name.equalsIgnoreCase(team[teamNumber].captainName) )
+                            m_botAction.sendPrivateMessage( team[teamNumber].captainName, name + " lagged out!");
+                    }
                 }
             }
         }
@@ -220,8 +224,12 @@ public class bwjsbot extends SubspaceBot {
             if (teamNumber != -1) {
                 if (team[teamNumber].players.containsKey(name)) {
                     if (team[teamNumber].players.get(name).p_state == IN && 
-                            event.getFrequency() != team[teamNumber].frequency)
+                            event.getFrequency() != team[teamNumber].frequency) {
                         team[teamNumber].players.get(name).lagout();
+                        //Check if captain is in the arena
+                        if ( m_botAction.getPlayerID( team[teamNumber].captainName ) != -1 && !name.equalsIgnoreCase(team[teamNumber].captainName) )
+                            m_botAction.sendPrivateMessage( team[teamNumber].captainName, name + " lagged out!");
+                    }
                 }
             }
         }
@@ -316,8 +324,12 @@ public class bwjsbot extends SubspaceBot {
             
             //Player lagged out
             if (team[teamNumber].players.containsKey(name)) {
-                if(team[teamNumber].players.get(name).p_state == IN)
+                if(team[teamNumber].players.get(name).p_state == IN) {
                     team[teamNumber].players.get(name).lagout();
+                    //Check if captain is in the arena
+                    if ( m_botAction.getPlayerID( team[teamNumber].captainName ) != -1 && !name.equalsIgnoreCase(team[teamNumber].captainName))
+                        m_botAction.sendPrivateMessage( team[teamNumber].captainName, name + " lagged out!");
+                }
             }
             
             /*
