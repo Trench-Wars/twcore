@@ -80,10 +80,12 @@ public class bwjsbot extends SubspaceBot {
     private StartGameTimer startGameTimer;
     private PreGameTimer preGameTimer;
     private ZonerTimer zonerTimer;
+    private PathTimer pathTimer;
     
     /* Other */
     private Objset scoreboard;
     private String enoughUsageCurrentName;
+    private int path;
     
     /* Some Constants */
     private static final int ZONER_WAIT_TIME = 15;
@@ -142,6 +144,7 @@ public class bwjsbot extends SubspaceBot {
         
         /* Other */
         lastGame = false;
+        path = 0;
         
         requestEvents();        
     }
@@ -236,7 +239,8 @@ public class bwjsbot extends SubspaceBot {
     }
     
     public void handleEvent(LoggedOn event) {
-        m_botAction.joinArena(cfg.arena);
+        //m_botAction.joinArena(cfg.arena);
+        try { m_botAction.joinArena(cfg.arena, (short) 3392, (short) 3392); } catch (Exception e) {}
         
         m_botAction.setMessageLimit(10);
     }
@@ -388,7 +392,7 @@ public class bwjsbot extends SubspaceBot {
                 if (x_coord != cfg.warpSpots[2] || y_coord != cfg.warpSpots[3])
                     m_botAction.warpTo(name, cfg.warpSpots[2], cfg.warpSpots[3]);
             }
-        } 
+        }
     }
     
     public void handleEvent(WeaponFired event) {
@@ -1318,6 +1322,12 @@ public class bwjsbot extends SubspaceBot {
         m_botAction.setTimer(cfg.time);
         gameTimer = new GameTimer();
         m_botAction.scheduleTask(gameTimer, Tools.TimeInMillis.MINUTE * cfg.time);
+        
+        if (cfg.gameType == JAVDUEL) {
+            pathTimer = new PathTimer();
+            m_botAction.stopReliablePositionUpdating();
+            m_botAction.scheduleTaskAtFixedRate(pathTimer, 100, 100);
+        }
     }
     
     private void gameOver() {
@@ -1329,6 +1339,7 @@ public class bwjsbot extends SubspaceBot {
         m_botAction.cancelTask(updateTimer);
         m_botAction.cancelTask(capTimerONE);
         m_botAction.cancelTask(capTimerTWO);
+        m_botAction.cancelTask(pathTimer);
         
         //Determine winner
         int teamNumber = -1;
@@ -1581,6 +1592,7 @@ public class bwjsbot extends SubspaceBot {
         m_botAction.cancelTask(startGameTimer);
         m_botAction.cancelTask(preGameTimer);
         m_botAction.cancelTask(newGameTimer);
+        m_botAction.cancelTask(pathTimer);
         
         setSpecAndFreq();
     }
@@ -2713,6 +2725,21 @@ public class bwjsbot extends SubspaceBot {
     private class ZonerTimer extends TimerTask {
         public void run() {
             lockZoner = false;
+        }
+    }
+
+    private class PathTimer extends TimerTask {
+        public void run() {
+            if (path == 0) {
+                m_botAction.moveToTile(512, 355);
+                path = 1;
+            } else if (path == 1) {
+                m_botAction.moveToTile(400, 424);
+                path = 2;
+            } else if (path == 2) {
+                m_botAction.moveToTile(624, 424);
+                path = 0;
+            }
         }
     }
 }
