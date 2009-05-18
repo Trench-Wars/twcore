@@ -103,7 +103,7 @@ public class utiletc extends MultiUtil {
             int xCoord = event.getXLocation();
             int yCoord = event.getYLocation();
             String playerName = m_botAction.getPlayerName(playerID);
-            m_botAction.sendChatMessage(playerName + " is at: " + xCoord + ", " + yCoord + ".");
+            m_botAction.sendPublicMessage(playerName + " is at: " + xCoord + ", " + yCoord + ".");
         }
     }
     
@@ -158,7 +158,7 @@ public class utiletc extends MultiUtil {
             if( printCoords )
                 m_botAction.sendSmartPrivateMessage( name, "Now printing coordinates to chat." );
             else
-                m_botAction.sendSmartPrivateMessage( name, "No longer printing coordinates to chat." );
+                m_botAction.sendSmartPrivateMessage( name, "No longer printing coordinates to public chat." );
         }
             
 
