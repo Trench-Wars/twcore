@@ -17,7 +17,7 @@ import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
 /**
- * CTF bot for hosting tankwarfare
+ * CTF bot for hosting tankwarfare (a capture the flag game)
  *
  * 
  * @author fantus
@@ -94,8 +94,8 @@ public class tankwarfare extends MultiModule {
         
         //Team Names
         name = new String[2];
-        name[0] = "Team <<<< Left";
-        name[1] = "Team >>>> Right";
+        name[0] = "Lefties";
+        name[1] = "Righties";
         
         //Target
         target = 3;
@@ -195,92 +195,96 @@ public class tankwarfare extends MultiModule {
         }
     }
     
+    /**
+     * This method is divided into two parts:
+     *  1. The handling of the flag carrier
+     *  2. The handling of the terrier location
+     */
     public void handleEvent(PlayerPosition event) {
-        /*
-         * This method is divided into two parts, the handling terrier location part and the handling of the flag carrier
-         * part.
-         */
         if (state == GAME_IN_PROGRESS) {
-            Player p = m_botAction.getPlayer(event.getPlayerID());
-            int playerID = event.getPlayerID();
-            int playerFreq = m_botAction.getPlayer(playerID).getFrequency();
-            String playerName = m_botAction.getPlayerName(playerID);
-            int coord_x = event.getXLocation() / 16;
-            int coord_y = event.getYLocation() / 16;
+            //Set Variables
+            Player p;
+            int coord_x;
+            int coord_y;
+            int freq;
+            String p_name;
             
+            //Initialize variables
+            coord_x = event.getXLocation() / 16;
+            coord_y = event.getYLocation() / 16;
             
-            //TERRIER
+            p = m_botAction.getPlayer(event.getPlayerID());
+            
+            if (p == null)
+                return;
+            
+            freq = p.getFrequency();
+            p_name = p.getPlayerName();
+            
+            /* TERRIER Part */
             if (p.getShipType() == Tools.Ship.TERRIER) {
-                if (flagCarrier[0].equalsIgnoreCase(playerName)) {
-                    flagCarrier[0] = "";
-                    m_botAction.shipReset(playerName);
-                } else if (flagCarrier[1].equalsIgnoreCase(playerName)) {
-                    flagCarrier[1] = "";
-                    m_botAction.shipReset(playerName);
-                }
-                
-                //Switch playerFreq to enemy freq
-                int enemyFreq;
-                if (playerFreq == 0)
-                    enemyFreq = 1;
-                else
-                    enemyFreq = 0;
-                
-                if (coord_x > coords[enemyFreq][0][0] && coord_x < coords[enemyFreq][0][1]) {
-                    if (coord_y < coords[enemyFreq][1][0] && coord_y > coords[enemyFreq][1][1]) {
-                        m_botAction.sendPrivateMessage(playerName, "Terriers may not enter the flagroom area!");
-                        
-                        if (enemyFreq == 0)
-                            m_botAction.warpTo(playerName, 200, 513);
-                        else
-                            m_botAction.warpTo(playerName, 820, 513);
+                //Check if terrier is carrying a flag
+                for (int i = 0; i < flagCarrier.length; i++) {
+                    if (flagCarrier[i].equalsIgnoreCase(p_name)) {
+                        flagCarrier[i] = "";
+                        m_botAction.sendPrivateMessage(p_name, "Terriers can not carry flags!");
+                        m_botAction.shipReset(p_name);
                     }
                 }
                 
+                //Check if the terrier is in the enemy flag room
+                if (isInEnemyFlagRoom(freq, coord_x, coord_y) {
+                    m_botAction.sendPrivateMessage(p_name, "Terriers may not enter the flagroom area!");
+                    warpOutsideFlagRoom(p_name, freq);
+                }
+                
+                //Terrier can never be a flag carrier, return here.
                 return;
             }
             
-            //FLAG CARRIER
-            /* 
-             * FlagID   -- Team
-             * ----------------
-             * 0        -- One
-             * 1        -- Two
-             * 2        -- Bogus
-             * 
-             * Coords[Team][x/y][1/2]
-             * 
-             */
-            Flag flagOne = m_botAction.getFlag(FLAG_ONE);
-            Flag flagTwo = m_botAction.getFlag(FLAG_TWO);
             
+            /* FLAG CARRIER Part */
+            //Set Variables
+            Flag flagOne;
+            Flag flagTwo;
+            boolean hasFlag;
+            boolean hasEnemyFlag;
+            int flagID;
+            
+            //Initialize Variables
+            hasFlag = false;                            //false = team doesn't have the flag
+            hasEnemyFlag = false;                       //false = team doesn't have the enemy flag
+            flagID = 2;                                 //default value
+            flagOne = m_botAction.getFlag(FLAG_ONE);    //get Flag Object
+            flagTwo = m_botAction.getFlag(FLAG_TWO);    //get Flag Object
+            
+            //Check if flags are found
             if (flagOne == null || flagTwo == null)
                 return;
             
+            //Check if a flag is carried, else quick quit
             if (!flagOne.carried() && !flagTwo.carried())
                 return;
             
-            boolean hasFlag = false;
-            boolean hasEnemyFlag = false;
-            int flagID = 2;
             
+            //Check if flagOne is carried and what team is carrying it.
             if (flagOne.carried()) {
                 flagID = FLAG_ONE;
-                if (playerName == flagCarrier[0]) {
+                if (p_name == flagCarrier[FLAG_ONE]) {
                     hasFlag = true;
                     
-                    if (FLAG_ONE != playerFreq) {
+                    if (FLAG_ONE != freq)
                         hasEnemyFlag = true;
-                    }
                 }
             }
             
+            //Check if flagTwo is carried and what team is carrying it.
             if (flagTwo.carried()) {
                 flagID = FLAG_TWO;
-                if (playerName == flagCarrier[1]) {
+                if (p_name == flagCarrier[FLAG_TWO]) {
                     hasFlag = true;
                     
-                    if (FLAG_TWO != playerFreq)
+                    if (FLAG_TWO != freq)
                         hasEnemyFlag = true;
                 }
             }
@@ -290,49 +294,45 @@ public class tankwarfare extends MultiModule {
                 return;
             
             //Check if that player isn't a bot
-            if (playerName.equals(m_botAction.getBotName()))
+            if (name.equalsIgnoreCase(m_botAction.getBotName()))
                 return;
             
             
             //Check if a player enters his team's flag area
-            if (coord_x > coords[playerFreq][0][0] && coord_x < coords[playerFreq][0][1]) {
-                if (coord_y < coords[playerFreq][1][0] && coord_y > coords[playerFreq][1][1]) {
-                    if (hasEnemyFlag) {
-                        
-                        if (isInFlagroom(playerFreq) && allowReplaceFlag) {
-                            //Score
-                            score[playerFreq]++;
-                            m_botAction.sendArenaMessage(playerName +
-                                    " scored for " + name[playerFreq] + "!!", Tools.Sound.GOAL);
-                            m_botAction.sendArenaMessage("Score: " + score[0] + " - " + score[1]);
-                            replaceFlag(flagID);
-                            checkGameOver();
-                        } else if (returnFlagWarning[playerFreq] && !isInFlagroom(playerFreq)) {
-                            returnFlagWarning[playerFreq] = false;
-                            m_botAction.sendArenaMessage(
-                                    name[playerFreq] + " almost scored a point, but where is their own flag? " +
-                            		"Quick find it before they will retreive their flag!", Tools.Sound.CROWD_GEE);
-                            if (playerFreq == 0) {
-                                timerReturnFlagWarning[0] = new TimerTask() {
-                                    public void run() {
-                                        returnFlagWarning[0] = true;
-                                    }
-                                };
-                                m_botAction.scheduleTask(timerReturnFlagWarning[0], 1 * Tools.TimeInMillis.MINUTE);
-                            } else {
-                                timerReturnFlagWarning[1] = new TimerTask() {
-                                    public void run() {
-                                        returnFlagWarning[1] = true;
-                                    }
-                                };
-                                m_botAction.scheduleTask(timerReturnFlagWarning[1], 1 * Tools.TimeInMillis.MINUTE);
-                            }   
-                        }    
-                    } else if (allowReplaceFlag) {
-                        m_botAction.sendArenaMessage(name[playerFreq] + " retrieved their flag! Good job " +
-                                playerName + "!", Tools.Sound.INCONCEIVABLE);
+            if (isInFlagRoom(freq, coord_x, coord_y)) {
+                if (hasEnemyFlag) {
+                    if (isInFlagroom(freq) && allowReplaceFlag) {
+                        //Score
+                        score[freq]++;
+                        m_botAction.sendArenaMessage(p_name + " scored for " + p_name[freq] + "!!", Tools.Sound.GOAL);
+                        m_botAction.sendArenaMessage("Score: " + score[0] + " - " + score[1]);
                         replaceFlag(flagID);
+                        checkGameOver();
+                    } else if (returnFlagWarning[freq] && !isInFlagroom(freq)) {
+                        returnFlagWarning[freq] = false;
+                        m_botAction.sendArenaMessage(
+                                name[freq] + " almost scored a point, but where is their own flag? " +
+                        		"Quick find it before they will retreive their flag!", Tools.Sound.CROWD_GEE);
+                        if (freq == 0) {
+                            timerReturnFlagWarning[0] = new TimerTask() {
+                                public void run() {
+                                    returnFlagWarning[0] = true;
+                                }
+                            };
+                            m_botAction.scheduleTask(timerReturnFlagWarning[0], 1 * Tools.TimeInMillis.MINUTE);
+                        } else {
+                            timerReturnFlagWarning[1] = new TimerTask() {
+                                public void run() {
+                                    returnFlagWarning[1] = true;
+                                }
+                            };
+                            m_botAction.scheduleTask(timerReturnFlagWarning[1], 1 * Tools.TimeInMillis.MINUTE);
+                        }
                     }
+                } else if (allowReplaceFlag) {
+                    m_botAction.sendArenaMessage(name[freq] + " retrieved their flag! Good job " +
+                        p_name + "!", Tools.Sound.INCONCEIVABLE);
+                    replaceFlag(flagID);
                 }
             }
         }
@@ -596,27 +596,36 @@ public class tankwarfare extends MultiModule {
     }
     
     private boolean isInFlagroom(int flagID) {
-        Flag flag = m_botAction.getFlag(flagID);
+        //Set variables
+        Flag flag;
+        Player p;
+        int coord_x;
+        int coord_y;
         
+        //Initialize variables
+        flag = m_botAction.getFlag(flagID);
+        
+        //Check if flag can be found, else return false
         if (flag == null)
             return false;
         
-        int coord_x;
-        int coord_y;
+        
         if (flag.carried()) {
-            coord_x = m_botAction.getPlayer(m_botAction.getPlayerID(flagCarrier[flagID])).getXTileLocation();
-            coord_y = m_botAction.getPlayer(m_botAction.getPlayerID(flagCarrier[flagID])).getYTileLocation();
+            p = m_botAction.getPlayer(flagCarrier[flagID]);
+            if (p == null)
+                return false;
+            
+            if (p.getShipType() == Tools.Ship.SPECTATOR)
+                return false;
+
+            coord_x = p.getXTileLocation();
+            coord_y = p.getYTileLocation();
         } else {
             coord_x = flag.getXLocation();
             coord_y = flag.getYLocation();
         }
         
-        if (coord_x > coords[flagID][0][0] && coord_x < coords[flagID][0][1]) {
-            if (coord_y < coords[flagID][1][0] && coord_y > coords[flagID][1][1])
-                return true;
-        }
-        
-        return false;
+        return isInFlagroom(flagID, coord_x, coord_y);
     }
     
     private void replaceFlag(int flagID) {
@@ -654,6 +663,33 @@ public class tankwarfare extends MultiModule {
         m_botAction.sendArenaMessage("Final score: " + score[0] + " - " + score[1]);
         
         stop();
+    }
+    
+    private int otherFreq(int frequency) {
+        if (frequency == 1)
+            return 0;
+        else
+            return 1;
+    }
+    
+    private boolean isInFlagRoom(int freq, int coord_x, int coord_y) {
+        if (coord_x > coords[freq][0][0] &&
+             coord_x < coords[freq][0][1] &&
+             coord_y < coords[freq][1][0] &&
+             coord_y > coords[freq][1][1])
+                return true;
+        return false;
+    }
+    
+    private boolean isInEnemyFlagRoom(int freq, int coord_x, int coord_y) {
+        return isInFlagRoom(otherFreq(freq), coord_x, coord_y);
+    }
+    
+    private void warpOutsideFlagRoom(String name, int frequency) {
+        if (frequency == 1)
+            m_botAction.warpTo(name, 200, 513);
+        else
+            m_botAction.warpTo(name, 820, 513);
     }
     
     private class FlagSet extends TimerTask {
