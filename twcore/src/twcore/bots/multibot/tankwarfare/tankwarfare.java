@@ -233,7 +233,7 @@ public class tankwarfare extends MultiModule {
                 }
                 
                 //Check if the terrier is in the enemy flag room
-                if (isInEnemyFlagRoom(freq, coord_x, coord_y) {
+                if (isInEnemyFlagRoom(freq, coord_x, coord_y)) {
                     m_botAction.sendPrivateMessage(p_name, "Terriers may not enter the flagroom area!");
                     warpOutsideFlagRoom(p_name, freq);
                 }
@@ -294,21 +294,21 @@ public class tankwarfare extends MultiModule {
                 return;
             
             //Check if that player isn't a bot
-            if (name.equalsIgnoreCase(m_botAction.getBotName()))
+            if (p_name.equalsIgnoreCase(m_botAction.getBotName()))
                 return;
             
             
             //Check if a player enters his team's flag area
             if (isInFlagRoom(freq, coord_x, coord_y)) {
                 if (hasEnemyFlag) {
-                    if (isInFlagroom(freq) && allowReplaceFlag) {
+                    if (isInFlagRoom(freq) && allowReplaceFlag) {
                         //Score
                         score[freq]++;
-                        m_botAction.sendArenaMessage(p_name + " scored for " + p_name[freq] + "!!", Tools.Sound.GOAL);
+                        m_botAction.sendArenaMessage(p_name + " scored for " + name[freq] + "!!", Tools.Sound.GOAL);
                         m_botAction.sendArenaMessage("Score: " + score[0] + " - " + score[1]);
                         replaceFlag(flagID);
                         checkGameOver();
-                    } else if (returnFlagWarning[freq] && !isInFlagroom(freq)) {
+                    } else if (returnFlagWarning[freq] && !isInFlagRoom(freq)) {
                         returnFlagWarning[freq] = false;
                         m_botAction.sendArenaMessage(
                                 name[freq] + " almost scored a point, but where is their own flag? " +
@@ -595,7 +595,7 @@ public class tankwarfare extends MultiModule {
         m_botAction.scheduleTaskAtFixedRate(moveAround, 1000, 300);
     }
     
-    private boolean isInFlagroom(int flagID) {
+    private boolean isInFlagRoom(int flagID) {
         //Set variables
         Flag flag;
         Player p;
@@ -625,7 +625,7 @@ public class tankwarfare extends MultiModule {
             coord_y = flag.getYLocation();
         }
         
-        return isInFlagroom(flagID, coord_x, coord_y);
+        return isInFlagRoom(flagID, coord_x, coord_y);
     }
     
     private void replaceFlag(int flagID) {
