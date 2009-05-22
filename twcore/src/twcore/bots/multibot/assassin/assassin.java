@@ -237,8 +237,33 @@ public class assassin extends MultiModule
             };
             m_botAction.privateMessageSpam(playerID, manual);
         }
-        else if(message.startsWith("!scores")) {
+        else if(message.startsWith("!scores") && running) {
+            int highestCumulativePoints = Integer.MIN_VALUE;
+            String highestCumulativePlayer = "?";
+            int pointsGainedFreq0 = 0;
+            int pointsGainedFreq1 = 0;
             
+            for(AssassinPlayer aplayer : players.values()) {
+                if(aplayer.freq == 0) {
+                    pointsGainedFreq0 += aplayer.pointsGained;
+                } else 
+                if(aplayer.freq == 1){
+                    pointsGainedFreq1 += aplayer.pointsGained;
+                }
+                int cumulativePoints = (aplayer.pointsGained - aplayer.pointsLost);
+                if(cumulativePoints > highestCumulativePoints) {
+                    highestCumulativePoints = cumulativePoints;
+                    highestCumulativePlayer = aplayer.name;
+                }
+            }
+            
+            m_botAction.sendPrivateMessage(playerID, "Current score:   Freq 0 - "+pointsGainedFreq0+" points");
+            m_botAction.sendPrivateMessage(playerID, "                 Freq 1 - "+pointsGainedFreq1+" points");
+            m_botAction.sendPrivateMessage(playerID, "Current MVP:     "+highestCumulativePlayer+" ("+highestCumulativePoints+" points)");
+            
+        }
+        else if(message.startsWith("!scores") && !running) {
+            m_botAction.sendPrivateMessage(playerID, "Game is not running.");
         }
     }
 
