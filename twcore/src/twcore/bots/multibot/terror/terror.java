@@ -56,7 +56,7 @@ public class terror extends MultiModule {
                 "!setteam <#>                       -- Set <#> number of teams",
                 "!setship <#>                       -- Set everyone to ship <#>",
                 "!setdeath <#>                      -- Set death limit",
-                "!spamrules                         -- Displays the rules in a arena message",
+                "!spam rules                        -- Displays the rules in a arena message",
                 "!subterr <name>                    -- Substitute the terrier with <name>",
                 "!add <name>:<# deaths>:<# freq>    -- Adds <name> with <# deaths> on <# freq>",
                 "NOTICE: The bot does NOT lock the arena. Adding lates is OK (use !add)"
@@ -170,7 +170,7 @@ public class terror extends MultiModule {
         if (killed.getPlayerName().equalsIgnoreCase(terrier)) {
             m_botAction.sendArenaMessage(
                     killer.getPlayerName() +
-                    "has killed the terr and is out!" +
+                    " has killed the terr and is out! " +
                     killer.getWins()+ " kills, " +
                     killer.getLosses() + " deaths",
                     Tools.Sound.SCREAM); 
@@ -336,10 +336,10 @@ public class terror extends MultiModule {
         m_botAction.setFreq(terrier, TERR_FREQ);
         
         //Check if frequency is only populated with terriers and spectate all the others
-        for (Iterator<Player> it = m_botAction.getFreqPlayerIterator(TERR_FREQ); it.hasNext();) {
+        for (Iterator<Player> it = m_botAction.getPlayingPlayerIterator(); it.hasNext();) {
             Player p = it.next();
             
-            if (!p.getPlayerName().equalsIgnoreCase(terrier))
+            if (!p.getPlayerName().equalsIgnoreCase(terrier) && p.getFrequency() == TERR_FREQ)
                 m_botAction.specWithoutLock(p.getPlayerName());
         }
     }
@@ -349,12 +349,12 @@ public class terror extends MultiModule {
         for (Iterator<Player> it = m_botAction.getPlayingPlayerIterator(); it.hasNext();) {
             Player p = it.next();
             
-            if (!freqs.contains(p.getFrequency()))
+            if (!freqs.contains(p.getFrequency()) && p.getShipType() != Tools.Ship.SPECTATOR)
                 freqs.add(p.getFrequency());
         }
         
-        if (freqs.contains((short) TERR_FREQ))
-            freqs.remove((short) TERR_FREQ);
+        if (freqs.contains(Short.valueOf((short) TERR_FREQ)))
+            freqs.remove(Short.valueOf((short) TERR_FREQ));
         
         if (freqs.size() != 1) 
             return;
