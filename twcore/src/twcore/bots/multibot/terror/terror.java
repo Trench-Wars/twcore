@@ -188,7 +188,9 @@ public class terror extends MultiModule {
         
         //Check if a late is out
         if (lates.containsKey(killed.getPlayerName().toLowerCase())) {
-            if (killed.getLosses() >= lates.get(killed.getPlayerName().toLowerCase())) {
+            if (killed.getLosses() >= lates.get(killed.getPlayerName().toLowerCase()) &&
+                    killed.getShipType() != Tools.Ship.SPECTATOR &&
+                    !killed.getPlayerName().equalsIgnoreCase(terrier)) {
                 m_botAction.sendArenaMessage(
                         killed.getPlayerName() + " is out! " +
                         killed.getWins() + " kills, " +
