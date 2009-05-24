@@ -27,9 +27,12 @@ public class terror extends MultiModule {
     private int deaths;
     private int ship;
     
+    private boolean twoTeams;
+    
     private TreeMap<String, Integer> lates;
     
     private String terrier;
+    private String terrier2;
     private String host;
     
     private String mvpName;
@@ -53,11 +56,13 @@ public class terror extends MultiModule {
     public String[] getModHelpMessage() {
         String[] stepElimHelp = {
                 "!start <name>                      -- Starts a game of Terror, with <name> as terr",
+                "!start2team <name1>:<name2>        -- Starts a game of Terror with two teams and two terrs",
+                "!stop                              -- Stops the current game",
                 "!setteam <#>                       -- Set <#> number of teams",
                 "!setship <#>                       -- Set everyone to ship <#>",
                 "!setdeath <#>                      -- Set death limit",
                 "!spam rules                        -- Displays the rules in a arena message",
-                "!subterr <name>                    -- Substitute the terrier with <name>",
+                "!subterr <# freq>:<name>           -- Substitute the terrier on <# freq> with <name>",
                 "!add <name>:<# deaths>:<# freq>    -- Adds <name> with <# deaths> on <# freq>",
                 "NOTICE: The bot does NOT lock the arena. Adding lates is OK (use !add)"
         };
@@ -102,10 +107,14 @@ public class terror extends MultiModule {
 			cmdSetDeath(name, message.substring(10));
 		else if (message.startsWith("!start "))
 		    cmdStart(name, message.substring(7));
+		else if (message.startsWith("!start2team "))
+		    cmdStartTwoTeam(name, message.substring(12));
 		else if (message.startsWith("!subterr "))
 		    cmdSubTerr(name, message.substring(9));
 		else if (message.startsWith("!add "))
 		    cmdAdd(name, message.substring(5));
+		else if (message.equalsIgnoreCase("!stop"))
+		    cmdStop(name);
 	}
 	
     public void handleEvent(PlayerLeft event) {
@@ -167,7 +176,7 @@ public class terror extends MultiModule {
         }
         
         //Check if someone killed the terrier
-        if (killed.getPlayerName().equalsIgnoreCase(terrier)) {
+        if (killed.getPlayerName().equalsIgnoreCase(terrier) || killed.getPlayerName().equalsIgnoreCase(terrier2)) {
             m_botAction.sendArenaMessage(
                     killer.getPlayerName() +
                     " has killed the terr and is out! " +
@@ -178,7 +187,10 @@ public class terror extends MultiModule {
         }
         
         //Check if someone is out by deaths
-        if (killed.getLosses() >= deaths && !killed.getPlayerName().equalsIgnoreCase(terrier)) {
+        if (killed.getLosses() >= deaths &&
+                !killed.getPlayerName().equalsIgnoreCase(terrier) &&
+                !killed.getPlayerName().equalsIgnoreCase(terrier2)) {
+            
             m_botAction.sendArenaMessage(
                     killed.getPlayerName() + " is out! " +
                     killed.getWins() + " kills, " +
@@ -190,7 +202,9 @@ public class terror extends MultiModule {
         if (lates.containsKey(killed.getPlayerName().toLowerCase())) {
             if (killed.getLosses() >= lates.get(killed.getPlayerName().toLowerCase()) &&
                     killed.getShipType() != Tools.Ship.SPECTATOR &&
-                    !killed.getPlayerName().equalsIgnoreCase(terrier)) {
+                    !killed.getPlayerName().equalsIgnoreCase(terrier) &&
+                    !killed.getPlayerName().equalsIgnoreCase(terrier2)) {
+                
                 m_botAction.sendArenaMessage(
                         killed.getPlayerName() + " is out! " +
                         killed.getWins() + " kills, " +
@@ -301,7 +315,7 @@ public class terror extends MultiModule {
                 return;
             }
             
-            setTerr(m_botAction.getFuzzyPlayerName(playerName));
+            setTerr(m_botAction.getFuzzyPlayerName(playerName), TERR_FREQ);
             
             m_botAction.sendArenaMessage("Get ready!! Game will start in 10 seconds..", Tools.Sound.BEEP3);
             
@@ -318,52 +332,151 @@ public class terror extends MultiModule {
         }
     }
     
-    private void cmdSubTerr(String name, String playerName) {
+    private void cmdStartTwoTeam(String name, String parameters) {
+        if (state == OFF) {
+            String[] parameter = parameters.split(":");
+            
+            if (parameter.length != 2) {
+                m_botAction.sendPrivateMessage(name, "Error: Syntax is wrong, check with !help for the correct syntax");
+                return;
+            }
+            
+            String playerName1 = parameter[0];
+            String playerName2 = parameter[1];
+            
+            if (m_botAction.getFuzzyPlayer(playerName1) == null) {
+                m_botAction.sendPrivateMessage(name, playerName1 + " could not be found.");
+                return;
+            }
+            
+            if (m_botAction.getFuzzyPlayer(playerName2) == null) {
+                m_botAction.sendPrivateMessage(name, playerName2 + " could not be found.");
+                return;
+            }
+            
+            cmdSetTeam("2");
+            twoTeams = true;
+            
+            setTerr(m_botAction.getFuzzyPlayerName(playerName1), 0);
+            setTerr(m_botAction.getFuzzyPlayerName(playerName2), 1);
+            
+            m_botAction.sendArenaMessage("Get ready!! Game will start in 10 seconds..", Tools.Sound.BEEP3);
+            
+            TimerTask startGame = new TimerTask() {
+                public void run() {
+                    m_botAction.scoreResetAll();
+                    m_botAction.shipResetAll();
+                    state = RUNNING;
+                    m_botAction.sendArenaMessage("Go go go!!!", Tools.Sound.GOGOGO);
+                }
+            };
+            m_botAction.warpAllRandomly();
+            m_botAction.scheduleTask(startGame, Tools.TimeInMillis.SECOND * 10);
+        }
+    }
+    
+    private void cmdSubTerr(String name, String parameters) {
+        String[] parameter = parameters.split(":");
+        String playerName;
+        int frequency;
+        
+        if (parameter.length != 2) {
+            m_botAction.sendPrivateMessage(name, "Error: Syntax is wrong, check with !help for the correct syntax");
+            return;
+        }
+        
+        frequency = Integer.parseInt(parameter[0]);
+        playerName = parameter[1];    
+        
         if (m_botAction.getFuzzyPlayer(playerName) == null) {
             m_botAction.sendPrivateMessage(name, playerName + " could not be found.");
             return;
         }
         
-        if (m_botAction.getPlayer(terrier) != null)
+        if ((frequency == 0 || frequency == TERR_FREQ) && m_botAction.getPlayer(terrier) != null)
             m_botAction.specWithoutLock(terrier);
+        else if (frequency == 1 && m_botAction.getPlayer(terrier2) != null)
+            m_botAction.specWithoutLock(terrier2);
         
-        setTerr(m_botAction.getFuzzyPlayerName(playerName));
+        setTerr(m_botAction.getFuzzyPlayerName(playerName), frequency);
     }
     
-    private void setTerr(String name) {
-        terrier = name.toLowerCase();
+    private void cmdStop(String name) {
+        if (state != OFF) {
+            m_botAction.sendArenaMessage("Game has been killed by " + name);
+            reset();
+        } else 
+            m_botAction.sendPrivateMessage(name, "Error: No game was already stopped.");
+    }
+    
+    private void setTerr(String name, int frequency) {
+        if (frequency == 0 || frequency == TERR_FREQ)
+            terrier = name.toLowerCase();
+        else
+            terrier2 = name.toLowerCase();
         
         //Set terrier
-        m_botAction.setShip(terrier, Tools.Ship.TERRIER);
-        m_botAction.setFreq(terrier, TERR_FREQ);
+        m_botAction.setShip(name, Tools.Ship.TERRIER);
+        m_botAction.setFreq(name, frequency);
         
         //Check if frequency is only populated with terriers and spectate all the others
         for (Iterator<Player> it = m_botAction.getPlayingPlayerIterator(); it.hasNext();) {
             Player p = it.next();
             
-            if (!p.getPlayerName().equalsIgnoreCase(terrier) && p.getFrequency() == TERR_FREQ)
+            if ((!p.getPlayerName().equalsIgnoreCase(terrier) || !p.getPlayerName().equalsIgnoreCase(terrier2)) &&
+                    p.getFrequency() == frequency)
                 m_botAction.specWithoutLock(p.getPlayerName());
         }
     }
 
     private void checkGameOver() {
-        ArrayList<Short> freqs = new ArrayList<Short>();
-        for (Iterator<Player> it = m_botAction.getPlayingPlayerIterator(); it.hasNext();) {
-            Player p = it.next();
+        if (twoTeams) {
+            int freq0Size = 0;
+            int freq1Size = 0;
             
-            if (!freqs.contains(p.getFrequency()) && p.getShipType() != Tools.Ship.SPECTATOR)
-                freqs.add(p.getFrequency());
+            for (Iterator<Player> it = m_botAction.getPlayingPlayerIterator(); it.hasNext();) {
+                Player p = it.next();
+                
+                if (p.getShipType() != Tools.Ship.SPECTATOR &&
+                        !p.getPlayerName().equalsIgnoreCase(terrier) &&
+                        !p.getPlayerName().equalsIgnoreCase(terrier2)) {
+                    if (p.getFrequency() == 0)
+                        freq0Size++;
+                    else
+                        freq1Size++;
+                }
+            }
+            
+            if (freq0Size < 1) {
+                gameOver(1);
+                return;
+            } else if (freq1Size < 1) {
+                gameOver(0);
+                return;
+            }
+        } else {
+            ArrayList<Short> freqs = new ArrayList<Short>();
+            for (Iterator<Player> it = m_botAction.getPlayingPlayerIterator(); it.hasNext();) {
+                Player p = it.next();
+                
+                if (!freqs.contains(p.getFrequency()) && p.getShipType() != Tools.Ship.SPECTATOR)
+                    freqs.add(p.getFrequency());
+            }
+            
+            if (freqs.contains(Short.valueOf((short) TERR_FREQ)))
+                freqs.remove(Short.valueOf((short) TERR_FREQ));
+            
+            if (freqs.size() != 1) 
+                return;
+            
+            gameOver(freqs.iterator().next());
         }
-        
-        if (freqs.contains(Short.valueOf((short) TERR_FREQ)))
-            freqs.remove(Short.valueOf((short) TERR_FREQ));
-        
-        if (freqs.size() != 1) 
-            return;
-        
+    }
+    
+    private void gameOver(int winningFreq) {
         state = OFF;
         m_botAction.sendArenaMessage(
-                "Freq " + freqs.iterator().next() + " = The Winner of Terror!",
+                "Freq " + winningFreq + " = The Winner of Terror!",
                 Tools.Sound.HALLELUJAH);
         m_botAction.sendArenaMessage("MVP: " + mvpName + "!");
         
@@ -372,8 +485,10 @@ public class terror extends MultiModule {
     
     private void reset() {
         lates.clear();
+        twoTeams = false;
         deaths = 10;
         terrier = "[nobody]";
+        terrier2 = "[nobody]";
         mvpName = "";
         mvpWins = 0;
         ship = 1;
