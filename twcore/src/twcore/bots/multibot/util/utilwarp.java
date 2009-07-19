@@ -151,6 +151,11 @@ public class utilwarp extends MultiUtil {
         try {
             ResultSet resultSet = m_botAction.SQLQuery(database, "SELECT SW.* " + "FROM tblArena A, tblSetupWarp SW " + "WHERE A.fnArenaID = SW.fnArenaID " + "AND A.fcArenaName = '" + arenaName + "'");
             
+            if(resultSet == null) {
+                m_botAction.sendSmartPrivateMessage(sender, "ERROR: Can't retrieve setup warps from the database.");
+                return;
+            }
+            
             int count = 0;
             while (resultSet.next()) {
                 String argument = resultSet.getString("fcArgument").trim();
@@ -162,14 +167,13 @@ public class utilwarp extends MultiUtil {
                 count++;
             }
             m_botAction.SQLClose(resultSet);
+            
             if (count == 0)
                 m_botAction.sendSmartPrivateMessage(sender, "No setup warps are registered for this arena.");
         }
 
         catch (SQLException e) {
-            m_botAction.sendSmartPrivateMessage(sender, "ERROR: Cannot connect to database.");
-        } catch (NullPointerException e) {
-            m_botAction.sendSmartPrivateMessage(sender, "ERROR: Cannot connect to database.");
+            m_botAction.sendSmartPrivateMessage(sender, "ERROR: Cannot connect to database. ("+e.getMessage()+")");
         }
     }
     
@@ -178,6 +182,11 @@ public class utilwarp extends MultiUtil {
         
         try {
             ResultSet resultSet = m_botAction.SQLQuery(database, "SELECT WP.* " + "FROM tblArena A, tblSetupWarp SW, tblWarpPoint WP " + "WHERE WP.fnSetupWarpID = SW.fnSetupWarpID " + "AND SW.fcArgument = '" + argument + "' " + "AND SW.fnArenaID = A.fnArenaID " + "AND A.fcArenaName = '" + arenaName + "'");
+            
+            if(resultSet == null) {
+                m_botAction.sendSmartPrivateMessage(sender, "ERROR: Can't retrieve setup warps from the database.");
+                return;
+            }
             
             int count = 0;
             while (resultSet.next()) {
@@ -190,14 +199,13 @@ public class utilwarp extends MultiUtil {
                 count++;
             }
             m_botAction.SQLClose(resultSet);
+            
             if (count == 0)
                 m_botAction.sendSmartPrivateMessage(sender, "Invalid argument.  Please use !SetupWarpList to see the setup warps available");
             else
                 m_botAction.sendSmartPrivateMessage(sender, "Setup warps completed.");
         } catch (SQLException e) {
-            m_botAction.sendSmartPrivateMessage(sender, "ERROR: Cannot connect to database.");
-        } catch (NullPointerException e) {
-            m_botAction.sendSmartPrivateMessage(sender, "ERROR: Cannot connect to database.");
+            m_botAction.sendSmartPrivateMessage(sender, "ERROR: Cannot connect to database. ("+e.getMessage()+")");
         }
     }
     
@@ -257,22 +265,20 @@ public class utilwarp extends MultiUtil {
     public void handleCommand(String sender, String message) {
         String command = message.toLowerCase();
         
-        try {
-            if (command.startsWith("!warpto "))
-                doWarpToCmd(sender, message.substring(8));
-            else if (command.startsWith("!warpfreq "))
-                doWarpFreqCmd(sender, message.substring(10));
-            else if (command.startsWith("!warpship "))
-                doWarpShipCmd(sender, message.substring(10));
-            else if (command.equalsIgnoreCase("!setupwarp"))
-                doSetupWarpCmd(sender, "");
-            else if (command.startsWith("!setupwarp "))
-                doSetupWarpCmd(sender, message.substring(11));
-            else if (command.equalsIgnoreCase("!setupwarplist"))
-                doSetupWarpListCmd(sender);
-            else if (command.equalsIgnoreCase("!whereami"))
-                doWhereCmd(sender);
-        } catch (RuntimeException e) {}
+        if (command.startsWith("!warpto "))
+            doWarpToCmd(sender, message.substring(8));
+        else if (command.startsWith("!warpfreq "))
+            doWarpFreqCmd(sender, message.substring(10));
+        else if (command.startsWith("!warpship "))
+            doWarpShipCmd(sender, message.substring(10));
+        else if (command.equalsIgnoreCase("!setupwarp"))
+            doSetupWarpCmd(sender, "");
+        else if (command.startsWith("!setupwarp "))
+            doSetupWarpCmd(sender, message.substring(11));
+        else if (command.equalsIgnoreCase("!setupwarplist"))
+            doSetupWarpListCmd(sender);
+        else if (command.equalsIgnoreCase("!whereami"))
+            doWhereCmd(sender);
     }
     
     public void handleEvent(Message event) {
@@ -280,7 +286,7 @@ public class utilwarp extends MultiUtil {
         String sender = m_botAction.getPlayerName(senderID);
         String message = event.getMessage().trim();
         
-        if (m_opList.isER(sender))
+        if (m_opList.isER(sender) || m_opList.isBotExact(sender))
             handleCommand(sender, message);
     }
     
