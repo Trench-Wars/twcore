@@ -475,6 +475,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Krazie &Who|Krazie <ER> + Pandora's Box = END OF THE WORLD!!!
 &A I &Who|I play Continuum a cant ya see, I play it everyday cause I'm so carefree                            I like to Shark you better believe, pullin those reps right outta my sleeve                         Put me in a Lanc and i'll kick da booty, Makin da NME look reel Fruity                              My name is A I, If yer lookin for me, C'mon and Jump in to T W B D!
 &AI &Who|I play Continuum a cant ya see, I play it everyday cause I'm so carefree                            I like to Shark you better believe, pullin those reps right outta my sleeve                         Put me in a Lanc and i'll kick da booty, Makin da NME look reel Fruity                              My name is A I, If yer lookin for me, C'mon and Jump in to T W B D!
+&HTF &Who|Hate The Fake is a celebrity, a person who works hard all of their life to become well known, and then wears dark glasses to avoid being recognized.
 
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
