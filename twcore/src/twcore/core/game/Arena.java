@@ -346,15 +346,12 @@ public class Arena {
         Map <Integer,Player>m = m_frequencyList.get((Integer)freq);
         if( m == null )
             return 0;
-
-        LinkedList <Player>list = new LinkedList<Player>();
-        for( Iterator<Player> i = m.values().iterator(); i.hasNext(); ){
-            Player player = i.next();
-            if( player.getShipType() != 0 ){
-                list.add(player);
-            }
-        }
-        return list.size();
+        
+        int size = 0;
+        for(Player player : m.values())
+            if( player.getShipType() != 0 )
+                size++;
+        return size;
     }
 
     // *** EVENT PROCESSING ***
