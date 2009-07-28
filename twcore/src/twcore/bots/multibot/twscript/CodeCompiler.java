@@ -2,7 +2,10 @@ package twcore.bots.multibot.twscript;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.Iterator;
@@ -18,9 +21,6 @@ import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
 /**
- * This class has nothing to do with compiling Java source; it merely compiles
- * commands from utilities implementing TWScript and returns a new message.
- * 
  * @author milosh
  */
 public final class CodeCompiler {
@@ -167,6 +167,12 @@ public final class CodeCompiler {
             message = message.replace("@arenasize", Integer.toString(bot.getArenaSize()));
         if(message.contains("@playingplayers"))
             message = message.replace("@playingplayers", Integer.toString(bot.getPlayingPlayers().size()));
+        if(message.contains("@mvp")){
+        	CompareByRatio byRatio = new CompareByRatio();
+        	List<Player> l = bot.getPlayingPlayers();
+        	Collections.sort(l, Collections.reverseOrder(byRatio));
+        	message = message.replace("@mvp", l.get(0).getPlayerName() + " (" + l.get(0).getWins() + "-" + l.get(0).getLosses() + ")");
+        }
         while(message.contains("@freqsize(") && message.indexOf(")", message.indexOf("@freqsize(")) != -1){
             int beginIndex = message.indexOf("@freqsize(");
             int endIndex = message.indexOf(")", beginIndex);
@@ -739,5 +745,15 @@ public final class CodeCompiler {
         else if (accessLevel == OperatorList.SYSOP_LEVEL)return true;
         else return false;
     }
+    
+    private static class CompareByRatio implements Comparator<Player> {
+		public int compare(Player a, Player b){
+			double x = a.getWins() / a.getLosses();
+			double y = b.getWins() / b.getLosses();
+			if(x > y)return 1;
+			else if(x == y)return 0;
+			else return -1;
+		}
+	}
     
 }
