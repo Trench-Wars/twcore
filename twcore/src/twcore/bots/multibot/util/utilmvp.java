@@ -1,0 +1,162 @@
+package twcore.bots.multibot.util;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.Iterator;
+import java.util.ArrayList;
+
+import twcore.bots.MultiUtil;
+import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
+import twcore.core.util.ModuleEventRequester;
+import twcore.core.OperatorList;
+
+/**
+ * Tracks player kills and deaths when activated and supplies the best K/D ratio.
+ * @author milosh
+ */
+public class utilmvp extends MultiUtil {
+	
+	public OperatorList opList = new OperatorList();
+	public TreeMap<String, MVPPlayer> mvpPlayers = new TreeMap<String, MVPPlayer>();
+	public boolean isRecording = false;
+	
+	@Override
+	public String[] getHelpMessages() {
+		String[] message =
+	    {
+	      "+=============== MVP ===============+",
+	      "| !startmvp - Starts MVP tracking   |",
+	      "| !stopmvp  - Stops MVP tracking    |",
+	      "| !arenamvp - Displays MVP to arena |",
+	      "| !mvp      - Displays MVP in PM    |",
+	      "+===================================+"
+	    };
+
+	    return message;
+	}
+	
+	@Override
+	public void init() {
+		opList = m_botAction.getOperatorList();
+	}
+
+	@Override
+	public void requestEvents(ModuleEventRequester modEventReq) {
+		// required :o
+	}
+	
+	public void handleEvent(Message event)
+	{
+		String message = event.getMessage();
+        String name = event.getMessager() == null ? m_botAction.getPlayerName(event.getPlayerID()) : event.getMessager();
+		if(event.getMessageType() == Message.PRIVATE_MESSAGE && opList.isER(name))
+			handleStaffCommands(name, message);
+		else if(event.getMessageType() == Message.PRIVATE_MESSAGE)
+			handlePlayerCommands(name, message);
+	}
+	
+	public void handleStaffCommands(String name, String cmd){
+		if(cmd.equalsIgnoreCase("!startmvp"))
+			doStartMvp(name);
+		else if(cmd.equalsIgnoreCase("!stopmvp"))
+			doStopMvp(name);
+		else if(cmd.equalsIgnoreCase("!arenamvp"))
+			doArenaMvp(name);
+	}
+	
+	public void handlePlayerCommands(String name, String cmd){
+		if(cmd.equalsIgnoreCase("!mvp"))
+			doMvp(name);
+	}
+	
+	public void doStartMvp(String name){
+		if(!isRecording){
+			mvpPlayers.clear();
+			isRecording = true;
+			m_botAction.sendSmartPrivateMessage(name, "MVP Recording has been enabled.");
+		}else m_botAction.sendSmartPrivateMessage(name, "MVP Recording is already running. Use !stopmvp to stop.");
+		
+	}
+	
+	public void doStopMvp(String name){
+		if(isRecording){
+			isRecording = false;
+			m_botAction.sendSmartPrivateMessage(name, "MVP Recording has been disabled. Use !arenamvp to display the MVP.");
+		}else m_botAction.sendSmartPrivateMessage(name, "MVP Recording is not running. Use !startmvp to start.");
+	}
+	
+	public void doArenaMvp(String name){
+		if(mvpPlayers.isEmpty() && !isRecording)
+			m_botAction.sendSmartPrivateMessage(name, "There is currently no MVP.");
+		else m_botAction.arenaMessageSpam(getMvpString());
+	}
+	
+	public void doMvp(String name){
+		if(mvpPlayers.isEmpty() && !isRecording)
+			m_botAction.sendSmartPrivateMessage(name, "There is currently no MVP.");
+		else m_botAction.smartPrivateMessageSpam(name, getMvpString());
+	}
+	
+	public String[] getMvpString(){
+		ArrayList<String> mvpArray = new ArrayList<String>();
+		mvpArray.add("There is currently no MVP.");
+		if(mvpPlayers.isEmpty())return (String[]) mvpArray.toArray();
+		Iterator<MVPPlayer> i = mvpPlayers.values().iterator();
+		while(i.hasNext()){
+			MVPPlayer p = i.next();
+			p.ratio = p.kills / p.deaths;
+		}
+		CompareByRatio byRatio = new CompareByRatio();
+    	List<MVPPlayer> l = Arrays.asList(mvpPlayers.values().toArray(new MVPPlayer[mvpPlayers.values().size()]));
+    	Collections.sort(l, Collections.reverseOrder(byRatio));
+    	if(isRecording){
+    		mvpArray.clear();
+    		mvpArray.add("+============= MVPs =============+");
+    		for(int z=0; z<5; z++)
+    			mvpArray.add(" " + (z+1) + ") " + l.get(z));
+    		return (String[]) mvpArray.toArray();
+    	}
+    	else {
+    		mvpArray.clear();
+    		mvpArray.add("MVP: " + l.get(0).name + " (" + l.get(0).kills + "-" + l.get(0).deaths + ")");
+    		return (String[]) mvpArray.toArray();
+    	}
+	}
+	
+	public void handleEvent(PlayerDeath event){
+		if(!isRecording)return;
+		String killer = m_botAction.getPlayerName(event.getKillerID());
+        String killed = m_botAction.getPlayerName(event.getKilleeID());
+        if(!mvpPlayers.containsKey(killer))
+        	mvpPlayers.put(killer, new MVPPlayer(killer));
+        else if(!mvpPlayers.containsKey(killed))
+        	mvpPlayers.put(killed, new MVPPlayer(killed));
+        mvpPlayers.get(killer).kills++;
+        mvpPlayers.get(killed).deaths++;
+	}
+	
+	public void cancel() {
+		mvpPlayers.clear();
+	}
+	
+	private class MVPPlayer {
+		private String name;
+		private double kills = 0,deaths = 0,ratio = 0;
+		
+		private MVPPlayer(String name){
+			this.name = name;
+		}
+	}
+	
+	private class CompareByRatio implements Comparator<MVPPlayer> {
+		public int compare(MVPPlayer a, MVPPlayer b){
+			if(a.ratio > b.ratio)return 1;
+			else if(a.ratio == b.ratio)return 0;
+			else return -1;
+		}
+	}
+}
