@@ -12,7 +12,6 @@ import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.util.ModuleEventRequester;
-import twcore.core.OperatorList;
 
 /**
  * Tracks player kills and deaths when activated and supplies the best K/D ratio.
@@ -20,7 +19,6 @@ import twcore.core.OperatorList;
  */
 public class utilmvp extends MultiUtil {
 	
-	public OperatorList opList = new OperatorList();
 	public TreeMap<String, MVPPlayer> mvpPlayers = new TreeMap<String, MVPPlayer>();
 	public boolean isRecording = false;
 	
@@ -40,9 +38,7 @@ public class utilmvp extends MultiUtil {
 	}
 	
 	@Override
-	public void init() {
-		opList = m_botAction.getOperatorList();
-	}
+	public void init() {}
 
 	@Override
 	public void requestEvents(ModuleEventRequester modEventReq) {
@@ -53,7 +49,7 @@ public class utilmvp extends MultiUtil {
 	{
 		String message = event.getMessage();
         String name = event.getMessager() == null ? m_botAction.getPlayerName(event.getPlayerID()) : event.getMessager();
-		if(event.getMessageType() == Message.PRIVATE_MESSAGE && opList.isER(name))
+		if(event.getMessageType() == Message.PRIVATE_MESSAGE && m_opList.isER(name))
 			handleStaffCommands(name, message);
 		else if(event.getMessageType() == Message.PRIVATE_MESSAGE)
 			handlePlayerCommands(name, message);
