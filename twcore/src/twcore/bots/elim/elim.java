@@ -188,7 +188,7 @@ public class elim extends SubspaceBot {
 				"| !rec <name>   - Shows the wins and losses of <name>.                       |",
 				"| !classic      - Toggles whether or not you'd like to be spec'd when out.   |",
 				"| !warp         - Warps you out of the safe if you're stuck.                 |",
-				"| !scorereset   - Resets your arena score card to zero. No going back. (!sr) |",
+				"| !scorereset   - Resets all of your stats to zero. No going back. (!sr)     |",
 
 		};List<String> reg = Arrays.asList(reghelp);
 		String[] modHelp = {
@@ -514,6 +514,7 @@ public class elim extends SubspaceBot {
     public void cmd_scorereset(String name){
     	try{
     		m_botAction.SQLQueryAndClose(db, "UPDATE tblElimCasualRecs SET fnKills = 0, fnDeaths = 0 WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    		m_botAction.SQLQueryAndClose(db, "DELETE * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
     		m_botAction.sendSmartPrivateMessage( name, "Your wins and losses have been reset to zero.");
     	}catch(SQLException e){
     		m_botAction.sendSmartPrivateMessage( name, "Error resetting score. Please try again later. If the problem persists contact a staff member.");
