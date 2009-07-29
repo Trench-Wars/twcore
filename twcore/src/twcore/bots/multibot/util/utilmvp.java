@@ -114,7 +114,9 @@ public class utilmvp extends MultiUtil {
 		Iterator<MVPPlayer> i = mvpPlayers.values().iterator();
 		while(i.hasNext()){
 			MVPPlayer p = i.next();
-			p.ratio = p.kills / p.deaths;
+			if(p.deaths != 0)
+				p.ratio = p.kills / p.deaths;
+			else p.ratio = p.kills / 1;
 		}
 		CompareByRatio byRatio = new CompareByRatio();
     	List<MVPPlayer> l = Arrays.asList(mvpPlayers.values().toArray(new MVPPlayer[mvpPlayers.values().size()]));
