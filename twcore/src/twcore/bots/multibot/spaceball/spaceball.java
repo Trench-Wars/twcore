@@ -171,11 +171,19 @@ public class spaceball extends MultiModule {
 			}
 		}
 
-		if (message.startsWith("!speed")) {
+		if (message.startsWith("!speed ")) {
+			try{
 			BULLET_SPEED = Integer.parseInt(event.getMessage().substring(7));
+			}catch(NumberFormatException e){
+				m_botAction.sendSmartPrivateMessage(name, "Invalid speed!");
+			}
 		}
-		if (message.startsWith("!mass")) {
+		if (message.startsWith("!mass ")) {
+			try{
 			botMass = Integer.parseInt(event.getMessage().substring(6));
+			}catch(NumberFormatException e){
+				m_botAction.sendSmartPrivateMessage(name, "Invalid mass!");
+			}
 		}
 	}
 
