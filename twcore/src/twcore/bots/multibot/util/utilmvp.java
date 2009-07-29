@@ -166,8 +166,9 @@ public class utilmvp extends MultiUtil {
 	
 	private class CompareByRatio implements Comparator<MVPPlayer> {
 		public int compare(MVPPlayer a, MVPPlayer b){
-			if(a.ratio > b.ratio)return 1;
-			else if(a.ratio == b.ratio)return 0;
+			if(a.kills > b.kills)return 1;
+			else if(a.kills == b.kills && a.ratio > b.ratio)return 1;
+			else if(a.kills == b.kills && a.ratio == b.ratio)return 0;
 			else return -1;
 		}
 	}
