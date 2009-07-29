@@ -121,10 +121,10 @@ public class utilmvp extends MultiUtil {
     	Collections.sort(l, Collections.reverseOrder(byRatio));
     	if(isRecording){
     		mvpArray.clear();
-    		mvpArray.add("+============= MVPs =============+");
+    		mvpArray.add("+===================== MVPs =====================+");
     		int z = 0;
     		while(z < 5 && z != l.size()){
-    			mvpArray.add(" " + (z+1) + ") " + l.get(z));
+    			mvpArray.add(" " + (z+1) + ") " + l.get(z).name + " (" + l.get(z).kills + "-" + l.get(z).deaths + ")");
     			z++;
     		}
     		return mvpArray;
@@ -154,7 +154,8 @@ public class utilmvp extends MultiUtil {
 	
 	private class MVPPlayer {
 		private String name;
-		private double kills = 0,deaths = 0,ratio = 0;
+		private int kills = 0,deaths = 0;
+		private double ratio = 0;
 		
 		private MVPPlayer(String name){
 			this.name = name;
