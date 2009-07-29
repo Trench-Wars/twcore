@@ -33,7 +33,7 @@ public class CoreData {
     public CoreData( File setupFile ){
         m_generalSettings = new BotSettings( setupFile );
         m_comm = new InterProcessCommunicator();
-        m_accessList = new OperatorList();
+        m_accessList = OperatorList.getInstance();
         File sqlFile = new File( m_generalSettings.getString( "Core Location" )
         + "/corecfg/sql.cfg" );
         m_manager = new SQLManager( sqlFile );

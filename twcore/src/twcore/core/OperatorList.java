@@ -68,14 +68,29 @@ public class OperatorList {
      * Value: Exact value from operators.cfg
      */
     private static Map<Integer,String> autoAssign;
+    
+    private static OperatorList operatorList;
 
 
     /**
-     * Creates a new instance of OperatorList.
+     * Private constructor. Use OperatorList.getInstance() instead.
      */
-    public OperatorList(){
+    private OperatorList(){
         operators = Collections.synchronizedMap( new LinkedHashMap<String,Integer>() );
         autoAssign = Collections.synchronizedMap( new LinkedHashMap<Integer,String>() );
+    }
+    
+    /**
+     * Singleton pattern; always only creates one instance of OperatorList.
+     * This method is synchronized so multiple threads can't both get a different OperatorList instance if they call this method at the same time.
+     * 
+     * @return OperatorList instance
+     */
+    public static synchronized OperatorList getInstance() {
+    	if(operatorList == null) {
+    		operatorList = new OperatorList();
+    	}
+    	return operatorList;
     }
 
     /**
@@ -591,5 +606,14 @@ public class OperatorList {
             case 9: return "Owner [" + accessLevel + "]";
             default: return "Unknown access level! [" + accessLevel + "]";
         }
+    }
+    
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#clone()
+     */
+    public Object clone() throws CloneNotSupportedException  {
+    	// Prevent cloning of this object as it's a Singleton.
+    	throw new CloneNotSupportedException(); 
     }
 }
