@@ -122,8 +122,11 @@ public class utilmvp extends MultiUtil {
     	if(isRecording){
     		mvpArray.clear();
     		mvpArray.add("+============= MVPs =============+");
-    		for(int z=0; z<5; z++)
+    		int z = 0;
+    		while(z < 5 && z != l.size()){
     			mvpArray.add(" " + (z+1) + ") " + l.get(z));
+    			z++;
+    		}
     		return mvpArray;
     	}
     	else {
