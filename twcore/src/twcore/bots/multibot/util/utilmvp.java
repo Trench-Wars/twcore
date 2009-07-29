@@ -51,7 +51,7 @@ public class utilmvp extends MultiUtil {
         String name = event.getMessager() == null ? m_botAction.getPlayerName(event.getPlayerID()) : event.getMessager();
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE && m_opList.isER(name))
 			handleStaffCommands(name, message);
-		else if(event.getMessageType() == Message.PRIVATE_MESSAGE)
+		if(event.getMessageType() == Message.PRIVATE_MESSAGE)
 			handlePlayerCommands(name, message);
 	}
 	
@@ -88,19 +88,29 @@ public class utilmvp extends MultiUtil {
 	public void doArenaMvp(String name){
 		if(mvpPlayers.isEmpty() && !isRecording)
 			m_botAction.sendSmartPrivateMessage(name, "There is currently no MVP.");
-		else m_botAction.arenaMessageSpam(getMvpString());
+		else {
+			int z = 0;
+			Iterator<String> i = getMvpString().iterator();
+			while(z < 6 && i.hasNext())
+				m_botAction.sendArenaMessage(i.next());
+		}
 	}
 	
 	public void doMvp(String name){
 		if(mvpPlayers.isEmpty() && !isRecording)
 			m_botAction.sendSmartPrivateMessage(name, "There is currently no MVP.");
-		else m_botAction.smartPrivateMessageSpam(name, getMvpString());
+		else {
+			int z = 0;
+			Iterator<String> i = getMvpString().iterator();
+			while(z < 6 && i.hasNext())
+				m_botAction.sendSmartPrivateMessage(name, i.next());
+		}
 	}
 	
-	public String[] getMvpString(){
+	public ArrayList<String> getMvpString(){
 		ArrayList<String> mvpArray = new ArrayList<String>();
 		mvpArray.add("There is currently no MVP.");
-		if(mvpPlayers.isEmpty())return (String[]) mvpArray.toArray();
+		if(mvpPlayers.isEmpty()) return mvpArray;
 		Iterator<MVPPlayer> i = mvpPlayers.values().iterator();
 		while(i.hasNext()){
 			MVPPlayer p = i.next();
@@ -114,12 +124,12 @@ public class utilmvp extends MultiUtil {
     		mvpArray.add("+============= MVPs =============+");
     		for(int z=0; z<5; z++)
     			mvpArray.add(" " + (z+1) + ") " + l.get(z));
-    		return (String[]) mvpArray.toArray();
+    		return mvpArray;
     	}
     	else {
     		mvpArray.clear();
     		mvpArray.add("MVP: " + l.get(0).name + " (" + l.get(0).kills + "-" + l.get(0).deaths + ")");
-    		return (String[]) mvpArray.toArray();
+    		return mvpArray;
     	}
 	}
 	
@@ -129,7 +139,7 @@ public class utilmvp extends MultiUtil {
         String killed = m_botAction.getPlayerName(event.getKilleeID());
         if(!mvpPlayers.containsKey(killer))
         	mvpPlayers.put(killer, new MVPPlayer(killer));
-        else if(!mvpPlayers.containsKey(killed))
+        if(!mvpPlayers.containsKey(killed))
         	mvpPlayers.put(killed, new MVPPlayer(killed));
         mvpPlayers.get(killer).kills++;
         mvpPlayers.get(killed).deaths++;
