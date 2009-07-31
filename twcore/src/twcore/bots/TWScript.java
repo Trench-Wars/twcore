@@ -76,6 +76,7 @@ public class TWScript extends MultiUtil {
                 "| @arenaname        - The arena's name.               |",
                 "| @arenasize        - Number of players in arena.     |",
                 "| @playingplayers   - Number of players in a ship.    |",
+                "| @mvp              - Player with best K:D ratio.     |",
                 "| @freqsize(#)      - Number of players on freq       |",
                 "| @pfreqsize(#)     - Num. of players playing on freq |",
                 "| @shipsonfreq(#,#) - Num of players in a certain ship|",

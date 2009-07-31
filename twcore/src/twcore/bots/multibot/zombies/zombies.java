@@ -232,7 +232,7 @@ public class zombies extends MultiModule {
             if( p == null || p2 == null )
                 return;
             try {
-                if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq ){
+                if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq && p2.getFrequency() != m_humanfreq){
                     m_botAction.setShip( event.getKilleeID(), m_zombieship );
                     m_botAction.setFreq( event.getKilleeID(), m_zombiefreq );
                     if(!rebK)

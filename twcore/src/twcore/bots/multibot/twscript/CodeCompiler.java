@@ -748,9 +748,12 @@ public final class CodeCompiler {
     
     private static class CompareByRatio implements Comparator<Player> {
 		public int compare(Player a, Player b){
-			double x = a.getWins() / a.getLosses();
-			double y = b.getWins() / b.getLosses();
-			if(x > y)return 1;
+			int aLosses = a.getLosses() == 0 ? 1 : a.getLosses();
+			int bLosses = b.getLosses() == 0 ? 1 : b.getLosses();
+			double x = a.getWins() / aLosses;
+			double y = b.getWins() / bLosses;
+			if(a.getWins() > b.getWins())return 1;
+			else if(a.getWins() == b.getWins() && x > y)return 1;
 			else if(x == y)return 0;
 			else return -1;
 		}
