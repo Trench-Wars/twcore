@@ -88,6 +88,11 @@ public class elim extends SubspaceBot {
 			"Unstoppable!",
 			"God-like!",
 			"Cheater!",
+			"Juggernaut!",
+			"Kill Frenzy!",
+			"Running Riot!",
+			"Utter Chaos!",
+			"Unthinkable paradoxes have ripped a hole in the fabric of the universe!"
 		};
 	
 	//Enums
@@ -1068,7 +1073,7 @@ public class elim extends SubspaceBot {
         if( cfg_casualAllowed == 1 )
             m_botAction.sendUnfilteredPrivateMessage(name, "*objoff " + CASUAL_LOGO_LVZ);
     	if(shipType == 6 && cfg_gameType == BASEELIM){
-    		int[] xarena = cfg.getIntArray("XArena" + rand.nextInt(1), ",");
+    		int[] xarena = cfg.getIntArray("XArena" + rand.nextInt(3), ",");
     		m_botAction.warpTo(name, xarena[0], xarena[1], xarena[2]);
     	}
     }
