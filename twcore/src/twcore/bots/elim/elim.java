@@ -92,7 +92,12 @@ public class elim extends SubspaceBot {
 			"Kill Frenzy!",
 			"Running Riot!",
 			"Utter Chaos!",
-			"Unthinkable paradoxes have ripped a hole in the fabric of the universe!"
+			"Grim Reaper!",
+			"Bulletproof!",
+			"Invincible!",
+			"Certified Veteran!",
+			"Trench Wars Most Wanted!",
+			"Unforeseeable paradoxes have ripped a hole in the fabric of the universe!"
 		};
 	
 	//Enums
