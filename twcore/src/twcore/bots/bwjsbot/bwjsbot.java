@@ -342,13 +342,20 @@ public class bwjsbot extends SubspaceBot {
              */
             if (isCaptain(name)) {
                 if (state == ADDING_PLAYERS) {
-                    m_botAction.sendArenaMessage("NOTICE: The captain of " +
+                	if(cfg.allowAuto){
+                		m_botAction.sendArenaMessage("NOTICE: The captain of " +
                             team[teamNumber].name + " has left the arena. Type !cap to claim captain.");
-                    team[teamNumber].removeCap();
+                		team[teamNumber].removeCap();
+                	} else
+                		m_botAction.sendArenaMessage("NOTICE: The captain of " + team[teamNumber].name + " has left the arena.");
                 } else if (state == GAME_IN_PROGRESS) {
-                    m_botAction.sendOpposingTeamMessageByFrequency(teamNumber, "NOTICE: The captain of your team has " +
-                    		"left the arena. Type !cap to claim captain.");
-                    team[teamNumber].removeCap();
+                	if(cfg.allowAuto){
+	                    m_botAction.sendOpposingTeamMessageByFrequency(teamNumber, "NOTICE: The captain of your team has " +
+	                    		"left the arena. Type !cap to claim captain.");
+	                    team[teamNumber].removeCap();
+                	} else
+                		m_botAction.sendOpposingTeamMessageByFrequency(teamNumber, "NOTICE: The captain of your team has " +
+                			"left the arena.");
                 } else { 
                     
                     m_botAction.sendArenaMessage("NOTICE: The captain of " +
@@ -589,11 +596,14 @@ public class bwjsbot extends SubspaceBot {
     }
     
     private void cmd_cap(Message event) {
-        if (state > OFF) {
-            String messager = m_botAction.getPlayerName(event.getPlayerID());
-            int teamNumber = getTeamNumber(messager);
-            String message = event.getMessage();
-            
+    	String messager = m_botAction.getPlayerName(event.getPlayerID());
+        int teamNumber = getTeamNumber(messager);
+        String message = event.getMessage();
+        
+    	if(!cfg.allowAuto){
+    		msgCaps(messager);
+    	}
+    	else if (state > OFF) {
             //Check for people who don't have enough usage to claim captain
             if (!listEnoughUsage.contains(messager.toLowerCase())  && cfg.capUsage != 0) {
                 if (team[ONE].captainName.equals("[nobody]") || team[TWO].captainName.equals("[nobody]")) {
@@ -724,8 +734,10 @@ public class bwjsbot extends SubspaceBot {
         String name = m_botAction.getPlayerName(event.getPlayerID());
         ArrayList<String> help = new ArrayList<String>();
         if (state == WAITING_FOR_CAPS) {
-            help.add("!cap                      -- Become captain of a team!");
-            help.add("!cap <teamname>           -- Become captain and set your own teamname!");
+        	if(cfg.allowAuto){
+        		help.add("!cap                      -- Become captain of a team!");
+        		help.add("!cap <teamname>           -- Become captain and set your own teamname!");
+        	}
             if (isCaptain(name))
                 help.add("!removecap                -- Removes you as a captain");
         } else if (state >= ADDING_PLAYERS) {
@@ -734,7 +746,10 @@ public class bwjsbot extends SubspaceBot {
                 if (cfg.gameType == BASE)
                     help.add("!add <player>:<ship>      -- Adds player in the specified ship");
             }
-            help.add("!cap                      -- Become captain of a team / shows current captains!");
+            if(cfg.allowAuto)
+            	help.add("!cap                      -- Become captain of a team / shows current captains!");
+            else
+            	help.add("!cap                      -- Shows the current captains");
             if (cfg.gameType == BASE && isCaptain(name))
                 help.add("!change <player>:<ship>   -- Sets the player in the specified ship");
             help.add("!lagout                   -- Puts you back into the game if you have lagged out");
@@ -1082,7 +1097,10 @@ public class bwjsbot extends SubspaceBot {
         if (state == OFF) {
             m_botAction.sendPrivateMessage(name, "Bot turned off, no games can be started at this moment.");
         } else if (state == WAITING_FOR_CAPS) {
-            m_botAction.sendPrivateMessage(name, "A new game will start when two people message me with !cap");
+        	if(cfg.allowAuto)
+        		m_botAction.sendPrivateMessage(name, "A new game will start when two people message me with !cap");
+        	else
+        		m_botAction.sendPrivateMessage(name, "A new game will start once two captains are selected.");
         } else if (state == ADDING_PLAYERS) {
             m_botAction.sendPrivateMessage(name, "Teams: " + team[ONE].name + " vs. " + team[TWO].name + 
                     ". We are currently arranging lineups");
@@ -1256,8 +1274,12 @@ public class bwjsbot extends SubspaceBot {
         reset();
         
         state = WAITING_FOR_CAPS;
-        m_botAction.sendArenaMessage("A new game will start when two people message me with !cap -" + 
+        if(cfg.allowAuto)
+        	m_botAction.sendArenaMessage("A new game will start when two people message me with !cap -" + 
                 m_botAction.getBotName(), Tools.Sound.BEEP2);
+        else
+        	m_botAction.sendArenaMessage("A new game will start when two captains are selected -" + 
+                    m_botAction.getBotName(), Tools.Sound.BEEP2);
     }
     
     private void startAddingPlayers() {
@@ -1766,6 +1788,7 @@ public class bwjsbot extends SubspaceBot {
         private BotSettings botSettings;
         private int gameType;
         private boolean allowZoner;
+        private boolean allowAuto;
         private boolean announceShipType;
         private boolean inBase;
         private int capUsage;
@@ -1813,6 +1836,9 @@ public class bwjsbot extends SubspaceBot {
             
             //Allow Zoner
             allowZoner = (botSettings.getInt("SendZoner" + botNumber) == 1);
+            
+            //Allow automation
+            allowAuto = (botSettings.getInt("AllowAuto" + botNumber) == 1);
             
             //Chats
             chats = botSettings.getString("Chats" + gameType);
