@@ -475,7 +475,7 @@ public class bwjsbot extends SubspaceBot {
                 cmd_start(event);
             else if (message.equals("!stop"))
                 cmd_stop(event);
-            else if (message.equals("!zone") && !cfg.allowAuto && (state == GAME_OVER || state == ADDING_PLAYERS))
+            else if (message.equals("!zone") && !cfg.allowAuto && (state == GAME_OVER || state == WAITING_FOR_CAPS))
             	newGameAlert();
             else if (message.startsWith("!setcaptain "))
                 cmd_setCaptain(event);
