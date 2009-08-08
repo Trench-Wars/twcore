@@ -475,6 +475,8 @@ public class bwjsbot extends SubspaceBot {
                 cmd_start(event);
             else if (message.equals("!stop"))
                 cmd_stop(event);
+            else if (message.equals("!zone") && !cfg.allowAuto && (state == GAME_OVER || state == ADDING_PLAYERS))
+            	newGameAlert();
             else if (message.startsWith("!setcaptain "))
                 cmd_setCaptain(event);
         }
@@ -785,6 +787,8 @@ public class bwjsbot extends SubspaceBot {
             help.add("ER commands:");
             help.add("!start                            -- starts the bot");
             help.add("!stop                             -- stops the bot");
+            if(!cfg.allowAuto)
+            	help.add("!zone                             -- sends time-restricted advert");
             help.add("!setcaptain <teamname>:<player>   -- Sets <player> as captain for <teamname>");
         }
         
@@ -1299,8 +1303,8 @@ public class bwjsbot extends SubspaceBot {
                     Tools.Sound.BEEP2);
             m_botAction.scheduleTask(addingTimer, 5 * Tools.TimeInMillis.MINUTE);
         }
-        
-        newGameAlert();
+        if(cfg.allowAuto)
+        	newGameAlert();
         
         determineNextPick();
     }
