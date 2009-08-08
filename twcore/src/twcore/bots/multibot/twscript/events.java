@@ -123,8 +123,11 @@ public class events extends MultiUtil {
     /** Sends an unfiltered private message to everyone in the arena. */
     public void do_massPm(String name, String msg){
         Iterator<Player> i = m_botAction.getPlayerIterator();
-        while( i.hasNext() )
-            CodeCompiler.handleTWScript(m_botAction, msg, i.next(), m_twscript, m_twscript.ACCESS_LEVEL);
+        while( i.hasNext() ){
+        	Player p = i.next();
+        	if(p.getPlayerName() != m_botAction.getBotName())
+        		CodeCompiler.handleTWScript(m_botAction, msg, p, m_twscript, m_twscript.ACCESS_LEVEL);
+        }
     }
     
     /** Executes a public TWScript message. */
