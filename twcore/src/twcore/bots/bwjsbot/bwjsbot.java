@@ -247,6 +247,10 @@ public class bwjsbot extends SubspaceBot {
     
     public void handleEvent(Message event) {
         /* Racism Watcher */
+    	if(event.getMessageType() == Message.PUBLIC_MESSAGE        ||
+    	   event.getMessageType() == Message.TEAM_MESSAGE          ||
+    	   event.getMessageType() == Message.OPPOSING_TEAM_MESSAGE ||
+    	   event.getMessageType() == Message.PUBLIC_MACRO_MESSAGE)
         racismWatcher.handleEvent(event);
         
         /* Arena Lock-O-Matic */
@@ -475,7 +479,7 @@ public class bwjsbot extends SubspaceBot {
                 cmd_start(event);
             else if (message.equals("!stop"))
                 cmd_stop(event);
-            else if (message.equals("!zone") && !cfg.allowAuto && (state == GAME_OVER || state == WAITING_FOR_CAPS))
+            else if (message.equals("!zone") && !cfg.allowAuto && (state == GAME_OVER || state == WAITING_FOR_CAPS || state == ADDING_PLAYERS))
             	newGameAlert();
             else if (message.startsWith("!setcaptain "))
                 cmd_setCaptain(event);
