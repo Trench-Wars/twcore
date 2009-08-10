@@ -210,6 +210,7 @@ public class TWScript extends MultiUtil {
     		m_botAction.sendEmailMessage(msg[0], msg[1]);
     		m_botAction.sendSmartPrivateMessage( name, "Message sent to " + msg[0] + ".");
     	}catch(Exception e){
+    		Tools.printStackTrace(e);
     		m_botAction.sendSmartPrivateMessage( name, "Delivery failed. Error sending message.");
     	}
     }
