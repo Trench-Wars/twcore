@@ -444,6 +444,7 @@ public class scramble extends MultiModule {
     public void doCheckPrivate(String name, String message) {
         if ((gameProgress == 2) || (gameProgress == 3)) {
             String curAns = t_word;
+            if(message == null || curAns == null)return;
             if ((message.toLowerCase().equals(curAns.toLowerCase()))) {
                 if (!cantPlay.contains(name)) {
                     answerSpeed = (new java.util.Date().getTime() - giveTime) / 1000.0;
