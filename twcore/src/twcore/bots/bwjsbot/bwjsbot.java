@@ -203,6 +203,7 @@ public class bwjsbot extends SubspaceBot {
     public void handleEvent(FrequencyChange event) {
         if (state >= ADDING_PLAYERS && state < GAME_OVER) {
             String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
+            if(name == null)return;
             int teamNumber = getTeamNumber(name);
             
             if (teamNumber != -1) {
@@ -222,6 +223,7 @@ public class bwjsbot extends SubspaceBot {
     public void handleEvent(FrequencyShipChange event) {
         if (state >= ADDING_PLAYERS && state < GAME_OVER && event.getShipType() == Tools.Ship.SPECTATOR) {
             String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
+            if(name == null)return;
             int teamNumber = getTeamNumber(name);
             
             if (teamNumber != -1) {
@@ -277,24 +279,25 @@ public class bwjsbot extends SubspaceBot {
     }
     
     public void handleEvent(PlayerDeath event) {
-        if (state == GAME_IN_PROGRESS) {
-            String killeeName = m_botAction.getPlayerName(event.getKilleeID()).toLowerCase();
-            String killerName = m_botAction.getPlayerName(event.getKillerID()).toLowerCase();
-            
-            if (team[ONE].players.containsKey(killeeName)) 
-                team[ONE].players.get(killeeName).killed();
-            else if (team[TWO].players.containsKey(killeeName))
-                team[TWO].players.get(killeeName).killed();
+    	Player killee = m_botAction.getPlayer(event.getKilleeID());
+    	Player killer = m_botAction.getPlayer(event.getKillerID());
+    	if(killee == null || killer == null)return;
+        if (state == GAME_IN_PROGRESS) {            
+            if (team[ONE].players.containsKey(killee.getPlayerName().toLowerCase())) 
+                team[ONE].players.get(killee.getPlayerName().toLowerCase()).killed();
+            else if (team[TWO].players.containsKey(killee.getPlayerName().toLowerCase()))
+                team[TWO].players.get(killee.getPlayerName().toLowerCase()).killed();
                         
-            if (team[ONE].players.containsKey(killerName)) 
-                team[ONE].players.get(killerName).killer(event);
-            else if (team[TWO].players.containsKey(killerName))
-                team[TWO].players.get(killerName).killer(event);
+            if (team[ONE].players.containsKey(killer.getPlayerName().toLowerCase())) 
+                team[ONE].players.get(killer.getPlayerName().toLowerCase()).killer(event);
+            else if (team[TWO].players.containsKey(killer.getPlayerName().toLowerCase()))
+                team[TWO].players.get(killer.getPlayerName().toLowerCase()).killer(event);
         }
     }
     
     public void handleEvent(PlayerEntered event) {
         String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
+        if(name == null)return;
         
         //Feed the list with people who have enough usage to get captain
         if (!listEnoughUsage.contains(name) && cfg.capUsage != 0)
@@ -324,6 +327,7 @@ public class bwjsbot extends SubspaceBot {
     public void handleEvent(PlayerLeft event) {
         if (state >= ADDING_PLAYERS && state < GAME_OVER) {
             String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
+            if(name == null)return;
             final int teamNumber = getTeamNumber(name);
             
             //If player was in neither of the teams, do nothing
@@ -392,6 +396,7 @@ public class bwjsbot extends SubspaceBot {
          */
         if (state == PRE_GAME) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
+            if(name == null)return;
             int teamNumber = getTeamNumber(name);
             int x_coord = event.getXLocation() / 16;
             int y_coord = event.getYLocation() / 16;
@@ -407,8 +412,10 @@ public class bwjsbot extends SubspaceBot {
     }
     
     public void handleEvent(WeaponFired event) {
+    	Player p = m_botAction.getPlayer(event.getPlayerID());
+    	if(p == null)return;
         if (state == GAME_IN_PROGRESS) {
-            String name = m_botAction.getPlayerName(event.getPlayerID()).toLowerCase();
+            String name = p.getPlayerName().toLowerCase();
             int teamNumber = getTeamNumber(name);
             
             //Repel fired
@@ -421,7 +428,7 @@ public class bwjsbot extends SubspaceBot {
     private void handleCommand(Message event) {
         String message = event.getMessage().toLowerCase();
         String messager = m_botAction.getPlayerName(event.getPlayerID());
-        
+        if(messager == null)return;
         //Captain commands
         if (isCaptain(messager)) {
             if (cfg.gameType == BASE) {
@@ -591,6 +598,7 @@ public class bwjsbot extends SubspaceBot {
                 
                 /* All checks done */
                 team[teamNumber].addPlayer(player, shipType);
+                m_botAction.sendSmartPrivateMessage(team[teamNumber].captainName, player.getPlayerName() + " has been added.");
                 
                 //Toggle turn
                 if (state == ADDING_PLAYERS) {
@@ -2370,6 +2378,7 @@ public class bwjsbot extends SubspaceBot {
             else {
                 players.get(player.getPlayerName().toLowerCase()).p_currentShip = shipType;
                 players.get(player.getPlayerName().toLowerCase()).addPlayer();
+                m_botAction.sendSmartPrivateMessage(player.getPlayerName(), "You've been added to the game.");//TODO:
             }
         }
         
