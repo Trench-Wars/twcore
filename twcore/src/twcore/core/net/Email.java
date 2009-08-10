@@ -43,7 +43,7 @@ public class Email {
     			
     		Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(user));
-            message.setRecipient(Message.RecipientType.TO, new InternetAddress(from));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
             message.setSubject(subject);
             message.setText(text);
                
