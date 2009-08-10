@@ -3,7 +3,6 @@ package twcore.bots.multibot.util;
 import twcore.bots.MultiUtil;
 import twcore.core.events.Message;
 import twcore.core.util.ModuleEventRequester;
-import twcore.core.util.Tools;
 
 /**
  * @author milosh
@@ -38,9 +37,7 @@ public class utilideabox extends MultiUtil {
 	
 	public void handlePlayerCommands(String name, String cmd){
 		if(cmd.startsWith("!idea ") && cmd.substring(6).length() > 0){
-			try{
-				m_botAction.sendEmailMessage("twsuggestions@googlegroups.com", cmd.substring(6));
-			}catch(Exception e){Tools.printStackTrace(e);}
+			m_botAction.sendEmailMessage("twsuggestions@googlegroups.com", "Submitted suggestion", cmd.substring(6));
 		}
 	}
 	

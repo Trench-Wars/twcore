@@ -1114,14 +1114,26 @@ public class BotAction
     }
 
     /**
-     * Sends an e-mail message. The subject will be the bot's name.
-     * @param to E-mail address of recipient
+     * Sends an e-mail message
+     * 
+     * @param recipient E-mail address of recipient
+     * @param subject Subject of the e-mail
      * @param text Body of the message
+     * @return boolean TRUE if successfull, FALSE if an error was encountered
      */
-    public void sendEmailMessage(final String to, final String text) throws Exception{
+    public boolean sendEmailMessage(String recipient, String subject, String text) {
     	BotSettings cfg = this.getGeneralSettings();
     	Email email = new Email(cfg.getString("MailHost"), cfg.getInt("MailPort"), cfg.getString("MailUser"), cfg.getString("MailPass"), cfg.getInt("SSL")==1);
-    	email.send(cfg.getString("MailUser"), to, getBotName(), text);
+    	
+    	try {
+    		email.send(cfg.getString("MailUser"), recipient, subject, text);
+    		
+    	} catch(Exception e) {
+    		Tools.printStackTrace(e);
+    		return false;
+    	}
+    	
+    	return true;
     }
 
 

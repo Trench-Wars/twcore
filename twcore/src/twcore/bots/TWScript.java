@@ -206,13 +206,13 @@ public class TWScript extends MultiUtil {
     		m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !email <address>:<text>");
     		return;
     	}
-    	try{
-    		m_botAction.sendEmailMessage(msg[0], msg[1]);
+
+    	boolean emailSend = m_botAction.sendEmailMessage(msg[0], "TWScript Message", msg[1]);
+    	
+    	if(emailSend)
     		m_botAction.sendSmartPrivateMessage( name, "Message sent to " + msg[0] + ".");
-    	}catch(Exception e){
-    		Tools.printStackTrace(e);
+    	else
     		m_botAction.sendSmartPrivateMessage( name, "Delivery failed. Error sending message.");
-    	}
     }
     
     /**
