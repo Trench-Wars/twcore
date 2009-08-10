@@ -338,8 +338,11 @@ public class elim extends SubspaceBot {
     		cmd_on(name);
     	else if(cmd.equalsIgnoreCase("!shutdown"))
     		cmd_off(name, true);
-    	else if(cmd.equalsIgnoreCase("!die"))
-    		m_botAction.scheduleTask(new DieTask(name), 500);    		
+    	else if(cmd.equalsIgnoreCase("!die")){
+    		try{
+    			m_botAction.scheduleTask(new DieTask(name), 500);
+    		}catch(Exception e){}
+    	}
     }
     
     public void handleSysopCommands(String name, String cmd){
@@ -667,7 +670,9 @@ public class elim extends SubspaceBot {
     	}else{
     		botMode = DISCONNECT;
     		if(game.state == GameStatus.OFF_MODE || game.state == GameStatus.WAITING_FOR_PLAYERS)
-    			m_botAction.scheduleTask(new DieTask(name), 500);
+    			try{
+    				m_botAction.scheduleTask(new DieTask(name), 500);
+    			}catch(Exception e){}
     		else
     			m_botAction.sendSmartPrivateMessage( name, "The bot will disconnect once the current game ends.");
     	}
@@ -720,7 +725,9 @@ public class elim extends SubspaceBot {
     	            game.moveOn();
     	        }
     	    };
-    	    m_botAction.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
+    	    try{
+    	    	m_botAction.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
+    	    }catch(Exception e){}
     	} else
     		m_botAction.sendArenaMessage("A new elimination match will begin when " + neededPlayers + " more player(s) enter.");
     }
@@ -1316,7 +1323,9 @@ private class GameStatus{
 				this.cancel();
 			}
 		};
-		m_botAction.scheduleTask(task, millis);
+		try{ 
+			m_botAction.scheduleTask(task, millis);
+		}catch(Exception e){}
 	}
 	
 	private void moveOn(){
@@ -1365,8 +1374,11 @@ private class GameStatus{
 					lastWinner = "-anonymous-";
 					winStreak = 0;
 				}
-				else if(botMode == DISCONNECT)
-					m_botAction.scheduleTask(new DieTask(m_botAction.getBotName()), 500);
+				else if(botMode == DISCONNECT){
+					try{
+						m_botAction.scheduleTask(new DieTask(m_botAction.getBotName()), 500);
+					}catch( Exception e ){}
+				}
 				break;
 		}	
 	}
@@ -1429,7 +1441,9 @@ private class MVPTimer {
         
     public MVPTimer(String name) {
         this.name = name;
-        m_botAction.scheduleTask(runIt, 5 * Tools.TimeInMillis.SECOND);
+        try{
+        	m_botAction.scheduleTask(runIt, 5 * Tools.TimeInMillis.SECOND);
+        } catch( Exception e){}
     }
 }
 
