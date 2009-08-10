@@ -819,8 +819,9 @@ public class utilprizes extends MultiUtil
           "!PrizeShip <type>:<ship>:<interval>       -- Grants a prize to ship <ship> every <interval> seconds",
           "!PrizePlayer <type>:<name>                -- Grants a prize to the player <name>",
           "!PrizePlayer <type>:<name1>:<interval>    -- Grants a prize to player <name> every <interval> seconds",
-          "!PrizeDel <PrizeNumber>                   -- Deletes a specific prize from the list.",
-          "!PrizesOff                                -- Clears all prizes.",
+          "!PrizeDel <PrizeNumber>                   -- Deletes a specific prize from the list",
+          "!PrizesOff                                -- Clears all prizing tasks you've created",
+          "!PrizeList                                -- Lists all the prizing tasks you've created",
           "!ListPrizeNames                           -- Lists all the types of prizes",
           "Note: some prizes that cause problems are restricted.  HighMod+ can override this."
       };

@@ -37,9 +37,9 @@ public class utilideabox extends MultiUtil {
 	}
 	
 	public void handlePlayerCommands(String name, String cmd){
-		if(cmd.startsWith("!idea ")){
+		if(cmd.startsWith("!idea ") && cmd.substring(6).length() > 0){
 			try{
-				m_botAction.sendEmailMessage("twsuggestions@googlegroups.com", cmd.substring(5));
+				m_botAction.sendEmailMessage("twsuggestions@googlegroups.com", cmd.substring(6));
 			}catch(Exception e){Tools.printStackTrace(e);}
 		}
 	}
