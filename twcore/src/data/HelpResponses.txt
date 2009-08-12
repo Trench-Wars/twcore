@@ -1,5 +1,6 @@
 &TWD &OP|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
 &TWD &Ops|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
+&TWDOp|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
 &Squad &Join &How|To join a squad type ?squadjoin=Name:Password where <Name> is the name of the squad and <Password> is the squad's password.
 &Squadjoin &How|To join a squad type ?squadjoin=Name:Password where <Name> is the name of the squad and <Password> is the squad's password.
 &Squad &Leave &How|To leave your current squad type ?squadleave.
