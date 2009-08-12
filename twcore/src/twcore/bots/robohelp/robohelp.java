@@ -659,7 +659,7 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendChatMessage( name + " hasn't done a help call yet." );
             } else {
                 if( helpRequest.getBeenWarned() == true ) {
-                    m_botAction.sendChatMessage( "NOTICE: " + name + " has already been warned." );
+                    m_botAction.sendChatMessage( name + " has already been warned, no warning given." );
                 } else {
                     helpRequest.setBeenWarned( true );
                     if( helpRequest.AdvertTell() == true ){
