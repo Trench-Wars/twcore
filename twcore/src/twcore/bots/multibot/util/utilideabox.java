@@ -37,7 +37,9 @@ public class utilideabox extends MultiUtil {
 	
 	public void handlePlayerCommands(String name, String cmd){
 		if(cmd.startsWith("!idea ") && cmd.substring(6).length() > 0){
-			m_botAction.sendEmailMessage("twsuggestions@googlegroups.com", "Submitted suggestion", cmd.substring(6));
+			if(m_botAction.sendEmailMessage("twsuggestions@googlegroups.com", name, cmd.substring(6)))
+				m_botAction.sendSmartPrivateMessage(name, "Idea submitted. Thank you for your suggestion.");
+			else m_botAction.sendSmartPrivateMessage(name, "An error occurred while submitting your idea.");
 		}
 	}
 	
