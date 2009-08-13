@@ -395,7 +395,7 @@ public class robohelp extends SubspaceBot {
 
     }
 
-    public void handleCheater( String playerName, String message ){
+    public void handleCheater( String playerName, String message ) {
         HelpRequest     helpRequest;
 
         lastHelpRequestName = playerName;
@@ -403,7 +403,7 @@ public class robohelp extends SubspaceBot {
         callList.addElement( new EventData( new java.util.Date().getTime() ) ); //For Records
         helpRequest = m_playerList.get( playerName.toLowerCase() );
         if( helpRequest == null ){
-            helpRequest = new HelpRequest( playerName, null, null );
+            helpRequest = new HelpRequest( playerName, message, null );
             m_playerList.put( playerName.toLowerCase(), helpRequest );
         }
     }
@@ -549,14 +549,25 @@ public class robohelp extends SubspaceBot {
         if( seperator == -1 ){
             name = lastHelpRequestName;
             keyword = message;
+            
+            // If the ?help caller is a bot, try to extract the name from its message
+            // cheater: (PubBot6) (Public 4): TK Report: 51xg35qas8ghc is reporting BadBoyTKer for intentional TK. (150 total TKs)
+            // (Not racism calls, you don't want to do !tell onit on the one who is doing racist words)
+            if(m_botAction.getOperatorList().isBotExact(name) && m_playerList.containsKey(lastHelpRequestName.toLowerCase())) { 
+            	String lastHelpMessage = m_playerList.get(lastHelpRequestName.toLowerCase()).getQuestion();
+            	
+            	if(lastHelpMessage != null && lastHelpMessage.contains("TK Report: ")) {
+            		name = lastHelpMessage.substring(lastHelpMessage.indexOf("TK Report: ")+11, lastHelpMessage.indexOf(" is reporting"));
+            	}
+            }
+            
         } else {
             name = message.substring( 0, seperator ).trim();
             keyword = message.substring( seperator + 1 ).trim();
         }
 
         if( name != null ){
-            if( messager.toLowerCase().compareTo( name.toLowerCase() ) == 0 ||
-                messager.toLowerCase().startsWith( name.toLowerCase() ) ){
+            if( messager.equalsIgnoreCase( name ) || messager.toLowerCase().startsWith( name.toLowerCase() ) ){
 
                 m_botAction.sendChatMessage( "Use :" + m_botAction.getBotName()
                 + ":!lookup <keyword> instead."  );
@@ -1338,6 +1349,10 @@ public class robohelp extends SubspaceBot {
         
         public long getTime() {
         	return this.m_time;
+        }
+        
+        public String getQuestion() {
+        	return this.m_question;
         }
     }
 
