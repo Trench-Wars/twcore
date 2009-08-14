@@ -150,7 +150,7 @@ public class dangerous extends MultiModule {
         while( i.hasNext() ) {
             Player p = i.next();
 
-            PlayerInfo player = new PlayerInfo( p.getPlayerName(), p.getPlayerID(), p.getShipType() );
+            PlayerInfo player = new PlayerInfo( p.getPlayerName(), p.getShipType(), m_starttime );
             m_botAction.scheduleTaskAtFixedRate( player, 1000, 1000 );
 
             m_players.put( p.getPlayerName(), player );
@@ -409,6 +409,32 @@ public class dangerous extends MultiModule {
                     m_botAction.sendPrivateMessage( name, "The Most Dangerous Game has already begun." );
                 }
 
+            } else if( message.startsWith( "!addlate " )){
+            	if(isRunning == true && m_players.values().size() != 0) {
+            		Iterator<PlayerInfo> i = m_players.values().iterator();
+            		int size = m_players.values().size();
+            		double average = 0, sum = 0;
+            		while( i.hasNext() ){
+            			PlayerInfo p = i.next();
+            			sum += p.time;
+            		}
+            		average = sum / size;//TODO:
+            	    String[] msgs = message.substring(9).split(":");
+            	    if(msgs.length != 2){
+                		m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !addlate <name>:<ship>");
+                		return;
+                	}
+            		try {
+            			Integer shipType = Integer.parseInt(msgs[1]);
+            			m_players.put(msgs[0], new PlayerInfo(msgs[0], shipType, (int) Math.round(average)));
+            			m_botAction.setShip(msgs[0], shipType);
+            		} catch(NumberFormatException e){
+            			m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !addlate <name>:<ship>");
+            			return;
+            		}
+            	} else {
+            		m_botAction.sendPrivateMessage( name, "Game is not currently running." );
+            	}
             } else if( message.startsWith( "!rules" )) {
 
                 m_botAction.sendArenaMessage( "RULES of the MOST DANGEROUS GAME: Everyone starts with a certain number of seconds left to live." );
@@ -513,14 +539,15 @@ public class dangerous extends MultiModule {
      */
     public String[] getModHelpMessage() {
         String[] DangerousHelp = {
-            "!start              - Starts normal game (same as !start 120 20 8)",
+            "!start                 - Starts normal game (same as !start 120 20 8)",
             "!start <starttime> <killtime> <deathtime>    where",
-            "                      starttime = time players begin with",
-            "                      killtime  = time gained for killing someone",
-            "                      deathtime = time lost for being killed",
-            "!stop               - Stops the Most Dangerous Game.",
-            "!rules              - Displays basic rules to the arena.",
-            "!remove <name>      - Removes player from the game." };
+            "                         starttime = time players begin with",
+            "                         killtime  = time gained for killing someone",
+            "                         deathtime = time lost for being killed",
+            "!addlate <name>:<ship> - Adds with average remaining time",
+            "!stop                  - Stops the Most Dangerous Game.",
+            "!rules                 - Displays basic rules to the arena.",
+            "!remove <name>         - Removes player from the game." };
         return DangerousHelp;
     }
 
@@ -541,7 +568,6 @@ public class dangerous extends MultiModule {
     private class PlayerInfo extends TimerTask {
 
         private String name;
-        private int id;
         private int time;
         private int maxTime;
         private int shipType;
@@ -549,11 +575,10 @@ public class dangerous extends MultiModule {
         private boolean laggedOut = false;
 
 
-        public PlayerInfo( String name, int id, int shipType ) {
+        public PlayerInfo( String name, int shipType, int startTime ) {
             this.name = name;
-            this.id = id;
             this.shipType = shipType;
-            time = m_starttime;
+            time = startTime;
             maxTime = m_starttime;
         }
 
@@ -563,7 +588,7 @@ public class dangerous extends MultiModule {
                 time += m_killtime;
             	if( time > maxTime )
                 	maxTime = time;
-        		m_botAction.sendPrivateMessage( id, "KILL:  +" + m_killtime + " sec life. (" + getTime() + " total)" );
+        		m_botAction.sendPrivateMessage( name, "KILL:  +" + m_killtime + " sec life. (" + getTime() + " total)" );
             }
         }
 
@@ -572,9 +597,9 @@ public class dangerous extends MultiModule {
             if( isPlaying ) {
                 time -= m_deathtime;
                 if( time > 0 )
-                    m_botAction.sendPrivateMessage( id, "DEATH: -" + m_deathtime + " sec life.  (" + getTime() + " total)" );
+                    m_botAction.sendPrivateMessage( name, "DEATH: -" + m_deathtime + " sec life.  (" + getTime() + " total)" );
                 else
-                    m_botAction.sendPrivateMessage( id, "DEATH: -" + m_deathtime + " sec life.  (0 TOTAL -- YOU ARE DEAD!!!)" );
+                    m_botAction.sendPrivateMessage( name, "DEATH: -" + m_deathtime + " sec life.  (0 TOTAL -- YOU ARE DEAD!!!)" );
 
             }
         }
@@ -607,13 +632,13 @@ public class dangerous extends MultiModule {
             	if( time > 0 ) {
             	    if( !laggedOut ) {
             	        if( time == 10 )
-            	            m_botAction.sendPrivateMessage( id, "                !!! 10 SECONDS LEFT !!!", 103 );
+            	            m_botAction.sendPrivateMessage( name, "                !!! 10 SECONDS LEFT !!!", 103 );
                 		else if( time <= 5 )
-                		    m_botAction.sendPrivateMessage( id, "                       --- " + String.valueOf(time) + " ---" );
+                		    m_botAction.sendPrivateMessage( name, "                       --- " + String.valueOf(time) + " ---" );
             	    }
             	} else {                                      //                 !!! 10 SECONDS LEFT !!!
             	                                              //                        --- 1 ---
-    	            m_botAction.sendPrivateMessage( id,         "~ R.I.P ~  Life cut short, you have expired.  ~ R.I.P ~", 8 );
+    	            m_botAction.sendPrivateMessage( name,         "~ R.I.P ~  Life cut short, you have expired.  ~ R.I.P ~", 8 );
                 	spec();
             	}
             }
@@ -628,19 +653,19 @@ public class dangerous extends MultiModule {
 
         public void laggedOut() {
             laggedOut = true;
-        	m_botAction.sendPrivateMessage( id, "PM me with !lagout to get back in the game." );
+        	m_botAction.sendPrivateMessage( name, "PM me with !lagout to get back in the game." );
         }
 
 
         public void returnedFromLagout() {
             Player p = m_botAction.getPlayer( name );
             if( p != null ) {
-                int id = p.getPlayerID();
-                m_botAction.setShip( id, shipType );
-                m_botAction.sendPrivateMessage( id, "Welcome back.  Time remaining: " + getTime() );
+                String name = p.getPlayerName();
+                m_botAction.setShip( name, shipType );
+                m_botAction.sendPrivateMessage( name, "Welcome back.  Time remaining: " + getTime() );
                 laggedOut = false;
             } else {
-                m_botAction.sendPrivateMessage( id, "Error!  Please ask the host to put you back in manually." );
+                m_botAction.sendPrivateMessage( name, "Error!  Please ask the host to put you back in manually." );
             }
         }
 
@@ -691,7 +716,7 @@ public class dangerous extends MultiModule {
 
             int amtReturn = (int)(amt * .15);
 
-            m_botAction.sendPrivateMessage( id, "INVESTMENT RETURN!  (" + getTimeString( amt ) + " + " + getTimeString( amtReturn ) + ") + " + getTimeString( time ) + " = " + getTimeString( amt + amtReturn + time ));
+            m_botAction.sendPrivateMessage( name, "INVESTMENT RETURN!  (" + getTimeString( amt ) + " + " + getTimeString( amtReturn ) + ") + " + getTimeString( time ) + " = " + getTimeString( amt + amtReturn + time ));
             time += amt + amtReturn;
             return true;
 
