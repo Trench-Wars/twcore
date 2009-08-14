@@ -1,5 +1,7 @@
 package twcore.bots.chatrelaybot;
 
+import java.util.TimerTask;
+
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -33,8 +35,8 @@ public class chatrelaybot extends SubspaceBot {
     
     public void handleEvent(Message event) {
     	String message = event.getMessage();
+    	String sender = event.getMessager() != null ? event.getMessager() : m_botAction.getPlayerName(event.getPlayerID());
     	if(event.getMessageType() == Message.CHAT_MESSAGE) {    		
-    		String sender = event.getMessager();
     		int chatNumber = event.getChatNumber();
     		String sendMessage = sender + ":" + message;
     		if(chatNumber == 2) {
@@ -57,6 +59,10 @@ public class chatrelaybot extends SubspaceBot {
     		if(message.equalsIgnoreCase(CHAT_COMMAND)){
     			requester = event.getMessager();
     			m_botAction.sendUnfilteredPublicMessage("?chat");
+    		}
+    		else if(message.equalsIgnoreCase("!die")){
+    			m_botAction.sendSmartPrivateMessage(sender, "Logging off.");
+    			m_botAction.scheduleTask(new DieTask(m_botAction.getBotName()), 500);
     		}
     	}
     }
@@ -84,5 +90,18 @@ public class chatrelaybot extends SubspaceBot {
     			m_botAction.sendChatMessage(1, temp.substring(0,index) + "> " + msg);
     		}
     	}
+    }
+    
+    private class DieTask extends TimerTask {
+        String m_initiator;
+
+        public DieTask( String name ) {
+            super();
+            m_initiator = name;
+        }
+
+        public void run() {
+            m_botAction.die( "!die initiated by " + m_initiator );
+        }
     }
 }
