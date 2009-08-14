@@ -54,9 +54,10 @@ public class untouchable extends MultiModule {
     TimerTask giveStartWarning;
 
     String m_untouchable = "";
-    int m_lives;
+    int m_lives, m_utLives;
 
     boolean isRunning = false;
+    boolean allowGuessing = false;
     boolean manual = false;        // Manual toggle for more personal hosting style
 
 
@@ -85,8 +86,9 @@ public class untouchable extends MultiModule {
      * @param UTName Name of player to be the starting Untouchable.  If
      *                   left blank, random starting UT.
      */
-    public void doInit( final int lives, String UTName ){
+    public void doInit( final int lives, final int utLives, String UTName ){
         m_lives = lives;
+        m_utLives = utLives;
 
         if ( UTName == "" ) {
             makeNewRandomUntouchable();
@@ -94,7 +96,7 @@ public class untouchable extends MultiModule {
             Player p = m_botAction.getFuzzyPlayer( UTName );
             if( p != null) {
                 m_untouchable = p.getPlayerName();
-                m_botAction.sendPrivateMessage( m_untouchable, "You have been selected to be the Untouchable!  You have no death limit, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
+                m_botAction.sendPrivateMessage( m_untouchable, "You have been selected to be the Untouchable!  You have a " + utLives + " death limit, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
             }
         }
 
@@ -107,7 +109,8 @@ public class untouchable extends MultiModule {
                     m_botAction.scoreResetAll();
                     m_botAction.shipResetAll();
 
-                    m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths (except the Untouchable)" );
+                    m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths" );
+                    m_botAction.sendArenaMessage("Removes the untouchable with " + utLives + " deaths");
                     m_botAction.sendArenaMessage( "GO GO GO!!", 104);
 
                     m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
@@ -121,7 +124,8 @@ public class untouchable extends MultiModule {
             isRunning = true;
             m_botAction.scoreResetAll();
             m_botAction.shipResetAll();
-            m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths (except the Untouchable)" );
+            m_botAction.sendArenaMessage( "Removing players with " + lives + " deaths" );
+            m_botAction.sendArenaMessage("Removes the untouchable with " + utLives + " deaths");
             m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
 
         } else {
@@ -153,7 +157,7 @@ public class untouchable extends MultiModule {
         while ( m_untouchable == "" && i.hasNext() ) {
             if (i != null) {
                 m_untouchable = ((Player) i.next()).getPlayerName();
-                m_botAction.sendPrivateMessage( m_untouchable, "You have been selected to be the Untouchable!  You can not die, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
+                m_botAction.sendPrivateMessage( m_untouchable, "You have been selected to be the Untouchable!  You have " + m_utLives + " deaths, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
             }
         }
     }
@@ -173,26 +177,35 @@ public class untouchable extends MultiModule {
             // Default: 10 lives, random starting Untouchable
             case 0:
                 m_untouchable = "";
-                doInit( 10, "" );
+                doInit( 10, 99, "" );
                 m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
                 break;
 
             // User-defined number of lives, random starting Untouchable
             case 1:
-                int lives = Integer.parseInt(params[0]);
+                int pLives1 = Integer.parseInt(params[0]);
                 m_untouchable = "";
-                doInit( lives, "" );
+                doInit( pLives1, 99, "" );
                 m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
                 break;
 
-            // User-defined number of lives and starting Untouchable
+            // User-defined number of both player and Untouchable lives    
             case 2:
-                int theLives = Integer.parseInt(params[0]);
-                String UTName = params[1];
+            	int pLives2 = Integer.parseInt(params[0]);
+            	int utLives2 = Integer.parseInt(params[1]);
+            	m_untouchable = "";
+            	doInit( pLives2, utLives2, "");
+            	m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
+            	break;
+            // User-defined number of player lives, Untouchable lives, and starting Untouchable
+            case 3:
+                int pLives3 = Integer.parseInt(params[0]);
+                int utLives3 = Integer.parseInt(params[1]);
+                String UTName = params[2];
                 Player p = m_botAction.getFuzzyPlayer( UTName );
 
                 if (p != null) {
-                    doInit( theLives, UTName );
+                    doInit( pLives3, utLives3, UTName );
                     m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
                 } else {
                     m_botAction.sendPrivateMessage( name, "Unrecognized user name.  Please check the spelling and try again." );
@@ -237,7 +250,7 @@ public class untouchable extends MultiModule {
         } else if( message.startsWith( "!start" )){
             if(isRunning == false) {
                 m_untouchable = "";
-                doInit( 10, "" );
+                doInit( 10, 99, "" );
                 m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
             } else {
                 m_botAction.sendPrivateMessage( name, "Untouchable mode is already enabled." );
@@ -245,7 +258,14 @@ public class untouchable extends MultiModule {
 
         } else if( message.startsWith( "!rules" )) {
             displayRules();
-
+        } else if( message.equalsIgnoreCase("!allowguessing")){
+        	if( allowGuessing ) {
+        		allowGuessing = false;
+        		m_botAction.sendSmartPrivateMessage( name, "Guessing OFF. Players are not allowed to guess the untouchable.");
+        	} else {
+        		allowGuessing = true;
+        		m_botAction.sendSmartPrivateMessage( name, "Guessing ON. Players are allowed to guess the untouchable.");
+        	}
         } else if( message.startsWith( "!manual" )) {
             if( manual ) {
                 manual = false;
@@ -265,7 +285,10 @@ public class untouchable extends MultiModule {
         // Prevent double !help spam (don't be TOO helpful)
         if( message.startsWith( "!bothelp" ) )
             sendHelp( name );
-
+        
+        else if( message.startsWith("!guess " ))
+        	guessUT( name, message.substring(7));
+        
         else if( message.startsWith( "!botrules" ) )
             sendRules( name );
 
@@ -375,18 +398,26 @@ public class untouchable extends MultiModule {
         if( isRunning ){
 
             Player p = m_botAction.getPlayer( event.getKilleeID() );
+            if(p == null)return;
 
             // If someone's shot the Untouchable . . .
             if( m_untouchable.equals( p.getPlayerName() ) ) {
                 Player killer = m_botAction.getPlayer( event.getKillerID() );
+                if(killer == null)return;
                 String killerName = killer.getPlayerName();
 
                 m_botAction.sendPrivateMessage(killerName, "You've made the permanent mistake of trying to kill the Untouchable ... now you're sleeping with the fishes!", 13);
                 m_botAction.sendPrivateMessage(killerName, "REMEMBER: Revealing the identity of the Untouchable is strictly forbidden!");
-                m_botAction.spec(killerName);
-                m_botAction.spec(killerName);
+                m_botAction.specWithoutLock(killerName);
+                // Spec UT over certain amount of lives m_utLives
+                if(p.getLosses() >= m_utLives ){
+                	m_botAction.sendArenaMessage(p.getPlayerName() + " was the untouchable, but is now out (" + p.getWins() + 
+                			" - " + p.getLosses() +  ")! A new untouchable has been selected.");
+                	m_botAction.specWithoutLock(p.getPlayerName());
+                	makeNewRandomUntouchable();
+                }
 
-            // Spec non-UTs over certain amount of lives
+            // Spec non-UTs over certain amount of lives m_lives
             } else if( p.getLosses() >= m_lives ) {
 
                 String playerName = p.getPlayerName();
@@ -394,8 +425,7 @@ public class untouchable extends MultiModule {
                 int losses = p.getLosses();
 
                 m_botAction.sendArenaMessage(playerName + " is out.  " + wins + " wins, " + losses + " losses.");
-                m_botAction.spec(playerName);
-                m_botAction.spec(playerName);
+                m_botAction.specWithoutLock(playerName);
 
             }
         }
@@ -417,7 +447,30 @@ public class untouchable extends MultiModule {
             m_botAction.sendArenaMessage( rules[i] );
     }
 
-
+    public void guessUT( String name, String message ) {
+    	Player p = m_botAction.getPlayer(name);
+    	Player guess = m_botAction.getFuzzyPlayer(message);
+    	if( p == null || guess == null)return;
+    	if(!allowGuessing){
+    		m_botAction.sendSmartPrivateMessage( name, "Guessing is currently disabled.");
+    		return;
+    	} else if(!p.isPlaying()) {
+    		m_botAction.sendSmartPrivateMessage( name, "You must be playing to guess!");
+    	} else {
+    		if(guess.getPlayerName().equalsIgnoreCase(m_untouchable)){
+    			m_botAction.sendSmartPrivateMessage( m_untouchable, "You've been discovered!");
+    			m_botAction.sendArenaMessage(guess.getPlayerName() + " was the untouchable, but is now out (" + guess.getWins() + 
+            			" - " + guess.getLosses() +  ")! A new untouchable has been selected.");
+    			m_botAction.specWithoutLock(m_untouchable);
+    			m_untouchable = p.getPlayerName();
+                m_botAction.sendPrivateMessage( m_untouchable, "You have been selected to be the Untouchable!  You have a " + m_utLives + " death limit, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
+    		} else {
+    			m_botAction.sendSmartPrivateMessage( name, "Incorrect guess!");
+    			m_botAction.sendArenaMessage(name + " chose poorly and is now out! " + p.getWins() + " wins " + p.getLosses() + " losses.");
+    			m_botAction.specWithoutLock(name);
+    		}
+    	}
+    }
 
     /** Sends rules privately to a player.
      * @param name Player to send msg to.
@@ -478,13 +531,14 @@ public class untouchable extends MultiModule {
      */
     public String[] getModHelpMessage() {
         String[] untouchableHelp = {
-            "!start              - Starts Untouchable mode w/ defaults (10 lives, random UT)",
-            "!start <lives>      - Starts Untouchable mode w/ specific # of lives and random UT.",
-            "!start <lives> <UTname> - Specify number of lives and starting Untouchable.",
-            "!stop               - Stops Untouchable mode.",
-            "!rules              - Displays basic rules of the Untouchable to the arena.",
-            "!whoami             - PUBLIC COMMAND.  Tells you if you are the Untouchable.",
-            "!manual             - Manual toggle.  If on, !start will start game instantly. (Default OFF)"
+            "!start                            - Starts Untouchable mode w/ defaults (10 lives, random UT)",
+            "!start <lives>                    - Starts Untouchable mode w/ specific # of lives and random UT.",
+            "!start <lives> <UTlives>          - Starts Untouchable mode w/ specific # of player and UT lives.",
+            "!start <lives> <UTlives> <UTname> - Specify number of lives and starting Untouchable.",
+            "!stop                             - Stops Untouchable mode.",
+            "!rules                            - Displays basic rules of the Untouchable to the arena.",
+            "!whoami                           - PUBLIC COMMAND.  Tells you if you are the Untouchable.",
+            "!manual                           - Manual toggle.  If on, !start will start game instantly. (Default OFF)"
         };
         return untouchableHelp;
     }
