@@ -420,6 +420,7 @@ Msgstaff|Please directly message the staff member who is helping you out by typi
 Nohost|Sorry, but there are no hosts available at this time.  Please try again at a later time.
 TwlHost|During TWL match times (Saturday and Sunday from 1pm to 6pm EST), only one TWD arena per division will be allowed. Elimination-type (?go elim/baseelim/tourny) events will play on, but no other events will be hosted.
 TwdtHost|During TWDT only one TWD arena per division will be allowed. Elimination-type (?go elim/baseelim/tourny) events will play on, but no other events will be hosted.
+BwcHost|During BWC only one TWD arena per division will be allowed. Elimination-type (?go elim/baseelim/tourny) events will play on, but no other events will be hosted.
 WeekendHost|During the Scheduled Weekend Events no other TW events are hosted. However the Elims and WBduel/JavDuel and Base will play on.
 SayThankYou|The SSCU Trench Wars staff would like to say Thank You!
 SayWelcome|The SSCU Trench Wars staff would like to say You are Welcome!
