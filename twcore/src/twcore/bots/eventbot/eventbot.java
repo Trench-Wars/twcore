@@ -22,6 +22,11 @@ import twcore.core.util.Tools;
 
 /**
  * @author Maverick
+ * 
+ * TODO:
+ *  - Track bans using database
+ *  - when lifting bans, don't remove the ban
+ *  - 1:Tres <ER>> You could set it to go to ?go events after it spawns, and pm anyone who enters with instructions about requesting events
  */
 public class eventbot extends SubspaceBot {
     private BotSettings m_botSettings;
@@ -237,9 +242,10 @@ public class eventbot extends SubspaceBot {
     		if(requests.containsKey(name.toLowerCase())) {
     			EventRequest eventReq = requests.get(name.toLowerCase());
     			
-    			if((new Date().getTime() - eventReq.getDate().getTime()) <= (1000*60)) {
+    			if((new Date().getTime() - eventReq.getDate().getTime()) <= (Tools.TimeInMillis.MINUTE*5)) {
     				// Player made the request less then one minute ago, tell him he needs to wait before doing another request
-    				m_botAction.sendSmartPrivateMessage(name, "You have to wait at least one minute before changing your previous request. Please try again later.");
+    				int minutesLeft = Math.round((new Date().getTime() - eventReq.getDate().getTime())/1000/60);
+    				m_botAction.sendSmartPrivateMessage(name, "You have to wait at least "+minutesLeft+" minute(s) before changing your previous request. Please try again later.");
     				return;
     			}
     		}
