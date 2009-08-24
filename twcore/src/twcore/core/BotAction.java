@@ -2123,7 +2123,7 @@ public class BotAction
             m_arenaName = arenaName;
             try
             {
-                m_packetGenerator.sendArenaLoginPacket((byte) 8, (short) 1024, (short) 768, (short) 0xFFFD, arenaName);
+                m_packetGenerator.sendArenaLoginPacket((byte) 8, (short) m_botSession.getCoreData().getResolutionX(), (short) m_botSession.getCoreData().getResolutionY(), (short) 0xFFFD, arenaName);
             }
             catch (Exception e)
             {
@@ -2180,7 +2180,7 @@ public class BotAction
         m_arenaName = "(Public " + arena + ")";
         try
         {
-            m_packetGenerator.sendArenaLoginPacket((byte) 8, (short) 1024, (short) 768, arena, "");
+            m_packetGenerator.sendArenaLoginPacket((byte) 8, (short) m_botSession.getCoreData().getResolutionX(), (short) m_botSession.getCoreData().getResolutionY(), arena, "");
         }
         catch (Exception e)
         {
@@ -2220,7 +2220,7 @@ public class BotAction
     {
         try
         {
-            m_packetGenerator.sendArenaLoginPacket((byte) 8, (short) 1024, (short) 768, (short) 0xFFFF, "");
+            m_packetGenerator.sendArenaLoginPacket((byte) 8, (short) m_botSession.getCoreData().getResolutionX(), (short) m_botSession.getCoreData().getResolutionY(), (short) 0xFFFF, "");
         }
         catch (Exception e)
         {

@@ -59,6 +59,20 @@ public class CoreData {
         }
         return name;
     }
+    
+    /**
+     * @return Resolution width of the bot
+     */
+    public int getResolutionX() {
+        return m_generalSettings.getInt( "ResolutionX" );
+    }
+    
+    /**
+     * @return Resolution height of the bot
+     */
+    public int getResolutionY() {
+        return m_generalSettings.getInt( "ResolutionY" );
+    }
 
     /**
      * @return Reference to the locally held InterProcessCommunicator
