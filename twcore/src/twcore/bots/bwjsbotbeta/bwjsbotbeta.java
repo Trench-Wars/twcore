@@ -4784,7 +4784,7 @@ public class bwjsbotbeta extends SubspaceBot {
      * @author fantus
      */
     private class BWJSSQL {
-        private String database = "website";
+        private String database = "bots";
         private String uniqueID = "bwjs";
         private int matchID = -1;
         

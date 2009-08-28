@@ -1,6 +1,6 @@
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 
-USE `twcore`;
+USE `bots`;
 CREATE TABLE `tblBWJS__Game` (
   `matchID` BIGINT unsigned NOT NULL auto_increment,
   `timeStarted` datetime default NULL,
