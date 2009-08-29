@@ -143,9 +143,9 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Please PM !request <event> to EventBot to 
 &Help &Server|For help setting up your own server please refer to: http://www.shanky.com/server.
 &Settings &Trench &Wars|Sorry but the Trench Wars settings are not publicly available.
 &Settings &TW|Sorry but the Trench Wars settings are not publicly available.
-&Banners &Site +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE, http://www.subspacedownloads.com/index.php?act=banners&f=1, http://www.deathstarbattle.com/bannervault and http://www.mama.twzone.net/files .
-&Banners &Download &Where +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE, http://www.subspacedownloads.com/index.php?act=banners&f=1, http://www.deathstarbattle.com/bannervault and http://www.mama.twzone.net/files .
-&Banners &Website +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE, http://www.subspacedownloads.com/index.php?act=banners&f=1, http://www.deathstarbattle.com/bannervault and http://www.mama.twzone.net/files .
+&Banners &Site +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE and http://www.subspacedownloads.com/index.php?act=banners&f=1
+&Banners &Download &Where +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE and http://www.subspacedownloads.com/index.php?act=banners&f=1
+&Banners &Website +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE and http://www.subspacedownloads.com/index.php?act=banners&f=1
 &Continuum &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/game/Continuum040Setup.exe .
 &Subspace &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/game/Continuum040Setup.exe .
 &Subspace &1.35 &Download &Where|Subspace v1.35 can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=11 .
