@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimerTask;
 import java.util.Vector;
 
 import twcore.core.BotAction;
@@ -34,13 +35,16 @@ public class eventbot extends SubspaceBot {
     private OperatorList m_opList;
     private CommandInterpreter commandInterpreter;
     
-    private final int REQUEST_EXPIRE_TIME_MS = 1000*60*60;	// 60 min.
+    // Each 30 seconds a player of the oldest checked request is checked if he's still online  
+    private final int PLAYER_CHECK_TIME = Tools.TimeInMillis.SECOND*30;
+    private String checkingPlayer;
+    
     private final String SUBSCRIBE_ALL = "all";
     private final String SUBSCRIBE_BWJS = "bwjs";
     
     //This vector stores all the requests
     private Map<String,EventRequest> requests = Collections.synchronizedMap(new HashMap<String,EventRequest>(64));
-    			// <playername, EventRequest>
+    			// <playername (lowercase), EventRequest>
     
     // Contains the names of all the players not allowed to use !request - stored in the eventbot.cfg file
     private Set<BannedPlayer> bannedPlayers = Collections.synchronizedSet(new HashSet<BannedPlayer>());
@@ -107,12 +111,24 @@ public class eventbot extends SubspaceBot {
 
     public void handleEvent(Message event) {
     	commandInterpreter.handleEvent(event);
+    	
+    	if(event.getMessageType() == Message.ARENA_MESSAGE && event.getMessage().startsWith(checkingPlayer+" - ")) {
+    		checkingPlayer = null;
+    	}
     }
 
 
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("arena"));
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ));
+        
+        // Start TimerTask to check players if they are offline and remove their request
+        TimerTask checkAndRemoveRequests = new TimerTask() {
+			public void run() {
+				checkAndRemoveRequests();
+			}
+		};
+        m_botAction.scheduleTaskAtFixedRate(checkAndRemoveRequests, PLAYER_CHECK_TIME, PLAYER_CHECK_TIME);
     }
     
     /*****************************************************************************
@@ -189,9 +205,6 @@ public class eventbot extends SubspaceBot {
     public void cmdRequest(String name, String message) {
     	message = message.trim();
     	
-    	// Cleanup expired requests
-    	this.removeExpiredRequests();
-    	
     	// Validate all parameters
     	if(message.length() == 0) {
     		m_botAction.sendSmartPrivateMessage(name, "Syntax error: Please specify the <event> and any optional [comments] seperated by ':'. Type ::!help for more information.");
@@ -230,10 +243,11 @@ public class eventbot extends SubspaceBot {
     	
     	if(message.contains(":")) {		// Message includes comments 
     		event = message.substring(0,message.indexOf(":")).trim();
+    		event = event.toLowerCase().replaceAll("<|>", "");
     		comments = message.substring(message.indexOf(":")+1).trim();
     		eventRequest = new EventRequest(name, event, comments);
     	} else {						// No comments available
-    		event = message;
+    		event = message.toLowerCase().replaceAll("<|>", "");
     		eventRequest = new EventRequest(name, message);
     	}
     	
@@ -241,21 +255,26 @@ public class eventbot extends SubspaceBot {
     		// Check if player's previous request was done more then 1 minute ago to prevent abuse.
     		if(requests.containsKey(name.toLowerCase())) {
     			EventRequest eventReq = requests.get(name.toLowerCase());
+    			int changeRequestTime = Tools.TimeInMillis.MINUTE*5;
     			
-    			if((new Date().getTime() - eventReq.getDate().getTime()) <= (Tools.TimeInMillis.MINUTE*5)) {
-    				// Player made the request less then one minute ago, tell him he needs to wait before doing another request
-    				int minutesLeft = Math.round((new Date().getTime() - eventReq.getDate().getTime())/1000/60);
+    			if((new Date().getTime() - eventReq.getDate().getTime()) <= changeRequestTime) {
+    				// Player made the request less then 5 minutes ago, tell him he needs to wait before doing another request
+    				int minutesLeft = (int)Math.ceil((double)(changeRequestTime - (new Date().getTime() - eventReq.getDate().getTime()))/1000/60);
     				m_botAction.sendSmartPrivateMessage(name, "You have to wait at least "+minutesLeft+" minute(s) before changing your previous request. Please try again later.");
+    				return;
+    			} else if(eventReq.getEvent().equals(event)) {
+    				// if player's previous request is the same event as he's requesting now, inform him that he can't change his request to the same event
+    				m_botAction.sendSmartPrivateMessage(name, "You can't change your request using the same event name. If you want to change your request, make sure you request a different event.");
     				return;
     			}
     		}
     		
     		   		
     		// If event is base/javduel/spidduel/wbduel-type then make the request directly without saving it.
-    		if(	event.toLowerCase().startsWith("base") || 
-    				event.toLowerCase().startsWith("javduel") ||
-    				event.toLowerCase().startsWith("spidduel") ||
-    				event.toLowerCase().startsWith("wbduel")) {
+    		if(	event.startsWith("base") || 
+    				event.startsWith("javduel") ||
+    				event.startsWith("spidduel") ||
+    				event.startsWith("wbduel")) {
     			
     			// Inform staff
     			m_botAction.sendChatMessage("> Staff, please start a new game in "+event+". (Requested by "+name+")");
@@ -286,7 +305,7 @@ public class eventbot extends SubspaceBot {
         		else
         			m_botAction.sendChatMessage(name+" changed request to '"+event+"' "+comments+"(rank: "+getEventRank(event)+")");
         		
-        		// Notify subscribed staffers of request
+        		// Notify subscribed staffers of request 
         		if(newRequest) {
         		    this.notifySubscribed(SUBSCRIBE_ALL, eventRequest);
         		}
@@ -350,9 +369,6 @@ public class eventbot extends SubspaceBot {
     public void cmdRequests(String name, String message) {
     	HashMap<String, Integer> rank = new HashMap<String, Integer>();
     	Vector<String> rankPosition = new Vector<String>();
-    	
-    	// Cleanup expired requests
-    	this.removeExpiredRequests();
     	
     	// Create the event with count mapping
     	synchronized(requests) {
@@ -434,7 +450,7 @@ public class eventbot extends SubspaceBot {
     				}
     			}
     		} else {
-    			m_botAction.sendSmartPrivateMessage(name, "Event '"+event+"' is not found amongst the saved requests of the last "+((REQUEST_EXPIRE_TIME_MS/1000)/60)+" minutes.");
+    			m_botAction.sendSmartPrivateMessage(name, "Event '"+event+"' is not found amongst the saved requests.");
     		}
     		
     	}
@@ -448,9 +464,6 @@ public class eventbot extends SubspaceBot {
      */
     public void cmdRemoveRequest(String name, String message) {
     	String requester = message.trim().toLowerCase();
-    	
-    	// Cleanup expired requests
-        this.removeExpiredRequests();
     	
         synchronized(requests) {
         	if(requests.containsKey(requester)) {
@@ -471,9 +484,6 @@ public class eventbot extends SubspaceBot {
     public void cmdFillRequest(String name, String message) {
     	String event = message.trim();
     	HashSet<EventRequest> matchingRequests = this.getEventRequests(event);
-    	
-    	// Cleanup expired requests
-        this.removeExpiredRequests();
     	
     	if(matchingRequests.size() > 0) {
 
@@ -671,20 +681,32 @@ public class eventbot extends SubspaceBot {
     /**
      * Removes any expired requests from the HashMap by comparing the date the request was made.
      */
-    private void removeExpiredRequests() {
+    private void checkAndRemoveRequests() {
         Set<Map.Entry<String, EventRequest>> playerRequests = requests.entrySet();
-        long now = new Date().getTime();
+        
+        // Remove the request of the player that was previously checked upon (if the player was found, the variable is cleared)
+        if(checkingPlayer != null) {
+        	requests.remove(checkingPlayer.toLowerCase());
+        	checkingPlayer = null;
+        }
         
     	synchronized(requests) {
     	    Iterator<Map.Entry<String, EventRequest>> it = playerRequests.iterator();
+    	    Date lastChecked = null;
     	    
     	    while (it.hasNext()) {
                 Map.Entry<String, EventRequest> request = it.next();
                 
-                if((now - request.getValue().getDate().getTime()) > Tools.TimeInMillis.HOUR) {
-                    it.remove();
+                if(lastChecked == null || request.getValue().getLastCheck().before(lastChecked)) {
+                	lastChecked = request.getValue().getLastCheck();
+                	checkingPlayer = request.getValue().getRequester();
                 }
             }
+    	    
+    	    if(checkingPlayer != null) {
+    	    	m_botAction.locatePlayer(checkingPlayer);
+    	    	requests.get(checkingPlayer.toLowerCase()).setLastCheck(new Date());
+    	    }
     	}
     }
     
@@ -884,12 +906,14 @@ class EventRequest {
     private String event;
     private String comments;
     private Date lastrequest;
+    private Date lastCheck;
     
     public EventRequest(String requester, String event) {
         this.requester = requester;
         this.event = event;
         this.comments = null;
         this.lastrequest = new Date();
+        this.lastCheck = new Date();
     }
     
     public EventRequest(String requester, String event, String comments) {
@@ -897,6 +921,7 @@ class EventRequest {
         this.event = event;
         this.comments = comments;
         this.lastrequest = new Date();
+        this.lastCheck = new Date();
     }
 
     /**
@@ -967,5 +992,21 @@ class EventRequest {
      */
     public void setLastrequest(Date lastrequest) {
         this.lastrequest = lastrequest;
-    }   
+    }
+
+	/**
+	 * @return the lastCheck
+	 */
+	public Date getLastCheck() {
+		return lastCheck;
+	}
+
+	/**
+	 * @param lastCheck the lastCheck to set
+	 */
+	public void setLastCheck(Date lastCheck) {
+		this.lastCheck = lastCheck;
+	}
+    
+    
 }
