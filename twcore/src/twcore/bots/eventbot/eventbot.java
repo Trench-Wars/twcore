@@ -141,9 +141,9 @@ public class eventbot extends SubspaceBot {
     		"|                                 EVENTBOT                                      |"  };
     	String[] publicCommands = 
     	{	"|                                                                               |",
-    		"| !request <event>:[comments] - Request an <event> to be hosted. Optional; any  |",
-    		"|                               [comments]. You can make only one request per   |",
-    		"|                               hour but you can change it.                     |",
+    		"| !request <event>:[comments] - Request an event to be hosted. Optional; any    |",
+    		"|                               [comments]. Once you have made a !request, you  |",
+    		"|                               can change it using !request again.             |",
     		"| !request -                  - Cancels your current request.                   |"   };
     	String[] zhCommands = 
     	{   "|------------------------------     ZH+    -------------------------------------|",
@@ -252,7 +252,7 @@ public class eventbot extends SubspaceBot {
     	}
     	
     	if(eventRequest != null) {
-    		// Check if player's previous request was done more then 1 minute ago to prevent abuse.
+    		// Check if player's previous request was done more then 5 minutes ago to prevent abuse.
     		if(requests.containsKey(name.toLowerCase())) {
     			EventRequest eventReq = requests.get(name.toLowerCase());
     			int changeRequestTime = Tools.TimeInMillis.MINUTE*5;
@@ -312,7 +312,7 @@ public class eventbot extends SubspaceBot {
     			
     			// Notify requester about his request
         		m_botAction.sendSmartPrivateMessage(name, "Your request for "+event+" has been registered and forwarded to staff.");
-        		m_botAction.sendSmartPrivateMessage(name, "If you want to change your request or make a new request once this request expires (after 60 mins), please use !request again.");
+        		m_botAction.sendSmartPrivateMessage(name, "If you want to change your request please use !request again.");
     		}
     		
     	} else {
