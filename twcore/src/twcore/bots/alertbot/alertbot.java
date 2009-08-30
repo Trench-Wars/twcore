@@ -180,7 +180,7 @@ public class alertbot extends SubspaceBot {
                     " !on   - turns on alerts in a private message to you",
                     " !off  - turns off alerts",
                     " !help - this message",
-                    "`",
+                    " ",
                     "Players on the ?chat="+chat+" or ?chat=alerts will also be",
                     "alerted through the chat when the next game begins."
             };

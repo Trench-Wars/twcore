@@ -443,10 +443,9 @@ public class BotAction
      */
     public void sendPrivateMessage(int playerID, String message, int soundCode)
     {
-        String temp = message.trim();
         char firstChar;
 
-        if (temp.length() > 0)
+        if (message.length() > 0)
         {
             firstChar = message.charAt(0);
             if (firstChar != '/' && firstChar != '*' && firstChar != '?' && firstChar != ';')
@@ -547,10 +546,9 @@ public class BotAction
         if(name == null)
             return;
         
-        String temp = message.trim();
         char firstChar;
 
-        if (temp.length() > 0)
+        if (message.length() > 0)
         {
             firstChar = message.charAt(0);
             if (firstChar != '/' && firstChar != '*' && firstChar != '?' && firstChar != ';')

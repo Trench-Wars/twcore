@@ -184,7 +184,7 @@ public class racebot extends SubspaceBot {
 
    	    if(key.startsWith("help")) {
    	        m_botAction.sendPrivateMessage(name, "!help [command]  :  Display available commands and what they do");
-   	        m_botAction.sendPrivateMessage(name, "`");
+   	        m_botAction.sendPrivateMessage(name, " ");
    	        m_botAction.sendPrivateMessage(name, "<> required  [] optional  () comments  -s[=assign] switches");
    	    } else if(key.startsWith("go")) {
    	        m_botAction.sendPrivateMessage(name, "!go <arena>  :  Make the bot move to the specified <arena>");

@@ -1051,7 +1051,7 @@ public class robohelp extends SubspaceBot {
 	    	}
 	    
 	    	// Response
-	    	m_botAction.sendSmartPrivateMessage(name, "`    "); // spacer
+	    	m_botAction.sendSmartPrivateMessage(name, "    "); // spacer
 	    	m_botAction.sendSmartPrivateMessage(name, title2);
 	    	m_botAction.sendSmartPrivateMessage(name, "-----------------");
 	    	if(yourPosition == -1) {
@@ -1134,7 +1134,7 @@ public class robohelp extends SubspaceBot {
             " !javadocs term                            - Returns a link for a javadocs lookup of the term.",
             " !google word                              - Returns a link for a google search of the word.",
             " !wiki word                                - Returns a link for a wikipedia search of the word.",
-            "`     ",
+            " ",
             "PM commands:",
             " !lookup <keyword>                         - Tells you the response when the specified key word",
             "                                             is given",
