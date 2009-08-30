@@ -594,17 +594,17 @@ public class OperatorList {
      */
     public String getAccessLevelName( int accessLevel ) {
         switch( accessLevel ) {
-            case 0: return "Player [" + accessLevel + "]";
-            case 1: return "Bot [" + accessLevel + "]";
-            case 2: return "Outsider [" + accessLevel + "]";
-            case 3: return "ER [" + accessLevel + "]";
-            case 4: return "Mod [" + accessLevel + "]";
-            case 5: return "HighMod [" + accessLevel + "]";
-            case 6: return "Developer [" + accessLevel + "]";
-            case 7: return "SMod [" + accessLevel + "]";
-            case 8: return "Sysop [" + accessLevel + "]";
-            case 9: return "Owner [" + accessLevel + "]";
-            default: return "Unknown access level! [" + accessLevel + "]";
+            case 0: return "Player [lvl " + accessLevel + "]";
+            case 1: return "Bot [lvl " + accessLevel + "]";
+            case 2: return "Outsider [lvl " + accessLevel + "]";
+            case 3: return "ER [lvl " + accessLevel + "]";
+            case 4: return "Mod [lvl " + accessLevel + "]";
+            case 5: return "HighMod [lvl " + accessLevel + "]";
+            case 6: return "Developer [lvl " + accessLevel + "]";
+            case 7: return "SMod [lvl " + accessLevel + "]";
+            case 8: return "Sysop [lvl " + accessLevel + "]";
+            case 9: return "Owner [lvl " + accessLevel + "]";
+            default: return "Unknown access level! [lvl " + accessLevel + "]";
         }
     }
     
