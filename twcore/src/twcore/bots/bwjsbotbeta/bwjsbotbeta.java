@@ -1338,7 +1338,7 @@ public class bwjsbotbeta extends SubspaceBot {
                 if (cfg.getAllowAutoCaps()) {
                     status[0] =  "A new game will start when two people message me with !cap";
                 } else {
-                    status[0] =  "Request a name game with :eventbot:!request " + cfg.getGameTypeString();
+                    status[0] =  "Request a new game with :eventbot:!request " + cfg.getGameTypeString();
                 }
                 break;
             case BWJSState.ADDING_PLAYERS :
