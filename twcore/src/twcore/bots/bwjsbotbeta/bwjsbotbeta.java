@@ -729,7 +729,7 @@ public class bwjsbotbeta extends SubspaceBot {
         
         /* Check when the last !change happened and if this change is allowed */
         if (!p.isChangeAllowed()) {
-            m_botAction.sendPrivateMessage(name, "Error: Changed not allowed yet, wait " + 
+            m_botAction.sendPrivateMessage(name, "Error: Changed not allowed yet for this player, wait " + 
                     p.getTimeUntilNextChange() + " more seconds before next !change");
             return;
         }
@@ -1467,7 +1467,7 @@ public class bwjsbotbeta extends SubspaceBot {
                 
                 /* Check when last !sub was and if this sub is allowed */
                 if (!playerB.isSubAllowed()) {
-                    m_botAction.sendPrivateMessage(name, "Error: Sub not allowed yet, wait " +
+                    m_botAction.sendPrivateMessage(name, "Error: Sub not allowed yet for this player, wait " +
                         playerB.getTimeUntilNextSub() + " more seconds before next !sub");
                     return;
                 }
@@ -1558,13 +1558,13 @@ public class bwjsbotbeta extends SubspaceBot {
             
             /* Check if a switch is allowed timewise */
             if (!playerA.isSwitchAllowed()) {
-                m_botAction.sendPrivateMessage(name, "Error: Sub not allowed yet, wait " +
-                    playerA.getTimeUntilNextSwitch() + " more seconds before next !switch");
+                m_botAction.sendPrivateMessage(name, "Error: Switch not allowed yet for " + playerA.getName() + 
+                        ", wait " + playerA.getTimeUntilNextSwitch() + " more seconds before next !switch");
                 return;
             }
             if (!playerB.isSwitchAllowed()) {
-                m_botAction.sendPrivateMessage(name, "Error: Sub not allowed yet, wait " +
-                    playerB.getTimeUntilNextSwitch() + " more seconds before next !switch");
+                m_botAction.sendPrivateMessage(name, "Error: Switch not allowed yet for " + playerB.getName() + 
+                        ", wait " + playerB.getTimeUntilNextSwitch() + " more seconds before next !switch");
                 return;
             }
             
