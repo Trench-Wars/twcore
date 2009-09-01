@@ -31,7 +31,7 @@ CREATE TABLE `tblBWJS__GamePlayerShipInfo` (
   `mines` INT unsigned default 0,
   `burst` INT unsigned default 0,
   `playTime` INT unsigned default 0,
-  `rating` INT unsigned default 0,
+  `rating` INT default 0,
 
   KEY  (`matchID`),
   KEY `userID` (`userID`),
