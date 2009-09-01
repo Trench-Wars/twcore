@@ -1350,7 +1350,7 @@ public class bwjsbotbeta extends SubspaceBot {
                     ". We are currently starting the game";
                 break;
             case BWJSState.GAME_IN_PROGRESS :
-                status[0] = "Game is in progress, " + ((cfg.getTime() - timeLeft) / 60) + " minutes played.";
+                status[0] = "Game is in progress, " + (((cfg.getTime() * 60) - timeLeft) / 60) + " minutes played.";
                 status[1] = "Score " + team[0].getName() + " vs. " + team[1].getName() + ": " + score();
                 break;
             case BWJSState.GAME_OVER :
@@ -1635,7 +1635,7 @@ public class bwjsbotbeta extends SubspaceBot {
             m_botAction.sendArenaMessage("Captains you have 10 minutes to set up your lineup correctly!", 
                     Tools.Sound.BEEP2);
         } else {
-            m_botAction.sendArenaMessage("Captains you have 10 minutes to set up your lineup correctly!", 
+            m_botAction.sendArenaMessage("Captains you have 5 minutes to set up your lineup correctly!", 
                     Tools.Sound.BEEP2);
         }
         
@@ -5119,7 +5119,7 @@ public class bwjsbotbeta extends SubspaceBot {
             time = (System.currentTimeMillis() - state.getTimeStamp()) / Tools.TimeInMillis.SECOND;
             
             //Announce mvp
-            if (time == 6 * Tools.TimeInMillis.SECOND) {
+            if (time == 6) {
                 m_botAction.sendArenaMessage("MVP: " + getMVP() + "!", Tools.Sound.INCONCEIVABLE);
             }
             
