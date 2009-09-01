@@ -4801,24 +4801,24 @@ public class bwjsbotbeta extends SubspaceBot {
         private BWJSSQL() {
             /* Game related */
             psAddGame = m_botAction.createPreparedStatement(database, uniqueID, 
-                    "INSERT INTO tblbwjs__game(timeStarted, type) " +
+                    "INSERT INTO tblBWJS__Game(timeStarted, type) " +
                     "VALUES(NOW(),?)", true);
             psEndGame = m_botAction.createPreparedStatement(database, uniqueID, 
-                    "UPDATE tblbwjs__game " +
+                    "UPDATE tblBWJS__Game " +
                     "SET timeEnded = NOW(), winner = ? " +
                     "WHERE matchID = ?");
             
             /* Player related */
             psGetUserID = m_botAction.createPreparedStatement(database, uniqueID, 
-                    "SELECT userID FROM tblbwjs__player " +
+                    "SELECT userID FROM tblBWJS__Player " +
                     "WHERE playerName = ?");
             psSetUserID = m_botAction.createPreparedStatement(database, uniqueID, 
-                    "INSERT INTO tblbwjs__player(playerName) " +
+                    "INSERT INTO tblBWJS__Player(playerName) " +
                     "VALUES(?)", true);
             
             /* Stats related */
             psPutGamePlayerShipInfo = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblbwjs__gameplayershipinfo(" +
+                    "INSERT INTO tblBWJS__GamePlayerShipInfo(" +
                         "matchID, " +       //1
                         "userID, " +        //2
                         "ship, " +          //3
@@ -4850,7 +4850,7 @@ public class bwjsbotbeta extends SubspaceBot {
                         "rating) " +        //29
                     "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             psPutGamePlayer = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblbwjs__gameplayer(" +
+                    "INSERT INTO tblBWJS__GamePlayer(" +
                         "matchID, " +       //1
                         "userID, " +        //2
                         "team, " +          //3
@@ -4859,7 +4859,7 @@ public class bwjsbotbeta extends SubspaceBot {
                         "status) " +        //6
                     "VALUES(?,?,?,?,?,?)");
             psPutGameCaptain = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblbwjs__gamecaptain(" +
+                    "INSERT INTO tblBWJS__GameCaptain(" +
                         "matchID, " +       //1
                         "userID, " +        //2
                         "team, " +          //3 
