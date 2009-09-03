@@ -32,6 +32,14 @@ maxship5=1
 maxship6=-1
 maxship8=2
 
+# Resolution limits
+# A player is put to spectator mode (after !add) if his 
+# X AND Y resolution is higher then what is specified below.
+# Set to 0 to disable limit.
+resolutionxmax=1280
+resolutionymax=900
+
+
 squadjoined=1
 rosterjoined=1
 shipchanges=6

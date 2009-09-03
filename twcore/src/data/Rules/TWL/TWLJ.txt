@@ -26,6 +26,13 @@ blueout=1
 lagoutextension=60
 aliascheck=1
 
+# Resolution limits
+# A player is put to spectator mode (after !add) if his 
+# X AND Y resolution is higher then what is specified below.
+# Set to 0 to disable limit.
+resolutionxmax=1280
+resolutionymax=900
+
 matchtype=2
 storegame=1
 loggame=0
