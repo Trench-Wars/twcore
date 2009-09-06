@@ -773,7 +773,7 @@ public class bwjsbotbeta extends SubspaceBot {
             }
             help.add("!lagout                   -- Puts you back into the game if you have lagged out");
             help.add("!list                     -- Lists all players on this team");
-            help.add("!listbest <ship>          -- Lists the players in the arena and groups them according to their rank");
+//            help.add("!listbest <ship>          -- Lists the players in the arena and groups them according to their rank");
             help.add("!myfreq                   -- Puts you on your team's frequency");
             help.add("!mvp                      -- Displays the current mvp");
             help.add("!rating <player>          -- Displays your/<player> current rating");
@@ -1086,7 +1086,8 @@ public class bwjsbotbeta extends SubspaceBot {
             return;
         }
         
-        cmd = cmd.substring(4); //Cut off !t1/!t2 part
+        cmd = cmd.substring(4); //Cut off !t1 -/!t2- part
+        cmd = "!" + cmd;
         
         handleCommand(name, cmd, override); //Handle command
     }
@@ -1264,7 +1265,7 @@ public class bwjsbotbeta extends SubspaceBot {
             /* Check command syntax */
             if (cmd.isEmpty()) {
                 m_botAction.sendPrivateMessage(name, "Error: please specify a player, " +
-                    "'!setcaptain <# freq>:<player>', or '!t1/!t2 !setcaptain <player>'");
+                    "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
                 return;
             }
             
@@ -1273,7 +1274,7 @@ public class bwjsbotbeta extends SubspaceBot {
             /* Check command syntax */
             if (splitCmd.length < 2) {
                 m_botAction.sendPrivateMessage(name, "Error: please specify a player, " +
-                    "'!setcaptain <# freq>:<player>', or '!t1/!t2 !setcaptain <player>'");
+                    "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
                 return;
             }
             
@@ -1290,14 +1291,14 @@ public class bwjsbotbeta extends SubspaceBot {
                 frequency = Integer.parseInt(splitCmd[0]);
             } catch (Exception e) {
                 m_botAction.sendPrivateMessage(name, "Error: please specify a correct frequency, " +
-                    "'!setcaptain <# freq>:<player>', or '!t1/!t2 !setcaptain <player>'");
+                    "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
                 return;
             }
             
             /* Check if frequency is valid */
             if (frequency < 0 || frequency > 1) {
                 m_botAction.sendPrivateMessage(name, "Error: please specify a correct frequency, " +
-                    "'!setcaptain <# freq>:<player>', or '!t1/!t2 !setcaptain <player>'");
+                    "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
                 return;
             }
             
@@ -1740,9 +1741,13 @@ public class bwjsbotbeta extends SubspaceBot {
             m_botAction.sendArenaMessage("A draw?!", Tools.Sound.GIBBERISH);
         
         //SQL update
-        sql.endGame(winningFreq);
-        sql.putPlayers();
-        sql.putCaptains();
+        if (sql.matchID != -1) {
+            sql.endGame(winningFreq);
+            sql.putPlayers();
+            sql.putCaptains();
+            
+//            sql.displayURL();
+        }
     }
     
     /*
@@ -4805,7 +4810,7 @@ public class bwjsbotbeta extends SubspaceBot {
                     "VALUES(NOW(),?)", true);
             psEndGame = m_botAction.createPreparedStatement(database, uniqueID, 
                     "UPDATE tblBWJS__Game " +
-                    "SET timeEnded = NOW(), winner = ? " +
+                    "SET timeEnded = NOW(), winner = ?, Score0 = ?, Score1 = ? " +
                     "WHERE matchID = ?");
             
             /* Player related */
@@ -4885,7 +4890,14 @@ public class bwjsbotbeta extends SubspaceBot {
         private void endGame(int winner) {
             try {
                 psEndGame.setInt(1, winner);
-                psEndGame.setInt(2, matchID);
+                if (cfg.gameType == BWJSConfig.BASE) {
+                    psEndGame.setInt(2, team[0].getFlagTime());
+                    psEndGame.setInt(3, team[1].getFlagTime());
+                } else {
+                    psEndGame.setInt(2, team[1].getDeaths());
+                    psEndGame.setInt(3, team[0].getDeaths());
+                }
+                psEndGame.setInt(4, matchID);
                 psEndGame.execute();
             } catch (Exception e) {}
         }
@@ -5007,6 +5019,11 @@ public class bwjsbotbeta extends SubspaceBot {
             m_botAction.closePreparedStatement(database, uniqueID, psPutGamePlayerShipInfo);
             m_botAction.closePreparedStatement(database, uniqueID, psPutGamePlayer);
             m_botAction.closePreparedStatement(database, uniqueID, psPutGameCaptain);
+        }
+    
+        private void displayURL() {
+            m_botAction.sendArenaMessage("Statistics url: http://www.trenchwars.org/index.php?v=bwjsstats.php&x=" 
+                    + cfg.getGameType() + "&y=" + matchID);
         }
     }
     
