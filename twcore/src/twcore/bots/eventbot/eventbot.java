@@ -311,8 +311,8 @@ public class eventbot extends SubspaceBot {
         		}
     			
     			// Notify requester about his request
-        		m_botAction.sendSmartPrivateMessage(name, "Your request for "+event+" has been registered and forwarded to staff.");
-        		m_botAction.sendSmartPrivateMessage(name, "If you want to change your request please use !request again.");
+        		m_botAction.sendSmartPrivateMessage(name, "Your request for "+event+" has been saved and forwarded to staff.");
+        		m_botAction.sendSmartPrivateMessage(name, "Your request will be saved for as long as you stay online. If you want to change your request please use !request again.");
     		}
     		
     	} else {
