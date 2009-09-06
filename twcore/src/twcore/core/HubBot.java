@@ -86,7 +86,7 @@ public class HubBot extends SubspaceBot {
         // Highmod+
         accessRequired = OperatorList.HIGHMOD_LEVEL; 
         m_commandInterpreter.registerCommand( "!spawnmax", acceptedMessages, this, "handleSpawnMaxMessage", accessRequired );
-        m_commandInterpreter.registerCommand( "!spawnauto", acceptedMessages, this, "handleAutoSpawnMessage", accessRequired );
+        m_commandInterpreter.registerCommand( "!spawnauto", acceptedMessages, this, "handleSpawnAutoMessage", accessRequired );
         m_commandInterpreter.registerCommand( "!remove", acceptedMessages, this, "handleRemove", accessRequired );
         m_commandInterpreter.registerCommand( "!removetype", acceptedMessages, this, "handleRemoveType", accessRequired );
         
