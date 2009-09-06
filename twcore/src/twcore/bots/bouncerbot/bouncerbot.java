@@ -208,7 +208,7 @@ public class bouncerbot extends SubspaceBot {
                     "!bounce           Toggles whether to bounce players           "+(m_isBouncing?"ON":"OFF"),
                     "!chat             Toggles sending bounce msgs to SMod chat    "+(m_sendToChat?"ON":"OFF"),
                     "!log              Toggles logging messages to chat            "+(m_logInfo?"ON":"OFF"),
-                    "!all              Toggles bouncing everyone except for sysop+ "+(m_bounceAll?"ON":"OFF"),
+                    "!all              Toggles bouncing staff except for sysop+    "+(m_bounceAll?"ON":"OFF"),
                     "!action <move|zonemove|kill>     Determines bounce action:",
                     "         move                    Bounces to pub on this zone",
                     "         move <arena>            Bounces to <arena> on this zone",
