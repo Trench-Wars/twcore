@@ -271,10 +271,10 @@ public class eventbot extends SubspaceBot {
     		
     		   		
     		// If event is base/javduel/spidduel/wbduel-type then make the request directly without saving it.
-    		if(	event.startsWith("base") || 
-    				event.startsWith("javduel") ||
-    				event.startsWith("spidduel") ||
-    				event.startsWith("wbduel")) {
+    		if(	event.equals("base") || 
+    				event.equals("javduel") ||
+    				event.equals("spidduel") ||
+    				event.equals("wbduel")) {
     			
     			// Inform staff
     			m_botAction.sendChatMessage("> Staff, please start a new game in "+event+". (Requested by "+name+")");
