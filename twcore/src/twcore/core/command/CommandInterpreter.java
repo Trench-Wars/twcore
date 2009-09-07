@@ -190,6 +190,38 @@ public class CommandInterpreter {
         helps.trimToSize();
         return helps;
     }
+    
+    /**
+     * Returns the amount of commands that are allowed for the specified accesslevel (excluding the default commands)
+     * 
+     * @param accesslevel
+     * @return
+     */
+    public int getAllowedCommandsCount( int accesslevel ) {
+    	int count = 0;
+    	
+    	for( Command command : m_commands.values()) {
+    		if(!command.getHelpString().startsWith("default") && command.getOpLevelReq() <= accesslevel) {
+    			count++;
+    		}
+    	}
+    	return count;
+    }
+    
+    /**
+     * Returns the amount of commands (excluding the default commands)
+     * @return
+     */
+    public int getCommandsCount() {
+    	int count = 0;
+    	
+    	for ( Command command : m_commands.values()) {
+    		if(!command.getHelpString().startsWith("default"))
+    			count++;
+    	}
+    	
+    	return count;
+    }
 
     /**
      * Gets a particular help message for a particular command, as specified by
@@ -277,7 +309,7 @@ public class CommandInterpreter {
                             m_botAction.privateMessageSpam( messager, msgs );
                         } else {
                             // Standard command execution
-                            Class parameterTypes[] = { messager.getClass(), message.getClass() };
+                            Class<?> parameterTypes[] = { messager.getClass(), message.getClass() };
                             methodClass.getClass().getMethod( command.getMethodName(), parameterTypes ).invoke( methodClass, parameters );
                         }
                         result = true;

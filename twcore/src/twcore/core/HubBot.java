@@ -671,12 +671,8 @@ public class HubBot extends SubspaceBot {
     	OperatorList operatorList = m_botAction.getOperatorList();
     	int accessLevel = operatorList.getAccessLevel(messager);
     	
-    	int accessCommandNumber = operatorList.isSysop(messager) ? 19 : 
-    								operatorList.isSmod(messager) ? 14 :
-    								operatorList.isHighmod(messager) ? 11 :
-    								operatorList.isModerator(messager) ? 7 :
-   									operatorList.isOutsider(messager) ? 4 : 0;
-    	int totalCommandsNumber = 19; // excluding !help
+    	int accessCommandNumber = m_commandInterpreter.getAllowedCommandsCount(accessLevel)-1; // excluding !help
+    	int totalCommandsNumber = m_commandInterpreter.getCommandsCount()-1; // excluding !help
     	String argument = message.replace("!", "").trim();
     	
     	// Access: Sysop [lvl 5]
