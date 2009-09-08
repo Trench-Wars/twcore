@@ -2856,6 +2856,7 @@ public class bwjsbotbeta extends SubspaceBot {
          */
         private void addPlayer() {
             p_state = IN;
+            p_ship[p_currentShip][USED] = 1;
             
             if (m_botAction.getPlayer(p_name) == null) {
                 return;
