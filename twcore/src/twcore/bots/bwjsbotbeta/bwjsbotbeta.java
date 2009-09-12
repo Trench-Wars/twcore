@@ -2,6 +2,7 @@ package twcore.bots.bwjsbotbeta;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -33,6 +34,7 @@ import twcore.core.util.Spy;
 /**
  * BWJSBot hosts base, wbduel, javduel and spidduel
  * 
+ * 
  * @author fantus
  */
 public class bwjsbotbeta extends SubspaceBot {
@@ -61,11 +63,17 @@ public class bwjsbotbeta extends SubspaceBot {
     //Game ticker
     private Gameticker gameticker;                          //The beating heart of the game
     
+    //Keep connection alive workaround
+    private KeepAliveConnection keepAliveConnection = new KeepAliveConnection();
+    
     /** Class constructor */
     public bwjsbotbeta(BotAction botAction) {
         super(botAction);
         initializeVariables();  //Initialize variables
         requestEvents();        //Request Subspace Events
+        
+        //Schedule the timertask to keep alive the database connection
+        m_botAction.scheduleTaskAtFixedRate(keepAliveConnection, 5 * Tools.TimeInMillis.MINUTE, 5 * Tools.TimeInMillis.MINUTE);
     }
     
     /*
@@ -1886,6 +1894,9 @@ public class bwjsbotbeta extends SubspaceBot {
         
         if (listNotplaying.contains(name)) {
             m_botAction.setFreq(name, FREQ_NOTPLAYING);
+            m_botAction.sendPrivateMessage(name, "You are on the !notplaying-list, " +
+                    "captains are unable to sub or put you in. " + 
+                    "Message me with !notplaying again to get you off this list.");
             return;
         }
     }
@@ -4804,6 +4815,8 @@ public class bwjsbotbeta extends SubspaceBot {
         private PreparedStatement psPutGamePlayer;
         private PreparedStatement psPutGameCaptain;
         
+        private PreparedStatement psKeepAlive;
+        
         private BWJSSQL() {
             /* Game related */
             psAddGame = m_botAction.createPreparedStatement(database, uniqueID, 
@@ -4872,6 +4885,8 @@ public class bwjsbotbeta extends SubspaceBot {
                         "startTime, " +     //4
                         "endTime) " +       //5
                     "VALUES(?,?,?,?,?)");
+            
+            psKeepAlive = m_botAction.createPreparedStatement(database, uniqueID, "SHOW DATABASES");
         }
         
         private void addGame() {
@@ -5026,6 +5041,14 @@ public class bwjsbotbeta extends SubspaceBot {
             m_botAction.sendArenaMessage("Statistics url: http://www.trenchwars.org/index.php?v=bwjsstats.php&x=" 
                     + cfg.getGameType() + "&y=" + matchID);
         }
+    
+        private void keepAlive() {
+            try {
+                psKeepAlive.execute();
+            } catch(SQLException sqle) {
+                // No need to do anything here
+            }
+        }
     }
     
     /**
@@ -5148,6 +5171,18 @@ public class bwjsbotbeta extends SubspaceBot {
                 reset();
                 unlockArena();
             }
+        }
+    }
+    
+    /**
+     * (This method is copied from forumbot.java and altered a bit to fit in here)
+     * 
+     * This TimerTask executes psKeepAlive which just sends a query to the database to keep the connection alive  
+     * @author Maverick
+     */
+    private class KeepAliveConnection extends TimerTask {
+        public void run() {
+            sql.keepAlive();
         }
     }
 }
