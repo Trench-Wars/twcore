@@ -36,22 +36,34 @@ public class sharkball extends MultiModule {
     private StringBag randomBag = new StringBag();
 
     /* Moderator+ Help Menu */
-    public String[] modHelp = { "-----------------------------------------------------------------------",
-            "ER+ Commands:", "!start                        -- Starts the game with random shooters.",
+    public String[] modHelp = { 
+            "-----------------------------------------------------------------------",
+            "ER+ Commands:", 
+            "!start                        -- Starts the game with random shooters.",
             "!start <FirstLev>:<SecondLev> -- Starts with specified players as lev.",
             "!goals # (Default is 5)       -- Sets the amount of goals needed to #.",
             "!stop                         -- Stops/cancels the game.",
             "!pHelp                        -- Displays the player help commands.",
+            "!spamRules                    -- arena's the rules of sharkball",
             "NOTE: Be sure to setup the prizes with the prize module before starting",
-            "      as this module doesn't handle prizing (Refer to A1 in sharkball."
+            "      as this module doesn't handle prizing (Refer to A1 in sharkball)"
 
     };
 
-    public String[] playerHelp = { "Player Commands:", "!help      -- Displays this message.",
+    public String[] playerHelp = { 
+            "Player Commands:",
+            "!help      -- Displays this message.",
             "!rules     -- Displays the rules of Sharkball."
 
     };
-
+    
+    public String[] rules = {
+            "RULES: There will be two teams of sharks and another of shooters (levs). Every time a shark dies they " +
+            "will be warped into their 'death box'. If a shark scores their team will be freed. Sharks win when" +
+            "they score the required amount of goals or the opposing team is all in their box."
+            
+    };
+    
     public void init() {
     }
 
@@ -94,6 +106,8 @@ public class sharkball extends MultiModule {
             doStopGame(sender);
         else if (msg.startsWith("!goals "))
             doSetGoals(sender, msg.substring(7));
+        else if (msg.equalsIgnoreCase("!spamrules"))
+            m_botAction.arenaMessageSpam(rules);
         else if (msg.equalsIgnoreCase("!phelp"))
             m_botAction.smartPrivateMessageSpam(sender, playerHelp);
     }
@@ -102,6 +116,8 @@ public class sharkball extends MultiModule {
     public void handlePlayerCommands(String sender, String msg) {
         if (msg.equalsIgnoreCase("!help"))
             m_botAction.smartPrivateMessageSpam(sender, playerHelp);
+        else if(msg.equalsIgnoreCase("!rules"))
+            m_botAction.smartPrivateMessageSpam(sender, rules);
     }
 
     /* Events */
