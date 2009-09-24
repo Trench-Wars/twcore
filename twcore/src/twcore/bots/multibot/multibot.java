@@ -1033,12 +1033,9 @@ public class multibot extends SubspaceBot {
      * @return true is returned if the arena is a public arena.
      */
     private boolean isPublicArena(String arenaName) {
-        try {
-            Integer.parseInt(arenaName);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+    	// Prevent use of ".30" or "..30" or "@30" as public arena name
+    	// Basically, special characters are clipped from the arena name before switching arenas
+       	return Tools.isAllDigits(arenaName.replaceAll("[^a-zA-Z0-9]", ""));
     }
 
     /**
