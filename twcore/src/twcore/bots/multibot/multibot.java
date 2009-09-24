@@ -289,13 +289,24 @@ public class multibot extends SubspaceBot {
     private void doGoCmd(String sender, String argString ) throws IllegalArgumentException {
         if( m_isLocked )
             throw new IllegalArgumentException("I am locked, sorry.  Use !unlock or !unlockwith before trying to move me.");
+        
         String currentArena = m_botAction.getArenaName();
-        if (currentArena.equalsIgnoreCase(argString))
+        // Prevent use of ".30" or "..30" or "@30" as public arena name
+    	// Basically, special characters are clipped from the arena name before switching arenas
+        String targetArena = argString.replaceAll("[^a-zA-Z0-9]", "");
+        
+        if (currentArena.equalsIgnoreCase(targetArena))
             throw new IllegalArgumentException("Bot is already in that arena.");
-        if (isPublicArena(argString) && m_accessLevel < OperatorList.SYSOP_LEVEL)
+        
+        if (isPublicArena(targetArena) && m_accessLevel < OperatorList.SYSOP_LEVEL)
             throw new IllegalArgumentException("Bot can not go into public arenas.");
-       	m_botAction.changeArena(argString);
-        m_botAction.sendSmartPrivateMessage(sender, "Going to " + argString + ".");
+        
+        if(!targetArena.isEmpty()) {
+        	m_botAction.changeArena(argString);
+        	m_botAction.sendSmartPrivateMessage(sender, "Going to " + argString + ".");
+        } else {
+        	throw new IllegalArgumentException("Syntax error.");
+        }
     }
 
     /**
@@ -1033,9 +1044,7 @@ public class multibot extends SubspaceBot {
      * @return true is returned if the arena is a public arena.
      */
     private boolean isPublicArena(String arenaName) {
-    	// Prevent use of ".30" or "..30" or "@30" as public arena name
-    	// Basically, special characters are clipped from the arena name before switching arenas
-       	return Tools.isAllDigits(arenaName.replaceAll("[^a-zA-Z0-9]", ""));
+       	return Tools.isAllDigits(arenaName);
     }
 
     /**
