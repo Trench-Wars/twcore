@@ -1754,7 +1754,9 @@ public class bwjsbotbeta extends SubspaceBot {
             sql.putPlayers();
             sql.putCaptains();
             
-//            sql.displayURL();
+            if (cfg.gameType == BWJSConfig.WBDUEL) {
+            	sql.displayURL();
+            }
         }
     }
     
@@ -5038,8 +5040,11 @@ public class bwjsbotbeta extends SubspaceBot {
         }
     
         private void displayURL() {
-            m_botAction.sendArenaMessage("Statistics url: http://www.trenchwars.org/index.php?v=bwjsstats.php&x=" 
-                    + cfg.getGameType() + "&y=" + matchID);
+        	String url = "Statistics url: http://www.trenchwars.org/" 
+        		+ cfg.getGameTypeString().toLowerCase() 
+        		+ "/" 
+        		+ matchID;
+            m_botAction.sendArenaMessage(url);
         }
     
         private void keepAlive() {
