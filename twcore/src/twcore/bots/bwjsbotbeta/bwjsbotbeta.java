@@ -786,7 +786,7 @@ public class bwjsbotbeta extends SubspaceBot {
             help.add("!mvp                      -- Displays the current mvp");
             help.add("!rating <player>          -- Displays your/<player> current rating");
             help.add("!score <player>           -- Displays your/<player> current score");
-            help.add("!stats <player>           -- Displays your/<player> stats");
+//            help.add("!stats <player>           -- Displays your/<player> stats");
             if (state.getCurrentState() == BWJSState.ADDING_PLAYERS && isCaptain(name)) { 
                 help.add("!ready                    -- Use this when you're done setting your lineup");
                 help.add("!remove <player>          -- Removes specified player)");
@@ -1821,7 +1821,7 @@ public class bwjsbotbeta extends SubspaceBot {
         }
         
         //Alert zoner, (max once every ZONER_WAIT_TIME (minutes))
-        if ((!cfg.getAllowAutoCaps() || allowZoner()) && cfg.getAllowZoner()) {
+        if (allowZoner() && cfg.getAllowZoner()) {
             m_botAction.sendZoneMessage("A game of " + cfg.getGameTypeString() + " is starting! Type ?go " +
                     m_botAction.getArenaName() + " to play. -" + m_botAction.getBotName(), Tools.Sound.BEEP2);
             zonerTimestamp = System.currentTimeMillis();
