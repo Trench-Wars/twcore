@@ -1753,10 +1753,7 @@ public class bwjsbot extends SubspaceBot {
             sql.endGame(winningFreq);
             sql.putPlayers();
             sql.putCaptains();
-            
-            if (cfg.gameType == BWJSConfig.WBDUEL || cfg.gameType == BWJSConfig.JAVDUEL || cfg.gameType == BWJSConfig.SPIDDUEL) {
-            	sql.displayURL();
-            }
+            sql.displayURL();
         }
     }
     
