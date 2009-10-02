@@ -1754,7 +1754,7 @@ public class bwjsbot extends SubspaceBot {
             sql.putPlayers();
             sql.putCaptains();
             
-            if (cfg.gameType == BWJSConfig.WBDUEL || cfg.gameType == BWJSConfig.JAVDUEL) {
+            if (cfg.gameType == BWJSConfig.WBDUEL || cfg.gameType == BWJSConfig.JAVDUEL || cfg.gameType == BWJSConfig.SPIDDUEL) {
             	sql.displayURL();
             }
         }
