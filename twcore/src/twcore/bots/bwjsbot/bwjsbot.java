@@ -2936,9 +2936,8 @@ public class bwjsbot extends SubspaceBot {
                         cfg.getGameType() == BWJSConfig.SPIDDUEL) {
                     p_ship[p_currentShip][DEATHS]++;    //Add a loss due the lagout
                     
-                    //Notify the team of the lagout
-                    m_botAction.sendOpposingTeamMessageByFrequency(p_frequency, p_name + " lagged out or specced. " +
-                            "(+1 death)");
+                    //Notify the arena of the lagout
+                    m_botAction.sendArenaMessage(p_name + " lagged out or specced. (+1 death)");
                     
                     checkIfOut(); //Check if the player reached the loss limit
                 } else {
