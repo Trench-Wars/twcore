@@ -51,6 +51,7 @@ public class bwjsbot extends SubspaceBot {
     
     private int timeLeft;                                   //Total game time
     private long zonerTimestamp;                            //Timestamp of the last zoner
+    private long manualZonerTimestamp;						//Timestamp of the last manualzoner
     private Objset scoreboard;                              //Scoreboard lvz
     
     //Frequencies
@@ -432,12 +433,8 @@ public class bwjsbot extends SubspaceBot {
                 cmd_start(name);
             } else if (cmd.equals("!stop")) {
                 cmd_stop(name);
-            } else if (cmd.equals("!zone") &&
-                    !cfg.getAllowAutoCaps() &&
-                    (state.getCurrentState() == BWJSState.GAME_OVER ||
-                            state.getCurrentState() == BWJSState.WAITING_FOR_CAPS ||
-                            state.getCurrentState() == BWJSState.ADDING_PLAYERS)) {
-                newGameAlert();
+            } else if (cmd.equals("!zone") && !cfg.getAllowAutoCaps()) {
+                cmd_zone(name);
             } else if (cmd.equals("!off")) {
                 cmd_off(name);
             } else if (cmd.startsWith("!setcaptain")) {
@@ -1583,6 +1580,27 @@ public class bwjsbot extends SubspaceBot {
         }
     }
     
+    /**
+     * Handles the !zone command
+     * 
+     * @param name name of the player that issued the command
+     */
+    private void cmd_zone(String name) {
+    	if (!allowManualZoner()) {
+    		m_botAction.sendPrivateMessage(name, "Zoner not allowed yet.");
+    		return;
+    	}
+    	
+    	if (!(state.getCurrentState() == BWJSState.GAME_OVER || 
+                            state.getCurrentState() == BWJSState.WAITING_FOR_CAPS ||
+                            state.getCurrentState() == BWJSState.ADDING_PLAYERS)) {
+    		m_botAction.sendPrivateMessage(name, "Zoner not allowed at this stage of the game.");
+    		return;
+    	}
+    	
+    	newGameAlert();
+    }
+    
     /*
      * Game modes
      */
@@ -1818,10 +1836,11 @@ public class bwjsbot extends SubspaceBot {
         }
         
         //Alert zoner, (max once every ZONER_WAIT_TIME (minutes))
-        if (allowZoner() && cfg.getAllowZoner()) {
+        if ((allowZoner() && cfg.getAllowZoner()) || (allowManualZoner() && !cfg.getAllowAutoCaps())) {
             m_botAction.sendZoneMessage("A game of " + cfg.getGameTypeString() + " is starting! Type ?go " +
                     m_botAction.getArenaName() + " to play. -" + m_botAction.getBotName(), Tools.Sound.BEEP2);
             zonerTimestamp = System.currentTimeMillis();
+            manualZonerTimestamp = zonerTimestamp;
         }
     }
     
@@ -1832,6 +1851,19 @@ public class bwjsbot extends SubspaceBot {
      */
     private boolean allowZoner() {
         if ((System.currentTimeMillis() - zonerTimestamp) <= (ZONER_WAIT_TIME * Tools.TimeInMillis.MINUTE)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    
+    /**
+     * Returns if a zoner can be send or not
+     * 
+     * @return True if a zoner can be send, else false
+     */
+    private boolean allowManualZoner() {
+        if ((System.currentTimeMillis() - manualZonerTimestamp) <= (1 * Tools.TimeInMillis.MINUTE)) {
             return false;
         } else {
             return true;
