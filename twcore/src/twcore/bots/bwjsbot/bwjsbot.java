@@ -5268,7 +5268,7 @@ public class bwjsbot extends SubspaceBot {
         	c.setTime(date);
         	        	
         	try {
-        		temp = new int[4];
+        		temp = new int[5];
         		ResultSet rs;
         		
         		/* CURRENT */
