@@ -3690,6 +3690,7 @@ public class bwjsbot extends SubspaceBot {
         private TreeMap<Short, BWJSCaptain> captains;
         private short captainsIndex;
         private String captainName;
+        private String lastCaptainName;
         private String teamName;
         private long captainTimestamp;
         private int substitutesLeft;
@@ -3719,6 +3720,7 @@ public class bwjsbot extends SubspaceBot {
             flag = false;
             turnToPick = false;
             captainName = "[NONE]";
+            lastCaptainName = "[NONE]";
             captains.clear();
             flagTime = 0;
             ready = false;
@@ -3984,6 +3986,7 @@ public class bwjsbot extends SubspaceBot {
          */
         private void captainLeft() {
             m_botAction.sendArenaMessage(captainName + " has been removed as captain of " + teamName + ".");
+            lastCaptainName = captainName;
             captainName = "[NONE]";
             
             if  (captains.containsKey(captainsIndex)) {
@@ -4197,6 +4200,17 @@ public class bwjsbot extends SubspaceBot {
             
             if (p == null) {
                 return;
+            }
+            
+            /* Last check to prevent arena spamming */
+            if (name.equalsIgnoreCase(lastCaptainName)) {
+            	if ((System.currentTimeMillis() - captainTimestamp) <= (5 * Tools.TimeInMillis.SECOND)) {
+            		m_botAction.sendPrivateMessage(name, "You will have to wait " +
+            				(System.currentTimeMillis() - captainTimestamp)/1000 +
+            				" more seconds before you can claim cap again.");
+            		sendCaptainList(name);
+            		return;
+            	}
             }
             
             captainName = p.getPlayerName();
@@ -4553,7 +4567,7 @@ public class bwjsbot extends SubspaceBot {
             }
             
             if (substitutesLeft >= 0)
-                m_botAction.sendSmartPrivateMessage(captainName, "You have " + substitutesLeft + "substitutes left.");
+                m_botAction.sendSmartPrivateMessage(captainName, "You have " + substitutesLeft + " substitutes left.");
             
         }
     
