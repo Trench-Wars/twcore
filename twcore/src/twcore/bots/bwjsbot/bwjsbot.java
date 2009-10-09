@@ -5277,20 +5277,21 @@ public class bwjsbot extends SubspaceBot {
                 
         		rs = psGetCurrentRank.executeQuery();
                 
-        		if (rs !=null && rs.next()) {
-        			name = rs.getString(2);
-        			temp[0] = rs.getInt(3);
-        			temp[1] = rs.getInt(4);
-        			temp[2] = rs.getInt(6);
-        			temp[2] += rs.getInt(7);
-        			temp[2] += rs.getInt(8);
-        			temp[2] += rs.getInt(9);
-        			temp[2] += rs.getInt(10);
-        			temp[2] += rs.getInt(11);
-        			temp[2] += rs.getInt(12);
-        			temp[2] += rs.getInt(13);
-        			temp[3] = rs.getInt(5);
-        			temp[4] = rs.getInt(15);
+        		if (rs != null && rs.next()) {
+        			name = rs.getString("name"); 
+        			temp[0] = rs.getInt("rat"); 
+        			temp[1] = rs.getInt("co"); 
+        			temp[2] = rs.getInt("wbkill"); 
+        			temp[2] += rs.getInt("javkill"); 
+        			temp[2] += rs.getInt("spidkill"); 
+        			temp[2] += rs.getInt("levkill"); 
+        			temp[2] += rs.getInt("terrkill"); 
+        			temp[2] += rs.getInt("weaskill"); 
+        			temp[2] += rs.getInt("lanckill"); 
+        			temp[2] += rs.getInt("sharkkill"); 
+        			temp[3] = rs.getInt("losses");
+        			temp[4] = rs.getInt("rank");
+        			
         			currentString = "CURRENT" + "   "
         				+ "Rank: " + temp[4] + "   " 
         				+ "Rating: " + temp[0] + "   "
@@ -5304,19 +5305,19 @@ public class bwjsbot extends SubspaceBot {
                     
             		rs = psGetNOCurrentRank.executeQuery();
             		
-            		if (rs !=null && rs.next()) {
-            			name = rs.getString(2);
-            			temp[0] = rs.getInt(3);
-            			temp[1] = rs.getInt(4);
-            			temp[2] = rs.getInt(6);
-            			temp[2] += rs.getInt(7);
-            			temp[2] += rs.getInt(8);
-            			temp[2] += rs.getInt(9);
-            			temp[2] += rs.getInt(10);
-            			temp[2] += rs.getInt(11);
-            			temp[2] += rs.getInt(12);
-            			temp[2] += rs.getInt(13);
-            			temp[3] = rs.getInt(5);
+            		if (rs != null && rs.next()) {
+            			name = rs.getString("name"); 
+            			temp[0] = rs.getInt("rat"); 
+            			temp[1] = rs.getInt("co"); 
+            			temp[2] = rs.getInt("wbkill"); 
+            			temp[2] += rs.getInt("javkill"); 
+            			temp[2] += rs.getInt("spidkill"); 
+            			temp[2] += rs.getInt("levkill"); 
+            			temp[2] += rs.getInt("terrkill"); 
+            			temp[2] += rs.getInt("weaskill"); 
+            			temp[2] += rs.getInt("lanckill"); 
+            			temp[2] += rs.getInt("sharkkill"); 
+            			temp[3] = rs.getInt("losses");;
             			
             			currentString = "CURRENT" + "   "
 	        				+ "Rank: " + "-" + "   " 
@@ -5328,27 +5329,28 @@ public class bwjsbot extends SubspaceBot {
                 }
             		
         		/* THIS MONTH */
-        		psGetRankMonth.setInt(1, c.get(Calendar.MONTH));	//month
+        		psGetRankMonth.setInt(1, (1 + c.get(Calendar.MONTH)));	//month
         		psGetRankMonth.setInt(2, c.get(Calendar.YEAR));	//year
         		psGetRankMonth.setString(3, cfg.getGameTypeString());
         		psGetRankMonth.setInt(4, userID);
                 
         		rs = psGetRankMonth.executeQuery();
                 
-        		if (rs !=null && rs.next()) {
-        			name = rs.getString(2);
-        			temp[0] = rs.getInt(3);
-        			temp[1] = rs.getInt(4);
-        			temp[2] = rs.getInt(6);
-        			temp[2] += rs.getInt(7);
-        			temp[2] += rs.getInt(8);
-        			temp[2] += rs.getInt(9);
-        			temp[2] += rs.getInt(10);
-        			temp[2] += rs.getInt(11);
-        			temp[2] += rs.getInt(12);
-        			temp[2] += rs.getInt(13);
-        			temp[3] = rs.getInt(5);
-        			temp[4] = rs.getInt(15);
+        		if (rs != null && rs.next()) {
+        			name = rs.getString("name"); 
+        			temp[0] = rs.getInt("rat"); 
+        			temp[1] = rs.getInt("co"); 
+        			temp[2] = rs.getInt("wbkill"); 
+        			temp[2] += rs.getInt("javkill"); 
+        			temp[2] += rs.getInt("spidkill"); 
+        			temp[2] += rs.getInt("levkill"); 
+        			temp[2] += rs.getInt("terrkill"); 
+        			temp[2] += rs.getInt("weaskill"); 
+        			temp[2] += rs.getInt("lanckill"); 
+        			temp[2] += rs.getInt("sharkkill"); 
+        			temp[3] = rs.getInt("losses");
+        			temp[4] = rs.getInt("rank");
+        			
         			thisMonthString = "THIS MONTH" + "   "
         				+ "Rank: " + temp[4] + "   " 
         				+ "Rating: " + temp[0] + "   "
@@ -5357,26 +5359,26 @@ public class bwjsbot extends SubspaceBot {
         				+ "Games: " + temp[1] + "   ";
         			
                 } else {
-                	psGetNORankMonth.setInt(1, c.get(Calendar.MONTH));	//Month
+                	psGetNORankMonth.setInt(1, (1 + c.get(Calendar.MONTH)));	//Month
                 	psGetNORankMonth.setInt(2, c.get(Calendar.YEAR));	//Year
                 	psGetNORankMonth.setString(3, cfg.getGameTypeString());
                 	psGetNORankMonth.setInt(4, userID);
                     
             		rs = psGetNORankMonth.executeQuery();
             		
-            		if (rs !=null && rs.next()) {
-            			name = rs.getString(2);
-            			temp[0] = rs.getInt(3);
-            			temp[1] = rs.getInt(4);
-            			temp[2] = rs.getInt(6);
-            			temp[2] += rs.getInt(7);
-            			temp[2] += rs.getInt(8);
-            			temp[2] += rs.getInt(9);
-            			temp[2] += rs.getInt(10);
-            			temp[2] += rs.getInt(11);
-            			temp[2] += rs.getInt(12);
-            			temp[2] += rs.getInt(13);
-            			temp[3] = rs.getInt(5);
+            		if (rs != null && rs.next()) {
+            			name = rs.getString("name"); 
+            			temp[0] = rs.getInt("rat"); 
+            			temp[1] = rs.getInt("co"); 
+            			temp[2] = rs.getInt("wbkill"); 
+            			temp[2] += rs.getInt("javkill"); 
+            			temp[2] += rs.getInt("spidkill"); 
+            			temp[2] += rs.getInt("levkill"); 
+            			temp[2] += rs.getInt("terrkill"); 
+            			temp[2] += rs.getInt("weaskill"); 
+            			temp[2] += rs.getInt("lanckill"); 
+            			temp[2] += rs.getInt("sharkkill"); 
+            			temp[3] = rs.getInt("losses");
             			
             			thisMonthString = "THIS MONTH" + "   "
 	        				+ "Rank: " + "-" + "   " 
@@ -5389,27 +5391,28 @@ public class bwjsbot extends SubspaceBot {
             	
         		/* LAST MONTH */
         		c.add(Calendar.MONTH, -1);
-        		psGetRankMonth.setInt(1, c.get(Calendar.MONTH));	//month
+        		psGetRankMonth.setInt(1, (1 + c.get(Calendar.MONTH)));	//month
         		psGetRankMonth.setInt(2, c.get(Calendar.YEAR));	//year
         		psGetRankMonth.setString(3, cfg.getGameTypeString());
         		psGetRankMonth.setInt(4, userID);
                 
         		rs = psGetRankMonth.executeQuery();
                 
-        		if (rs !=null && rs.next()) {
-        			name = rs.getString(2);
-        			temp[0] = rs.getInt(3);
-        			temp[1] = rs.getInt(4);
-        			temp[2] = rs.getInt(6);
-        			temp[2] += rs.getInt(7);
-        			temp[2] += rs.getInt(8);
-        			temp[2] += rs.getInt(9);
-        			temp[2] += rs.getInt(10);
-        			temp[2] += rs.getInt(11);
-        			temp[2] += rs.getInt(12);
-        			temp[2] += rs.getInt(13);
-        			temp[3] = rs.getInt(5);
-        			temp[4] = rs.getInt(15);
+        		if (rs != null && rs.next()) {
+        			name = rs.getString("name"); 
+        			temp[0] = rs.getInt("rat"); 
+        			temp[1] = rs.getInt("co"); 
+        			temp[2] = rs.getInt("wbkill"); 
+        			temp[2] += rs.getInt("javkill"); 
+        			temp[2] += rs.getInt("spidkill"); 
+        			temp[2] += rs.getInt("levkill"); 
+        			temp[2] += rs.getInt("terrkill"); 
+        			temp[2] += rs.getInt("weaskill"); 
+        			temp[2] += rs.getInt("lanckill"); 
+        			temp[2] += rs.getInt("sharkkill"); 
+        			temp[3] = rs.getInt("losses");
+        			temp[4] = rs.getInt("rank");
+        			
         			lastMonthString = "LAST MONTH" + "   "
         				+ "Rank: " + temp[4] + "   " 
         				+ "Rating: " + temp[0] + "   "
@@ -5425,19 +5428,19 @@ public class bwjsbot extends SubspaceBot {
                     
             		rs = psGetNORankMonth.executeQuery();
             		
-            		if (rs !=null && rs.next()) {
-            			name = rs.getString(2);
-            			temp[0] = rs.getInt(3);
-            			temp[1] = rs.getInt(4);
-            			temp[2] = rs.getInt(6);
-            			temp[2] += rs.getInt(7);
-            			temp[2] += rs.getInt(8);
-            			temp[2] += rs.getInt(9);
-            			temp[2] += rs.getInt(10);
-            			temp[2] += rs.getInt(11);
-            			temp[2] += rs.getInt(12);
-            			temp[2] += rs.getInt(13);
-            			temp[3] = rs.getInt(5);
+            		if (rs != null && rs.next()) {
+            			name = rs.getString("name"); 
+            			temp[0] = rs.getInt("rat"); 
+            			temp[1] = rs.getInt("co"); 
+            			temp[2] = rs.getInt("wbkill"); 
+            			temp[2] += rs.getInt("javkill"); 
+            			temp[2] += rs.getInt("spidkill"); 
+            			temp[2] += rs.getInt("levkill"); 
+            			temp[2] += rs.getInt("terrkill"); 
+            			temp[2] += rs.getInt("weaskill"); 
+            			temp[2] += rs.getInt("lanckill"); 
+            			temp[2] += rs.getInt("sharkkill"); 
+            			temp[3] = rs.getInt("losses");
             			
             			lastMonthString = "LAST MONTH" + "   "
 	        				+ "Rank: " + "-" + "   " 
