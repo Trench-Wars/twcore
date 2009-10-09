@@ -5421,7 +5421,7 @@ public class bwjsbot extends SubspaceBot {
         				+ "Games: " + temp[1] + "   ";
         			
                 } else {
-                	psGetNORankMonth.setInt(1, c.get(Calendar.MONTH));	//Month
+                	psGetNORankMonth.setInt(1, (1 + c.get(Calendar.MONTH)));	//Month
                 	psGetNORankMonth.setInt(2, c.get(Calendar.YEAR));	//Year
                 	psGetNORankMonth.setString(3, cfg.getGameTypeString());
                 	psGetNORankMonth.setInt(4, userID);
