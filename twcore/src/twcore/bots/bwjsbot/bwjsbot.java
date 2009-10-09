@@ -4987,12 +4987,11 @@ public class bwjsbot extends SubspaceBot {
             					+ "WHERE ( "
             						+ "timeEnded > DATE_ADD(NOW(), INTERVAL  -1 MONTH) "
             						+ "AND type = ? "
-            						+ "AND userID = ? "
             					+ ") "
             					+ "GROUP BY playerName "
             					+ "HAVING co > 5 "
             				+ ") as z, (SELECT @rownum:=0) r "
-            			+ ") as y ");
+            			+ ") as y WHERE userID = ? ");
             
             psGetRankMonth = m_botAction.createPreparedStatement(database, uniqueID,
             		"SELECT * FROM ( "
@@ -5020,12 +5019,11 @@ public class bwjsbot extends SubspaceBot {
             						+ "MONTH(timeEnded) = ? "
             						+ "AND YEAR(timeEnded) = ? "
             						+ "AND type = ? "
-            						+ "AND userID = ? "
             					+ ") "
             					+ "GROUP BY playerName "
             					+ "HAVING co > 5 "
             				+ ") as z, (SELECT @rownum:=0) r "
-            			+ ") as y ");
+            			+ ") as y WHERE userID = ? ");
             
             psGetNOCurrentRank = m_botAction.createPreparedStatement(database, uniqueID,
            				"SELECT * "
@@ -5258,17 +5256,23 @@ public class bwjsbot extends SubspaceBot {
     
         private void pmStats(String pName, int userID) {
         	String name = "[NOBODY]";
-        	String currentString = "CURRENT   [ERROR]";
-        	String thisMonthString = "THIS MONTH   [ERROR]";
-        	String lastMonthString = "LAST MONTH   [ERROR]";
-        	int[] temp;
+        	String currentString = "";
+        	String thisMonthString = "";
+        	String lastMonthString = "";
         	
         	Calendar c = Calendar.getInstance();
         	Date date = new Date(System.currentTimeMillis());
         	c.setTime(date);
+        	
+        	int[] current = new int[5];
+    		int[] lastMonth = new int[5];
+    		int[] thisMonth = new int[5];
+    		
+    		Arrays.fill(current, -1);
+    		Arrays.fill(lastMonth, -1);
+    		Arrays.fill(thisMonth, -1);
         	        	
         	try {
-        		temp = new int[5];
         		ResultSet rs;
         		
         		/* CURRENT */
@@ -5279,26 +5283,18 @@ public class bwjsbot extends SubspaceBot {
                 
         		if (rs != null && rs.next()) {
         			name = rs.getString("name"); 
-        			temp[0] = rs.getInt("rat"); 
-        			temp[1] = rs.getInt("co"); 
-        			temp[2] = rs.getInt("wbkill"); 
-        			temp[2] += rs.getInt("javkill"); 
-        			temp[2] += rs.getInt("spidkill"); 
-        			temp[2] += rs.getInt("levkill"); 
-        			temp[2] += rs.getInt("terrkill"); 
-        			temp[2] += rs.getInt("weaskill"); 
-        			temp[2] += rs.getInt("lanckill"); 
-        			temp[2] += rs.getInt("sharkkill"); 
-        			temp[3] = rs.getInt("losses");
-        			temp[4] = rs.getInt("rank");
-        			
-        			currentString = "CURRENT" + "   "
-        				+ "Rank: " + temp[4] + "   " 
-        				+ "Rating: " + temp[0] + "   "
-        				+ "Kills: " + temp[2] + "   "
-        				+ "Losses: " + temp[3] + "   "
-        				+ "Games: " + temp[1] + "   ";
-        			
+        			current[0] = rs.getInt("rat"); 
+        			current[1] = rs.getInt("co"); 
+        			current[2] = rs.getInt("wbkill"); 
+        			current[2] += rs.getInt("javkill"); 
+        			current[2] += rs.getInt("spidkill"); 
+        			current[2] += rs.getInt("levkill"); 
+        			current[2] += rs.getInt("terrkill"); 
+        			current[2] += rs.getInt("weaskill"); 
+        			current[2] += rs.getInt("lanckill"); 
+        			current[2] += rs.getInt("sharkkill"); 
+        			current[3] = rs.getInt("losses");
+        			current[4] = rs.getInt("rank");
                 } else {
                 	psGetNOCurrentRank.setString(1, cfg.getGameTypeString());
             		psGetNOCurrentRank.setInt(2, userID);
@@ -5307,24 +5303,17 @@ public class bwjsbot extends SubspaceBot {
             		
             		if (rs != null && rs.next()) {
             			name = rs.getString("name"); 
-            			temp[0] = rs.getInt("rat"); 
-            			temp[1] = rs.getInt("co"); 
-            			temp[2] = rs.getInt("wbkill"); 
-            			temp[2] += rs.getInt("javkill"); 
-            			temp[2] += rs.getInt("spidkill"); 
-            			temp[2] += rs.getInt("levkill"); 
-            			temp[2] += rs.getInt("terrkill"); 
-            			temp[2] += rs.getInt("weaskill"); 
-            			temp[2] += rs.getInt("lanckill"); 
-            			temp[2] += rs.getInt("sharkkill"); 
-            			temp[3] = rs.getInt("losses");;
-            			
-            			currentString = "CURRENT" + "   "
-	        				+ "Rank: " + "-" + "   " 
-	        				+ "Rating: " + temp[0] + "   "
-	        				+ "Kills: " + temp[2] + "   "
-	        				+ "Losses: " + temp[3] + "   "
-	        				+ "Games: " + temp[1] + "   ";
+            			current[0] = rs.getInt("rat"); 
+            			current[1] = rs.getInt("co"); 
+            			current[2] = rs.getInt("wbkill"); 
+            			current[2] += rs.getInt("javkill"); 
+            			current[2] += rs.getInt("spidkill"); 
+            			current[2] += rs.getInt("levkill"); 
+            			current[2] += rs.getInt("terrkill"); 
+            			current[2] += rs.getInt("weaskill"); 
+            			current[2] += rs.getInt("lanckill"); 
+            			current[2] += rs.getInt("sharkkill"); 
+            			current[3] = rs.getInt("losses");
             		}
                 }
             		
@@ -5338,26 +5327,18 @@ public class bwjsbot extends SubspaceBot {
                 
         		if (rs != null && rs.next()) {
         			name = rs.getString("name"); 
-        			temp[0] = rs.getInt("rat"); 
-        			temp[1] = rs.getInt("co"); 
-        			temp[2] = rs.getInt("wbkill"); 
-        			temp[2] += rs.getInt("javkill"); 
-        			temp[2] += rs.getInt("spidkill"); 
-        			temp[2] += rs.getInt("levkill"); 
-        			temp[2] += rs.getInt("terrkill"); 
-        			temp[2] += rs.getInt("weaskill"); 
-        			temp[2] += rs.getInt("lanckill"); 
-        			temp[2] += rs.getInt("sharkkill"); 
-        			temp[3] = rs.getInt("losses");
-        			temp[4] = rs.getInt("rank");
-        			
-        			thisMonthString = "THIS MONTH" + "   "
-        				+ "Rank: " + temp[4] + "   " 
-        				+ "Rating: " + temp[0] + "   "
-        				+ "Kills: " + temp[2] + "   "
-        				+ "Losses: " + temp[3] + "   "
-        				+ "Games: " + temp[1] + "   ";
-        			
+        			thisMonth[0] = rs.getInt("rat"); 
+        			thisMonth[1] = rs.getInt("co"); 
+        			thisMonth[2] = rs.getInt("wbkill"); 
+        			thisMonth[2] += rs.getInt("javkill"); 
+        			thisMonth[2] += rs.getInt("spidkill"); 
+        			thisMonth[2] += rs.getInt("levkill"); 
+        			thisMonth[2] += rs.getInt("terrkill"); 
+        			thisMonth[2] += rs.getInt("weaskill"); 
+        			thisMonth[2] += rs.getInt("lanckill"); 
+        			thisMonth[2] += rs.getInt("sharkkill"); 
+        			thisMonth[3] = rs.getInt("losses");
+        			thisMonth[4] = rs.getInt("rank");
                 } else {
                 	psGetNORankMonth.setInt(1, (1 + c.get(Calendar.MONTH)));	//Month
                 	psGetNORankMonth.setInt(2, c.get(Calendar.YEAR));	//Year
@@ -5368,24 +5349,17 @@ public class bwjsbot extends SubspaceBot {
             		
             		if (rs != null && rs.next()) {
             			name = rs.getString("name"); 
-            			temp[0] = rs.getInt("rat"); 
-            			temp[1] = rs.getInt("co"); 
-            			temp[2] = rs.getInt("wbkill"); 
-            			temp[2] += rs.getInt("javkill"); 
-            			temp[2] += rs.getInt("spidkill"); 
-            			temp[2] += rs.getInt("levkill"); 
-            			temp[2] += rs.getInt("terrkill"); 
-            			temp[2] += rs.getInt("weaskill"); 
-            			temp[2] += rs.getInt("lanckill"); 
-            			temp[2] += rs.getInt("sharkkill"); 
-            			temp[3] = rs.getInt("losses");
-            			
-            			thisMonthString = "THIS MONTH" + "   "
-	        				+ "Rank: " + "-" + "   " 
-	        				+ "Rating: " + temp[0] + "   "
-	        				+ "Kills: " + temp[2] + "   "
-	        				+ "Losses: " + temp[3] + "   "
-	        				+ "Games: " + temp[1] + "   ";
+            			thisMonth[0] = rs.getInt("rat"); 
+            			thisMonth[1] = rs.getInt("co"); 
+            			thisMonth[2] = rs.getInt("wbkill"); 
+            			thisMonth[2] += rs.getInt("javkill"); 
+            			thisMonth[2] += rs.getInt("spidkill"); 
+            			thisMonth[2] += rs.getInt("levkill"); 
+            			thisMonth[2] += rs.getInt("terrkill"); 
+            			thisMonth[2] += rs.getInt("weaskill"); 
+            			thisMonth[2] += rs.getInt("lanckill"); 
+            			thisMonth[2] += rs.getInt("sharkkill"); 
+            			thisMonth[3] = rs.getInt("losses");
             		}
                 }
             	
@@ -5400,26 +5374,18 @@ public class bwjsbot extends SubspaceBot {
                 
         		if (rs != null && rs.next()) {
         			name = rs.getString("name"); 
-        			temp[0] = rs.getInt("rat"); 
-        			temp[1] = rs.getInt("co"); 
-        			temp[2] = rs.getInt("wbkill"); 
-        			temp[2] += rs.getInt("javkill"); 
-        			temp[2] += rs.getInt("spidkill"); 
-        			temp[2] += rs.getInt("levkill"); 
-        			temp[2] += rs.getInt("terrkill"); 
-        			temp[2] += rs.getInt("weaskill"); 
-        			temp[2] += rs.getInt("lanckill"); 
-        			temp[2] += rs.getInt("sharkkill"); 
-        			temp[3] = rs.getInt("losses");
-        			temp[4] = rs.getInt("rank");
-        			
-        			lastMonthString = "LAST MONTH" + "   "
-        				+ "Rank: " + temp[4] + "   " 
-        				+ "Rating: " + temp[0] + "   "
-        				+ "Kills: " + temp[2] + "   "
-        				+ "Losses: " + temp[3] + "   "
-        				+ "Games: " + temp[1] + "   ";
-        			
+        			lastMonth[0] = rs.getInt("rat"); 
+        			lastMonth[1] = rs.getInt("co"); 
+        			lastMonth[2] = rs.getInt("wbkill"); 
+        			lastMonth[2] += rs.getInt("javkill"); 
+        			lastMonth[2] += rs.getInt("spidkill"); 
+        			lastMonth[2] += rs.getInt("levkill"); 
+        			lastMonth[2] += rs.getInt("terrkill"); 
+        			lastMonth[2] += rs.getInt("weaskill"); 
+        			lastMonth[2] += rs.getInt("lanckill"); 
+        			lastMonth[2] += rs.getInt("sharkkill"); 
+        			lastMonth[3] = rs.getInt("losses");
+        			lastMonth[4] = rs.getInt("rank");
                 } else {
                 	psGetNORankMonth.setInt(1, (1 + c.get(Calendar.MONTH)));	//Month
                 	psGetNORankMonth.setInt(2, c.get(Calendar.YEAR));	//Year
@@ -5430,30 +5396,145 @@ public class bwjsbot extends SubspaceBot {
             		
             		if (rs != null && rs.next()) {
             			name = rs.getString("name"); 
-            			temp[0] = rs.getInt("rat"); 
-            			temp[1] = rs.getInt("co"); 
-            			temp[2] = rs.getInt("wbkill"); 
-            			temp[2] += rs.getInt("javkill"); 
-            			temp[2] += rs.getInt("spidkill"); 
-            			temp[2] += rs.getInt("levkill"); 
-            			temp[2] += rs.getInt("terrkill"); 
-            			temp[2] += rs.getInt("weaskill"); 
-            			temp[2] += rs.getInt("lanckill"); 
-            			temp[2] += rs.getInt("sharkkill"); 
-            			temp[3] = rs.getInt("losses");
-            			
-            			lastMonthString = "LAST MONTH" + "   "
-	        				+ "Rank: " + "-" + "   " 
-	        				+ "Rating: " + temp[0] + "   "
-	        				+ "Kills: " + temp[2] + "   "
-	        				+ "Losses: " + temp[3] + "   "
-	        				+ "Games: " + temp[1] + "   ";
+            			lastMonth[0] = rs.getInt("rat"); 
+            			lastMonth[1] = rs.getInt("co"); 
+            			lastMonth[2] = rs.getInt("wbkill"); 
+            			lastMonth[2] += rs.getInt("javkill"); 
+            			lastMonth[2] += rs.getInt("spidkill"); 
+            			lastMonth[2] += rs.getInt("levkill"); 
+            			lastMonth[2] += rs.getInt("terrkill"); 
+            			lastMonth[2] += rs.getInt("weaskill"); 
+            			lastMonth[2] += rs.getInt("lanckill"); 
+            			lastMonth[2] += rs.getInt("sharkkill"); 
+            			lastMonth[3] = rs.getInt("losses");
             		}
                 }		
             } catch (Exception e) {Tools.printLog("BWJS ERROR: " + e.getMessage());}
-        	
+            
+            int[] length = new int[5];
+            
+            for (int i = 0; i < 5; i++) {
+            	int[] j = new int[3];
+            	j[0] = current[i];
+            	j[1] = thisMonth[i];
+            	j[2] = lastMonth[i];
+            	
+            	Arrays.sort(j);
+            	
+            	length[i] = Integer.toString(j[0]).length(); 
+            }
+            
+            
+            currentString = Tools.formatString("CURRENT", 13);
+            currentString += "Rank: ";
+            if (current[4] == -1) {
+            	currentString += Tools.rightString("-", length[4]);
+            } else {
+            	currentString += Tools.rightString(Integer.toString(current[4]), length[4]);
+            }
+            currentString += "   ";
+            currentString += "Rating: ";
+            if (current[1] == -1) {
+            	currentString += Tools.rightString("-", length[0]);
+            } else {
+            	currentString += Tools.rightString(Integer.toString(current[0]), length[0]);
+            }
+            currentString += "   ";
+            currentString += "Kills: ";
+            if (current[2] == -1) {
+            	currentString += Tools.rightString("-", length[2]);
+            } else {
+            	currentString += Tools.rightString(Integer.toString(current[2]), length[2]);
+            }
+            currentString += "   ";
+            currentString += "Losses: ";
+            if (current[3] == -1) {
+            	currentString += Tools.rightString("-", length[3]);
+            } else {
+            	currentString += Tools.rightString(Integer.toString(current[3]), length[3]);
+            }
+            currentString += "   ";
+            currentString += "Games: ";
+            if (current[1] == -1) {
+            	currentString += Tools.rightString("-", length[1]);
+            } else {
+            	currentString += Tools.rightString(Integer.toString(current[1]), length[1]);
+            }
+            
+            thisMonthString = Tools.formatString("THIS MONTH", 13);
+            thisMonthString += "Rank: ";
+            if (thisMonth[4] == -1) {
+            	thisMonthString += Tools.rightString("-", length[4]);
+            } else {
+            	thisMonthString += Tools.rightString(Integer.toString(thisMonth[4]), length[4]);
+            }
+            thisMonthString += "   ";
+            thisMonthString += "Rating: ";
+            if (thisMonth[1] == -1) {
+            	thisMonthString += Tools.rightString("-", length[0]);
+            } else {
+            	thisMonthString += Tools.rightString(Integer.toString(thisMonth[0]), length[0]);
+            }
+            thisMonthString += "   ";
+            thisMonthString += "Kills: ";
+            if (thisMonth[2] == -1) {
+            	thisMonthString += Tools.rightString("-", length[2]);
+            } else {
+            	thisMonthString += Tools.rightString(Integer.toString(thisMonth[2]), length[2]);
+            }
+            thisMonthString += "   ";
+            thisMonthString += "Losses: ";
+            if (thisMonth[3] == -1) {
+            	thisMonthString += Tools.rightString("-", length[3]);
+            } else {
+            	thisMonthString += Tools.rightString(Integer.toString(thisMonth[3]), length[3]);
+            }
+            thisMonthString += "   ";
+            thisMonthString += "Games: ";
+            if (thisMonth[1] == -1) {
+            	thisMonthString += Tools.rightString("-", length[1]);
+            } else {
+            	thisMonthString += Tools.rightString(Integer.toString(thisMonth[1]), length[1]);
+            }
+            
+            lastMonthString = Tools.formatString("LAST MONTH", 13);
+            lastMonthString += "Rank: ";
+            if (lastMonth[4] == -1) {
+            	lastMonthString += Tools.rightString("-", length[4]);
+            } else {
+            	lastMonthString += Tools.rightString(Integer.toString(lastMonth[4]), length[4]);
+            }
+            lastMonthString += "   ";
+            lastMonthString += "Rating: ";
+            if (lastMonth[1] == -1) {
+            	lastMonthString += Tools.rightString("-", length[0]);
+            } else {
+            	lastMonthString += Tools.rightString(Integer.toString(lastMonth[0]), length[0]);
+            }
+            lastMonthString += "   ";
+            lastMonthString += "Kills: ";
+            if (lastMonth[2] == -1) {
+            	lastMonthString += Tools.rightString("-", length[2]);
+            } else {
+            	lastMonthString += Tools.rightString(Integer.toString(lastMonth[2]), length[2]);
+            }
+            lastMonthString += "   ";
+            lastMonthString += "Losses: ";
+            if (lastMonth[3] == -1) {
+            	lastMonthString += Tools.rightString("-", length[3]);
+            } else {
+            	lastMonthString += Tools.rightString(Integer.toString(lastMonth[3]), length[3]);
+            }
+            lastMonthString += "   ";
+            lastMonthString += "Games: ";
+            if (lastMonth[1] == -1) {
+            	lastMonthString += Tools.rightString("-", length[1]);
+            } else {
+            	lastMonthString += Tools.rightString(Integer.toString(lastMonth[1]), length[1]);
+            }
+            
             m_botAction.sendPrivateMessage(pName, "-- Player: " + name);
-        	m_botAction.sendPrivateMessage(pName, currentString);
+            m_botAction.sendPrivateMessage(pName, currentString);
         	m_botAction.sendPrivateMessage(pName, thisMonthString);
         	m_botAction.sendPrivateMessage(pName, lastMonthString);
         }
