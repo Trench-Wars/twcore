@@ -413,9 +413,9 @@ public class bwjsbot extends SubspaceBot {
             cmd_myfreq(name);
         } else if (cmd.equals("!mvp")) {
             cmd_mvp(name);
-        } else if (cmd.startsWith("!rating ")) {
+        } else if (cmd.startsWith("!rating")) {
             cmd_rating(name, cmd);
-        } else if (cmd.startsWith("!score ")) {
+        } else if (cmd.startsWith("!score")) {
             cmd_score(name, cmd);
         } else if (cmd.equals("!notplaying")) {
             cmd_notplaying(name);
@@ -423,7 +423,7 @@ public class bwjsbot extends SubspaceBot {
             cmd_status(name);
         } else if (cmd.equals("!subscribe")) {
             cmd_subscribe(name);
-        } else if (cmd.startsWith("!stats ")) {
+        } else if (cmd.startsWith("!stats")) {
             cmd_stats(name, cmd);
 //        } else if (cmd.startsWith("!top10")) {
 //            cmd_top10(name, cmd);
