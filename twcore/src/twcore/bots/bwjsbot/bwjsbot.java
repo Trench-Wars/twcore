@@ -4990,6 +4990,7 @@ public class bwjsbot extends SubspaceBot {
             					+ ") "
             					+ "GROUP BY playerName "
             					+ "HAVING co > 5 "
+            					+ "ORDER BY rat DESC"
             				+ ") as z, (SELECT @rownum:=0) r "
             			+ ") as y WHERE userID = ? ");
             
@@ -5022,6 +5023,7 @@ public class bwjsbot extends SubspaceBot {
             					+ ") "
             					+ "GROUP BY playerName "
             					+ "HAVING co > 5 "
+            					+ "ORDER BY rat DESC"
             				+ ") as z, (SELECT @rownum:=0) r "
             			+ ") as y WHERE userID = ? ");
             
