@@ -3,8 +3,10 @@ package twcore.bots.bwjsbot;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.TimerTask;
@@ -421,8 +423,8 @@ public class bwjsbot extends SubspaceBot {
             cmd_status(name);
         } else if (cmd.equals("!subscribe")) {
             cmd_subscribe(name);
-//        } else if (cmd.startsWith("!stats ")) {
-//            cmd_stats(name, cmd);
+        } else if (cmd.startsWith("!stats ")) {
+            cmd_stats(name, cmd);
 //        } else if (cmd.startsWith("!top10")) {
 //            cmd_top10(name, cmd);
         }
@@ -783,7 +785,7 @@ public class bwjsbot extends SubspaceBot {
             help.add("!mvp                      -- Displays the current mvp");
             help.add("!rating <player>          -- Displays your/<player> current rating");
             help.add("!score <player>           -- Displays your/<player> current score");
-//            help.add("!stats <player>           -- Displays your/<player> stats");
+            help.add("!stats <player>           -- Displays your/<player> stats");
             if (state.getCurrentState() == BWJSState.ADDING_PLAYERS && isCaptain(name)) { 
                 help.add("!ready                    -- Use this when you're done setting your lineup");
                 help.add("!remove <player>          -- Removes specified player)");
@@ -1322,6 +1324,28 @@ public class bwjsbot extends SubspaceBot {
         } else {
             m_botAction.sendPrivateMessage(name, "Error: Bot is already ON");
         }
+    }
+    
+    private void cmd_stats(String name, String cmd) {
+    	int userID;
+    	
+    	if (state.getCurrentState() != BWJSState.OFF) {
+    		cmd = cmd.substring(6).trim();
+    		
+    		if (!cmd.isEmpty()) {
+    			userID = sql.getUserID(cmd);
+    		} else {
+    			userID = sql.getUserID(name);
+    		}
+    		
+    		/* Check if statsUsername exists */
+    		if (userID == -1) {
+    			m_botAction.sendPrivateMessage(name, "Player could not been found in the database.");
+    			return;
+    		}
+    		
+    		sql.pmStats(name, userID);
+    	}
     }
     
     /**
@@ -4859,6 +4883,12 @@ public class bwjsbot extends SubspaceBot {
         private PreparedStatement psPutGamePlayer;
         private PreparedStatement psPutGameCaptain;
         
+        private PreparedStatement psGetRankMonth;
+        private PreparedStatement psGetCurrentRank;
+        private PreparedStatement psGetNORankMonth;
+        private PreparedStatement psGetNOCurrentRank;
+        
+        
         private PreparedStatement psKeepAlive;
         
         private BWJSSQL() {
@@ -4931,6 +4961,130 @@ public class bwjsbot extends SubspaceBot {
                     "VALUES(?,?,?,?,?)");
             
             psKeepAlive = m_botAction.createPreparedStatement(database, uniqueID, "SHOW DATABASES");
+        
+            psGetCurrentRank = m_botAction.createPreparedStatement(database, uniqueID,
+            		"SELECT * FROM ("
+            				+ "SELECT *, @rownum:=@rownum+1 rank"
+            				+ "FROM ("
+            					+ "SELECT  userID,"
+            						+ "playerName as name,"
+            						+ "avg(rating) AS rat,"
+            						+ "count(matchID) as co,"
+            						+ "sum(deaths) as losses,"
+            						+ "sum(WBkill) as wbkill,"
+            						+ "sum(JAVkill) as javkill,"
+            						+ "sum(SPIDkill) as spidkill,"
+            						+ "sum(LEVkill) as levkill,"
+            						+ "sum(TERRkill) as terrkill,"
+            						+ "sum(WEASkill) as weaskill,"
+            						+ "sum(LANCkill) as weaskill,"
+            						+ "sum(SHARKkill) as sharkkill"
+            					+ "FROM tblBWJS__Game"
+            					+ "LEFT JOIN tblBWJS__GamePlayerShipInfo"
+            					+ "USING (matchID)"
+            					+ "LEFT JOIN tblBWJS__Player"
+            					+ "USING (userID)"
+            					+ "WHERE ("
+            						+ "timeEnded > DATE_ADD(NOW(), INTERVAL  -1 MONTH)"
+            						+ "AND type = ?"
+            						+ "AND userID = ?"
+            					+ ")"
+            					+ "GROUP BY playerName"
+            					+ "HAVING co > 5"
+            				+ ") as z, (SELECT @rownum:=0) r"
+            			+ ") as y");
+            
+            psGetRankMonth = m_botAction.createPreparedStatement(database, uniqueID,
+            		"SELECT * FROM ("
+            				+ "SELECT *, @rownum:=@rownum+1 rank"
+            				+ "FROM ("
+            					+ "SELECT  userID,"
+            						+ "playerName as name,"
+            						+ "avg(rating) AS rat,"
+            						+ "count(matchID) as co,"
+            						+ "sum(deaths) as losses,"
+            						+ "sum(WBkill) as wbkill,"
+            						+ "sum(JAVkill) as javkill,"
+            						+ "sum(SPIDkill) as spidkill,"
+            						+ "sum(LEVkill) as levkill,"
+            						+ "sum(TERRkill) as terrkill,"
+            						+ "sum(WEASkill) as weaskill,"
+            						+ "sum(LANCkill) as weaskill,"
+            						+ "sum(SHARKkill) as sharkkill"
+            					+ "FROM tblBWJS__Game"
+            					+ "LEFT JOIN tblBWJS__GamePlayerShipInfo"
+            					+ "USING (matchID)"
+            					+ "LEFT JOIN tblBWJS__Player"
+            					+ "USING (userID)"
+            					+ "WHERE ("
+            						+ "MONTH(timeEnded) = ?"
+            						+ "AND YEAR(timeEnded) = ?"
+            						+ "AND type = ?"
+            						+ "AND userID = ?"
+            					+ ")"
+            					+ "GROUP BY playerName"
+            					+ "HAVING co > 5"
+            				+ ") as z, (SELECT @rownum:=0) r"
+            			+ ") as y");
+            
+            psGetNOCurrentRank = m_botAction.createPreparedStatement(database, uniqueID,
+           				"SELECT *"
+            				+ "FROM ("
+            					+ "SELECT  userID,"
+            						+ "playerName as name,"
+            						+ "avg(rating) AS rat,"
+            						+ "count(matchID) as co,"
+            						+ "sum(deaths) as losses,"
+            						+ "sum(WBkill) as wbkill,"
+            						+ "sum(JAVkill) as javkill,"
+            						+ "sum(SPIDkill) as spidkill,"
+            						+ "sum(LEVkill) as levkill,"
+            						+ "sum(TERRkill) as terrkill,"
+            						+ "sum(WEASkill) as weaskill,"
+            						+ "sum(LANCkill) as weaskill,"
+            						+ "sum(SHARKkill) as sharkkill"
+            					+ "FROM tblBWJS__Game"
+            					+ "LEFT JOIN tblBWJS__GamePlayerShipInfo"
+            					+ "USING (matchID)"
+            					+ "LEFT JOIN tblBWJS__Player"
+            					+ "USING (userID)"
+            					+ "WHERE ("
+            						+ "timeEnded > DATE_ADD(NOW(), INTERVAL  -1 MONTH)"
+            						+ "AND type = ?"
+            						+ "AND userID = ?"
+            					+ ")"
+            					+ "GROUP BY playerName"
+            			+ ") as y");
+            
+            psGetNORankMonth = m_botAction.createPreparedStatement(database, uniqueID,
+            		"SELECT *"
+            			+ "FROM ("
+            				+ "SELECT  userID,"
+            					+ "playerName as name,"
+            					+ "avg(rating) AS rat,"
+            					+ "count(matchID) as co,"
+            					+ "sum(deaths) as losses,"
+            					+ "sum(WBkill) as wbkill,"
+            					+ "sum(JAVkill) as javkill,"
+            					+ "sum(SPIDkill) as spidkill,"
+            					+ "sum(LEVkill) as levkill,"
+            					+ "sum(TERRkill) as terrkill,"
+            					+ "sum(WEASkill) as weaskill,"
+            					+ "sum(LANCkill) as weaskill,"
+            					+ "sum(SHARKkill) as sharkkill"
+            				+ "FROM tblBWJS__Game"
+            				+ "LEFT JOIN tblBWJS__GamePlayerShipInfo"
+            				+ "USING (matchID)"
+            				+ "LEFT JOIN tblBWJS__Player"
+            				+ "USING (userID)"
+            				+ "WHERE ("
+            					+ "MONTH(timeEnded) = ?"
+            					+ "AND YEAR(timeEnded) = ?"
+            					+ "AND type = ?"
+            					+ "AND userID = ?"
+            				+ ")"
+            				+ "GROUP BY playerName"
+            			+ ") as y");
         }
         
         private void addGame() {
@@ -5095,6 +5249,205 @@ public class bwjsbot extends SubspaceBot {
             } catch(SQLException sqle) {
                 // No need to do anything here
             }
+        }
+    
+        private void pmStats(String pName, int userID) {
+        	String name = "[NOBODY]";
+        	String currentString = "CURRENT   [ERROR]";
+        	String thisMonthString = "THIS MONTH   [ERROR]";
+        	String lastMonthString = "LAST MONTH   [ERROR]";
+        	int[] temp;
+        	
+        	Calendar c = Calendar.getInstance();
+        	Date date = new Date(System.currentTimeMillis());
+        	c.setTime(date);
+        	        	
+        	try {
+        		temp = new int[4];
+        		ResultSet rs;
+        		
+        		/* CURRENT */
+        		psGetCurrentRank.setString(1, cfg.getGameTypeString());
+        		psGetCurrentRank.setInt(2, userID);
+                
+        		rs = psGetCurrentRank.executeQuery();
+                
+        		if (rs.next()) {
+        			name = rs.getString("name");
+        			temp[0] = rs.getInt("rat");
+        			temp[1] = rs.getInt("co");
+        			temp[2] = rs.getInt("wbkill");
+        			temp[2] += rs.getInt("javkill");
+        			temp[2] += rs.getInt("spidkill");
+        			temp[2] += rs.getInt("levkill");
+        			temp[2] += rs.getInt("terrkill");
+        			temp[2] += rs.getInt("weaskill");
+        			temp[2] += rs.getInt("lanckill");
+        			temp[2] += rs.getInt("sharkkill");
+        			temp[3] = rs.getInt("losses");
+        			temp[4] = rs.getInt("rank");
+        			currentString = "CURRENT" + "   "
+        				+ "Rank: " + temp[4] + "   " 
+        				+ "Rating: " + temp[0] + "   "
+        				+ "Kills: " + temp[2] + "   "
+        				+ "Losses: " + temp[3] + "   "
+        				+ "Games: " + temp[1] + "   ";
+        			
+                } else {
+                	psGetNOCurrentRank.setString(1, cfg.getGameTypeString());
+            		psGetNOCurrentRank.setInt(2, userID);
+                    
+            		rs = psGetNOCurrentRank.executeQuery();
+            		
+            		if (rs.next()) {
+            			name = rs.getString("name");
+            			temp[0] = rs.getInt("rat");
+            			temp[1] = rs.getInt("co");
+            			temp[2] = rs.getInt("wbkill");
+            			temp[2] += rs.getInt("javkill");
+            			temp[2] += rs.getInt("spidkill");
+            			temp[2] += rs.getInt("levkill");
+            			temp[2] += rs.getInt("terrkill");
+            			temp[2] += rs.getInt("weaskill");
+            			temp[2] += rs.getInt("lanckill");
+            			temp[2] += rs.getInt("sharkkill");
+            			temp[3] = rs.getInt("losses");
+            			
+            			currentString = "CURRENT" + "   "
+	        				+ "Rank: " + "-" + "   " 
+	        				+ "Rating: " + temp[0] + "   "
+	        				+ "Kills: " + temp[2] + "   "
+	        				+ "Losses: " + temp[3] + "   "
+	        				+ "Games: " + temp[1] + "   ";
+            		}
+                }
+            		
+        		/* THIS MONTH */
+        		psGetRankMonth.setInt(1, c.get(Calendar.MONTH));	//month
+        		psGetRankMonth.setInt(2, c.get(Calendar.YEAR));	//year
+        		psGetRankMonth.setString(3, cfg.getGameTypeString());
+        		psGetRankMonth.setInt(4, userID);
+                
+        		rs = psGetRankMonth.executeQuery();
+                
+        		if (rs.next()) {
+        			name = rs.getString("name");
+        			temp[0] = rs.getInt("rat");
+        			temp[1] = rs.getInt("co");
+        			temp[2] = rs.getInt("wbkill");
+        			temp[2] += rs.getInt("javkill");
+        			temp[2] += rs.getInt("spidkill");
+        			temp[2] += rs.getInt("levkill");
+        			temp[2] += rs.getInt("terrkill");
+        			temp[2] += rs.getInt("weaskill");
+        			temp[2] += rs.getInt("lanckill");
+        			temp[2] += rs.getInt("sharkkill");
+        			temp[3] = rs.getInt("losses");
+        			temp[4] = rs.getInt("rank");
+        			thisMonthString = "THIS MONTH" + "   "
+        				+ "Rank: " + temp[4] + "   " 
+        				+ "Rating: " + temp[0] + "   "
+        				+ "Kills: " + temp[2] + "   "
+        				+ "Losses: " + temp[3] + "   "
+        				+ "Games: " + temp[1] + "   ";
+        			
+                } else {
+                	psGetNORankMonth.setInt(1, c.get(Calendar.MONTH));	//Month
+                	psGetNORankMonth.setInt(2, c.get(Calendar.YEAR));	//Year
+                	psGetNORankMonth.setString(3, cfg.getGameTypeString());
+                	psGetNORankMonth.setInt(4, userID);
+                    
+            		rs = psGetNORankMonth.executeQuery();
+            		
+            		if (rs.next()) {
+            			name = rs.getString("name");
+            			temp[0] = rs.getInt("rat");
+            			temp[1] = rs.getInt("co");
+            			temp[2] = rs.getInt("wbkill");
+            			temp[2] += rs.getInt("javkill");
+            			temp[2] += rs.getInt("spidkill");
+            			temp[2] += rs.getInt("levkill");
+            			temp[2] += rs.getInt("terrkill");
+            			temp[2] += rs.getInt("weaskill");
+            			temp[2] += rs.getInt("lanckill");
+            			temp[2] += rs.getInt("sharkkill");
+            			temp[3] = rs.getInt("losses");
+            			
+            			thisMonthString = "THIS MONTH" + "   "
+	        				+ "Rank: " + "-" + "   " 
+	        				+ "Rating: " + temp[0] + "   "
+	        				+ "Kills: " + temp[2] + "   "
+	        				+ "Losses: " + temp[3] + "   "
+	        				+ "Games: " + temp[1] + "   ";
+            		}
+                }
+            	
+        		/* LAST MONTH */
+        		c.add(Calendar.MONTH, -1);
+        		psGetRankMonth.setInt(1, c.get(Calendar.MONTH));	//month
+        		psGetRankMonth.setInt(2, c.get(Calendar.YEAR));	//year
+        		psGetRankMonth.setString(3, cfg.getGameTypeString());
+        		psGetRankMonth.setInt(4, userID);
+                
+        		rs = psGetRankMonth.executeQuery();
+                
+        		if (rs.next()) {
+        			name = rs.getString("name");
+        			temp[0] = rs.getInt("rat");
+        			temp[1] = rs.getInt("co");
+        			temp[2] = rs.getInt("wbkill");
+        			temp[2] += rs.getInt("javkill");
+        			temp[2] += rs.getInt("spidkill");
+        			temp[2] += rs.getInt("levkill");
+        			temp[2] += rs.getInt("terrkill");
+        			temp[2] += rs.getInt("weaskill");
+        			temp[2] += rs.getInt("lanckill");
+        			temp[2] += rs.getInt("sharkkill");
+        			temp[3] = rs.getInt("losses");
+        			temp[4] = rs.getInt("rank");
+        			lastMonthString = "LAST MONTH" + "   "
+        				+ "Rank: " + temp[4] + "   " 
+        				+ "Rating: " + temp[0] + "   "
+        				+ "Kills: " + temp[2] + "   "
+        				+ "Losses: " + temp[3] + "   "
+        				+ "Games: " + temp[1] + "   ";
+        			
+                } else {
+                	psGetNORankMonth.setInt(1, c.get(Calendar.MONTH));	//Month
+                	psGetNORankMonth.setInt(2, c.get(Calendar.YEAR));	//Year
+                	psGetNORankMonth.setString(3, cfg.getGameTypeString());
+                	psGetNORankMonth.setInt(4, userID);
+                    
+            		rs = psGetNORankMonth.executeQuery();
+            		
+            		if (rs.next()) {
+            			name = rs.getString("name");
+            			temp[0] = rs.getInt("rat");
+            			temp[1] = rs.getInt("co");
+            			temp[2] = rs.getInt("wbkill");
+            			temp[2] += rs.getInt("javkill");
+            			temp[2] += rs.getInt("spidkill");
+            			temp[2] += rs.getInt("levkill");
+            			temp[2] += rs.getInt("terrkill");
+            			temp[2] += rs.getInt("weaskill");
+            			temp[2] += rs.getInt("lanckill");
+            			temp[2] += rs.getInt("sharkkill");
+            			temp[3] = rs.getInt("losses");
+            			
+            			lastMonthString = "LAST MONTH" + "   "
+	        				+ "Rank: " + "-" + "   " 
+	        				+ "Rating: " + temp[0] + "   "
+	        				+ "Kills: " + temp[2] + "   "
+	        				+ "Losses: " + temp[3] + "   "
+	        				+ "Games: " + temp[1] + "   ";
+            		}
+                }		
+            } catch (Exception e) {}
+        	
+            m_botAction.sendPrivateMessage(pName, "-- Player: " + name);
+        	m_botAction.sendPrivateMessage(pName, currentString);
+        	m_botAction.sendPrivateMessage(pName, thisMonthString);
+        	m_botAction.sendPrivateMessage(pName, lastMonthString);
         }
     }
     
