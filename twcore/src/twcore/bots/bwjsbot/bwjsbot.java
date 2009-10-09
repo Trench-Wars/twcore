@@ -5277,7 +5277,7 @@ public class bwjsbot extends SubspaceBot {
                 
         		rs = psGetCurrentRank.executeQuery();
                 
-        		if (rs.next()) {
+        		if (rs !=null && rs.next()) {
         			name = rs.getString(2);
         			temp[0] = rs.getInt(3);
         			temp[1] = rs.getInt(4);
@@ -5304,7 +5304,7 @@ public class bwjsbot extends SubspaceBot {
                     
             		rs = psGetNOCurrentRank.executeQuery();
             		
-            		if (rs.next()) {
+            		if (rs !=null && rs.next()) {
             			name = rs.getString(2);
             			temp[0] = rs.getInt(3);
             			temp[1] = rs.getInt(4);
@@ -5335,7 +5335,7 @@ public class bwjsbot extends SubspaceBot {
                 
         		rs = psGetRankMonth.executeQuery();
                 
-        		if (rs.next()) {
+        		if (rs !=null && rs.next()) {
         			name = rs.getString(2);
         			temp[0] = rs.getInt(3);
         			temp[1] = rs.getInt(4);
@@ -5364,7 +5364,7 @@ public class bwjsbot extends SubspaceBot {
                     
             		rs = psGetNORankMonth.executeQuery();
             		
-            		if (rs.next()) {
+            		if (rs !=null && rs.next()) {
             			name = rs.getString(2);
             			temp[0] = rs.getInt(3);
             			temp[1] = rs.getInt(4);
@@ -5396,7 +5396,7 @@ public class bwjsbot extends SubspaceBot {
                 
         		rs = psGetRankMonth.executeQuery();
                 
-        		if (rs.next()) {
+        		if (rs !=null && rs.next()) {
         			name = rs.getString(2);
         			temp[0] = rs.getInt(3);
         			temp[1] = rs.getInt(4);
@@ -5425,7 +5425,7 @@ public class bwjsbot extends SubspaceBot {
                     
             		rs = psGetNORankMonth.executeQuery();
             		
-            		if (rs.next()) {
+            		if (rs !=null && rs.next()) {
             			name = rs.getString(2);
             			temp[0] = rs.getInt(3);
             			temp[1] = rs.getInt(4);
