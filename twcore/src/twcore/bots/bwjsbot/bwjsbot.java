@@ -5447,7 +5447,7 @@ public class bwjsbot extends SubspaceBot {
 	        				+ "Games: " + temp[1] + "   ";
             		}
                 }		
-            } catch (Exception e) {}
+            } catch (Exception e) {Tools.printLog("BWJS ERROR: " + e.getMessage());}
         	
             m_botAction.sendPrivateMessage(pName, "-- Player: " + name);
         	m_botAction.sendPrivateMessage(pName, currentString);
