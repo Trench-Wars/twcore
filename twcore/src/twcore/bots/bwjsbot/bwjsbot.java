@@ -1790,6 +1790,10 @@ public class bwjsbot extends SubspaceBot {
         m_botAction.showObject(cfg.getObject(2));
         m_botAction.sendArenaMessage("Go go go!!!", Tools.Sound.GOGOGO);
         
+        //Sometimes the players dont get warped on the first time 
+        team[0].warpTo(cfg.getWarpSpot(4), cfg.getWarpSpot(5));
+        team[1].warpTo(cfg.getWarpSpot(6), cfg.getWarpSpot(7));
+        
         timeLeft = cfg.getTime() * 60;
     }
     
@@ -5704,7 +5708,7 @@ public class bwjsbot extends SubspaceBot {
             
             if (time == 25) {
                 m_botAction.showObject(cfg.getObject(1));
-            } else if (time == 30) {
+            } else if (time >= 30) {
                 startGame();
             }
         }
