@@ -767,6 +767,12 @@ public class bwjsbot extends SubspaceBot {
             if (isCaptain(name)) {
                 help.add("!removecap                -- Removes you as a captain");
             }
+            if (cfg.getGameType() != BWJSConfig.BASE) {
+                help.add("!stats <player>           -- Displays your/<player> stats");
+            } 
+//            else {
+//                help.add("!stats <player>:<ship>    -- Displays your/<player>:<ship> stats");
+//            }
         } else if (state.getCurrentState() >= BWJSState.ADDING_PLAYERS) {
             if (isCaptain(name)) {
                 help.add("!add <player>             -- Adds player");
@@ -780,12 +786,18 @@ public class bwjsbot extends SubspaceBot {
             }
             help.add("!lagout                   -- Puts you back into the game if you have lagged out");
             help.add("!list                     -- Lists all players on this team");
-//            help.add("!listbest <ship>          -- Lists the players in the arena and groups them according to their rank");
+//            if (cfg.getGameType() != BWJSConfig.BASE) {
+//                help.add("!listbest <ship>          -- Lists the players in the arena and orders them according to their rank");
+//            } else {
+//                help.add("!listbest                 -- Lists the players in the arena and orders them according to their rank");
+//            }
             help.add("!myfreq                   -- Puts you on your team's frequency");
             help.add("!mvp                      -- Displays the current mvp");
             help.add("!rating <player>          -- Displays your/<player> current rating");
             help.add("!score <player>           -- Displays your/<player> current score");
-            help.add("!stats <player>           -- Displays your/<player> stats");
+            if (cfg.getGameType() != BWJSConfig.BASE) {
+            	help.add("!stats <player>           -- Displays your/<player> stats");
+            }
             if (state.getCurrentState() == BWJSState.ADDING_PLAYERS && isCaptain(name)) { 
                 help.add("!ready                    -- Use this when you're done setting your lineup");
                 help.add("!remove <player>          -- Removes specified player)");
@@ -4792,19 +4804,19 @@ public class bwjsbot extends SubspaceBot {
                             + Tools.rightString(Integer.toString(p.getTotalRating()), 9) + " | "
                             + Tools.rightString(Integer.toString(p.getLagouts()), 2) + " |");
                     //Per ship
-                    for (int i = 0; i < 9; i++) {
-                        if (p.p_ship[i][BWJSPlayer.USED] == 1) {
-                            out.add("|  " + Tools.formatString(" `-- " + Tools.shipName(i), 25) + " "
-                                    + Tools.rightString(Integer.toString(p.getKills(i)), 4) + " | "
-                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.DEATHS]), 4) + " | "
-                                    + Tools.rightString(Integer.toString(p.getTeamKills(i)), 4) + " | "
-                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.SCORE]), 9) + " | "
-                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.FLAGS_CLAIMED]), 4) + " | "
-                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.TERRIER_KILL]), 4) + " | "
-                                    + Tools.rightString(Integer.toString(p.getRating(i)), 9) + " | "
-                                    + Tools.rightString("-", 2) + " |");
-                        }
-                    }
+//                    for (int i = 0; i < 9; i++) {
+//                        if (p.p_ship[i][BWJSPlayer.USED] == 1) {
+//                            out.add("|  " + Tools.formatString(" `-- " + Tools.shipName(i), 25) + " "
+//                                    + Tools.rightString(Integer.toString(p.getKills(i)), 4) + " | "
+//                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.DEATHS]), 4) + " | "
+//                                    + Tools.rightString(Integer.toString(p.getTeamKills(i)), 4) + " | "
+//                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.SCORE]), 9) + " | "
+//                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.FLAGS_CLAIMED]), 4) + " | "
+//                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.TERRIER_KILL]), 4) + " | "
+//                                    + Tools.rightString(Integer.toString(p.getRating(i)), 9) + " | "
+//                                    + Tools.rightString("-", 2) + " |");
+//                        }
+//                    }
                 }
             } else  if (cfg.getGameType() == BWJSConfig.JAVDUEL){
                 out.add("|                          ,------+------+------+-----------+----+");
