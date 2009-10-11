@@ -50,6 +50,7 @@ public class bwjsbot extends SubspaceBot {
     
     private ArrayList<String> listNotplaying;               //List of notplaying players
     private ArrayList<String> listAlert;                    //List of players who toggled !subscribe on
+    private ArrayList<ExtendedLog> listExtendedLog;         //Logs more information of a game
     
     private int timeLeft;                                   //Total game time
     private long zonerTimestamp;                            //Timestamp of the last zoner
@@ -222,11 +223,11 @@ public class bwjsbot extends SubspaceBot {
     public void handleEvent(PlayerDeath event) {
         if (state.getCurrentState() == BWJSState.GAME_IN_PROGRESS) {
             Player killee;      //Player that got killed
-            String killer;      //Name of the player killer
+            Player killer;      //Player that was the killer
             
             
             killee = m_botAction.getPlayer(event.getKilleeID());
-            killer = m_botAction.getPlayerName(event.getKillerID());
+            killer = m_botAction.getPlayer(event.getKillerID());
 
             /* Null pointer exception check */
             if (killee == null || killer == null) {
@@ -235,11 +236,22 @@ public class bwjsbot extends SubspaceBot {
             
             for (BWJSTeam i : team) {
                 i.playerDeath(killee.getPlayerName(), 
-                        killer, 
+                        killer.getPlayerName(), 
                         killee.getShipType(), 
                         killee.getFrequency(), 
                         event.getKilledPlayerBounty());
             }
+            
+            //Log in extendedLogfile
+            listExtendedLog.add(new ExtendedLog(
+                    killer.getPlayerName(),
+                    killee.getPlayerName(),
+                    killer.getShipType(),
+                    killee.getShipType(),
+                    killer.getXLocation(),
+                    killee.getXLocation(),
+                    killer.getYLocation(),
+                    killee.getYLocation()));
         }
     }
     
@@ -1778,10 +1790,6 @@ public class bwjsbot extends SubspaceBot {
         m_botAction.showObject(cfg.getObject(2));
         m_botAction.sendArenaMessage("Go go go!!!", Tools.Sound.GOGOGO);
         
-        //Sometimes the players dont get warped the first time
-        team[0].warpTo(cfg.getWarpSpot(4), cfg.getWarpSpot(5));
-        team[1].warpTo(cfg.getWarpSpot(6), cfg.getWarpSpot(7));
-        
         timeLeft = cfg.getTime() * 60;
     }
     
@@ -1843,6 +1851,7 @@ public class bwjsbot extends SubspaceBot {
             sql.endGame(winningFreq);
             sql.putPlayers();
             sql.putCaptains();
+            sql.putExtendedLog();
             sql.displayURL();
         }
     }
@@ -2029,6 +2038,7 @@ public class bwjsbot extends SubspaceBot {
         listNotplaying = new ArrayList<String>();
         listNotplaying.add(m_botAction.getBotName().toLowerCase());
         listAlert = new ArrayList<String>();
+        listExtendedLog = new ArrayList<ExtendedLog>();
         
         lockArena = false;
         lockLastGame = false;
@@ -2292,6 +2302,8 @@ public class bwjsbot extends SubspaceBot {
      * Resets variables to their default value
      */
     private void reset() {
+        listExtendedLog.clear();
+        
         team[0].resetVariables();
         team[1].resetVariables();
         timeLeft = cfg.getTime() * 60;
@@ -4936,6 +4948,7 @@ public class bwjsbot extends SubspaceBot {
         private PreparedStatement psGetNORankMonth;
         private PreparedStatement psGetNOCurrentRank;
         
+        private PreparedStatement psPutExtendedLog;
         
         private PreparedStatement psKeepAlive;
         
@@ -5133,6 +5146,20 @@ public class bwjsbot extends SubspaceBot {
                             + ") "
                             + "GROUP BY playerName "
                         + ") as y ");
+            
+            psPutExtendedLog = m_botAction.createPreparedStatement(database, uniqueID,
+                    "INSERT INTO tblBWJS__GameExtended(" +
+                    "matchID, " +       //1
+                    "userIDKiller, " +  //2
+                    "userIDKillee, " +  //3
+                    "shipKiller, " +    //4
+                    "shipKillee, " +    //5
+                    "timestamp, " +     //6
+                    "x_coordKiller, " + //7
+                    "x_coordKilled, " + //8
+                    "y_coordKiller, " + //9
+                    "y_coordKilled, " + //10
+                    "VALUES(?,?,?,?,?,?,?,?,?,?)");
         }
         
         private void addGame() {
@@ -5273,6 +5300,26 @@ public class bwjsbot extends SubspaceBot {
             } catch (Exception e) {}
         }
     
+        private void putExtendedLog() {
+            try {
+                for (ExtendedLog i : listExtendedLog) {
+                    psPutExtendedLog.clearParameters();
+                    psPutExtendedLog.setInt(1, matchID);
+                    psPutExtendedLog.setInt(2, i.userIDKiller);
+                    psPutExtendedLog.setInt(3, i.userIDKillee);
+                    psPutExtendedLog.setInt(4, i.shipKiller);
+                    psPutExtendedLog.setInt(5, i.shipKillee);
+                    psPutExtendedLog.setLong(6, i.timestamp);
+                    psPutExtendedLog.setInt(7, i.x_coordKiller);
+                    psPutExtendedLog.setInt(8, i.x_coordKillee);
+                    psPutExtendedLog.setInt(9, i.y_coordKiller);
+                    psPutExtendedLog.setInt(10, i.y_coordKillee);
+                    
+                    psPutExtendedLog.execute();
+                }
+            } catch (Exception e) {}
+        }
+        
         private void closePreparedStatements() {
             m_botAction.closePreparedStatement(database, uniqueID, psAddGame);
             m_botAction.closePreparedStatement(database, uniqueID, psEndGame);
@@ -5286,6 +5333,7 @@ public class bwjsbot extends SubspaceBot {
             m_botAction.closePreparedStatement(database, uniqueID, psGetNORankMonth);
             m_botAction.closePreparedStatement(database, uniqueID, psGetNOCurrentRank);
             m_botAction.closePreparedStatement(database, uniqueID, psKeepAlive);
+            m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLog);
         }
     
         private void displayURL() {
@@ -5656,7 +5704,7 @@ public class bwjsbot extends SubspaceBot {
             
             if (time == 25) {
                 m_botAction.showObject(cfg.getObject(1));
-            } else if (time >= 30) {
+            } else if (time == 30) {
                 startGame();
             }
         }
@@ -5724,6 +5772,33 @@ public class bwjsbot extends SubspaceBot {
     private class KeepAliveConnection extends TimerTask {
         public void run() {
             sql.keepAlive();
+        }
+    }
+
+    /**
+     * Extended log
+     */
+    private class ExtendedLog {
+        private int userIDKiller;
+        private int userIDKillee;
+        private int shipKiller;
+        private int shipKillee;
+        private long timestamp;
+        private int x_coordKiller;
+        private int x_coordKillee;
+        private int y_coordKiller;
+        private int y_coordKillee;
+        
+        private ExtendedLog(String nameKiller, String nameKillee, int shipKiller, int shipKillee, int x_coordKiller, int x_coordKillee, int y_coordKiller, int y_coordKillee) {
+            this.userIDKiller = sql.getUserID(nameKiller);
+            this.userIDKillee = sql.getUserID(nameKillee);
+            this.shipKiller = shipKiller;
+            this.shipKillee = shipKillee;
+            this.timestamp = System.currentTimeMillis();
+            this.x_coordKiller = x_coordKiller;
+            this.x_coordKillee = x_coordKillee;
+            this.y_coordKiller = y_coordKiller;
+            this.y_coordKillee = y_coordKillee;
         }
     }
 }
