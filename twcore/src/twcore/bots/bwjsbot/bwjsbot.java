@@ -5158,7 +5158,7 @@ public class bwjsbot extends SubspaceBot {
                     "userIDKillee, " +  //3
                     "shipKiller, " +    //4
                     "shipKillee, " +    //5
-                    "timestamp, " +     //6
+                    "time_stamp, " +     //6
                     "x_coordKiller, " + //7
                     "x_coordKilled, " + //8
                     "y_coordKiller, " + //9
