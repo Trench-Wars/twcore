@@ -439,6 +439,8 @@ public class bwjsbot extends SubspaceBot {
                 cmd_zone(name);
             } else if (cmd.equals("!off")) {
                 cmd_off(name);
+            } else if (cmd.startsWith("!forcenp ")) {
+                cmd_forcenp(name, cmd);
             } else if (cmd.startsWith("!setcaptain")) {
                 cmd_setCaptain(name, cmd, override);
             } else if (cmd.startsWith("!t1") || cmd.startsWith("!t2")) {
@@ -751,6 +753,35 @@ public class bwjsbot extends SubspaceBot {
     }
     
     /**
+     * Handles the !forcenp command
+     * Forces a player to !notplaying
+     * 
+     * @param name name of the player that issued the command
+     * @param cmd name of the player that needs to get forced into !notplaying
+     */
+    private void cmd_forcenp(String name, String cmd) {
+        Player p;
+        
+        cmd = cmd.substring(8).trim();
+         
+        p = m_botAction.getFuzzyPlayer(cmd);
+        
+        if (p == null) {
+            m_botAction.sendPrivateMessage(name, cmd + " could not be found.");
+            return;
+        }
+        
+        if (listNotplaying.contains(p.getPlayerName().toLowerCase())) {
+            m_botAction.sendPrivateMessage(name, p.getPlayerName() + " is already set to !notplaying.");
+            return;
+        }
+        
+        cmd_notplaying(p.getPlayerName());
+        
+        m_botAction.sendPrivateMessage(name, p.getPlayerName() + " has been set to !notplaying.");
+    }
+    
+    /**
      * Handles the !help command
      * 
      * @param name name of the player that issued the !help command
@@ -831,6 +862,7 @@ public class bwjsbot extends SubspaceBot {
             if(!cfg.getAllowAutoCaps()) {
                 help.add("!zone                             -- sends time-restricted advert");
             }
+            help.add("!forcenp <player>                 -- Sets <player> to !notplaying");
             if (state.getCurrentState() > BWJSState.OFF) {
                 help.add("!setcaptain <# freq>:<player>     -- Sets <player> as captain for <# freq>");
                 help.add("-- Prepend your command with !t1- for 'Freq 0', !t2- for 'Freq 1' --");
