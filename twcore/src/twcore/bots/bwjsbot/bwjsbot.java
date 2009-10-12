@@ -1790,9 +1790,9 @@ public class bwjsbot extends SubspaceBot {
         m_botAction.showObject(cfg.getObject(2));
         m_botAction.sendArenaMessage("Go go go!!!", Tools.Sound.GOGOGO);
         
-        //Sometimes the players dont get warped on the first time 
-        team[0].warpTo(cfg.getWarpSpot(4), cfg.getWarpSpot(5));
-        team[1].warpTo(cfg.getWarpSpot(6), cfg.getWarpSpot(7));
+        //Sometimes the players dont get warped on the first time
+        m_botAction.warpFreqToLocation(0, cfg.getWarpSpot(4), cfg.getWarpSpot(5));
+        m_botAction.warpFreqToLocation(1, cfg.getWarpSpot(6), cfg.getWarpSpot(7));
         
         timeLeft = cfg.getTime() * 60;
     }
@@ -5158,7 +5158,7 @@ public class bwjsbot extends SubspaceBot {
                     "userIDKillee, " +  //3
                     "shipKiller, " +    //4
                     "shipKillee, " +    //5
-                    "time_stamp, " +     //6
+                    "time_stamp, " +    //6
                     "x_coordKiller, " + //7
                     "x_coordKilled, " + //8
                     "y_coordKiller, " + //9
@@ -5313,7 +5313,7 @@ public class bwjsbot extends SubspaceBot {
                     psPutExtendedLog.setInt(3, i.userIDKillee);
                     psPutExtendedLog.setInt(4, i.shipKiller);
                     psPutExtendedLog.setInt(5, i.shipKillee);
-                    psPutExtendedLog.setLong(6, i.timestamp);
+                    psPutExtendedLog.setInt(6, i.timestamp);
                     psPutExtendedLog.setInt(7, i.x_coordKiller);
                     psPutExtendedLog.setInt(8, i.x_coordKillee);
                     psPutExtendedLog.setInt(9, i.y_coordKiller);
@@ -5321,7 +5321,7 @@ public class bwjsbot extends SubspaceBot {
                     
                     psPutExtendedLog.execute();
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) { Tools.printLog(e.getMessage());}
         }
         
         private void closePreparedStatements() {
@@ -5757,9 +5757,9 @@ public class bwjsbot extends SubspaceBot {
                 m_botAction.sendArenaMessage("MVP: " + getMVP() + "!", Tools.Sound.INCONCEIVABLE);
             }
             
-            if (!lockLastGame && (time == 15)) {
+            if (!lockLastGame && (time >= 15)) {
                 startWaitingForCaps();
-            } else if (time == 15){
+            } else if (time >= 15){
                 m_botAction.sendArenaMessage("Bot has been shutdown.", Tools.Sound.GAME_SUCKS);
                 reset();
                 unlockArena();
@@ -5787,7 +5787,7 @@ public class bwjsbot extends SubspaceBot {
         private int userIDKillee;
         private int shipKiller;
         private int shipKillee;
-        private long timestamp;
+        private int timestamp;
         private int x_coordKiller;
         private int x_coordKillee;
         private int y_coordKiller;
@@ -5798,7 +5798,7 @@ public class bwjsbot extends SubspaceBot {
             this.userIDKillee = sql.getUserID(nameKillee);
             this.shipKiller = shipKiller;
             this.shipKillee = shipKillee;
-            this.timestamp = System.currentTimeMillis();
+            this.timestamp = (cfg.getTime() * 60) - timeLeft;;
             this.x_coordKiller = x_coordKiller;
             this.x_coordKillee = x_coordKillee;
             this.y_coordKiller = y_coordKiller;
