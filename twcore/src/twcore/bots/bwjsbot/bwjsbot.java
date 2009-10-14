@@ -4094,7 +4094,7 @@ public class bwjsbot extends SubspaceBot {
         private void captainLeftArena() {
             if (cfg.getAllowAutoCaps()) {
                 m_botAction.sendArenaMessage("The captain of " + teamName 
-                        + " has left the arena, anyone can claim cap with !cap");
+                        + " has left the arena, anyone of Freq " + frequency + " can claim cap with !cap");
             } else {
                 m_botAction.sendArenaMessage("The captain of " + teamName 
                         + " has left the arena.");
