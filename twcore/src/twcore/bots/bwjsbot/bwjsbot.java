@@ -5162,7 +5162,7 @@ public class bwjsbot extends SubspaceBot {
                     "x_coordKiller, " + //7
                     "x_coordKilled, " + //8
                     "y_coordKiller, " + //9
-                    "y_coordKilled, " + //10
+                    "y_coordKilled) " + //10
                     "VALUES(?,?,?,?,?,?,?,?,?,?)");
         }
         
