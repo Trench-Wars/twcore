@@ -1523,8 +1523,14 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
+            /* Check if sub is a bot */
+            if (m_botAction.getOperatorList().isBotExact(playerBnew.getPlayerName())) {
+                m_botAction.sendPrivateMessage(name, "Error: Bots are not allowed to play.");
+                return;
+            }
+            
             /* Check if <playerA> is already out and thus cannot be subbed */
-            if (playerA.isOut()) {
+            if (playerA.p_state > BWJSPlayer.OUT_SUBABLE) {
                 m_botAction.sendPrivateMessage(name, "Error: Cannot substitute a player that is already out");
                 return;
             }
