@@ -289,14 +289,12 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Please PM !request <event> to EventBot to 
 &Teaming &What|Teaming is when two or more people of different teams have a truce together and/or both attack other players together.  In certain arenas such as elim and baseelim, teaming is illegal.
 &Framerate &What|Framerate or FPS stands for Frames Per Second.  It is a measure of how often your screen updates the picture. You can toggle a framerate indicator by pressing <Esc> + <F>.
 &FPS &What|FPS stands for Frames Per Second.  It is a measure of how often your screen updates the picture. You can toggle a framerate indicator by pressing <Esc> + <F>.
-&FU &What|FU stands for F**k You.
 &GG &What|GG stands for either Good Going or Good Game.
 &NC &What|NC stands for No Count.  It is often used in one on one duels when two people kill each other at the same time.
 &NS &What|NS stands for Nice Shot.
 &PM &What|PM stands for Private Message.
 &AFK &What|AFK stands for Away From the Keyboard.
 &BRB &What|BRB stands for Be Right Back.
-&FFS &What|FFS stands for For F**ks Sake.
 &LOL &What|LOL stands for Laughing Out Loud.
 &MVP &What|MVP stands for Most Valuable Player.
 &WTF &What|WTF stands for What The F**k.
