@@ -5766,6 +5766,7 @@ public class bwjsbot extends SubspaceBot {
             if (!lockLastGame && (time >= 15)) {
                 startWaitingForCaps();
             } else if (time >= 15){
+                state.setState(BWJSState.OFF);
                 m_botAction.sendArenaMessage("Bot has been shutdown.", Tools.Sound.GAME_SUCKS);
                 reset();
                 unlockArena();
