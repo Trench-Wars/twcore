@@ -3189,6 +3189,10 @@ public class BotAction
     {
         getCoreData().getInterProcessCommunicator().destroy(channelName);
     }
+    
+    public String[] ipcSubscribedChannels() {
+    	return getCoreData().getInterProcessCommunicator().getSubscribedChannels(m_botSession.getSubspaceBot());
+    }
 
 
 
