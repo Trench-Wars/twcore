@@ -429,7 +429,7 @@ public class bwjsbot extends SubspaceBot {
             cmd_rating(name, cmd);
         } else if (cmd.startsWith("!score")) {
             cmd_score(name, cmd);
-        } else if (cmd.equals("!notplaying")) {
+        } else if (cmd.equals("!notplaying") || cmd.equals("!np")) {
             cmd_notplaying(name);
         } else if (cmd.equals("!status")) {
             cmd_status(name);
@@ -857,7 +857,7 @@ public class bwjsbot extends SubspaceBot {
         help.add("!status                   -- Display status and score");
         
         if (state.getCurrentState() != BWJSState.OFF) {
-            help.add("!notplaying               -- Toggles not playing mode");
+            help.add("!notplaying               -- Toggles not playing mode  (short !np)");
             help.add("!subscribe                -- Toggles alerts in private messages");
         }
         
