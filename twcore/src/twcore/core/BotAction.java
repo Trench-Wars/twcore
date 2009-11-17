@@ -1649,6 +1649,26 @@ public class BotAction
     {
         sendUnfilteredPrivateMessage(playerName, "*watchdamage");
     }
+    
+    /**
+     * Toggles the WatchGreen attribute for this player, which will send
+     * information about the green that has been picked up by the player.
+     * @param playerID PlayerID of the player to receive green info about.
+     */
+    public void toggleWatchGreen(int playerID)
+    {
+        sendUnfilteredPrivateMessage(playerID, "*watchgreen");
+    }
+
+    /**
+     * Toggles the WatchGreen attribute for this player, which will send
+     * information about the green that has been picked up by the player.
+     * @param playerName playerName of the player to receive green info about.
+     */
+    public void toggleWatchGreen(String playerName)
+    {
+        sendUnfilteredPrivateMessage(playerName, "*watchgreen");
+    }
 
 
     // ***** ARENA OPERATIONS *****
