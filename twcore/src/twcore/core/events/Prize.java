@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
- * (S2C 0x08) Event fired when a player revceives a prize. <code><pre>
+ * (S2C 0x08) Event fired when a player receives a prize. <code><pre>
  *
  * +------------------------+
  * |Field Length Description|
