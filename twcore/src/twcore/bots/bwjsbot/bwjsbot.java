@@ -27,6 +27,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
+import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
@@ -241,17 +242,6 @@ public class bwjsbot extends SubspaceBot {
                         killee.getFrequency(), 
                         event.getKilledPlayerBounty());
             }
-            
-            //Log in extendedLogfile
-            listExtendedLog.add(new ExtendedLog(
-                    killer.getPlayerName(),
-                    killee.getPlayerName(),
-                    killer.getShipType(),
-                    killee.getShipType(),
-                    killer.getXLocation(),
-                    killee.getXLocation(),
-                    killer.getYLocation(),
-                    killee.getYLocation()));
         }
     }
     
@@ -273,6 +263,8 @@ public class bwjsbot extends SubspaceBot {
             
             sendWelcomeMessage(name);   //Sends welcome message with status info to the player
             putOnFreq(name);            //Puts the player on the corresponding frequency
+            m_botAction.toggleWatchDamage(name);
+            //TODO: m_botAction.toggleWatchGreen(name);
         }
     }
     
@@ -362,6 +354,43 @@ public class bwjsbot extends SubspaceBot {
             }
             
             t.weaponFired(name, event.getWeaponType());
+        }
+    }
+    
+    public void handleEvent(WatchDamage event) {
+        Player killee;
+        Player killer;
+        
+        if (state.getCurrentState() == BWJSState.GAME_IN_PROGRESS) {
+            //Did someone die?
+            if (event.getEnergyLost() < event.getOldEnergy()) {
+                //nope
+                return;
+            }
+            
+            //Did someone shot himself? (can't kill yourself..)
+            if (event.getVictim() == event.getAttacker()) {
+                return;
+            }
+            
+            killee = m_botAction.getPlayer(event.getVictim());
+            killer = m_botAction.getPlayer(event.getAttacker());
+            
+            if (killee == null || killer == null) {
+                return;
+            }
+            
+            //Log in extendedLogfile
+            listExtendedLog.add(new ExtendedLog(
+                    killer.getPlayerName(),
+                    killee.getPlayerName(),
+                    killer.getShipType(),
+                    killee.getShipType(),
+                    killer.getXLocation(),
+                    killee.getXLocation(),
+                    killer.getYLocation(),
+                    killee.getYLocation(),
+                    event.getWeaponType()));
         }
     }
     
@@ -2073,6 +2102,7 @@ public class bwjsbot extends SubspaceBot {
         req.request(EventRequester.PLAYER_LEFT);            //Player left arena
         req.request(EventRequester.PLAYER_POSITION);        //Player position
         req.request(EventRequester.WEAPON_FIRED);           //Player fired weapon
+        req.request(EventRequester.WATCH_DAMAGE);           //Watch damage per player
     }
     
     /**
@@ -5168,7 +5198,8 @@ public class bwjsbot extends SubspaceBot {
                     "x_coordKiller, " + //7
                     "x_coordKilled, " + //8
                     "y_coordKiller, " + //9
-                    "y_coordKilled) " + //10
+                    "y_coordKilled, " + //10
+                    "weaponType) " + //11
                     "VALUES(?,?,?,?,?,?,?,?,?,?)");
         }
         
@@ -5324,6 +5355,7 @@ public class bwjsbot extends SubspaceBot {
                     psPutExtendedLog.setInt(8, i.x_coordKillee);
                     psPutExtendedLog.setInt(9, i.y_coordKiller);
                     psPutExtendedLog.setInt(10, i.y_coordKillee);
+                    psPutExtendedLog.setInt(11, i.weaponType);
                     
                     psPutExtendedLog.execute();
                 }
@@ -5799,8 +5831,9 @@ public class bwjsbot extends SubspaceBot {
         private int x_coordKillee;
         private int y_coordKiller;
         private int y_coordKillee;
+        private int weaponType;
         
-        private ExtendedLog(String nameKiller, String nameKillee, int shipKiller, int shipKillee, int x_coordKiller, int x_coordKillee, int y_coordKiller, int y_coordKillee) {
+        private ExtendedLog(String nameKiller, String nameKillee, int shipKiller, int shipKillee, int x_coordKiller, int x_coordKillee, int y_coordKiller, int y_coordKillee, int weaponType) {
             this.userIDKiller = sql.getUserID(nameKiller);
             this.userIDKillee = sql.getUserID(nameKillee);
             this.shipKiller = shipKiller;
@@ -5810,6 +5843,7 @@ public class bwjsbot extends SubspaceBot {
             this.x_coordKillee = x_coordKillee;
             this.y_coordKiller = y_coordKiller;
             this.y_coordKillee = y_coordKillee;
+            this.weaponType = weaponType;
         }
     }
 }
