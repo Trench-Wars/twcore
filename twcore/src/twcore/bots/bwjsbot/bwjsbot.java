@@ -41,6 +41,8 @@ import twcore.core.util.Spy;
  * @author fantus
  */
 public class bwjsbot extends SubspaceBot {
+    private boolean hasDatabase = false;
+    
     private boolean lockArena;
     private boolean lockLastGame;
     private BWJSConfig cfg;                                 //Game configuration
@@ -1414,6 +1416,10 @@ public class bwjsbot extends SubspaceBot {
     private void cmd_stats(String name, String cmd) {
         int userID;
         
+        if (!hasDatabase) {
+            return;
+        }
+        
         if (state.getCurrentState() != BWJSState.OFF) {
             cmd = cmd.substring(6).trim();
             
@@ -1771,8 +1777,10 @@ public class bwjsbot extends SubspaceBot {
         state.setState(BWJSState.ADDING_PLAYERS);
         
         //SQL Put match in database
-        sql.addGame();
-        
+        if (hasDatabase) {
+            sql.addGame();
+        }
+            
         if (cfg.getGameType() == BWJSConfig.BASE) {
             m_botAction.sendArenaMessage("Captains you have 10 minutes to set up your lineup correctly!", 
                     Tools.Sound.BEEP2);
@@ -1886,7 +1894,7 @@ public class bwjsbot extends SubspaceBot {
             m_botAction.sendArenaMessage("A draw?!", Tools.Sound.GIBBERISH);
         
         //SQL update
-        if (sql.matchID != -1) {
+        if (sql.matchID != -1 && hasDatabase) {
             sql.endGame(winningFreq);
             sql.putPlayers();
             sql.putCaptains();
@@ -2066,7 +2074,8 @@ public class bwjsbot extends SubspaceBot {
     private void initializeVariables() {
         cfg = new BWJSConfig();                 //Game configuration
         state = new BWJSState();                //Game state
-        sql = new BWJSSQL();                    //Game sql methods
+        if (hasDatabase)
+            sql = new BWJSSQL();                    //Game sql methods
         
         team = new BWJSTeam[2];                 //Teams
         team[0] = new BWJSTeam(0);              //Team: Freq 0
@@ -3003,7 +3012,9 @@ public class bwjsbot extends SubspaceBot {
             p_lagouts = 0;
             p_outOfBorderTime = cfg.getOutOfBorderTime();
             p_outOfBorderWarning = false;
-            p_userID = sql.getUserID(p_name);
+            if (hasDatabase) {
+                p_userID = sql.getUserID(p_name);
+            }
             
             m_botAction.scoreReset(p_name);
             addPlayer();
@@ -4989,10 +5000,21 @@ public class bwjsbot extends SubspaceBot {
         private PreparedStatement psGetNOCurrentRank;
         
         private PreparedStatement psPutExtendedLog;
+        private PreparedStatement psPutExtendedLogAdd;
+        private PreparedStatement psPutExtendedLogLagout;
+        private PreparedStatement psPutExtendedLogOut;
+        private PreparedStatement psPutExtendedLogPlayerDeath;
+        private PreparedStatement psPutExtendedLogReturn;
+        private PreparedStatement psPutExtendedLogShipChange;
+        private PreparedStatement psPutExtendedLogSub;
+        private PreparedStatement psPutExtendedLogSwitch;
         
         private PreparedStatement psKeepAlive;
         
         private BWJSSQL() {
+            if (!hasDatabase) {
+                return;
+            }
             /* Game related */
             psAddGame = m_botAction.createPreparedStatement(database, uniqueID, 
                     "INSERT INTO tblBWJS__Game(timeStarted, type) " +
@@ -5199,8 +5221,84 @@ public class bwjsbot extends SubspaceBot {
                     "x_coordKilled, " + //8
                     "y_coordKiller, " + //9
                     "y_coordKilled, " + //10
-                    "weaponType) " + //11
-                    "VALUES(?,?,?,?,?,?,?,?,?,?)");
+                    "weaponType) " +    //11
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?)");
+            
+            psPutExtendedLogAdd = m_botAction.createPreparedStatement(database, uniqueID,
+                    "INSERT INTO tblBWJS__GameExtended__Add(" +
+                    "matchID, " +       //1
+                    "time_stamp, " +    //2
+                    "playerID, " +      //3
+                    "shipType) " +      //4
+                    "VALUES(?,?,?,?)");
+            
+            psPutExtendedLogLagout = m_botAction.createPreparedStatement(database, uniqueID,
+                    "INSERT INTO tblBWJS__GameExtended__Lagout(" +
+                    "matchID, " +       //1
+                    "time_stamp, " +    //2
+                    "playerID) " +      //3
+                    "VALUES(?,?,?)");
+            
+            psPutExtendedLogOut = m_botAction.createPreparedStatement(database, uniqueID,
+                    "INSERT INTO tblBWJS__GameExtended__Out(" +
+                    "matchID, " +       //1
+                    "time_stamp, " +    //2
+                    "playerID, " +      //3
+                    "reason, " +        //4
+                    "kills, " +         //5
+                    "deaths) " +        //6
+                    "VALUES(?,?,?,?,?,?)");
+            
+            psPutExtendedLogPlayerDeath = m_botAction.createPreparedStatement(database, uniqueID,
+                    "INSERT INTO tblBWJS__GameExtended__PlayerDeath(" +
+                    "matchID, " +           //1
+                    "time_stamp, " +        //2
+                    "VictimID, " +          //3
+                    "AttackerID, " +        //4
+                    "Victim_x_coord, " +    //5
+                    "Victim_y_coord, " +    //6
+                    "Attacker_x_coord, " +  //7
+                    "Attacker_y_coord, " +  //8
+                    "Victim_ShipType, " +   //9
+                    "Attacker_ShipType, " + //10
+                    "WeaponType) " +        //11
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?)");
+            
+            psPutExtendedLogReturn = m_botAction.createPreparedStatement(database, uniqueID,
+                    "INSERT INTO tblBWJS__GameExtended__Return(" +
+                    "matchID, " +       //1
+                    "time_stamp, " +    //2
+                    "playerID) " +      //3
+                    "VALUES(?,?,?)");
+            
+            psPutExtendedLogShipChange = m_botAction.createPreparedStatement(database, uniqueID,
+                    "INSERT INTO tblBWJS__GameExtended__ShipChange(" +
+                    "matchID, " +       //1
+                    "time_stamp, " +    //2
+                    "playerID, " +      //3
+                    "oldShipType, " +   //4
+                    "newShipType) " +   //5
+                    "VALUES(?,?,?,?,?)");
+            
+            psPutExtendedLogSub = m_botAction.createPreparedStatement(database, uniqueID,
+                    "INSERT INTO tblBWJS__GameExtended__Sub(" +
+                    "matchID, " +       //1
+                    "time_stamp, " +    //2
+                    "playerINID, " +    //3
+                    "playerOUTID, " +   //4
+                    "ShipType, " +      //5
+                    "DeathsLeft) " +    //6
+                    "VALUES(?,?,?,?,?,?)");
+            
+            psPutExtendedLogSwitch = m_botAction.createPreparedStatement(database, uniqueID,
+                    "INSERT INTO tblBWJS__GameExtended__Switch(" +
+                    "matchID, " +       //1
+                    "time_stamp, " +    //2
+                    "player1ID, " +     //3
+                    "shipType1, " +     //4
+                    "player2ID, " +     //5
+                    "shipType2) " +     //6
+                    "VALUES(?,?,?,?,?,?)");
         }
         
         private void addGame() {
@@ -5376,6 +5474,14 @@ public class bwjsbot extends SubspaceBot {
             m_botAction.closePreparedStatement(database, uniqueID, psGetNOCurrentRank);
             m_botAction.closePreparedStatement(database, uniqueID, psKeepAlive);
             m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLog);
+            m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLogAdd);
+            m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLogLagout);
+            m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLogOut);
+            m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLogPlayerDeath);
+            m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLogReturn);
+            m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLogShipChange);
+            m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLogSub);
+            m_botAction.closePreparedStatement(database, uniqueID, psPutExtendedLogSwitch);
         }
     
         private void displayURL() {
@@ -5814,7 +5920,8 @@ public class bwjsbot extends SubspaceBot {
      */
     private class KeepAliveConnection extends TimerTask {
         public void run() {
-            sql.keepAlive();
+            if (hasDatabase)
+                sql.keepAlive();
         }
     }
 
@@ -5834,6 +5941,10 @@ public class bwjsbot extends SubspaceBot {
         private int weaponType;
         
         private ExtendedLog(String nameKiller, String nameKillee, int shipKiller, int shipKillee, int x_coordKiller, int x_coordKillee, int y_coordKiller, int y_coordKillee, int weaponType) {
+            if (!hasDatabase) {
+                return;
+            }
+            
             this.userIDKiller = sql.getUserID(nameKiller);
             this.userIDKillee = sql.getUserID(nameKillee);
             this.shipKiller = shipKiller;
