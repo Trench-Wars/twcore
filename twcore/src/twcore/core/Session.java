@@ -74,7 +74,6 @@ public class Session extends Thread {
         m_ipAddress = m_coreData.getServerName();
         m_serverPort = m_coreData.getServerPort();
         m_localIPAddress = m_coreData.getLocalIP();
-        m_localPort = m_coreData.getLocalPort();
         m_sysopPassword = m_coreData.getGeneralSettings().getString( "Sysop Password" );
     }
 
@@ -94,13 +93,12 @@ public class Session extends Thread {
         m_sysopPassword = altSysop;
         m_serverPort = altPort;
         m_localIPAddress = m_coreData.getLocalIP();
-        m_localPort = m_coreData.getLocalPort();
     }
 
     public void prepare(){
         try {
             InetAddress inet = InetAddress.getByName( m_ipAddress );
-            InetSocketAddress local = new InetSocketAddress(m_localIPAddress, m_localPort);
+            InetSocketAddress local = new InetSocketAddress(m_localIPAddress, 0);
             m_socket = new DatagramSocket(local);
             m_socket.connect( inet, m_serverPort );
             Tools.printLog( m_name + " bound to " + m_socket.getLocalAddress().getHostAddress() + ":" + m_socket.getLocalPort() );
