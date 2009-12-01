@@ -26,6 +26,7 @@ public class CoreData {
     private OperatorList                m_accessList;        // Access list
     private BotSettings                 m_generalSettings;   // CFG-loaded settings
     private int                         m_lastIP = 0x050000; // For local IP conversion
+    private int	portIncrement = 0;
 
     /**
      * Load bot settings, SQL settings, and instantiate all member classes.
@@ -58,6 +59,15 @@ public class CoreData {
             m_lastIP++;
         }
         return name;
+    }
+    
+    
+    public String getLocalIP() {
+    	return m_generalSettings.getString("LocalIP");
+    }
+    
+    public int getLocalPort() {
+    	return m_generalSettings.getInt("LocalPort")+portIncrement++;
     }
     
     /**

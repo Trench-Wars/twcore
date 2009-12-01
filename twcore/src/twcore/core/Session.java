@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Timer;
 
 import twcore.core.game.Arena;
@@ -46,6 +47,8 @@ public class Session extends Thread {
     private String			m_ipAddress;
     private String			m_sysopPassword;
     private int				m_serverPort;
+    private String			m_localIPAddress;
+    private int				m_localPort;
 
     private GamePacketGenerator     m_packetGenerator;
     private GamePacketInterpreter   m_packetInterpreter;
@@ -70,6 +73,8 @@ public class Session extends Thread {
         m_chatLog = null;
         m_ipAddress = m_coreData.getServerName();
         m_serverPort = m_coreData.getServerPort();
+        m_localIPAddress = m_coreData.getLocalIP();
+        m_localPort = m_coreData.getLocalPort();
         m_sysopPassword = m_coreData.getGeneralSettings().getString( "Sysop Password" );
     }
 
@@ -88,13 +93,17 @@ public class Session extends Thread {
         m_ipAddress = altIP;
         m_sysopPassword = altSysop;
         m_serverPort = altPort;
+        m_localIPAddress = m_coreData.getLocalIP();
+        m_localPort = m_coreData.getLocalPort();
     }
 
     public void prepare(){
         try {
             InetAddress inet = InetAddress.getByName( m_ipAddress );
-            m_socket = new DatagramSocket();
+            InetSocketAddress local = new InetSocketAddress(m_localIPAddress, m_localPort);
+            m_socket = new DatagramSocket(local);
             m_socket.connect( inet, m_serverPort );
+            Tools.printLog( m_name + " bound to " + m_socket.getLocalAddress().getHostAddress() + ":" + m_socket.getLocalPort() );
 
             m_outboundQueue = new Sender( m_group, m_socket );
             m_inboundQueue = new Receiver( m_group, m_socket );
