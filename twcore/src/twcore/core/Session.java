@@ -48,7 +48,6 @@ public class Session extends Thread {
     private String			m_sysopPassword;
     private int				m_serverPort;
     private String			m_localIPAddress;
-    private int				m_localPort;
 
     private GamePacketGenerator     m_packetGenerator;
     private GamePacketInterpreter   m_packetInterpreter;
