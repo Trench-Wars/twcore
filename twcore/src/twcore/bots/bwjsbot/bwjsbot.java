@@ -1459,7 +1459,7 @@ public class bwjsbot extends SubspaceBot {
                 if (cfg.getAllowAutoCaps()) {
                     status[0] =  "A new game will start when two people message me with !cap";
                 } else {
-                    status[0] =  "Request a new game with :eventbot:!request " + cfg.getGameTypeString();
+                    status[0] =  "Request a new game with '?help start "+cfg.getGameTypeString()+" please'";
                 }
                 break;
             case BWJSState.ADDING_PLAYERS :
@@ -1762,7 +1762,7 @@ public class bwjsbot extends SubspaceBot {
             m_botAction.sendArenaMessage("A new game will start when two people message me with !cap -" +
                     m_botAction.getBotName(), Tools.Sound.BEEP2);
         } else {
-            m_botAction.sendArenaMessage("Request a new game with :eventbot:!request " + cfg.getGameTypeString() 
+            m_botAction.sendArenaMessage("Request a new game with '?help start "+cfg.getGameTypeString()+" please'" 
                     + " -" + m_botAction.getBotName(), Tools.Sound.BEEP2);
         }
     }
