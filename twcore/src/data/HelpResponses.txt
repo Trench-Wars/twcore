@@ -114,16 +114,16 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Owners &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
 Abuse Abusing Abused Abuser|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 &Staff &Complaint|To register any complaints about any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
-Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Please PM !request <event> to EventBot to submit your request for an event. (Type :EventBot:!request <event>) There is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the <ER> tag next to their name.
-&Host &Base|Base is an automated event. The MatchBot hosting base advertises automatically every 10 minutes if there aren't enough players in the arena. If you already have enough people, PM '!request base' to EventBot to have a staff member start the bot for you.
-&Host &Base2|Base is an automated event. The MatchBot hosting base advertises automatically every 10 minutes if there aren't enough players in the arena. If you already have enough people, PM '!request base' to EventBot to have a staff member start the bot for you.
-&Host &Base3|Base is an automated event. The MatchBot hosting base advertises automatically every 10 minutes if there aren't enough players in the arena. If you already have enough people, PM '!request base' to EventBot to have a staff member start the bot for you.
-&Host &Wbduel|Keep in mind that only upperstaff is allowed to advertise for WBDuel.  If you already have enough people, PM '!request wbduel' to EventBot to have a staff member start the bot for you.
-&Host &Wbduel2|Keep in mind that only upperstaff is allowed to advertise for WBDuel.  If you already have enough people, PM '!request wbduel' to EventBot to have a staff member start the bot for you.
-&Host &Wbduel3|Keep in mind that only upperstaff is allowed to advertise for WBDuel.  If you already have enough people, PM '!request wbduel' to EventBot to have a staff member start the bot for you.
-&Host &Javduel|Keep in mind that only upperstaff is allowed to advertise for Javduel.  If you already have enough people, PM '!request javduel' to EventBot to have a staff member start the bot for you.
-&Host &Javduel2|Keep in mind that only upperstaff is allowed to advertise for Javduel.  If you already have enough people, PM '!request javduel' to EventBot to have a staff member start the bot for you.
-&Host &Javduel3|Keep in mind that only upperstaff is allowed to advertise for Javduel.  If you already have enough people, PM '!request javduel' to EventBot to have a staff member start the bot for you.
+Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting request. We will attempt to handle your request as promptly as possible but there is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the <ER> tag next to their name.
+&Host &Base|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
+&Host &Base2|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
+&Host &Base3|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
+&Host &Wbduel|An available staff member will start the wbduel bot if there are 2 captains present in the arena. Staff will advertise for wbduel if there are 2 captains, but not enough players present.
+&Host &Wbduel2|An available staff member will start the wbduel bot if there are 2 captains present in the arena. Staff will advertise for wbduel if there are 2 captains, but not enough players present.
+&Host &Wbduel3|An available staff member will start the wbduel bot if there are 2 captains present in the arena. Staff will advertise for wbduel if there are 2 captains, but not enough players present.
+&Host &Javduel|An available staff member will start the javduel bot if there are 2 captains present in the arena. Staff will advertise for javduel if there are 2 captains, but not enough players present.
+&Host &Javduel2|An available staff member will start the javduel bot if there are 2 captains present in the arena. Staff will advertise for javduel if there are 2 captains, but not enough players present.
+&Host &Javduel3|An available staff member will start the javduel bot if there are 2 captains present in the arena. Staff will advertise for javduel if there are 2 captains, but not enough players present.
 &Host &Tourny|Tourny is only run in the weekends from Friday morning till Sunday evening (EST).
 &Forum &Ban|Issues regarding to banishment at Trench Wars's forums should be talked directly to a forum staff member. Please consult this page for a name to contact: http://forums.trenchwars.org/showgroups.php . 
 &Ban &Email|E-mail twbans@gmail.com for legitimate ban disputes. You must include your BanID # and user name(s) in the E-mail subject to avoid being filtered as spam.
@@ -436,7 +436,7 @@ NotIllegal|Sorry, but that is not illegal in Trench Wars.
 Dontberude|Please do not be rude to the staff.
 HelpAbuse|Please discontinue your use of the ?help command as Trench Wars Staff has deemed your requests invalid or excessive.
 CheaterAbuse|Please do not abuse ?cheater unless you have a valid cheater to report.
-AdvertAbuse|Please do not abuse ?advert.  If you would like to request an event, please PM EventBot with '!request <event>'.  For example; :EventBot:!request safewars
+AdvertAbuse|Please do not abuse ?advert.  If you would like to request an event, type '?help Please host eventname'. For instance, type '?help Please host turretwars!'
 Onit|We have received your ?help or ?cheater call and are currently attending to it.  Please be assured that we will assist you in any way possible.
 ResetAbuse|Please do not ask for any more scoreresets.  You have been reset enough today.
 HostAbuse|Please do not make any more hosting requests.  All of our hosts are currently busy.
