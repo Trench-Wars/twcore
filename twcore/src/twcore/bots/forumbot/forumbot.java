@@ -135,7 +135,7 @@ public class forumbot extends SubspaceBot {
     	{   "+-------------------------------------------------------------------------------+",
     		"|                                 FORUMBOT                                      |",  
     	    "|                                                                               |",
-    	    "| I'm a bot that can active your forum account at http://forums.trenchwars.org. |",
+    	    "| I'm a bot that can activate your forum account at http://forums.trenchwars.org|",
     	    "| Please look below for the available commands.                                 |"
         };
     	String[] publicCommands = 
