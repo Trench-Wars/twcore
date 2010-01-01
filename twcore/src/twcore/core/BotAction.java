@@ -1233,6 +1233,56 @@ public class BotAction
      * @param xTiles X coordinate (1 to 1024)
      * @param yTiles Y coordinate (1 to 1024)
      */
+    
+    /**
+     * Splits a frequence in two teams & warps each team to a location. Example:
+     * if you want to split freq 0 in two teams and warp them to different coords,
+     * so a team of freq 0 can go to a coord(like top right) and other team to other(like bottom left).
+     * Works for even and odd numbers of frequence's size.
+     * @param freq Frequence number that'll be split in 2 teams
+     * @param X1 X coordinate in Tiles to first team
+     * @param Y1 Y coordinate in Tiles to first team
+     * @param X2 X coordinate in Tiles to second team
+     * @param Y2 Y coordinate in Tiles to second team
+     */
+  	public void splitTeam(int freq, int X1, int Y1, int X2, int Y2){
+  		
+  		Iterator<Player> freqIterator = getFreqPlayerIterator(freq); //we need an iterator to freq
+  		int freqSize = getFrequencySize(freq) ; //we need to know the freq size
+  		
+  		/*now, it'll see if the number of size is even or odd. if even, we split it well. 
+  		otherwise we put the (size-1)/2...(like the number 5, 5-1 = 4. 4/2 = 2.
+  		then we put 2 members on a location and the other 3(the rest) will go to the other location
+  		*/
+  		if(freqSize % 2 == 0 && freqSize != 0){ 
+  			int i;
+  			for( i = 1; i <= (freqSize/2) ; i++){//half to a location and...
+  				Player p = (Player) freqIterator.next();
+  				warpTo(p.getPlayerName(), X1 , Y1 );
+  			}
+  			for(int u = i; u<= freqSize ; u++){ 
+  				Player p = (Player) freqIterator.next();//and the other half to other
+  				warpTo(p.getPlayerName(), X2, Y2 );
+  				
+  			}
+  		}
+  		//odd number of freqsize
+  		else if(freqSize != 0){
+  			int i;
+  			for( i = 1; i <= ((freqSize-1)/2) ; i++){ //the little amount goin to a location
+  				Player p = (Player) freqIterator.next();
+  				warpTo(p.getPlayerName(), X1 , Y1 );
+  			}
+  			for(int u = i; u<= freqSize ; u++){ //then, the rest goes to other location
+  				Player p = (Player) freqIterator.next();
+  				warpTo(p.getPlayerName(), X2, Y2 );
+  				
+  			}
+  		}
+
+
+  	}
+
     public void warpTo(int playerID, int xTiles, int yTiles)
     {
         sendUnfilteredPrivateMessage(playerID, "*warpto " + xTiles + " " + yTiles);
