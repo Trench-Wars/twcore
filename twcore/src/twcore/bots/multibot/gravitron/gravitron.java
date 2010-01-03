@@ -12,8 +12,8 @@ import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
 /**
- * Authors: Andre Vinicius (Dexter)
- * 					Derek (Dezmond)
+ * Author: Andre Vinicius (Dexter)
+ * Helper:	Derek (Dezmond)
  * Gravitron's bot, JabJabJab's event
  * */
 
@@ -73,7 +73,7 @@ public class gravitron extends MultiModule {
 				startcmd = st.nextToken(); //this will be the first token: !start
 				
 				if(!st.hasMoreTokens()){ //if doesnt have any more command, host wants to be a standard game, then sets time to 60 30 20 and teamsize 1
-					timer1 = 60;
+					timer1 = 45;
 					timer2 = 30;
 					timer3 = 20;
 					teamSize = 1;
@@ -108,7 +108,6 @@ public class gravitron extends MultiModule {
 				
 				}
 			//starts the game
-				m_botAction.createRandomTeams(teamSize);
 				preGameStarting(); //pre-starting...
 				
 				TimerTask afterTenSeconds = new TimerTask(){ //this is after "Game begins in 10 seconds...(stage 1)
@@ -116,6 +115,7 @@ public class gravitron extends MultiModule {
 						startObjon1();
 						m_botAction.sendArenaMessage("Starting stage 1! " +timer1+ " seconds ... GOGOGOGOGO!!!! ", 104);
 						gravitronGame = true; //Game has started, 10 seconds has passed, so, gravitronGame is true and it will enable the spec watch.
+			
 					}
 					};
 
@@ -150,18 +150,31 @@ public class gravitron extends MultiModule {
 
 	//all the settings and what happens in each stage n pre-game
 	public void preGameStarting(){//before starts
-			m_botAction.toggleLocked(); //looks every1 in
+			
 			m_botAction.changeAllShips(1); //change every1 to wb
+		
+			m_botAction.createRandomTeams(teamSize);
+			
 			m_botAction.setShip(m_botAction.getBotName(), 8); //set bot a shark
+			
 			m_botAction.setFreq(m_botAction.getBotName(), 322);	//set him to a priv freq
+			
+			m_botAction.toggleLocked(); //looks every1 in
+			
+			m_botAction.prizeAll(18);
+			
 			m_botAction.warpAllToLocation(512, 462); //warp all to the game's circle
+			
 			m_botAction.warpFreqToLocation(322, 512, 513); //warps bot to the middle of ring
+			
 			m_botAction.sendArenaMessage("Game begins in 10 seconds", 4);
-		}
+		
+	}
 
 	public void startObjon1(){		//on stage 1
 		m_botAction.showObject(5); //shows background of ring
 		m_botAction.showObject(1); //ring of stage 1
+		
 		settingsObjon1(); //settings of the game(warbird speed...etc)
 	}
 	
@@ -250,7 +263,9 @@ public void checkWinner(){
 }
 	//this counts number of playing players.
 	public int countPlayers(){
+		
 		Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+		
 		int numplayers = 0;
 	
 		for( ; i.hasNext(); i.next()) numplayers++;
@@ -287,11 +302,13 @@ public void checkWinner(){
 	public String[] getModHelpMessage() {
 		String[] message = {
 				  "	Commands for <ER>'s And above                                                                          ",
-			    " !start 																												- Starts Gravitron with times of 60 30 20 and teamsize of 1",
-	    		" !start time1 time2 time3											- Starts Gravitron with each times and teamsize of 1       ",
-	    		" !start time1 time2 time3  teamsize - Starts Gravitron with each times and a teamsize           ",
+			    " !start 																												- Starts Gravitron with times of 60 30 20 and teams of 1",
+	    		" !start time1 time2 time3											- Starts Gravitron with each times and teams of 1       ",
+	    		" !start time1 time2 time3  teamsize - Starts Gravitron with each times and teams of size <teamsize>           ",
 	    		" !stop 																													- Stop the game of Gravitron while it is running           ",
-	    		"Authors: Dexter and Dezmond"};
+	    		" !rules																													- Sends the rules"	
+	    		
+		};
 			return message;
 	}
 
@@ -299,12 +316,12 @@ public void checkWinner(){
      m_botAction.sendArenaMessage("Rules: The player objective is to defeat the machine (Be last standing)."); 
      m_botAction.sendArenaMessage("Do not fall easy with his power! It will try hard to push you into the safes and get you out.");
      m_botAction.sendArenaMessage("Warning: Watch for walls turning on. If you are on a wall when turned on, you will be specced.");
-     m_botAction.sendArenaMessage("Beware of the obstacles that come at you. It will require speed and tacticts. Good luck!", 9);      
+     m_botAction.sendArenaMessage("Beware of the obstacles that come at you. It will require speed and tactics. Good luck!", 9);      
   }
 
 	public boolean isUnloadable() {
 		
-		return false;
+		return !gravitronGame;
 	}
 
 
@@ -314,15 +331,20 @@ public void checkWinner(){
 	}
 	
 	public void cancel() {
-	
+	m_botAction.cancelTasks();
 	}
 
 	public void init() {}
 
 	//settings stage1, 2, 3 and end of game.
 	public void settingsObjon1(){
+		
+		m_botAction.shipResetAll();
+		
 		m_botAction.sendUnfilteredPublicMessage("*ufo");
+		
 		m_botAction.sendUnfilteredPublicMessage("?set warbird:gravity:2000");
+		
 		m_botAction.sendUnfilteredPublicMessage("?set warbird:gravitytopspeed:200");
 	}
 	
