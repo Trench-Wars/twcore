@@ -40,9 +40,6 @@ public class betrayal extends MultiModule {
 	private		Queue		previousfreq = new Queue();	//will save the previous freqs of each player
 	private		Queue		oldCoords = new Queue();	//will save the old coords of each player that went to middle of circle, so they can get back to tubes with those oldcoords
 	
-	private 	String 	winner = "";
-
-	
 	public void handleEvent(Message event){
 		String message = event.getMessage();
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE){
@@ -390,9 +387,10 @@ public void startBetrayal(String nome, String message){
 	public String[] getModHelpMessage() {
 
 		String opm []= {
-				"!start 												 												- starts betrayal in circle 1 and teamkill limit 2",
-				"!start <circle> 															 - starts betrayal in a circle and teamkill limit 2",
-				"!start <circle> <teamkilllimit> - starts betrayal in a circle and a custom limit of teamkill",
+				"!start 												 												- starts betrayal in circle 1 and teamkill limit 2, 10 deaths",
+				"!start <circle> 															 - starts betrayal in a circle and teamkill limit 2, 10 deaths",
+				"!start <circle> <teamkilllimit> - starts betrayal in a circle and a custom limit of teamkill, 10 deaths",
+				"!start <circle> <tklim> <death> - starts betrayal in a circle, a custom limit of tk and death of <death>",
 				"!warp  <circle>	  														- warps to other circle during the game",	
 				"!stop													 													- stops betrayal's game while it is running.",
 				"!rules																										- sends the rules"																									
