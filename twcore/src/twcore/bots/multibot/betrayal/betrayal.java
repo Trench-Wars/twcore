@@ -3,7 +3,7 @@ package twcore.bots.multibot.betrayal;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import sun.misc.Queue;
+import java.util.Vector;
 
 import java.util.StringTokenizer;
 import java.util.TimerTask;
@@ -16,7 +16,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
-/*Author: André Vinícius (Dexter),
+/*Author: Dexter,
 	thanks to everyone who helped on the tests/final tests.
 */
 
@@ -36,9 +36,9 @@ public class betrayal extends MultiModule {
 	//because of those vars, there are 3 queues and 1 hashmap.
 	private Map<String, Integer> playingPlayers = new HashMap<String,Integer>();
 	
-	private		Queue		bannedPlayerName = new Queue(); //will save the names of players that went to middle of circle(like a ban in the game) 
-	private		Queue		previousfreq = new Queue();	//will save the previous freqs of each player
-	private		Queue		oldCoords = new Queue();	//will save the old coords of each player that went to middle of circle, so they can get back to tubes with those oldcoords
+	private		Vector<String>		bannedPlayerName = 	new Vector<String>(); //will save the names of players that went to middle of circle(like a ban in the game) 
+	private		Vector<Integer>		previousfreq 		 = 	new Vector<Integer>();	//will save the previous freqs of each player
+	private		Vector<Integer>		oldCoords 			 =	new Vector<Integer>();	//will save the old coords of each player that went to middle of circle, so they can get back to tubes with those oldcoords
 	
 	public void handleEvent(Message event){
 		String message = event.getMessage();
@@ -91,12 +91,12 @@ public class betrayal extends MultiModule {
 			if(playingPlayers.get(killerName) > allowedTK){ //there, we'll warp the player to middle of circle for 1 minute
 				
 				int f = freqKiller;
-				previousfreq.enqueue(f); /*we use 3 queues for the 3 player's var...
+				previousfreq.add(f); /*we use 3 queues for the 3 player's var...
 				 													which they are: frequence, coords and name of each player
 				 													during the game on "tubes->middle of circle". Because it changes the coords to each player, there are different names for each players and different freqs.	*/
 				warpMiddle(killerName);
 
-				bannedPlayerName.enqueue(killerName);
+				bannedPlayerName.add(killerName); //using it like a queue
 				
 				//Why use a queue? Because, first player who gets in middle of circle, is the first of leave it too. so each player will have his 1 minute on circle
 				TimerTask betrayalTime = new TimerTask(){
@@ -107,10 +107,20 @@ public class betrayal extends MultiModule {
 					
 					public void run(){
 						try{
-							kn = (String) bannedPlayerName.dequeue();//bannedPlayers.pop();
-							freq =  (Integer) previousfreq.dequeue(); //old freq
-							x = (Integer) oldCoords.dequeue(); //x is the first which "entered" in queue, its the first who'll leave too(its a queue, thats why :P)
-							y = (Integer) oldCoords.dequeue(); //second leaves...its the y
+							//like dequeue a queue
+							kn = bannedPlayerName.firstElement();
+							bannedPlayerName.remove(bannedPlayerName.firstElement());
+							
+							freq =  (Integer) previousfreq.firstElement(); //old freq
+							previousfreq.remove(previousfreq.firstElement());//like dequeue
+							
+							//like a queue
+							x = (Integer) oldCoords.firstElement(); //x is the first which "entered" in queue, its the first who'll leave too(its a queue, thats why :P)
+							oldCoords.remove(oldCoords.firstElement());
+							
+							//like a queue
+							y = (Integer) oldCoords.firstElement(); //second leaves...its the y
+							oldCoords.remove(oldCoords.firstElement());
 						}catch(Exception e){}
 						m_botAction.setFreq(kn, freq);  //Setting player back to old frequence
 						m_botAction.warpTo(kn, x, y);  //Warping player back to a tube of his frequence(2 tubes each freq)
@@ -237,8 +247,8 @@ public class betrayal extends MultiModule {
 		}
 	
 		//enqueue the old coords of each player
-		oldCoords.enqueue(oldX); 
-		oldCoords.enqueue(oldY);
+		oldCoords.add(oldX); 
+		oldCoords.add(oldY);
 }
 	
 public void startBetrayal(String nome, String message){
