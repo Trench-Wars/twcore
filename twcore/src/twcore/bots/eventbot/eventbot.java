@@ -6,8 +6,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.TimerTask;
 import java.util.Vector;
 
@@ -19,6 +21,7 @@ import twcore.core.SubspaceBot;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
@@ -37,6 +40,8 @@ public class eventbot extends SubspaceBot {
     
     // Each 30 seconds a player of the oldest checked request is checked if he's still online  
     private final int PLAYER_CHECK_TIME = Tools.TimeInMillis.SECOND*30;
+    public static final String GO_STRING = "?go ";
+    
     private String checkingPlayer;
     
     private final String SUBSCRIBE_ALL = "all";
@@ -59,7 +64,9 @@ public class eventbot extends SubspaceBot {
     // yyyy-MM-dd HH:mm
     private SimpleDateFormat banDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
-
+    //It'll pm the player added on this list ... about new events starting
+    private LinkedList<String> pmPlayersNewEvent = new LinkedList<String>(); //new
+    
     public eventbot(BotAction botAction) {
         super(botAction);
         m_botAction = BotAction.getBotAction();
@@ -112,12 +119,54 @@ public class eventbot extends SubspaceBot {
     public void handleEvent(Message event) {
     	commandInterpreter.handleEvent(event);
     	
+    	String message = event.getMessage();
+    	String name = m_botAction.getPlayerName(event.getPlayerID());
+    	
     	if(event.getMessageType() == Message.ARENA_MESSAGE && event.getMessage().startsWith(checkingPlayer+" - ")) {
     		checkingPlayer = null;
     	}
+    	
+    	if(event.getMessageType() == Message.ARENA_MESSAGE)
+    		this.pmAdvert(event.getMessage());
+    
+    	if(event.getMessageType() == Message.PRIVATE_MESSAGE && message.startsWith("!on")) registerPlayerEvent(name); 
+    	else if(event.getMessageType() == Message.PRIVATE_MESSAGE && message.startsWith("!off")) unregisterPlayerEvent(name);
+    
     }
+    
+    //it'll add the person who wants to receive pms about new events going on
+    public void registerPlayerEvent(String name){
+    	
+    	this.pmPlayersNewEvent.add(name);
 
-
+    	m_botAction.sendPrivateMessage(name, "Allright! Any new event I'll pm you!");
+    
+    }
+    
+    //it'll remove the person as she doesn't want to receive it anymore.
+    public void unregisterPlayerEvent(String name){
+    	
+    	this.pmPlayersNewEvent.remove(name);
+    	
+    	m_botAction.sendPrivateMessage(name, "Ok, I won't disturb you anymore!");
+    	
+    }
+    
+    //this method is to pm the person on the linkedlist about new events starting
+  	public void pmAdvert(String message){
+  
+  		StringTokenizer st = new StringTokenizer(message);
+  		String arenaname = "";
+  		
+  		while(st.hasMoreTokens())
+  			if(st.nextToken().equalsIgnoreCase("?go")) arenaname = st.nextToken();	
+  		
+  	if(arenaname != "")
+  		for(String nameOn: this.pmPlayersNewEvent) 
+  			m_botAction.sendPrivateMessage(nameOn, "A new event is starting in ?go "+arenaname+ "  ... come play!");
+  	
+  	}
+   
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("arena"));
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ));
@@ -144,7 +193,11 @@ public class eventbot extends SubspaceBot {
     		"| !request <event>:[comments] - Request an event to be hosted. Optional; any    |",
     		"|                               [comments]. Once you have made a !request, you  |",
     		"|                               can change it using !request again.             |",
-    		"| !request -                  - Cancels your current request.                   |"   };
+    		"| !request -                  - Cancels your current request.                   |",
+    	  "| !on												 - turns the pms about new events starting on			 |",
+    	  "| !off												- turns the pms about new events starting off		 |"
+    	};
+    
     	String[] zhCommands = 
     	{   "|------------------------------     ZH+    -------------------------------------|",
     	    "| !subscribe all              - EventBot will PM you on all event requests      |",
@@ -1008,5 +1061,5 @@ class EventRequest {
 		this.lastCheck = lastCheck;
 	}
     
-    
+
 }
