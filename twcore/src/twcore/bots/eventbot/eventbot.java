@@ -21,7 +21,6 @@ import twcore.core.SubspaceBot;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
-import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
@@ -33,14 +32,14 @@ import twcore.core.util.Tools;
  *  - 1:Tres <ER>> You could set it to go to ?go events after it spawns, and pm anyone who enters with instructions about requesting events
  */
 public class eventbot extends SubspaceBot {
-    private BotSettings m_botSettings;
+  
+	private BotSettings m_botSettings;
     private BotAction m_botAction;
     private OperatorList m_opList;
     private CommandInterpreter commandInterpreter;
     
     // Each 30 seconds a player of the oldest checked request is checked if he's still online  
     private final int PLAYER_CHECK_TIME = Tools.TimeInMillis.SECOND*30;
-    public static final String GO_STRING = "?go ";
     
     private String checkingPlayer;
     
@@ -90,13 +89,13 @@ public class eventbot extends SubspaceBot {
         commandInterpreter.registerCommand("!help", acceptedMessageTypes, this, "cmdHelp");
         // Public only (not enforced by CommandInterpreter)
         commandInterpreter.registerCommand("!request", acceptedMessageTypes, this, "cmdRequest");
+        commandInterpreter.registerCommand("!subscribe", acceptedMessageTypes, this, "cmdSubscribe");
         
-        // ZH+
-        int level = OperatorList.BOT_LEVEL;
-        commandInterpreter.registerCommand("!subscribe", acceptedMessageTypes, this, "cmdSubscribe", level);
-        
+       
+  
         // ER+
-        level = OperatorList.ER_LEVEL; 
+        int  level = OperatorList.ER_LEVEL; 
+        
         commandInterpreter.registerCommand("!requests", acceptedMessageTypes, this, "cmdRequests", level);
         commandInterpreter.registerCommand("!reqs", acceptedMessageTypes, this, "cmdRequests", level);
         commandInterpreter.registerCommand("!fillrequest", acceptedMessageTypes, this, "cmdFillRequest", level);
@@ -118,40 +117,33 @@ public class eventbot extends SubspaceBot {
 
     public void handleEvent(Message event) {
     	commandInterpreter.handleEvent(event);
-    	
-    	String message = event.getMessage();
-    	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	
+    		
     	if(event.getMessageType() == Message.ARENA_MESSAGE && event.getMessage().startsWith(checkingPlayer+" - ")) {
     		checkingPlayer = null;
     	}
     	
-    	if(event.getMessageType() == Message.ARENA_MESSAGE)
-    		this.pmAdvert(event.getMessage());
-    
-    	if(event.getMessageType() == Message.PRIVATE_MESSAGE && message.startsWith("!on")) registerPlayerEvent(name); 
-    	else if(event.getMessageType() == Message.PRIVATE_MESSAGE && message.startsWith("!off")) unregisterPlayerEvent(name);
+    	if(event.getMessageType() == Message.ARENA_MESSAGE && event.getMessage().toLowerCase().contains("?go"))
+    		pmAdvert(event.getMessage());
     
     }
     
+  
     //it'll add the person who wants to receive pms about new events going on
-    public void registerPlayerEvent(String name){
+    public void subscribePmPlayer(String name){
+    
+    	if(!pmPlayersNewEvent.contains(name)){ //if the name isnt on list, it'll add him
+    		pmPlayersNewEvent.add(name);
+    		m_botAction.sendSmartPrivateMessage(name, "Allright! Any new event I'll pm you!");
+    	}
     	
-    	this.pmPlayersNewEvent.add(name);
-
-    	m_botAction.sendPrivateMessage(name, "Allright! Any new event I'll pm you!");
+    	else{ //otherwise he doesnt want to receive the pms anymore and it'll remove him from the linkedlist
+    		pmPlayersNewEvent.remove(name);
+    		m_botAction.sendSmartPrivateMessage(name, "Ok, I won't disturb you anymore!");
+    	}
     
     }
     
-    //it'll remove the person as she doesn't want to receive it anymore.
-    public void unregisterPlayerEvent(String name){
-    	
-    	this.pmPlayersNewEvent.remove(name);
-    	
-    	m_botAction.sendPrivateMessage(name, "Ok, I won't disturb you anymore!");
-    	
-    }
-    
+  
     //this method is to pm the person on the linkedlist about new events starting
   	public void pmAdvert(String message){
   
@@ -161,9 +153,8 @@ public class eventbot extends SubspaceBot {
   		while(st.hasMoreTokens())
   			if(st.nextToken().equalsIgnoreCase("?go")) arenaname = st.nextToken();	
   		
-  	if(arenaname != "")
-  		for(String nameOn: this.pmPlayersNewEvent) 
-  			m_botAction.sendPrivateMessage(nameOn, "A new event is starting in ?go "+arenaname+ "  ... come play!");
+  	for(String nameOn: this.pmPlayersNewEvent) 
+  			m_botAction.sendSmartPrivateMessage(nameOn, "A new event is starting in ?go "+arenaname.toLowerCase()+ "  ... come play!");
   	
   	}
    
@@ -194,13 +185,13 @@ public class eventbot extends SubspaceBot {
     		"|                               [comments]. Once you have made a !request, you  |",
     		"|                               can change it using !request again.             |",
     		"| !request -                  - Cancels your current request.                   |",
-    	  "| !on												 - turns the pms about new events starting on			 |",
-    	  "| !off												- turns the pms about new events starting off		 |"
+    	  "| !subscribe -								 - Toggles alerts in private messages							 |",
     	};
     
     	String[] zhCommands = 
     	{   "|------------------------------     ZH+    -------------------------------------|",
-    	    "| !subscribe all              - EventBot will PM you on all event requests      |",
+    		  "| !subscribe 																 - Toggles alerts in private messages    	         |",
+    			"| !subscribe all              - EventBot will PM you on all event requests      |",
     	    "|                               except for Base, WBDuel, JavDuel and SpidDuel   |",
     	    "| !subscribe bwjs             - EventBot will only PM you on event requests for |",
     	    "|                               Base, WBDuel, JavDuel or SpidDuel               |",
@@ -374,19 +365,24 @@ public class eventbot extends SubspaceBot {
     }
     
     /**
-     * [PM] !subscribe all / bwjs / off[ZH+]
-     * 
+     * [PM]  !subscribe all / bwjs / off[ZH+]
+     * [new] !subscribe  	-		it'll add the player to a list which will receive pm when a new event starts 
      * @param name
      * @param message
      */
     public void cmdSubscribe(String name, String message) {
-        message = message.trim().toLowerCase();
+    		
+    		boolean level = m_opList.isER(name);
+    		message = message.trim().toLowerCase();
         String staffer = name.toLowerCase();
         
+      //it'll add or remove the player to be pmed if any event is on
         if(message.length() == 0) {
-            m_botAction.sendSmartPrivateMessage(name, "Command syntax error. Please specify 'all', 'bwjs' or 'off'. Type ::!help for more information.");
-
-        } else if(message.equals("all")) {
+        	subscribePmPlayer(name);
+        } 
+        
+        else if(level){ 
+        	if(message.equals("all")) {
             if(subscribers.containsKey(staffer) && subscribers.get(staffer).indexOf(SUBSCRIBE_ALL)>-1) {
                 m_botAction.sendSmartPrivateMessage(name, "You are already subscribed for all event requests.");
             } else {
@@ -411,8 +407,8 @@ public class eventbot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Command syntax error. You can only specify 'all', 'bwjs' or 'off'. Type ::!help for more information.");
         }
         
+      }
     }
-    
     /**
      * [PM] !requests [ER+]
      * 
