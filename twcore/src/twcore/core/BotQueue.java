@@ -280,8 +280,8 @@ public class BotQueue extends Thread {
         Iterator<String> j = names.iterator();
         while( j.hasNext() ) {
             String name = j.next();
-            removeBot( name, "!hardremove by " + initiator );
-            m_botAction.sendChatMessage( 1, name + " logged off.  (!hardremove initiated.)" );
+            removeBot( name, "!removetype by " + initiator );
+            m_botAction.sendChatMessage( 1, name + " logged off.  (!removetype initiated.)" );
         }
         Integer numBots = m_botTypes.get( rawClassName );
         if( numBots != null )
