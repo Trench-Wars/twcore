@@ -114,7 +114,7 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Owners &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
 Abuse Abusing Abused Abuser|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 &Staff &Complaint|To register any complaints about any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
-Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting request. We will attempt to handle your request as promptly as possible but there is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the tag <ER> next to their name.
+Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting request. We will attempt to handle your request as promptly as possible but there is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the <ER> tag next to their name.
 &Host &Base|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
 &Host &Base2|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
 &Host &Base3|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
