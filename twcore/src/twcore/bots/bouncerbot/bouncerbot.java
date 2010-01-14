@@ -132,12 +132,14 @@ public class bouncerbot extends SubspaceBot {
         + "/" + c.get( Calendar.YEAR ) + ": " + c.get( Calendar.HOUR ) + ":"
         + c.get( Calendar.MINUTE ) + ":" + c.get( Calendar.SECOND ) + " - ";
         try{
-            PrintWriter out = new PrintWriter( new FileWriter( "bouncerbot.log" ));
+        	FileWriter writer = new FileWriter( "bouncerbot.log" );
+            PrintWriter out = new PrintWriter( writer );
             m_log.add( timestamp + event );
             for( Iterator<String> i = m_log.iterator(); i.hasNext(); ){
                 out.println( i.next() );
             }
             out.close();
+            writer.close();
         }catch(Exception e){
             Tools.printStackTrace( e );
         }

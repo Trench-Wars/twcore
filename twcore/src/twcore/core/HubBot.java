@@ -131,13 +131,14 @@ public class HubBot extends SubspaceBot {
      */
     private void autoSpawnBots(boolean checkAlreadySpawned) {
         try {
-            BufferedReader reader = new BufferedReader( new FileReader( m_botAction.getCoreCfg( "autoload.cfg" ) ) );
+        	FileReader reader = new FileReader( m_botAction.getCoreCfg( "autoload.cfg" ) );
+            BufferedReader buffer = new BufferedReader( reader );
             LinkedHashMap<String, Integer> autoLoads = new LinkedHashMap<String, Integer>();
             // using LinkedHashMap implementation so the order of autoload.cfg is used when spawning bots
             
             String line = "";
             
-            while( (line = reader.readLine()) != null ){
+            while( (line = buffer.readLine()) != null ){
                 if( line == null || line.length() == 0 ){
                     continue;
                 }
@@ -169,6 +170,9 @@ public class HubBot extends SubspaceBot {
                     }
                 }
             }
+            
+            buffer.close();
+            reader.close();
         } catch( FileNotFoundException fnfe ){
             Tools.printStackTrace( "File not found: autoload.cfg  ;  ", fnfe );
         } catch( IOException ioe) {

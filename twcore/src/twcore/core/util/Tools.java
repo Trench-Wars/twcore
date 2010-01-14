@@ -184,13 +184,18 @@ public final class Tools {
             e.printStackTrace();
             if( exceptionLogFilePath == null ) return;
             try{
-                PrintWriter out = new PrintWriter( new BufferedWriter( new FileWriter( exceptionLogFilePath, true )));
+            	FileWriter fileWriter = new FileWriter( exceptionLogFilePath, true );
+            	BufferedWriter buffer = new BufferedWriter( fileWriter );
+                PrintWriter out = new PrintWriter( buffer );
                 out.println();
                 out.println( "-----------------" );
                 out.println( getTimeStamp() );
                 out.println();
                 e.printStackTrace( out );
+                
                 out.close();
+                buffer.close();
+                fileWriter.close();
             } catch( IOException ioe ){
                 ioe.printStackTrace();
             }
@@ -212,13 +217,21 @@ public final class Tools {
             e.printStackTrace();
             if( exceptionLogFilePath == null ) return;
             try{
-                PrintWriter out = new PrintWriter( new BufferedWriter( new FileWriter( exceptionLogFilePath, true )));
+            	FileWriter writer = new FileWriter( exceptionLogFilePath, true );
+            	BufferedWriter bufferWriter = new BufferedWriter( writer );
+                PrintWriter out = new PrintWriter( bufferWriter );
+                
+                
                 out.println();
                 out.println( "-----------------" );
                 out.println( getTimeStamp() + " " + note );
                 out.println();
                 e.printStackTrace( out );
+                
+                
                 out.close();
+                bufferWriter.close();
+                writer.close();
             } catch( IOException ioe ){
                 ioe.printStackTrace();
             }

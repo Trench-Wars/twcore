@@ -6,6 +6,7 @@ import twcore.core.BotAction;
 import twcore.core.events.Message;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -48,11 +49,15 @@ public class Spy {
      * Loads the banned keywords and fragments via corecfg/racism.cfg
      */
     public void loadConfig () { 
-    	BufferedReader sr;
+    	FileReader reader = null;
+    	BufferedReader sr = null;
     	String line;
     	boolean loadWords = true;
+    	
     	try {
-    		sr = new BufferedReader(new FileReader(m_botAction.getCoreCfg("racism.cfg")));
+    		reader = new FileReader(m_botAction.getCoreCfg("racism.cfg"));
+    		sr = new BufferedReader(reader);
+    		
     		while((line = sr.readLine()) != null)
     		{
     		   if(line.contains("[Words]")) { loadWords = true; }
@@ -67,11 +72,19 @@ public class Spy {
     			   }
     		   }
     		}
-    		sr.close();
-    		sr = null;
-    	}
-    		catch (Exception e) {
-    		sr = null;
+    		
+    	} catch (Exception e) {
+    		
+    		
+    	} finally {
+    		try {
+    			if(sr != null)
+	    			sr.close();
+	    		if(reader != null)
+	    			reader.close();
+    		} catch(IOException ioe) {
+    			Tools.printStackTrace("Unable to close file handlers: "+ioe.getMessage(), ioe);
+    		}
     	}
     	
     }

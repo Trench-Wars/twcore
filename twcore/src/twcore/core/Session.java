@@ -33,6 +33,7 @@ public class Session extends Thread {
     private Timer           m_timer;
     private DatagramSocket  m_socket;
     private PrintWriter		m_chatLog;
+    private FileWriter 		m_chatLogWriter;
     private CoreData        m_coreData;
     private String          m_password;
     private BotAction       m_botAction;
@@ -70,6 +71,7 @@ public class Session extends Thread {
         m_botNumber = botNum;
         m_timer = new Timer(name+"-Timer");
         m_chatLog = null;
+        m_chatLogWriter = null;
         m_ipAddress = m_coreData.getServerName();
         m_serverPort = m_coreData.getServerPort();
         m_localIPAddress = m_coreData.getLocalIP();
@@ -88,6 +90,7 @@ public class Session extends Thread {
         m_botNumber = botNum;
         m_timer = new Timer(name+"-Timer");
         m_chatLog = null;
+        m_chatLogWriter = null;
         m_ipAddress = altIP;
         m_sysopPassword = altSysop;
         m_serverPort = altPort;
@@ -165,7 +168,8 @@ public class Session extends Thread {
 	        	}
 	        	String filename = m_coreData.getGeneralSettings().getString("Core Location");
 	        	filename += "/logs/"+ botName + ".log";
-	        	m_chatLog = new PrintWriter(new FileWriter(filename, true));
+	        	m_chatLogWriter = new FileWriter(filename, true);
+	        	m_chatLog = new PrintWriter( m_chatLogWriter );
 	        }
 
             Class[] parameterTypes = { m_botAction.getClass() };
@@ -269,8 +273,13 @@ public class Session extends Thread {
 
 		if(m_chatLog != null)
 		{
-        	m_chatLog.flush();
-        	m_chatLog.close();
+        	try {
+        		m_chatLog.flush();
+            	m_chatLog.close();
+				m_chatLogWriter.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
         // Experimental fast disconnect mode destroys the socket immediately.

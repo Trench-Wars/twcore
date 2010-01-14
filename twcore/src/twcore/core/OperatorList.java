@@ -169,11 +169,12 @@ public class OperatorList {
 
                 // Read through the file and add operators
                 try {
-                    BufferedReader br = new BufferedReader(new FileReader(data));
+                	FileReader reader = new FileReader(data);
+                    BufferedReader buffer = new BufferedReader(reader);
                     String line = null, name = null;
                     boolean in_area = false;
 
-                    while (( line = br.readLine()) != null) {
+                    while (( line = buffer.readLine()) != null) {
 
                         if( line.startsWith(" ") ||
                             line.startsWith("-") ||
@@ -225,6 +226,9 @@ public class OperatorList {
                             }
                         }
                     }
+                    
+                    buffer.close();
+                    reader.close();
 
                 } catch(FileNotFoundException fnfe) {
 

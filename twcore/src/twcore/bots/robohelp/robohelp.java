@@ -208,8 +208,10 @@ public class robohelp extends SubspaceBot {
         search = new SearchableStructure();
         rawData = new TreeMap<String, String>();
         try {
-            BufferedReader in = new BufferedReader(new FileReader( m_botAction.getDataFile( "HelpResponses.txt" )));
+        	FileReader reader = new FileReader( m_botAction.getDataFile( "HelpResponses.txt" ) );
+            BufferedReader in = new BufferedReader( reader );
             String line;
+            
             int i = 0;
             do{
                 line = in.readLine();
@@ -224,15 +226,14 @@ public class robohelp extends SubspaceBot {
                             rawData.put( response, key );
                         }
                     }
-        } catch( Exception e ){
-            System.out.println( "Error in HelpResponses.txt near: Line " + i );
-        }
-        i++;
+		        } catch( Exception e ){
+		            System.out.println( "Error in HelpResponses.txt near: Line " + i );
+		        }
+		        i++;
             } while( line!=null );
 
-            if( in != null ){
-                in.close();
-            }
+            in.close();
+            reader.close();
         } catch( IOException e ){
             Tools.printStackTrace( e );
         }

@@ -525,10 +525,12 @@ public class GamePacketInterpreter {
 
         try {
             fileName = message.readString( 1, 16 );
-            BufferedWriter fileWriter = new BufferedWriter( new FileWriter(
-            m_session.getBotAction().getDataFile( fileName )));
-            fileWriter.write( message.readString( 17, message.size() - 17 ) );
-            fileWriter.close();
+            FileWriter writer = new FileWriter(m_session.getBotAction().getDataFile( fileName ));
+            BufferedWriter buffer = new BufferedWriter( writer );
+            buffer.write( message.readString( 17, message.size() - 17 ) );
+            buffer.close();
+            writer.close();
+            
             if( m_requester.check( EventRequester.FILE_ARRIVED )){
                 ByteArray       fileNameArray = new ByteArray( 16 );
 

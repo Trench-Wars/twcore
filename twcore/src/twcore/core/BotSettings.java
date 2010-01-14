@@ -52,7 +52,8 @@ public class BotSettings {
             String          line;
             String          value;
             int             equalsIndex;
-            BufferedReader  in = new BufferedReader( new FileReader( file ));
+            FileReader fileReader = new FileReader( file );
+            BufferedReader  in = new BufferedReader( fileReader);
 
             while( (line = in.readLine()) != null ){
                 if( line.length() != 0 ){
@@ -77,6 +78,7 @@ public class BotSettings {
             }
 
             in.close();
+            fileReader.close();
         } catch(FileNotFoundException fnfe) {
             Tools.printLog( "BotSettings configuration file ("+file.getName()+") not found: " + fnfe.getMessage());
         } catch(IOException ioe) {
@@ -247,8 +249,11 @@ public class BotSettings {
             String          line;
             String          value;
             int             equalsIndex;
-            BufferedReader  in = new BufferedReader( new FileReader( m_fileName ));
-            PrintWriter     out = new PrintWriter( new BufferedWriter ( new FileWriter(m_fileName + ".tmp")));
+            FileReader reader = new FileReader( m_fileName );
+            BufferedReader  in = new BufferedReader( reader );
+            FileWriter writer = new FileWriter(m_fileName + ".tmp");
+            BufferedWriter bufferWriter = new BufferedWriter( writer );
+            PrintWriter     out = new PrintWriter( bufferWriter );
             HashSet <String> existingKeys = new HashSet<String>();
 
             while( (line = in.readLine()) != null ){
@@ -282,7 +287,11 @@ public class BotSettings {
                 }
             }
             in.close();
+            reader.close();
+            
             out.close();
+            bufferWriter.close();
+            writer.close();
 
             File f = new File(m_fileName);
             if (f.exists()) f.delete();
