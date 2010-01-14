@@ -569,9 +569,8 @@ public class robohelp extends SubspaceBot {
 
         if( name != null ){
             if( messager.equalsIgnoreCase( name ) || messager.toLowerCase().startsWith( name.toLowerCase() ) ){
-
-                m_botAction.sendChatMessage( "Use :" + m_botAction.getBotName()
-                + ":!lookup <keyword> instead."  );
+                m_botAction.sendChatMessage( "Use :" + m_botAction.getBotName() + ":!lookup <keyword> instead."  );
+                
 /*            } else if( keyword.toLowerCase().startsWith( "google " ) ){
                 String     query;
 
@@ -583,6 +582,9 @@ public class robohelp extends SubspaceBot {
                     m_botAction.sendRemotePrivateMessage( name, "Google says: " + result );
                     m_botAction.sendChatMessage( "Told " + name + " that Google says: " + result );
                 }*/
+            } else if( name.startsWith("#") ) {
+            	m_botAction.sendChatMessage( "Invalid name. Please specify a different name." );
+            	
             } else if( keyword.toLowerCase().startsWith( "dictionary " ) ){
                 String     query;
 
