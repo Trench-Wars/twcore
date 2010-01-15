@@ -1991,7 +1991,7 @@ public class bwjsbot extends SubspaceBot {
      * @return True if a zoner can be send, else false
      */
     private boolean allowManualZoner() {
-        if ((System.currentTimeMillis() - manualZonerTimestamp) <= (1 * Tools.TimeInMillis.MINUTE)) {
+        if ((System.currentTimeMillis() - manualZonerTimestamp) <= (10 * Tools.TimeInMillis.MINUTE)) {
             return false;
         } else {
             return true;
