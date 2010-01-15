@@ -79,28 +79,36 @@ public class robohelp extends SubspaceBot {
         int         acceptedMessages;
 
         acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE;
-
+        
+        // Player commands
         m_commandInterpreter.registerCommand( "!next", acceptedMessages, this, "handleNext" );
         m_commandInterpreter.registerCommand( "!summon", acceptedMessages, this, "handleSummon" );
-        m_commandInterpreter.registerCommand( "!lookup", acceptedMessages, this, "handleLookup" );
-        m_commandInterpreter.registerCommand( "!last", acceptedMessages, this, "handleLast" );
-        m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "mainHelpScreen" );
-        m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload" );
-        m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats");
-        m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted" );
+        
+        // ER+ commands
+        m_commandInterpreter.registerCommand( "!lookup", acceptedMessages, this, "handleLookup", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!last", acceptedMessages, this, "handleLast", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats", OperatorList.ER_LEVEL);
+        m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted", OperatorList.ER_LEVEL );
+        
+        // Sysop+ 
+        m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload", OperatorList.SYSOP_LEVEL );
+        m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "handleDie", OperatorList.SYSOP_LEVEL );
+        
         
         acceptedMessages = Message.CHAT_MESSAGE;
-
-        m_commandInterpreter.registerCommand( "!repeat", acceptedMessages, this, "handleRepeat" );
-        m_commandInterpreter.registerCommand( "!warn", acceptedMessages, this, "handleWarn" );
-        m_commandInterpreter.registerCommand( "!tell", acceptedMessages, this, "handleTell" );
-        m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleBan" );
-        m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle" );
-        m_commandInterpreter.registerCommand( "!wiki",  acceptedMessages, this, "handleWikipedia" );
-        m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "handleStatus" );
-        m_commandInterpreter.registerCommand( "!dictionary", acceptedMessages, this, "handleDictionary" );
-        m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus" );
-        m_commandInterpreter.registerCommand( "!javadocs", acceptedMessages, this, "handleJavadocs" );
+        
+        // ER+
+        m_commandInterpreter.registerCommand( "!repeat", acceptedMessages, this, "handleRepeat", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!warn", acceptedMessages, this, "handleWarn", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!tell", acceptedMessages, this, "handleTell", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleBan", OperatorList.ER_LEVEL );
+        //m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!wiki",  acceptedMessages, this, "handleWikipedia", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!status", acceptedMessages, this, "handleStatus", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!dictionary", acceptedMessages, this, "handleDictionary", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!javadocs", acceptedMessages, this, "handleJavadocs", OperatorList.ER_LEVEL );
         
 		if (!m_strictOnIts)
             m_commandInterpreter.registerDefaultCommand( acceptedMessages, this, "handleChat" );
@@ -643,10 +651,17 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleReload( String name, String message ){
-        if( opList.isOwner( name ) ){
+        if( opList.isSysop( name ) ){
             populateSearch();
             m_botAction.sendRemotePrivateMessage( name, "Reloaded." );
         }
+    }
+    
+    public void handleDie( String name, String message ) {
+    	if( opList.isSysop( name ) ) {
+    		m_botAction.cancelTasks();
+    		m_botAction.die("RoboHelp disconnected by "+name);
+    	}
     }
 
     public void handleWarn( String playerName, String message ){
@@ -1153,14 +1168,15 @@ public class robohelp extends SubspaceBot {
             " !mystats <month>-<year> [above arguments] - Returns the top/call count from specified",
             "                                             month-year. F.ex: !mystats 08-2007 mod 50"
         };
-        if( m_botAction.getOperatorList().isBot( playerName ) )
+        if( m_botAction.getOperatorList().isER( playerName ) )
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
                 
-        String[] OwnerHelpText = {
-            " !reload                                   - Reloads the HelpResponses database from file",            
+        String[] SysopHelpText = {
+            " !reload                                   - Reloads the HelpResponses database from file",
+            " !die                                      - Disconnects this bot"
         };
-        if( m_botAction.getOperatorList().isOwner( playerName ))
-        	m_botAction.remotePrivateMessageSpam( playerName, OwnerHelpText );
+        if( m_botAction.getOperatorList().isSysop( playerName ))
+        	m_botAction.remotePrivateMessageSpam( playerName, SysopHelpText );
     }
 
     private int indexNotOf(String string, char target, int fromIndex)
