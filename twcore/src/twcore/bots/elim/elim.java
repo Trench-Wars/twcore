@@ -113,7 +113,7 @@ public class elim extends SubspaceBot {
 	public static final int LAGOUT_RETURN = 60;//Time you must return before when returning from a lagout in seconds
 	public static final int MAX_LAGOUT = 2;    //Maximum number of lagouts allowed
 	public static final int DOUBLE_KILL = 5;   //Number of seconds after a kill for another kill to be considered duplicate
-	public static final int MIN_ZONER = 3;     //The minimum amount of minutes that another zoner can be sent
+	public static final int MIN_ZONER = 15;    //The minimum amount of minutes that another zoner can be sent
 	public static final int BOUNDARY_TIME = 30;//The maximum amount of time you can be outside of base in seconds
 	public static final int STREAK_INIT = 5;   //The number of kills needed for the first streak
 	public static final int STREAK_REPEAT = 2; //The number of kills needed for streak messages after the initial streak
