@@ -98,7 +98,8 @@ public class OperatorList {
      */
     public void init(File operatorsCfg) throws FileNotFoundException, IOException {
         Properties prop = new Properties();
-        prop.load(new FileInputStream(operatorsCfg));
+        FileInputStream fileInput = new FileInputStream(operatorsCfg);
+        prop.load(fileInput);
 
         // temporary map for reading out the configuration
         String[] operators_keys = {
@@ -139,7 +140,8 @@ public class OperatorList {
                 }
             }
         }
-
+        
+        fileInput.close();
     }
 
     /**
