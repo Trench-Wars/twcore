@@ -695,7 +695,7 @@ public class robohelp extends SubspaceBot {
 
                         m_botAction.sendRemotePrivateMessage( name, "WARNING: We appreciate "
                         +"your input.  However, your excessive abuse of the ?cheater or ?help command will "
-                        +"not be tolerated further!", 1 );
+                        +"not be tolerated further! Further abuse will result in a ban from the zone.", 1 );
                         m_botAction.sendChatMessage( name + " has been warned." );
 
                         Calendar thisTime = Calendar.getInstance();
