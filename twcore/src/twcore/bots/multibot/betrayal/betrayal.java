@@ -410,7 +410,7 @@ public void startBetrayal(String nome, String message){
 	}
 
 	public void sendRules(){
-		m_botAction.sendArenaMessage("Rules:", 12);
+		m_botAction.sendArenaMessage("Rules:", 2);
 		m_botAction.sendArenaMessage("It's a javelin game!");
 		m_botAction.sendArenaMessage("There are two freqs, each freq will have 2 teams, each team will be in a tube of the circle.");
 		m_botAction.sendArenaMessage("If you tk, you are the betrayal, so be careful to don't get owned if you are it!");
