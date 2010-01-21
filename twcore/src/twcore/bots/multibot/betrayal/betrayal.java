@@ -23,10 +23,11 @@ import twcore.core.util.ModuleEventRequester;
 //bot to betrayal's event
 public class betrayal extends MultiModule {
 
-	private	boolean		betrayalGame = false;
-	private		int 		death;
-	private		int 		allowedTK;
-	private		int 		circleNumber;
+	
+	private		boolean		betrayalGame = false;
+	private		int 			death;
+	private		int 			allowedTK;
+	private		int 			circleNumber;
 
 	//Var of players, those will change to each player when they get warped into middle of the circle
 	private		int			oldX, oldY; 
@@ -123,15 +124,15 @@ public class betrayal extends MultiModule {
 							kn = bannedPlayerName.getFirst();
 							bannedPlayerName.remove(bannedPlayerName.getFirst());
 							
-							freq =  (Integer) previousfreq.getFirst(); //old freq
+							freq =  previousfreq.getFirst(); //old freq
 							previousfreq.remove(previousfreq.getFirst());//like dequeue
 							
 							//like a queue
-							x = (Integer) oldCoords.getFirst(); //x is the first which "entered" in queue, its the first who'll leave too(its a queue, thats why :P)
+							x = oldCoords.getFirst(); //x is the first which "entered" in queue, its the first who'll leave too(its a queue, thats why :P)
 							oldCoords.remove(oldCoords.getFirst());
 							
 							//like a queue
-							y = (Integer) oldCoords.getFirst(); //second leaves...its the y
+							y =  oldCoords.getFirst(); //second leaves...its the y
 							oldCoords.remove(oldCoords.getFirst());
 							
 						}catch(Exception e){}
@@ -145,9 +146,9 @@ public class betrayal extends MultiModule {
 					}//if > allowed		
 				}//if tk'd
 		 	
-		}//if betrayalgame
-			
+		}//if betrayalgame		
 	}	
+	
 	public void handleCommand(String nome, String message){
 		try{
 			if(message.startsWith("!start")) startBetrayal(nome, message);
@@ -204,6 +205,7 @@ public class betrayal extends MultiModule {
 				}else m_botAction.sendPrivateMessage(name, "Can't change circle while someone is a betrayal!");	
 			}else m_botAction.sendPrivateMessage(name, "Can't warp if the game hasn't been started!");
 	}
+
 	//It will be like the punishment of players, warping them into middle of circle.
 	public void warpMiddle(String killerName){
 		//relacionar nome oldx old y e frequencia...esses 3 mudam pra cada tker. fazer algo, arvore, que seja!
@@ -351,13 +353,14 @@ public void startBetrayal(String nome, String message){
 							splitTeam(1, 632, 741, 608, 762);
 							splitTeam(0, 611, 740, 630, 765); 
 					}
-					m_botAction.sendArenaMessage("GOGOGOGOGO!", 104);
+					m_botAction.sendArenaMessage("GO GO GO!", 104);
 				}
 			};m_botAction.scheduleTask(startGame, 10000); //timerset to do after "game begins in 10 secs..."
 	
 	}else m_botAction.sendPrivateMessage(nome, "Not enough players, get more than 1 player playing to start betrayal please.");
 }
-	public void checkWinner(String killer){
+	
+public void checkWinner(String killer){
 		if(betrayalGame){
 	
 			if(m_botAction.getFrequencySize(0) == 0 || m_botAction.getFrequencySize(1) == 0){
@@ -374,7 +377,7 @@ public void startBetrayal(String nome, String message){
 				this.oldCoords.clear();
 				this.playingPlayers.clear();
 				this.previousfreq.clear();
-			
+				m_botAction.cancelTasks();
 				betrayalGame = false;
 		
 		}
@@ -427,16 +430,16 @@ public void startBetrayal(String nome, String message){
 	}
 	public void stopBetrayal(String name, String message){
 		if(betrayalGame){
-		m_botAction.cancelTasks();
-		m_botAction.shipResetAll();
-		m_botAction.toggleLocked();
-		m_botAction.sendPrivateMessage(name, "Game stop'd.");
-		this.bannedPlayerName.clear();
-		this.oldCoords.clear();
-		this.playingPlayers.clear();
-		this.previousfreq.clear();
+			m_botAction.cancelTasks();
+			m_botAction.shipResetAll();
+			m_botAction.toggleLocked();
+			m_botAction.sendPrivateMessage(name, "Game stop'd.");
+			this.bannedPlayerName.clear();
+			this.oldCoords.clear();
+			this.playingPlayers.clear();
+			this.previousfreq.clear();
 		
-		betrayalGame = false;
+			betrayalGame = false;
 		
 		}
 		else m_botAction.sendPrivateMessage(name, "I'll just stop the game if it is running!");
@@ -461,8 +464,8 @@ public void startBetrayal(String nome, String message){
 	public void sendRules(){
 		m_botAction.sendArenaMessage("Rules:", 2);
 		m_botAction.sendArenaMessage("It's a javelin game!");
-		m_botAction.sendArenaMessage("There are two freqs, each freq will have 2 teams, each team will be in a tube of the circle.");
-		m_botAction.sendArenaMessage("If you tk, you are the betrayal, so be careful to don't get owned if you are it!");
+		m_botAction.sendArenaMessage("There will be two teams, each spawned within a tube of a circle.");
+		m_botAction.sendArenaMessage("Teamkilling results in the player being warped into the middle of the circle to be bombed by all!");
 	}
 	public void init() {}
 
