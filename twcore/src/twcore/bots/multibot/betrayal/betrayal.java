@@ -2,9 +2,8 @@ package twcore.bots.multibot.betrayal;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.LinkedList;
-
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TimerTask;
 
@@ -12,143 +11,104 @@ import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
-
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
-/*Author: Dexter,
-	thanks to everyone who helped on the tests/final tests.
+/*Author: Dexter
+	
+	Thanks to D1st0rt who gave me an idea to fix a problem I had with the bot.
+	Thanks to everyone who helped me on tests.
 */
 
-//bot to betrayal's event
 public class betrayal extends MultiModule {
+	
+	private boolean betrayalGame = false;
+	
+	private LinkedList<bannedinfo> bannedPlayer = new LinkedList<bannedinfo>();
+	private Map<String, Integer> nameTK = new HashMap<String, Integer>(); //Map to Player and his tk number
+	
+	private int circleNumber;
+	private int deathPlayer;
+	private int tkPlayer;
 
-	
-	private		boolean		betrayalGame = false;
-	private		int 			death;
-	private		int 			allowedTK;
-	private		int 			circleNumber;
-
-	//Var of players, those will change to each player when they get warped into middle of the circle
-	private		int			oldX, oldY; 
-	private		String	killerName; 
-	private		int			freqKiller; 
-	
-	//because of those vars, there are 3 queues and 1 hashmap.
-	private Map<String, Integer> playingPlayers = new HashMap<String,Integer>();
-	
-	private		LinkedList<String>		bannedPlayerName = 	new LinkedList<String>(); //will save the names of players that went to middle of circle(like a ban in the game) 
-	private		LinkedList<Integer>		previousfreq 		 = 	new LinkedList<Integer>();	//will save the previous freqs of each player
-	private		LinkedList<Integer>		oldCoords 			 =	new LinkedList<Integer>();	//will save the old coords of each player that went to middle of circle, so they can get back to tubes with those oldcoords
-	
 	public void handleEvent(Message event){
 		String message = event.getMessage();
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE){
 			String nome = m_botAction.getPlayerName(event.getPlayerID());
 			if(opList.isER(nome)) handleCommand(nome, message);
-	
 		}
 	}
 	
 	public void handleEvent(PlayerDeath event){
-		
-	if(betrayalGame){
-		
-		//--------------------------------------------------------------------------//
-		//this will add the tk number of each player
-		//check if player has 10 deaths then check if there is a winner already
-		//will see if the tk number > allowed tk(given by host), if yes, he gets as betrayal.
-		//--------------------------------------------------------------------------//
+		if(betrayalGame){ 
+			
+			Player pkiller = m_botAction.getPlayer(event.getKillerID());
+			Player pkillee = m_botAction.getPlayer(event.getKilleeID()); //killed
+			
+			// --------- checks the winner of game ------------
+			if(pkillee.getLosses() == deathPlayer){ //to spec player on that death limit
+				m_botAction.specWithoutLock(event.getKilleeID());
+				m_botAction.sendArenaMessage(pkillee.getPlayerName()+" is out! "+deathPlayer+" deaths!");
+				if(pkillee.getFrequency() != pkiller.getFrequency()){
+					TimerTask checkWin = new TimerTask(){ //it'll check the winner.
+						public void run(){
+							checkWinner();
+								}
+							}; m_botAction.scheduleTask(checkWin, 500);
+				}// -------- checks the winner of game ---------
+			}
+			if(pkiller == null && pkillee == null)
+				return ;
+			
+			// ------------ checks if it is a tk ----------
+			if(pkiller.getFrequency() == pkillee.getFrequency()){
+			
+					if(nameTK.get(pkiller.getPlayerName()) == null)
+						nameTK.put(pkiller.getPlayerName(), 1); //first TK
+					else
+						nameTK.put(pkiller.getPlayerName(), nameTK.get(pkiller.getPlayerName())+1); //adds to number of tk, which isnt in limit yet.
 
-		Player pkiller = m_botAction.getPlayer(event.getKillerID());
-		Player pkillee = m_botAction.getPlayer(event.getKilleeID()); //player who got killed
-		
-		killerName = pkiller.getPlayerName(); //gets the name of tker
-		freqKiller = pkiller.getFrequency();	//gets the name of the killed guy
-		
-		if(pkillee.getLosses() == death){ //to spec player on that death limit
-			m_botAction.specWithoutLock(event.getKilleeID());
-			m_botAction.sendArenaMessage(pkillee.getPlayerName()+" is out! "+death+" deaths!");
-			TimerTask checkWin = new TimerTask(){ //it'll check the winner.
-				public void run(){
-				checkWinner(killerName);
+				// --------- checks if tked more than allowed --------
+					if(nameTK.get(pkiller.getPlayerName()) > tkPlayer){
+						bannedinfo player = new bannedinfo();
+						player.setFreq(pkiller.getFrequency());
+						player.setPlayerName(pkiller.getPlayerName());
+						warpMiddle(player);
+						
+						//depletes NRG to whoever is in middle of circle
+						TimerTask prizeNegNRG = new TimerTask(){
+							
+							public void run(){
+								for(bannedinfo b: bannedPlayer)
+									m_botAction.specificPrize(b.getPlayerName(), -13);
 							}
-						}; m_botAction.scheduleTask(checkWin, 500);
-		}
-		
-		if(pkiller == null && pkillee == null)
-			return ;
-		
-		/*This is a "tk watcher", it'll use a tree with the map<player,numberofTKz>
-		if the guy has passed the TK Limit, he'll get in the middle of circle for 1 minute.
-		*/if(pkiller.getFrequency() == pkillee.getFrequency()){	
-			
-			if(playingPlayers.get(killerName) == null)
-				playingPlayers.put(killerName, 1); //first TK
-			
-			else
-				playingPlayers.put(killerName, playingPlayers.get(killerName)+1); //adds to number of tk, which isnt in limit yet.
-			
-			if(playingPlayers.get(killerName) > allowedTK){ //there, we'll warp the player to middle of circle for 1 minute
+						};//It'll go on all the bannedplayers list & deplete energy. like a punishment.
+						m_botAction.scheduleTaskAtFixedRate(prizeNegNRG, 50, 300);
 				
-				int f = freqKiller;
-				previousfreq.add(f); /*we use 3 queues for the 3 player's var...
-				 													which they are: frequence, coords and name of each player
-				 													during the game on "tubes->middle of circle". Because it changes the coords to each player, there are different names for each players and different freqs.	*/
-				warpMiddle(killerName);
-				
-				
-				bannedPlayerName.add(killerName); //using it like a queue
-				TimerTask prizeNegNRG = new TimerTask(){
-					
-					public void run(){
-						for(String b: bannedPlayerName )
-							m_botAction.specificPrize(b, -13);
-					}
-				};//It'll go on all the bannedplayers list & deplete energy. like a punishment.
-				m_botAction.scheduleTaskAtFixedRate(prizeNegNRG, 50, 300);
-		
-				
-				//Why use a queue? Because, first player who gets in middle of circle, is the first of leave it too. so each player will have his 1 minute on circle
-	
-				TimerTask betrayalTime = new TimerTask(){
-					
-					String 	kn; //the name will be saved on a queue
-					int 	freq; //this will be the old frequence of each player, which's goin to be saved on a queue.
-					int 	x,y; //those will be coords before the warp, we'll save on a queue.
-					
-					public void run(){
-						
-						try{
-							//like dequeue a queue
-							kn = bannedPlayerName.getFirst();
-							bannedPlayerName.remove(bannedPlayerName.getFirst());
-							
-							freq =  previousfreq.getFirst(); //old freq
-							previousfreq.remove(previousfreq.getFirst());//like dequeue
-							
-							//like a queue
-							x = oldCoords.getFirst(); //x is the first which "entered" in queue, its the first who'll leave too(its a queue, thats why :P)
-							oldCoords.remove(oldCoords.getFirst());
-							
-							//like a queue
-							y =  oldCoords.getFirst(); //second leaves...its the y
-							oldCoords.remove(oldCoords.getFirst());
-							
-						}catch(Exception e){}
-						
-						m_botAction.setFreq(kn, freq);  //Setting player back to old frequence
-						m_botAction.warpTo(kn, x, y);  //Warping player back to a tube of his frequence(2 tubes each freq)
-						m_botAction.sendArenaMessage("Hope "+kn+" has learned his lesson! Back to some tube!");
-						
+						// ------- warps player back to old frequence -------
+						TimerTask betrayalTime = new TimerTask(){
+							public void run(){
+								try{
+								
+									bannedinfo playerBack = bannedPlayer.getFirst(); //works like a QUEUE, first entered, first who leaves from circle
+									m_botAction.setFreq(playerBack.getPlayerName(), playerBack.getFreq()); //sets back to old freq
+									m_botAction.warpTo(playerBack.getPlayerName(), playerBack.getOldX(), playerBack.getOldY()); //warps to some old tube's freq
+									nameTK.remove(playerBack.getPlayerName()); //resets tk number of player
+									bannedPlayer.remove(bannedPlayer.getFirst()); //removes him fom banned list(to stop depleting energy)
+									m_botAction.sendArenaMessage("Hope "+playerBack.getPlayerName()+" has learned his lesson! Back to some tube!");
+								
+								}catch(Exception e){}
 							}
-						}; m_botAction.scheduleTask(betrayalTime, 60000); //1 minute of punishment
-					}//if > allowed		
-				}//if tk'd
-		 	
-		}//if betrayalgame		
-	}	
-	
+						};// ------- warps player back to old frequence -------
+						m_botAction.scheduleTask(betrayalTime, 60000);
+					
+					} // --------- checks if tked more than allowed --------
+				
+			}// ------------ checks if it is a tk ----------
+			
+			
+		}//betrayalgame
+	}
 	public void handleCommand(String nome, String message){
 		try{
 			if(message.startsWith("!start")) startBetrayal(nome, message);
@@ -158,169 +118,116 @@ public class betrayal extends MultiModule {
 		}catch(Exception e){}
 		
 	}
-	
-	//this method is to warp ppl into other circles during the game
-	public void changeCircle(String name, String message){
-		
-		if(betrayalGame){
-			if(m_botAction.getFrequencySize(222) == 0 && m_botAction.getFrequencySize(221) == 0){
-			
-				StringTokenizer			st = new StringTokenizer(message);
-				String 							cmd, circleN;
-				int 								numbercircle;
-				
-				cmd = st.nextToken();
-				circleN = st.nextToken();
-				
-				numbercircle = Integer.parseInt(circleN); //getting number of circle to warp players into it
-				
-				m_botAction.sendArenaMessage("Surprise! Warp!", 22);
-				//analyzing what circle it is to warp it right
-				if(numbercircle == 1){//circle 1
-						splitTeam(0, 474, 362, 652, 562);
-						splitTeam(1, 574, 371, 364, 565);
-					}
-				else if(numbercircle == 2){ //circle 2
-						splitTeam(0, 391, 105, 539, 220);
-						splitTeam(1, 374, 244, 507, 106);
-					}
-				else if(numbercircle == 3 ) { //circle 3
-						splitTeam(0, 138, 388, 228, 474);
-						splitTeam(1, 220, 375, 137, 464);
-						}
-				else if(numbercircle == 4){
-						splitTeam(0, 295, 699, 346, 744);
-						splitTeam(1, 345, 693, 295, 739);
-						}
-				else if(numbercircle == 5){
-						splitTeam(0, 611, 740, 632, 763);
-						splitTeam(1, 632, 741, 608, 762);
-						}
-				
-				this.bannedPlayerName.clear();
-				this.oldCoords.clear();
-				this.playingPlayers.clear();
-				this.previousfreq.clear();
-				
-				}else m_botAction.sendPrivateMessage(name, "Can't change circle while someone is a betrayal!");	
-			}else m_botAction.sendPrivateMessage(name, "Can't warp if the game hasn't been started!");
-	}
+	public void warpMiddle(bannedinfo player){
+		int oldX = -1, oldY = -1;
 
-	//It will be like the punishment of players, warping them into middle of circle.
-	public void warpMiddle(String killerName){
-		//relacionar nome oldx old y e frequencia...esses 3 mudam pra cada tker. fazer algo, arvore, que seja!
-		if(this.playingPlayers.get(killerName) == allowedTK + 1)
-			m_botAction.sendArenaMessage(killerName+" will be punished for tking! 1 minute in the middle of circle!", 13);
-		
 		/*Each case of them, had to do it and not in general by .getYTileLocation and .GetXTileLocation because of the map's structure,
 		it has the tube's walls and so, when someone hit the walls, they get warped into spawn instead of right Coords. 
 		So, I did default coords to warp players to each case. */
 		
-		if(freqKiller == 1){
+		if(nameTK.get(player.getPlayerName()) == tkPlayer+1)
+			m_botAction.sendArenaMessage(player.getPlayerName()+" will be punished for tking! 1 minute in the middle of circle!", 13);
+		
+		if(player.getFreq() == 1){
 			if(circleNumber == 5){
 				oldX = 632; oldY = 741; //depends on freq
-				m_botAction.setFreq(killerName, 222);
-				m_botAction.warpTo(killerName, 621, 748); //will be the same
+				m_botAction.setFreq(player.getPlayerName(), 222);
+				m_botAction.warpTo(player.getPlayerName(), 621, 748); //will be the same
 				}
 			else if(circleNumber == 4){
 				oldX = 295; oldY = 739;
-				m_botAction.setFreq(killerName, 222);
-				m_botAction.warpTo(killerName, 337, 712);
+				m_botAction.setFreq(player.getPlayerName(), 222);
+				m_botAction.warpTo(player.getPlayerName(), 337, 712);
 				
 			}
 			else if(circleNumber == 3){
 				oldX = 220; oldY = 375;
-				m_botAction.setFreq(killerName, 222);
-				m_botAction.warpTo(killerName, 185, 418);
+				m_botAction.setFreq(player.getPlayerName(), 222);
+				m_botAction.warpTo(player.getPlayerName(), 185, 418);
 			}
 			else if(circleNumber == 2){
 				oldX = 507; oldY = 106;
-				m_botAction.setFreq(killerName, 222);
-				m_botAction.warpTo(killerName, 446, 167);
+				m_botAction.setFreq(player.getPlayerName(), 222);
+				m_botAction.warpTo(player.getPlayerName(), 446, 167);
 			}
 			else if(circleNumber == 1){
 				oldX = 574; oldY = 371;
-				m_botAction.setFreq(killerName, 222);
-				m_botAction.warpTo(killerName, 609, 503);	
+				m_botAction.setFreq(player.getPlayerName(), 222);
+				m_botAction.warpTo(player.getPlayerName(), 609, 503);	
 			}
 		}
-		else if(freqKiller == 0){
+		else if(player.getFreq() == 0){
 			if(circleNumber == 5){
 				oldX = 611; oldY = 740;
-				m_botAction.setFreq(killerName, 221);
-				m_botAction.warpTo(killerName, 621, 748);
+				m_botAction.setFreq(player.getPlayerName(), 221);
+				m_botAction.warpTo(player.getPlayerName(), 621, 748);
 			}
 			else if(circleNumber == 4){
 				oldX = 346; oldY = 744;
-				m_botAction.setFreq(killerName, 221);
-				m_botAction.warpTo(killerName, 337, 712);
+				m_botAction.setFreq(player.getPlayerName(), 221);
+				m_botAction.warpTo(player.getPlayerName(), 337, 712);
 				
 			}
 			else if(circleNumber == 3){
 				oldX = 228; oldY = 474;
-				m_botAction.setFreq(killerName, 221);
-				m_botAction.warpTo(killerName, 185, 418);
+				m_botAction.setFreq(player.getPlayerName(), 221);
+				m_botAction.warpTo(player.getPlayerName(), 185, 418);
 			}
 			else if(circleNumber == 2){
 				oldX = 539; oldY = 220;
-				m_botAction.setFreq(killerName, 221);
-				m_botAction.warpTo(killerName, 446, 167);
+				m_botAction.setFreq(player.getPlayerName(), 221);
+				m_botAction.warpTo(player.getPlayerName(), 446, 167);
 			}
 			else if(circleNumber == 1){
 				oldX = 474; oldY = 362;
-				m_botAction.setFreq(killerName, 221);
-				m_botAction.warpTo(killerName, 609, 503);	
+				m_botAction.setFreq(player.getPlayerName(), 221);
+				m_botAction.warpTo(player.getPlayerName(), 609, 503);	
 			}
 		}
+		player.setOldX(oldX);
+		player.setOldY(oldY);
+		bannedPlayer.add(player);
 	
-		//enqueue the old coords of each player
-		oldCoords.add(oldX); 
-		oldCoords.add(oldY);
-}
+	}
+	//deixar start menor
+	public void startBetrayal(String nome, String message){
 	
-public void startBetrayal(String nome, String message){
-	
-	/*As each player who gets in middle will leave after 1 minute, well, 
-	we dont need any "clear" on the enqueues. just on the Tree cause of players - tknumber */
-	
-		this.bannedPlayerName.clear();
-		this.oldCoords.clear();
-		this.playingPlayers.clear();
-		this.previousfreq.clear();
+		String commandStart, circle,	TK, DEATH; //it'll analyze what the mod typed. if it is a standard start or customizable one
+		StringTokenizer st = new StringTokenizer(message);
+		commandStart = st.nextToken();
 		
 		int playingplayers = countPlayers(); 
-
+		
+		bannedPlayer.clear();
+		nameTK.clear();
+		
 		if(playingplayers > 1){ //the game will start if there's more than 1 person in game
-		
-			String commandStart,	circle,	TK, DEATH; //it'll analyze what the mod typed. if it is a standard start or customizable one
-			StringTokenizer st = new StringTokenizer(message);
-			commandStart = st.nextToken();
-		
+	
 			if(!st.hasMoreTokens()){
 				circleNumber = 1;
-				allowedTK = 2;
-				death = 10;
+				tkPlayer = 2;
+				deathPlayer = 10;
 			}
 			
 			else{
 				circle = st.nextToken();
 				circleNumber = Integer.parseInt(circle);
 				if(!st.hasMoreTokens()){
-					allowedTK = 2;
-					death = 10;
+					tkPlayer = 2;
+					deathPlayer = 10;
 					}
 				else{
 					TK = st.nextToken();
-					allowedTK = Integer.parseInt(TK);
-					if(!st.hasMoreTokens()) death = 10;
+					tkPlayer = Integer.parseInt(TK);
+					if(!st.hasMoreTokens()) deathPlayer = 10;
 					else{
 						DEATH = st.nextToken();
-						death = Integer.parseInt(DEATH);
+						deathPlayer = Integer.parseInt(DEATH);
 					}
 				}
 			}
 			
-			this.betrayalGame = true; //game begins
+			betrayalGame = true; //game begins
 			
 			m_botAction.changeAllShips(2);
 			m_botAction.prizeAll(20);
@@ -357,12 +264,91 @@ public void startBetrayal(String nome, String message){
 				}
 			};m_botAction.scheduleTask(startGame, 10000); //timerset to do after "game begins in 10 secs..."
 	
-	}else m_botAction.sendPrivateMessage(nome, "Not enough players, get more than 1 player playing to start betrayal please.");
-}
+		}else m_botAction.sendPrivateMessage(nome, "Not enough players, get more than 1 player playing to start betrayal please.");
+	}
 	
-public void checkWinner(String killer){
+	public void splitTeam(int freq, int X1, int Y1, int X2, int Y2){
+		
+			Iterator<Player> freqIterator = m_botAction.getFreqPlayerIterator(freq); //we need an iterator to freq
+			int freqSize = m_botAction.getFrequencySize(freq) ; //we need to know the freq size
+			
+			/*now, it'll see if the number of size is even or odd. if even, we split it well. 
+			otherwise we put the (size-1)/2...(like the number 5, 5-1 = 4. 4/2 = 2.
+			then we put 2 members on a location and the other 3(the rest) will go to the other location
+			*/
+			if(freqSize % 2 == 0 && freqSize != 0){ 
+				int i;
+				for( i = 1; i <= (freqSize/2) ; i++){//half to a location and...
+					Player p = (Player) freqIterator.next();
+					m_botAction.warpTo(p.getPlayerName(), X1 , Y1 );
+				}
+				for(int u = i; u<= freqSize ; u++){ 
+					Player p = (Player) freqIterator.next();//and the other half to other
+					m_botAction.warpTo(p.getPlayerName(), X2, Y2 );
+				}
+			}
+			
+			//odd number of freqsize
+			else if(freqSize != 0){
+				int i;
+				for( i = 1; i <= ((freqSize-1)/2) ; i++){ //the little amount goin to a location
+					Player p = (Player) freqIterator.next();
+					m_botAction.warpTo(p.getPlayerName(), X1 , Y1 );
+							}
+				for(int u = i; u<= freqSize ; u++){ //then, the rest goes to other location
+					Player p = (Player) freqIterator.next();
+					m_botAction.warpTo(p.getPlayerName(), X2, Y2 );
+					}
+				}
+		}
+
+	public void changeCircle(String name, String message){
+		
 		if(betrayalGame){
-	
+			if(m_botAction.getFrequencySize(222) == 0 && m_botAction.getFrequencySize(221) == 0){
+			
+				StringTokenizer st = new StringTokenizer(message);
+				String cmd, circleN;
+				int numbercircle;
+				
+				cmd = st.nextToken();
+				circleN = st.nextToken();
+				
+				numbercircle = Integer.parseInt(circleN); //getting number of circle to warp players into it
+				
+				m_botAction.sendArenaMessage("Surprise! Warp!", 22);
+				//analyzing what circle it is to warp it right
+				if(numbercircle == 1){//circle 1
+						splitTeam(0, 474, 362, 652, 562);
+						splitTeam(1, 574, 371, 364, 565);
+					}
+				else if(numbercircle == 2){ //circle 2
+						splitTeam(0, 391, 105, 539, 220);
+						splitTeam(1, 374, 244, 507, 106);
+					}
+				else if(numbercircle == 3 ) { //circle 3
+						splitTeam(0, 138, 388, 228, 474);
+						splitTeam(1, 220, 375, 137, 464);
+						}
+				else if(numbercircle == 4){
+						splitTeam(0, 295, 699, 346, 744);
+						splitTeam(1, 345, 693, 295, 739);
+						}
+				else if(numbercircle == 5){
+						splitTeam(0, 611, 740, 632, 763);
+						splitTeam(1, 632, 741, 608, 762);
+						}
+				
+				bannedPlayer.clear();
+				nameTK.clear();
+				
+				}else m_botAction.sendPrivateMessage(name, "Can't change circle while someone is a betrayal!");	
+			}else m_botAction.sendPrivateMessage(name, "Can't warp if the game hasn't been started!");
+		}
+
+	public void checkWinner(){
+		if(betrayalGame){
+			
 			if(m_botAction.getFrequencySize(0) == 0 || m_botAction.getFrequencySize(1) == 0){
 				
 				if(m_botAction.getFrequencySize(0) == 0)
@@ -372,50 +358,25 @@ public void checkWinner(String killer){
 					m_botAction.sendArenaMessage("Freq 0 has won this game of betrayal!", 7);
 				
 				m_botAction.toggleLocked();
-			
-				this.bannedPlayerName.clear();
-				this.oldCoords.clear();
-				this.playingPlayers.clear();
-				this.previousfreq.clear();
+				bannedPlayer.clear();
+				nameTK.clear();
 				m_botAction.cancelTasks();
 				betrayalGame = false;
-		
+			}
 		}
 	}
-}
-	public void splitTeam(int freq, int X1, int Y1, int X2, int Y2){
-		
-		Iterator<Player> freqIterator = m_botAction.getFreqPlayerIterator(freq); //we need an iterator to freq
-		int freqSize = m_botAction.getFrequencySize(freq) ; //we need to know the freq size
-		
-		/*now, it'll see if the number of size is even or odd. if even, we split it well. 
-		otherwise we put the (size-1)/2...(like the number 5, 5-1 = 4. 4/2 = 2.
-		then we put 2 members on a location and the other 3(the rest) will go to the other location
-		*/
-		if(freqSize % 2 == 0 && freqSize != 0){ 
-			int i;
-			for( i = 1; i <= (freqSize/2) ; i++){//half to a location and...
-				Player p = (Player) freqIterator.next();
-				m_botAction.warpTo(p.getPlayerName(), X1 , Y1 );
-			}
-			for(int u = i; u<= freqSize ; u++){ 
-				Player p = (Player) freqIterator.next();//and the other half to other
-				m_botAction.warpTo(p.getPlayerName(), X2, Y2 );
-			}
-		}
-		
-		//odd number of freqsize
-		else if(freqSize != 0){
-			int i;
-			for( i = 1; i <= ((freqSize-1)/2) ; i++){ //the little amount goin to a location
-				Player p = (Player) freqIterator.next();
-				m_botAction.warpTo(p.getPlayerName(), X1 , Y1 );
-						}
-			for(int u = i; u<= freqSize ; u++){ //then, the rest goes to other location
-				Player p = (Player) freqIterator.next();
-				m_botAction.warpTo(p.getPlayerName(), X2, Y2 );
-				}
-			}
+
+	public void stopBetrayal(String name, String message){
+		if(betrayalGame){
+			m_botAction.cancelTasks();
+			m_botAction.shipResetAll();
+			m_botAction.toggleLocked();
+			m_botAction.sendPrivateMessage(name, "Game stop'd.");
+			bannedPlayer.clear();
+			nameTK.clear();
+			
+			betrayalGame = false;
+			}else m_botAction.sendPrivateMessage(name, "I'll just stop the game if it is running!");
 	}
 	
 	public int countPlayers(){
@@ -424,30 +385,18 @@ public void checkWinner(String killer){
 		for( ; i.hasNext(); i.next()) numplayers++;
 		return numplayers;
 	}
-
+	
+	public void sendRules(){
+		m_botAction.sendArenaMessage("Rules: It's a javelin game!",2);
+		m_botAction.sendArenaMessage("There will be two teams, each spawned within a tube of a circle.");
+		m_botAction.sendArenaMessage("Teamkilling results in the player being warped into the middle of the circle to be bombed by all!");
+	}
+	
 	public void cancel() {
-	m_botAction.cancelTasks();
+		m_botAction.cancelTasks();
 	}
-	public void stopBetrayal(String name, String message){
-		if(betrayalGame){
-			m_botAction.cancelTasks();
-			m_botAction.shipResetAll();
-			m_botAction.toggleLocked();
-			m_botAction.sendPrivateMessage(name, "Game stop'd.");
-			this.bannedPlayerName.clear();
-			this.oldCoords.clear();
-			this.playingPlayers.clear();
-			this.previousfreq.clear();
-		
-			betrayalGame = false;
-		
-		}
-		else m_botAction.sendPrivateMessage(name, "I'll just stop the game if it is running!");
-		
-	}
-
+	
 	public String[] getModHelpMessage() {
-
 		String opm []= {
 				"!start 												 												- starts betrayal in circle 1 and teamkill limit 2, 10 deaths",
 				"!start <circle> 															 - starts betrayal in a circle and teamkill limit 2, 10 deaths",
@@ -460,21 +409,13 @@ public void checkWinner(String killer){
 										
 			return opm;
 	}
-
-	public void sendRules(){
-		m_botAction.sendArenaMessage("Rules:", 2);
-		m_botAction.sendArenaMessage("It's a javelin game!");
-		m_botAction.sendArenaMessage("There will be two teams, each spawned within a tube of a circle.");
-		m_botAction.sendArenaMessage("Teamkilling results in the player being warped into the middle of the circle to be bombed by all!");
-	}
+	
 	public void init() {}
-
 	public boolean isUnloadable() {
 		return !betrayalGame;
 	}
-
 	public void requestEvents(ModuleEventRequester eventRequester) {
-	   eventRequester.request(this, EventRequester.PLAYER_DEATH);     
+	   eventRequester.request(this, EventRequester.PLAYER_DEATH);   
 	}
-
+	
 }
