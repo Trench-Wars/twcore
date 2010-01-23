@@ -369,7 +369,7 @@ public class GamePacketInterpreter {
                 break;
             // 0x3B - *sendto packet: See http://forums.minegoboom.com/viewtopic.php?p=75317#75317
             default:
-                Tools.printLog("Received unknown packet 0x"+(index<10?"0":"")+index);
+                Tools.printLog(m_session.getBotName() + " received unknown packet 0x"+(index<10?"0":"")+index);
                 break;
         }
     }
@@ -416,6 +416,7 @@ public class GamePacketInterpreter {
                 break;
             case 0x07:              // Order to disconnect
                 Tools.printConnectionLog("RECV BI : (0x07) Disconnect (" + m_session.getBotName() + ")");
+                Tools.printConnectionLog("0x07 packet contents: "+array.toString());
                 m_session.disconnect( "received bi-directional packet 0x07 from server (ordered to DC)" );
                 break;
             case 0x08:              // Small chunk body (store data in buffer until tail is received)
