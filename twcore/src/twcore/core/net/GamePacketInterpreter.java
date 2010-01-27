@@ -369,7 +369,7 @@ public class GamePacketInterpreter {
                 break;
             // 0x3B - *sendto packet: See http://forums.minegoboom.com/viewtopic.php?p=75317#75317
             default:
-                Tools.printLog(m_session.getBotName() + " received unknown packet 0x"+(index<10?"0":"")+index+":");
+                Tools.printLog(m_session.getBotName() + " received unknown packet 0x"+Integer.toHexString(index));
                 Tools.printLog(array.toString());
                 break;
         }
