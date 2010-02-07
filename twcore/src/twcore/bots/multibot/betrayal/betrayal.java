@@ -17,13 +17,15 @@ import twcore.core.util.ModuleEventRequester;
 /*Author: Dexter
 	
 	Thanks to D1st0rt who gave me an idea to fix a problem I had with the bot.
+	Thanks to Dezmond who gave me the coords to all circles and tubes of map(5 circles, each circle has 4 tubes)
 	Thanks to everyone who helped me on tests.
+
 */
 
-public class betrayal extends MultiModule {
+public class betrayal extends MultiModule
+{
 	
 	private boolean betrayalGame = false;
-	
 	private LinkedList<bannedinfo> bannedPlayer = new LinkedList<bannedinfo>();
 	private Map<String, Integer> nameTK = new HashMap<String, Integer>(); //Map to Player and his tk number
 	
@@ -39,7 +41,8 @@ public class betrayal extends MultiModule {
 		}
 	}
 	
-	public void handleEvent(PlayerDeath event){
+	public void handleEvent(PlayerDeath event)
+	{
 		if(betrayalGame){ 
 			
 			Player pkiller = m_botAction.getPlayer(event.getKillerID());
@@ -49,6 +52,7 @@ public class betrayal extends MultiModule {
 			if(pkillee.getLosses() == deathPlayer){ //to spec player on that death limit
 				m_botAction.specWithoutLock(event.getKilleeID());
 				m_botAction.sendArenaMessage(pkillee.getPlayerName()+" is out! "+deathPlayer+" deaths!");
+				
 				if(pkillee.getFrequency() != pkiller.getFrequency()){
 					TimerTask checkWin = new TimerTask(){ //it'll check the winner.
 						public void run(){
@@ -91,12 +95,13 @@ public class betrayal extends MultiModule {
 								try{
 								
 									bannedinfo playerBack = bannedPlayer.getFirst(); //works like a QUEUE, first entered, first who leaves from circle
-									m_botAction.setFreq(playerBack.getPlayerName(), playerBack.getFreq()); //sets back to old freq
-									m_botAction.warpTo(playerBack.getPlayerName(), playerBack.getOldX(), playerBack.getOldY()); //warps to some old tube's freq
-									nameTK.remove(playerBack.getPlayerName()); //resets tk number of player
-									bannedPlayer.remove(bannedPlayer.getFirst()); //removes him fom banned list(to stop depleting energy)
-									m_botAction.sendArenaMessage("Hope "+playerBack.getPlayerName()+" has learned his lesson! Back to some tube!");
-								
+									if(nameTK.containsKey(playerBack.getPlayerName())){
+										m_botAction.setFreq(playerBack.getPlayerName(), playerBack.getFreq()); //sets back to old freq
+										m_botAction.warpTo(playerBack.getPlayerName(), playerBack.getOldX(), playerBack.getOldY()); //warps to some old tube's freq
+										nameTK.remove(playerBack.getPlayerName()); //resets tk number of player
+										bannedPlayer.remove(bannedPlayer.getFirst()); //removes him fom banned list(to stop depleting energy)
+										m_botAction.sendArenaMessage(playerBack.getPlayerName()+", get back to old frequence, playing or in spec!" );
+									}
 								}catch(Exception e){}
 							}
 						};// ------- warps player back to old frequence -------
@@ -109,7 +114,8 @@ public class betrayal extends MultiModule {
 			
 		}//betrayalgame
 	}
-	public void handleCommand(String nome, String message){
+	public void handleCommand(String nome, String message)
+	{
 		try{
 			if(message.startsWith("!start")) startBetrayal(nome, message);
 			else if(message.startsWith("!warp")) 	changeCircle(nome, message);
@@ -118,7 +124,8 @@ public class betrayal extends MultiModule {
 		}catch(Exception e){}
 		
 	}
-	public void warpMiddle(bannedinfo player){
+	public void warpMiddle(bannedinfo player)
+	{
 		int oldX = -1, oldY = -1;
 
 		/*Each case of them, had to do it and not in general by .getYTileLocation and .GetXTileLocation because of the map's structure,
@@ -190,7 +197,8 @@ public class betrayal extends MultiModule {
 	
 	}
 	//deixar start menor
-	public void startBetrayal(String nome, String message){
+	public void startBetrayal(String nome, String message)
+	{
 	
 		String commandStart, circle,	TK, DEATH; //it'll analyze what the mod typed. if it is a standard start or customizable one
 		StringTokenizer st = new StringTokenizer(message);
@@ -267,7 +275,8 @@ public class betrayal extends MultiModule {
 		}else m_botAction.sendPrivateMessage(nome, "Not enough players, get more than 1 player playing to start betrayal please.");
 	}
 	
-	public void splitTeam(int freq, int X1, int Y1, int X2, int Y2){
+	public void splitTeam(int freq, int X1, int Y1, int X2, int Y2)
+	{
 		
 			Iterator<Player> freqIterator = m_botAction.getFreqPlayerIterator(freq); //we need an iterator to freq
 			int freqSize = m_botAction.getFrequencySize(freq) ; //we need to know the freq size
@@ -302,7 +311,8 @@ public class betrayal extends MultiModule {
 				}
 		}
 
-	public void changeCircle(String name, String message){
+	public void changeCircle(String name, String message)
+	{
 		
 		if(betrayalGame){
 			if(m_botAction.getFrequencySize(222) == 0 && m_botAction.getFrequencySize(221) == 0){
@@ -346,7 +356,8 @@ public class betrayal extends MultiModule {
 			}else m_botAction.sendPrivateMessage(name, "Can't warp if the game hasn't been started!");
 		}
 
-	public void checkWinner(){
+	public void checkWinner()
+	{
 		if(betrayalGame){
 			
 			if(m_botAction.getFrequencySize(0) == 0 || m_botAction.getFrequencySize(1) == 0){
@@ -366,7 +377,8 @@ public class betrayal extends MultiModule {
 		}
 	}
 
-	public void stopBetrayal(String name, String message){
+	public void stopBetrayal(String name, String message)
+	{
 		if(betrayalGame){
 			m_botAction.cancelTasks();
 			m_botAction.shipResetAll();
@@ -379,24 +391,28 @@ public class betrayal extends MultiModule {
 			}else m_botAction.sendPrivateMessage(name, "I'll just stop the game if it is running!");
 	}
 	
-	public int countPlayers(){
+	public int countPlayers()
+	{
 		Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 		int numplayers = 0;
 		for( ; i.hasNext(); i.next()) numplayers++;
 		return numplayers;
 	}
 	
-	public void sendRules(){
+	public void sendRules()
+	{
 		m_botAction.sendArenaMessage("Rules: It's a javelin game!",2);
 		m_botAction.sendArenaMessage("There will be two teams, each spawned within a tube of a circle.");
 		m_botAction.sendArenaMessage("Teamkilling results in the player being warped into the middle of the circle to be bombed by all!");
 	}
 	
-	public void cancel() {
+	public void cancel() 
+	{
 		m_botAction.cancelTasks();
 	}
 	
-	public String[] getModHelpMessage() {
+	public String[] getModHelpMessage() 
+	{
 		String opm []= {
 				"!start 												 												- starts betrayal in circle 1 and teamkill limit 2, 10 deaths",
 				"!start <circle> 															 - starts betrayal in a circle and teamkill limit 2, 10 deaths",
@@ -411,10 +427,12 @@ public class betrayal extends MultiModule {
 	}
 	
 	public void init() {}
-	public boolean isUnloadable() {
+	public boolean isUnloadable() 
+	{
 		return !betrayalGame;
 	}
-	public void requestEvents(ModuleEventRequester eventRequester) {
+	public void requestEvents(ModuleEventRequester eventRequester)
+	{
 	   eventRequester.request(this, EventRequester.PLAYER_DEATH);   
 	}
 	
