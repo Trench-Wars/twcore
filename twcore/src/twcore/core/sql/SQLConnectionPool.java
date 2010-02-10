@@ -88,7 +88,7 @@ public class SQLConnectionPool implements Runnable {
         try{
             Statement stmt = conn.createStatement();
             
-            stmt.execute( query );
+            stmt.execute( query, Statement.RETURN_GENERATED_KEYS );
             
             ResultSet set = stmt.getResultSet();
             // If ResultSet is null (INSERT statement), get auto-generated ID if available
