@@ -480,7 +480,6 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Bounty &Who|Bounty the quicker picker and greener upper!
 &hurricane &Who|hurricane is the real #1 player! Both in game and in real life! With girls on his side, he is the fear of every subspace player out there!
 &Geio &Who|Geio is the King of all Wb's, and the best basketball player in TW.
-&Evildeed &Who|EvilDeed is the most overall consistant player out there. no matter what league, no matter what team, he gets it done.
 
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
