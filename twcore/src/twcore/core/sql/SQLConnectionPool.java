@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+import twcore.core.util.Tools;
+
 /**
  * Main workhorse of the TWCore SQL system.  Handles all connections of a given
  * connection pool and any queries that use it, passing to separate threads to
@@ -31,7 +33,7 @@ public class SQLConnectionPool implements Runnable {
                                                 // False - throw SQLException if no
                                                 //         connection is available
     private Vector<Connection>  availableConnections;       // Connections not in use
-    private Map<String, Connection>  busyConnections;            // Connections currently querying
+    private Map<String, Vector<Connection>>  busyConnections;            // Connections currently querying
 
     private boolean connectionPending = false;  // True if a connection is being made
     private int     currentBackground = 0;      // Total number of background queries
@@ -66,7 +68,7 @@ public class SQLConnectionPool implements Runnable {
             initialConnections = maxConnections;
         }
         availableConnections = new Vector<Connection>(initialConnections);
-        busyConnections = Collections.synchronizedMap(new HashMap<String, Connection>());
+        busyConnections = Collections.synchronizedMap(new HashMap<String, Vector<Connection>>());
         for(int i=0; i<initialConnections; i++) {
             availableConnections.addElement(makeNewConnection());
         }
@@ -85,22 +87,20 @@ public class SQLConnectionPool implements Runnable {
         Connection conn = getConnection();
         try{
             Statement stmt = conn.createStatement();
+            
             stmt.execute( query );
-            free( conn );
+            
             ResultSet set = stmt.getResultSet();
             // If ResultSet is null (INSERT statement), get auto-generated ID if available
             if( set != null )
                 return stmt.getResultSet();
             else
                 return stmt.getGeneratedKeys();
-        }catch( SQLException e ){
-            free( conn );
-
-            //throw e;
-
-            // DEBUG: Returning null to generate NullPointerExceptions in bots that
-            // do not catch SQLExceptions
-            return null;
+        } catch( SQLException e ){
+        	throw e;
+        	
+        } finally {
+            free( DEFAULT_UNIQUE_ID, conn );
         }
     }
 
@@ -120,33 +120,47 @@ public class SQLConnectionPool implements Runnable {
      * @throws SQLException
      */
     public synchronized Connection getConnection(String uniqueID) throws SQLException {
-        if(uniqueID.equals("0")==false) {
+    	if(uniqueID.equals(DEFAULT_UNIQUE_ID)==false) {
             if(busyConnections.containsKey(uniqueID)) {
-                return busyConnections.get(uniqueID);
+                return busyConnections.get(uniqueID).firstElement();
             }
         }
         
-        if (availableConnections.isEmpty()==false) {
-            Connection existingConnection = availableConnections.lastElement();
+        if (availableConnections.isEmpty()==false) { // if there are availableConnections
+        	
+        	// Get an connection from list of available connections and remove it from the list
+        	Connection availableConnection = availableConnections.lastElement();
             int lastIndex = availableConnections.size() - 1;
             availableConnections.removeElementAt(lastIndex);
-            if (existingConnection.isClosed()) {
+            
+            if (availableConnection.isClosed()) {
+            	
+            	// if the connection is closed, try again by calling this method again - the availableConnection is lost
                 notifyAll(); // Freed up a spot for anybody waiting
                 return(getConnection());
+                
             } else {
-                busyConnections.put(uniqueID, existingConnection);
-                return(existingConnection);
+            	if(!busyConnections.containsKey(uniqueID)) {
+            		busyConnections.put(uniqueID, new Vector<Connection>());
+            	}
+            	busyConnections.get(uniqueID).add(availableConnection);
+                return availableConnection;
             }
-        } else {
+            
+        } else {	// there are no available connections
+        	
+        	// Check if we reached the maximum amount of connections
             if(( totalConnections() < maxConnections ) && !connectionPending ) {
                 makeBackgroundConnection();
             } else if( !waitIfBusy ) {
                 throw new SQLException("Connection limit reached");
             }
+            
             try {
                 wait();
             } catch(InterruptedException ie) {}
-            // Someone freed up a connection, so try again.
+            // Someone freed up a connection or a new connection has been made, try again.
+            
             return getConnection(uniqueID);
         }
     }
@@ -187,12 +201,14 @@ public class SQLConnectionPool implements Runnable {
     public void run() {
         try {
             Connection connection = makeNewConnection();
+            
             synchronized(this) {
                 availableConnections.addElement(connection);
                 connectionPending = false;
                 notifyAll();
             }
-        } catch(Exception e) {
+        } catch(SQLException e) {
+        	Tools.printStackTrace(e);
         }
     }
 
@@ -215,30 +231,34 @@ public class SQLConnectionPool implements Runnable {
     }
 
     /**
-     * Free a connection back to the available connection pool.  This will notify
+     * Free a specific connection back to the available connection pool.  This will notify
      * other threads that are waiting (using wait()) for a connection in getConnection()
      * that a new connection is now available.
      * @param connection The connection to free
      */
     public synchronized void free( String uniqueID, Connection connection ) {
-        if(busyConnections.containsKey(uniqueID)) {
-            busyConnections.remove(uniqueID);
+        if(busyConnections.containsKey(uniqueID) && busyConnections.get(uniqueID).contains(connection)) {
+        	
+        	// Remove connection from the vector
+        	busyConnections.get(uniqueID).remove(connection);
+        	
+        	// Remove HashMap entry if vector has become empty
+        	if(busyConnections.get(uniqueID).isEmpty()) {
+        		busyConnections.remove(uniqueID);
+        	}
+        	
             availableConnections.addElement(connection);
+            
             // Wake up threads that are waiting for a connection
             notifyAll();
         }
     }
     
-    public synchronized void free( Connection connection ) {
-        this.free( DEFAULT_UNIQUE_ID, connection);
-    }
-
     /**
      * @return Total number of connections either available or currently busy
      */
     public synchronized int totalConnections() {
-        return(availableConnections.size() +
-        busyConnections.size());
+        return(availableConnections.size() + busyConnections.size());
     }
 
     /**
@@ -248,7 +268,7 @@ public class SQLConnectionPool implements Runnable {
         closeAvailableConnections(availableConnections);
         availableConnections = new Vector<Connection>();
         closeBusyConnections(busyConnections);
-        busyConnections = new HashMap<String,Connection>();
+        busyConnections = new HashMap<String,Vector<Connection>>();
     }
 
     /**
@@ -270,13 +290,15 @@ public class SQLConnectionPool implements Runnable {
      * Closes all of the connections in the given HashMap.
      * @param connections Vector containing connections to close
      */
-    private void closeBusyConnections(Map<String,Connection> connections) {
+    private void closeBusyConnections(Map<String,Vector<Connection>> connections) {
         try {
-            for(Connection conn:connections.values()) {
-                if (!conn.isClosed()) {
-                    conn.close();
-                }
-            }
+        	for(Vector<Connection> conns:connections.values()) {
+	            for(Connection conn:conns) {
+	                if (!conn.isClosed()) {
+	                    conn.close();
+	                }
+	            }
+        	}
         } catch(SQLException sqle) {
         }
     }
@@ -292,11 +314,11 @@ public class SQLConnectionPool implements Runnable {
      * @return Number of connections busy, available and maximum allowed.
      */
     public synchronized String toString() {
-        String info =
+        /*String info =
         "SQL pool " + poolName + ": " + totalConnections() + "/"
         + maxConnections + " connections online, " + busyConnections.size()
-        + " in use";
-        return(info);
+        + " in use";*/
+        return "SQL pool "+ poolName + ": " + busyConnections.size() + "/" + availableConnections.size() + " connections online (background: "+getNumBackground()+") (max: "+maxConnections+")";
     }
 
     /**
