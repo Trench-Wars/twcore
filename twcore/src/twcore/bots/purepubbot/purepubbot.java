@@ -403,15 +403,17 @@ public class purepubbot extends SubspaceBot
     {
         int playerID = event.getPlayerID();
         int freq = event.getFrequency();
+		int ship = event.getShipType();
 
         Player p = m_botAction.getPlayer( playerID );
+		// ship = p.getShipType(); // for old times' sake
         if( p == null )
             return;
 
         try {
             if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
                 // Remove player if spec'ing
-                if( p.getShipType() == 0 ) {
+                if( ship == Tools.Ship.SPECTATOR ) {
                     String pname = p.getPlayerName();
                 	playerTimes.remove( pname );
                 // Reset player if shipchanging
@@ -423,26 +425,50 @@ public class purepubbot extends SubspaceBot
                         boolean freq0cont = freq0List.contains(pname);
                         boolean freq1cont = freq1List.contains(pname);
                         if( (freq0cont || freq1cont ) ) {   // Only for those who were on the other freq before!
-                            if( (freq == 0 && !freq0List.contains(pname)) ||
-                                (freq == 1 && !freq1List.contains(pname))) {
+                            if( (freq == 0 && !freq0cont) ||
+                                (freq == 1 && !freq1cont)) {
                                 authd = true;
                                 m_botAction.sendPrivateMessage(pname, "For evening the teams, you keep any MVP status you had on your prior freq and earn " + NICEGUY_BOUNTY_AWARD + " bounty." );
                                 m_botAction.giveBounty(pname, NICEGUY_BOUNTY_AWARD);
                             }
                         }
                     }
+
+					// If player changes to a ship needed by the team, they maintain MVP status
+					if	(ship == Tools.Ship.SPIDER || ship == Tools.Ship.TERRIER || ship == Tools.Ship.SHARK) {
+						ArrayList<Vector<String>> team = getTeamData(freq);
+						int numOfShipNeeded = 0;
+						
+						switch (ship) {
+							case Tools.Ship.SPIDER:		numOfShipNeeded = SPIDER_QUOTA - team.get(Tools.Ship.SPIDER).size(); break;
+							case Tools.Ship.TERRIER:	numOfShipNeeded = TERR_QUOTA - team.get(Tools.Ship.TERRIER).size();	break;
+							case Tools.Ship.SHARK:		numOfShipNeeded = SHARK_QUOTA - team.get(Tools.Ship.SHARK).size(); break;
+							default: break;
+						}
+						
+						if (numOfShipNeeded > 0) {
+							authd = true;
+							m_botAction.sendPrivateMessage(pname,
+									"For changing to a ship needed by your team, you keep any MVP status and and earn "
+									+ NICEGUY_BOUNTY_AWARD + " bounty.");
+							m_botAction.giveBounty(pname, NICEGUY_BOUNTY_AWARD);
+						}
+					}
+					
                     if( !authd ) {
                         playerTimes.remove( pname );
                         playerTimes.put( pname, new Integer( flagTimer.getTotalSecs() ) );
                     }
-                    if( autoWarp )
-                        if( !freq0List.contains(pname) && !freq1List.contains(pname) && !warpPlayers.contains(pname) )
-                            if( p.getShipType() != Tools.Ship.SPECTATOR )
-                                doWarpCmd(pname);
                     
+                    if( autoWarp ) {
+                        if( !freq0List.contains(pname) && !freq1List.contains(pname) && !warpPlayers.contains(pname) )
+                            if( ship != Tools.Ship.SPECTATOR )
+                                doWarpCmd(pname);
+                    }
+                        
                     // Terrs and Levis can't warp into base if Levis are enabled
                     if( shipWeights.get(Tools.Ship.LEVIATHAN) > 0 ) {                        
-                        if( p.getShipType() == Tools.Ship.LEVIATHAN || p.getShipType() == Tools.Ship.TERRIER )            
+                        if( ship == Tools.Ship.LEVIATHAN || ship == Tools.Ship.TERRIER )            
                             warpPlayers.remove( pname );
                     }
 
@@ -1232,7 +1258,9 @@ public class purepubbot extends SubspaceBot
      * @param argString Ship to change to
      */
     public void doShipCmd(String sender, String argString ) {
+		throw new RuntimeException("!ship <ship#> is deprecated, you can change ship normally without losing any MVP status.");
 
+		/*
         String[] args = argString.split(" ");
         if( args.length != 1 )
             throw new RuntimeException("Usage: !ship <ship#>, where <ship#> is the number of the ship to change to.");
@@ -1292,6 +1320,7 @@ public class purepubbot extends SubspaceBot
         m_botAction.setShip( p.getPlayerID(), ship );
         m_botAction.giveBounty( p.getPlayerID(), bounty + NICEGUY_BOUNTY_AWARD - 3 );  // -3 to compensate for new ship bty
         m_botAction.sendPrivateMessage( p.getPlayerID(), "For changing to a ship needed by your team, you keep any MVP status and gain 25 bounty in addition to your old bounty of " + bounty + "." );
+		*/
     }
 
 
@@ -1441,7 +1470,7 @@ public class purepubbot extends SubspaceBot
                 "!restrictions     -- Lists all current ship restrictions.",
                 "!time             -- Provides time remaining when Flag Time mode.",
                 "!warp             -- Warps you into flagroom at start of next round (flagtime)",
-                "!ship <ship#>     -- Puts you in ship <ship#>, keeping MVP status.",
+                //"!ship <ship#>     -- Puts you in ship <ship#>, keeping MVP status.",
                 "!clearmines       -- Clears all mines you have laid, keeping MVP status.",
                 "!terr             -- Shows terriers on the team & their last seen locations",
                 "!whereis <name>   -- Shows last seen location of <name>",
@@ -1461,7 +1490,7 @@ public class purepubbot extends SubspaceBot
                 "!terr             -- Shows terriers on the team & their last seen locations",
                 "!whereis <name>   -- Shows last seen location of <name> (if on your team)",
                 "!team             -- Tells you which ships your team members are in.",
-                "!ship <ship#>     -- Puts you in ship <ship#>, keeping MVP status.",
+                //"!ship <ship#>     -- Puts you in ship <ship#>, keeping MVP status.",
                 "!clearmines       -- Clears all mines you have laid, keeping MVP status.",
                 "!restrictions     -- Lists all current ship restrictions.",
                 "!listvotes        -- Lists issues you can vote on to change the way pub's played",
