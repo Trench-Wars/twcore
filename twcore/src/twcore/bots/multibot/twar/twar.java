@@ -165,6 +165,8 @@ public class twar extends MultiModule
 					m_botAction.toggleLocked();
 					m_botAction.scoreResetAll();
 					m_botAction.shipResetAll();
+					m_botAction.resetFlagGame();
+					
 					turretWar = true;
 					}
 		};m_botAction.scheduleTask(starting, 10000);
