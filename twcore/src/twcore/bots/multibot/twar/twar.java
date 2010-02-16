@@ -1,8 +1,10 @@
 package twcore.bots.multibot.twar;
 
-/*
- * Author: Dexter
- * Thanks to turban who gave the idea of ships promotion to turretwars event*/
+/**
+ * @author dexter
+ * Thanks to turban, who gave the idea of ship promotion to turretwars event
+ * Thanks to Maverick, who gave me the idea to what ship promotion's command use*/
+
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -51,15 +53,18 @@ public class twar extends MultiModule
 	{
 			"1.  Use !terr name to pick terr",
 			"2.  Use !switch name:newTerr to switch terrs",
-			"3.  Use !prom ship:kills to set a promotion",
-			"4.  Use !ship number to set everyone in this ship",
-			"5.  Use !start to: scorereset, shipreset and lock",
-			"6.  Use !warp to make detachers get warped to spawn area - old !warpon command ",
-			"7.  do manually the *arena GO GO GO and *timer <numberMinutes>",
-			"8.  Use !setship #ship to set the starter ship (using promotions or not)",
-			"9.  Use !setupwarplist to check the warp command",
-			"10.  When you use !terr name at first time, it'll automatically !random 2, so don't worry about the old !random 2",
-			"11. !prom ship:kills is AUTO-SORTED by KILLS in the LIST !lprom"
+			"3.  Use !prom <#ship>:<#kills> to set a promotion",
+			"4.  Use !removep <#ship> to remove a ship promotion",
+			"5.  Use !ship <#number> to set everyone in this ship",
+			"6.  Use !start to: scorereset, shipreset and lock",
+			"7.  Use !warp to make detachers get warped to spawn area - old !warpon command ",
+			"8.  do manually the *arena GO GO GO and *timer <#Minutes>",
+			"9.  Use !ship <#ship> to set the starter ship (using promotions or not)",
+			"10.  Use !setupwarplist to check the warp command",
+			"11.  When you use !terr name at first time, it'll automatically !random 2, so don't worry about the old !random 2",
+			"12. !prom ship:kills is AUTO-SORTED by KILLS in the LIST !lprom",
+			"13. To stop the game use !stop, use it AFTER the game ends too, so you can !unload this module."
+	
 	};
 	public void handleEvent(TurretEvent event)
 	{
@@ -111,6 +116,7 @@ public class twar extends MultiModule
 			else if(message.toLowerCase().startsWith("!ship")) setFirstShip(name, message);
 			else if(message.toLowerCase().startsWith("!prom")) setPromotion(name, message);
 			else if(message.toLowerCase().startsWith("!lprom")) listPromotion(name, message);
+			else if(message.toLowerCase().startsWith("!removep")) removePromotion(name, message);
 			else if(message.toLowerCase().startsWith("!stop")) stopTurretWar(name, message);
 			else if(message.toLowerCase().startsWith("!warp")) warpDetachedPlayer(name, message);
 			else if(message.toLowerCase().startsWith("!guide")) showGuide(name, message);
@@ -150,28 +156,31 @@ public class twar extends MultiModule
 			this.firstShip = Integer.parseInt( message.substring(6) );
 			m_botAction.changeAllShips(firstShip);
 		}
-		else m_botAction.sendPrivateMessage(name, "Use !setship before the command !terr please. Now !stop and start all again.");
+		else m_botAction.sendPrivateMessage(name, "Use !ship before the command !terr please. Now !stop and start all again.");
 	}
 	
 	public void startTurretWar(String name, String message)
 	{
-		m_botAction.sendArenaMessage("Locking in 10 seconds, get ready!", 13);
-		m_botAction.sendPrivateMessage(name, "locking arena in 10 seconds and it'll start.");
-		m_botAction.sendPrivateMessage(name,"Please *arena GO after it");
-		m_botAction.sendPrivateMessage(name ,"and type *timer <number> to SET TIMER.");
-		
-		TimerTask starting = new TimerTask(){
-			public void run(){
-					m_botAction.toggleLocked();
-					m_botAction.scoreResetAll();
-					m_botAction.shipResetAll();
-					m_botAction.resetFlagGame();
-					
-					turretWar = true;
-					}
-		};m_botAction.scheduleTask(starting, 10000);
+		if(!turretWar){
+			m_botAction.sendArenaMessage("Locking in 10 seconds, get ready!", 13);
+			m_botAction.sendPrivateMessage(name, "I am locking arena in 10 seconds");
+			m_botAction.sendPrivateMessage(name,"do !terr <name> to pick the terrs, if you haven't yet");
+			m_botAction.sendPrivateMessage(name,"do *arena GO GO GO %%104");
+			m_botAction.sendPrivateMessage(name ,"do *timer <minutes> after it");
+			
+			
+			TimerTask starting = new TimerTask(){
+				public void run(){
+						m_botAction.toggleLocked();
+						m_botAction.scoreResetAll();
+						m_botAction.shipResetAll();
+						m_botAction.resetFlagGame();
+						
+						turretWar = true;
+						}
+			};m_botAction.scheduleTask(starting, 10000);
+		}else m_botAction.sendPrivateMessage(name, "The game has already started. To stop the game use !stop");
 	}
-	
 	public int getFreq( String player )
 	{
 		return m_botAction.getPlayer(player).getFrequency();
@@ -255,6 +264,22 @@ public class twar extends MultiModule
 		Collections.sort(listShipSettings);
 		
 	}	
+	
+	public void removePromotion( String name, String message)
+	{
+		//!removep 1
+		//	m_botAction.sendPrivateMessage(name, message.substring(6+3)+" ship being removed...");
+		Integer removeP = Integer.parseInt( message.substring(9) );
+		
+		for( shipSettings e:listShipSettings)
+			if(e.getShip() == removeP)
+			{
+				listShipSettings.remove(e);
+				break;
+			}
+		
+	}
+	
 	public void cancel() {}
 
 	public void listPromotion(String name, String message)
@@ -268,18 +293,21 @@ public class twar extends MultiModule
 	public String[] getModHelpMessage() 
 	{
 		String erHelp [] = {
+			"--------------------------------------------------------------------------------------------------",
 			"|	!guide 																					 																														- A GUIDE TO HOST TURRETWAR",
 			"| !ship number																																															- to set everyone in this ship",																				
 			"|	!terr name																																																	- to pick a terr",
 			"|	!switch name:terr																																										- to switch terrs",
+			"---------------------------------- Promotion -----------------------------------------------------",
 			"|	!prom	ship:kill																																												- to enable promotion",	
 			"| !lprom																																																					- to check the list of promotions",
+			"| !removep ship																																														- removes the promotion of this #ship",
+			"--------------------------------------------------------------------------------------------------",
 			"|	!start																																																					- to start game (*scorereset, *shipreset and *lock)",
 			"|	!warp																																																						- to enable warpback",
-			"|	 OTHERS:",
-			"|| !setship #ship																																												- to set everyone in a ship",
+			"| ---- Warping to safes ----",
 			"|| !setupwarplist																																												- to see warp safes list",
-			
+			"--------------------------------------------------------------------------------------------------"
 		};
 		return erHelp;
 	}
@@ -307,10 +335,14 @@ public class twar extends MultiModule
 		m_botAction.sendPrivateMessage(name, guideER[9]);
 		m_botAction.sendPrivateMessage(name, " ");
 		m_botAction.sendPrivateMessage(name, guideER[10]);
-	
+		m_botAction.sendPrivateMessage(name, " ");
+		m_botAction.sendPrivateMessage(name, guideER[11]);
+		m_botAction.sendPrivateMessage(name, " ");
+		m_botAction.sendPrivateMessage(name, guideER[12]);
 	}
 	//stopping game.
-	public void stopTurretWar(String name, String message){
+	public void stopTurretWar(String name, String message)
+	{
 		turretWar = false;
 		promotion = false;
 		warpOn = false;
@@ -319,7 +351,8 @@ public class twar extends MultiModule
 		listShipSettings.clear();
 		m_botAction.cancelTasks();
 		m_botAction.toggleLocked();
-		m_botAction.sendPrivateMessage(name, "game stopped.");
+		m_botAction.sendPrivateMessage(name, "Game stopped. Now you can make other round by !start");
+		m_botAction.sendPrivateMessage(name, "or just !unload twar");
 	}
 	public void init() {
 	}
