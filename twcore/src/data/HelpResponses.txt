@@ -301,6 +301,10 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &GTFO &What|GTFO stands for Get The F**k Off, Get The F**k On or Get The F**k Out.
 &ROFL &What|&ROFL stands for Rolling On the Floor Laughing.
 &ASAP &What|ASAP stands for As Soon As Possible.
+&SSCU &What|SSCU stands for SubSpace Central eUrope. Note that the SSCU Trench Wars server is not hosted in Europe but is currently hosted in Washington, DC.
+&SCCC &What|SSCC stands for SubSpace Central Center (US)
+&SCCE &What|SSCE stands for SubSpace Central East (US)
+&SSC &What|SSC stands for SubSpace Central
 &Kill &Messages|To toggle kill messages off, to chat, and to the center of your screen, type: ?kill.
 &Enter &Messages|To toggle enter messages off, to chat, and to the center of your screen, type: ?enter.
 &Leave &Messages|To toggle leave messages off, to chat, and to the center of your screen, type: ?leave.
