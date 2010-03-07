@@ -35,7 +35,9 @@ import twcore.core.util.ModuleEventRequester;
 	
 	. any player can type !lprom to bot so he'll get back the ship promotions list
 	--------------- Turret War ----------------------
+*
 */
+
 public class twar
 extends MultiModule
 implements turretwar
