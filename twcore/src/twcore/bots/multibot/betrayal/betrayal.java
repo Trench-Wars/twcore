@@ -19,7 +19,6 @@ import twcore.core.util.ModuleEventRequester;
 	Thanks to D1st0rt who gave me an idea to fix a problem I had with the bot.
 	Thanks to Dezmond who gave me the coords to all circles and tubes of map(5 circles, each circle has 4 tubes)
 	Thanks to everyone who helped me on tests.
-
 */
 
 public class betrayal extends MultiModule
