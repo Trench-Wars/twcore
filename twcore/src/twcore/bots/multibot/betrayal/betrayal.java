@@ -14,7 +14,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
-/*Author: Dexter
+/*Author: dexter
 	
 	Thanks to D1st0rt who gave me an idea to fix a problem I had with the bot.
 	Thanks to Dezmond who gave me the coords to all circles and tubes of map(5 circles, each circle has 4 tubes)
@@ -105,7 +105,7 @@ public class betrayal extends MultiModule
 								}catch(Exception e){}
 							}
 						};// ------- warps player back to old frequence -------
-						m_botAction.scheduleTask(betrayalTime, 60000);
+						m_botAction.scheduleTask(betrayalTime, 15000);
 					
 					} // --------- checks if tked more than allowed --------
 				
