@@ -132,7 +132,7 @@ public class betrayal extends MultiModule
 		So, I did default coords to warp players to each case. */
 		
 		if(nameTK.get(player.getPlayerName()) == tkPlayer+1)
-			m_botAction.sendArenaMessage(player.getPlayerName()+" will be punished for tking! 1 minute in the middle of circle!", 13);
+			m_botAction.sendArenaMessage(player.getPlayerName()+" will be punished for tking! 15 seconds in the middle of circle!", 13);
 		
 		if(player.getFreq() == 1){
 			if(circleNumber == 5){
