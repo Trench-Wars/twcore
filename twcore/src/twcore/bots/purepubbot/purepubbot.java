@@ -210,7 +210,7 @@ public class purepubbot extends SubspaceBot
         mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
         shipWeights = new Vector<Integer>();
         objs = m_botAction.getObjectSet();
-
+        
         // Small hack to use different warp coordinates with april fools map.
         GregorianCalendar now = new GregorianCalendar();
         GregorianCalendar april1 = new GregorianCalendar(2008,GregorianCalendar.APRIL,1,0,0,0);
@@ -383,7 +383,7 @@ public class purepubbot extends SubspaceBot
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub];
+    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
@@ -419,8 +419,14 @@ public class purepubbot extends SubspaceBot
                 // Reset player if shipchanging
                 } else {
                     String pname = p.getPlayerName();
-                    boolean authd = authorizedChangePlayers.remove( pname );
+                    
+                    /**It'll keep MVP by any esc+#ship change*/
+                    boolean authd = true ;//authorizedChangePlayers.remove( pname );
+                    
                     // If player is switching to the smaller team, they maintain any MVP status
+                    m_botAction.sendPrivateMessage(pname,
+                    "You'll keep any MVP status by any ESC+# change.");
+            
                     if( teamsUneven && freq == freqSizeInfo[1] ) {
                         boolean freq0cont = freq0List.contains(pname);
                         boolean freq1cont = freq1List.contains(pname);
@@ -448,9 +454,6 @@ public class purepubbot extends SubspaceBot
 						
 						if (numOfShipNeeded > 0) {
 							authd = true;
-							m_botAction.sendPrivateMessage(pname,
-									"For changing to a ship needed by your team, you keep any MVP status and and earn "
-									+ NICEGUY_BOUNTY_AWARD + " bounty.");
 							m_botAction.giveBounty(pname, NICEGUY_BOUNTY_AWARD);
 						}
 					}
@@ -750,8 +753,8 @@ public class purepubbot extends SubspaceBot
                 doShowTeamCmd(sender);
             else if(command.startsWith("!t"))
                 doTerrCmd(sender);
-            else if(command.startsWith("!ship "))
-                doShipCmd(sender, command.substring(6));
+            //else if(command.startsWith("!ship "))
+              // doShipCmd(sender, command.substring(6));
             else if(command.startsWith("!challenge "))
                 doChallengeCmd(sender, command.substring(11));
             else if(command.startsWith("!end"))
@@ -1257,6 +1260,7 @@ public class purepubbot extends SubspaceBot
      * @param sender Player sending
      * @param argString Ship to change to
      */
+    /*
     public void doShipCmd(String sender, String argString ) {
 		throw new RuntimeException("!ship <ship#> is deprecated, you can change ship normally without losing any MVP status.");
 
@@ -1321,8 +1325,8 @@ public class purepubbot extends SubspaceBot
         m_botAction.giveBounty( p.getPlayerID(), bounty + NICEGUY_BOUNTY_AWARD - 3 );  // -3 to compensate for new ship bty
         m_botAction.sendPrivateMessage( p.getPlayerID(), "For changing to a ship needed by your team, you keep any MVP status and gain 25 bounty in addition to your old bounty of " + bounty + "." );
 		*/
-    }
-
+    
+    
 
     /**
      * Clears all of player's mines, and restores any MVP status, but only once per round.
@@ -1344,9 +1348,12 @@ public class purepubbot extends SubspaceBot
         int ship = p.getShipType();
         if( !easyClear)
             authorizedChangePlayers.add( p.getPlayerName() );
+        
         m_botAction.setShip( sender, 1 );
+        
         if( !easyClear)
             authorizedChangePlayers.add( p.getPlayerName() );
+        
         m_botAction.setShip( sender, ship );
         m_botAction.giveBounty( sender, bounty - 3 );
         if( !easyClear) {
@@ -2308,7 +2315,7 @@ public class purepubbot extends SubspaceBot
 
                             if( percentOnFreq == 100 ) {
                                 MVPs.add( playerName );
-                                m_botAction.sendPrivateMessage( playerName, "For staying with the same freq and ship the entire match, you are an MVP and receive the full bonus: " + modbounty );
+                                m_botAction.sendPrivateMessage( playerName, "For staying with the same freq the entire match, you are an MVP and receive the full bonus: " + modbounty );
                                 int grabs = flagTimer.getFlagGrabs( playerName );
                                 if( special == 4 ) {
                                     m_botAction.sendPrivateMessage( playerName, "You also receive an additional " + weight + " bounty as a special prize!" );
