@@ -586,7 +586,7 @@ public class purepubbot extends SubspaceBot
                 String cmds = "";
                 if( warpAllowed )
                     cmds += "!warp ";
-                cmds += "!terr !team !ship <#> !clearmines";
+                cmds += "!terr !team !clearmines";
                 if( m_votingEnabled )
                     cmds += " !listvotes !startvote";
                 if( m_challengeEnabled )
