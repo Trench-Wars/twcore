@@ -6,7 +6,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,6 +22,7 @@ import twcore.core.command.CommandInterpreter;
 import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+
 import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
 
@@ -79,6 +79,7 @@ public class messagebot extends SubspaceBot
 	boolean bug = false;
 	public String database = "website";//If you change this you must also change line ~1426
 
+	private LinkedList<String> playersOnline = new LinkedList();
 	/** Constructor, requests Message and Login events.
 	 *  Also prepares bot for use.
 	 */
@@ -121,13 +122,34 @@ public class messagebot extends SubspaceBot
                 unreadMsgs++;
 			}
             m_botAction.SQLClose(results);
-            if(unreadMsgs > 0) {
-                m_botAction.sendSmartPrivateMessage(name, "You have " + unreadMsgs + " new message" + (unreadMsgs==1?"":"s") +
-                        ".  PM me with !read to read " + (unreadMsgs==1?"it":"them") +", or !messages for a list.");
+            if(unreadMsgs > 0) 
+            {
+                checkPlayerOnline(name);
+                if( playersOnline.contains(name) ){
+                    m_botAction.sendSmartPrivateMessage(name, "You have "
+                            + unreadMsgs + " new message" + (unreadMsgs==1?"":"s") +
+                        ".  PM me with !read to read " + (unreadMsgs==1?"it":"them") +
+                        ", or !messages for a list.");
+                    playersOnline.remove(name);
+                }
+                   
+                else{
+                        sendSSMessage(name);
+                    }
             }
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
-
+	
+	public void checkPlayerOnline(String name)
+	{
+	    m_botAction.locatePlayer(name);
+	    
+	}
+	public void sendSSMessage(String name)
+	{
+	    m_botAction.sendUnfilteredPublicMessage("?message "+name+
+	            ":You have new messages, type :MessageBot:!read to check them!");
+	}
 	/** Sets up the CommandInterpreter to respond to
 	 *  all of the commands.
 	 *
@@ -688,6 +710,11 @@ public class messagebot extends SubspaceBot
 	 */
 	public void handleEvent(Message event)
 	{
+	    if(event.getMessageType() == Message.ARENA_MESSAGE){
+	        if(event.getMessage().contains(" - ")){
+	            playersOnline.add(event.getMessage().substring(0, event.getMessage().indexOf(" -")));
+	        }
+	    }
 		m_CI.handleEvent(event);
 	}
 
