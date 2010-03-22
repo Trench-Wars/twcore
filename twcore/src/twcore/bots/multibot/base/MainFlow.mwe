@@ -1,0 +1,4 @@
+1.The ER comes and starts the game with #teamsize
+2.The ER sets 2 captains to each team
+3.Each captain adds a player by player's name to the team till #teamsize is full
+4.The game starts, informing everyone it started.

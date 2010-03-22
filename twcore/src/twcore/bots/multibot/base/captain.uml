@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Package xmi:version="2.1" xmlns:xmi="http://schema.omg.org/spec/XMI/2.1" xmlns:uml="http://www.eclipse.org/uml2/3.0.0/UML" xmi:id="_3jYncDUkEd-Ee4no6mAyMw" name="captain">
+  <elementImport xmi:id="_3kUbkDUkEd-Ee4no6mAyMw">
+    <importedElement xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
+  </elementImport>
+  <elementImport xmi:id="_3kVCoDUkEd-Ee4no6mAyMw">
+    <importedElement xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+  </elementImport>
+  <elementImport xmi:id="_3kVCoTUkEd-Ee4no6mAyMw">
+    <importedElement xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#UnlimitedNatural"/>
+  </elementImport>
+  <elementImport xmi:id="_3kVCojUkEd-Ee4no6mAyMw">
+    <importedElement xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+  </elementImport>
+  <packagedElement xmi:type="uml:Actor" xmi:id="_43D10DUkEd-Ee4no6mAyMw" name="Captain"/>
+  <packagedElement xmi:type="uml:Component" xmi:id="_8HhhADUkEd-Ee4no6mAyMw" name="Base Event - captain" useCase="_6m1KUDUkEd-Ee4no6mAyMw __2HSoDUkEd-Ee4no6mAyMw _AcIw0DUlEd-Ee4no6mAyMw _CHb1ADUlEd-Ee4no6mAyMw _DPUqIDUlEd-Ee4no6mAyMw">
+    <ownedUseCase xmi:id="_6m1KUDUkEd-Ee4no6mAyMw" name="Add Player" subject="_8HhhADUkEd-Ee4no6mAyMw">
+      <include xmi:id="_GcBPoDUlEd-Ee4no6mAyMw" addition="_DPUqIDUlEd-Ee4no6mAyMw"/>
+    </ownedUseCase>
+    <ownedUseCase xmi:id="__2HSoDUkEd-Ee4no6mAyMw" name="Remove Player" subject="_8HhhADUkEd-Ee4no6mAyMw"/>
+    <ownedUseCase xmi:id="_AcIw0DUlEd-Ee4no6mAyMw" name="Chance Ship Player" subject="_8HhhADUkEd-Ee4no6mAyMw">
+      <include xmi:id="_HO1zsDUlEd-Ee4no6mAyMw" addition="_DPUqIDUlEd-Ee4no6mAyMw"/>
+    </ownedUseCase>
+    <ownedUseCase xmi:id="_CHb1ADUlEd-Ee4no6mAyMw" name="Switch Player" subject="_8HhhADUkEd-Ee4no6mAyMw"/>
+    <ownedUseCase xmi:id="_DPUqIDUlEd-Ee4no6mAyMw" name="Specify Ship Player" subject="_8HhhADUkEd-Ee4no6mAyMw"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Association" xmi:id="_t9ywwDUlEd-Ee4no6mAyMw" memberEnd="_t9zX0DUlEd-Ee4no6mAyMw _t9z-4jUlEd-Ee4no6mAyMw" navigableOwnedEnd="_t9z-4jUlEd-Ee4no6mAyMw">
+    <ownedEnd xmi:id="_t9zX0DUlEd-Ee4no6mAyMw" name="src" type="_43D10DUkEd-Ee4no6mAyMw" association="_t9ywwDUlEd-Ee4no6mAyMw">
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_t9z-4TUlEd-Ee4no6mAyMw" value="1"/>
+      <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_t9z-4DUlEd-Ee4no6mAyMw" value="1"/>
+    </ownedEnd>
+    <ownedEnd xmi:id="_t9z-4jUlEd-Ee4no6mAyMw" name="dst" type="_6m1KUDUkEd-Ee4no6mAyMw" association="_t9ywwDUlEd-Ee4no6mAyMw">
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_t90l8TUlEd-Ee4no6mAyMw" value="1"/>
+      <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_t90l8DUlEd-Ee4no6mAyMw" value="1"/>
+    </ownedEnd>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Association" xmi:id="_vAqjADUlEd-Ee4no6mAyMw" memberEnd="_vArKEDUlEd-Ee4no6mAyMw _vArxITUlEd-Ee4no6mAyMw" navigableOwnedEnd="_vArxITUlEd-Ee4no6mAyMw">
+    <ownedEnd xmi:id="_vArKEDUlEd-Ee4no6mAyMw" name="src" type="_43D10DUkEd-Ee4no6mAyMw" association="_vAqjADUlEd-Ee4no6mAyMw">
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_vArxIDUlEd-Ee4no6mAyMw" value="1"/>
+      <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_vArKETUlEd-Ee4no6mAyMw" value="1"/>
+    </ownedEnd>
+    <ownedEnd xmi:id="_vArxITUlEd-Ee4no6mAyMw" name="dst" type="_AcIw0DUlEd-Ee4no6mAyMw" association="_vAqjADUlEd-Ee4no6mAyMw">
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_vAsYMTUlEd-Ee4no6mAyMw" value="1"/>
+      <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_vAsYMDUlEd-Ee4no6mAyMw" value="1"/>
+    </ownedEnd>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Association" xmi:id="_xFkaADUlEd-Ee4no6mAyMw" memberEnd="_xFlBEDUlEd-Ee4no6mAyMw _xFloITUlEd-Ee4no6mAyMw" navigableOwnedEnd="_xFloITUlEd-Ee4no6mAyMw">
+    <ownedEnd xmi:id="_xFlBEDUlEd-Ee4no6mAyMw" name="src" type="_43D10DUkEd-Ee4no6mAyMw" association="_xFkaADUlEd-Ee4no6mAyMw">
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_xFloIDUlEd-Ee4no6mAyMw" value="1"/>
+      <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_xFlBETUlEd-Ee4no6mAyMw" value="1"/>
+    </ownedEnd>
+    <ownedEnd xmi:id="_xFloITUlEd-Ee4no6mAyMw" name="dst" type="__2HSoDUkEd-Ee4no6mAyMw" association="_xFkaADUlEd-Ee4no6mAyMw">
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_xFmPMTUlEd-Ee4no6mAyMw" value="1"/>
+      <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_xFmPMDUlEd-Ee4no6mAyMw" value="1"/>
+    </ownedEnd>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Association" xmi:id="_xx6ioDUlEd-Ee4no6mAyMw" memberEnd="_xx6ioTUlEd-Ee4no6mAyMw _xx7JsTUlEd-Ee4no6mAyMw" navigableOwnedEnd="_xx7JsTUlEd-Ee4no6mAyMw">
+    <ownedEnd xmi:id="_xx6ioTUlEd-Ee4no6mAyMw" name="src" type="_43D10DUkEd-Ee4no6mAyMw" association="_xx6ioDUlEd-Ee4no6mAyMw">
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_xx7JsDUlEd-Ee4no6mAyMw" value="1"/>
+      <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_xx6iojUlEd-Ee4no6mAyMw" value="1"/>
+    </ownedEnd>
+    <ownedEnd xmi:id="_xx7JsTUlEd-Ee4no6mAyMw" name="dst" type="_CHb1ADUlEd-Ee4no6mAyMw" association="_xx6ioDUlEd-Ee4no6mAyMw">
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_xx7JszUlEd-Ee4no6mAyMw" value="1"/>
+      <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_xx7JsjUlEd-Ee4no6mAyMw" value="1"/>
+    </ownedEnd>
+  </packagedElement>
+</uml:Package>
