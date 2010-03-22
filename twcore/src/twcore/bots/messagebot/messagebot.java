@@ -124,18 +124,18 @@ public class messagebot extends SubspaceBot
             m_botAction.SQLClose(results);
             if(unreadMsgs > 0) 
             {
-                checkPlayerOnline(name);
-                if( playersOnline.contains(name) ){
+                //checkPlayerOnline(name);
+                //if( playersOnline.contains(name) ){
                     m_botAction.sendSmartPrivateMessage(name, "You have "
                             + unreadMsgs + " new message" + (unreadMsgs==1?"":"s") +
                         ".  PM me with !read to read " + (unreadMsgs==1?"it":"them") +
                         ", or !messages for a list.");
                     playersOnline.remove(name);
-                }
+                //}
                    
-                else{
+                /*else{
                         sendSSMessage(name);
-                    }
+                    }*/
             }
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
@@ -144,11 +144,6 @@ public class messagebot extends SubspaceBot
 	{
 	    m_botAction.locatePlayer(name);
 	    
-	}
-	public void sendSSMessage(String name)
-	{
-	    m_botAction.sendUnfilteredPublicMessage("?message "+name+
-	            ":You have new messages, type :MessageBot:!read to check them!");
 	}
 	/** Sets up the CommandInterpreter to respond to
 	 *  all of the commands.
@@ -1355,6 +1350,13 @@ public class messagebot extends SubspaceBot
      		} else {
      			m_botAction.SQLClose(m_botAction.SQLQuery(database, "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES(0, '"+Tools.addSlashesToString(player)+"', '"+Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(name)+"', 0, NOW())"));
      			m_botAction.sendSmartPrivateMessage(name, "Message sent.");
+     			checkPlayerOnline(player);
+     			if(playersOnline.contains(player))
+     			    m_botAction.sendSmartPrivateMessage(name, "You have a new message, " +
+     			    		"type :MessageBot:!read to check");
+     			else
+     			    m_botAction.sendUnfilteredPublicMacro("?message "+player+":You have a new message, " +
+     			    		"type :MessageBot:!read to check");
      		}
      	} catch(Exception e) {}
      }
