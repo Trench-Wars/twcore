@@ -35,6 +35,7 @@ public final class radiobot extends SubspaceBot {
     private final static int MAX_ANNOUNCE_LINES = 3;
     private final static long SIX_HOURS = 21600000;
     private final static long TEN_MINUTES = 600000;
+    private final static long THREE_MINUTES = 3*60000;
     private final static long ONE_HOUR = 3600000;
 
     private String[] m_announcement = { "", "", "" };
@@ -93,7 +94,7 @@ public final class radiobot extends SubspaceBot {
 		String message = event.getMessage();
 		boolean isLoggedIn = m_loggedInList.contains(name);
 		boolean isCurrentHost = m_someoneHosting && isLoggedIn && m_currentHost.equals(name);
-		boolean isMod = m_opList.isModerator(name);
+		boolean isSMod = m_opList.isSmod(name);
 
 		//make command part lowercase
 		message = message.trim();
@@ -115,9 +116,10 @@ public final class radiobot extends SubspaceBot {
     	    		m_botAction.privateMessageSpam(id, currentRadioHostHelp);
 	            }
 			}
-			if(isMod) {
-				m_botAction.privateMessageSpam(id, modHelp);
+			if(isSMod) {
+				m_botAction.privateMessageSpam(id, SModHelp);
 			}
+			
 			return;
         }
 
@@ -143,9 +145,9 @@ public final class radiobot extends SubspaceBot {
         }
 
 		/**
-		 * Handle Mod+ commands
+		 * Handle SMod+ commands
 		 */
-		if(isMod && handleModMessage(name, id, message)) {
+		if(isSMod && handleSModMessage(name, id, message)) {
 			return;
 		}
 
@@ -214,7 +216,25 @@ public final class radiobot extends SubspaceBot {
 
             m_botAction.sendPrivateMessage(id, "Online for " + (ontime / 1000 / 60 / 60) + " hours and " + (ontime / 1000 / 60 % 60) + " minutes.");
 
-        } else if(!m_currentHost.equals(name)
+        } else if(message.startsWith("!grantzone")){
+            if(m_botAction.getOperatorList().isER(name)){
+                handled = true;
+                long now = System.currentTimeMillis();
+                if(m_alreadyZoned.contains(m_currentHost)) {
+                    if(now < m_timeOfLastZone + THREE_MINUTES) {
+                        m_botAction.sendPrivateMessage(id, "Sorry, you may only grantzone 3 mins from the last zone which was "
+                            + ((now - m_timeOfLastZone) / 1000 / 60) + " minutes ago.");
+                    } else {
+                        m_alreadyZoned.remove(m_currentHost);
+                        m_botAction.sendPrivateMessage(id, "Zoner granted to " + m_currentHost);
+                        m_botAction.sendPrivateMessage(m_currentHost, name + " has granted you another zone message.");
+                    }
+                } else {
+                    m_botAction.sendPrivateMessage(id, "No current host or host is already granted a zone.");
+                       }
+            }
+        }
+        else if(!m_currentHost.equals(name)
         		&& (message.startsWith("!poll ")
         		|| message.startsWith("!arena ")
 		        || message.startsWith("!zone ")
@@ -222,8 +242,8 @@ public final class radiobot extends SubspaceBot {
         	handled = true;
             m_botAction.sendPrivateMessage(id, "Sorry, only the current radio host may use that command."
             	+ " If you are hosting, use the !host command.");
-        }
-
+        } 
+      
         return handled;
     }
 
@@ -486,9 +506,9 @@ public final class radiobot extends SubspaceBot {
 
 
 	/**
-	 * Handle Mod commands
+	 * Handle SMod commands
 	 */
-	private boolean handleModMessage(String name, int id, String message) {
+	private boolean handleSModMessage(String name, int id, String message) {
 
 		boolean handled = false;
 
@@ -514,8 +534,8 @@ public final class radiobot extends SubspaceBot {
     		handled = true;
     		long now = System.currentTimeMillis();
 			if(m_alreadyZoned.contains(m_currentHost)) {
-				if(now < m_timeOfLastZone + ONE_HOUR) {
-					m_botAction.sendPrivateMessage(id, "Sorry, you may only grantzone 1 hour from the last zone which was "
+				if(now < m_timeOfLastZone + 3*60000) {
+					m_botAction.sendPrivateMessage(id, "Sorry, you may only grantzone 3 mins from the last zone which was "
 						+ ((now - m_timeOfLastZone) / 1000 / 60) + " minutes ago.");
 				} else {
 					m_alreadyZoned.remove(m_currentHost);
@@ -704,7 +724,8 @@ public final class radiobot extends SubspaceBot {
         " --Radio Staff Help",
         "!who                  - Shows who is currently logged into the bot.",
         "!host                 - Announces that you are hosting, allows you to use Current Radio Host commands.",
-        "!status               - Shows bot status."
+        "!status               - Shows bot status.",
+        "!grantzone            - Grants the radio host another zoner."
     };
 
     private final static String[] currentRadioHostHelp = {
@@ -723,14 +744,14 @@ public final class radiobot extends SubspaceBot {
         "!setmax <t> <r> <q> <s> - Sets max queue size for Topics, Requests, Questions, Shoutouts. (Disable=0)"
     };
 
-    private final static String[] modHelp = {
+    private final static String[] SModHelp = {
     	" --Mod Commands",
     	"!go <arena>           - Moves bot to <arena>.",
     	"!die                  - Disconnects bot.",
     	"!setpw <password>     - Changes login password for this session.",
     	"!seturl <url>         - Sets the URL that appears in the announcements.",
     	"!setwelcome <msg>     - Sets welcome message (!welcomeoff to disable).",
-    	"!grantzone            - Grants the radio host another zoner.",
+    	"!grantzone            - Grants the radio host another zoner.",//change to ER+, change time allowd to 3 mins, rest of MOD to Smod
     	"!unhost               - Removes the current host."
     };
 
