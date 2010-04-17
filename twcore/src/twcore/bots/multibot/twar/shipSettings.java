@@ -12,11 +12,6 @@ public class shipSettings implements Comparable<shipSettings>{ //Uses comparable
 		return ship;
 	}
 	
-	public String toString()
-	{
-		return "be ship #"+ship+" with "+kill+" kills";
-	}
-	
 	public int compareTo(shipSettings ship)
 	{ 
 	
