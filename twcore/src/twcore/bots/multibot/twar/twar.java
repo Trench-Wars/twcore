@@ -184,7 +184,7 @@ implements turretwar
     {
         m_botAction.sendPrivateMessage(name,"------------------------------------------");
         for(shipSettings e:listShipSettings)
-            m_botAction.sendPrivateMessage(name, "| be a "+e.getShipName()+ " at "+e.getKill()+" kills");
+            m_botAction.sendPrivateMessage(name, "| be a "+e.getShipName()+ " with more than "+e.getKill()+" kills");
         
         m_botAction.sendPrivateMessage(name,"------------------------------------------");  
     }
