@@ -310,7 +310,7 @@ implements turretwar
 			"|	!guide                        - A GUIDE TO HOST TURRETWAR                         |",
 			"| !ship number                  - to set everyone in this ship                      |",																				
 			"|	!terr name                    - to pick a terr                                    |",
-			"|	!switch name:terr             - to switch terrs                                   |",
+			"|	!switch name:terr             - to put :terr as a terr / switch terrs                                   |",
 			"| ------------------ Promotion ---------------------------------------------------  |",
 			"| !prom ship:kill               - to enable promotion                               |",	
 			"| !lprom                        - to check the list of promotions                   |",
@@ -362,6 +362,8 @@ implements turretwar
         m_botAction.sendArenaMessage(p1.getPlayerName()+" (terr) switched with "+p2.getPlayerName());
         m_botAction.sendPrivateMessage( name, "You've switched "+p1.getPlayerName()+
                 " with "+p2.getPlayerName());
+        m_botAction.sendPrivateMessage(name, "now "+p2.getPlayerName()+
+                " is your terr!");
     }
     
     //------------------------- Getters setters --------------------------------
