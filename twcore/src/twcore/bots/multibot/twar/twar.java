@@ -29,9 +29,10 @@ implements turretwar
 {
     private    boolean     promotion   = false;
     private    boolean     warpOn      = false;
-	private    boolean     isAlreadyPromoted = false;
+	
     private    int         firstShip   = 0;
 
+    private     boolean  isAlreadyPromoted = false;
     private    ArrayList<shipSettings> listShipSettings = new ArrayList() ;
 	
 	//guide to ER+s
