@@ -206,10 +206,12 @@ implements turretwar
 	    //!ship #
 	    if(message.length() > 5)
 	    {
-    	    setFirstShip( Integer.parseInt( message.substring(6) ) );
+	        int ship = Integer.parseInt( message.substring(6) );
+    	    setFirstShip( ship );
     	    m_botAction.changeAllShips( getFirstShip() );
     	    m_botAction.scoreResetAll();
     	    m_botAction.shipResetAll();
+    	    m_botAction.sendPrivateMessage(name, "Everyone will start on the ship "+ship+" now. If you want to enable proms, do !prom #ship:#kills");
 	    } else{
 	        m_botAction.sendPrivateMessage(name, "Please use !ship #shipnumber to set a starter.");
 	        return ;
@@ -276,7 +278,7 @@ implements turretwar
             return ;
         }
         //ok..the player might be lagged out(work on it still)
-        switchTerrs(p1, p2);
+        switchTerrs(name, p1, p2);
     }
     
 	public void cmd_warp(String name, String message)
@@ -345,10 +347,11 @@ implements turretwar
         m_botAction.scoreReset(terr.getPlayerID());
         m_botAction.shipReset(terr.getPlayerID());
         m_botAction.sendArenaMessage(terr.getPlayerName()+" is your terr!");
-        
+        m_botAction.sendPrivateMessage(name, terr.getPlayerName()+" has been added as terr successfuly into freq #" +
+        		+terr.getFrequency()+".");
     }
   
-    public void switchTerrs(Player p1, Player p2){
+    public void switchTerrs(String name, Player p1, Player p2){
         
         m_botAction.setShip     (p2.getPlayerID(), 5);
         m_botAction.scoreReset  (p2.getPlayerID());
@@ -357,6 +360,8 @@ implements turretwar
         m_botAction.setShip     (p1.getPlayerID(), getFirstShip() );
         
         m_botAction.sendArenaMessage(p1.getPlayerName()+" (terr) switched with "+p2.getPlayerName());
+        m_botAction.sendPrivateMessage( name, "You've switched "+p1.getPlayerName()+
+                " with "+p2.getPlayerName());
     }
     
     //------------------------- Getters setters --------------------------------
