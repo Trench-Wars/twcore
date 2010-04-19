@@ -1,5 +1,6 @@
 package twcore.core;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -983,7 +984,8 @@ public class HubBot extends SubspaceBot {
         //method to display the list of bots from the .txt files
         try {
             String botname = m_botAction.getBotName();
-            FileReader listbots = new FileReader("A:/CODE/WorkSpace/TWCore/src/twcore/core/"+botname+"list");
+            File dir = new File ( m_botAction.getCoreData().getGeneralSettings().getString( "Core Location" )+"/twcore/core/"+botname+"list" );
+            FileReader listbots = new FileReader(dir);
             BufferedReader bf = new BufferedReader(listbots);
             
             for(String line = bf.readLine(); line != null; line = bf.readLine())
