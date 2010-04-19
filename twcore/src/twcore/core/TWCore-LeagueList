@@ -8,8 +8,8 @@ List of bots that can be spawned:
 ------- NickName / typebot ---------
  
 DuelBot - [duelbot]
-MatchBot* [matchbot]
-TWDBot [twdbot]
+MatchBot* - [matchbot]
+TWDBot - [twdbot]
 Tournybot - [tournybot]
 TWDBot - [twdbot]
 TWLBot* - [twl]
