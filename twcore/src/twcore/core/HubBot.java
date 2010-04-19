@@ -997,6 +997,7 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendPrivateMessage(name, "FileNotFoundException.");
         } catch(Exception e){
             e.printStackTrace();
+            m_botAction.sendPrivateMessage(name, "Exception.");
         }
     }
 }
