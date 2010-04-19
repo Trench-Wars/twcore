@@ -74,10 +74,10 @@ public class HubBot extends SubspaceBot {
         // Outsider+
         accessRequired = OperatorList.OUTSIDER_LEVEL; 
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "handleHelp", accessRequired );
-        m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "handleListBots", accessRequired );
+        m_commandInterpreter.registerCommand( "!listOnbots", acceptedMessages, this, "handleListBots", accessRequired );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList", accessRequired );
         m_commandInterpreter.registerCommand( "!billerdown", acceptedMessages, this, "handleBillerDownCommand", accessRequired );
-        
+        m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "displayListBots", accessRequired );
         // Moderator+
         m_commandInterpreter.registerCommand( "!uptime", acceptedMessages, this, "handleUptimeCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!dbstatus", acceptedMessages, this, "handleDbStatus", accessRequired );
@@ -718,14 +718,14 @@ public class HubBot extends SubspaceBot {
 	    	
 	    		m_botAction.sendSmartPrivateMessage( messager, "-----------------------------------------------");
 	    	if(operatorList.isOutsider(messager) && !operatorList.isHighmod(messager)) {
-	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !waitinglist !listbots");
+	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !waitinglist !listbots !listonbots");
 	    	}
 	    	if(operatorList.isHighmod(messager) && !operatorList.isSysop(messager)) {
-	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !waitinglist !listbots");
+	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !waitinglist !listbots !listonbots");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove  !removetype");
 	    	}
 	    	if(operatorList.isSysop(messager)) {
-	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots");
+	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots !listonbots");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !smartshutdown !shutdownidlebots !shutdownallbots");
 	    	}
@@ -977,5 +977,24 @@ public class HubBot extends SubspaceBot {
     	String version = "$Revision$".substring(11).replace(" $","");
     	m_botAction.sendSmartPrivateMessage( messager , "TWCore revision "+version);
     	m_botAction.sendSmartPrivateMessage( messager , "More information about the latest change on http://www.twcore.org/changeset/"+version);
+    }
+    
+    public void displayListBots(String name, String message){
+        //method to display the list of bots from the .txt files
+        try {
+            String botname = m_botAction.getBotName();
+            FileReader listbots = new FileReader("A:/CODE/WorkSpace/TWCore/src/twcore/core/"+botname+"list");
+            BufferedReader bf = new BufferedReader(listbots);
+            
+            for(String line = bf.readLine(); line != null; line = bf.readLine())
+                m_botAction.sendPrivateMessage(name, line);
+            
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            m_botAction.sendPrivateMessage(name, "FileNotFoundException.");
+        } catch(Exception e){
+            e.printStackTrace();
+        }
     }
 }

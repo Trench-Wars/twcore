@@ -1,0 +1,15 @@
+------------------------------------
+========= TWCore-League ============
+ 
+List of bots that can be spawned:
+ 
+- Use !spawn <typebot> to spawn it -
+ 
+------- NickName / typebot ---------
+ 
+DuelBot - [duelbot]
+MatchBot* [matchbot]
+TWDBot [twdbot]
+Tournybot - [tournybot]
+TWDBot - [twdbot]
+TWLBot* - [twl]

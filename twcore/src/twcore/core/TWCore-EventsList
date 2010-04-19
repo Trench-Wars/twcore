@@ -1,0 +1,13 @@
+------------------------------------
+========= TWCore-Events ============
+ 
+List of bots that can be spawned:
+ 
+- Use !spawn <typebot> to spawn it -
+ 
+------- NickName / typebot ---------
+ 
+RoboBot* - [multibot]
+TWBot1 / TWBot2 - [elim]
+Basebot/Wbduelbot/Javduelbot/Spiderduelbot - [bwjsbot]
+RoboBoy/RoboGirl - [purepubbot]
