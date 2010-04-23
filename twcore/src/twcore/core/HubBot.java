@@ -983,18 +983,69 @@ public class HubBot extends SubspaceBot {
     public void displayListBots(String name, String message){
         //method to display the list of bots from the .txt files
         try {
+            
             String botname = m_botAction.getBotName();
-            File dir = new File ( m_botAction.getCoreData().getGeneralSettings().getString( "Core Location" )+"/twcore/core/"+botname+"list" );
-            FileReader listbots = new FileReader(dir);
-            BufferedReader bf = new BufferedReader(listbots);
             
-            for(String line = bf.readLine(); line != null; line = bf.readLine())
-                m_botAction.sendPrivateMessage(name, line);
+            if(botname.equals("TWCore")){
+                String[] twcore = {
+                        "------------------------------------",
+                        "=========== TWCore =================",
+                        "List of bots that can be spawned:",
+                        "- Use !spawn <typebot> to spawn it -",
+                        "------- NickName / typebot ---------",
+                        " ",
+                        "Staffbot - [staffbot]",
+                        "Zonerbot - [zonerbot]",
+                        "Robohelp - [robohelp]",
+                        "MessageBot - [messagebot]",
+                        "Radiobot - [radiobot]",
+                        "Pubbot - [pubbot]",
+                        "Pubhub - [pubhub]",
+                        "Banner Boy - [bannerboy]"
+                };
+                m_botAction.remotePrivateMessageSpam(name, twcore);
+                }
             
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            m_botAction.sendPrivateMessage(name, "FileNotFoundException.");
+            else if(botname.equals("TWCore-Events")){
+                String[] twcoreEvents = {
+                        "------------------------------------",
+                        "========= TWCore-Events ============",
+                        " ",
+                        "List of bots that can be spawned:",
+                        " ",
+                        "- Use !spawn <typebot> to spawn it -",
+                        " ",
+                        "------- NickName / typebot ---------",
+                        " ",
+                        "RoboBot* - [multibot]",
+                        "TWBot1 / TWBot2 - [elim]",
+                        "Basebot/Wbduelbot/Javduelbot/Spiderduelbot - [bwjsbot]",
+                        "RoboBoy/RoboGirl - [purepubbot]"
+                };
+                m_botAction.remotePrivateMessageSpam(name, twcoreEvents);
+            }
+            
+            else if(botname.equals("TWCore-League")){
+                String[] twcoreLeague = {
+                        "------------------------------------",
+                        "========= TWCore-League ============",
+                        " ",
+                        "List of bots that can be spawned:",
+                        " ",
+                        "- Use !spawn <typebot> to spawn it -",
+                        " ",
+                        "------- NickName / typebot ---------",
+                        "",
+                        "DuelBot - [duelbot]",
+                        "MatchBot* - [matchbot]",
+                        "TWDBot - [twdbot]",
+                        "Tournybot - [tournybot]",
+                        "TWDBot - [twdbot]",
+                        "TWLBot* - [twl]"
+                };
+                m_botAction.remotePrivateMessageSpam(name, twcoreLeague);
+            }
+            
         } catch(Exception e){
             e.printStackTrace();
             m_botAction.sendPrivateMessage(name, "Exception.");
