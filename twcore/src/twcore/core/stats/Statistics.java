@@ -40,6 +40,10 @@ import java.util.Vector;
 			public static final int TOTAL_TEAMKILLS = 21;
 			public static final int REPELS_PER_DEATH = 22;
 			public static final int RATING = 23;
+			public static final int BOMBS_FIRED = 24;
+			public static final int BURSTS_FIRED = 25;
+			public static final int BULLETS_FIRED = 26;
+			public static final int MINES_FIRED = 27;
 
 			private int m_shipType;
 
@@ -72,6 +76,10 @@ import java.util.Vector;
 				m_statistics.add(SHARK_TEAMKILL, new SharkTeamKills());
 				m_statistics.add(FLAG_CLAIMED, new FlagTouches());
 				m_statistics.add(REPELS_USED, new RepelsUsed());
+				m_statistics.add(BOMBS_FIRED, new BombsFired());
+				m_statistics.add(BULLETS_FIRED, new BulletsFired());
+				m_statistics.add(BURSTS_FIRED, new BurstsFired());
+				m_statistics.add(MINES_FIRED, new MinesFired());
 				m_statistics.add(TOTAL_KILLS, new TotalKills());
 				m_statistics.add(TOTAL_TEAMKILLS, new TotalTeamKills());
 				m_statistics.add(REPELS_PER_DEATH, new RepelsPerDeath(m_shipType));
@@ -158,6 +166,7 @@ import java.util.Vector;
 								+ getStatistic(LANCASTER_KILL)
 								+ getStatistic(SHARK_KILL)
 								+ getStatistic(FLAG_CLAIMED)
+								+ getStatistic(BULLETS_FIRED)
 								+ getStatistic(SCORE)
 								+ getStatistic(RATING));
 						break;
@@ -177,6 +186,8 @@ import java.util.Vector;
 								+ getStatistic(LANCASTER_KILL)
 								+ getStatistic(SHARK_KILL)
 								+ getStatistic(FLAG_CLAIMED)
+								+ getStatistic(BOMBS_FIRED)
+								+ getStatistic(BULLETS_FIRED)
 								+ getStatistic(SCORE)
 								+ getStatistic(RATING));
 
@@ -210,6 +221,7 @@ import java.util.Vector;
 								+ getStatistic(LANCASTER_KILL)
 								+ getStatistic(SHARK_KILL)
 								+ getStatistic(FLAG_CLAIMED)
+								+ getStatistic(BULLETS_FIRED)
 								+ getStatistic(SCORE)
 								+ getStatistic(RATING));
 						break;
@@ -232,6 +244,8 @@ import java.util.Vector;
 								+ getStatistic(LANCASTER_KILL)
 								+ getStatistic(SHARK_KILL)
 								+ getStatistic(FLAG_CLAIMED)
+								+ getStatistic(BULLETS_FIRED)
+								+ getStatistic(BURSTS_FIRED)
 								+ getStatistic(SCORE)
 								+ getStatistic(RATING));
 						break;
@@ -250,6 +264,7 @@ import java.util.Vector;
 								+ getStatistic(LANCASTER_KILL)
 								+ getStatistic(SHARK_KILL)
 								+ getStatistic(FLAG_CLAIMED)
+								+ getStatistic(BULLETS_FIRED)
 								+ getStatistic(SCORE)
 								+ getStatistic(RATING));
 						break;
@@ -268,6 +283,7 @@ import java.util.Vector;
 								+ getStatistic(LANCASTER_KILL)
 								+ getStatistic(SHARK_KILL)
 								+ getStatistic(FLAG_CLAIMED)
+								+ getStatistic(BULLETS_FIRED)
 								+ getStatistic(SCORE)
 								+ getStatistic(RATING));
 						break;
@@ -279,6 +295,8 @@ import java.util.Vector;
 								+ getStatistic(DEATHS)
 								+ getStatistic(TOTAL_TEAMKILLS)
 								+ getStatistic(REPELS_USED)
+								+ getStatistic(MINES_FIRED)
+								+ getStatistic(BOMBS_FIRED)
 								+ getStatistic(WARBIRD_KILL)
 								+ getStatistic(JAVELIN_KILL)
 								+ getStatistic(SPIDER_KILL)
@@ -359,7 +377,39 @@ import java.util.Vector;
 					super(REPELS_USED, "Rep");
 				}
 			}
-
+			
+			private class BombsFired extends Statistic
+			{
+				public BombsFired()
+				{
+					super(BOMBS_FIRED, "FBomb");
+				}
+			}
+			
+			private class BulletsFired extends Statistic
+			{
+				public BulletsFired()
+				{
+					super(BULLETS_FIRED, "FBull");
+				}
+			}
+			
+			private class BurstsFired extends Statistic
+			{
+				public BurstsFired()
+				{
+					super(BURSTS_FIRED, "FBurs");
+				}
+			}
+			
+			private class MinesFired extends Statistic
+			{
+				public MinesFired()
+				{
+					super(MINES_FIRED, "FMine");
+				}
+			}
+			
 			private class WarbirdKills extends Statistic
 			{
 				public WarbirdKills()
