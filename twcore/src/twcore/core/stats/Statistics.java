@@ -15,7 +15,7 @@ import java.util.Vector;
 			//stats
 			//dont forget to increment the totals accordingly
 			//make a class and add it to the vector
-			public static final int TOTAL_NORMAL_NUMBER = 24;
+			public static final int TOTAL_NORMAL_NUMBER = 28;
 			public static final int DEATHS = 0;
 			public static final int SCORE = 1;
 			public static final int WARBIRD_KILL = 2;
