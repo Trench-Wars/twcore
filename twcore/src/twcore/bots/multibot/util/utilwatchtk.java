@@ -41,8 +41,9 @@ public final class utilwatchtk extends MultiUtil {
 
 	private final static String[] TKHelp = {
 		"!watchtk <tklimit> <bantime> <decaytime> -starts watching tk's with specified stuff.",
-		"!watchtk <tklimit> <bantime> -starts watching tk's with specified stuff with decay time of 5 minutes.",
-		"!watchtk <tklimit> -starts watching tk's with specified limit, decay time of 5 minutes, and bantime of 5 minutes.",
+		"<tklimit> -amount of allowed tk's (use 0 to forbid tking). Using 3 tk's if blank",
+		"<bantime> -time amount in minutes to ban player from game. Using 5 minutes if blank",
+		"<decaytime> -tk decay time amount in minutes",
 		"!watchtk -starts watching tk's with 3 tk limit, decay time of 5 minutes, and bantime of 5 minutes.",
 		"!stoptkwatch -stops watching tk's."
     };
@@ -98,13 +99,13 @@ public final class utilwatchtk extends MultiUtil {
     			dT = Integer.parseInt(pieces[3]);
     		} catch(Exception e) {}
 
-    		aT = Math.max(1, Math.min(aT, 100));
+    		aT = Math.max(0, Math.min(aT, 100));
     		bT = Math.max(1, Math.min(bT, 60));
     		dT = Math.max(1, Math.min(dT, 30));
     		allowedTKs = aT;
     		banTime = bT;
     		decayTime = dT;
-    		m_botAction.sendArenaMessage(name + " has activated TK watcher. You will be spec'd for " + banTime + " minute(s) after " + allowedTKs + " TKs.");
+    		m_botAction.sendArenaMessage(name + " has activated TK watcher. You will be spec'd for " + banTime + " minute(s) exceeding " + allowedTKs + " TKs.");
     		m_botAction.sendArenaMessage("Each TK will decay after " + decayTime + " minute(s).");
     		tkwatching = true;   //enables watch for teamkills and undertakes action.
 
