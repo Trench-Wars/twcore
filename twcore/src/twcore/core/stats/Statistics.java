@@ -15,7 +15,8 @@ import java.util.Vector;
 			//stats!
 			//dont forget to increment the totals accordingly
 			//make a class and add it to the vector
-			public static final int TOTAL_NORMAL_NUMBER = 28;
+			public static final int TOTAL_NORMAL_NUMBER = 39;
+			
 			public static final int DEATHS = 0;
 			public static final int SCORE = 1;
 			public static final int WARBIRD_KILL = 2;
@@ -44,6 +45,17 @@ import java.util.Vector;
 			public static final int BURSTS_FIRED = 25;
 			public static final int BULLETS_FIRED = 26;
 			public static final int MINES_FIRED = 27;
+			public static final int PRIZES = 28;
+			public static final int PRIZE_PORTAL = 29;
+			public static final int PRIZE_REPEL = 30;
+			public static final int PRIZE_BURST = 31;
+			public static final int PRIZE_SHRAPNEL = 32;
+			public static final int PRIZE_FULL_CHARGE = 33;
+			public static final int KILL_SHORT_RANGE = 34;
+			public static final int KILL_NORMAL_RANGE = 35;
+			public static final int KILL_LONG_RANGE = 36;
+			public static final int KILL_ULTRA_LONG_RANGE = 37;
+			public static final int DEATH_ON_ATTACH = 38;
 
 			private int m_shipType;
 
@@ -84,13 +96,24 @@ import java.util.Vector;
 				m_statistics.add(BURSTS_FIRED, new BurstsFired());
 				m_statistics.add(BULLETS_FIRED, new BulletsFired());
 				m_statistics.add(MINES_FIRED, new MinesFired());
+				m_statistics.add(PRIZES, new PrizeTotal());
+				m_statistics.add(PRIZE_PORTAL, new PrizePortal());
+				m_statistics.add(PRIZE_REPEL, new PrizeRepel());
+				m_statistics.add(PRIZE_BURST, new PrizeBurst());
+				m_statistics.add(PRIZE_SHRAPNEL, new PrizeShrapnel());
+				m_statistics.add(PRIZE_FULL_CHARGE, new PrizeFullCharge());
+				m_statistics.add(KILL_SHORT_RANGE, new KillShortRange());
+				m_statistics.add(KILL_NORMAL_RANGE, new KillNormalRange());
+				m_statistics.add(KILL_LONG_RANGE, new KillLongRange());
+				m_statistics.add(KILL_ULTRA_LONG_RANGE, new KillUltraLongRange());
+				m_statistics.add(DEATH_ON_ATTACH, new DeathOnAttach());
 			}
 
 
 
 			public int getIntStatistic(int statType)
 			{
-					return m_statistics.get(statType).getIntValue();
+				return m_statistics.get(statType).getIntValue();
 			}
 
 			public double getDoubleStatistic(int statType)
@@ -407,6 +430,72 @@ import java.util.Vector;
 				public MinesFired()
 				{
 					super(MINES_FIRED, "FMine");
+				}
+			}
+			
+			private class PrizeTotal extends Statistic {
+				public PrizeTotal() {
+					super(PRIZES, "PRZs");
+				}
+			}
+			
+			private class PrizePortal extends Statistic {
+				public PrizePortal() {
+					super(PRIZE_PORTAL, "PPor");
+				}
+			}
+			
+			private class PrizeBurst extends Statistic {
+				public PrizeBurst() {
+					super(PRIZE_BURST, "PBur");
+				}
+			}
+			
+			private class PrizeShrapnel extends Statistic {
+				public PrizeShrapnel() {
+					super(PRIZE_SHRAPNEL, "PShr");
+				}
+			}
+			
+			private class PrizeFullCharge extends Statistic {
+				public PrizeFullCharge() {
+					super(PRIZE_FULL_CHARGE, "PFuC");
+				}
+			}
+			
+			private class PrizeRepel extends Statistic {
+				public PrizeRepel() {
+					super(PRIZE_REPEL, "PRep");
+				}
+			}
+			
+			private class KillShortRange extends Statistic {
+				public KillShortRange() {
+					super(KILL_SHORT_RANGE, "KSR");
+				}
+			}
+			
+			private class KillNormalRange extends Statistic {
+				public KillNormalRange() {
+					super(KILL_NORMAL_RANGE, "KNR");
+				}
+			}
+			
+			private class KillLongRange extends Statistic {
+				public KillLongRange() {
+					super(KILL_LONG_RANGE, "KLR");
+				}
+			}
+			
+			private class KillUltraLongRange extends Statistic {
+				public KillUltraLongRange() {
+					super(KILL_ULTRA_LONG_RANGE, "KULR");
+				}
+			}
+			
+			private class DeathOnAttach extends Statistic {
+				public DeathOnAttach() {
+					super(DEATH_ON_ATTACH, "DOA");
 				}
 			}
 			
