@@ -486,6 +486,8 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Geio &Who|Geio is the King of all Wb's, and the best basketball player in TW.
 &Arobas+ &Who|ALL YOUR BASE ARE BELONG TO US!!!
 &Pinkstar &Who|Twinkle, twinkle, little pinkSTAR, how I wonder what you are. Up above the world so high like a diamond in the sky. Twinkle, twinkle, little pinkSTAR!
+&EvilDeed &Who|Hi my name is EvilDeed an i jav.
+&Dexter &Who|Dexter is the guy that hides on a laboratory to do scientific studies, then Dee Dee comes and KBOOM!
 
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
