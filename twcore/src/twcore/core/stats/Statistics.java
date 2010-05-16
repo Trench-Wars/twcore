@@ -15,7 +15,7 @@ import java.util.Vector;
 			//stats!
 			//dont forget to increment the totals accordingly
 			//make a class and add it to the vector
-			public static final int TOTAL_NORMAL_NUMBER = 39;
+			public static final int TOTAL_NORMAL_NUMBER = 40;
 			
 			public static final int DEATHS = 0;
 			public static final int SCORE = 1;
@@ -56,6 +56,7 @@ import java.util.Vector;
 			public static final int KILL_LONG_RANGE = 36;
 			public static final int KILL_ULTRA_LONG_RANGE = 37;
 			public static final int DEATH_ON_ATTACH = 38;
+			public static final int SPAWN_DEATHS = 39;
 
 			private int m_shipType;
 
@@ -107,6 +108,7 @@ import java.util.Vector;
 				m_statistics.add(KILL_LONG_RANGE, new KillLongRange());
 				m_statistics.add(KILL_ULTRA_LONG_RANGE, new KillUltraLongRange());
 				m_statistics.add(DEATH_ON_ATTACH, new DeathOnAttach());
+				m_statistics.add(SPAWN_DEATHS, new SpawnDeaths());
 			}
 
 
@@ -374,6 +376,14 @@ import java.util.Vector;
 				public Deaths()
 				{
 					super(DEATHS, "D");
+				}
+			}
+			
+			private class SpawnDeaths extends Statistic
+			{
+				public SpawnDeaths()
+				{
+					super(SPAWN_DEATHS, "SD");
 				}
 			}
 
