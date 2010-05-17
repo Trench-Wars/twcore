@@ -16,6 +16,7 @@ import twcore.core.net.Receiver;
 import twcore.core.net.ReliablePacketHandler;
 import twcore.core.net.SSEncryption;
 import twcore.core.net.Sender;
+import twcore.core.util.ByteArray;
 import twcore.core.util.Tools;
 
 /**
@@ -53,6 +54,8 @@ public class Session extends Thread {
     private GamePacketGenerator     m_packetGenerator;
     private GamePacketInterpreter   m_packetInterpreter;
     private ReliablePacketHandler   m_reliablePacketHandler;
+    
+    private ByteArray lastPacketReceived;
 
     public static int RUNNING = 2;
     public static int STARTING = 1;
@@ -402,7 +405,17 @@ public class Session extends Thread {
                 currentTime = System.currentTimeMillis();
 
                 if( currentTime - lastPacketTime > TIMEOUT_DELAY ){
-                    disconnect( "connection timed out" );
+                
+                	// Debug
+                	String packetType = "0x";
+                	int index = lastPacketReceived.readByte( 0 ) & 0xff;
+                    if( index == 0 ){
+                    	packetType += "S:"+Integer.toHexString(lastPacketReceived.readByte( 1 ) & 0xff);
+                    } else {
+                    	packetType += "N:"+Integer.toHexString(lastPacketReceived.readByte( 0 ) & 0xff);
+                    }
+
+                    disconnect( "connection timed out ("+packetType+")" );
                     return;
                 }
 
@@ -418,7 +431,8 @@ public class Session extends Thread {
 
                 if( m_inboundQueue.containsMoreElements() ){
                     lastPacketTime = currentTime;
-                    m_packetInterpreter.translateGamePacket( m_inboundQueue.get(), false );
+                    lastPacketReceived = m_inboundQueue.get();
+                    m_packetInterpreter.translateGamePacket( lastPacketReceived, false );
                 } else {
 	                if(!m_socket.isConnected()){
                         disconnect( "network socket connection broken" );
@@ -440,5 +454,6 @@ public class Session extends Thread {
             Tools.printStackTrace( e );
         }
     }
+
 }
 
