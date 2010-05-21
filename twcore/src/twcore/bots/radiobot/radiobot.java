@@ -103,8 +103,6 @@ public final class radiobot extends SubspaceBot {
         public void handleEvent(Message event) {
         	
     	if(event.getMessageType() != Message.PRIVATE_MESSAGE)
-        if(event.getMessageType() != Message.REMOTE_PRIVATE_MESSAGE)
-        if(event.getMessageType() != Message.CHAT_MESSAGE)
         return;
         	
         	 int id = event.getPlayerID();
