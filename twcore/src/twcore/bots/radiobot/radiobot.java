@@ -4,8 +4,8 @@ import java.util.*;
 
 
 import twcore.core.*;
-import twcore.core.events.ArenaJoined;
 import twcore.core.events.LoggedOn;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.util.Tools;
@@ -16,6 +16,7 @@ import twcore.core.util.Tools;
  * @author Flibb
  * Update @author Derek (dezmond)
  */
+
 public final class radiobot extends SubspaceBot {
     private EventRequester m_req;
     private OperatorList m_opList;
@@ -47,6 +48,7 @@ public final class radiobot extends SubspaceBot {
     private String[] m_announcement = { "", "", "" };
     private int m_announceLength = 0;
     private String m_welcome = "";
+    final String        mySQLHost = "website";
     BotSettings         m_botSettings;
 
     /** Creates a new instance of radiobot */
@@ -84,20 +86,13 @@ public final class radiobot extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + chat );
         m_botAction.joinArena("radio");
         m_botAction.setMessageLimit(10);
-       }
-    
-    public void handleEvent( ArenaJoined event ){
         m_botAction.sendChatMessage(m_botAction.getBotName() + " is now online.");
-        m_botAction.sendChatMessage("DJ's should refer to .... for hosting rules/tips.");
+        m_botAction.sendChatMessage("Have fun hosting Radio! Also..Watch out for Dezmond!");
     }
-             
-         
-
     
-   
+    public void handleEvent (ArenaJoined event) {}
+       
     
-
-
     public void handleEvent(PlayerEntered event) {
 		if(!m_welcome.equals("")) {
 			m_botAction.sendPrivateMessage(event.getPlayerID(), m_welcome);
@@ -468,6 +463,7 @@ public final class radiobot extends SubspaceBot {
             m_botAction.sendChatMessage(name +" has finished hosting radio.");
             m_currentHost = "";
             m_someoneHosting = false;
+            
         }
 
         return handled;
@@ -517,14 +513,14 @@ public final class radiobot extends SubspaceBot {
         	} else if(m_currentPassword.equals(message.substring(7))) {
                 if(!m_loggedInList.contains(m_botAction.getPlayerName(id))) {
                     m_loggedInList.add(name);
-                    m_botAction.sendChatMessage(name +" has logged into me successfully.");
+                    m_botAction.sendChatMessage(name +" has logged in successfully.");
                     m_botAction.sendSmartPrivateMessage(name,"Login Successfull.");
                 } else {
                 	m_botAction.sendPrivateMessage(id, "You are already logged in.");
                 }
             } else {
                 m_botAction.sendPrivateMessage(id, "Incorrect password.");
-                m_botAction.sendChatMessage(name + " has attempted to login to me and failed. Is he/she a host?.");
+                m_botAction.sendChatMessage(name + " has attempted to login and failed. Is he/she a host?.");
             }
         }
         return handled;
@@ -554,6 +550,7 @@ public final class radiobot extends SubspaceBot {
 
 		} else if(message.equals("!die")) {
     		handled = true;
+    		m_botAction.sendChatMessage("Dying....");
 			m_botAction.die();
 
 		} else if(message.startsWith("!grantzone")) {
@@ -596,8 +593,15 @@ public final class radiobot extends SubspaceBot {
 			handled = true;
 			m_url = message.substring(8);
 			m_botAction.sendPrivateMessage(id, "URL set to " + m_url);
+			
 		}
-		return handled;
+        return handled;
+        
+       
+        
+		} {
+    	
+
 	}
 
 
