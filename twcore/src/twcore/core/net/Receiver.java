@@ -68,6 +68,14 @@ public class Receiver extends Thread {
 
         return !m_packets.isEmpty();
     }
+    
+    /**
+     * @return The number of packets in the queue
+     */
+    public int getNumPacketsWaiting(){
+    	
+    	return m_packets.size();
+    }
 
     /**
      * As long as the connection is maintained, attempts to receive a new

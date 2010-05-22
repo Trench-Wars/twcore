@@ -407,18 +407,18 @@ public class Session extends Thread {
                 if( currentTime - lastPacketTime > TIMEOUT_DELAY ){
                 
                 	// Debug
-                	String packetType = "0x";
+                	String packetType;
                 	int index = lastPacketReceived.readByte( 0 ) & 0xff;
                     if( index == 0 ){
-                    	packetType += "S:"+Integer.toHexString(lastPacketReceived.readByte( 1 ) & 0xff);
+                    	packetType = "S:"+Integer.toHexString(lastPacketReceived.readByte( 1 ) & 0xff);
                     } else {
-                    	packetType += "N:"+Integer.toHexString(lastPacketReceived.readByte( 0 ) & 0xff);
+                    	packetType = "N:"+Integer.toHexString(lastPacketReceived.readByte( 0 ) & 0xff);
                     }
 
-                    disconnect( "connection timed out ("+packetType+")" );
+                    disconnect( "connection timed out ("+packetType+", " + m_inboundQueue.getNumPacketsWaiting() + " pkts were waiting.)" );
                     return;
                 }
-
+ 
                 if( currentTime - lastSyncTime > SYNC_TIME ){
                     lastSyncTime = currentTime;
                     m_packetGenerator.sendSyncPacket( m_outboundQueue.getNumPacketsSent(), m_inboundQueue.getNumPacketsReceived() );
