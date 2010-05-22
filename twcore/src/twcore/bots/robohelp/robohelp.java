@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -277,7 +278,10 @@ public class robohelp extends SubspaceBot {
     }
     
     // This is to catch any backgroundqueries even though none of them need to be catched to do something with the results
-    public void handleEvent( SQLResultEvent event) {}
+    public void handleEvent(SQLResultEvent event) {
+    	if (event.getIdentifier().equals("robohelp"))
+    		m_botAction.SQLClose( event.getResultSet() );
+    }
 
     /**
      * Stores data of an advert into the database.
@@ -1105,9 +1109,9 @@ public class robohelp extends SubspaceBot {
             String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             if(result.next()) {
-                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             } else {
-                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
             }
             m_botAction.SQLClose( result );
         } catch ( Exception e ) {
@@ -1125,9 +1129,9 @@ public class robohelp extends SubspaceBot {
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
 
             if(result.next()) {
-                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
             } else
-                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('"+name+"', '1', '1', '"+time+"')" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('"+name+"', '1', '1', '"+time+"')" );
         } catch ( Exception e ) { 
         	//m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
         	Tools.printStackTrace(e);
