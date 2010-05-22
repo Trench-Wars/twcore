@@ -25,6 +25,7 @@ import twcore.core.events.ArenaList;
 import twcore.core.events.KotHReset;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 
 /**
@@ -38,16 +39,17 @@ public class whoisonbot extends SubspaceBot {
 
 	private final static String VERSION = "0.1";
 	
-	private final static Pattern LOCATE_PATTERN = Pattern
-			.compile("(.+)\\s-\\s([#\\w\\d\\p{Z}]+)");
+	private final static Pattern LOCATE_PATTERN = Pattern.compile("(.+)\\s-\\s([#\\w\\d\\p{Z}]+)");
 
-	private static final int ROAM_INTERVAL = 1 * 60 * 1000;
+	private static final int ROAMING_INTERVAL = 60 * 1000;
+	private static final int FAST_ROAMING_INTERVAL = 10 * 1000;
+	
 	private static final int REMOVE_PLAYER_INTERVAL = 7 * 60 * 1000;
-	private static final int IDLE_TIME = 10 * 60;
+	private static final int IDLE_SECOND_TIME = 10 * 60;
 	private static final int ENTER_DELAY = 5000;
 
 	private static final int ARENA_SIZE_HIGH_PRIORITY = 20;
-	private static final int ARENA_SIZE_LOW_PRIORITY = 5;
+	private static final int ARENA_SIZE_LOW_PRIORITY = 2;
 
 	private static final int ARENA_HIGH_PRIORITY_WEIGHT = 3;
 	private static final int ARENA_NORMAL_PRIORITY_WEIGHT = 2;
@@ -71,14 +73,15 @@ public class whoisonbot extends SubspaceBot {
 
 		requestEvents();
 
-		players = Collections
-				.synchronizedMap(new HashMap<String, PlayerInfo>());
+		players = Collections.synchronizedMap(new HashMap<String, PlayerInfo>());
+		arenas = new HashMap<String, Integer>();
 
 		accessList = new HashSet<String>();
 		roamTask = new RoamTask();
-		removePlayersTask = new RemovePlayersTask();
-
 		//m_botAction.ipcSubscribe(IPCCHANNEL);
+		
+		m_botAction.scheduleTaskAtFixedRate(new RemovePlayersTask(), REMOVE_PLAYER_INTERVAL, REMOVE_PLAYER_INTERVAL);
+		
 	}
 
 	public void handleEvent(LoggedOn event) {
@@ -91,6 +94,14 @@ public class whoisonbot extends SubspaceBot {
 				+ botSettings.getString("chat"));
 		changeArena(botSettings.getString("initialarena"));
 		setupAccessList(botSettings.getString("accesslist"));
+
+	}
+	
+	public void handleEvent(PlayerEntered event) {
+
+		Player player = m_botAction.getPlayer(event.getPlayerID());
+		if (players.containsKey(player.getPlayerName()))
+			players.get(player.getPlayerName()).seen();
 
 	}
 
@@ -153,6 +164,7 @@ public class whoisonbot extends SubspaceBot {
 				String arenaName = m.group(2);
 
 				if (players.containsKey(playerName)) {
+					System.out.println("Locate received: " + playerName);
 					players.get(playerName).seen();
 				}
 
@@ -166,7 +178,7 @@ public class whoisonbot extends SubspaceBot {
 
 		int idleTime = getIdleTime(message);
 
-		if (idleTime > IDLE_TIME) {
+		if (idleTime > IDLE_SECOND_TIME) {
 
 			players.get(playerName.toLowerCase()).setIdle(idleTime);
 
@@ -223,7 +235,7 @@ public class whoisonbot extends SubspaceBot {
 		m_botAction.changeArena(arenaName);
 		currentArena = arenaName;
 		m_botAction.scheduleTask(new CheckPlayersTask(), ENTER_DELAY);
-		scheduleRoamTask();
+		scheduleRoamTask(ROAMING_INTERVAL);
 	}
 
 	/**
@@ -231,12 +243,13 @@ public class whoisonbot extends SubspaceBot {
 	 */
 	private void checkPlayers() {
 
-		Iterator<Player> iterator = m_botAction.getPlayingPlayerIterator();
+		Iterator<Player> iterator = m_botAction.getPlayerIterator();
 
 		while (iterator.hasNext()) {
 
 			Player player = iterator.next();
 			String playerName = m_botAction.getPlayerName(player.getPlayerID());
+
 
 			if (playerName == null)
 				continue;
@@ -250,6 +263,8 @@ public class whoisonbot extends SubspaceBot {
 				playerInfo.setArena(m_botAction.getArenaName());
 				
 			} else {
+				
+				System.out.println("New player: " + playerName);
 
 				playerInfo = new PlayerInfo(playerName, player.getPlayerID(),
 						player.getSquadName(), m_botAction.getArenaName());
@@ -271,10 +286,23 @@ public class whoisonbot extends SubspaceBot {
 		try {
 
 			// Remove non-existing arena
-			Set<String> arenaQueue = arenas.keySet();
-			arenaQueue.removeAll(event.getArenaList().keySet());
-			for (String arena : arenaQueue) {
-				arenas.remove(arena);
+			for (String arena : arenas.keySet()) {
+				if (!event.getArenaList().containsKey(arena)) {
+					System.out.println("Removing arena : " + arena);
+					arenas.remove(arena);
+				}
+			}
+			
+			synchronized (arenas) {
+				
+				Iterator<Entry<String,Integer>> it = arenas.entrySet().iterator();
+				while (it.hasNext()) {
+					Entry<String,Integer> entry = it.next();
+					if (!event.getArenaList().containsKey(entry.getKey())) {
+						System.out.println("Removing arena : " + entry.getKey());
+						it.remove();
+					}
+				}
 			}
 
 			int weight = 0;
@@ -289,21 +317,42 @@ public class whoisonbot extends SubspaceBot {
 				} else {
 					weight = ARENA_LOW_PRIORITY_WEIGHT;
 				}
+				
+				int currentWeight = 0;
+				if (arenas.containsKey(entry.getKey()))
+						currentWeight =  arenas.get(entry.getKey());
 
-				arenas.put(entry.getKey(), entry.getValue() + weight);
+				arenas.put(entry.getKey(), currentWeight + weight);
 			}
 
 			// Now get the heaviest and change the arena with this one
+			/*
 			LinkedHashMap<String, Integer> arenaWeighted = sortValue(arenas);
 			String[] weighted = arenaWeighted.keySet().toArray(
 					new String[arenaWeighted.size()]);
-			changeArena(weighted[weighted.length - 1]);
+					*/
+			
+			String highest = getHighest(arenas);
+			
+			System.out.println("Roaming to: " + highest);
+			
+			changeArena(highest);
+			
+			if (event.getArenaList().get(highest) <= ARENA_SIZE_LOW_PRIORITY) {
+				scheduleRoamTask(FAST_ROAMING_INTERVAL);
+			}
+			else {
+				scheduleRoamTask(ROAMING_INTERVAL);
+			}
+			
 			
 			// Reset the heaviest
-			arenas.put(weighted[weighted.length - 1], 0);
+			arenas.put(highest, 0);
 
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
+
 	}
 
 	/**
@@ -329,21 +378,20 @@ public class whoisonbot extends SubspaceBot {
 		EventRequester eventRequester = m_botAction.getEventRequester();
 		eventRequester.request(EventRequester.MESSAGE);
 		eventRequester.request(EventRequester.ARENA_LIST);
-		eventRequester.request(EventRequester.ARENA_JOINED);
+		eventRequester.request(EventRequester.PLAYER_ENTERED);
 		eventRequester.request(EventRequester.KOTH_RESET);
 	}
 
 	/**
 	 * This method schedules a new roam task
 	 */
-	private void scheduleRoamTask() {
+	private void scheduleRoamTask(int roamTime) {
 
-		int roamTime = ROAM_INTERVAL;
 		m_botAction.cancelTask(roamTask);
 		roamTask = new RoamTask();
 		m_botAction.scheduleTask(roamTask, roamTime);
 	}
-
+	
 	/**
 	 * This method schedules a new remove player task
 	 */
@@ -379,35 +427,54 @@ public class whoisonbot extends SubspaceBot {
 					PlayerInfo player = it.next();
 	
 					if (player.lastLocate > player.lastSeen) {
+						System.out.println("Removing player: " + player.getPlayerName());
 						it.remove();
-					} else if (IDLE_TIME < (System.currentTimeMillis() - player.lastSeen)) {
+					} else if (IDLE_SECOND_TIME < (System.currentTimeMillis() - player.lastSeen)) {
 						m_botAction.locatePlayer(player.getPlayerName());
+						System.out.println("Locating: " + player.getPlayerName());
 						player.updateLocate();
 					}
 				}
 			}
 		
-		} catch(Exception e) { }
-		
-		scheduleRemovePlayersTask();
+		} catch(Exception e) { e.printStackTrace(); }
+
 	}
 
 	private class RoamTask extends TimerTask {
 		public void run() {
+			System.out.println("Roaming..");
 			m_botAction.requestArenaList();
+			scheduleRoamTask(ROAMING_INTERVAL);
 		}
 	}
 
 	private class CheckPlayersTask extends TimerTask {
 		public void run() {
+			System.out.println("Checking players..");
 			checkPlayers();
 		}
 	}
 
 	private class RemovePlayersTask extends TimerTask {
 		public void run() {
+			System.out.println("Removing players..");
 			removePlayers();
 		}
+	}
+	
+	private String getHighest(HashMap<String, Integer> arenas) {
+		
+		int weight = 0;
+		String arena = "";
+		
+		for (Entry<String, Integer> entry :arenas.entrySet()) {
+			if (entry.getValue() > weight) {
+				weight = entry.getValue();
+				arena = entry.getKey();
+			}
+		}
+		return arena;		
 	}
 
 	public LinkedHashMap<String, Integer> sortValue(HashMap<String, Integer> map) {
