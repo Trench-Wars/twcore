@@ -1,5 +1,7 @@
 package twcore.bots.whoisonbot;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +34,17 @@ import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
+ * TODO
+ * 
+ * - Anti-spam function
+ * - IPC Channel with shared informations if multiple WhoisOnBot
+ * - !here to let the bot know that you are online
+ * 
+ */
+
+
+
+/**
  * WhoisOnBot
  * 
  * Go from arena to arena to get the current population.
@@ -41,10 +54,11 @@ import twcore.core.util.Tools;
 public class whoisonbot extends SubspaceBot {
 
 	private final static String VERSION = "0.2";
+	private final static boolean DEBUG = false;
 	
 	private final static Pattern LOCATE_PATTERN = Pattern.compile("(.+)\\s-\\s([#\\w\\d\\p{Z}]+)");
 
-	private static final int ROAMING_INTERVAL = 60 * 1000; // 
+	private static final int ROAMING_INTERVAL = 20 * 1000; // 
 	private static final int ROAMING_INTERVAL_MULTIPLICATOR = 1750; // 1.75 sec. X population of the arena
 	
 	private static final int REMOVE_PLAYER_INTERVAL = 7 * 60 * 1000; // check every 7 minutes
@@ -73,35 +87,39 @@ public class whoisonbot extends SubspaceBot {
 	private Map<String, PlayerInfo> players;
 	private HashMap<String, Integer> arenas; // Arena + Weight
 	
-	private static enum GroupCategory { PUB, TWD, TWHT }
+	private static enum GroupCategory { PUB, TWD, TWHT, STAFF }
 	private Map<String, PlayerGroup> groups;
+	
+    private static final String HELP_MESSAGE [] = {
+    	
+        "--------- WHO'S ONLINE COMMANDS -----------------------------------",
+        "!here              - tell the bot that you are connected",
+        "                     in case the bot had'nt picked up your name yet",
+        "!me                - check your current status on the bot",
+        "!pub <squadname>   - check who's online on this squad (pub)",
+        "!twd <squadname>   - check who's online on this squad (twd)",
+        //"!twht <squadname>  - check who's online on this squad (twht)"
+    };
+    
+    private static final String HELP_SMOD_MESSAGE [] = { 
+    	"--------- SMOD COMMANDS--------------------------------------------",
+    	"!die               - kill this bot",
+    };
 
 	public whoisonbot(BotAction botAction) {
 
 		super(botAction);
 
 		requestEvents();
-		
-		opList = m_botAction.getOperatorList();
 
 		players = Collections.synchronizedMap(new HashMap<String, PlayerInfo>());
 		groups = Collections.synchronizedMap(new HashMap<String, PlayerGroup>());
 		arenas = new HashMap<String, Integer>();
-		
-		PlayerGroup group = new PlayerGroup(GroupCategory.PUB, "mygroup");
-		TreeSet<String> playersName = new TreeSet<String>();
-		playersName.add("arobas+");
-		playersName.add("arohubbot");
-		playersName.add("arobasbot");
-		group.updatePlayersList(playersName);
-		groups.put("pub_mygroup", group);
 
 		accessList = new HashSet<String>();
 		roamTask = new RoamTask();
 		//m_botAction.ipcSubscribe(IPCCHANNEL);
-		
-		
-		
+
 		m_botAction.scheduleTaskAtFixedRate(new RemovePlayersTask(), REMOVE_PLAYER_INTERVAL, REMOVE_PLAYER_INTERVAL);
 		
 	}
@@ -137,88 +155,158 @@ public class whoisonbot extends SubspaceBot {
 
 		String message = event.getMessage();
 		int messageType = event.getMessageType();
+		
+		String sender = m_botAction.getPlayerName(event.getPlayerID());
+		String command = event.getMessage();
 
 		if (messageType == Message.ARENA_MESSAGE) {
 			handleArenaMessage(message);
 		}
 		else if (messageType == Message.REMOTE_PRIVATE_MESSAGE || messageType == Message.PRIVATE_MESSAGE) {
 			if (event.getMessage().startsWith("!"))
-				handlePrivateCommand(event);
+				handlePrivateCommand(command, sender);
 		}
 		else if (messageType == Message.CHAT_MESSAGE) {
 			if (event.getMessage().startsWith("!"))
-				handleChatCommand(event);
+				handleChatCommand(command, sender);
 		}
 	}
 
-	private void handleChatCommand(Message event) {
+	private void handleChatCommand(String command, String sender) {
 
-		String command = event.getMessage().toLowerCase();
+		
 
 	}
 	
-	private void handlePrivateCommand(Message event) {
+	private void handlePrivateCommand(String command, String sender) {
 
-		String command = event.getMessage().toLowerCase();
-
-		if (command.startsWith("!get")) {
-			
-			String name = command.substring(5);
-			
-			if (players.containsKey(name.toLowerCase())) {
-				int lastUpdate = (int)(System.currentTimeMillis() - players.get(name.toLowerCase()).lastUpdate)/1000;
-				m_botAction.sendPrivateMessage(event.getPlayerID(), "Updated " + lastUpdate + " seconds ago.");
-			}
-			else {
-				m_botAction.sendPrivateMessage(event.getPlayerID(), name + " does not exists.");
-			}
+		if(command.startsWith("!help")) {
+			m_botAction.privateMessageSpam(sender, HELP_MESSAGE);
+			if(opList.isSmod(sender) || accessList.contains(sender.toLowerCase())) {
+				 m_botAction.privateMessageSpam(sender, HELP_SMOD_MESSAGE);
+			} 
 		}
-		else if(command.equals("!die")) {
+		else if(command.equals("!die") && (opList.isSmod(sender) || accessList.contains(sender.toLowerCase()))) {
 			handleDisconnect();
 		} 
-		else if(command.equals("!version")) {
-			m_botAction.sendPrivateMessage(event.getPlayerID(), VERSION);
+		else if(command.equals("!here")) {
+			if (!players.containsKey(sender.toLowerCase())) {
+				PlayerInfo player = new PlayerInfo(sender, (short)m_botAction.getPlayerID(sender), m_botAction.getPlayer(sender).getSquadName(), "Unknown");
+				players.put(sender.toLowerCase(), player);
+			}
 		}
-		else if(command.equals("!who")) {
+		else if(command.startsWith("!twd")) {
 
-			String category = GroupCategory.valueOf("PUB").toString().toLowerCase();
-			String groupName = "MYGROUP".toLowerCase();
-			String identifier = category+"_"+groupName;
-			
-			ArrayList<String> lines = new ArrayList<String>();
-			
-			if (groups.containsKey(identifier)) {
-				PlayerGroup group = groups.get(identifier);
+			if (command.length() > 5) {
 				
-				for(String playerName: group.getPlayersName()) {
-					if (players.containsKey(playerName)) {
-						PlayerInfo player = players.get(playerName);
-						StringBuffer buffer = new StringBuffer();
-						buffer.append(Tools.rightString(player.getPlayerName(), group.getLongestName(), ' ') +": ");
-						String arena = player.getArenaLastSeen();
-						if (arena.startsWith("("))
-							arena = arena.substring(1,arena.length()-1);
-						if (player.getIdleTime()==0) {
-							if (player.isPlaying())
-								buffer.append("PLAYING ");
-							else
-								buffer.append("IN SPEC ");
-							buffer.append("on ?go " + arena.toUpperCase() + " ");
-						}else {
-							buffer.append("IDLING since " + player.getIdleTime() + " sec. ");
-							buffer.append("on ?go " + arena.toUpperCase() + " ");
-						}
-						
-						buffer.append("(updated " + player.getLastUpdate() + " sec. ago)");
-						lines.add(buffer.toString());
-					}
+				String squadname = command.substring(5).trim();
+				String identifier = "twd_"+squadname;
+
+				if (groups.containsKey(identifier) && !groups.get(identifier).needUpdate()) {
+					showGroup(identifier, sender);	
+				}
+				else {
+					m_botAction.sendPrivateMessage(sender, "Please wait while retrieving the player list..");
+					String query = "SELECT fcUserName " +
+						"FROM tblTeam t " +
+						"JOIN tblTeamUser tu ON t.fnTeamID = tu.fnTeamID " +
+						"JOIN tblUser u ON u.fnUserID = tu.fnUserID " +
+						"WHERE t.fcTeamName = '" + squadname + "' " +
+						"AND tu.fnCurrentTeam = 1";
+					
+					m_botAction.SQLBackgroundQuery("website", "updategroup:::"+identifier+":::"+sender, query);
 				}
 			}
 			else {
-				lines.add("Group not found.");
+				
+			}
+
+		}
+		else if(command.startsWith("!pub")) {
+
+			if (command.length() > 5) {
+				
+				String squadname = command.substring(5).trim();
+				String identifier = "pub_"+squadname;
+
+				if (groups.containsKey(identifier) && !groups.get(identifier).needUpdate()) {
+					showGroup(identifier, sender);	
+				}
+				else {
+					m_botAction.sendPrivateMessage(sender, "Please wait while retrieving the player list..");
+					String query = "SELECT fcName " +
+						"FROM tblPlayer " +
+						"WHERE fcSquad = '" + squadname + "'";
+											
+					m_botAction.SQLBackgroundQuery("website", "updategroup:::"+identifier+":::"+sender, query);
+				}
+			}
+			else {
+				
+			}
+
+		}
+
+	}
+	
+	private void showGroup(String identifier, String sender) {
+		
+		ArrayList<String> lines = new ArrayList<String>();
+		
+		if (groups.containsKey(identifier)) {
+			PlayerGroup group = groups.get(identifier);
+			
+			StringBuffer buffer = new StringBuffer();
+			buffer.append(Tools.formatString("Player Name", 24));
+			buffer.append(Tools.formatString("Status", 20));
+			buffer.append(Tools.formatString("Arena", 20));
+			buffer.append(Tools.formatString("Last Updated", 18));
+			lines.add(buffer.toString());
+			
+			int playing = 0;
+			int inspec = 0;
+			int idle = 0;
+			int offline = 0;
+			
+			for(String playerName: group.getPlayersName()) {
+				
+				if (players.containsKey(playerName.toLowerCase())) {
+					PlayerInfo player = players.get(playerName.toLowerCase());
+					buffer = new StringBuffer();
+					buffer.append(Tools.formatString(player.getPlayerName(), 24));
+					String arena = player.getArenaLastSeen();
+					if (arena.startsWith("("))
+						arena = arena.substring(1,arena.length()-1);
+					if (player.getIdleTime()==0) {
+						if (player.isPlaying()) {
+							buffer.append(Tools.formatString("Playing", 20));
+							playing++;
+						} else {
+							buffer.append(Tools.formatString("In spec", 20));
+							inspec++;
+						}
+					} else {
+						buffer.append(Tools.formatString("Idle ("+player.getIdleTime()+" sec)", 20));
+						idle++;
+					}
+					buffer.append(Tools.formatString(arena, 20));
+					buffer.append(Tools.formatString(player.getLastUpdate() + " sec. ago", 18));
+					lines.add(buffer.toString());
+				}
+				else {
+					offline++;
+				}
 			}
 			
-			m_botAction.privateMessageSpam(event.getPlayerID(), lines.toArray(new String[lines.size()]));
+			lines.add(" ");
+			lines.add("ONLINE: "+(playing+inspec+idle)+"    OFFLINE: "+offline);
+			
+			m_botAction.privateMessageSpam(sender, lines.toArray(new String[lines.size()]));
+			
+		
+		}
+		else {
+			System.out.println("No group found for identifier: " + identifier);
 		}
 
 	}
@@ -337,7 +425,8 @@ public class whoisonbot extends SubspaceBot {
 				
 			} else {
 				
-				System.out.println("New player: " + playerName);
+				if (DEBUG)
+					System.out.println("New player: " + playerName);
 
 				playerInfo = new PlayerInfo(playerName, player.getPlayerID(),
 						player.getSquadName(), m_botAction.getArenaName());
@@ -366,7 +455,8 @@ public class whoisonbot extends SubspaceBot {
 				while (it.hasNext()) {
 					Entry<String,Integer> entry = it.next();
 					if (!event.getArenaList().containsKey(entry.getKey())) {
-						System.out.println("Removing arena : " + entry.getKey());
+						if (DEBUG)
+							System.out.println("Removing arena : " + entry.getKey());
 						it.remove();
 					}
 				}
@@ -394,13 +484,15 @@ public class whoisonbot extends SubspaceBot {
 
 			String highest = getHighest(arenas);
 			
-			System.out.println("Roaming to: " + highest);
+			if (DEBUG)
+				System.out.println("Roaming to: " + highest);
 			
 			changeArena(highest);
 			
 			int customRoamingInterval = ENTER_DELAY+(ROAMING_INTERVAL_MULTIPLICATOR*event.getArenaList().get(highest));
 			
-			System.out.println(customRoamingInterval);
+			if (DEBUG)
+				System.out.println("Roaming interval: " + customRoamingInterval);
 			
 			scheduleRoamTask(customRoamingInterval);
 			
@@ -425,6 +517,39 @@ public class whoisonbot extends SubspaceBot {
 	
 	public void handleEvent(SQLResultEvent event) {
 		
+		String command = event.getIdentifier();
+
+		String[] split = command.split(":::");
+		if (split.length == 3) {
+			
+			String type = split[0];
+			String identifier = split[1];
+			String[] idSplit = identifier.split("_");
+			String sender = split[2];
+			
+			ResultSet set = event.getResultSet();
+			try {
+				
+				TreeSet<String> playersName = new TreeSet<String>();
+				while(set.next()) {
+					String name = set.getString("fcUserName");
+					playersName.add(name);
+				}
+				if (!groups.containsKey(identifier)) {
+					PlayerGroup group = new PlayerGroup(GroupCategory.valueOf(idSplit[0].toUpperCase()), idSplit[1]);
+					group.updatePlayersList(playersName);
+					groups.put(identifier, group);
+				}
+				else {
+					groups.get(identifier).updatePlayersList(playersName);
+				}
+
+				showGroup(identifier, sender);
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 		
 	}
 
@@ -481,11 +606,13 @@ public class whoisonbot extends SubspaceBot {
 					PlayerInfo player = it.next();
 	
 					if (player.lastLocate > player.lastSeen) {
-						System.out.println("Removing player: " + player.getPlayerName());
+						if (DEBUG)
+							System.out.println("Removing player: " + player.getPlayerName());
 						it.remove();
 					} else if (LAST_SEEN_TTL < (System.currentTimeMillis() - player.lastSeen)) {
 						m_botAction.locatePlayer(player.getPlayerName());
-						System.out.println("Locating: " + player.getPlayerName());
+						if (DEBUG)
+							System.out.println("Locating: " + player.getPlayerName());
 						player.updateLocate();
 					}
 				}
@@ -497,7 +624,8 @@ public class whoisonbot extends SubspaceBot {
 
 	private class RoamTask extends TimerTask {
 		public void run() {
-			System.out.println("Roaming..");
+			if (DEBUG)
+				System.out.println("Roaming..");
 			m_botAction.requestArenaList();
 			scheduleRoamTask(ROAMING_INTERVAL);
 		}
@@ -505,14 +633,16 @@ public class whoisonbot extends SubspaceBot {
 
 	private class CheckPlayersTask extends TimerTask {
 		public void run() {
-			System.out.println("Checking players..");
+			if (DEBUG)
+				System.out.println("Checking players..");
 			checkPlayers();
 		}
 	}
 
 	private class RemovePlayersTask extends TimerTask {
 		public void run() {
-			System.out.println("Removing players..");
+			if (DEBUG)
+				System.out.println("Removing players..");
 			removePlayers();
 		}
 	}
@@ -579,7 +709,6 @@ public class whoisonbot extends SubspaceBot {
 			
 			this.category = category;
 			this.name = name;
-			
 		}
 		
 		public boolean needUpdate() {
