@@ -498,8 +498,8 @@ public final class radiobot extends SubspaceBot {
         } else if(message.startsWith("!ask")) {
             handled = true;
             long now = System.currentTimeMillis();
-            m_botAction.sendUnfilteredPublicMessage("?help The radio host is requesting a zoner (" + ((m_timeOfLastZone - now) / 1000 / 60) + " minutes and "
-                    + ((m_timeOfLastZone - now) / 1000 % 60) + " seconds since last zone)" );
+            m_botAction.sendUnfilteredPublicMessage("?help The radio host is requesting a zoner (" + ((now - m_timeOfLastZone) / 1000 / 60) + " minutes and "
+                    + ((now - m_timeOfLastZone) / 1000 % 60) + " seconds since last zone)" );
         }
         
         return handled;
