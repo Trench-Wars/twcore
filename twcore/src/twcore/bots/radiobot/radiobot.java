@@ -807,6 +807,7 @@ public final class radiobot extends SubspaceBot {
         "|!who                  - Shows who is currently logged into the bot.              |",
         "|!host                 - Enables hosting commands. Announces you are current host.|",
         "|!status               - Shows bot status.                                        |",
+        "|!sex                  - Lets amuse the hosts in chat! - H.M.S.                   |",
         "+---------------------------------------------------------------------------------+"   
     };
 
@@ -821,7 +822,8 @@ public final class radiobot extends SubspaceBot {
         "|!viewannounce         - View the current announcement.                           |",
         "|!unhost               - Do this when you're done to allow someone else to host.  |",
         "|!setwelcome <msg>     - Sets welcome message (!welcomeoff to disable).           |",
-        "!seturl                - Sets the URL that appears in your announcement.          |",
+        "|!seturl               - Sets the URL that appears in your announcement.          |",
+        "|!ask                  - Sends a ?help asking for another zoner.                  |",
         "+---------------------------------------------------------------------------------+",
         "|    Read requests (append a number to retrieve several at once)                  |",
         "+---------------------------------------------------------------------------------|",
@@ -841,6 +843,7 @@ public final class radiobot extends SubspaceBot {
     	"|!seturl <url>         - Sets the URL that appears in the announcements.          |",
     	"|!grantzone            - Grants the radio host another zoner.                     |",
     	"|!unhost               - Removes the current host.                                |",
+    	"|!dbcon                - Checks for a database connection                         |",
     	"|!setwelcome           - Use this if the host has put an inappropiate welcome msg |",
     	"|                        (Also !welcomeoff)                                       |",
         "+---------------------------------------------------------------------------------+"  
