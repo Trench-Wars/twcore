@@ -9,6 +9,7 @@ import twcore.core.events.ArenaJoined;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.util.Tools;
+import twcore.core.events.SQLResultEvent;
 
 /**
  * To assist in hosting radio (while not requiring a host to have staff access).
@@ -86,11 +87,12 @@ public final class radiobot extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + chat );
         m_botAction.joinArena("radio");
         m_botAction.setMessageLimit(10);
-        m_botAction.sendChatMessage(m_botAction.getBotName() + " is now online.");
-        m_botAction.sendChatMessage("Have fun hosting Radio! Also..Watch out for Dezmond!");
+       
     }
     
-    public void handleEvent (ArenaJoined event) {}
+    public void handleEvent (ArenaJoined event) {
+        m_botAction.sendChatMessage(m_botAction.getBotName() + " is here!");
+    }
        
     
     public void handleEvent(PlayerEntered event) {
@@ -243,7 +245,33 @@ public final class radiobot extends SubspaceBot {
         	handled = true;
             m_botAction.sendPrivateMessage(id, "Sorry, only the current radio host may use that command."
             	+ " If you are hosting, use the !host command.");
-        }
+        
+   
+        } else if (message.startsWith("!sex")) {
+		    Random r = new Random();
+		      int randInt = Math.abs(r.nextInt()) % 14;
+		    if( randInt == 1 ){
+		    m_botAction.sendChatMessage( "O yea baby keep hosting it that way OMG OMG YAAAA BABY!" );
+		    } else if(randInt == 2){
+		    m_botAction.sendChatMessage( "You're so sexy...GOD YEA!" );
+		    } else if(randInt == 3){
+		    m_botAction.sendChatMessage( "Unf Unf!!" );
+		    } else if(randInt == 4){
+		    m_botAction.sendChatMessage( "Why Do you want sex now?" );
+		    } else if(randInt == 5){
+		    m_botAction.sendChatMessage( "I'M BUSY!" );
+		    } else if(randInt == 6){
+		    m_botAction.sendChatMessage( "Can you repeat that?" );
+		    } else if(randInt == 7){
+		    m_botAction.sendChatMessage( "Gonna Ride you like a horse!" );
+		    } else if(randInt == 8){
+		    m_botAction.sendChatMessage( "I'm here to amuse the hosts!" );
+
+		    } 
+		      
+		    
+		    
+		    }
 
         return handled;
     }
@@ -302,7 +330,7 @@ public final class radiobot extends SubspaceBot {
 	            m_timeToClearZone += SIX_HOURS;
 	        }
             if(m_alreadyZoned.contains(name)) {
-                m_botAction.sendPrivateMessage(id, "Sorry, you've already used your zone message. Get a <ER>+ to grant you another.");
+                m_botAction.sendPrivateMessage(id, "Sorry, you've already used your zone message. Get an <ER>+ to grant you another.");
             } else if(now < m_timeOfLastZone + TEN_MINUTES) {
             	m_botAction.sendPrivateMessage(id, "Sorry, you must wait "
             		+ ((m_timeOfLastZone + TEN_MINUTES - now) / 1000 / 60) + " minutes and "
@@ -452,6 +480,11 @@ public final class radiobot extends SubspaceBot {
 			handled = true;
 			m_welcome = "";
 			m_botAction.sendPrivateMessage(id, "Welcome message turned off.");
+			
+       } else if(message.startsWith("!seturl ")) {
+           handled = true;
+           m_url = message.substring(8);
+           m_botAction.sendPrivateMessage(id, "URL set to " + m_url);
 
         } else if(message.startsWith("!unhost")) {
         	handled = true;
@@ -462,8 +495,13 @@ public final class radiobot extends SubspaceBot {
             m_currentHost = "";
             m_someoneHosting = false;
             
+        } else if(message.startsWith("!ask")) {
+            handled = true;
+            long now = System.currentTimeMillis();
+            m_botAction.sendUnfilteredPublicMessage("?help The radio host is requesting a zoner (" + ((m_timeOfLastZone - now) / 1000 / 60) + " minutes and "
+                    + ((m_timeOfLastZone - now) / 1000 % 60) + " seconds since last zone)" );
         }
-
+        
         return handled;
     }
 
@@ -501,7 +539,7 @@ public final class radiobot extends SubspaceBot {
 			
 	    } else if(message.equals("!how")) {
     		handled = true;
-    		m_botAction.sendSmartPrivateMessage(name, "TW Radio is managed by a Radio Server. If you want to be a DJ fill out a application at ...");
+    		m_botAction.sendSmartPrivateMessage(name, "TW Radio is managed by a Radio Server. If you want to be a DJ fill out an application at ...");
 			
 
 	    } else if(message.startsWith("!login ")) {
@@ -548,7 +586,7 @@ public final class radiobot extends SubspaceBot {
 
 		} else if(message.equals("!die")) {
     		handled = true;
-    		m_botAction.sendChatMessage("Dying....");
+    		m_botAction.sendChatMessage( "Dying....");
 			m_botAction.die();
 
 		} else if(message.startsWith("!grantzone")) {
@@ -592,7 +630,21 @@ public final class radiobot extends SubspaceBot {
 			m_url = message.substring(8);
 			m_botAction.sendPrivateMessage(id, "URL set to " + m_url);
 			
-		}
+		} else if(message.startsWith("!dbcon")) {
+		    handled = true;
+		    if( !m_botAction.SQLisOperational() ){
+	            m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
+	            
+	        }
+	        try {
+	            m_botAction.SQLQueryAndClose( mySQLHost, "SELECT * FROM tblHost LIMIT 0,1" );
+	            m_botAction.sendChatMessage( "The Database is online. I can connect to it!" );
+	        } catch (Exception e ) {
+	            m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
+	        }
+	    }
+			
+		
         return handled;
         
        
@@ -769,6 +821,7 @@ public final class radiobot extends SubspaceBot {
         "|!viewannounce         - View the current announcement.                           |",
         "|!unhost               - Do this when you're done to allow someone else to host.  |",
         "|!setwelcome <msg>     - Sets welcome message (!welcomeoff to disable).           |",
+        "!seturl                - Sets the URL that appears in your announcement.          |",
         "+---------------------------------------------------------------------------------+",
         "|    Read requests (append a number to retrieve several at once)                  |",
         "+---------------------------------------------------------------------------------|",
@@ -788,7 +841,7 @@ public final class radiobot extends SubspaceBot {
     	"|!seturl <url>         - Sets the URL that appears in the announcements.          |",
     	"|!grantzone            - Grants the radio host another zoner.                     |",
     	"|!unhost               - Removes the current host.                                |",
-    	"|!setwelcome           - Use this if the host as put an inappropiate welcome msg  |",
+    	"|!setwelcome           - Use this if the host has put an inappropiate welcome msg |",
     	"|                        (Also !welcomeoff)                                       |",
         "+---------------------------------------------------------------------------------+"  
     };
