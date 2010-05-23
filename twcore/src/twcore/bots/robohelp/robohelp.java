@@ -92,6 +92,9 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats", OperatorList.ER_LEVEL);
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted", OperatorList.ER_LEVEL );
         
+        // Smod
+        m_commandInterpreter.registerCommand( "!say", acceptedMessages, this, "handleSay", OperatorList.SMOD_LEVEL );
+        
         // Sysop+ 
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload", OperatorList.SYSOP_LEVEL );
         m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "handleDie", OperatorList.SYSOP_LEVEL );
@@ -199,6 +202,10 @@ public class robohelp extends SubspaceBot {
             return new String( "Nothing found." );
        }
    }*/
+    
+    public void handleSay(String name, String msg){
+
+    m_botAction.sendChatMessage( msg );}
 
    public void handleBanNumber( String name, String message ){
         String number;
