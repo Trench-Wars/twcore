@@ -1,7 +1,6 @@
 package twcore.bots.whoisonbot;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +24,7 @@ import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaList;
+import twcore.core.events.InterProcessEvent;
 import twcore.core.events.KotHReset;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
@@ -32,13 +32,13 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
+import twcore.core.util.ipc.IPCMessage;
 
 /**
  * TODO
  * 
  * - Anti-spam function
  * - IPC Channel with shared informations if multiple WhoisOnBot
- * - !here to let the bot know that you are online
  * 
  */
 
@@ -53,20 +53,21 @@ import twcore.core.util.Tools;
  */
 public class whoisonbot extends SubspaceBot {
 
-	private final static String VERSION = "0.2";
-	private final static boolean DEBUG = false;
-	
-	private final static Pattern LOCATE_PATTERN = Pattern.compile("(.+)\\s-\\s([#\\w\\d\\p{Z}]+)");
+	private final static String VERSION = "0.4";
+	private final static boolean DEBUG = true;
 
+	/* INTERVALS */
+	
 	private static final int ROAMING_INTERVAL = 20 * 1000; // 
 	private static final int ROAMING_INTERVAL_MULTIPLICATOR = 1750; // 1.75 sec. X population of the arena
-	
-	private static final int REMOVE_PLAYER_INTERVAL = 7 * 60 * 1000; // check every 7 minutes
-	private static final int REMOVE_PLAYER_LOCATE_INTERVAL = 3 * 60 * 1000; //
-	private static final int LAST_SEEN_TTL = 10 * 60;
+	private static final int REMOVE_PLAYER_INTERVAL = 3 * 60 * 1000; // check every 7 minutes
+	private static final int REMOVE_PLAYER_LOCATE_INTERVAL = 2 * 60 * 1000; //
+	private static final int LAST_SEEN_TTL = 10 * 60 * 1000;
+	private static final int IDLE_CHECK_INTERVAL = 10 * 60 * 1000;
 	private static final int ENTER_DELAY = 5000;
-
 	private static final int GROUP_PLAYER_LIST_INTERVAL = 60 * 60 * 1000; // every hour
+	
+	/* PRIORITY QUEUING */
 	
 	private static final int ARENA_SIZE_HIGH_PRIORITY = 20;
 	private static final int ARENA_SIZE_LOW_PRIORITY = 2;
@@ -75,6 +76,21 @@ public class whoisonbot extends SubspaceBot {
 	private static final int ARENA_NORMAL_PRIORITY_WEIGHT = 2;
 	private static final int ARENA_LOW_PRIORITY_WEIGHT = 1;
 
+	/* MASTER-SLAVE */
+	
+	private static enum Status { MASTER, SLAVE };
+	private static final String REQUEST_MASTER = "REQUEST_MASTER";
+	private static final String MASTER = "MASTER";
+	private static final String SLAVE = "SLAVE";
+	private static final String PLAYER_SEEN = "SEEN:";
+	private static final String ROAMING_ARENA = "ROAMARENA:";
+	
+	/* ... */
+	
+	private final static Pattern LOCATE_PATTERN = Pattern.compile("(.+)\\s-\\s([#\\w\\d\\p{Z}]+)");
+	
+	/* VARIABLES */
+	
 	private OperatorList opList;
 	private String currentArena;
 	private RoamTask roamTask;
@@ -89,6 +105,9 @@ public class whoisonbot extends SubspaceBot {
 	
 	private static enum GroupCategory { PUB, TWD, TWHT, STAFF }
 	private Map<String, PlayerGroup> groups;
+	
+	private Status status;
+	private String masterName;
 	
     private static final String HELP_MESSAGE [] = {
     	
@@ -115,26 +134,101 @@ public class whoisonbot extends SubspaceBot {
 		players = Collections.synchronizedMap(new HashMap<String, PlayerInfo>());
 		groups = Collections.synchronizedMap(new HashMap<String, PlayerGroup>());
 		arenas = new HashMap<String, Integer>();
-
-		accessList = new HashSet<String>();
-		roamTask = new RoamTask();
-		//m_botAction.ipcSubscribe(IPCCHANNEL);
-
-		m_botAction.scheduleTaskAtFixedRate(new RemovePlayersTask(), REMOVE_PLAYER_INTERVAL, REMOVE_PLAYER_INTERVAL);
 		
+		accessList = new HashSet<String>();
+				
 	}
-
+	
 	public void handleEvent(LoggedOn event) {
 
 		BotSettings botSettings = m_botAction.getBotSettings();
-
+		
 		opList = m_botAction.getOperatorList();
+		
+		if (botSettings.getString("Type"+m_botAction.getBotNumber()).equals("master")) {
+			status = Status.MASTER;
+		} else {
+			status = Status.SLAVE;
+		}
 
-		m_botAction.sendUnfilteredPublicMessage("?chat="
-				+ botSettings.getString("chat"));
-		changeArena(botSettings.getString("initialarena"));
+		m_botAction.sendUnfilteredPublicMessage("?chat=" + botSettings.getString("chat"));
+		
 		setupAccessList(botSettings.getString("accesslist"));
+		
+		m_botAction.ipcSubscribe(IPCCHANNEL);
 
+		if (status.equals(Status.SLAVE)) {
+			
+			m_botAction.ipcSendMessage(IPCCHANNEL, REQUEST_MASTER, null, m_botAction.getBotName());
+			if (DEBUG)
+				System.out.println("Requesting master..");
+			m_botAction.scheduleTask(new CheckRequestMasterAnswerTask(), (long)Math.random()*60000);
+		}
+		else {
+			start();
+		}
+
+	}
+	
+	/**
+	 * Starting only when we know if we are MASTER or SLAVE.
+	 */
+	public void start() {
+		
+		changeArena(m_botAction.getBotSettings().getString("initialarena"));
+		roamTask = new RoamTask();
+		if (status.equals(Status.MASTER)) {
+			m_botAction.scheduleTaskAtFixedRate(new RemovePlayersTask(), REMOVE_PLAYER_INTERVAL, REMOVE_PLAYER_INTERVAL);
+		}
+	}
+	
+	public void handleEvent(InterProcessEvent event) {
+		
+		if (event.getObject()==null)
+			return;
+
+		if (event.getSenderName().equals(m_botAction.getBotName()))
+			return;
+		
+		if (event.getObject() instanceof Message) {
+			
+			handleEvent((Message)event.getObject());
+			
+		}
+
+		else if (event.getObject() instanceof IPCMessage) {
+		
+			IPCMessage ipcMessage = (IPCMessage)event.getObject();
+			String message = ipcMessage.getMessage();
+			
+			System.out.println("IPC received from (" + event.getSenderName() + "): " + message);
+			
+			if (REQUEST_MASTER.equals(message)) {
+				
+				if (status.equals(status.MASTER)) {
+					m_botAction.ipcSendMessage(IPCCHANNEL, MASTER, event.getSenderName(), m_botAction.getBotName());
+				}
+			}
+			else if (MASTER.equals(message)) {
+				masterName = event.getSenderName();
+			}
+			else if (message.startsWith(PLAYER_SEEN) && status.equals(Status.MASTER)) {
+				
+				String[] split = message.substring(PLAYER_SEEN.length()).split(":::");
+				updatePlayer(split[0], Boolean.getBoolean(split[1]));
+				
+			}
+			else if(message.startsWith(ROAMING_ARENA) && status.equals(Status.MASTER)) {
+				
+				String arena = message.substring(ROAMING_ARENA.length());
+				synchronized (arenas) {
+					arenas.put(arena, 0);
+				}
+				
+			}
+		
+		}
+		
 	}
 	
 	public void handleEvent(PlayerEntered event) {
@@ -153,6 +247,11 @@ public class whoisonbot extends SubspaceBot {
 
 	public void handleEvent(Message event) {
 
+		if (status.equals(Status.SLAVE)) {
+			m_botAction.ipcTransmit(IPCCHANNEL, event);
+			return;
+		}
+		
 		String message = event.getMessage();
 		int messageType = event.getMessageType();
 		
@@ -190,9 +289,23 @@ public class whoisonbot extends SubspaceBot {
 			handleDisconnect();
 		} 
 		else if(command.equals("!here")) {
+			
 			if (!players.containsKey(sender.toLowerCase())) {
-				PlayerInfo player = new PlayerInfo(sender, (short)m_botAction.getPlayerID(sender), m_botAction.getPlayer(sender).getSquadName(), "Unknown");
+				PlayerInfo player = new PlayerInfo(sender, "Unknown");
 				players.put(sender.toLowerCase(), player);
+				m_botAction.sendPrivateMessage(sender, "You have been added.");
+			}
+			else {
+				m_botAction.sendPrivateMessage(sender, "You are already monitored.");
+			}
+		}
+		else if(command.equals("!me")) {
+			
+			if (players.containsKey(sender.toLowerCase())) {
+				lookupPlayer(sender);
+			}
+			else {
+				m_botAction.sendPrivateMessage(sender, "You are not monitored yet.");
 			}
 		}
 		else if(command.startsWith("!twd")) {
@@ -203,7 +316,7 @@ public class whoisonbot extends SubspaceBot {
 				String identifier = "twd_"+squadname;
 
 				if (groups.containsKey(identifier) && !groups.get(identifier).needUpdate()) {
-					showGroup(identifier, sender);	
+					lookupGroup(identifier, sender);	
 				}
 				else {
 					m_botAction.sendPrivateMessage(sender, "Please wait while retrieving the player list..");
@@ -230,7 +343,7 @@ public class whoisonbot extends SubspaceBot {
 				String identifier = "pub_"+squadname;
 
 				if (groups.containsKey(identifier) && !groups.get(identifier).needUpdate()) {
-					showGroup(identifier, sender);	
+					lookupGroup(identifier, sender);	
 				}
 				else {
 					m_botAction.sendPrivateMessage(sender, "Please wait while retrieving the player list..");
@@ -249,7 +362,7 @@ public class whoisonbot extends SubspaceBot {
 
 	}
 	
-	private void showGroup(String identifier, String sender) {
+	private void lookupGroup(String identifier, String sender) {
 		
 		ArrayList<String> lines = new ArrayList<String>();
 		
@@ -310,6 +423,43 @@ public class whoisonbot extends SubspaceBot {
 		}
 
 	}
+	
+	private void lookupPlayer(String playerName) {
+		
+		ArrayList<String> lines = new ArrayList<String>();
+
+		if (players.containsKey(playerName.toLowerCase())) {
+			
+			StringBuffer buffer = new StringBuffer();
+			buffer.append(Tools.formatString("Player Name", 24));
+			buffer.append(Tools.formatString("Status", 20));
+			buffer.append(Tools.formatString("Arena", 20));
+			buffer.append(Tools.formatString("Last Updated", 18));
+			lines.add(buffer.toString());
+			
+			PlayerInfo player = players.get(playerName.toLowerCase());
+			buffer = new StringBuffer();
+			buffer.append(Tools.formatString(player.getPlayerName(), 24));
+			String arena = player.getArenaLastSeen();
+			if (arena.startsWith("("))
+				arena = arena.substring(1,arena.length()-1);
+			if (player.getIdleTime()==0) {
+				if (player.isPlaying()) {
+					buffer.append(Tools.formatString("Playing", 20));
+				} else {
+					buffer.append(Tools.formatString("In spec", 20));
+				}
+			} else {
+				buffer.append(Tools.formatString("Idle ("+player.getIdleTime()+" sec)", 20));
+			}
+			buffer.append(Tools.formatString(arena, 20));
+			buffer.append(Tools.formatString(player.getLastUpdate() + " sec. ago", 18));
+			lines.add(buffer.toString());
+		}
+			
+		m_botAction.privateMessageSpam(playerName, lines.toArray(new String[lines.size()]));
+
+	}
 
 	private void handleArenaMessage(String message) {
 
@@ -327,7 +477,8 @@ public class whoisonbot extends SubspaceBot {
 				String arenaName = m.group(2);
 
 				if (players.containsKey(playerName)) {
-					System.out.println("Locate received: " + playerName);
+					if (DEBUG)
+						System.out.println("Locate received: " + playerName);
 					players.get(playerName).seen();
 				}
 
@@ -397,6 +548,18 @@ public class whoisonbot extends SubspaceBot {
 		m_botAction.scheduleTask(new CheckPlayersTask(), ENTER_DELAY);
 		scheduleRoamTask(ROAMING_INTERVAL);
 	}
+	
+	/**
+	 * This method update the idling information of a player
+	 */
+	private void checkRequestMasterAnswer() {
+
+		if (masterName != null) {
+			if (DEBUG)
+				System.out.println(masterName + " is my new master.");
+			start();
+		}
+	}
 
 	/**
 	 * This method update the idling information of a player
@@ -405,37 +568,59 @@ public class whoisonbot extends SubspaceBot {
 
 		Iterator<Player> iterator = m_botAction.getPlayerIterator();
 
+		ArrayList<String> players = new ArrayList<String>();
+		
 		while (iterator.hasNext()) {
 
 			Player player = iterator.next();
 			String playerName = m_botAction.getPlayerName(player.getPlayerID());
 
-
 			if (playerName == null)
 				continue;
 			
-			PlayerInfo playerInfo;
-
-			if (players.containsKey(playerName.toLowerCase())) {
-
-				playerInfo = players.get(playerName.toLowerCase());
-				playerInfo.seen();
-				playerInfo.setArena(m_botAction.getArenaName());
-				playerInfo.setIsPlaying(player.isPlaying());
-				
-			} else {
-				
-				if (DEBUG)
-					System.out.println("New player: " + playerName);
-
-				playerInfo = new PlayerInfo(playerName, player.getPlayerID(),
-						player.getSquadName(), m_botAction.getArenaName());
-				playerInfo.setIsPlaying(player.isPlaying());
-				players.put(playerName.toLowerCase(), playerInfo);
-				m_botAction.sendUnfilteredPrivateMessage(playerName, "*info");
-				m_botAction.sendUnfilteredPrivateMessage(playerName, "*einfo");
+			if (status.equals(Status.MASTER)) {
+				updatePlayer(playerName, player.isPlaying());
 			}
+			else {
+				String message = PLAYER_SEEN+playerName+":::"+(player.isPlaying()?1:0);
+				m_botAction.ipcSendMessage(IPCCHANNEL, message, masterName, m_botAction.getBotName());
+			}
+			
 		}
+
+	}
+	
+	public void updatePlayer(String playerName, boolean isPlaying) {
+		
+		PlayerInfo playerInfo;
+
+		if (players.containsKey(playerName.toLowerCase())) {
+
+			playerInfo = players.get(playerName.toLowerCase());
+			playerInfo.seen();
+			playerInfo.setArena(m_botAction.getArenaName());
+			playerInfo.setIsPlaying(isPlaying);
+			if (IDLE_CHECK_INTERVAL < playerInfo.getLastIdleCheck()) {
+				sendIdleTimeInfo(playerName);
+			}
+			
+		} else {
+			
+			if (DEBUG)
+				System.out.println("New player: " + playerName);
+
+			playerInfo = new PlayerInfo(playerName, m_botAction.getArenaName());
+			playerInfo.setIsPlaying(isPlaying);
+			players.put(playerName.toLowerCase(), playerInfo);
+			sendIdleTimeInfo(playerName);
+		}
+	}
+	
+	public void sendIdleTimeInfo(String playerName) {
+		if (DEBUG)
+			System.out.println("Sending *info/*einfo to " + playerName);
+		m_botAction.sendUnfilteredPrivateMessage(playerName, "*info");
+		m_botAction.sendUnfilteredPrivateMessage(playerName, "*einfo");
 	}
 
 	/**
@@ -447,7 +632,7 @@ public class whoisonbot extends SubspaceBot {
 	public void handleEvent(ArenaList event) {
 
 		try {
-
+			
 			// Remove non-existing arena
 			synchronized (arenas) {
 				
@@ -490,14 +675,15 @@ public class whoisonbot extends SubspaceBot {
 			changeArena(highest);
 			
 			int customRoamingInterval = ENTER_DELAY+(ROAMING_INTERVAL_MULTIPLICATOR*event.getArenaList().get(highest));
-			
-			if (DEBUG)
-				System.out.println("Roaming interval: " + customRoamingInterval);
-			
+
 			scheduleRoamTask(customRoamingInterval);
 			
+			m_botAction.ipcSendMessage(IPCCHANNEL, ROAMING_ARENA+highest, null, m_botAction.getBotName());
+			
 			// Reset the heaviest
-			arenas.put(highest, 0);
+			synchronized (arenas) {
+				arenas.put(highest, 0);
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -544,7 +730,7 @@ public class whoisonbot extends SubspaceBot {
 					groups.get(identifier).updatePlayersList(playersName);
 				}
 
-				showGroup(identifier, sender);
+				lookupGroup(identifier, sender);
 				
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -610,6 +796,7 @@ public class whoisonbot extends SubspaceBot {
 							System.out.println("Removing player: " + player.getPlayerName());
 						it.remove();
 					} else if (LAST_SEEN_TTL < (System.currentTimeMillis() - player.lastSeen)) {
+						System.out.println((System.currentTimeMillis() - player.lastSeen));
 						m_botAction.locatePlayer(player.getPlayerName());
 						if (DEBUG)
 							System.out.println("Locating: " + player.getPlayerName());
@@ -631,6 +818,12 @@ public class whoisonbot extends SubspaceBot {
 		}
 	}
 
+	private class CheckRequestMasterAnswerTask extends TimerTask {
+		public void run() {
+			checkRequestMasterAnswer();
+		}
+	}
+	
 	private class CheckPlayersTask extends TimerTask {
 		public void run() {
 			if (DEBUG)
@@ -741,21 +934,17 @@ public class whoisonbot extends SubspaceBot {
 	private class PlayerInfo {
 
 		private String playerName;
-		private short playerID;
-		private String playerSquad;
 		private String arenaLastSeen;
 		private long lastUpdate;
+		private long lastIdleCheck;
 		private long lastLocate;
 		private long lastSeen;
 		private int idleTime;
 		private boolean isPlaying;
 
-		public PlayerInfo(String playerName, short playerID,
-				String playerSquad, String arena) {
+		public PlayerInfo(String playerName, String arena) {
 
 			this.playerName = playerName;
-			this.playerID = playerID;
-			this.playerSquad = playerSquad;
 			this.lastLocate = System.currentTimeMillis();
 			this.lastSeen = System.currentTimeMillis();
 			this.lastUpdate = System.currentTimeMillis();
@@ -796,21 +985,14 @@ public class whoisonbot extends SubspaceBot {
 
 		public void setIdle(int idleTime) {
 			this.idleTime = idleTime;
+			this.lastIdleCheck = System.currentTimeMillis();
 			update();
 		}
 		
 		public String getPlayerName() {
 			return playerName;
 		}
-		
-		public String getPlayerSquad() {
-			return playerSquad;
-		}
-		
-		public short getPlayerID() {
-			return playerID;
-		}
-		
+				
 		public boolean isPlaying() {
 			return isPlaying;
 		}
@@ -819,6 +1001,12 @@ public class whoisonbot extends SubspaceBot {
 		 * @return idle time (in second) since the last check */
 		public int getIdleTime() {
 			return idleTime;
+		}
+		
+		/**
+		 * @return last idle info update (in second) since the last check */
+		public int getLastIdleCheck() {
+			return (int)(System.currentTimeMillis()-lastIdleCheck)/1000;
 		}
 		
 		/**
