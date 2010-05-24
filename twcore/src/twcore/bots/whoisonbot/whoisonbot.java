@@ -50,12 +50,12 @@ import twcore.core.util.ipc.IPCMessage;
  */
 public class whoisonbot extends SubspaceBot {
 
-	private final static boolean DEBUG = true;
+	private final static boolean DEBUG = false;
 
 	/* INTERVALS */
 	
 	private static final int ROAMING_INTERVAL = 60 * 1000; // 
-	private static final int ROAMING_INTERVAL_MULTIPLICATOR = 1750; // 1.75 sec. X population of the arena
+	private static final int ROAMING_INTERVAL_MULTIPLICATOR = 1500; // 1.75 sec. X population of the arena
 	private static final int REMOVE_PLAYER_INTERVAL = 7 * 60 * 1000; // check every 7 minutes
 	private static final int REMOVE_PLAYER_LOCATE_INTERVAL = 2 * 60 * 1000; //
 	private static final int LAST_SEEN_TTL = 10 * 60 * 1000;
@@ -208,7 +208,8 @@ public class whoisonbot extends SubspaceBot {
 			IPCMessage ipcMessage = (IPCMessage)event.getObject();
 			String message = ipcMessage.getMessage();
 			
-			System.out.println("IPC received from (" + event.getSenderName() + "): " + message);
+			if (DEBUG)
+				System.out.println("IPC received from (" + event.getSenderName() + "): " + message);
 			
 			if (REQUEST_MASTER.equals(message)) {
 				
@@ -288,6 +289,9 @@ public class whoisonbot extends SubspaceBot {
 
 	private void handlePrivateCommand(String command, String sender) {
 
+		if (command == null || sender == null)
+			return;
+		
 		if(command.startsWith("!help")) {
 
 			m_botAction.remotePrivateMessageSpam(sender, HELP_MESSAGE);
@@ -686,11 +690,14 @@ public class whoisonbot extends SubspaceBot {
 			
 			if (DEBUG)
 				System.out.println("Roaming to: " + highest);
-			
+
 			// Reset the heaviest
 			synchronized (arenas) {
 				arenas.put(highest, 0);
 			}
+			
+
+			System.out.println(m_botAction.getBotName()+"("+highest+"): "+arenas);
 			
 			changeArena(highest);
 			
