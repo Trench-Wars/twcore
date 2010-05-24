@@ -174,7 +174,6 @@ public class whoisonbot extends SubspaceBot {
 		
 	
 		changeArena(m_botAction.getBotSettings().getString("initialarena"));
-		scheduleRoamTask(ROAMING_INTERVAL);
 		roamTask = new RoamTask();
 		if (status.equals(Status.MASTER)) {
 			m_botAction.scheduleTaskAtFixedRate(new RemovePlayersTask(), REMOVE_PLAYER_INTERVAL, REMOVE_PLAYER_INTERVAL);
@@ -293,11 +292,6 @@ public class whoisonbot extends SubspaceBot {
 			if(opList.isSmod(sender) || accessList.contains(sender.toLowerCase())) {
 				 m_botAction.remotePrivateMessageSpam(sender, HELP_SMOD_MESSAGE);
 			} 
-			if (status.equals(Status.MASTER))
-				m_botAction.sendRemotePrivateMessage(sender, "------------------------------------------------------------MASTER-");
-			else	
-				m_botAction.sendRemotePrivateMessage(sender, "-------------------------------------------------------------SLAVE-");
-
 		}
 		else if(command.equals("!die") && (opList.isSmod(sender) || accessList.contains(sender.toLowerCase()))) {
 			handleDisconnect();
@@ -565,6 +559,7 @@ public class whoisonbot extends SubspaceBot {
 		m_botAction.changeArena(arenaName);
 		currentArena = arenaName;
 		m_botAction.scheduleTask(new CheckPlayersTask(), ENTER_DELAY);
+		scheduleRoamTask(ROAMING_INTERVAL);
 	}
 	
 	/**
