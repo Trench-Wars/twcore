@@ -172,7 +172,9 @@ public class whoisonbot extends SubspaceBot {
 	 */
 	public void start() {
 		
+	
 		changeArena(m_botAction.getBotSettings().getString("initialarena"));
+		scheduleRoamTask(ROAMING_INTERVAL);
 		roamTask = new RoamTask();
 		if (status.equals(Status.MASTER)) {
 			m_botAction.scheduleTaskAtFixedRate(new RemovePlayersTask(), REMOVE_PLAYER_INTERVAL, REMOVE_PLAYER_INTERVAL);
@@ -553,7 +555,7 @@ public class whoisonbot extends SubspaceBot {
 
 		int beginIndex = 0;
 		int endIndex;
-
+		
 		beginIndex = arenaName.indexOf("(Public ");
 		endIndex = arenaName.indexOf(")");
 
