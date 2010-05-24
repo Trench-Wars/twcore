@@ -156,7 +156,7 @@ public class whoisonbot extends SubspaceBot {
 		setupAccessList(botSettings.getString("accesslist"));
 		
 		m_botAction.ipcSubscribe(IPCCHANNEL);
-		m_botAction.socketSubscribe(SOCKETCHANNEL);
+		//m_botAction.socketSubscribe(SOCKETCHANNEL);
 
 		if (status.equals(Status.SLAVE)) {
 			
