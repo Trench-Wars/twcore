@@ -36,10 +36,7 @@ import twcore.core.util.ipc.IPCMessage;
 
 /**
  * TODO
- * 
  * - Anti-spam function
- * - IPC Channel with shared informations if multiple WhoisOnBot
- * 
  */
 
 
@@ -49,11 +46,10 @@ import twcore.core.util.ipc.IPCMessage;
  * 
  * Go from arena to arena to get the current population.
  * 
- * Author: Arobas+
+ * @author Arobas+
  */
 public class whoisonbot extends SubspaceBot {
 
-	private final static String VERSION = "0.4";
 	private final static boolean DEBUG = false;
 
 	/* INTERVALS */
@@ -286,11 +282,12 @@ public class whoisonbot extends SubspaceBot {
 		
 
 	}
-	
+
 	private void handlePrivateCommand(String command, String sender) {
 
 		if(command.startsWith("!help")) {
-			m_botAction.sendPrivateMessage(sender, "We are currently testing this bot. Nothing to see here (yet).");
+
+			m_botAction.sendRemotePrivateMessage(sender, "We are currently testing this bot. Nothing to see here (yet).");
 			/*
 			m_botAction.privateMessageSpam(sender, HELP_MESSAGE);
 			if(opList.isSmod(sender) || accessList.contains(sender.toLowerCase())) {
@@ -306,10 +303,12 @@ public class whoisonbot extends SubspaceBot {
 			if (!players.containsKey(sender.toLowerCase())) {
 				PlayerInfo player = new PlayerInfo(sender, "Unknown");
 				players.put(sender.toLowerCase(), player);
-				m_botAction.sendPrivateMessage(sender, "You have been added.");
+				m_botAction.sendRemotePrivateMessage(sender, "You have been added.");
+
 			}
 			else {
-				m_botAction.sendPrivateMessage(sender, "You are already monitored.");
+				m_botAction.sendRemotePrivateMessage(sender, "You are already monitored.");
+				
 			}
 		}
 		else if(command.equals("!me")) {
@@ -318,7 +317,8 @@ public class whoisonbot extends SubspaceBot {
 				lookupPlayer(sender);
 			}
 			else {
-				m_botAction.sendPrivateMessage(sender, "You are not monitored yet.");
+				m_botAction.sendRemotePrivateMessage(sender, "You are not monitored yet.");
+
 			}
 		}
 		else if(command.startsWith("!twd")) {
@@ -332,8 +332,9 @@ public class whoisonbot extends SubspaceBot {
 					lookupGroup(identifier, sender);	
 				}
 				else {
-					m_botAction.sendPrivateMessage(sender, "Please wait while retrieving the player list..");
-					String query = "SELECT fcUserName " +
+					m_botAction.sendRemotePrivateMessage(sender, "Please wait while retrieving the player list..");
+
+					String query = "SELECT fcUserName AS name " +
 						"FROM tblTeam t " +
 						"JOIN tblTeamUser tu ON t.fnTeamID = tu.fnTeamID " +
 						"JOIN tblUser u ON u.fnUserID = tu.fnUserID " +
@@ -359,12 +360,13 @@ public class whoisonbot extends SubspaceBot {
 					lookupGroup(identifier, sender);	
 				}
 				else {
-					m_botAction.sendPrivateMessage(sender, "Please wait while retrieving the player list..");
-					String query = "SELECT fcName " +
+					m_botAction.sendRemotePrivateMessage(sender, "Please wait while retrieving the player list..");
+
+					String query = "SELECT fcName AS name " +
 						"FROM tblPlayer " +
 						"WHERE fcSquad = '" + squadname + "'";
 											
-					m_botAction.SQLBackgroundQuery("website", "updategroup:::"+identifier+":::"+sender, query);
+					m_botAction.SQLBackgroundQuery("pubstats", "updategroup:::"+identifier+":::"+sender, query);
 				}
 			}
 			else {
@@ -427,7 +429,7 @@ public class whoisonbot extends SubspaceBot {
 			lines.add(" ");
 			lines.add("ONLINE: "+(playing+inspec+idle)+"    OFFLINE: "+offline);
 			
-			m_botAction.privateMessageSpam(sender, lines.toArray(new String[lines.size()]));
+			m_botAction.remotePrivateMessageSpam(sender, lines.toArray(new String[lines.size()]));
 			
 		
 		}
@@ -470,7 +472,7 @@ public class whoisonbot extends SubspaceBot {
 			lines.add(buffer.toString());
 		}
 			
-		m_botAction.privateMessageSpam(playerName, lines.toArray(new String[lines.size()]));
+		m_botAction.remotePrivateMessageSpam(playerName, lines.toArray(new String[lines.size()]));
 
 	}
 
@@ -559,7 +561,6 @@ public class whoisonbot extends SubspaceBot {
 		m_botAction.changeArena(arenaName);
 		currentArena = arenaName;
 		m_botAction.scheduleTask(new CheckPlayersTask(), ENTER_DELAY);
-		scheduleRoamTask(ROAMING_INTERVAL);
 	}
 	
 	/**
@@ -731,7 +732,7 @@ public class whoisonbot extends SubspaceBot {
 				
 				TreeSet<String> playersName = new TreeSet<String>();
 				while(set.next()) {
-					String name = set.getString("fcUserName");
+					String name = set.getString("name");
 					playersName.add(name);
 				}
 				if (!groups.containsKey(identifier)) {
