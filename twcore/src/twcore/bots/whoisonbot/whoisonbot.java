@@ -50,7 +50,7 @@ import twcore.core.util.ipc.IPCMessage;
  */
 public class whoisonbot extends SubspaceBot {
 
-	private final static boolean DEBUG = false;
+	private final static boolean DEBUG = true;
 
 	/* INTERVALS */
 	
@@ -106,7 +106,7 @@ public class whoisonbot extends SubspaceBot {
 	private String masterName;
 	
     private static final String HELP_MESSAGE [] = {
-    	
+
         "--------- WHO'S ONLINE COMMANDS -----------------------------------",
         "!here              - tell the bot that you are connected",
         "                     in case the bot had'nt picked up your name yet",
@@ -225,10 +225,12 @@ public class whoisonbot extends SubspaceBot {
 				updatePlayer(split[0], Boolean.getBoolean(split[1]));
 				
 			}
-			else if(message.startsWith(ROAMING_ARENA) && status.equals(Status.MASTER)) {
+			else if(message.startsWith(ROAMING_ARENA)) {
 				
 				String arena = message.substring(ROAMING_ARENA.length());
 				synchronized (arenas) {
+					if (DEBUG)
+						System.out.println("Reseting arena from a slave: " + arena);
 					arenas.put(arena, 0);
 				}
 				
@@ -658,32 +660,37 @@ public class whoisonbot extends SubspaceBot {
 						it.remove();
 					}
 				}
-			}
-
-			int weight = 0;
-
-			// Increment the weight of an arena
-			for (Entry<String, Integer> entry : event.getArenaList().entrySet()) {
-
-				if (entry.getValue() >= ARENA_SIZE_HIGH_PRIORITY) {
-					weight = ARENA_HIGH_PRIORITY_WEIGHT;
-				} else if (entry.getValue() > ARENA_SIZE_LOW_PRIORITY) {
-					weight = ARENA_NORMAL_PRIORITY_WEIGHT;
-				} else {
-					weight = ARENA_LOW_PRIORITY_WEIGHT;
+	
+				int weight = 0;
+	
+				// Increment the weight of an arena
+				for (Entry<String, Integer> entry : event.getArenaList().entrySet()) {
+	
+					if (entry.getValue() >= ARENA_SIZE_HIGH_PRIORITY) {
+						weight = ARENA_HIGH_PRIORITY_WEIGHT;
+					} else if (entry.getValue() > ARENA_SIZE_LOW_PRIORITY) {
+						weight = ARENA_NORMAL_PRIORITY_WEIGHT;
+					} else {
+						weight = ARENA_LOW_PRIORITY_WEIGHT;
+					}
+					
+					int currentWeight = 0;
+					if (arenas.containsKey(entry.getKey()))
+							currentWeight =  arenas.get(entry.getKey());
+	
+					arenas.put(entry.getKey(), currentWeight + weight);
 				}
-				
-				int currentWeight = 0;
-				if (arenas.containsKey(entry.getKey()))
-						currentWeight =  arenas.get(entry.getKey());
-
-				arenas.put(entry.getKey(), currentWeight + weight);
 			}
-
+			
 			String highest = getHighest(arenas);
 			
 			if (DEBUG)
 				System.out.println("Roaming to: " + highest);
+			
+			// Reset the heaviest
+			synchronized (arenas) {
+				arenas.put(highest, 0);
+			}
 			
 			changeArena(highest);
 			
@@ -693,11 +700,6 @@ public class whoisonbot extends SubspaceBot {
 			
 			m_botAction.ipcSendMessage(IPCCHANNEL, ROAMING_ARENA+highest, null, m_botAction.getBotName());
 			
-			// Reset the heaviest
-			synchronized (arenas) {
-				arenas.put(highest, 0);
-			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
