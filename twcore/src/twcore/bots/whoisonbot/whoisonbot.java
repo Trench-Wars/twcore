@@ -30,6 +30,7 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.SQLResultEvent;
+import twcore.core.events.SocketMessageEvent;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
@@ -54,13 +55,13 @@ import twcore.core.util.ipc.IPCMessage;
 public class whoisonbot extends SubspaceBot {
 
 	private final static String VERSION = "0.4";
-	private final static boolean DEBUG = true;
+	private final static boolean DEBUG = false;
 
 	/* INTERVALS */
 	
-	private static final int ROAMING_INTERVAL = 20 * 1000; // 
+	private static final int ROAMING_INTERVAL = 60 * 1000; // 
 	private static final int ROAMING_INTERVAL_MULTIPLICATOR = 1750; // 1.75 sec. X population of the arena
-	private static final int REMOVE_PLAYER_INTERVAL = 3 * 60 * 1000; // check every 7 minutes
+	private static final int REMOVE_PLAYER_INTERVAL = 7 * 60 * 1000; // check every 7 minutes
 	private static final int REMOVE_PLAYER_LOCATE_INTERVAL = 2 * 60 * 1000; //
 	private static final int LAST_SEEN_TTL = 10 * 60 * 1000;
 	private static final int IDLE_CHECK_INTERVAL = 10 * 60 * 1000;
@@ -94,10 +95,10 @@ public class whoisonbot extends SubspaceBot {
 	private OperatorList opList;
 	private String currentArena;
 	private RoamTask roamTask;
-	private RemovePlayersTask removePlayersTask;
 	private HashSet<String> accessList;
 	private String target;
 
+	private final String SOCKETCHANNEL = "whoisonline";
 	private final String IPCCHANNEL = "whoisonline";
 
 	private Map<String, PlayerInfo> players;
@@ -156,6 +157,7 @@ public class whoisonbot extends SubspaceBot {
 		setupAccessList(botSettings.getString("accesslist"));
 		
 		m_botAction.ipcSubscribe(IPCCHANNEL);
+		m_botAction.socketSubscribe(SOCKETCHANNEL);
 
 		if (status.equals(Status.SLAVE)) {
 			
@@ -180,6 +182,13 @@ public class whoisonbot extends SubspaceBot {
 		if (status.equals(Status.MASTER)) {
 			m_botAction.scheduleTaskAtFixedRate(new RemovePlayersTask(), REMOVE_PLAYER_INTERVAL, REMOVE_PLAYER_INTERVAL);
 		}
+	}
+	
+	public void handleEvent(SocketMessageEvent event) {
+		
+		System.out.println("RESPONSE!");
+		//event.setResponse("TES\nTdfsdf");
+		
 	}
 	
 	public void handleEvent(InterProcessEvent event) {
@@ -280,10 +289,13 @@ public class whoisonbot extends SubspaceBot {
 	private void handlePrivateCommand(String command, String sender) {
 
 		if(command.startsWith("!help")) {
+			m_botAction.sendPrivateMessage(sender, "We are currently testing this bot. Nothing to see here (yet).");
+			/*
 			m_botAction.privateMessageSpam(sender, HELP_MESSAGE);
 			if(opList.isSmod(sender) || accessList.contains(sender.toLowerCase())) {
 				 m_botAction.privateMessageSpam(sender, HELP_SMOD_MESSAGE);
 			} 
+			*/
 		}
 		else if(command.equals("!die") && (opList.isSmod(sender) || accessList.contains(sender.toLowerCase()))) {
 			handleDisconnect();
@@ -757,15 +769,6 @@ public class whoisonbot extends SubspaceBot {
 		m_botAction.cancelTask(roamTask);
 		roamTask = new RoamTask();
 		m_botAction.scheduleTask(roamTask, roamTime);
-	}
-	
-	/**
-	 * This method schedules a new remove player task */
-	private void scheduleRemovePlayersTask() {
-
-		m_botAction.cancelTask(removePlayersTask);
-		removePlayersTask = new RemovePlayersTask();
-		m_botAction.scheduleTask(removePlayersTask, REMOVE_PLAYER_INTERVAL);
 	}
 
 	private void setupAccessList(String accessString) {
