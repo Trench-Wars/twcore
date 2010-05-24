@@ -68,9 +68,9 @@ public class whoisonbot extends SubspaceBot {
 	private static final int ARENA_SIZE_HIGH_PRIORITY = 20;
 	private static final int ARENA_SIZE_LOW_PRIORITY = 2;
 
-	private static final int ARENA_HIGH_PRIORITY_WEIGHT = 3;
-	private static final int ARENA_NORMAL_PRIORITY_WEIGHT = 2;
-	private static final int ARENA_LOW_PRIORITY_WEIGHT = 1;
+	private static final double ARENA_HIGH_PRIORITY_WEIGHT = 2.5;
+	private static final double ARENA_NORMAL_PRIORITY_WEIGHT = 2;
+	private static final double ARENA_LOW_PRIORITY_WEIGHT = 1;
 
 	/* MASTER-SLAVE */
 	
@@ -97,7 +97,7 @@ public class whoisonbot extends SubspaceBot {
 	private final String IPCCHANNEL = "whoisonline";
 
 	private Map<String, PlayerInfo> players;
-	private HashMap<String, Integer> arenas; // Arena + Weight
+	private HashMap<String, Double> arenas; // Arena + Weight
 	
 	private static enum GroupCategory { PUB, TWD, TWHT, STAFF }
 	private Map<String, PlayerGroup> groups;
@@ -129,7 +129,7 @@ public class whoisonbot extends SubspaceBot {
 
 		players = Collections.synchronizedMap(new HashMap<String, PlayerInfo>());
 		groups = Collections.synchronizedMap(new HashMap<String, PlayerGroup>());
-		arenas = new HashMap<String, Integer>();
+		arenas = new HashMap<String, Double>();
 		
 		accessList = new HashSet<String>();
 				
@@ -232,7 +232,7 @@ public class whoisonbot extends SubspaceBot {
 				synchronized (arenas) {
 					if (DEBUG)
 						System.out.println("Reseting arena from a slave: " + arena);
-					arenas.put(arena, 0);
+					arenas.put(arena, 0d);
 				}
 				
 			}
@@ -294,9 +294,9 @@ public class whoisonbot extends SubspaceBot {
 		
 		if(command.startsWith("!help")) {
 
-			m_botAction.remotePrivateMessageSpam(sender, HELP_MESSAGE);
+			m_botAction.smartPrivateMessageSpam(sender, HELP_MESSAGE);
 			if(opList.isSmod(sender) || accessList.contains(sender.toLowerCase())) {
-				 m_botAction.remotePrivateMessageSpam(sender, HELP_SMOD_MESSAGE);
+				 m_botAction.smartPrivateMessageSpam(sender, HELP_SMOD_MESSAGE);
 			} 
 		}
 		else if(command.equals("!die") && (opList.isSmod(sender) || accessList.contains(sender.toLowerCase()))) {
@@ -307,11 +307,11 @@ public class whoisonbot extends SubspaceBot {
 			if (!players.containsKey(sender.toLowerCase())) {
 				PlayerInfo player = new PlayerInfo(sender, "Unknown");
 				players.put(sender.toLowerCase(), player);
-				m_botAction.sendRemotePrivateMessage(sender, "You have been added.");
+				m_botAction.sendSmartPrivateMessage(sender, "You have been added.");
 
 			}
 			else {
-				m_botAction.sendRemotePrivateMessage(sender, "You are already monitored.");
+				m_botAction.sendSmartPrivateMessage(sender, "You are already monitored.");
 				
 			}
 		}
@@ -321,7 +321,7 @@ public class whoisonbot extends SubspaceBot {
 				lookupPlayer(sender);
 			}
 			else {
-				m_botAction.sendRemotePrivateMessage(sender, "You are not monitored yet.");
+				m_botAction.sendSmartPrivateMessage(sender, "You are not monitored yet.");
 
 			}
 		}
@@ -336,7 +336,7 @@ public class whoisonbot extends SubspaceBot {
 					lookupGroup(identifier, sender);	
 				}
 				else {
-					m_botAction.sendRemotePrivateMessage(sender, "Please wait while retrieving the player list..");
+					m_botAction.sendSmartPrivateMessage(sender, "Please wait while retrieving the player list..");
 
 					String query = "SELECT fcUserName AS name " +
 						"FROM tblTeam t " +
@@ -364,7 +364,7 @@ public class whoisonbot extends SubspaceBot {
 					lookupGroup(identifier, sender);	
 				}
 				else {
-					m_botAction.sendRemotePrivateMessage(sender, "Please wait while retrieving the player list..");
+					m_botAction.sendSmartPrivateMessage(sender, "Please wait while retrieving the player list..");
 
 					String query = "SELECT fcName AS name " +
 						"FROM tblPlayer " +
@@ -433,7 +433,7 @@ public class whoisonbot extends SubspaceBot {
 			lines.add(" ");
 			lines.add("ONLINE: "+(playing+inspec+idle)+"    OFFLINE: "+offline);
 			
-			m_botAction.remotePrivateMessageSpam(sender, lines.toArray(new String[lines.size()]));
+			m_botAction.smartPrivateMessageSpam(sender, lines.toArray(new String[lines.size()]));
 			
 		
 		}
@@ -476,7 +476,7 @@ public class whoisonbot extends SubspaceBot {
 			lines.add(buffer.toString());
 		}
 			
-		m_botAction.remotePrivateMessageSpam(playerName, lines.toArray(new String[lines.size()]));
+		m_botAction.smartPrivateMessageSpam(playerName, lines.toArray(new String[lines.size()]));
 
 	}
 
@@ -655,9 +655,9 @@ public class whoisonbot extends SubspaceBot {
 			// Remove non-existing arena
 			synchronized (arenas) {
 				
-				Iterator<Entry<String,Integer>> it = arenas.entrySet().iterator();
+				Iterator<Entry<String,Double>> it = arenas.entrySet().iterator();
 				while (it.hasNext()) {
-					Entry<String,Integer> entry = it.next();
+					Entry<String,Double> entry = it.next();
 					if (!event.getArenaList().containsKey(entry.getKey())) {
 						if (DEBUG)
 							System.out.println("Removing arena : " + entry.getKey());
@@ -665,7 +665,7 @@ public class whoisonbot extends SubspaceBot {
 					}
 				}
 	
-				int weight = 0;
+				double weight = 0;
 	
 				// Increment the weight of an arena
 				for (Entry<String, Integer> entry : event.getArenaList().entrySet()) {
@@ -678,7 +678,7 @@ public class whoisonbot extends SubspaceBot {
 						weight = ARENA_LOW_PRIORITY_WEIGHT;
 					}
 					
-					int currentWeight = 0;
+					double currentWeight = 0;
 					if (arenas.containsKey(entry.getKey()))
 							currentWeight =  arenas.get(entry.getKey());
 	
@@ -693,11 +693,8 @@ public class whoisonbot extends SubspaceBot {
 
 			// Reset the heaviest
 			synchronized (arenas) {
-				arenas.put(highest, 0);
+				arenas.put(highest, 0d);
 			}
-			
-
-			System.out.println(m_botAction.getBotName()+"("+highest+"): "+arenas);
 			
 			changeArena(highest);
 			
@@ -853,12 +850,12 @@ public class whoisonbot extends SubspaceBot {
 		}
 	}
 	
-	private String getHighest(HashMap<String, Integer> arenas) {
+	private String getHighest(HashMap<String, Double> arenas) {
 		
-		int weight = 0;
+		double weight = 0;
 		String arena = "";
 		
-		for (Entry<String, Integer> entry :arenas.entrySet()) {
+		for (Entry<String, Double> entry :arenas.entrySet()) {
 			if (entry.getValue() > weight) {
 				weight = entry.getValue();
 				arena = entry.getKey();
