@@ -25,6 +25,7 @@ import twcore.core.events.SQLResultEvent;
 import twcore.core.events.ScoreReset;
 import twcore.core.events.ScoreUpdate;
 import twcore.core.events.SoccerGoal;
+import twcore.core.events.SocketMessageEvent;
 import twcore.core.events.SubspaceEvent;
 import twcore.core.events.TurfFlagUpdate;
 import twcore.core.events.TurretEvent;
@@ -354,6 +355,18 @@ public abstract class SubspaceBot {
     public void handleEvent( InterProcessEvent event ){
 
         Tools.printLog( m_botAction.getBotName() + ": InterProcess event not handled; ignored" );
+    }
+    
+    /**
+     * Request this event from EventRequester and override this method in your bot to
+     * handle this event (packet).  If you request this event and do not handle it,
+     * the default behavior defined here will be executed.  If you attempt to handle
+     * the event without requesting it from EventRequester, it will not be handled.
+     * @param event Event object of handled event (packet)
+     */
+    public void handleEvent( SocketMessageEvent event ){
+
+        Tools.printLog( m_botAction.getBotName() + ": SocketMessage event not handled; ignored" );
     }
 
     /**

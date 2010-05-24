@@ -3240,6 +3240,17 @@ public class BotAction
     {
         getCoreData().getInterProcessCommunicator().subscribe(channelName, m_botSession.getSubspaceBot());
     }
+    
+    /**
+     * Subscribes the current bot to the specified Socket Channel.  Do not attempt to
+     * use this method in the constructor of a bot.  Use it during or after handling
+     * the LoggedOn event, or at a later time.
+     * @param channelName Name of the Socket channel you wish to subscribe to.
+     */
+    public void socketSubscribe(String channelName)
+    {
+        getCoreData().getSocketCommunicator().subscribe(channelName, m_botSession.getSubspaceBot());
+    }
 
     /**
      * Unsubscribes this bot from the provided channelName.  If the bot is the last

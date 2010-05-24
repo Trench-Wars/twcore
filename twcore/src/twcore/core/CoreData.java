@@ -4,6 +4,7 @@ import java.io.File;
 
 import twcore.core.sql.SQLManager;
 import twcore.core.util.InterProcessCommunicator;
+import twcore.core.util.SocketCommunicator;
 import twcore.core.util.Tools;
 
 /**
@@ -22,6 +23,7 @@ import twcore.core.util.Tools;
 public class CoreData {
 
     private InterProcessCommunicator    m_comm;              // Command handler
+    private SocketCommunicator			m_socketComm;		 // Socket Command handler
     private SQLManager                  m_manager;           // SQL system manager
     private OperatorList                m_accessList;        // Access list
     private BotSettings                 m_generalSettings;   // CFG-loaded settings
@@ -33,6 +35,7 @@ public class CoreData {
     public CoreData( File setupFile ){
         m_generalSettings = new BotSettings( setupFile );
         m_comm = new InterProcessCommunicator();
+        m_socketComm = new SocketCommunicator(m_generalSettings.getInt( "SocketPort" ));
         m_accessList = OperatorList.getInstance();
         File sqlFile = new File( m_generalSettings.getString( "Core Location" )
         + "/corecfg/sql.cfg" );
@@ -84,6 +87,13 @@ public class CoreData {
      */
     public InterProcessCommunicator getInterProcessCommunicator(){
         return m_comm;
+    }
+    
+    /**
+     * @return Reference to the locally held SocketCommunicator
+     */
+    public SocketCommunicator getSocketCommunicator(){
+        return m_socketComm;
     }
 
     /**
