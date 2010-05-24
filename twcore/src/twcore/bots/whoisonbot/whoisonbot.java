@@ -287,13 +287,15 @@ public class whoisonbot extends SubspaceBot {
 
 		if(command.startsWith("!help")) {
 
-			m_botAction.sendRemotePrivateMessage(sender, "We are currently testing this bot. Nothing to see here (yet).");
-			/*
-			m_botAction.privateMessageSpam(sender, HELP_MESSAGE);
+			m_botAction.remotePrivateMessageSpam(sender, HELP_MESSAGE);
 			if(opList.isSmod(sender) || accessList.contains(sender.toLowerCase())) {
-				 m_botAction.privateMessageSpam(sender, HELP_SMOD_MESSAGE);
+				 m_botAction.remotePrivateMessageSpam(sender, HELP_SMOD_MESSAGE);
 			} 
-			*/
+			if (status.equals(Status.MASTER))
+				m_botAction.sendRemotePrivateMessage(sender, "------------------------------------------------------------MASTER-");
+			else	
+				m_botAction.sendRemotePrivateMessage(sender, "-------------------------------------------------------------SLAVE-");
+
 		}
 		else if(command.equals("!die") && (opList.isSmod(sender) || accessList.contains(sender.toLowerCase()))) {
 			handleDisconnect();
