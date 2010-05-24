@@ -438,7 +438,8 @@ public class whoisonbot extends SubspaceBot {
 		
 		}
 		else {
-			System.out.println("No group found for identifier: " + identifier);
+			if (DEBUG)
+				System.out.println("No group found for identifier: " + identifier);
 		}
 
 	}
@@ -806,7 +807,7 @@ public class whoisonbot extends SubspaceBot {
 							System.out.println("Removing player: " + player.getPlayerName());
 						it.remove();
 					} else if (LAST_SEEN_TTL < (System.currentTimeMillis() - player.lastSeen)) {
-						System.out.println((System.currentTimeMillis() - player.lastSeen));
+						
 						m_botAction.locatePlayer(player.getPlayerName());
 						if (DEBUG)
 							System.out.println("Locating: " + player.getPlayerName());
