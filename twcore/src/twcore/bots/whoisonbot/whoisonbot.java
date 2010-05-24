@@ -30,7 +30,6 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.SQLResultEvent;
-import twcore.core.events.SocketMessageEvent;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
@@ -184,12 +183,14 @@ public class whoisonbot extends SubspaceBot {
 		}
 	}
 	
+	/*
 	public void handleEvent(SocketMessageEvent event) {
 		
 		System.out.println("RESPONSE!");
 		//event.setResponse("TES\nTdfsdf");
 		
 	}
+	*/
 	
 	public void handleEvent(InterProcessEvent event) {
 		
