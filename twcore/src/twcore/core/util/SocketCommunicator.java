@@ -170,8 +170,13 @@ public class SocketCommunicator extends Thread {
 	 */
 	public synchronized void broadcast(String channelName, SocketMessageEvent event) {
 
-		SocketChannel channel = channels.get(channelName);
-		channel.broadcast(event);
+		if (channels.containsKey(channelName)) {
+			SocketChannel channel = channels.get(channelName);
+			channel.broadcast(event);
+		}
+		else {
+			event.setResponse("NO LISTENER");
+		}
 	}
 
 	/**
