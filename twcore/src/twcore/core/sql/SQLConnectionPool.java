@@ -23,6 +23,9 @@ import twcore.core.util.Tools;
  * and no connections are available, instead of waiting an SQLException is thrown.
  */
 public class SQLConnectionPool implements Runnable {
+    
+    private volatile static SQLConnectionPool connection;
+    
     private String  driver;                     // Driver used to make connections
     private String  dburl;                      // URL of the database to access
     private String  poolName;                   // Name used by bots to refer to pool
@@ -53,7 +56,7 @@ public class SQLConnectionPool implements Runnable {
      * @param driver
      * @throws SQLException
      */
-    public SQLConnectionPool(String poolName, String dbURL, int minPool, int maxPool, int wait, String driver) throws SQLException {
+    private SQLConnectionPool(String poolName, String dbURL, int minPool, int maxPool, int wait, String driver) throws SQLException {
 
         this.poolName = poolName;
         if( wait == 0 )
@@ -72,6 +75,19 @@ public class SQLConnectionPool implements Runnable {
         for(int i=0; i<initialConnections; i++) {
             availableConnections.addElement(makeNewConnection());
         }
+    }
+    
+    public static SQLConnectionPool getInstance(String poolName, String dbURL, int minPool, int maxPool, int wait, String driver) throws SQLException{
+        if( connection == null ){
+            synchronized( SQLConnectionPool.class ){
+                if( connection == null )
+                {
+                    connection = new SQLConnectionPool(poolName, dbURL, minPool, maxPool, wait, driver);
+                }
+            }
+        }
+        
+        return connection;
     }
 
     /**

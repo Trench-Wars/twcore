@@ -77,7 +77,7 @@ public class SQLManager extends Thread {
                 + sqlcfg.getString( "Login" + i ) + "&password="
                 + sqlcfg.getString( "Password" + i ) + "&autoReconnect=true" + "&autoReconnectForPools=true" + "&maxReconnects=2147483647" + "&initialTimeout=1" + "&logSlowQueries=true" + "&interactiveClient=true";
 
-                SQLConnectionPool db = new SQLConnectionPool( name, dburl,
+                SQLConnectionPool db = SQLConnectionPool.getInstance( name, dburl,
                 sqlcfg.getInt( "MinPoolSize" + i ),
                 sqlcfg.getInt( "MaxPoolSize" + i ),
                 sqlcfg.getInt( "WaitIfBusy" + i ),
@@ -225,7 +225,7 @@ public class SQLManager extends Thread {
 
     /**
      * Frees specified Connection for specified connectionpool using specified unique ID.
-     * This should be used when closing a PreparedStatement as it locks a connection on creation.
+     * This should be used when closing a PreparedState\ment as it locks a connection on creation.
      *
      * @param connectionName Name of the connection as defined in sql.cfg
      * @param uniqueID The unique ID used to create the Prepared Statement
