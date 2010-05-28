@@ -14,7 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import twcore.bots.pubhub.pubhubchat;
 import twcore.core.SubspaceBot;
 import twcore.core.events.SocketMessageEvent;
 
@@ -31,7 +30,6 @@ public class SocketCommunicator extends Thread {
 
 	private Map<String, SocketChannel> channels;
 
-	private pubhubchat bot;
 	private ServerSocket servsock;
 	private boolean running = true;
 
