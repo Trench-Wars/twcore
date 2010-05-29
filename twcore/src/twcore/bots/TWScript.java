@@ -3,7 +3,6 @@ package twcore.bots;
 import java.sql.ResultSet;
 import java.util.TreeMap;
 import java.util.Iterator;
-import java.util.Vector;
 
 import java.io.*;
 
@@ -255,12 +254,11 @@ public class TWScript extends MultiUtil {
     		if(f.exists()){
     			FileReader fr = new FileReader(f);
     			BufferedReader x = new BufferedReader(fr);
-    			Vector<String> stringBag = new Vector<String>();
+    			String textFile = "";
     			String s;
-    			while((s = x.readLine()) != null){
-    				stringBag.add(s);
-    			}
-    			String[] msgs = (String[]) stringBag.toArray();
+    			while((s = x.readLine()) != null)
+    				textFile += s + "\r";
+    			String[] msgs = textFile.split("\r");
     			m_botAction.smartPrivateMessageSpam(m_botAction.getBotName(), msgs);
     			m_botAction.sendSmartPrivateMessage( name, "Setup complete.");
     		}
