@@ -3,6 +3,9 @@ package twcore.bots;
 import java.sql.ResultSet;
 import java.util.TreeMap;
 import java.util.Iterator;
+import java.util.Vector;
+
+import java.io.*;
 
 import twcore.core.events.Message;
 import twcore.core.game.Player;
@@ -178,6 +181,8 @@ public class TWScript extends MultiUtil {
     		doArenaSetup(name, cmd.substring(7));
     	if (cmd.equalsIgnoreCase("!mysetup"))
     		doArenaSetup(name, name);
+    	if (cmd.startsWith("!fromfile "))
+    		doFromFile(name, cmd.substring(10));
     	if (cmd.startsWith("!addvar "))
     		doAddVar(name, cmd.substring(8));
     	if (cmd.startsWith("!setvar "))
@@ -238,6 +243,33 @@ public class TWScript extends MultiUtil {
         } catch (Exception e) {
             Tools.printStackTrace(e);
         }
+    }
+    
+    /**
+     * Handles arena setups from a .txt file. The message displays a location which
+     * may need forward or back slashes depending on the operating system.
+     */
+    public void doFromFile(String name, String message){
+    	try {
+    		File f = new File(message);
+    		if(f.exists()){
+    			FileReader fr = new FileReader(f);
+    			BufferedReader x = new BufferedReader(fr);
+    			Vector<String> stringBag = new Vector<String>();
+    			String s;
+    			while((s = x.readLine()) != null){
+    				stringBag.add(s);
+    			}
+    			String[] msgs = (String[]) stringBag.toArray();
+    			m_botAction.smartPrivateMessageSpam(m_botAction.getBotName(), msgs);
+    			m_botAction.sendSmartPrivateMessage( name, "Setup complete.");
+    		}
+    		else
+    			m_botAction.sendSmartPrivateMessage( name, "Setup failed; File does not exist.");
+  
+    	} catch (Exception e) {
+    		Tools.printStackTrace(e);
+    	}
     }
     
     /**
