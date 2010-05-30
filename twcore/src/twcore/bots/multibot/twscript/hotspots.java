@@ -80,7 +80,7 @@ public class hotspots extends MultiUtil {
         if (message.startsWith("!addspot "))
             do_addHotSpot(sender, message.substring(9, message.length()));
         if (message.startsWith("!addspotmsg "))
-            do_addMessage(sender, msg.substring(8));
+            do_addMessage(sender, msg.substring(12));
         if (message.startsWith("!removespot "))
             do_removeHotSpot(sender, message.substring(12));
         if (message.startsWith("!removemsg "))
