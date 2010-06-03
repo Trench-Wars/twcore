@@ -10,6 +10,7 @@ import twcore.core.events.SQLResultEvent;
  * stored in the queue and returned from the queue is SQLResultEvents.
  */
 public class SQLBackgroundQueue {
+    
     private LinkedList<SQLResultEvent> queue;
 
     /**
