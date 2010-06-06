@@ -3035,6 +3035,7 @@ public class BotAction
         }
         catch (Exception e)
         {
+        	Tools.printStackTrace(e);
         }
     }
 
@@ -3079,6 +3080,7 @@ public class BotAction
         }
         catch (Exception e)
         {
+        	Tools.printStackTrace(e);
         }
     }
 
