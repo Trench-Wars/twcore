@@ -435,9 +435,12 @@ SayHi|Hi!
 SayHello|Hello!
 SayWait|The game will end shortly.  Please be patient and wait for it to end.
 SayPlease|What is the magic word?
+SayNo|No.
+SayYes|Yes.
 SayTechSupport|We are sorry, but we do not have the answer to your question.  If you wish to post it on our tech support forum, please do so at: http://forums.trenchwars.org/forumdisplay.php?f=5.
 NotIllegal|Sorry, but that is not illegal in Trench Wars.
 Dontberude|Please do not be rude to the staff.
+Dontlie|Don't Lie!
 HelpAbuse|Please discontinue your use of the ?help command as Trench Wars Staff has deemed your requests invalid or excessive.
 CheaterAbuse|Please do not abuse ?cheater unless you have a valid cheater to report.
 AdvertAbuse|Please do not abuse ?advert.  If you would like to request an event, type '?help Please host eventname'. For instance, type '?help Please host turretwars!'
