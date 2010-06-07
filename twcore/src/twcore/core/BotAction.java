@@ -2491,6 +2491,11 @@ public class BotAction
         return flags;
     }
 
+    public void getBall(int playerID, int ballId){
+        
+        m_packetGenerator.sendBallPacket((short) playerID, (short) ballId);
+    }
+    
     /**
      * Drops all flags the bot is carrying.
      */

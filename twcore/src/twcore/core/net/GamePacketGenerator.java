@@ -742,6 +742,21 @@ public class GamePacketGenerator {
         sendReliableMessage( bytearray );
     }
 
+
+    public void sendBallPacket( short playerID, short ballId){
+        
+        ByteArray bytearray = new ByteArray( 3 );
+        if( playerID == -1 )
+        { 
+            bytearray.addByte(0x2E);
+        }
+        else
+            bytearray.addLittleEndianShort( ballId );
+        
+        sendReliableMessage( bytearray );
+        m_outboundQueue.forceInstantSend( new DatagramPacket( bytearray.getByteArray(), 3 ) );
+    }
+    
     /**
      * Sets the bot as a given ship number.  Unlike TWCore ship numbering
      * standards, the SS protocol uses ship 0 as warbird and 8 as spectator.
