@@ -255,8 +255,10 @@ public class bannerboy extends SubspaceBot {
 			    if(message.indexOf(':')==-1)
 			        return;
 
+			    //!say <>:<>
+			    //012345
 			    String pieces[] = message.split( ":" );
-		        m_botAction.sendSmartPrivateMessage( pieces[0], pieces[1] );
+		        m_botAction.sendSmartPrivateMessage( pieces[0].substring(5), pieces[1] );
 		        m_botAction.sendSmartPrivateMessage( player, "PM send to "+pieces[0]);
 			} else
 
