@@ -742,7 +742,7 @@ public class GamePacketGenerator {
         sendReliableMessage( bytearray );
     }
 
-
+/*
     public void sendBallPacket( short playerID, short ballId){
         
         ByteArray bytearray = new ByteArray( 3 );
@@ -756,7 +756,52 @@ public class GamePacketGenerator {
         sendReliableMessage( bytearray );
         m_outboundQueue.forceInstantSend( new DatagramPacket( bytearray.getByteArray(), 3 ) );
     }
-    
+  */
+    /**
+    * Sends a request to pick up a ball.
+    * @param ballID ID of ball to pick up
+    * @author Cheese
+    */
+    public void sendBallPickupPacket(byte ballID)
+    {
+        Tools.printConnectionLog("SEND BP: (0x20) Ball Pickup");
+        
+      
+        ByteArray bytearray = new ByteArray(6);
+        bytearray.addByte(0x20); //Type Byte
+        bytearray.addByte(ballID);
+        bytearray.addLittleEndianInt((int)(System.currentTimeMillis()/10) + m_serverTimeDifference);
+        
+        sendReliableMessage(bytearray);
+    }
+
+    /**
+    * Sends a ball fire packet.
+    * @param ballID ID of ball to fire
+    * @param xPosition Starting X position
+    * @param yPosition Starting Y position
+    * @param xVelocity Ball X velocity
+    * @param yVelocity Ball Y velocity
+    * @param playerID ID of player firing ball
+    * @author Cheese
+    */
+    public void sendBallFirePacket(byte ballID, short xPosition, short yPosition, short xVelocity, short yVelocity, short playerID)
+    {
+        Tools.printConnectionLog("SEND BF: (0x1F) Ball Fire");
+        
+        ByteArray bytearray=new ByteArray(16);
+        bytearray.addByte(0x1F); //Type Byte
+        bytearray.addByte(ballID);
+        bytearray.addLittleEndianShort(xPosition);
+        bytearray.addLittleEndianShort(yPosition);
+        bytearray.addLittleEndianShort(xVelocity);
+        bytearray.addLittleEndianShort(yVelocity);
+        bytearray.addLittleEndianShort(playerID);
+        bytearray.addLittleEndianInt((int)(System.currentTimeMillis()/10) + m_serverTimeDifference);
+        
+        sendReliableMessage(bytearray);
+    }
+  
     /**
      * Sets the bot as a given ship number.  Unlike TWCore ship numbering
      * standards, the SS protocol uses ship 0 as warbird and 8 as spectator.
