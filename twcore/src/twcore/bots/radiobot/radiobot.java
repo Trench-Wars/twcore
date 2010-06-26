@@ -1,5 +1,7 @@
 package twcore.bots.radiobot;
 
+import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -101,6 +103,9 @@ public final class radiobot extends SubspaceBot {
 		}
     }
 
+    public void handleEvent( SQLResultEvent event) {}
+
+    
 
         public void handleEvent(Message event) {
         	
@@ -187,6 +192,7 @@ public final class radiobot extends SubspaceBot {
     	boolean handled = false;
 
 		if(message.startsWith("!host")) {
+		    updateStatRecordsHOST( name );
         	handled = true;
             if(!m_someoneHosting){
                 m_currentHost = name;
@@ -199,7 +205,8 @@ public final class radiobot extends SubspaceBot {
                 m_botAction.sendPrivateMessage(id, "You are now the current host. Do not abuse the green messages, or write anything inappropriate. Thanks!");
                 m_botAction.sendChatMessage(name +" has enabled current hosting commands.");
             } else {
-                m_botAction.sendPrivateMessage(id, "Someone is already hosting. Wait until they are done, or get a <ER>+ to !unhost them first.");
+                m_botAction.sendPrivateMessage(id, "Someone is already hosting. Wait until they are done, or get an <ER>+ to !unhost them first.");
+                
             }
 
         } else if(message.startsWith("!who")) {
@@ -277,7 +284,29 @@ public final class radiobot extends SubspaceBot {
     }
 
 
-	/**
+	private void updateStatRecordsHOST(String name) {
+	    if( !m_botAction.SQLisOperational())
+            return;
+        
+        try {
+            String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
+            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+            if(result.next()) {
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+            } else {
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
+            }
+            m_botAction.SQLClose( result );
+            m_botAction.sendSmartPrivateMessage(name, "Added a host count for you on my database.");
+        } catch ( Exception e ) {
+            m_botAction.sendChatMessage("Error occured when registering host count :"+e.getMessage());
+            Tools.printStackTrace(e);
+        }
+    }
+        
+    
+
+    /**
 	 * Handle current host only commands
 	 */
 	@SuppressWarnings("fallthrough")
@@ -331,10 +360,10 @@ public final class radiobot extends SubspaceBot {
 	        }
             if(m_alreadyZoned.contains(name)) {
                 m_botAction.sendPrivateMessage(id, "Sorry, you've already used your zone message. Get an <ER>+ to grant you another.");
-            } else if(now < m_timeOfLastZone + TEN_MINUTES) {
+            } else if(now < m_timeOfLastZone + THIRTY_MINUTES) {
             	m_botAction.sendPrivateMessage(id, "Sorry, you must wait "
-            		+ ((m_timeOfLastZone + TEN_MINUTES - now) / 1000 / 60) + " minutes and "
-            		+ ((m_timeOfLastZone + TEN_MINUTES - now) / 1000 % 60) + " seconds before you may zone.");
+            		+ ((m_timeOfLastZone + THIRTY_MINUTES - now) / 1000 / 60) + " minutes and "
+            		+ ((m_timeOfLastZone + THIRTY_MINUTES - now) / 1000 % 60) + " seconds before you may zone.");
             } else {
                 m_botAction.sendZoneMessage(message.substring(6) + " -" + name, 2);
                 m_alreadyZoned.add(name);
@@ -490,7 +519,7 @@ public final class radiobot extends SubspaceBot {
         	handled = true;
             m_botAction.cancelTasks();
             m_announcing = false;
-            m_botAction.sendArenaMessage(m_currentHost + " has signed off the radio, thank you for listening!");
+            m_botAction.sendArenaMessage(m_currentHost + " has signed off the radio, thank you for listening!",5);
             m_botAction.sendChatMessage(name +" has finished hosting radio.");
             m_currentHost = "";
             m_someoneHosting = false;
@@ -586,7 +615,7 @@ public final class radiobot extends SubspaceBot {
 
 		} else if(message.equals("!die")) {
     		handled = true;
-    		m_botAction.sendChatMessage( "Dying....");
+    		m_botAction.sendChatMessage(name + " Just killed me!");
 			m_botAction.die();
 
 		} else if(message.startsWith("!grantzone")) {
@@ -637,7 +666,7 @@ public final class radiobot extends SubspaceBot {
 	            
 	        }
 	        try {
-	            m_botAction.SQLQueryAndClose( mySQLHost, "SELECT * FROM tblHost LIMIT 0,1" );
+	            m_botAction.SQLQueryAndClose( mySQLHost, "SELECT * FROM tblRadio_Host LIMIT 0,1" );
 	            m_botAction.sendChatMessage( "The Database is online. I can connect to it!" );
 	        } catch (Exception e ) {
 	            m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
