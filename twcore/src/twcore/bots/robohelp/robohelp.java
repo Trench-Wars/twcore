@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -39,6 +40,12 @@ public class robohelp extends SubspaceBot {
     													   // (90 secs - 1,5 min)
     public static final String ZONE_CHANNEL = "Zone Channel";
 
+    private UpdateDBHelpTask updateDBHelpTask = new UpdateDBHelpTask();
+    private UpdateDBCheaterTask updateDBCheaterTask = new UpdateDBCheaterTask();
+    
+    private HashMap<String,Call> callHelp;
+    private HashMap<String,Call> callCheater;
+    
     boolean             m_banPending = false;
     boolean             m_strictOnIts = true;
     String              m_lastBanner = null;
@@ -61,6 +68,8 @@ public class robohelp extends SubspaceBot {
 	int					setPopID = -1;
 
 	String	 			lastStafferClaimedCall;
+	
+	
 
     public robohelp( BotAction botAction ){
         super( botAction );
@@ -74,6 +83,11 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
         m_botAction.getEventRequester().request( EventRequester.MESSAGE );
+        
+        updateDBHelpTask = new UpdateDBHelpTask();
+        updateDBCheaterTask = new UpdateDBCheaterTask();
+        callHelp = new HashMap<String,Call>();
+        callCheater = new HashMap<String,Call>();
     }
 
     void registerCommands(){
@@ -426,6 +440,13 @@ public class robohelp extends SubspaceBot {
             helpRequest = new HelpRequest( playerName, message, null );
             m_playerList.put( playerName.toLowerCase(), helpRequest );
         }
+        
+        Call call = new Call(playerName, message);
+        String key = playerName+"-"+message;
+        callCheater.put(key, call);
+        
+        m_botAction.cancelTask(updateDBCheaterTask);
+        m_botAction.scheduleTask(updateDBCheaterTask, CALL_EXPIRATION_TIME+5);
     }
 
     public void handleHelp( String playerName, String message ){
@@ -435,7 +456,7 @@ public class robohelp extends SubspaceBot {
         if( playerName.compareTo( m_botAction.getBotName() ) == 0 ){
             return;
         }
-
+        
         lastHelpRequestName = playerName;
 
         if( opList.isBot( playerName ) ){
@@ -450,6 +471,10 @@ public class robohelp extends SubspaceBot {
             m_playerList.put( playerName.toLowerCase(), helpRequest );
             return;
         }
+        
+        Call call = new Call(playerName, message);
+        String key = playerName+"-"+message;
+        callHelp.put(key, call);
 
         callList.addElement( new EventData( new java.util.Date().getTime() ) ); //For Records
         response = search.search( message );
@@ -468,7 +493,8 @@ public class robohelp extends SubspaceBot {
         } else {
             m_botAction.sendChatMessage( "I'll take it!" );
             m_botAction.sendRemotePrivateMessage( playerName, helpRequest.getNextResponse() );
-
+            call.setStaffTaker("RoboHelp");
+            
             if( helpRequest.hasMoreResponses() == false ){
                 helpRequest.setAllowSummons( true );
                 m_botAction.sendRemotePrivateMessage( playerName, "If this is not helpful, type :" + m_botAction.getBotName() + ":!summon to request live help." );
@@ -476,6 +502,9 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendRemotePrivateMessage( playerName, "If this is not helpful, type :" + m_botAction.getBotName() + ":!next to retrieve the next response." );
             }
         }
+                
+        m_botAction.cancelTask(updateDBHelpTask);
+        m_botAction.scheduleTask(updateDBHelpTask, CALL_EXPIRATION_TIME+5);
     }
 
     public void handleNext( String playerName, String message ){
@@ -881,6 +910,15 @@ public class robohelp extends SubspaceBot {
             	m_botAction.sendRemotePrivateMessage(name, "Call claim of the player '"+player+"' recorded.");
             else
             	m_botAction.sendRemotePrivateMessage(name, "Call claim recorded.");
+            
+            String key = player+"-"+message;
+            Call call = callHelp.get(key);
+            if (call == null) {
+            	call = callCheater.get(key);
+            }
+            if (call != null) {
+            	call.setStaffTaker(name);
+            }
             
         } else {
         	// A staffer did "on it" while there was no call to take (or all calls were expired).
@@ -1385,6 +1423,64 @@ public class robohelp extends SubspaceBot {
         	return this.m_question;
         }
     }
+    
+	private class UpdateDBHelpTask extends TimerTask {
+		public void run() {
+			
+	        if( !m_botAction.SQLisOperational())
+	            return;
+
+	        try {
+	        	
+	            for(Call call: callHelp.values()) {
+	            	String dateCreated = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(call.dateCreated);
+	            	m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCallHelp (`fcUserName`, `fcMessage`, `fcUserNameTaker`, `fdCreated`)  VALUES ('"+call.playerName+"', '"+call.message+"', '"+call.staffTaker+"', '"+dateCreated+"')" );
+	            }
+	            
+	        } catch ( Exception e ) { 
+	        	Tools.printStackTrace(e);
+	        }
+		}
+	}
+	
+	private class UpdateDBCheaterTask extends TimerTask {
+		public void run() {
+			
+	        if( !m_botAction.SQLisOperational())
+	            return;
+
+	        try {
+	        	
+	            for(Call call: callCheater.values()) {
+	            	String dateCreated = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(call.dateCreated);
+	            	m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCallCheater (`fcUserName`, `fcMessage`, `fcUserNameTaker`, `fdCreated`)  VALUES ('"+call.playerName+"', '"+call.message+"', '"+call.staffTaker+"', '"+dateCreated+"')" );
+	            }
+	            
+	        } catch ( Exception e ) { 
+	        	Tools.printStackTrace(e);
+	        }
+			
+		}
+	}
+	
+	private class Call {
+		
+		public final String playerName;
+		public final String message;
+		public final Date dateCreated;
+		public String staffTaker = "";
+		
+		public Call(String playerName, String message) {
+			this.playerName = playerName;
+			this.message = message;
+			this.dateCreated = new Date();
+		}
+		
+		public void setStaffTaker(String playerName) {
+			this.staffTaker = playerName;
+		}
+		
+	}
 
 }
 
