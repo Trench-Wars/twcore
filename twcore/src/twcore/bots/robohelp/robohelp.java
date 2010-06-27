@@ -69,7 +69,6 @@ public class robohelp extends SubspaceBot {
 
 	String	 			lastStafferClaimedCall;
 	
-	
 
     public robohelp( BotAction botAction ){
         super( botAction );
@@ -447,7 +446,7 @@ public class robohelp extends SubspaceBot {
         
         updateDBCheaterTask.cancel();
         updateDBCheaterTask = new UpdateDBCheaterTask();
-        m_botAction.scheduleTask(updateDBCheaterTask, CALL_EXPIRATION_TIME+5);
+        m_botAction.scheduleTask(updateDBCheaterTask, CALL_EXPIRATION_TIME+5000);
     }
 
     public void handleHelp( String playerName, String message ){
@@ -506,7 +505,7 @@ public class robohelp extends SubspaceBot {
                 
         updateDBHelpTask.cancel();
         updateDBHelpTask = new UpdateDBHelpTask();
-        m_botAction.scheduleTask(updateDBHelpTask, CALL_EXPIRATION_TIME+5);
+        m_botAction.scheduleTask(updateDBHelpTask, CALL_EXPIRATION_TIME+5000);
     }
 
     public void handleNext( String playerName, String message ){
@@ -913,7 +912,7 @@ public class robohelp extends SubspaceBot {
             else
             	m_botAction.sendRemotePrivateMessage(name, "Call claim recorded.");
             
-            String key = player+"-"+message;
+            String key = lastHelpRequestName+"-"+message;
             Call call = callHelp.get(key);
             if (call == null) {
             	call = callCheater.get(key);
