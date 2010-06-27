@@ -445,7 +445,8 @@ public class robohelp extends SubspaceBot {
         String key = playerName+"-"+message;
         callCheater.put(key, call);
         
-        m_botAction.cancelTask(updateDBCheaterTask);
+        updateDBCheaterTask.cancel();
+        updateDBCheaterTask = new UpdateDBCheaterTask();
         m_botAction.scheduleTask(updateDBCheaterTask, CALL_EXPIRATION_TIME+5);
     }
 
@@ -503,7 +504,8 @@ public class robohelp extends SubspaceBot {
             }
         }
                 
-        m_botAction.cancelTask(updateDBHelpTask);
+        updateDBHelpTask.cancel();
+        updateDBHelpTask = new UpdateDBHelpTask();
         m_botAction.scheduleTask(updateDBHelpTask, CALL_EXPIRATION_TIME+5);
     }
 
@@ -1432,9 +1434,18 @@ public class robohelp extends SubspaceBot {
 
 	        try {
 	        	
-	            for(Call call: callHelp.values()) {
-	            	String dateCreated = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(call.dateCreated);
-	            	m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCallHelp (`fcUserName`, `fcMessage`, `fcUserNameTaker`, `fdCreated`)  VALUES ('"+call.playerName+"', '"+call.message+"', '"+call.staffTaker+"', '"+dateCreated+"')" );
+	        	Calendar calendar = Calendar.getInstance();
+	        	
+	            Iterator<Call> i = callHelp.values().iterator();
+	            while(i.hasNext()) {
+	            	Call call = i.next();
+	            	//calendar.setTime(call.dateCreated);
+	            	//calendar.set(Calendar.SECOND, 90);
+	            	//if (new Date().after(calendar.getTime())) {
+	            		String dateCreated = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(call.dateCreated);
+	            		m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCallHelp (`fcUserName`, `fcMessage`, `fcUserNameTaker`, `fdCreated`)  VALUES ('"+call.playerName+"', '"+call.message+"', '"+call.staffTaker+"', '"+dateCreated+"')" );
+	            		i.remove();
+	            	//}
 	            }
 	            
 	        } catch ( Exception e ) { 
@@ -1451,9 +1462,18 @@ public class robohelp extends SubspaceBot {
 
 	        try {
 	        	
-	            for(Call call: callCheater.values()) {
-	            	String dateCreated = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(call.dateCreated);
-	            	m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCallCheater (`fcUserName`, `fcMessage`, `fcUserNameTaker`, `fdCreated`)  VALUES ('"+call.playerName+"', '"+call.message+"', '"+call.staffTaker+"', '"+dateCreated+"')" );
+	        	Calendar calendar = Calendar.getInstance();
+	        	
+	            Iterator<Call> i = callCheater.values().iterator();
+	            while(i.hasNext()) {
+	            	Call call = i.next();
+	            	//calendar.setTime(call.dateCreated);
+	            	//calendar.set(Calendar.SECOND, 90);
+	            	//if (new Date().after(calendar.getTime())) {
+	            		String dateCreated = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(call.dateCreated);
+	            		m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCallCheater (`fcUserName`, `fcMessage`, `fcUserNameTaker`, `fdCreated`)  VALUES ('"+call.playerName+"', '"+call.message+"', '"+call.staffTaker+"', '"+dateCreated+"')" );
+	            		i.remove();
+	            	//}
 	            }
 	            
 	        } catch ( Exception e ) { 
