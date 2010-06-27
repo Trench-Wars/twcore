@@ -57,7 +57,8 @@ public class robohelp extends SubspaceBot {
     Map<String, HelpRequest> m_playerList;
 
     CommandInterpreter  m_commandInterpreter;
-    String              lastHelpRequestName = null;
+    String              lastHelpRequestName = "";
+    String				lastHelpRequestMessage = "";
 
     final String        mySQLHost = "website";
     Vector<EventData>   eventList = new Vector<EventData>();
@@ -432,6 +433,7 @@ public class robohelp extends SubspaceBot {
         HelpRequest     helpRequest;
 
         lastHelpRequestName = playerName;
+        lastHelpRequestMessage = message;
 
         callList.addElement( new EventData( new java.util.Date().getTime() ) ); //For Records
         helpRequest = m_playerList.get( playerName.toLowerCase() );
@@ -458,6 +460,7 @@ public class robohelp extends SubspaceBot {
         }
         
         lastHelpRequestName = playerName;
+        lastHelpRequestMessage = message;
 
         if( opList.isBot( playerName ) ){
             String tempMessage = "Staff members: Please use :" + m_botAction.getBotName() + ":!lookup instead of ?help!";
@@ -912,7 +915,7 @@ public class robohelp extends SubspaceBot {
             else
             	m_botAction.sendRemotePrivateMessage(name, "Call claim recorded.");
             
-            String key = lastHelpRequestName+"-"+message;
+            String key = lastHelpRequestName+"-"+lastHelpRequestMessage;
             Call call = callHelp.get(key);
             if (call == null) {
             	call = callCheater.get(key);
