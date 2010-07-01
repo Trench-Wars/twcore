@@ -57,7 +57,7 @@ public class robohelp extends SubspaceBot {
     Map<String, HelpRequest> m_playerList;
 
     CommandInterpreter  m_commandInterpreter;
-    String              lastHelpRequestName = "";
+    String              lastHelpRequestName = null;
     String				lastHelpRequestMessage = "";
 
     final String        mySQLHost = "website";
@@ -1151,8 +1151,10 @@ public class robohelp extends SubspaceBot {
     }
 
     public void updateStatRecordsONIT( String name ) {
-    	if( !m_botAction.SQLisOperational())
-            return;
+    	if( !m_botAction.SQLisOperational()) {
+    		System.out.println("(robohelp) SQL is not operational. Cannot record ONIT.");
+    		return;
+    	}
     	
         try {
             String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
