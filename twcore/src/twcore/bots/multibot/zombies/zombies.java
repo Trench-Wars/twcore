@@ -235,7 +235,7 @@ public class zombies extends MultiModule {
                 if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq && p2.getFrequency() != m_humanfreq){
                     m_botAction.setShip( event.getKilleeID(), m_zombieship );
                     m_botAction.setFreq( event.getKilleeID(), m_zombiefreq );
-                    if(!rebK)
+                    if(rebK)
                     	m_botAction.scoreReset( event.getKilleeID() );
                     String killmsg = killmsgs.toString();
                     int soundPos = killmsg.indexOf('%');
@@ -256,9 +256,9 @@ public class zombies extends MultiModule {
 
                     if( soundCode > 0 ){
                         killmsg = killmsg.substring(0, soundPos + 1);
-                        m_botAction.sendArenaMessage( p.getPlayerName() + killmsg, soundCode );
+                        m_botAction.sendArenaMessage( p.getPlayerName() + killmsg + " (" + p.getWins() + ")", soundCode );
                     } else {
-                        m_botAction.sendArenaMessage( p.getPlayerName() + killmsg );
+                        m_botAction.sendArenaMessage( p.getPlayerName() + killmsg + " (" + p.getWins() + ")");
                     }
                 }
                 // Check ship upgrade for a zombie killer
