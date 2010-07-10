@@ -49,6 +49,15 @@ public abstract class Statistic
 		m_variableType = DOUBLE;
 	}
 	
+	public Statistic(int statType, double initialValue, String shortForm, boolean derived)
+	{
+		m_shortForm = shortForm;
+		m_statisticType = statType;
+		m_doubleValue = initialValue;
+		m_derived = derived;
+		m_variableType = DOUBLE;
+	}
+	
 	/**
 	 * @return String The printout of the stat
 	 */

@@ -694,7 +694,7 @@ import java.util.Vector;
 
 			    public RepelsPerDeath(int shipType)
 			    {
-			        super(REPELS_PER_DEATH, "R/D", true); //derived is true
+			        super(REPELS_PER_DEATH, 0.0, "R/D", true); //derived is true
 			        m_shipType = shipType;
 			    }
 
