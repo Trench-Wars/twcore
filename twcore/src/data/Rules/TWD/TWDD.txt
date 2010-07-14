@@ -16,7 +16,7 @@ lineuptime=5
 forfeit_loser_score=0
 forfeit_winner_score=50
 captainsfixed=0
-pingmax=350
+pingmax=250
 lagoutextension=60
 subdelaytime=2
 blueout=1
@@ -27,7 +27,7 @@ blueout=1
 # (e.g. if set to 3 the bot will zone when squads within the 
 # top three play each other) zoneforladdertime sets the amount
 # of time to wait before zoning again in minutes.
-zoneforladder=2
+zoneforladder=3
 zoneforladdertime=90
 
 matchtype=4
@@ -57,15 +57,15 @@ obj_countdown54321=2
 obj_gogogo=3
 obj_gameover=4
 
-CurPing=330
-AvePing=300
+CurPing=250
+AvePing=250
 S2CPloss=3
 C2SPloss=3
-WeaponPloss=3
+WeaponPloss=2
 SlowS2C=5
 SlowC2S=5
-Med=80
-SpikeCount=6
+Med=75
+SpikeCount=5
 
 EnableLagLimits=1
 strictmidip=0

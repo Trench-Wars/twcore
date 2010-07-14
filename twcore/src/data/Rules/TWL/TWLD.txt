@@ -27,13 +27,6 @@ lagoutextension=60
 blueout=1
 aliascheck=1
 
-# Resolution limits
-# A player is put to spectator mode (after !add) if his 
-# X AND Y resolution is higher then what is specified below.
-# Set to 0 to disable limit.
-resolutionxmax=1280
-resolutionymax=900
-
 matchtype=1
 storegame=1
 loggame=0
@@ -43,6 +36,13 @@ shipchanges=0
 shipswitches=0
 substitutes=2
 lagouts=3
+
+# Resolution limits
+# A player is put to spectator mode (after !add) if his 
+# X AND Y resolution is higher then what is specified below.
+# Set to 0 to disable limit.
+resolutionxmax=1280
+resolutionymax=900
 
 [Arena]
 safe1x=312
@@ -59,14 +59,14 @@ obj_countdown54321=2
 obj_gogogo=3
 obj_gameover=4
 
-CurPing=350
-AvePing=300
+CurPing=250
+AvePing=250
 S2CPloss=3
 C2SPloss=3
-WeaponPloss=3
+WeaponPloss=2
 SlowS2C=5
 SlowC2S=5
-Med=200
+Med=75
 SpikeCount=5
 
 EnableLagLimits=1

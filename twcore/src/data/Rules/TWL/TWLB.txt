@@ -14,8 +14,8 @@ pickbyturn=2
 forfeit_loser_score=0
 forfeit_winner_score=1
 captainsfixed=1
-pingmax=350
-maxcurrping=350
+pingmax=250
+maxcurrping=250
 maxploss=3.5
 staffonly=1
 zoneok=1
@@ -38,7 +38,6 @@ maxship8=2
 # Set to 0 to disable limit.
 resolutionxmax=1280
 resolutionymax=900
-
 
 squadjoined=1
 rosterjoined=1
@@ -65,14 +64,17 @@ storegame=1
 loggame=0
 matchtype=3
 
-CurPing=330
-AvePing=300
-S2CPloss=4
-C2SPloss=4
-WeaponPloss=3
-SlowS2C=6
-SlowC2S=6
-Med=70
+CurPing=250
+AvePing=250
+MaxCurrPing1=150
+MaxCurrPing2=150
+MaxCurrPing7=150
+S2CPloss=3
+C2SPloss=3
+WeaponPloss=2
+SlowS2C=5
+SlowC2S=5
+Med=75
 SpikeCount=5
 
 EnableLagLimits=1
