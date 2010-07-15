@@ -3,9 +3,9 @@ package twcore.bots.purepubbot.location;
 public class pubpointBase implements pubpointlocation {
 
     @Override
-    public boolean givePoint() {
+    public int givePoint() {
         // TODO Auto-generated method stub
-        return false;
+        return 0;
     }
 
 }
