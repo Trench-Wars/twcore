@@ -16,6 +16,8 @@ import java.util.Vector;
 
 import twcore.bots.purepubbot.location.pubpointNullObject;
 import twcore.bots.purepubbot.location.pubpointlocation;
+import twcore.bots.purepubbot.ship.pubpointShipNullObject;
+import twcore.bots.purepubbot.ship.pubpointShipNumber;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -72,7 +74,8 @@ import twcore.core.util.Tools;
 public class purepubbot extends SubspaceBot
 {
     
-    private pubpointlocation pointLocation; //Strategy to give points depending on the player's location
+    private pubpointlocation pointLocationAlgorithm; //Strategy to give points depending on the player's location
+    private pubpointShipNumber pointShipAlgorithm;
     
     public static final int SPEC = 0;                   // Number of the spec ship
     public static final int FREQ_0 = 0;                 // Frequency 0
@@ -200,8 +203,8 @@ public class purepubbot extends SubspaceBot
         requestEvents();
 
         //Null Object to start the variable safely
-        this.pointLocation = new pubpointNullObject();
-
+        this.pointLocationAlgorithm = new pubpointNullObject();
+        this.pointShipAlgorithm = new pubpointShipNullObject();
         opList = m_botAction.getOperatorList();
         freq0List = new HashSet<String>();
         freq1List = new HashSet<String>();
