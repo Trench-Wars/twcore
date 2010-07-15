@@ -72,7 +72,7 @@ import twcore.core.util.Tools;
 public class purepubbot extends SubspaceBot
 {
     
-    private pubpointlocation pointLocation;
+    private pubpointlocation pointLocation; //Strategy to give points depending on the player's location
     
     public static final int SPEC = 0;                   // Number of the spec ship
     public static final int FREQ_0 = 0;                 // Frequency 0
