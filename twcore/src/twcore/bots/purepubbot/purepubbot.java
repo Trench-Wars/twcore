@@ -14,6 +14,8 @@ import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import twcore.bots.purepubbot.location.pubpointNullObject;
+import twcore.bots.purepubbot.location.pubpointlocation;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -69,6 +71,9 @@ import twcore.core.util.Tools;
  */
 public class purepubbot extends SubspaceBot
 {
+    
+    private pubpointlocation pointLocation;
+    
     public static final int SPEC = 0;                   // Number of the spec ship
     public static final int FREQ_0 = 0;                 // Frequency 0
     public static final int FREQ_1 = 1;                 // Frequency 1
@@ -193,6 +198,10 @@ public class purepubbot extends SubspaceBot
     {
         super(botAction);
         requestEvents();
+
+        //Null Object to start the variable safely
+        this.pointLocation = new pubpointNullObject();
+
         opList = m_botAction.getOperatorList();
         freq0List = new HashSet<String>();
         freq1List = new HashSet<String>();
@@ -383,7 +392,7 @@ public class purepubbot extends SubspaceBot
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
+    	String arenaToJoin = arenaNames[initialPub+1];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
@@ -1260,6 +1269,7 @@ public class purepubbot extends SubspaceBot
      * @param sender Player sending
      * @param argString Ship to change to
      */
+    
     /*
     public void doShipCmd(String sender, String argString ) {
 		throw new RuntimeException("!ship <ship#> is deprecated, you can change ship normally without losing any MVP status.");
