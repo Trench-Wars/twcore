@@ -38,7 +38,7 @@ public class PointLocation {
 		return !isInside(point);
 	}
 	
-	public int isPointInPolygon(Point point) {
+	private int isPointInPolygon(Point point) {
 		
 		if (pointOnVertex && isPointOnVertex(point)== true)
 			return POINT_VERTEX;
@@ -98,7 +98,7 @@ public class PointLocation {
 		
 		
 		PointLocation location = new PointLocation(vertices, true);
-		System.out.println(location.isPointInPolygon(new Point(50,50)) + ":2");
+
 		System.out.println(location.isPointInPolygon(new Point(49,50)) + ":5");
 		System.out.println(location.isPointInPolygon(new Point(51,50)) + ":3");
 		System.out.println(location.isPointInPolygon(new Point(51,51)) + ":4");
