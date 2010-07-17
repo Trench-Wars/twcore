@@ -865,6 +865,14 @@ public class purepubbot extends SubspaceBot
                 for(Integer i: this.shipPoints.values())
                     Tools.printLog("Ship Values "+i);
             }
+            else if(command.equals("!mypoints"))
+            {
+                if(players.containsKey(sender)){
+                    PubPlayer pubPlayer = this.players.get(sender);
+                    m_botAction.sendPrivateMessage(sender, "You have "+pubPlayer.getPoint()+" points");
+                }else
+                    m_botAction.sendPrivateMessage(sender, "You're still not in the point system. Wait a bit to be added");
+            }
         } catch(RuntimeException e) {
             if( e != null && e.getMessage() != null )
                 m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
