@@ -742,16 +742,16 @@ public class purepubbot extends SubspaceBot
         //decorates by ship number point
         points+=0;//shipPoints.get(killer.getShipType());
         
-        Point pointXY = new Point(killer.getXLocation(), killer.getYLocation());
+        //Point pointXY = new Point(killer.getXLocation(), killer.getYLocation());
         
         int location;
-        if(baseLocation.isInFlagRoom(pointXY))
+        /*if(baseLocation.isInFlagRoom(pointXY))
             location = areaPoints.get("flagroom");
         else if(baseLocation.isInMid(pointXY))
             location = areaPoints.get("mid");
         else
             location = areaPoints.get("spawn");
-        
+        */
         //decorates by area points
         points+=0;//areaPoints.get(location);
         
