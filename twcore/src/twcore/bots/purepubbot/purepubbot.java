@@ -17,7 +17,8 @@ import java.util.Vector;
 
 import twcore.bots.purepubbot.location.pubpointNullObject;
 import twcore.bots.purepubbot.location.pubpointlocation;
-import twcore.bots.purepubbot.pointlocation.BasePointLocation;
+import twcore.bots.purepubbot.pointlocation.FlagRoomPointLocation;
+import twcore.bots.purepubbot.pointlocation.MidPointLocation;
 import twcore.bots.purepubbot.ship.pubpointShipNullObject;
 import twcore.bots.purepubbot.ship.pubpointShipNumber;
 import twcore.core.BotAction;
@@ -85,7 +86,9 @@ public class purepubbot extends SubspaceBot
     
     private pubpointlocation pointLocationAlgorithm; //Strategy to give points depending on the player's location
     private pubpointShipNumber pointShipAlgorithm;
-    private BasePointLocation baseLocation;
+    private FlagRoomPointLocation flagRoomLocation;
+    private MidPointLocation midBaseLocation;
+    
     public static final int SPEC = 0;                   // Number of the spec ship
     public static final int FREQ_0 = 0;                 // Frequency 0
     public static final int FREQ_1 = 1;                 // Frequency 1
@@ -211,7 +214,9 @@ public class purepubbot extends SubspaceBot
         super(botAction);
         requestEvents();
         botSets = m_botAction.getBotSettings();
-        this.baseLocation = new BasePointLocation();
+        this.flagRoomLocation = new FlagRoomPointLocation();
+        this.midBaseLocation = new MidPointLocation();
+        
         //Null Object to start the variable safely
         this.pointLocationAlgorithm = new pubpointNullObject();
         this.pointShipAlgorithm = new pubpointShipNullObject();
@@ -734,39 +739,53 @@ public class purepubbot extends SubspaceBot
             return;
         boolean challengeFound = false;     // Players can only be in one at once
         
-        int points = 1;
-        
-        /**
-         * starts decorating the point
-        */
-        //decorates by ship number point
-        points+=0;//shipPoints.get(killer.getShipType());
-        
-        //Point pointXY = new Point(killer.getXLocation(), killer.getYLocation());
-        
-        int location;
-        /*if(baseLocation.isInFlagRoom(pointXY))
-            location = areaPoints.get("flagroom");
-        else if(baseLocation.isInMid(pointXY))
-            location = areaPoints.get("mid");
-        else
-            location = areaPoints.get("spawn");
-        */
-        //decorates by area points
-        points+=0;//areaPoints.get(location);
-        
-        //update on the map the player
-        PubPlayer pubPlayer;
-        String playerName = killer.getPlayerName();
-        if(players.containsKey(playerName))
-            pubPlayer = players.get(playerName);
-        else
-            pubPlayer = new PubPlayer(playerName);
-        
-        pubPlayer.setPoint(pubPlayer.getPoint()+points);
-        players.put(playerName, pubPlayer);
-        Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
-        //--
+        /** Point System */
+        try{
+            int points = 1;
+            
+            /**
+             * starts decorating the point
+            */
+            //decorates by ship number point
+            System.out.println("SHIP TYPE: "+killer.getShipType());
+            
+            points+=shipPoints.get((int)killer.getShipType());
+            
+            Point pointXY = new Point(killer.getXTileLocation(), killer.getYTileLocation());
+            System.out.println("X,Y: "+pointXY.x+", "+pointXY.y);
+            int location;
+            
+            if(flagRoomLocation.isInside(pointXY)){
+                location = areaPoints.get("flagroom");
+                System.out.println(killer.getPlayerName()+" killed flagroom");
+            }
+            else if(midBaseLocation.isInside(pointXY)){
+                location = areaPoints.get("mid");
+                System.out.println(killer.getPlayerName()+" killed mid");
+            }
+            else{
+                location = areaPoints.get("spawn");
+                System.out.println(killer.getPlayerName()+" killed spawn");
+            }
+            
+            points+=(int)location;
+            
+            //update on the map the player
+            PubPlayer pubPlayer;
+            String playerName = killer.getPlayerName();
+            if(players.containsKey(playerName))
+                pubPlayer = players.get(playerName);
+            else
+                pubPlayer = new PubPlayer(playerName);
+            
+            pubPlayer.setPoint(pubPlayer.getPoint()+points);
+            players.put(playerName, pubPlayer);
+            Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
+            //--
+        }catch(Exception e){
+            Tools.printLog("Exception: "+e.getMessage());
+            e.printStackTrace();
+        }
         
         for( PubChallenge pc : m_challenges ) {
             if( pc.challengeActive() ) {
@@ -862,8 +881,9 @@ public class purepubbot extends SubspaceBot
             {
                 for(Integer i: this.areaPoints.values())
                     Tools.printLog("Area Values: "+i);
-                for(Integer i: this.shipPoints.values())
-                    Tools.printLog("Ship Values "+i);
+                
+                for(int i = 1; i < 9; i++)
+                    Tools.printLog("Ship Values "+shipPoints.get(i) );
             }
             else if(command.equals("!mypoints"))
             {
