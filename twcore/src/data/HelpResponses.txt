@@ -435,12 +435,9 @@ SayHi|Hi!
 SayHello|Hello!
 SayWait|The game will end shortly.  Please be patient and wait for it to end.
 SayPlease|What is the magic word?
-SayNo|No.
-SayYes|Yes.
 SayTechSupport|We are sorry, but we do not have the answer to your question.  If you wish to post it on our tech support forum, please do so at: http://forums.trenchwars.org/forumdisplay.php?f=5.
 NotIllegal|Sorry, but that is not illegal in Trench Wars.
 Dontberude|Please do not be rude to the staff.
-Dontlie|Don't Lie!
 HelpAbuse|Please discontinue your use of the ?help command as Trench Wars Staff has deemed your requests invalid or excessive.
 CheaterAbuse|Please do not abuse ?cheater unless you have a valid cheater to report.
 AdvertAbuse|Please do not abuse ?advert.  If you would like to request an event, type '?help Please host eventname'. For instance, type '?help Please host turretwars!'
@@ -488,9 +485,11 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &hurricane &Who|hurricane is the real #1 player! Both in game and in real life! With girls on his side, he is the fear of every subspace player out there!
 &Geio &Who|Geio is the King of all Wb's, and the best basketball player in TW.
 &Arobas+ &Who|ALL YOUR BASE ARE BELONG TO US!!!
-&Pinkstar &Who|Twinkle, twinkle, little pinkSTAR, how I wonder what you are. Up above the world so high like a diamond in the sky. Twinkle, twinkle, little pinkSTAR!
-&EvilDeed &Who|Hi my name is EvilDeed an i jav.
-&Dexter &Who|Dexter is the guy that hides on a laboratory to do scientific studies, then Dee Dee comes and KBOOM!
+&Pinkstar &Who|Roses are red,                                                                                                 Violets are corny,                                                                                                 When I think of you                                                                                                 Ohhh baby I get horny!!!
+&EvilDeed &Who|hi my name is EvilDeed and i like to play the javelin
+&Dexter &Who|Dexter is the guy that hides on a laboratory to do scientific studies, then Dee Dee comes and KBOOM! 
+&Jacklyn &Who|Huhhhhhhh!~?!?!?!?! ...where'd the cookies go?
+&Dominant &Who|I'll kill you where you stand
 
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
