@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -76,6 +77,11 @@ import twcore.core.util.Tools;
  */
 public class purepubbot extends SubspaceBot
 {
+    
+    private Map<String, PubPlayer> players;
+    private Map<Integer, Integer> shipPoints;
+    private Map<String, Integer> areaPoints;
+    private BotSettings botSets;
     
     private pubpointlocation pointLocationAlgorithm; //Strategy to give points depending on the player's location
     private pubpointShipNumber pointShipAlgorithm;
@@ -204,11 +210,16 @@ public class purepubbot extends SubspaceBot
     {
         super(botAction);
         requestEvents();
-
+        botSets = m_botAction.getBotSettings();
         this.baseLocation = new BasePointLocation();
         //Null Object to start the variable safely
         this.pointLocationAlgorithm = new pubpointNullObject();
         this.pointShipAlgorithm = new pubpointShipNullObject();
+        
+        this.players = new HashMap<String, PubPlayer>();
+        this.shipPoints = new HashMap<Integer, Integer>();
+        this.areaPoints = new HashMap<String, Integer>();
+        initializePoints();
         
         opList = m_botAction.getOperatorList();
         freq0List = new HashSet<String>();
@@ -242,7 +253,8 @@ public class purepubbot extends SubspaceBot
         };
         m_botAction.scheduleTask( entranceWaitTask, 3000 );
         setupVotingOptions();
-        Integer vo = m_botAction.getBotSettings().getInteger(m_botAction.getBotName() + "Voting");
+        Integer vo = botSets.getInteger(m_botAction.getBotName() + "Voting");
+        
         if( vo == null || vo == 0 )
             m_votingEnabled = false;
         else {
@@ -256,6 +268,24 @@ public class purepubbot extends SubspaceBot
         }
     }
 
+    /**
+     * Gets default settings for the points: area and ship
+     * */
+    public void initializePoints(){
+        
+        areaPoints.put("flagroom", botSets.getInteger("pointlocation1"));
+        areaPoints.put("mid", botSets.getInteger("pointlocation2"));
+        areaPoints.put("spawn", botSets.getInteger("pointlocation3"));
+        
+        shipPoints.put(1, botSets.getInteger("pointship1"));
+        shipPoints.put(2, botSets.getInteger("pointship2"));
+        shipPoints.put(3, botSets.getInteger("pointship3"));
+        shipPoints.put(4, botSets.getInteger("pointship4"));
+        shipPoints.put(5, botSets.getInteger("pointship5"));
+        shipPoints.put(6, botSets.getInteger("pointship6"));
+        shipPoints.put(7, botSets.getInteger("pointship7"));
+        shipPoints.put(8, botSets.getInteger("pointship8"));
+    }
     /**
      * Sets up the voting options, if voting is enabled in the CFG.
      */
@@ -609,6 +639,7 @@ public class purepubbot extends SubspaceBot
                 if( m_challengeEnabled )
                     cmds += " !challenge !end";
                 m_botAction.sendPrivateMessage(playerName, "Commands:  " + cmds );
+                
             }
             if(flagTimeStarted) {
                 if( flagTimer != null)
@@ -616,6 +647,16 @@ public class purepubbot extends SubspaceBot
                 if( autoWarp )      // Autowarp is "opt out" warping rather than "opt in"
                     if( player.getShipType() != Tools.Ship.SPECTATOR )
                         doWarpCmd(playerName);
+              //Point system
+                if( this.players.containsKey(playerName) ){
+                    Tools.printLog("Already contains "+playerName);
+                    //m_botAction.sendArenaMessage("Player already in the point system: "+playerName);
+                }
+                else{
+                    players.put( playerName, new PubPlayer(playerName) );
+                    //m_botAction.sendArenaMessage("New player entered: Added "+playerName);
+                    Tools.printLog("Added "+playerName);    
+                }
             }
         } catch (Exception e) {
         }
@@ -692,6 +733,41 @@ public class purepubbot extends SubspaceBot
         if( killer == null || killed == null )
             return;
         boolean challengeFound = false;     // Players can only be in one at once
+        
+        int points = 1;
+        
+        /**
+         * starts decorating the point
+        */
+        //decorates by ship number point
+        points+=shipPoints.get(killer.getShipType());
+
+        Point pointXY = new Point(killer.getXLocation(), killer.getYLocation());
+        
+        int location;
+        if(baseLocation.isInFlagRoom(pointXY))
+            location = areaPoints.get("flagroom");
+        else if(baseLocation.isInMid(pointXY))
+            location = areaPoints.get("mid");
+        else
+            location = areaPoints.get("spawn");
+        
+        //decorates by area points
+        points+=areaPoints.get(location);
+        
+        //update on the map the player
+        PubPlayer pubPlayer;
+        String playerName = killer.getPlayerName();
+        if(players.containsKey(playerName))
+            pubPlayer = players.get(playerName);
+        else
+            pubPlayer = new PubPlayer(playerName);
+        
+        pubPlayer.setPoint(pubPlayer.getPoint()+points);
+        players.put(playerName, pubPlayer);
+        Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
+        //--
+        
         for( PubChallenge pc : m_challenges ) {
             if( pc.challengeActive() ) {
                 if(        killer.getPlayerID() == pc.getPlayer1().getPlayerID() ) {
@@ -782,6 +858,13 @@ public class purepubbot extends SubspaceBot
                 doStartVoteCmd(sender, command.substring(11));
             else if(command.equals("!listvotes"))
                 doListVotesCmd(sender);
+            else if(command.equals("!loc"))
+            {
+                for(Integer i: this.areaPoints.values())
+                    Tools.printLog("Area Values: "+i);
+                for(Integer i: this.shipPoints.values())
+                    Tools.printLog("Ship Values "+i);
+            }
         } catch(RuntimeException e) {
             if( e != null && e.getMessage() != null )
                 m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
@@ -2205,6 +2288,14 @@ public class purepubbot extends SubspaceBot
         m_botAction.showObject(2300); //Turns on coutdown lvz
         m_botAction.hideObject(1000); //Turns off intermission lvz
         m_botAction.scheduleTaskAtFixedRate( flagTimer, 100, 1000);
+
+        //To point system
+        for(Iterator<Player> i = m_botAction.getPlayingPlayerIterator(); i.hasNext(); ){
+            Player p = i.next();
+            String playerName = p.getPlayerName();
+            this.players.put(playerName, new PubPlayer(playerName) );
+            Tools.printLog("Round starts: Added "+playerName);
+        }
     }
 
 
