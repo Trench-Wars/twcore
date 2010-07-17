@@ -753,7 +753,7 @@ public class purepubbot extends SubspaceBot
             location = areaPoints.get("spawn");
         
         //decorates by area points
-        points+=areaPoints.get(location);
+        points+=0;//areaPoints.get(location);
         
         //update on the map the player
         PubPlayer pubPlayer;
