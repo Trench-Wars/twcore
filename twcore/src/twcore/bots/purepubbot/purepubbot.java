@@ -740,8 +740,8 @@ public class purepubbot extends SubspaceBot
          * starts decorating the point
         */
         //decorates by ship number point
-        points+=shipPoints.get(killer.getShipType());
-
+        points+=0;//shipPoints.get(killer.getShipType());
+        
         Point pointXY = new Point(killer.getXLocation(), killer.getYLocation());
         
         int location;
