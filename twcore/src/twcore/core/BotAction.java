@@ -2491,9 +2491,9 @@ public class BotAction
         return flags;
     }
 
-    public void getBall(int playerID, int ballId){
+    public void getBall(){
         
-        m_packetGenerator.sendBallPacket((short) playerID, (short) ballId);
+        m_packetGenerator.sendBallPickupPacket((byte) 0);
     }
     
     /**
@@ -3256,7 +3256,7 @@ public class BotAction
      */
     public void socketSubscribe(String channelName)
     {
-        getCoreData().getSocketCommunicator().subscribe(channelName, m_botSession.getSubspaceBot());
+        //getCoreData().getSocketCommunicator().subscribe(channelName, m_botSession.getSubspaceBot());
     }
 
     /**
