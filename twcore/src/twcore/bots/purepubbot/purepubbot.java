@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import twcore.bots.multibot.util.utilprizes;
 import twcore.bots.purepubbot.location.pubpointNullObject;
 import twcore.bots.purepubbot.location.pubpointlocation;
 import twcore.bots.purepubbot.pointlocation.FlagRoomPointLocation;
@@ -80,6 +81,8 @@ public class purepubbot extends SubspaceBot
 {
     
     private Map<String, PubPlayer> players;
+    private Map<String, PubItem> items;
+    
     private Map<Integer, Integer> shipPoints;
     private Map<String, Integer> areaPoints;
     private BotSettings botSets;
@@ -222,6 +225,8 @@ public class purepubbot extends SubspaceBot
         this.pointShipAlgorithm = new pubpointShipNullObject();
         
         this.players = new HashMap<String, PubPlayer>();
+        this.items = new HashMap<String, PubItem>();
+        
         this.shipPoints = new HashMap<Integer, Integer>();
         this.areaPoints = new HashMap<String, Integer>();
         initializePoints();
@@ -290,6 +295,17 @@ public class purepubbot extends SubspaceBot
         shipPoints.put(6, botSets.getInteger("pointship6"));
         shipPoints.put(7, botSets.getInteger("pointship7"));
         shipPoints.put(8, botSets.getInteger("pointship8"));
+    }
+    
+    public void prizeBoughtItem(String playerName, String item){
+        
+        PubPlayer player = players.get(playerName);
+        PubItem i = items.get(item);
+        
+        player.setPoint(player.getPoint() - i.getPrice());
+        
+        int itemNumber = i.getItemNumber();
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #"+itemNumber);
     }
     /**
      * Sets up the voting options, if voting is enabled in the CFG.
@@ -653,13 +669,8 @@ public class purepubbot extends SubspaceBot
                     if( player.getShipType() != Tools.Ship.SPECTATOR )
                         doWarpCmd(playerName);
               //Point system
-                if( this.players.containsKey(playerName) ){
-                    Tools.printLog("Already contains "+playerName);
-                    //m_botAction.sendArenaMessage("Player already in the point system: "+playerName);
-                }
-                else{
+                if( !this.players.containsKey(playerName) ){
                     players.put( playerName, new PubPlayer(playerName) );
-                    //m_botAction.sendArenaMessage("New player entered: Added "+playerName);
                     Tools.printLog("Added "+playerName);    
                 }
             }
@@ -781,6 +792,7 @@ public class purepubbot extends SubspaceBot
             pubPlayer.setPoint(pubPlayer.getPoint()+points);
             players.put(playerName, pubPlayer);
             Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
+           
             //--
         }catch(Exception e){
             Tools.printLog("Exception: "+e.getMessage());
@@ -2321,8 +2333,11 @@ public class purepubbot extends SubspaceBot
         for(Iterator<Player> i = m_botAction.getPlayingPlayerIterator(); i.hasNext(); ){
             Player p = i.next();
             String playerName = p.getPlayerName();
-            this.players.put(playerName, new PubPlayer(playerName) );
-            Tools.printLog("Round starts: Added "+playerName);
+            
+            if(!players.containsKey(playerName)){
+                this.players.put(playerName, new PubPlayer(playerName) );
+                Tools.printLog("Round starts: Added "+playerName);
+            }
         }
     }
 
