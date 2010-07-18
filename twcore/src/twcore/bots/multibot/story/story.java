@@ -57,6 +57,10 @@ public class story extends MultiModule{
     String				phrasewin;//the winning phrase holder
     Vector<String>		fullstory;//the winning phrases are appended
     String			    fullstory2[];//at games end, fullstory is converted to this array to output using arenaMessageSpam method
+    String				ShowStory[];//used when a player wants to see the story so far, with the !showstory command.
+    int					customNumberRounds;//custom number of rounds specified by the host
+    int					NumberRounds;//the number of rounds for the game, default is 10, unless changed by a !customstart command
+    boolean				custom;//boolean will be true if there is a custom number of rounds
     
     
     /*
@@ -103,11 +107,58 @@ public class story extends MultiModule{
         acceptedMessages = Message.PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!stop", acceptedMessages, this, "doStopGame" );
-        m_commandInterpreter.registerCommand( "!showanswers", acceptedMessages, this, "doShowAnswers" );
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
         m_commandInterpreter.registerCommand( "!opener", acceptedMessages, this, "doGetOpener" );
+        m_commandInterpreter.registerCommand( "!customstart", acceptedMessages, this, "doCustomStart");
+        m_commandInterpreter.registerCommand( "!showstory", acceptedMessages, this, "doShowStory");
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
+    
+    
+    /*
+     * 
+     */
+	public void doCustomStart (String name, String message)	{
+    	if( m_botAction.getOperatorList().isER( name )) {
+    		 if( gameState == 0 )	{
+           		handleRoundEvent(message);
+           		if( custom == true)	{
+           			doStartGame(name,message);
+           		}
+    		 }
+    	}
+    }
+     /*
+     * This method will display instructions to both the host and to the players. 
+     * When this method begins, the bot will also begin the time frame in which 
+     * the host will be able to submit an opening phrase for the story.
+     */
+    public void doStartGame( String name, String message ) {
+        if( m_botAction.getOperatorList().isER( name ) ) {
+            if( gameState == 0 ) {
+            	gameState = -2;
+            	m_botAction.sendPrivateMessage(name, name + ", you have 45 seconds to private message me with the opening line for this story. I will randomly choose one of my openers if you can't come up with an opening phrase.");
+                m_botAction.sendPrivateMessage(name, "Example: :bot:!opener All was quiet in the midnight hours of Trench Wars...");
+                if (custom == true)	{
+                	NumberRounds = customNumberRounds;
+                    m_botAction.sendArenaMessage( "Listen for the opener to the story. Add your phrases to the story and be sure to vote on the best one! If two phrases tie in votes, the appended phrase will be the phrase voted for first. " + NumberRounds + " rounds!   -" + m_botAction.getBotName(), 22 );
+                    }	else {
+                    	NumberRounds = 10;
+                    	m_botAction.sendArenaMessage( "Listen for the opener to the story. Add your phrases to the story and be sure to vote on the best one! If two phrases tie in votes, the appended phrase will be the phrase voted for first. 10 rounds!   -" + m_botAction.getBotName(), 22 );
+                    }
+                
+                openingLine = null;
+                phrasewin = null;
+    	     
+                TimerTask opener = new TimerTask() {
+                	 public void run() {
+                		 opener();
+                	 }
+                };
+                m_botAction.scheduleTask( opener, 45000);
+            } 
+        }
+    }    
     
     
     /*
@@ -120,46 +171,17 @@ public class story extends MultiModule{
             m_botAction.sendArenaMessage("This game has been slaughtered by " + name);
         }
     }
-    
-    
-    /*
-     * The !start command, to start the game, will display instructions to 
-     * both the host and to the players. The !start command to the bot will
-     * also begin the time frame in which the host will be able to submit an
-     * opening phrase for the story.
-     */
-    public void doStartGame( String name, String message ) {
-        if( m_botAction.getOperatorList().isER( name ) ) {
-            if( gameState == 0 ) {
-               gameState = -2;
-               m_botAction.sendPrivateMessage(name, name + ", you have 45 seconds to private message me with the opening line for this story. I will randomly choose one of my openers if you can't come up with an opening phrase.");
-               m_botAction.sendPrivateMessage(name, "Example: :bot:!opener All was quiet in the midnight hours of Trench Wars...");
-               m_botAction.sendArenaMessage( "Listen for the opener to the story. Add your phrases to the story and be sure to vote on the best one! If two phrases tie in votes, the appended phrase will be the phrase voted for first. 10 rounds!   -" + m_botAction.getBotName(), 22 );
-               openingLine = null;
-           
-    	     
-               TimerTask opener = new TimerTask() {
-                	public void run() {
-                		opener();
-                	}
-               };
-               m_botAction.scheduleTask( opener, 45000);
-            } 
-        }
-    } 
-    
-    
-    /*
+
+
+	/*
      * This method will be invoked after an !opener command is sent to the bot.
      * It will take in the message and send it to the handleEvent method and
      * also confirm that the opener has been submitted.
      */
     public void doGetOpener (String name, String message)	{
     	if( m_botAction.getOperatorList().isER( name )) {
-            handleEvent(message);
+            handleOpenerEvent(message);
             m_botAction.sendPrivateMessage(name, "Your opener has been submitted. The game will begin momentarily.");
-            
-    		
     	}
     }
    
@@ -243,27 +265,6 @@ public class story extends MultiModule{
     
     
     /*
-     * doShowAnwers() method will display to the moderator the current answers
-     * and the players who submitted them.
-     */
-    public void doShowAnswers(String name, String message) {
-        if(m_botAction.getOperatorList().isModerator( name )) {
-            if( gameState == 2 ) {
-                Iterator<String> it = playerIdeas.keySet().iterator();
-                String player, answer;
-                while (it.hasNext()) {
-                    player = it.next();
-                    answer = playerIdeas.get(player);
-                    m_botAction.sendPrivateMessage( name, player + ":  " + answer );
-                }
-            } else {
-                m_botAction.sendPrivateMessage( name, "Currently the game isn't in the voting stage." );
-            }
-        }
-    }
-    
-    
-    /*
      * setUpShow() method will display the phrase parameters (how many words
      * are allowed in the particular round's phrase). It will also schedule
      * the timer task which will be used to take in the submitted phrases 
@@ -308,50 +309,57 @@ public class story extends MultiModule{
     public void setUpVotes() {
         TimerTask vote = new TimerTask() {
             public void run() {
-                m_botAction.sendArenaMessage( "Round Winners: " );
-                for( int i = 0; i < phrases.size(); i++ ) {
-                    if( votes[i] == maxVote ) {
-                        String piece[] = Tools.stringChopper( phrases.elementAt( i ), '-' );
-                        phrasewin = piece[1].toString();
-                        if( playerVotes.containsKey( piece[0] ) ) {
-                        	
-                            if( playerScores.containsKey( piece[0] ) ) {
-                                int s = Integer.parseInt( playerScores.get( piece[0] ) );
-                                s += 10;
-                                playerScores.put( piece[0], ""+s );
-                            } else
-                                playerScores.put( piece[0], "10" );
-                            m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
-                        } else {
-                            m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) + " (no vote/score)" );
-                        }
-                    }
-                }
-                
+            	if (phrases != null)	{
+	                m_botAction.sendArenaMessage( "Round Winners: " );
+	                for( int i = 0; i < phrases.size(); i++ ) {
+	                    if( votes[i] == maxVote ) {
+	                        String piece[] = Tools.stringChopper( phrases.elementAt( i ), '-' );
+	                        phrasewin = piece[1].toString();
+	                        if( playerVotes.containsKey( piece[0] ) ) {
+	                        	
+	                            if( playerScores.containsKey( piece[0] ) ) {
+	                                int s = Integer.parseInt( playerScores.get( piece[0] ) );
+	                                s += 10;
+	                                playerScores.put( piece[0], ""+s );
+	                            } else
+	                                playerScores.put( piece[0], "10" );
+	                            m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
+	                        } else {
+	                            m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) + " (no vote/score)" );
+	                        }
+	                    }
+	                }
+            	}
+            	
+            	
                 if (phrasewin != null)	{
                 	fullstory.addElement(phrasewin);
                 }
                 else	{
-                	phrasewin = "...";
+                	phrasewin = "No winner this round.";
                 	fullstory.addElement(phrasewin);
                 }
+                
+                phrasewin = null;
                 playerIdeas.clear();
                 playerVotes.clear();
                 phrases.clear();
                 maxVote = -1;
                 round++;
-                if( round > 10 ) {
-                	String[] fullstory2 = new String[fullstory.size()];
-                	fullstory.toArray(fullstory2);
-                	arenaMessageSpam(fullstory2);
-                 } else {
-                    TimerTask preStart = new TimerTask() {
-                        public void run() {
-                            setUpShow();
-                        }
-                    };
-                    m_botAction.scheduleTask( preStart, 10000 );
-                }
+      
+	            if( round > NumberRounds ) {
+	                String[] fullstory2 = new String[fullstory.size()];
+	                fullstory.toArray(fullstory2);
+	                arenaMessageSpam(fullstory2);
+	                } else {
+	                TimerTask preStart = new TimerTask() {
+	                    public void run() {
+	                        setUpShow();
+	                    }
+	                };
+	                m_botAction.scheduleTask( preStart, 10000 );
+	            }
+                
             }
         };
         m_botAction.scheduleTask( vote, 30000 );
@@ -479,7 +487,7 @@ public class story extends MultiModule{
 		            else if( x >= 40 && x < 60 ) {
 		            	acro += "A 7 Word Phrase . . .";
 		            }
-		            else if( x >= 60 && x <= 80 ) {
+		            else if( x >= 60 && x <= 81 ) {
 		            	acro += "An 8 Word Phrase . . . .";
 		            }
 
@@ -498,17 +506,18 @@ public class story extends MultiModule{
         if( ! m_botAction.getOperatorList().isER( name ) )
             m_botAction.privateMessageSpam( name, getPlayerHelpMessage() );
     }
-
+    
     
     /*
      * Host help message
      */
     public String[] getModHelpMessage() {
         String[] help = {
-                "!start       - Starts a game of Story.",
-                "!stop        - Stops a game currently in progress.",
-                "!showanswers - Shows who has entered which answer.",
-                "!opener      - Sets the story opener in the alloted timeframe.",
+        		"!start                   - Starts a game of Story, with 10 rounds.",
+        		"!customstart #ofRounds   - Starts a game of Story, with the number of rounds specified.",
+                "!stop                    - Stops a game currently in progress.",
+                "!opener                  - Sets the story opener in the alloted timeframe.",
+                "!showstory               - Displays the current story.",
                 "NOTE: This event should only be hosted by Mod+!"
         };
         return help;
@@ -523,10 +532,23 @@ public class story extends MultiModule{
                 "Rules for Story: compose a phrase with the correct number of words specified.",
                 "PM your answers to me before the timer is up!",
                 "Then vote for your favorite answer.  You can't vote for your own!",
-                "If you don't vote for someone else's phrase, you can't win."
+                "If you don't vote for someone else's phrase, you can't win.",
+                "If you wish to see the story so far, private message me with '!showstory'"
         };
         return help;
     }
+    
+    
+    /*
+     * This method will be invoked when the player sends a !showstory command
+     * to the bot. The bot will create an array of the story to send to the player. 
+     * Each time this method is invoked, a new ShowStory array will be created.
+     */
+    public void doShowStory ( String name ) { 	
+    	String[] ShowStory = new String[fullstory.size()];
+    	m_botAction.privateMessageSpam( name, ShowStory );
+    }
+     
 
     /*
      * Necessary method to handle incoming messages to the bot. 
@@ -534,7 +556,22 @@ public class story extends MultiModule{
  
     public void handleEvent( Message event ) {
            	m_commandInterpreter.handleEvent( event );
-        }
+    }
+    
+    
+    /*
+     * Prior to the start of the game, this method will be invoked if the host
+     * uses the !customStart command, which will allow the host to use a custom
+     * number of rounds. After type "!customstart 4" for example, this method will
+     * take in the 4, and store it in the CustomNumberRounds variable.
+     */
+    
+    public void handleRoundEvent(String message) {
+    	if (gameState == 0 && message != null)	{
+    		customNumberRounds = Integer.parseInt(message);
+        	custom = true;
+    	}
+    }
     
     
     /*
@@ -543,10 +580,9 @@ public class story extends MultiModule{
      * take in the message submitted by the host and store it in the openingLine
      * string.
      */
-    private void handleEvent(String message) {
+    public void handleOpenerEvent(String message) {
     	if (gameState == -2 )	{
     		openingLine = message.trim();
-    	}	
-	}
-    
+    	}
+    } 
 }
