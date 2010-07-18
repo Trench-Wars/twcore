@@ -451,7 +451,7 @@ public class purepubbot extends SubspaceBot
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub+1];// initialPub+1 if you spawn it in # arena
+    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
