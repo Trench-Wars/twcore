@@ -71,6 +71,7 @@ public class story extends MultiModule{
         registerCommands();
         generator = new Random();
         racismSpy = new Spy( m_botAction );
+        
     }
 
     
@@ -110,7 +111,7 @@ public class story extends MultiModule{
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
         m_commandInterpreter.registerCommand( "!opener", acceptedMessages, this, "doGetOpener" );
         m_commandInterpreter.registerCommand( "!customstart", acceptedMessages, this, "doCustomStart");
-        m_commandInterpreter.registerCommand( "!showstory", acceptedMessages, this, "doShowStory");
+        //m_commandInterpreter.registerCommand( "!showstory", acceptedMessages, this, "doShowStory");
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
     
@@ -544,18 +545,18 @@ public class story extends MultiModule{
      * to the bot. The bot will create an array of the story to send to the player. 
      * Each time this method is invoked, a new ShowStory array will be created.
      */
-    public void doShowStory ( String name ) { 	
-    	String[] ShowStory = new String[fullstory.size()];
-    	m_botAction.privateMessageSpam( name, ShowStory );
-    }
-     
+
 
     /*
      * Necessary method to handle incoming messages to the bot. 
      */
  
+    @Override
     public void handleEvent( Message event ) {
            	m_commandInterpreter.handleEvent( event );
+           	String name = m_botAction.getPlayerName(event.getPlayerID());
+           	if(event.getMessage().startsWith("!showstory"))
+           	    doShowStory(name);
     }
     
     
@@ -585,4 +586,17 @@ public class story extends MultiModule{
     		openingLine = message.trim();
     	}
     } 
+    
+    public void doShowStory ( String name ) {
+        try{
+            //String[] ShowStory = new String[fullstory.size()];
+            //ShowStory = (String[]) fullstory.toArray();
+            m_botAction.sendArenaMessage("Size of fullstory: "+fullstory.size());
+            m_botAction.privateMessageSpam( name, fullstory.toArray(new String[fullstory.size()]) );
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+     
+    }
 }
