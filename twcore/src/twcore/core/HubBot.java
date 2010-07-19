@@ -90,6 +90,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!spawnauto", acceptedMessages, this, "handleSpawnAutoMessage", accessRequired );
         m_commandInterpreter.registerCommand( "!remove", acceptedMessages, this, "handleRemove", accessRequired );
         m_commandInterpreter.registerCommand( "!removetype", acceptedMessages, this, "handleRemoveType", accessRequired );
+        m_commandInterpreter.registerCommand( "!reloadconf", acceptedMessages, this, "handleReloadConfiguration", accessRequired );
         
         // Smod+
         accessRequired = OperatorList.SMOD_LEVEL;
@@ -282,6 +283,16 @@ public class HubBot extends SubspaceBot {
         m_botQueue.hardRemoveAllBotsOfType( message, messager );
         m_botAction.sendPrivateMessage( messager, "Removed all bots of type " + message + " (if possible).  Count reset to 0." );
         System.gc();
+    }
+    
+    /**
+     * Removes all bots of a given type.
+     * @param messager Name of the player who sent the command
+     * @param message Type of bot to remove
+     */
+    public void handleReloadConfiguration( String messager, String message ){
+        message = message.trim();
+        m_botQueue.hardRemoveAllBotsOfType( message, messager );
     }
 
     /**
@@ -684,7 +695,7 @@ public class HubBot extends SubspaceBot {
     	// You have access to 12 / 18 commands.
     	// +-------------------------==  BOT CONTROL  ==--------------------------+
     	// | !spawn  !spawnmax  !spawnauto  !forcespawn  !waitinglist  !listbots  |
-    	// | !remove  !removetype                                                 |
+    	// | !remove  !removetype  !reloadconf                                               |
     	// | !shutdowncore  !smartshutdown  !shutdownidlebots  !shutdownallbots   |
     	// |                                                                      |
     	// +----------------------==  ACCESS MANAGEMENT  ==-----------------------+
@@ -704,7 +715,7 @@ public class HubBot extends SubspaceBot {
     	// You have access to 12 / 18 commands.
     	// -----------------------------------------------
     	// BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots
-    	//                   !remove !removetype
+    	//                   !remove !removetype !reloadconf
     	//                   !shutdowncore !smartshutdown !shutdownidlebots !shutdownallbots
     	// ACCESS CONTROL:   !updateaccess !listoperators
     	// SERVER TROUBLESH: !billerdown !recycleserver
@@ -723,11 +734,11 @@ public class HubBot extends SubspaceBot {
 	    	}
 	    	if(operatorList.isHighmod(messager) && !operatorList.isSysop(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !waitinglist !listbots !listonbots");
-	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove  !removetype");
+	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype !reloadconf");
 	    	}
 	    	if(operatorList.isSysop(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots !listonbots");
-	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype");
+	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype !reloadconf");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !smartshutdown !shutdownidlebots !shutdownallbots");
 	    	}
 	    	if(operatorList.isSmod(messager)) {
@@ -802,6 +813,12 @@ public class HubBot extends SubspaceBot {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Forces a removal of all bots of the specified type from the zone and resets the bot's count.");
 	    		m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.HIGHMOD_LEVEL));
 	    		m_botAction.sendSmartPrivateMessage( messager , " !removetype <bottype>");
+	    	}
+	    	// !reloadconf
+	    	else if (argument.equalsIgnoreCase("reloadconf")) {
+	    		m_botAction.sendSmartPrivateMessage( messager , "Reload the configuration for a type of bot.");
+	    		m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.HIGHMOD_LEVEL));
+	    		m_botAction.sendSmartPrivateMessage( messager , " !reloadconf <bot type>");
 	    	}
 	    	// !shutdowncore
 	    	else if (argument.equalsIgnoreCase("shutdowncore")) {
