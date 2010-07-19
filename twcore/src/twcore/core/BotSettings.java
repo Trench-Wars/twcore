@@ -44,9 +44,29 @@ public class BotSettings {
      * @param file Reference object to properly formed configuration file
      */
     public BotSettings( File file ) {
-        m_fileName = file.getPath();
-
-        m_data = new HashMap<String, String>();
+    	m_fileName = file.getPath();
+    	m_data = new HashMap<String, String>();
+        loadFile(file);
+    }
+    
+    /**
+     * Reload the configuration
+     */
+    public void reloadFile() {
+    	if (m_fileName != null) {
+    		loadFile( new File(m_fileName) );
+    	}
+    }
+    
+    /**
+     * Load a configuration file
+     * @param file Configuration file (CFG)
+     */
+    private void loadFile(File file) {
+    	
+    	m_fileName = file.getPath();
+    	m_data = new HashMap<String, String>();
+    	
         try{
             String          key;
             String          line;
@@ -84,6 +104,7 @@ public class BotSettings {
         } catch(IOException ioe) {
             Tools.printLog( "BotSettings configuration file ("+file.getName()+") I/O exception: " + ioe.getMessage());
         }
+    	
     }
 
     /**
