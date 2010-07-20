@@ -671,7 +671,7 @@ public class purepubbot extends SubspaceBot
               //Point system
                 if( !this.players.containsKey(playerName) ){
                     players.put( playerName, new PubPlayer(playerName) );
-                    Tools.printLog("Added "+playerName);    
+                    //Tools.printLog("Added "+playerName);    
                 }
             }
         } catch (Exception e) {
@@ -2336,7 +2336,7 @@ public class purepubbot extends SubspaceBot
             
             if(!players.containsKey(playerName)){
                 this.players.put(playerName, new PubPlayer(playerName) );
-                Tools.printLog("Round starts: Added "+playerName);
+                //Tools.printLog("Round starts: Added "+playerName);
             }
         }
     }
