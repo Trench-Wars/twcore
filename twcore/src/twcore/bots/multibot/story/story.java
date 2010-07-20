@@ -10,6 +10,7 @@ import java.util.Vector;
 import twcore.bots.MultiModule;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
+import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Spy;
 import twcore.core.util.Tools;
@@ -57,11 +58,10 @@ public class story extends MultiModule{
     String				phrasewin;//the winning phrase holder
     Vector<String>		fullstory;//the winning phrases are appended
     String			    fullstory2[];//at games end, fullstory is converted to this array to output using arenaMessageSpam method
-    String				ShowStory[];//used when a player wants to see the story so far, with the !showstory command.
     int					customNumberRounds;//custom number of rounds specified by the host
     int					NumberRounds;//the number of rounds for the game, default is 10, unless changed by a !customstart command
     boolean				custom;//boolean will be true if there is a custom number of rounds
-    
+    int					FREQ_NOTPLAYING = 666;
     
     /*
      * 
@@ -111,13 +111,14 @@ public class story extends MultiModule{
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
         m_commandInterpreter.registerCommand( "!opener", acceptedMessages, this, "doGetOpener" );
         m_commandInterpreter.registerCommand( "!customstart", acceptedMessages, this, "doCustomStart");
-        //m_commandInterpreter.registerCommand( "!showstory", acceptedMessages, this, "doShowStory");
+        m_commandInterpreter.registerCommand( "!forcenp", acceptedMessages, this, "doForceNp" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
     
     
     /*
-     * 
+     * Handles the !customstart #ofRounds command. It invokes the handleRoundEvent()
+     * method, then starts the game like normal.
      */
 	public void doCustomStart (String name, String message)	{
     	if( m_botAction.getOperatorList().isER( name )) {
@@ -538,17 +539,12 @@ public class story extends MultiModule{
         };
         return help;
     }
-    
-    
-    /*
-     * This method will be invoked when the player sends a !showstory command
-     * to the bot. The bot will create an array of the story to send to the player. 
-     * Each time this method is invoked, a new ShowStory array will be created.
-     */
 
+    
 
     /*
-     * Necessary method to handle incoming messages to the bot. 
+     * Necessary method to handle incoming messages to the bot. This method will
+     * also handle the !showstory command.
      */
  
     @Override
@@ -557,6 +553,23 @@ public class story extends MultiModule{
            	String name = m_botAction.getPlayerName(event.getPlayerID());
            	if(event.getMessage().startsWith("!showstory"))
            	    doShowStory(name);
+    }
+    
+    
+    /*
+     * This method will be invoked when the player sends a !showstory command
+     * to the bot. The bot will create an array of the story to send to the player. 
+     * Each time this method is invoked, a new ShowStory array will be created.
+     */
+    
+    public void doShowStory ( String name ) {
+        try{
+            m_botAction.privateMessageSpam( name, fullstory.toArray(new String[fullstory.size()]) );
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+     
     }
     
     
@@ -574,6 +587,8 @@ public class story extends MultiModule{
     	}
     }
     
+ 
+    
     
     /*
      * Keeping in mind that gameState = -2 means the game is in the state where
@@ -587,16 +602,7 @@ public class story extends MultiModule{
     	}
     } 
     
-    public void doShowStory ( String name ) {
-        try{
-            //String[] ShowStory = new String[fullstory.size()];
-            //ShowStory = (String[]) fullstory.toArray();
-            m_botAction.sendArenaMessage("Size of fullstory: "+fullstory.size());
-            m_botAction.privateMessageSpam( name, fullstory.toArray(new String[fullstory.size()]) );
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
-     
-    }
+
+    
+   
 }
