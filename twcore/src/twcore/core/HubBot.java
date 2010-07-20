@@ -286,13 +286,13 @@ public class HubBot extends SubspaceBot {
     }
     
     /**
-     * Removes all bots of a given type.
+     * Reload the configuration for a type of bots, need to implement Reloadable
      * @param messager Name of the player who sent the command
-     * @param message Type of bot to remove
+     * @param message Type of bot to reload configuration
      */
     public void handleReloadConfiguration( String messager, String message ){
         message = message.trim();
-        m_botQueue.hardRemoveAllBotsOfType( message, messager );
+        m_botQueue.reloadConfiguration( message, messager );
     }
 
     /**
