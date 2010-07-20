@@ -758,25 +758,25 @@ public class purepubbot extends SubspaceBot
              * starts decorating the point
             */
             //decorates by ship number point
-            System.out.println("SHIP TYPE: "+killer.getShipType());
+           // System.out.println("SHIP TYPE: "+killer.getShipType());
             
             points+=shipPoints.get((int)killer.getShipType());
             
             Point pointXY = new Point(killer.getXTileLocation(), killer.getYTileLocation());
-            System.out.println("X,Y: "+pointXY.x+", "+pointXY.y);
+            //System.out.println("X,Y: "+pointXY.x+", "+pointXY.y);
             int location;
             
             if(flagRoomLocation.isInside(pointXY)){
                 location = areaPoints.get("flagroom");
-                System.out.println(killer.getPlayerName()+" killed flagroom");
+                //System.out.println(killer.getPlayerName()+" killed flagroom");
             }
             else if(midBaseLocation.isInside(pointXY)){
                 location = areaPoints.get("mid");
-                System.out.println(killer.getPlayerName()+" killed mid");
+                //System.out.println(killer.getPlayerName()+" killed mid");
             }
             else{
                 location = areaPoints.get("spawn");
-                System.out.println(killer.getPlayerName()+" killed spawn");
+                //System.out.println(killer.getPlayerName()+" killed spawn");
             }
             
             points+=(int)location;
@@ -791,7 +791,7 @@ public class purepubbot extends SubspaceBot
             
             pubPlayer.setPoint(pubPlayer.getPoint()+points);
             players.put(playerName, pubPlayer);
-            Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
+            //Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
            
             //--
         }catch(Exception e){
