@@ -542,7 +542,7 @@ public class purepubbot extends SubspaceBot
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub+1];// initialPub+1 if you spawn it in # arena
+    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
@@ -2394,30 +2394,31 @@ public class purepubbot extends SubspaceBot
     public void startBot()
     {
         try{
-    	/*String commands[] = botSets.getString(m_botAction.getBotName() + "Setup").split(",");
-    	for(int k = 0; k < commands.length; k++) {
-    		handleModCommand(m_botAction.getBotName(), commands[k]);
-		}
-        /*String toggleInfoString = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Toggle");
-        if( toggleInfoString != null && !toggleInfoString.trim().equals("") ) {
-            String toggleSplit[] = toggleInfoString.split(":");
-            if( toggleSplit.length == 2 ) {
-                try {
-                    Integer toggleTime = Integer.parseInt(toggleSplit[1]);
-                    String toggles[] = toggleSplit[0].split(";");
-                    if( toggles.length == 2 ) {
-                        toggleTask = new ToggleTask( toggles[0].split(","),toggles[1].split(",") );
-                        m_botAction.scheduleTaskAtFixedRate(toggleTask, toggleTime * Tools.TimeInMillis.MINUTE, toggleTime * Tools.TimeInMillis.MINUTE );
-                    } else {
-                        Tools.printLog("Must have two toggles (did not find semicolon)");
+        	String commands[] = botSets.getString(m_botAction.getBotName() + "Setup").split(",");
+        	for(int k = 0; k < commands.length; k++) {
+        		handleModCommand(m_botAction.getBotName(), commands[k]);
+    		}
+            String toggleInfoString = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Toggle");
+            if( toggleInfoString != null && !toggleInfoString.trim().equals("") ) {
+                String toggleSplit[] = toggleInfoString.split(":");
+                if( toggleSplit.length == 2 ) {
+                    try {
+                        Integer toggleTime = Integer.parseInt(toggleSplit[1]);
+                        String toggles[] = toggleSplit[0].split(";");
+                        if( toggles.length == 2 ) {
+                            toggleTask = new ToggleTask( toggles[0].split(","),toggles[1].split(",") );
+                            m_botAction.scheduleTaskAtFixedRate(toggleTask, toggleTime * Tools.TimeInMillis.MINUTE, toggleTime * Tools.TimeInMillis.MINUTE );
+                        } else {
+                            Tools.printLog("Must have two toggles (did not find semicolon)");
+                        }
+                    } catch(NumberFormatException e) {
+                        Tools.printLog("Unreadable time in toggle.");
                     }
-                } catch(NumberFormatException e) {
-                    Tools.printLog("Unreadable time in toggle.");
+                } else {
+                    Tools.printLog("Must have both toggles and number of minutes defined (!toggle;!toggle2:mins)");
                 }
-            } else {
-                Tools.printLog("Must have both toggles and number of minutes defined (!toggle;!toggle2:mins)");
             }
-        }*/}catch(Exception e){
+        }catch(Exception e){
             e.printStackTrace();
         }
         started = true;
