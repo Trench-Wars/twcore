@@ -14,14 +14,12 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
-
-import twcore.bots.multibot.util.utilprizes;
-import twcore.bots.purepubbot.location.pubpointNullObject;
-import twcore.bots.purepubbot.location.pubpointlocation;
 import twcore.bots.purepubbot.pointlocation.FlagRoomPointLocation;
 import twcore.bots.purepubbot.pointlocation.MidPointLocation;
-import twcore.bots.purepubbot.ship.pubpointShipNullObject;
-import twcore.bots.purepubbot.ship.pubpointShipNumber;
+import twcore.bots.purepubbot.pointlocation.ProcessorPointLocation;
+import twcore.bots.purepubbot.pubitem.PubItem;
+import twcore.bots.purepubbot.pubstore.PubStore;
+
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -80,17 +78,17 @@ import twcore.core.util.Tools;
 public class purepubbot extends SubspaceBot
 {
     
+    private PubStore pubStore;
+    private List<Point> flagRoomCoords;
+    private List<Point> midCoords;
     private Map<String, PubPlayer> players;
-    private Map<String, PubItem> items;
     
     private Map<Integer, Integer> shipPoints;
     private Map<String, Integer> areaPoints;
     private BotSettings botSets;
-    
-    private pubpointlocation pointLocationAlgorithm; //Strategy to give points depending on the player's location
-    private pubpointShipNumber pointShipAlgorithm;
-    private FlagRoomPointLocation flagRoomLocation;
-    private MidPointLocation midBaseLocation;
+
+    private ProcessorPointLocation flagRoomLocation;
+    private ProcessorPointLocation midBaseLocation;
     
     public static final int SPEC = 0;                   // Number of the spec ship
     public static final int FREQ_0 = 0;                 // Frequency 0
@@ -217,18 +215,19 @@ public class purepubbot extends SubspaceBot
         super(botAction);
         requestEvents();
         botSets = m_botAction.getBotSettings();
-        this.flagRoomLocation = new FlagRoomPointLocation();
-        this.midBaseLocation = new MidPointLocation();
         
-        //Null Object to start the variable safely
-        this.pointLocationAlgorithm = new pubpointNullObject();
-        this.pointShipAlgorithm = new pubpointShipNullObject();
-        
+        this.pubStore = new PubStore(m_botAction);
         this.players = new HashMap<String, PubPlayer>();
-        this.items = new HashMap<String, PubItem>();
-        
+       
         this.shipPoints = new HashMap<Integer, Integer>();
         this.areaPoints = new HashMap<String, Integer>();
+        
+        this.flagRoomCoords = initializeFRCoords();
+        this.midCoords = initializeMidCoords();
+        this.flagRoomLocation = new FlagRoomPointLocation(flagRoomCoords);
+        this.midBaseLocation = new MidPointLocation(midCoords);
+        flagRoomLocation.setSucessor(midBaseLocation);
+        
         initializePoints();
         
         opList = m_botAction.getOperatorList();
@@ -296,16 +295,108 @@ public class purepubbot extends SubspaceBot
         shipPoints.put(7, botSets.getInteger("pointship7"));
         shipPoints.put(8, botSets.getInteger("pointship8"));
     }
+    private List<Point> initializeMidCoords(){
+        this.midCoords = new Vector<Point>();
+
+        midCoords.add(new Point(472, 286));
+        midCoords.add(new Point(471, 272));
+        midCoords.add(new Point(448, 272));
+        midCoords.add(new Point(461, 334));
+        midCoords.add(new Point(563, 334));
+        midCoords.add(new Point(575, 295));
+        midCoords.add(new Point(575, 272));
+        midCoords.add(new Point(552, 271));
+        midCoords.add(new Point(552, 286));
+        midCoords.add(new Point(529, 286));
+        midCoords.add(new Point(529, 283));
+        midCoords.add(new Point(528, 283));
+        midCoords.add(new Point(528, 286));
+        midCoords.add(new Point(527, 286));
+        midCoords.add(new Point(527, 287));
+        midCoords.add(new Point(525, 287));
+        midCoords.add(new Point(525, 294));
+        midCoords.add(new Point(519, 294));
+        midCoords.add(new Point(519, 283));
+        midCoords.add(new Point(515, 283));
+        midCoords.add(new Point(515, 278));
+        midCoords.add(new Point(509, 278));
+        midCoords.add(new Point(509, 283));
+        midCoords.add(new Point(505, 283));
+        midCoords.add(new Point(505, 294));
+        midCoords.add(new Point(499, 294));
+        midCoords.add(new Point(499, 286));
+        midCoords.add(new Point(496, 28));
+        midCoords.add(new Point(496, 283));
+        midCoords.add(new Point(495, 283));
+        midCoords.add(new Point(495, 286));
+        return midCoords;
+    }
+    private List<Point> initializeFRCoords(){
+        this.flagRoomCoords = new Vector<Point>();
+        //flagroom coords
+        flagRoomCoords.add(new Point(479, 285));
+        flagRoomCoords.add(new Point(479, 249));
+        flagRoomCoords.add(new Point(545, 249));
+        flagRoomCoords.add(new Point(545, 285));
+        flagRoomCoords.add(new Point(531, 285));
+        flagRoomCoords.add(new Point(531, 282));
+        flagRoomCoords.add(new Point(530, 282));
+        flagRoomCoords.add(new Point(530, 281));
+        flagRoomCoords.add(new Point(527, 281));
+        flagRoomCoords.add(new Point(527, 282));
+        flagRoomCoords.add(new Point(526, 285));
+        flagRoomCoords.add(new Point(523, 285));
+        flagRoomCoords.add(new Point(523, 292));
+        flagRoomCoords.add(new Point(521, 292));
+        flagRoomCoords.add(new Point(517, 281));
+        flagRoomCoords.add(new Point(517, 278));
+        flagRoomCoords.add(new Point(519, 278));
+        flagRoomCoords.add(new Point(519, 276));
+        flagRoomCoords.add(new Point(517, 276));
+        flagRoomCoords.add(new Point(517, 274));
+        flagRoomCoords.add(new Point(515, 274));
+        flagRoomCoords.add(new Point(515, 276));
+        flagRoomCoords.add(new Point(509, 276));
+        flagRoomCoords.add(new Point(509, 274));
+        flagRoomCoords.add(new Point(507, 274));
+        flagRoomCoords.add(new Point(507, 276));
+        flagRoomCoords.add(new Point(505, 276));
+        flagRoomCoords.add(new Point(505, 278));
+        flagRoomCoords.add(new Point(507, 278));
+        flagRoomCoords.add(new Point(507, 281));
+        flagRoomCoords.add(new Point(503, 281));
+        flagRoomCoords.add(new Point(503, 292));
+        flagRoomCoords.add(new Point(501, 292));
+        flagRoomCoords.add(new Point(501, 285));
+        flagRoomCoords.add(new Point(499, 285));
+        flagRoomCoords.add(new Point(499, 284));
+        flagRoomCoords.add(new Point(498, 284));
+        flagRoomCoords.add(new Point(498, 282));
+        flagRoomCoords.add(new Point(497, 282));
+        flagRoomCoords.add(new Point(497, 281));
+        flagRoomCoords.add(new Point(494,281));
+        flagRoomCoords.add(new Point(494, 282));
+        flagRoomCoords.add(new Point(492, 282));
+        flagRoomCoords.add(new Point(493, 284));
+        flagRoomCoords.add(new Point(492, 284));
+        flagRoomCoords.add(new Point(492, 285));
+        return flagRoomCoords;
+    }
     
-    public void prizeBoughtItem(String playerName, String item){
+    public void buyItem(String playerName, String itemName, int shipType){
+        try{
+            boolean isInSystem = players.containsKey(playerName)? true: false;
+            
+            if(isInSystem){
+                PubPlayer playerBought = pubStore.prizeItem(itemName, players.get(playerName), shipType);
+                m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
+                this.players.put(playerName, playerBought);
+            } else
+                m_botAction.sendPrivateMessage(playerName, "You're not in the system to use !buy.");
+        }catch(Exception e){
+            e.printStackTrace();
+        }
         
-        PubPlayer player = players.get(playerName);
-        PubItem i = items.get(item);
-        
-        player.setPoint(player.getPoint() - i.getPrice());
-        
-        int itemNumber = i.getItemNumber();
-        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #"+itemNumber);
     }
     /**
      * Sets up the voting options, if voting is enabled in the CFG.
@@ -451,7 +542,7 @@ public class purepubbot extends SubspaceBot
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
+    	String arenaToJoin = arenaNames[initialPub+1];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
@@ -765,8 +856,15 @@ public class purepubbot extends SubspaceBot
             Point pointXY = new Point(killer.getXTileLocation(), killer.getYTileLocation());
             //System.out.println("X,Y: "+pointXY.x+", "+pointXY.y);
             int location;
+            String loc;
             
-            if(flagRoomLocation.isInside(pointXY)){
+            loc = flagRoomLocation.getLocation(pointXY);//chain of responsibility
+            
+            if(loc == null)
+                return;
+            
+            location = areaPoints.get(loc);
+            /*if(flagRoomLocation.isInside(pointXY)){
                 location = areaPoints.get("flagroom");
                 //System.out.println(killer.getPlayerName()+" killed flagroom");
             }
@@ -778,7 +876,7 @@ public class purepubbot extends SubspaceBot
                 location = areaPoints.get("spawn");
                 //System.out.println(killer.getPlayerName()+" killed spawn");
             }
-            
+            */
             points+=(int)location;
             
             //update on the map the player
@@ -904,6 +1002,20 @@ public class purepubbot extends SubspaceBot
                     m_botAction.sendPrivateMessage(sender, "You have "+pubPlayer.getPoint()+" points");
                 }else
                     m_botAction.sendPrivateMessage(sender, "You're still not in the point system. Wait a bit to be added");
+            }
+            else if(command.startsWith("!b ")){
+                try{
+                    Player p = m_botAction.getPlayer(sender);
+                    String itemName;
+                    if(p == null)
+                        return;
+                    //!b <item>
+                    //0123
+                    itemName = command.substring(3);
+                    buyItem(sender, itemName, p.getShipType());
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
             }
         } catch(RuntimeException e) {
             if( e != null && e.getMessage() != null )
@@ -2281,11 +2393,12 @@ public class purepubbot extends SubspaceBot
      */
     public void startBot()
     {
-    	String commands[] = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Setup").split(",");
+        try{
+    	/*String commands[] = botSets.getString(m_botAction.getBotName() + "Setup").split(",");
     	for(int k = 0; k < commands.length; k++) {
     		handleModCommand(m_botAction.getBotName(), commands[k]);
 		}
-        String toggleInfoString = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Toggle");
+        /*String toggleInfoString = m_botAction.getBotSettings().getString(m_botAction.getBotName() + "Toggle");
         if( toggleInfoString != null && !toggleInfoString.trim().equals("") ) {
             String toggleSplit[] = toggleInfoString.split(":");
             if( toggleSplit.length == 2 ) {
@@ -2304,6 +2417,8 @@ public class purepubbot extends SubspaceBot
             } else {
                 Tools.printLog("Must have both toggles and number of minutes defined (!toggle;!toggle2:mins)");
             }
+        }*/}catch(Exception e){
+            e.printStackTrace();
         }
         started = true;
     }

@@ -1,15 +1,21 @@
 package twcore.bots.purepubbot;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 public class PubPlayer implements Comparable<PubPlayer>{
 
     
     private String p_name;
     private int id;
     private int point;
+    private LinkedList<String> listLastItems;
     
     public PubPlayer(String name){
         p_name = name;
         point = 0;
+        listLastItems = new LinkedList<String>();
     }
     
     public String getP_name() {
@@ -31,6 +37,13 @@ public class PubPlayer implements Comparable<PubPlayer>{
         this.point = point;
     }
 
+    public void addItemString(String itemDetail){
+        listLastItems.add(itemDetail);
+    }
+    
+    public String getLastItemDetail(){
+        return listLastItems.getLast();
+    }
     @Override
     public int compareTo(PubPlayer o) {
         // TODO Auto-generated method stub
