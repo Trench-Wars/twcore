@@ -17,14 +17,12 @@ import java.util.Vector;
 import twcore.bots.purepubbot.pointlocation.FlagRoomPointLocation;
 import twcore.bots.purepubbot.pointlocation.MidPointLocation;
 import twcore.bots.purepubbot.pointlocation.ProcessorPointLocation;
-import twcore.bots.purepubbot.pubitem.PubItem;
 import twcore.bots.purepubbot.pubstore.PubStore;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
-import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.ArenaList;
 import twcore.core.events.FlagClaimed;
@@ -39,7 +37,6 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Point;
-import twcore.core.util.PointLocation;
 import twcore.core.util.Tools;
 
 /**
@@ -75,7 +72,7 @@ import twcore.core.util.Tools;
  * @author qan / original idea and bot by Cpt. Guano!
  * @see pubbot; pubhub
  */
-public class purepubbot extends SubspaceBot
+public class purepubbot extends ItemObserver
 {
     
     private PubStore pubStore;
@@ -216,7 +213,8 @@ public class purepubbot extends SubspaceBot
         requestEvents();
         botSets = m_botAction.getBotSettings();
         
-        this.pubStore = new PubStore(m_botAction);
+        this.allowedPlayersToUseItem = new Vector<String>();
+        this.pubStore = new PubStore(m_botAction, this);
         this.players = new HashMap<String, PubPlayer>();
        
         this.shipPoints = new HashMap<Integer, Integer>();
@@ -383,6 +381,18 @@ public class purepubbot extends SubspaceBot
         return flagRoomCoords;
     }
     
+    @Override
+    public void update(String playerName) {
+        // TODO Auto-generated method stub
+        boolean isInList = this.allowedPlayersToUseItem.contains(playerName) ? true : false;
+        if(!isInList)
+            this.allowedPlayersToUseItem.add(playerName);
+        else
+            allowedPlayersToUseItem.remove(playerName);
+        
+        
+    }
+    
     public void buyItem(String playerName, String itemName, int shipType){
         try{
             boolean isInSystem = players.containsKey(playerName)? true: false;
@@ -390,11 +400,14 @@ public class purepubbot extends SubspaceBot
             if(isInSystem){
                 PubPlayer playerBought = pubStore.prizeItem(itemName, players.get(playerName), shipType);
                 m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
+               
                 this.players.put(playerName, playerBought);
             } else
                 m_botAction.sendPrivateMessage(playerName, "You're not in the system to use !buy.");
+            
         }catch(Exception e){
             e.printStackTrace();
+            throw new RuntimeException("You've bought too many items and reached the limit. It'll be reseted after you die.");
         }
         
     }
@@ -639,8 +652,11 @@ public class purepubbot extends SubspaceBot
         } catch (Exception e) {
         }
 
+        boolean isAuth = this.allowedPlayersToUseItem.contains(p.getPlayerName()) ? true : false;
+        //Adapt the buying system here
         if(started) {
-            checkPlayer(playerID);
+            if(!isAuth) //he didn't buy the item
+             checkPlayer(playerID);
             if(!privFreqs) {
                 checkFreq(playerID, freq, true);
             }
@@ -841,6 +857,18 @@ public class purepubbot extends SubspaceBot
             return;
         boolean challengeFound = false;     // Players can only be in one at once
         
+        //buying system of ships
+        update(killed.getPlayerName()); //makes not allowed to use the ship after dead, will need to buy again
+        //--
+        
+        //reset limit bought items per life
+        boolean isIn = players.containsKey(killed.getPlayerName())? true:false;
+        if(isIn){
+            PubPlayer pubPlayer = players.get(killed.getPlayerName());
+            pubPlayer.setItemsBoughtPerLife(0);
+            players.put(pubPlayer.getP_name(), pubPlayer);
+        }
+     
         /** Point System */
         try{
             int points = 1;
@@ -2176,8 +2204,7 @@ public class purepubbot extends SubspaceBot
 
         // If weight is 0, ship is completely restricted.
         if( weight == 0 ) {
-            m_botAction.spec(playerID);
-        	m_botAction.spec(playerID);
+            m_botAction.specWithoutLock(playerID);
        	    m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "That ship has been restricted in this arena.  Please choose another, or type ?arena to select another arena.");
        	    return;
         }
@@ -3473,4 +3500,6 @@ public class purepubbot extends SubspaceBot
             return p2;
         }
     }
+
+
 }

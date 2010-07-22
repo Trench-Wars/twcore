@@ -1,8 +1,9 @@
 package twcore.bots.purepubbot;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
+
+
+import twcore.bots.purepubbot.pubitem.PubItem;
 
 public class PubPlayer implements Comparable<PubPlayer>{
 
@@ -11,11 +12,17 @@ public class PubPlayer implements Comparable<PubPlayer>{
     private int id;
     private int point;
     private LinkedList<String> listLastItems;
+    private LinkedList<PubItem> boughtItems;
+    private int limitBought;
+    private int itemsBoughtPerLife;
     
     public PubPlayer(String name){
         p_name = name;
         point = 0;
         listLastItems = new LinkedList<String>();
+        boughtItems = new LinkedList<PubItem>();
+        this.limitBought = 3;
+        this.itemsBoughtPerLife = 0;
     }
     
     public String getP_name() {
@@ -44,6 +51,10 @@ public class PubPlayer implements Comparable<PubPlayer>{
     public String getLastItemDetail(){
         return listLastItems.getLast();
     }
+    
+    public PubItem getLastItem(){
+        return this.boughtItems.getLast();
+    }
     @Override
     public int compareTo(PubPlayer o) {
         // TODO Auto-generated method stub
@@ -53,5 +64,21 @@ public class PubPlayer implements Comparable<PubPlayer>{
         return -1;
     }
     
-    
+    public boolean hasNotReachedLimit(){
+        return this.limitBought < this.itemsBoughtPerLife;
+    }
+
+    /**
+     * @param itemsBoughtPerLife the itemsBoughtPerLife to set
+     */
+    public void setItemsBoughtPerLife(int itemsBoughtPerLife) {
+        this.itemsBoughtPerLife = itemsBoughtPerLife;
+    }
+
+    /**
+     * @return the itemsBoughtPerLife
+     */
+    public int getItemsBoughtPerLife() {
+        return itemsBoughtPerLife;
+    }
 }
