@@ -858,17 +858,22 @@ public class purepubbot extends ItemObserver
         boolean challengeFound = false;     // Players can only be in one at once
         
         //buying system of ships
-        update(killed.getPlayerName()); //makes not allowed to use the ship after dead, will need to buy again
+        //update(killed.getPlayerName());
+        boolean wasAuth = this.allowedPlayersToUseItem.contains(killed.getPlayerName())? true : false;
+        if(wasAuth)
+            this.allowedPlayersToUseItem.remove(killed.getPlayerName());
+        
         //--
         
-        //reset limit bought items per life
+        /*reset limit bought items per life
         boolean isIn = players.containsKey(killed.getPlayerName())? true:false;
         if(isIn){
             PubPlayer pubPlayer = players.get(killed.getPlayerName());
             pubPlayer.setItemsBoughtPerLife(0);
             players.put(pubPlayer.getP_name(), pubPlayer);
         }
-     
+         */
+        
         /** Point System */
         try{
             int points = 1;
