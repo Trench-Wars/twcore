@@ -15,19 +15,19 @@ public class PubStoreJav
     @Override
     protected boolean checkEnoughMoney(PubPlayer player) {
         // TODO Auto-generated method stub
-        return false;
+        return player.getPoint() >= item.getPrice();
     }
 
     @Override
     protected boolean checkShipType(int shipType) {
         // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     @Override
     protected PubItem getItem() {
         // TODO Auto-generated method stub
-        return null;
+        return item;
     }
 
 }
