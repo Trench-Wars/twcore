@@ -2,10 +2,10 @@ package twcore.bots.purepubbot.pubitem;
 
 import twcore.bots.purepubbot.ItemObserver;
 
-public class Repel
+public class FullCharge
         extends PubItem {
 
-    public Repel(String name, int itemNumber, int price) {
+    public FullCharge(String name, int itemNumber, int price) {
         super(name, itemNumber, price);
         // TODO Auto-generated constructor stub
     }
@@ -13,7 +13,7 @@ public class Repel
     @Override
     public void notifyObservers(String playerName) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -28,5 +28,5 @@ public class Repel
         
     }
 
-    
+
 }

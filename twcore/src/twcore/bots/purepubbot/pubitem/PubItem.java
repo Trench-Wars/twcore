@@ -1,16 +1,26 @@
 package twcore.bots.purepubbot.pubitem;
 
-public abstract class PubItem {
+import twcore.bots.purepubbot.ItemObserver;
+
+public abstract class PubItem extends PubItemSubject{
+    protected String name;
+    protected int itemNumber;
+    protected int price;
     
-    private String name;
-    private int itemNumber;
-    private int price;
     
-    public PubItem(String name, int itemNumber, int price){
+    public PubItem(ItemObserver bot, String name, int itemNumber, int price){
         this.name = name;
         this.itemNumber = itemNumber;
         this.price = price;
     }
+    
+    public PubItem(String name, int itemNumber, int price) {
+        this.name = name;
+        this.itemNumber = itemNumber;
+        this.price = price;
+    }
+
+    
     public String getName() {
         return name;
     }

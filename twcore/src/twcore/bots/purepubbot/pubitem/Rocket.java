@@ -2,10 +2,10 @@ package twcore.bots.purepubbot.pubitem;
 
 import twcore.bots.purepubbot.ItemObserver;
 
-public class Repel
+public class Rocket
         extends PubItem {
 
-    public Repel(String name, int itemNumber, int price) {
+    public Rocket(String name, int itemNumber, int price) {
         super(name, itemNumber, price);
         // TODO Auto-generated constructor stub
     }
@@ -28,5 +28,4 @@ public class Repel
         
     }
 
-    
 }
