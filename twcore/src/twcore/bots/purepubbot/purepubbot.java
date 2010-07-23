@@ -860,9 +860,11 @@ public class purepubbot extends ItemObserver
         //buying system of ships
         //update(killed.getPlayerName());
         boolean wasAuth = this.allowedPlayersToUseItem.contains(killed.getPlayerName())? true : false;
-        if(wasAuth)
+        if(wasAuth){
             this.allowedPlayersToUseItem.remove(killed.getPlayerName());
-        
+            m_botAction.specWithoutLock(killed.getPlayerName());
+            m_botAction.sendPrivateMessage(killed.getPlayerName(), "You just died. Now, buy an other ship please or get in any allowed ship.");
+        }
         //--
         
         /*reset limit bought items per life
