@@ -74,7 +74,7 @@ import twcore.core.util.Tools;
  */
 public class purepubbot extends ItemObserver
 {
-    
+    private boolean nextCantBuy;
     private PubStore pubStore;
     private List<Point> flagRoomCoords;
     private List<Point> midCoords;
@@ -381,6 +381,10 @@ public class purepubbot extends ItemObserver
         return flagRoomCoords;
     }
     
+    @Override
+    public void update(boolean nextCanBuy){
+        this.nextCantBuy = nextCanBuy;
+    }
     @Override
     public void update(String playerName) {
         // TODO Auto-generated method stub

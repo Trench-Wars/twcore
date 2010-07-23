@@ -8,8 +8,12 @@ import twcore.bots.purepubbot.PubPlayer;
 import twcore.bots.purepubbot.pubitem.Burst;
 import twcore.bots.purepubbot.pubitem.FullCharge;
 import twcore.bots.purepubbot.pubitem.JavHouse;
+import twcore.bots.purepubbot.pubitem.JavHouse2;
 import twcore.bots.purepubbot.pubitem.Javelin;
+import twcore.bots.purepubbot.pubitem.JavelinHouseOff;
 import twcore.bots.purepubbot.pubitem.LeviHouse;
+import twcore.bots.purepubbot.pubitem.LeviHouse2;
+import twcore.bots.purepubbot.pubitem.LeviHouseOff;
 import twcore.bots.purepubbot.pubitem.Leviathan;
 import twcore.bots.purepubbot.pubitem.PubItem;
 import twcore.bots.purepubbot.pubitem.Repel;
@@ -17,6 +21,7 @@ import twcore.bots.purepubbot.pubitem.Rocket;
 import twcore.bots.purepubbot.pubitem.Shield;
 import twcore.bots.purepubbot.pubitem.Shrapnel;
 import twcore.bots.purepubbot.pubitem.Super;
+import twcore.bots.purepubbot.pubitem.WarbirdHouseOff;
 import twcore.bots.purepubbot.pubitem.Warp;
 import twcore.bots.purepubbot.pubitem.Weasel;
 import twcore.bots.purepubbot.pubitem.WeaselHouse;
@@ -37,6 +42,11 @@ public class PubStore {
         PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 50);
         PubItem itemsubject5 = new LeviHouse(bot, "leviathan", 0, 50);
         PubItem itemsubject6 = new WeaselHouse(bot, "weasel2", 0, 50);
+        PubItem itemsubject7 = new LeviHouse2(bot, "leviathan2", 0, 50);
+        PubItem itemsubject8 = new JavHouse2(bot, "javelin2", 0, 50);
+        PubItem itemsubject9 = new LeviHouseOff(bot, "leviathan3", 0, 50);
+        PubItem itemsubject10 = new JavelinHouseOff(bot, "javelin3", 0, 50);
+        PubItem itemsubject11 = new WarbirdHouseOff(bot, "warbirdoff", 0, 50);
         PubItem item1 = new Repel("repel", 21, 50);
         PubItem item2 = new Super("super", 17, 5000);
         PubItem item3 = new Rocket("rocket", 27, 50);
@@ -45,6 +55,7 @@ public class PubStore {
         PubItem item6 = new FullCharge("fullcharge", 13, 20);
         PubItem item7 = new Warp("warp", 7, 10);
         PubItem item8 = new Shrapnel("shrap", 19, 20);
+        
         //PubItem item4 = new Leviathan("levi", 0, 250);
         //more items
         
@@ -62,6 +73,11 @@ public class PubStore {
         PubSpecificStore specificStore12 = new PubStoreLeviathan(itemsubject5);
         PubSpecificStore specificStore13 = new PubStoreWeasel(itemsubject6);
         PubSpecificStore specificStore14 = new PubStoreShrapnel(item8);
+        PubSpecificStore specificStore15 = new PubStoreLeviathan(itemsubject7);
+        PubSpecificStore specificStore16 = new PubStoreJav(itemsubject8);
+        PubSpecificStore specificStore17 = new PubStoreLeviathan(itemsubject9);
+        PubSpecificStore specificStore18 = new PubStoreJav(itemsubject10);
+        PubSpecificStore specificStore19 = new PubWarbirdStore(itemsubject11);
         //more specifis stores
         
         hashSpecificStores.put("repel", specificStore1);
@@ -78,6 +94,11 @@ public class PubStore {
         hashSpecificStores.put("leviathan", specificStore12);
         hashSpecificStores.put("weasel2", specificStore13);
         hashSpecificStores.put("shrap", specificStore14);
+        hashSpecificStores.put("leviathan2", specificStore15);
+        hashSpecificStores.put("javelin2", specificStore16);
+        hashSpecificStores.put("leviathan3", specificStore17);
+        hashSpecificStores.put("javelin3", specificStore18);
+        hashSpecificStores.put("warbirdoff", specificStore19);
     }
     
     public PubPlayer prizeItem(String itemName, PubPlayer player, int shipType){

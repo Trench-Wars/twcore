@@ -15,5 +15,6 @@ public abstract class ItemObserver extends SubspaceBot {
     }
     public abstract void update(String playerName);
     public abstract void update(String playerName, String whatToEnableDisable, int time);
+    public abstract void update(boolean nextCanBuy);
     public abstract void doSetCmd(String sender, String argString);
 }
