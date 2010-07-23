@@ -2229,7 +2229,8 @@ public class purepubbot extends ItemObserver
                 randomShip = new Random().nextInt(8);
             
             m_botAction.setShip(playerID, randomShip);
-       	    m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "That ship has been restricted in this arena.  Please choose another, or type ?arena to select another arena. You've been put randomly in ship "+randomShip);
+       	    m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "That ship has been restricted in this arena.");  
+       	    m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "Please choose another, or type ?arena to select another arena. You've been put randomly in ship "+randomShip);
        	    return;
         }
 
