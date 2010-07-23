@@ -2224,7 +2224,7 @@ public class purepubbot extends ItemObserver
             
             int randomShip = player.getShipType();
             
-            while( (randomShip == player.getShipType() && randomShip == 0)
+            while( (randomShip == player.getShipType() && randomShip != 0)
                     && shipWeights.get(randomShip) == 0)
                 randomShip = new Random().nextInt(8);
             
