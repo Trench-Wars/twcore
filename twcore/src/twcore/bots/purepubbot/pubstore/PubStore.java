@@ -15,6 +15,7 @@ import twcore.bots.purepubbot.pubitem.PubItem;
 import twcore.bots.purepubbot.pubitem.Repel;
 import twcore.bots.purepubbot.pubitem.Rocket;
 import twcore.bots.purepubbot.pubitem.Shield;
+import twcore.bots.purepubbot.pubitem.Shrapnel;
 import twcore.bots.purepubbot.pubitem.Super;
 import twcore.bots.purepubbot.pubitem.Warp;
 import twcore.bots.purepubbot.pubitem.Weasel;
@@ -43,6 +44,7 @@ public class PubStore {
         PubItem item5 = new Shield("shield", 18, 5000);
         PubItem item6 = new FullCharge("fullcharge", 13, 20);
         PubItem item7 = new Warp("warp", 7, 10);
+        PubItem item8 = new Shrapnel("shrap", 19, 20);
         //PubItem item4 = new Leviathan("levi", 0, 250);
         //more items
         
@@ -59,6 +61,7 @@ public class PubStore {
         PubSpecificStore specificStore11 = new PubStoreJav(itemsubject4);
         PubSpecificStore specificStore12 = new PubStoreLeviathan(itemsubject5);
         PubSpecificStore specificStore13 = new PubStoreWeasel(itemsubject6);
+        PubSpecificStore specificStore14 = new PubStoreShrapnel(item8);
         //more specifis stores
         
         hashSpecificStores.put("repel", specificStore1);
@@ -74,6 +77,7 @@ public class PubStore {
         hashSpecificStores.put("javelin", specificStore11);
         hashSpecificStores.put("leviathan", specificStore12);
         hashSpecificStores.put("weasel2", specificStore13);
+        hashSpecificStores.put("shrap", specificStore14);
     }
     
     public PubPlayer prizeItem(String itemName, PubPlayer player, int shipType){

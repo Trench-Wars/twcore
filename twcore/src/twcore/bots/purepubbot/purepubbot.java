@@ -1040,7 +1040,7 @@ public class purepubbot extends ItemObserver
                 for(int i = 1; i < 9; i++)
                     Tools.printLog("Ship Values "+shipPoints.get(i) );
             }
-            else if(command.equals("!mypoints"))
+            else if(command.equals("$ "))
             {
                 if(players.containsKey(sender)){
                     PubPlayer pubPlayer = this.players.get(sender);
