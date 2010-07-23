@@ -569,7 +569,7 @@ public class purepubbot extends ItemObserver
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
+    	String arenaToJoin = arenaNames[initialPub+1];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
@@ -1044,11 +1044,11 @@ public class purepubbot extends ItemObserver
                 for(int i = 1; i < 9; i++)
                     Tools.printLog("Ship Values "+shipPoints.get(i) );
             }
-            else if(command.equals("$"))
+            else if(command.equals("!$"))
             {
                 if(players.containsKey(sender)){
                     PubPlayer pubPlayer = this.players.get(sender);
-                    m_botAction.sendPrivateMessage(sender, "You have "+pubPlayer.getPoint()+" points");
+                    m_botAction.sendPrivateMessage(sender, "You have $"+pubPlayer.getPoint());
                 }else
                     m_botAction.sendPrivateMessage(sender, "You're still not in the point system. Wait a bit to be added");
             }
