@@ -7,6 +7,7 @@ import twcore.bots.purepubbot.ItemObserver;
 import twcore.bots.purepubbot.PubPlayer;
 import twcore.bots.purepubbot.pubitem.Burst;
 import twcore.bots.purepubbot.pubitem.FullCharge;
+import twcore.bots.purepubbot.pubitem.JavHouse;
 import twcore.bots.purepubbot.pubitem.Javelin;
 import twcore.bots.purepubbot.pubitem.Leviathan;
 import twcore.bots.purepubbot.pubitem.PubItem;
@@ -30,6 +31,7 @@ public class PubStore {
         PubItem itemsubject1 = new Leviathan(bot, "levi", 0, 10);
         PubItem itemsubject2 = new Javelin(bot, "jav", 0, 100);
         PubItem itemsubject3 = new Weasel(bot, "weasel", 0, 30);
+        PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 50);
         PubItem item1 = new Repel("repel", 21, 50);
         PubItem item2 = new Super("super", 17, 5000);
         PubItem item3 = new Rocket("rocket", 27, 50);
@@ -50,6 +52,7 @@ public class PubStore {
         PubSpecificStore specificStore8 = new PubStoreShield(item5);
         PubSpecificStore specificStore9 = new PubStoreFullCharge(item6);
         PubSpecificStore specificStore10 = new PubStoreWarp(item7);
+        PubSpecificStore specificStore11 = new PubStoreJav(itemsubject4);
         //more specifis stores
         
         hashSpecificStores.put("repel", specificStore1);
@@ -62,7 +65,7 @@ public class PubStore {
         hashSpecificStores.put("shield", specificStore8);
         hashSpecificStores.put("fullcharge", specificStore9);
         hashSpecificStores.put("warp", specificStore10);
-        
+        hashSpecificStores.put("javelin", specificStore11);
     }
     
     public PubPlayer prizeItem(String itemName, PubPlayer player, int shipType){

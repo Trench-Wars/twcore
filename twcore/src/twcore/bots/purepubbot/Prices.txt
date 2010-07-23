@@ -1,0 +1,10 @@
+Super:100000
+Shields:35000
+Repel:5000
+Full Charge:1000
+Warp:500
+Portal:3000
+Thor:90000
+Shrapnel:600
+Leviathan:30000
+LT:10000
