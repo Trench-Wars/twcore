@@ -32,6 +32,7 @@ public final class radiobot extends SubspaceBot {
     private boolean m_announcing = false;
     private boolean m_someoneHosting = false;
     private long m_timeStarted;
+    private long m_timeStartedToHost;
     private long m_timeToClearZone;
     private long m_timeOfLastZone = 0;
    
@@ -76,6 +77,7 @@ public final class radiobot extends SubspaceBot {
         m_questions = new RadioQueue("Question");
 
         m_timeStarted = System.currentTimeMillis();
+        m_timeStartedToHost = System.currentTimeMillis();
         m_timeToClearZone = m_timeStarted + SIX_HOURS;
     }
 
@@ -284,7 +286,9 @@ public final class radiobot extends SubspaceBot {
     }
 
 
-	private void updateStatRecordsHOST(String name) {
+
+
+    private void updateStatRecordsHOST(String name) {
 	    if( !m_botAction.SQLisOperational())
             return;
         
@@ -297,7 +301,7 @@ public final class radiobot extends SubspaceBot {
                 m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
             }
             m_botAction.SQLClose( result );
-            m_botAction.sendSmartPrivateMessage(name, "Added a host count for you on my database.");
+            m_botAction.sendSmartPrivateMessage(name, "Host count recorded, Start time enabled..");
         } catch ( Exception e ) {
             m_botAction.sendChatMessage("Error occured when registering host count :"+e.getMessage());
             Tools.printStackTrace(e);
@@ -369,6 +373,13 @@ public final class radiobot extends SubspaceBot {
                 m_alreadyZoned.add(name);
                 m_timeOfLastZone = now;
             }
+            
+        } else if(message.startsWith("!time")) {
+            handled = true;
+            long now = System.currentTimeMillis();
+            long start = now - m_timeStartedToHost;
+            m_botAction.sendPrivateMessage(id, "You have hosted for " + (start / 1000 / 60 / 60) + " hours and " + (start / 1000 / 60 % 60) + " minutes.");
+
 
         } else if(message.startsWith("!nextshout")) {
         	handled = true;
@@ -523,6 +534,11 @@ public final class radiobot extends SubspaceBot {
             m_botAction.sendChatMessage(name +" has finished hosting radio.");
             m_currentHost = "";
             m_someoneHosting = false;
+            long now = System.currentTimeMillis();
+            long start = now - m_timeStartedToHost;
+            m_botAction.sendPrivateMessage(id, "You hosted for " + (start / 1000 / 60 / 60) + " hours and " + (start / 1000 / 60 % 60) + " minutes. Please ?message the Radio Operator this time.");
+
+
             
         } else if(message.startsWith("!ask")) {
             handled = true;
@@ -614,7 +630,6 @@ public final class radiobot extends SubspaceBot {
     		}
 
 		} else if(message.equals("!die")) {
-    		handled = true;
     		m_botAction.sendChatMessage(name + " Just killed me!");
 			m_botAction.die();
 
@@ -853,6 +868,7 @@ public final class radiobot extends SubspaceBot {
         "|!setwelcome <msg>     - Sets welcome message (!welcomeoff to disable).           |",
         "|!seturl               - Sets the URL that appears in your announcement.          |",
         "|!ask                  - Sends a ?help asking for another zoner.                  |",
+        "|!time                 - Displays how long you haave currently hosted for.        |",                                       
         "+---------------------------------------------------------------------------------+",
         "|    Read requests (append a number to retrieve several at once)                  |",
         "+---------------------------------------------------------------------------------|",
