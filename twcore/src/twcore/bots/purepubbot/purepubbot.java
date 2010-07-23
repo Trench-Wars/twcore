@@ -597,7 +597,7 @@ public class purepubbot extends ItemObserver
             return;
         
         if(ship == 5)
-            m_botAction.sendOpposingTeamMessageByFrequency(freq, p.getPlayerName()+" is a terr now. Freq "+freq+" can attach to him");
+            m_botAction.sendOpposingTeamMessageByFrequency(freq, p.getPlayerName()+" is a terr now. Freq "+freq+", attach to him!");
         
         try {
             if( flagTimeStarted && flagTimer != null && flagTimer.isRunning() ) {
