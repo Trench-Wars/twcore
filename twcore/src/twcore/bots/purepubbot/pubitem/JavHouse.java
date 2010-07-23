@@ -21,10 +21,10 @@ public class JavHouse
     public void notifyObservers(String playerName) {
         // TODO Auto-generated method stub
         for(final ItemObserver io:observers){
-            io.doSetCmd(playerName, "!set 2 1"); //enables jav
+            io.doSetCmd(playerName, "2 1"); //enables jav
             TimerTask disableAfterFiveMinutes = new TimerTask(){
                 public void run(){
-                    io.doSetCmd("", "!set 2 0"); //disables back after the time runs out
+                    io.doSetCmd("", "2 0"); //disables back after the time runs out
                 }
             };
             Timer timer = new Timer(); //sets timer to be run after 5 mins so it'll be disabled.
