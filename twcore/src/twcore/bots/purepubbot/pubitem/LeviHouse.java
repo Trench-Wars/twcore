@@ -21,7 +21,10 @@ public class LeviHouse
     public void notifyObservers(String playerName) {
         // TODO Auto-generated method stub
         for(final ItemObserver io:observers){
+            io.update(playerName, "4 1", 5);
+            /*
             io.doSetCmd(playerName, "4 1");
+            */
             TimerTask disableAfterFiveMinutes = new TimerTask(){
                 public void run(){
                     io.doSetCmd("", "4 0");
