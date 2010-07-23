@@ -2224,10 +2224,12 @@ public class purepubbot extends ItemObserver
             
             int randomShip = player.getShipType();
             
-            while( (randomShip == player.getShipType() && randomShip != 0)
-                    && shipWeights.get(randomShip) == 0)
+            while( randomShip == player.getShipType() 
+                    && shipWeights.get(randomShip) == 0){
                 randomShip = new Random().nextInt(8);
-            
+                if(randomShip == 0)
+                    randomShip = player.getShipType();
+            }
             m_botAction.setShip(playerID, randomShip);
        	    m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "That ship has been restricted in this arena.");  
        	    m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "Please choose another, or type ?arena to select another arena. You've been put randomly in ship "+randomShip);
