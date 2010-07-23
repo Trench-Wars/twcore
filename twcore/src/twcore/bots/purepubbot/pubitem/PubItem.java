@@ -3,10 +3,10 @@ package twcore.bots.purepubbot.pubitem;
 import twcore.bots.purepubbot.ItemObserver;
 
 public abstract class PubItem extends PubItemSubject{
+    
     protected String name;
     protected int itemNumber;
     protected int price;
-    
     
     public PubItem(ItemObserver bot, String name, int itemNumber, int price){
         this.name = name;
