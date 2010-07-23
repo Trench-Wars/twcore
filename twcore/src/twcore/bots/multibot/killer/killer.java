@@ -398,6 +398,9 @@ public class killer extends MultiModule {
 
                 if( numPs > 1 )
                     makeNewRandomKiller();
+                if( numPs == 1 ) {
+                    announceWinner();
+                }
 
             } else {
 
@@ -422,26 +425,29 @@ public class killer extends MultiModule {
                     }
 
                 } else if( numPlayers == 1) {
-                    Iterator<Player> i2 = m_botAction.getPlayingPlayerIterator();
-
-                    try {
-                        Player winner = (Player) i2.next();
-
-                        if( m_killer.equals( winner.getPlayerName() ) ) {
-                            m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + ", the notorious Killer, has emerged victorious, and lives to kill another day...",13);
-                            doStop();
-                        } else {
-                            m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " has triumphed over the Killer and returned peace to this once-quiet city.",5);
-                            doStop();
-                        }
-                    } catch (Exception e) {
-                    }
+                    announceWinner();
                 }
             }
         }
     }
 
+    public void announceWinner(){
+        Iterator<Player> i2 = m_botAction.getPlayingPlayerIterator();
 
+        try {
+            Player winner = (Player) i2.next();
+
+            if( m_killer.equals( winner.getPlayerName() ) ) {
+                m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + ", the notorious Killer, has emerged victorious, and lives to kill another day...",13);
+                doStop();
+            } else {
+                m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " has triumphed over the Killer and returned peace to this once-quiet city.",5);
+                doStop();
+            }
+        } catch (Exception e) {
+        }
+        
+    }
 
     /** Handles player death events.  Spec at appropriate number of deaths, spec
      * if killed by the killer, and spec if in sudden death.
