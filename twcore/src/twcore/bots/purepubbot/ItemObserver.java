@@ -14,5 +14,6 @@ public abstract class ItemObserver extends SubspaceBot {
         // TODO Auto-generated constructor stub
     }
     public abstract void update(String playerName);
+    public abstract void update(String playerName, String whatToEnableDisable, int time);
     public abstract void doSetCmd(String sender, String argString);
 }

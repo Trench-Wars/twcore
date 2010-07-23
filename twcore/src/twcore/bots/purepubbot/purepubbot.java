@@ -393,6 +393,16 @@ public class purepubbot extends ItemObserver
         
     }
     
+    @Override
+    public void update(String playerName, String whatToEnableDisable, int time) {
+        // TODO Auto-generated method stub
+        String split[] = whatToEnableDisable.split(" ");
+        String enableOrDisable = split[1].equals("1")? "enabled":"disabled";
+        doSetCmd(playerName, whatToEnableDisable);
+        m_botAction.sendPrivateMessage(playerName, "You've "+enableOrDisable+" the ship "+split[0]+" for "+time+" minutes.");
+    
+    }
+
     public void buyItem(String playerName, String itemName, int shipType){
         try{
             boolean isInSystem = players.containsKey(playerName)? true: false;
