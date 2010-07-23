@@ -9,6 +9,7 @@ import twcore.bots.purepubbot.pubitem.Burst;
 import twcore.bots.purepubbot.pubitem.FullCharge;
 import twcore.bots.purepubbot.pubitem.JavHouse;
 import twcore.bots.purepubbot.pubitem.Javelin;
+import twcore.bots.purepubbot.pubitem.LeviHouse;
 import twcore.bots.purepubbot.pubitem.Leviathan;
 import twcore.bots.purepubbot.pubitem.PubItem;
 import twcore.bots.purepubbot.pubitem.Repel;
@@ -17,6 +18,7 @@ import twcore.bots.purepubbot.pubitem.Shield;
 import twcore.bots.purepubbot.pubitem.Super;
 import twcore.bots.purepubbot.pubitem.Warp;
 import twcore.bots.purepubbot.pubitem.Weasel;
+import twcore.bots.purepubbot.pubitem.WeaselHouse;
 import twcore.core.BotAction;
 
 public class PubStore {
@@ -32,6 +34,8 @@ public class PubStore {
         PubItem itemsubject2 = new Javelin(bot, "jav", 0, 100);
         PubItem itemsubject3 = new Weasel(bot, "weasel", 0, 30);
         PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 50);
+        PubItem itemsubject5 = new LeviHouse(bot, "leviathan", 0, 50);
+        PubItem itemsubject6 = new WeaselHouse(bot, "weasel2", 0, 50);
         PubItem item1 = new Repel("repel", 21, 50);
         PubItem item2 = new Super("super", 17, 5000);
         PubItem item3 = new Rocket("rocket", 27, 50);
@@ -53,6 +57,8 @@ public class PubStore {
         PubSpecificStore specificStore9 = new PubStoreFullCharge(item6);
         PubSpecificStore specificStore10 = new PubStoreWarp(item7);
         PubSpecificStore specificStore11 = new PubStoreJav(itemsubject4);
+        PubSpecificStore specificStore12 = new PubStoreLeviathan(itemsubject5);
+        PubSpecificStore specificStore13 = new PubStoreWeasel(itemsubject6);
         //more specifis stores
         
         hashSpecificStores.put("repel", specificStore1);
@@ -66,6 +72,8 @@ public class PubStore {
         hashSpecificStores.put("fullcharge", specificStore9);
         hashSpecificStores.put("warp", specificStore10);
         hashSpecificStores.put("javelin", specificStore11);
+        hashSpecificStores.put("leviathan", specificStore12);
+        hashSpecificStores.put("weasel2", specificStore13);
     }
     
     public PubPlayer prizeItem(String itemName, PubPlayer player, int shipType){
