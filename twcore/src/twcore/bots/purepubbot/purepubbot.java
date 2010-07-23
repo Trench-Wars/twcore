@@ -652,9 +652,11 @@ public class purepubbot extends ItemObserver
                     if( autoWarp ) {
                         if( !freq0List.contains(pname) && !freq1List.contains(pname) && !warpPlayers.contains(pname) )
                             if( ship != Tools.Ship.SPECTATOR )
-                                doWarpCmd(pname);
+                                doWarpCmd(pname); 
                     }
-                        
+                    
+                    if(ship == 5)
+                        m_botAction.sendOpposingTeamMessageByFrequency(freq, p.getPlayerName()+" is a terr now. Freq "+freq+" can attach to him");
                     // Terrs and Levis can't warp into base if Levis are enabled
                     if( shipWeights.get(Tools.Ship.LEVIATHAN) > 0 ) {                        
                         if( ship == Tools.Ship.LEVIATHAN || ship == Tools.Ship.TERRIER )            
