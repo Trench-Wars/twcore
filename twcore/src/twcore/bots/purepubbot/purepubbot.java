@@ -2221,7 +2221,7 @@ public class purepubbot extends ItemObserver
 
         // If weight is 0, ship is completely restricted.
         if( weight == 0 ) {
-            m_botAction.specWithoutLock(playerID);
+            m_botAction.setShip(playerID, 3);
        	    m_botAction.sendSmartPrivateMessage(m_botAction.getPlayerName(playerID), "That ship has been restricted in this arena.  Please choose another, or type ?arena to select another arena.");
        	    return;
         }
