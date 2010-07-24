@@ -1,16 +1,14 @@
 package twcore.bots.purepubbot.pointlocation;
 
 import java.util.List;
-import java.util.Vector;
-
 import twcore.core.util.Point;
-import twcore.core.util.PointLocation;
 
 public class FlagRoomPointLocation extends ProcessorPointLocation{
     
     public FlagRoomPointLocation(List<Point> coords) {
         super(coords);
         // TODO Auto-generated constructor stub
+       
     }
 
     public boolean isInside(Point point){

@@ -5,6 +5,7 @@ import java.util.List;
 import twcore.core.util.Point;
 import twcore.core.util.PointLocation;
 
+//Chain of responsibility to calculate where the player is
 public abstract class ProcessorPointLocation {
 
     protected ProcessorPointLocation sucessor;

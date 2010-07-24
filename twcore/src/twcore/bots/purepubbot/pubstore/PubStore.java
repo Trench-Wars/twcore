@@ -32,8 +32,7 @@ public class PubStore {
     private Map<String, PubSpecificStore> hashSpecificStores;
     private BotAction botAction;
     
-    public PubStore(BotAction botAction, ItemObserver bot){
-        this.botAction = botAction;
+    public PubStore(ItemObserver bot){
         this.hashSpecificStores = new HashMap<String, PubSpecificStore>();
 
         PubItem itemsubject1 = new Leviathan(bot, "levi", 0, 10);

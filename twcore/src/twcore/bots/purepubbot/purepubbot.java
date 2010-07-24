@@ -14,11 +14,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
-import twcore.bots.purepubbot.pointlocation.FlagRoomPointLocation;
-import twcore.bots.purepubbot.pointlocation.MidPointLocation;
-import twcore.bots.purepubbot.pointlocation.ProcessorPointLocation;
-import twcore.bots.purepubbot.pubstore.PubStore;
 
+import twcore.bots.purepubbot.pubsystemstate.PubPointStore;
+import twcore.bots.purepubbot.pubsystemstate.PubPointStoreOn;
+import twcore.bots.purepubbot.pubsystemstate.SystemIsOffException;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -75,17 +74,15 @@ import twcore.core.util.Tools;
 public class purepubbot extends ItemObserver
 {
     private boolean nextCantBuy;
-    private PubStore pubStore;
-    private List<Point> flagRoomCoords;
-    private List<Point> midCoords;
+    private PubPointStore pubStoreSystem;
+
     private Map<String, PubPlayer> players;
     
     private Map<Integer, Integer> shipPoints;
     private Map<String, Integer> areaPoints;
     private BotSettings botSets;
 
-    private ProcessorPointLocation flagRoomLocation;
-    private ProcessorPointLocation midBaseLocation;
+ 
     
     public static final int SPEC = 0;                   // Number of the spec ship
     public static final int FREQ_0 = 0;                 // Frequency 0
@@ -214,18 +211,12 @@ public class purepubbot extends ItemObserver
         botSets = m_botAction.getBotSettings();
         
         this.allowedPlayersToUseItem = new Vector<String>();
-        this.pubStore = new PubStore(m_botAction, this);
+        this.pubStoreSystem = new PubPointStoreOn(this);
         this.players = new HashMap<String, PubPlayer>();
        
         this.shipPoints = new HashMap<Integer, Integer>();
         this.areaPoints = new HashMap<String, Integer>();
-        
-        this.flagRoomCoords = initializeFRCoords();
-        this.midCoords = initializeMidCoords();
-        this.flagRoomLocation = new FlagRoomPointLocation(flagRoomCoords);
-        this.midBaseLocation = new MidPointLocation(midCoords);
-        flagRoomLocation.setSucessor(midBaseLocation);
-        
+   
         initializePoints();
         
         opList = m_botAction.getOperatorList();
@@ -293,93 +284,7 @@ public class purepubbot extends ItemObserver
         shipPoints.put(7, botSets.getInteger("pointship7"));
         shipPoints.put(8, botSets.getInteger("pointship8"));
     }
-    private List<Point> initializeMidCoords(){
-        this.midCoords = new Vector<Point>();
-
-        midCoords.add(new Point(472, 286));
-        midCoords.add(new Point(471, 272));
-        midCoords.add(new Point(448, 272));
-        midCoords.add(new Point(461, 334));
-        midCoords.add(new Point(563, 334));
-        midCoords.add(new Point(575, 295));
-        midCoords.add(new Point(575, 272));
-        midCoords.add(new Point(552, 271));
-        midCoords.add(new Point(552, 286));
-        midCoords.add(new Point(529, 286));
-        midCoords.add(new Point(529, 283));
-        midCoords.add(new Point(528, 283));
-        midCoords.add(new Point(528, 286));
-        midCoords.add(new Point(527, 286));
-        midCoords.add(new Point(527, 287));
-        midCoords.add(new Point(525, 287));
-        midCoords.add(new Point(525, 294));
-        midCoords.add(new Point(519, 294));
-        midCoords.add(new Point(519, 283));
-        midCoords.add(new Point(515, 283));
-        midCoords.add(new Point(515, 278));
-        midCoords.add(new Point(509, 278));
-        midCoords.add(new Point(509, 283));
-        midCoords.add(new Point(505, 283));
-        midCoords.add(new Point(505, 294));
-        midCoords.add(new Point(499, 294));
-        midCoords.add(new Point(499, 286));
-        midCoords.add(new Point(496, 28));
-        midCoords.add(new Point(496, 283));
-        midCoords.add(new Point(495, 283));
-        midCoords.add(new Point(495, 286));
-        return midCoords;
-    }
-    private List<Point> initializeFRCoords(){
-        this.flagRoomCoords = new Vector<Point>();
-        //flagroom coords
-        flagRoomCoords.add(new Point(479, 285));
-        flagRoomCoords.add(new Point(479, 249));
-        flagRoomCoords.add(new Point(545, 249));
-        flagRoomCoords.add(new Point(545, 285));
-        flagRoomCoords.add(new Point(531, 285));
-        flagRoomCoords.add(new Point(531, 282));
-        flagRoomCoords.add(new Point(530, 282));
-        flagRoomCoords.add(new Point(530, 281));
-        flagRoomCoords.add(new Point(527, 281));
-        flagRoomCoords.add(new Point(527, 282));
-        flagRoomCoords.add(new Point(526, 285));
-        flagRoomCoords.add(new Point(523, 285));
-        flagRoomCoords.add(new Point(523, 292));
-        flagRoomCoords.add(new Point(521, 292));
-        flagRoomCoords.add(new Point(517, 281));
-        flagRoomCoords.add(new Point(517, 278));
-        flagRoomCoords.add(new Point(519, 278));
-        flagRoomCoords.add(new Point(519, 276));
-        flagRoomCoords.add(new Point(517, 276));
-        flagRoomCoords.add(new Point(517, 274));
-        flagRoomCoords.add(new Point(515, 274));
-        flagRoomCoords.add(new Point(515, 276));
-        flagRoomCoords.add(new Point(509, 276));
-        flagRoomCoords.add(new Point(509, 274));
-        flagRoomCoords.add(new Point(507, 274));
-        flagRoomCoords.add(new Point(507, 276));
-        flagRoomCoords.add(new Point(505, 276));
-        flagRoomCoords.add(new Point(505, 278));
-        flagRoomCoords.add(new Point(507, 278));
-        flagRoomCoords.add(new Point(507, 281));
-        flagRoomCoords.add(new Point(503, 281));
-        flagRoomCoords.add(new Point(503, 292));
-        flagRoomCoords.add(new Point(501, 292));
-        flagRoomCoords.add(new Point(501, 285));
-        flagRoomCoords.add(new Point(499, 285));
-        flagRoomCoords.add(new Point(499, 284));
-        flagRoomCoords.add(new Point(498, 284));
-        flagRoomCoords.add(new Point(498, 282));
-        flagRoomCoords.add(new Point(497, 282));
-        flagRoomCoords.add(new Point(497, 281));
-        flagRoomCoords.add(new Point(494,281));
-        flagRoomCoords.add(new Point(494, 282));
-        flagRoomCoords.add(new Point(492, 282));
-        flagRoomCoords.add(new Point(493, 284));
-        flagRoomCoords.add(new Point(492, 284));
-        flagRoomCoords.add(new Point(492, 285));
-        return flagRoomCoords;
-    }
+   
     
     @Override
     public void update(boolean nextCanBuy){
@@ -412,14 +317,18 @@ public class purepubbot extends ItemObserver
             boolean isInSystem = players.containsKey(playerName)? true: false;
             
             if(isInSystem){
-                PubPlayer playerBought = pubStore.prizeItem(itemName, players.get(playerName), shipType);
+                PubPlayer playerBought = pubStoreSystem.buyItem(itemName, players.get(playerName), shipType);
                 m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
                
                 this.players.put(playerName, playerBought);
             } else
                 m_botAction.sendPrivateMessage(playerName, "You're not in the system to use !buy.");
             
-        }catch(Exception e){
+        }
+        catch(SystemIsOffException e){
+            m_botAction.sendPrivateMessage(playerName, "Store is off today, please come back tomorrow!");
+        }
+        catch(Exception e){
             e.printStackTrace();
             throw new RuntimeException("You've bought too many items and reached the limit. It'll be reseted after you die.");
         }
@@ -910,7 +819,7 @@ public class purepubbot extends ItemObserver
             int location;
             String loc;
             
-            loc = flagRoomLocation.getLocation(pointXY);//chain of responsibility
+            loc = pubStoreSystem.getLocation(pointXY);//chain of responsibility
             
             if(loc == null)
                 return;
@@ -944,7 +853,9 @@ public class purepubbot extends ItemObserver
             //Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
            
             //--
-        }catch(Exception e){
+        } catch(SystemIsOffException e){
+          //system is on off state, won't calculate anything and returns null   
+        } catch(Exception e){
             Tools.printLog("Exception: "+e.getMessage());
             e.printStackTrace();
         }
