@@ -515,7 +515,6 @@ public class elim extends SubspaceBot {
 			    		enabled.add(name);
 			    	m_botAction.sendSmartPrivateMessage( name, "You have been put back into the game. You have " + (MAX_LAGOUT-elimPlayers.get(name).lagouts) + " lagouts left.");
 			    	elimPlayers.get(name).clearBorderInfo();
-			    	elimPlayers.get(name).setSpawnGrace();
 			    	m_botAction.setShip(name, elimPlayers.get(name).shiptype);
 			    	m_botAction.setFreq(name, elimPlayers.get(name).frequency);
 			    	doWarpIntoElim(name);
@@ -1076,6 +1075,7 @@ public class elim extends SubspaceBot {
     }
     
     public void doWarpIntoElim(String name){
+        elimPlayers.get(name).setSpawnGrace();
         if( cfg_casualAllowed == 1 )
             m_botAction.sendUnfilteredPrivateMessage(name, "*objoff " + CASUAL_LOGO_LVZ);
     	if(shipType == 6 && cfg_gameType == BASEELIM){
@@ -1392,7 +1392,7 @@ private class SpawnTimer {
     private boolean casual;
     private TimerTask runIt = new TimerTask() {
         public void run() {
-        	if(!casual){
+            if(!casual){
 	        	if(shrap == ON)
 	        		m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
 	        	m_botAction.specificPrize(name, Tools.Prize.MULTIFIRE);
@@ -1405,7 +1405,7 @@ private class SpawnTimer {
 	        		}
 	        	}
         	}else
-        		doWarpIntoCasual(name);
+        	    doWarpIntoCasual(name);
         }
     };
         
@@ -1499,6 +1499,7 @@ private class MVPTimer {
     public void handleEvent(PlayerDeath event) {
     	String win = m_botAction.getPlayerName(event.getKillerID());
     	String loss = m_botAction.getPlayerName(event.getKilleeID());
+    	
     	if(win == null || loss == null)return;
     	Player winp = m_botAction.getPlayer(win);
     	Player lossp = m_botAction.getPlayer(loss);
@@ -1542,10 +1543,9 @@ private class MVPTimer {
     		}
     	}else if(elimPlayers.containsKey(loss)){
     		l.clearBorderInfo();
-    		l.setSpawnGrace();
     		new SpawnTimer(loss, false);
     	}else
-    		new SpawnTimer(loss, true);
+    	   	new SpawnTimer(loss, true);
     	if(elimPlayers.size() == 1){
     		winner = elimPlayers.get(elimPlayers.firstKey());
     		game.moveOn();
