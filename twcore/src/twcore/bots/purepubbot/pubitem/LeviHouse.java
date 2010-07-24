@@ -46,5 +46,8 @@ public class LeviHouse
         // TODO Auto-generated method stub
         this.observers.remove(bot);
     }
-
+    
+    public String toString(){
+        return "Leviathan for 5 minutes";
+    }
 }

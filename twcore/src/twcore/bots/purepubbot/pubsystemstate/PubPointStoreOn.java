@@ -12,6 +12,7 @@ public class PubPointStoreOn
     public PubPointStoreOn(ItemObserver bot){
         this.facadeStore = new PubStore(bot);
         this.facadePoints = new AreaPlayer();
+   
     }
     @Override
     public PubPlayer buyItem(String itemName, PubPlayer player, int shipType) {

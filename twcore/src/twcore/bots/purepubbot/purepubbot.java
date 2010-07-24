@@ -16,6 +16,7 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 import twcore.bots.purepubbot.pubsystemstate.PubPointStore;
+import twcore.bots.purepubbot.pubsystemstate.PubPointStoreOff;
 import twcore.bots.purepubbot.pubsystemstate.PubPointStoreOn;
 import twcore.bots.purepubbot.pubsystemstate.SystemIsOffException;
 import twcore.core.BotAction;
@@ -319,7 +320,7 @@ public class purepubbot extends ItemObserver
             if(isInSystem){
                 PubPlayer playerBought = pubStoreSystem.buyItem(itemName, players.get(playerName), shipType);
                 m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
-               
+                //m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail());
                 this.players.put(playerName, playerBought);
             } else
                 m_botAction.sendPrivateMessage(playerName, "You're not in the system to use !buy.");
@@ -1017,6 +1018,11 @@ public class purepubbot extends ItemObserver
                 doAllowWarpCmd(sender);
             else if(command.equals("!die"))
                 doDieCmd(sender);
+            else if(command.equals("!storeon"))
+                this.pubStoreSystem = new PubPointStoreOn(this);
+            else if(command.equals("!storeoff"))
+                this.pubStoreSystem = new PubPointStoreOff();
+            
         } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }

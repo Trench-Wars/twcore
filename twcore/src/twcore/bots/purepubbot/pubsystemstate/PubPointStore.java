@@ -11,7 +11,7 @@ public abstract class PubPointStore {
 
     protected PubStore facadeStore;
     protected AreaPlayer facadePoints;
-    
     public abstract String getLocation(Point point) throws SystemIsOffException; //won't calculate points if system is off state
     public abstract PubPlayer buyItem(String itemName, PubPlayer player, int shipType) throws SystemIsOffException;
+
 }
