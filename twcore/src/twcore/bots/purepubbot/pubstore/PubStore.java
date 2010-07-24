@@ -35,25 +35,25 @@ public class PubStore {
     public PubStore(ItemObserver bot){
         this.hashSpecificStores = new HashMap<String, PubSpecificStore>();
 
-        PubItem itemsubject1 = new Leviathan(bot, "levi", 0, 10);
+        PubItem itemsubject1 = new Leviathan(bot, "levi", 0, 250);
         PubItem itemsubject2 = new Javelin(bot, "jav", 0, 100);
-        PubItem itemsubject3 = new Weasel(bot, "weasel", 0, 30);
-        PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 50);
-        PubItem itemsubject5 = new LeviHouse(bot, "leviathan", 0, 50);
-        PubItem itemsubject6 = new WeaselHouse(bot, "weasel2", 0, 50);
-        PubItem itemsubject7 = new LeviHouse2(bot, "leviathan2", 0, 50);
-        PubItem itemsubject8 = new JavHouse2(bot, "javelin2", 0, 50);
+        PubItem itemsubject3 = new Weasel(bot, "weasel", 0, 100);
+        PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 250);
+        PubItem itemsubject5 = new LeviHouse(bot, "leviathan", 0, 0);
+        PubItem itemsubject6 = new WeaselHouse(bot, "weasel2", 0, 200);
+        PubItem itemsubject7 = new LeviHouse2(bot, "leviathan2", 0, 700);
+        PubItem itemsubject8 = new JavHouse2(bot, "javelin2", 0, 600);
         PubItem itemsubject9 = new LeviHouseOff(bot, "leviathan3", 0, 50);
         PubItem itemsubject10 = new JavelinHouseOff(bot, "javelin3", 0, 50);
-        PubItem itemsubject11 = new WarbirdHouseOff(bot, "warbirdoff", 0, 50);
+        PubItem itemsubject11 = new WarbirdHouseOff(bot, "warbirdoff", 0, 500);
         PubItem item1 = new Repel("repel", 21, 50);
         PubItem item2 = new Super("super", 17, 5000);
         PubItem item3 = new Rocket("rocket", 27, 50);
-        PubItem item4 = new Burst("burst", 22, 50);
+        PubItem item4 = new Burst("burst", 22, 250);
         PubItem item5 = new Shield("shield", 18, 5000);
         PubItem item6 = new FullCharge("fullcharge", 13, 20);
         PubItem item7 = new Warp("warp", 7, 10);
-        PubItem item8 = new Shrapnel("shrap", 19, 20);
+        PubItem item8 = new Shrapnel("shrap", 19, 30);
         
         //PubItem item4 = new Leviathan("levi", 0, 250);
         //more items
@@ -111,10 +111,9 @@ public class PubStore {
                     PubSpecificStore pubStore = hashSpecificStores.get(itemName);
                     
                     PubItem item = pubStore.sellItem(player, shipType);
-                    System.out.println("I'm here, item: "+item.getName());
+                    //System.out.println("I'm here, item: "+item.getName());
                     player.setPoint(player.getPoint() - item.getPrice());
                     player.addItemString(item.toString());
-                    botAction.specificPrize(player.getP_name(), item.getItemNumber());
                     item.notifyObservers(player.getP_name());
                     
                     return player;

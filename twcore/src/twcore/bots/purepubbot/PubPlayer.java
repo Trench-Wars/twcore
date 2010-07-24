@@ -1,6 +1,7 @@
 package twcore.bots.purepubbot;
 
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 
 
 import twcore.bots.purepubbot.pubitem.PubItem;
@@ -52,7 +53,7 @@ public class PubPlayer implements Comparable<PubPlayer>{
         return listLastItems.getLast();
     }
     
-    public PubItem getLastItem(){
+    public PubItem getLastItem() throws NoSuchElementException{
         return this.boughtItems.getLast();
     }
     @Override

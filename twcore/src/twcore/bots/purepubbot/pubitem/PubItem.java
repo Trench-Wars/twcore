@@ -7,6 +7,7 @@ public abstract class PubItem extends PubItemSubject{
     protected String name;
     protected int itemNumber;
     protected int price;
+    protected boolean isArenaItem;
     
     public PubItem(ItemObserver bot, String name, int itemNumber, int price){
         this.name = name;
@@ -44,5 +45,7 @@ public abstract class PubItem extends PubItemSubject{
         return "You've bought a "+this.getName()+" for $"+this.getPrice();
     }
 
-
+    public boolean isArenaItem(){
+        return isArenaItem;
+    }
 }

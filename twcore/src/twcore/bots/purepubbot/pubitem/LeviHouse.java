@@ -15,6 +15,7 @@ public class LeviHouse
         // TODO Auto-generated constructor stub
         this.observers = new ArrayList<ItemObserver>();
         registerObserver(bot);
+        this.isArenaItem = true;
     }
 
     @Override
@@ -49,5 +50,10 @@ public class LeviHouse
     
     public String toString(){
         return "Leviathan for 5 minutes";
+    }
+    
+    @Override
+    public boolean isArenaItem(){
+        return isArenaItem;
     }
 }

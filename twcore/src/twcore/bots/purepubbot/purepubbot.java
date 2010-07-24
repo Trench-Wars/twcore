@@ -11,14 +11,15 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import twcore.bots.purepubbot.pubitem.PubItem;
 import twcore.bots.purepubbot.pubsystemstate.PubPointStore;
 import twcore.bots.purepubbot.pubsystemstate.PubPointStoreOff;
 import twcore.bots.purepubbot.pubsystemstate.PubPointStoreOn;
-import twcore.bots.purepubbot.pubsystemstate.SystemIsOffException;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -320,18 +321,30 @@ public class purepubbot extends ItemObserver
             if(isInSystem){
                 PubPlayer playerBought = pubStoreSystem.buyItem(itemName, players.get(playerName), shipType);
                 m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
-                //m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail());
+                PubItem lastItem = playerBought.getLastItem();
+                
+                System.out.println("Item q.."+lastItem.isArenaItem());
+                /*
+                if(arenaItem)
+                    m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail()+" for "+lastItem.getPrice(), 2);
+                */
+                
                 this.players.put(playerName, playerBought);
+                m_botAction.specificPrize(playerBought.getP_name(), playerBought.getLastItem().getItemNumber());
             } else
                 m_botAction.sendPrivateMessage(playerName, "You're not in the system to use !buy.");
             
         }
-        catch(SystemIsOffException e){
+        catch(NoSuchElementException e){
+            e.toString();
+        }
+        catch(RuntimeException e){
             m_botAction.sendPrivateMessage(playerName, "Store is off today, please come back tomorrow!");
         }
         catch(Exception e){
-            e.printStackTrace();
-            throw new RuntimeException("You've bought too many items and reached the limit. It'll be reseted after you die.");
+            e.toString();
+            //e.printStackTrace();
+            //throw new RuntimeException("You've bought too many items and reached the limit. It'll be reseted after you die.");
         }
         
     }
@@ -479,7 +492,7 @@ public class purepubbot extends ItemObserver
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
+    	String arenaToJoin = arenaNames[initialPub+1];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
@@ -854,7 +867,7 @@ public class purepubbot extends ItemObserver
             //Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
            
             //--
-        } catch(SystemIsOffException e){
+        } catch(RuntimeException e){
           //system is on off state, won't calculate anything and returns null   
         } catch(Exception e){
             Tools.printLog("Exception: "+e.getMessage());
@@ -961,26 +974,21 @@ public class purepubbot extends ItemObserver
             }
             else if(command.equals("!$"))
             {
-                if(players.containsKey(sender)){
-                    PubPlayer pubPlayer = this.players.get(sender);
-                    m_botAction.sendPrivateMessage(sender, "You have $"+pubPlayer.getPoint());
-                }else
-                    m_botAction.sendPrivateMessage(sender, "You're still not in the point system. Wait a bit to be added");
+                doCmdDisplayMoney(sender);
+                
             }
             else if(command.startsWith("!b ")){
                 try{
-                    Player p = m_botAction.getPlayer(sender);
-                    String itemName;
-                    if(p == null)
-                        return;
-                    //!b <item>
-                    //0123
-                    itemName = command.substring(3);
-                    buyItem(sender, itemName, p.getShipType());
+                    doCmdBuy(sender, command);
                 }catch(Exception e){
                     e.printStackTrace();
                 }
             }
+            else if(command.equals("!buy"))
+                doDisplayItems(sender);
+            else if(command.equals("!about"))
+                doDisplayExplanation(sender);
+            
         } catch(RuntimeException e) {
             if( e != null && e.getMessage() != null )
                 m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
@@ -1019,9 +1027,9 @@ public class purepubbot extends ItemObserver
             else if(command.equals("!die"))
                 doDieCmd(sender);
             else if(command.equals("!storeon"))
-                this.pubStoreSystem = new PubPointStoreOn(this);
+                enableStore(sender);
             else if(command.equals("!storeoff"))
-                this.pubStoreSystem = new PubPointStoreOff();
+                disableStore(sender);
             
         } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
@@ -1046,7 +1054,54 @@ public class purepubbot extends ItemObserver
     	}
     	m_votes.put(sender, vote);
     }
-
+    
+    private void doDisplayExplanation(String sender){
+        String[] explanation = {
+                
+                "Hi, I'm a new store that sells lots of items to your ship",
+                "Depending on your kill, you get money added into your cash",
+                "This money, depends on the location you are(flagroom, mid, spawn) and what ship you were using",
+                "So, you may get rich and buy items that are being sold by me. by Dex"
+                
+        };
+        m_botAction.smartPrivateMessageSpam(sender, explanation);
+    }
+    
+    private void enableStore(String sender){
+        this.pubStoreSystem = new PubPointStoreOn(this);
+        m_botAction.sendPrivateMessage(sender, "Welcome, thanks for logging me on! Now I'm selling item. Want to buy?");
+    }
+    
+    private void disableStore(String sender){
+        this.pubStoreSystem = new PubPointStoreOff();
+        m_botAction.sendPrivateMessage(sender, "It was a good day of work, but now the store is ...shutting down! Off.");
+    }
+    
+    private void doDisplayItems(String sender){
+        try{
+            List list = pubStoreSystem.displayAvailableItems();
+            m_botAction.smartPrivateMessageSpam(sender, (String[]) list.toArray(new String[list.size()]));
+        }catch(Exception e){
+            m_botAction.sendPrivateMessage(sender, "?");
+        }
+    }
+    private void doCmdBuy(String sender, String command){
+        Player p = m_botAction.getPlayer(sender);
+        String itemName;
+        if(p == null)
+            return;
+        //!b <item>
+        //0123
+        itemName = command.substring(3);
+        buyItem(sender, itemName, p.getShipType());
+    }
+    private void doCmdDisplayMoney(String sender){
+        if(players.containsKey(sender)){
+            PubPlayer pubPlayer = this.players.get(sender);
+            m_botAction.sendPrivateMessage(sender, "You have $"+pubPlayer.getPoint());
+        }else
+            m_botAction.sendPrivateMessage(sender, "You're still not in the point system. Wait a bit to be added");
+    }
 
     /**
      * Moves the bot from one arena to another.  The bot must not be
@@ -1706,7 +1761,14 @@ public class purepubbot extends ItemObserver
                 "!listvotes        -- Lists issues you can vote on to change the way pub's played",
                 "!startvote <num>  -- Starts voting on issue <num>.  See !listvotes for numbers.",
                 "!challenge <name> -- Issues a challenge (records kills vs eachother) to <name>",
-                "!end              -- Ends your current challenge"
+                "!end              -- Ends your current challenge",
+                "------- Pub Store (NEW) -------------------------------------------------------",
+                "!storeon          -- Turns the store on",
+                "!storeoff         -- Turns the store off",
+                "!buy              -- Checks the list of items",
+                "!b <itemNumber>   -- Buys an item of # Number",
+                "!$                -- Checks how rich you are",
+                "!about            -- Explains my System"
         };
 
         String[] playerHelpMessage =
@@ -1725,7 +1787,12 @@ public class purepubbot extends ItemObserver
                 "!listvotes        -- Lists issues you can vote on to change the way pub's played",
                 "!startvote <num>  -- Starts voting on issue <num>.  See !listvotes for numbers.",
                 "!challenge <name> -- Issues a challenge (records kills vs eachother) to <name>",
-                "!end              -- Ends your current challenge"
+                "!end              -- Ends your current challenge",
+                "------- Pub Store (NEW) -------------------------------------------------------",
+                "!buy              -- Checks the list of items",
+                "!b <itemNumber>   -- Buys an item of # Number",
+                "!$                -- Checks how rich you are",
+                "!about            -- Explains my System"
         };
 
         if( opList.isHighmod( sender ) )
