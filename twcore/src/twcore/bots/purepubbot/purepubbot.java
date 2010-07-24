@@ -316,20 +316,27 @@ public class purepubbot extends ItemObserver
 
     public void buyItem(String playerName, String itemName, int shipType){
         try{
+            
+            if(playerName.toLowerCase().equals("thrill")){
+                m_botAction.sendPrivateMessage(playerName, "you're banned from this system and not allowed to use it. congratulations!");
+                return;
+            }
+            
             boolean isInSystem = players.containsKey(playerName)? true: false;
             
             if(isInSystem){
                 PubPlayer playerBought = pubStoreSystem.buyItem(itemName, players.get(playerName), shipType);
-                m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
                 PubItem lastItem = playerBought.getLastItem();
-                
                 System.out.println("Item q.."+lastItem.isArenaItem());
+                
+                m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
+               
                 /*
                 if(arenaItem)
                     m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail()+" for "+lastItem.getPrice(), 2);
                 */
                 
-                this.players.put(playerName, playerBought);
+                players.put(playerName, playerBought);
                 m_botAction.specificPrize(playerBought.getP_name(), playerBought.getLastItem().getItemNumber());
             } else
                 m_botAction.sendPrivateMessage(playerName, "You're not in the system to use !buy.");
