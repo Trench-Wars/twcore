@@ -515,6 +515,7 @@ public class elim extends SubspaceBot {
 			    		enabled.add(name);
 			    	m_botAction.sendSmartPrivateMessage( name, "You have been put back into the game. You have " + (MAX_LAGOUT-elimPlayers.get(name).lagouts) + " lagouts left.");
 			    	elimPlayers.get(name).clearBorderInfo();
+			    	elimPlayers.get(name).setSpawnGrace();
 			    	m_botAction.setShip(name, elimPlayers.get(name).shiptype);
 			    	m_botAction.setFreq(name, elimPlayers.get(name).frequency);
 			    	doWarpIntoElim(name);
