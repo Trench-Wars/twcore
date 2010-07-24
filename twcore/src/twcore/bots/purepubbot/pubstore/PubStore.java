@@ -39,7 +39,7 @@ public class PubStore {
         PubItem itemsubject2 = new Javelin(bot, "jav", 0, 100);
         PubItem itemsubject3 = new Weasel(bot, "weasel", 0, 100);
         PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 250);
-        PubItem itemsubject5 = new LeviHouse(bot, "leviathan", 0, 0);
+        PubItem itemsubject5 = new LeviHouse(bot, "leviathan", 0, 400);
         PubItem itemsubject6 = new WeaselHouse(bot, "weasel2", 0, 200);
         PubItem itemsubject7 = new LeviHouse2(bot, "leviathan2", 0, 700);
         PubItem itemsubject8 = new JavHouse2(bot, "javelin2", 0, 600);
