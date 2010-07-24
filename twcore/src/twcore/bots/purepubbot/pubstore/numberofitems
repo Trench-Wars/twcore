@@ -1,0 +1,42 @@
+Numbers/Names to !b command
+
+repel - 1
+rocket - 2
+burst - 3
+portal - 4
+shrapnel - 5
+warp- 6
+fullcharge - 7
+shield - 8
+super - 9
+
+-- 1 life items --
+leviathan -  levi
+javelin - jav
+weasel - weasel
+
+-- arena items --
+- for 10 mins 
+- enable levi, jav and weasel
+- disable warbird
+
+leviathan - levi10
+javelin - jav10
+weasel - weasel10
+warbird - wb10
+
+- for 5 mins
+- enable levi, jav and weasel
+- disable warbird
+leviathan - levi5
+javelin - jav5
+weasel - wea5
+warbird wb5
+
+- for 10 mins
+- disable levi, jav, weasel
+- enable warbird
+javelin - 10
+leviathan - 11
+weasel - 12
+warbird - 13

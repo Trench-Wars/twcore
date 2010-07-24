@@ -80,25 +80,26 @@ public class PubStore {
         PubSpecificStore specificStore19 = new PubWarbirdStore(itemsubject11);
         //more specifis stores
         
-        hashSpecificStores.put("repel", specificStore1);
-        hashSpecificStores.put("super", specificStore2);
-        hashSpecificStores.put("rocket", specificStore3);
+        hashSpecificStores.put("1", specificStore1); //repel
+        hashSpecificStores.put("9", specificStore2); //super
+        hashSpecificStores.put("2", specificStore3); //rocket
         hashSpecificStores.put("levi", specificStore4);
         hashSpecificStores.put("jav", specificStore5);
         hashSpecificStores.put("weasel", specificStore6);
-        hashSpecificStores.put("burst", specificStore7);
-        hashSpecificStores.put("shield", specificStore8);
-        hashSpecificStores.put("fullcharge", specificStore9);
-        hashSpecificStores.put("warp", specificStore10);
-        hashSpecificStores.put("javelin", specificStore11);
-        hashSpecificStores.put("leviathan", specificStore12);
-        hashSpecificStores.put("weasel2", specificStore13);
-        hashSpecificStores.put("shrap", specificStore14);
-        hashSpecificStores.put("leviathan2", specificStore15);
-        hashSpecificStores.put("javelin2", specificStore16);
-        hashSpecificStores.put("leviathan3", specificStore17);
-        hashSpecificStores.put("javelin3", specificStore18);
-        hashSpecificStores.put("warbirdoff", specificStore19);
+        hashSpecificStores.put("3", specificStore7); //burst
+        hashSpecificStores.put("8", specificStore8); //shield
+        hashSpecificStores.put("7", specificStore9); //fullcharge
+        hashSpecificStores.put("6", specificStore10); //warp
+        hashSpecificStores.put("jav5", specificStore11); //enable jav arena 5 mins
+        hashSpecificStores.put("levi5", specificStore12);  //enable levi arena 5 mins
+        hashSpecificStores.put("wea5", specificStore13); //enable weasel arena 5 mins
+        hashSpecificStores.put("5", specificStore14);
+        hashSpecificStores.put("levi10", specificStore15);//enable levi arena 10 mins
+        hashSpecificStores.put("jav10", specificStore16); //enable jav arena 10 mins
+        hashSpecificStores.put("11", specificStore17); //disable levi 10 mins
+        hashSpecificStores.put("10", specificStore18); //disable jav 10 mins
+                                                        //disable weasel 10 mins shud be 13
+        hashSpecificStores.put("13", specificStore19); //disable warbird 5 mins
     }
     
     public PubPlayer prizeItem(String itemName, PubPlayer player, int shipType){
