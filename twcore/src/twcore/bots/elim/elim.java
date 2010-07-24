@@ -115,8 +115,7 @@ public class elim extends SubspaceBot {
 	public static final int MAX_LAGOUT = 2;    //Maximum number of lagouts allowed
 	public static final int DOUBLE_KILL = 5;   //Number of seconds after a kill for another kill to be considered duplicate
 	public static final int MIN_ZONER = 15;    //The minimum amount of minutes that another zoner can be sent
-	public static final int BOUNDARY_TIME = 6; //The maximum amount of time you can be outside of base in seconds
-	public static final int SPAWN_BOUNDARY_TIME = 30; //The maximum amount of time you can be outside of base in seconds after spawn
+	public static final int BOUNDARY_TIME = 30;//The maximum amount of time you can be outside of base in seconds
 	public static final int STREAK_INIT = 5;   //The number of kills needed for the first streak
 	public static final int STREAK_REPEAT = 2; //The number of kills needed for streak messages after the initial streak
 	public static final int SAFE_HEIGHT = 14;  //The height of the safety area in tiles
@@ -1075,7 +1074,6 @@ public class elim extends SubspaceBot {
     }
     
     public void doWarpIntoElim(String name){
-        elimPlayers.get(name).setSpawnGrace();
         if( cfg_casualAllowed == 1 )
             m_botAction.sendUnfilteredPrivateMessage(name, "*objoff " + CASUAL_LOGO_LVZ);
     	if(shipType == 6 && cfg_gameType == BASEELIM){
@@ -1149,7 +1147,7 @@ private class ElimPlayer{
 	//========================================================================
 	private int shiptype = -1, vote = -1, frequency = -1, lagouts = 0;
 	private long outOfBounds = 0, lagTime = -1, spawnTime = -1, killTime = -1;
-	private boolean gotBorderWarning = false, gotChangeWarning = false, gotSpawned = true;
+	private boolean gotBorderWarning = false, gotChangeWarning = false;
 	//========================================================================
 	//Database variables
 	//========================================================================
@@ -1244,12 +1242,6 @@ private class ElimPlayer{
 	private void clearBorderInfo(){
 		outOfBounds = 0;
 		gotBorderWarning = false;
-	}
-	private void setSpawnGrace(){
-	    gotSpawned = true;
-	}
-	private void removeSpawnGrace(){
-	    gotSpawned = false;
 	}
 
 }
@@ -1379,12 +1371,7 @@ private class GameStatus{
 			return true;
 		else return false;
 	}
-	public boolean hasStarted() {
-	    if(state == GAME_IN_PROGRESS)
-	        return true;
-	    else return false;
-	    
-	}
+	
 }
 
 private class SpawnTimer {
@@ -1392,7 +1379,7 @@ private class SpawnTimer {
     private boolean casual;
     private TimerTask runIt = new TimerTask() {
         public void run() {
-            if(!casual){
+        	if(!casual){
 	        	if(shrap == ON)
 	        		m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
 	        	m_botAction.specificPrize(name, Tools.Prize.MULTIFIRE);
@@ -1405,7 +1392,7 @@ private class SpawnTimer {
 	        		}
 	        	}
         	}else
-        	    doWarpIntoCasual(name);
+        		doWarpIntoCasual(name);
         }
     };
         
@@ -1450,7 +1437,6 @@ private class MVPTimer {
     }
     
     public void handleEvent(ArenaJoined event) {
-        m_botAction.setReliableKills(1);
     	for(int z=0;z<4;z++){
     		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-x:" + cfg_competitive[0]);
     		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-y:" + cfg_competitive[1]);
@@ -1499,7 +1485,6 @@ private class MVPTimer {
     public void handleEvent(PlayerDeath event) {
     	String win = m_botAction.getPlayerName(event.getKillerID());
     	String loss = m_botAction.getPlayerName(event.getKilleeID());
-    	
     	if(win == null || loss == null)return;
     	Player winp = m_botAction.getPlayer(win);
     	Player lossp = m_botAction.getPlayer(loss);
@@ -1545,7 +1530,7 @@ private class MVPTimer {
     		l.clearBorderInfo();
     		new SpawnTimer(loss, false);
     	}else
-    	   	new SpawnTimer(loss, true);
+    		new SpawnTimer(loss, true);
     	if(elimPlayers.size() == 1){
     		winner = elimPlayers.get(elimPlayers.firstKey());
     		game.moveOn();
@@ -1710,36 +1695,21 @@ private class MVPTimer {
     	}
     	if(cfg_gameType == ELIM)return;
     	ElimPlayer ep = elimPlayers.get(p.getPlayerName());
-	    if(ep != null && game.hasStarted()){
-	    	if(p.getYTileLocation() < cfg_border){
-	    	    ep.outOfBounds = 0;    
-	    	    if(ep.gotSpawned){
-	    	        ep.removeSpawnGrace();
-	    	        ep.clearBorderInfo();
-	    	    }
-	    	        
-	    	}
-	    	else if(p.getYTileLocation() > cfg_border){    		
+	    if(ep != null && game.isInProgress()){
+	    	if(p.getYTileLocation() < cfg_border)
+	    		ep.clearBorderInfo();
+		    else if(p.getYTileLocation() > cfg_border){    		
 		    	if(ep.outOfBounds == 0)
 		    		ep.outOfBounds = System.currentTimeMillis();
-		    	else if((System.currentTimeMillis() - ep.outOfBounds) > BOUNDARY_TIME * Tools.TimeInMillis.SECOND && !ep.gotSpawned){
+		    	else if((System.currentTimeMillis() - ep.outOfBounds) > BOUNDARY_TIME * Tools.TimeInMillis.SECOND){
 		    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Too long outside base)");
 		       		losers.put(ep.name, elimPlayers.remove(ep.name));
 		       		doWarpIntoCasualSafe(ep.name);
 		    	}
-		    	else if((System.currentTimeMillis() - ep.outOfBounds) > (BOUNDARY_TIME-(BOUNDARY_TIME-1)) * Tools.TimeInMillis.SECOND && !ep.gotBorderWarning && !ep.gotSpawned){
-		    		m_botAction.sendSmartPrivateMessage( ep.name, "Get in the base! "+(BOUNDARY_TIME-1)+" seconds left.");
+		    	else if((System.currentTimeMillis() - ep.outOfBounds) > (BOUNDARY_TIME/2) * Tools.TimeInMillis.SECOND && !ep.gotBorderWarning){
+		    		m_botAction.sendSmartPrivateMessage( ep.name, "Get in the base!");
 		    		ep.gotBorderWarning = true;
-		    	}
-		    	else if((System.currentTimeMillis() - ep.outOfBounds) > SPAWN_BOUNDARY_TIME * Tools.TimeInMillis.SECOND && ep.gotSpawned){
-		    	    m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Too long outside base)");
-                    losers.put(ep.name, elimPlayers.remove(ep.name));
-                    doWarpIntoCasualSafe(ep.name);
-		    	}
-		    	else if((System.currentTimeMillis() - ep.outOfBounds) > (SPAWN_BOUNDARY_TIME/2) * Tools.TimeInMillis.SECOND && !ep.gotBorderWarning && ep.gotSpawned){
-                    m_botAction.sendSmartPrivateMessage( ep.name, "Get in the base! " +(SPAWN_BOUNDARY_TIME/2)+" seconds left.");
-                    ep.gotBorderWarning = true;
-                }
+		    	}    		
 		    }
 		    if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
 		    	winner = elimPlayers.get(elimPlayers.firstKey());
