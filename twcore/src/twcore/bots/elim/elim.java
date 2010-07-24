@@ -1449,6 +1449,7 @@ private class MVPTimer {
     }
     
     public void handleEvent(ArenaJoined event) {
+        m_botAction.setReliableKills(1);
     	for(int z=0;z<4;z++){
     		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-x:" + cfg_competitive[0]);
     		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-y:" + cfg_competitive[1]);
