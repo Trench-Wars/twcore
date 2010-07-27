@@ -14,6 +14,7 @@ public class JavHouse
         super(bot, name, itemNumber, price);
         // TODO Auto-generated constructor stub
         this.observers = new Vector<ItemObserver>();
+        this.isArenaItem = true;
         registerObserver(bot);
     }
 
@@ -42,6 +43,11 @@ public class JavHouse
     public void removeObserver(ItemObserver bot) {
         // TODO Auto-generated method stub
         observers.remove(bot);
+    }
+    
+    @Override
+    public String toString(){
+        return "Javelin($"+this.price+") for 5 minutes";
     }
 
 }

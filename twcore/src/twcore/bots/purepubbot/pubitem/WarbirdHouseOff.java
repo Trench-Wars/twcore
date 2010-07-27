@@ -14,6 +14,7 @@ public class WarbirdHouseOff
             int price) {
         super(bot, name, itemNumber, price);
         // TODO Auto-generated constructor stub
+        this.isArenaItem = true;
         this.observers = new ArrayList<ItemObserver>();
         registerObserver(bot);
     }
@@ -45,4 +46,8 @@ public class WarbirdHouseOff
         observers.remove(bot);
     }
 
+    @Override
+    public String toString(){
+        return "Warbird OFF($"+this.price+") for 5 minutes";
+    }
 }

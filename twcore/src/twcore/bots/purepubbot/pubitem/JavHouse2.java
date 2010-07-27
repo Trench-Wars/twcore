@@ -13,6 +13,7 @@ public class JavHouse2
     public JavHouse2(ItemObserver bot, String name, int itemNumber, int price) {
         super(bot, name, itemNumber, price);
         // TODO Auto-generated constructor stub
+        this.isArenaItem = true;
         this.observers = new Vector<ItemObserver>();
         registerObserver(bot);
     }
@@ -44,4 +45,8 @@ public class JavHouse2
         observers.remove(bot);
     }
 
+    @Override
+    public String toString(){
+        return "Javelin($"+this.price+") for 10 minutes";
+    }
 }

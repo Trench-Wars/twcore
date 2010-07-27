@@ -13,6 +13,7 @@ public class WeaselHouse
     public WeaselHouse(ItemObserver bot, String name, int itemNumber, int price) {
         super(bot, name, itemNumber, price);
         // TODO Auto-generated constructor stub
+        this.isArenaItem = true;
         this.observers = new LinkedList<ItemObserver>();
         registerObserver(bot);
     }
@@ -46,4 +47,8 @@ public class WeaselHouse
         this.observers.remove(bot);
     }
 
+    @Override
+    public String toString(){
+        return "Weasel($"+this.price+") for 5 minutes";
+    }
 }

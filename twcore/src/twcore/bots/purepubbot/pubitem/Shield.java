@@ -8,6 +8,7 @@ public class Shield
     public Shield(String name, int itemNumber, int price) {
         super(name, itemNumber, price);
         // TODO Auto-generated constructor stub
+        this.isArenaItem = true;
     }
 
     @Override
@@ -28,5 +29,7 @@ public class Shield
         
     }
 
-   
+    public String toString(){
+        return "Shield ($"+this.price+")";
+    }
 }
