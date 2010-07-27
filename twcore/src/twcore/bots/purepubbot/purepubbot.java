@@ -347,7 +347,6 @@ public class purepubbot extends ItemObserver
         }
         catch(RuntimeException e){
             m_botAction.sendPrivateMessage(playerName, "Store is off today, please come back tomorrow!");
-            e.printStackTrace();
         }
         catch(Exception e){
             e.printStackTrace();
