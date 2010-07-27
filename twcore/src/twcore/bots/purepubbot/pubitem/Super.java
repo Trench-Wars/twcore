@@ -8,6 +8,7 @@ public class Super
     public Super(String name, int itemNumber, int price) {
         super(name, itemNumber, price);
         // TODO Auto-generated constructor stub
+        this.isArenaItem = true;
     }
 
     @Override
@@ -28,4 +29,7 @@ public class Super
         
     }
 
+    public String toString(){
+        return "Super for $"+this.price;
+    }
 }

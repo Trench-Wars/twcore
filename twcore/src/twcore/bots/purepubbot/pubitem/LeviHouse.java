@@ -49,7 +49,7 @@ public class LeviHouse
     }
     
     public String toString(){
-        return "Leviathan for 5 minutes";
+        return "Leviathan($+"+this.price+") for 5 minutes";
     }
     
     @Override

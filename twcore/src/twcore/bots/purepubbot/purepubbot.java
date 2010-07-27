@@ -334,7 +334,7 @@ public class purepubbot extends ItemObserver
                
                 
                 if(arenaItem)
-                    m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail()+" for "+lastItem.getPrice(), 2);
+                    m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail(), 2); //put price on levi tostring
                 
                 
                 players.put(playerName, playerBought);
