@@ -47,7 +47,7 @@ public class PubStore {
         PubItem itemsubject10 = new JavelinHouseOff(bot, "javelin3", 0, 50);
         PubItem itemsubject11 = new WarbirdHouseOff(bot, "warbirdoff", 0, 500);
         PubItem item1 = new Repel("repel", 21, 50);
-        PubItem item2 = new Super("super", 17, 50);
+        PubItem item2 = new Super("super", 17, 5000);
         PubItem item3 = new Rocket("rocket", 27, 50);
         PubItem item4 = new Burst("burst", 22, 250);
         PubItem item5 = new Shield("shield", 18, 5000);
