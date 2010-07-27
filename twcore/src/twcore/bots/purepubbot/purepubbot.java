@@ -327,14 +327,15 @@ public class purepubbot extends ItemObserver
             if(isInSystem){
                 PubPlayer playerBought = pubStoreSystem.buyItem(itemName, players.get(playerName), shipType);
                 PubItem lastItem = playerBought.getLastItem();
+                boolean arenaItem = lastItem.isArenaItem()? true:false;
                 //System.out.println("Item q.."+lastItem.isArenaItem());
                 
                 m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
                
-                /*
+                
                 if(arenaItem)
                     m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail()+" for "+lastItem.getPrice(), 2);
-                */
+                
                 
                 players.put(playerName, playerBought);
                 m_botAction.specificPrize(playerBought.getP_name(), lastItem.getItemNumber());
