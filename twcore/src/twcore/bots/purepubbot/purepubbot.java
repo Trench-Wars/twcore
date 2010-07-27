@@ -326,7 +326,7 @@ public class purepubbot extends ItemObserver
             
             if(isInSystem){
                 PubPlayer playerBought = pubStoreSystem.buyItem(itemName, players.get(playerName), shipType);
-                //PubItem lastItem = playerBought.getLastItem();
+                PubItem lastItem = playerBought.getLastItem();
                 //System.out.println("Item q.."+lastItem.isArenaItem());
                 
                 m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
@@ -337,19 +337,20 @@ public class purepubbot extends ItemObserver
                 */
                 
                 players.put(playerName, playerBought);
-                m_botAction.specificPrize(playerBought.getP_name(), playerBought.getLastItem().getItemNumber());
+                m_botAction.specificPrize(playerBought.getP_name(), lastItem.getItemNumber());
             } else
                 m_botAction.sendPrivateMessage(playerName, "You're not in the system to use !buy.");
             
         }
         catch(NoSuchElementException e){
-            e.toString();
+            e.printStackTrace();
         }
         catch(RuntimeException e){
             m_botAction.sendPrivateMessage(playerName, "Store is off today, please come back tomorrow!");
+            e.printStackTrace();
         }
         catch(Exception e){
-            e.toString();
+            e.printStackTrace();
             //e.printStackTrace();
             //throw new RuntimeException("You've bought too many items and reached the limit. It'll be reseted after you die.");
         }
@@ -499,7 +500,7 @@ public class purepubbot extends ItemObserver
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
+    	String arenaToJoin = arenaNames[initialPub+1];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
@@ -543,9 +544,9 @@ public class purepubbot extends ItemObserver
                     boolean authd = true ;//authorizedChangePlayers.remove( pname );
                     
                     // If player is switching to the smaller team, they maintain any MVP status
-                    m_botAction.sendPrivateMessage(pname,
+                    /*m_botAction.sendPrivateMessage(pname,
                     "You'll keep any MVP status by any ESC+# change.");
-            
+                     */
                     if( teamsUneven && freq == freqSizeInfo[1] ) {
                         boolean freq0cont = freq0List.contains(pname);
                         boolean freq1cont = freq1List.contains(pname);
@@ -714,6 +715,7 @@ public class purepubbot extends ItemObserver
                 if( m_challengeEnabled )
                     cmds += " !challenge !end";
                 m_botAction.sendPrivateMessage(playerName, "Commands:  " + cmds );
+                
                 
             }
             if(flagTimeStarted) {
@@ -1334,7 +1336,7 @@ public class purepubbot extends ItemObserver
             m_botAction.sendSmartPrivateMessage( sender, "You will NOT be warped inside FR at every round start.  !warp again to turn back on." );
         } else {
             warpPlayers.add( sender );
-            m_botAction.sendSmartPrivateMessage( sender, "You will be warped inside FR at every round start.  Type !warp to turn off." );
+            //m_botAction.sendSmartPrivateMessage( sender, "You will be warped inside FR at every round start.  Type !warp to turn off." );
         }
     }
 

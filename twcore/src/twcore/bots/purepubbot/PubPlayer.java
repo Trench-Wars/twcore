@@ -45,6 +45,10 @@ public class PubPlayer implements Comparable<PubPlayer>{
         this.point = point;
     }
 
+    public void addItem(PubItem item){
+        this.boughtItems.add(item);
+    }
+    
     public void addItemString(String itemDetail){
         listLastItems.add(itemDetail);
     }

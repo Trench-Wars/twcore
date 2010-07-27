@@ -46,7 +46,7 @@ public class PubStore {
         PubItem itemsubject9 = new LeviHouseOff(bot, "leviathan3", 0, 50);
         PubItem itemsubject10 = new JavelinHouseOff(bot, "javelin3", 0, 50);
         PubItem itemsubject11 = new WarbirdHouseOff(bot, "warbirdoff", 0, 500);
-        PubItem item1 = new Repel("repel", 21, 50);
+        PubItem item1 = new Repel("repel", 21, 0);
         PubItem item2 = new Super("super", 17, 5000);
         PubItem item3 = new Rocket("rocket", 27, 50);
         PubItem item4 = new Burst("burst", 22, 250);
@@ -114,6 +114,7 @@ public class PubStore {
                     //System.out.println("I'm here, item: "+item.getName());
                     player.setPoint(player.getPoint() - item.getPrice());
                     player.addItemString(item.toString());
+                    player.addItem(item);
                     item.notifyObservers(player.getP_name());
                     
                     return player;
