@@ -30,7 +30,7 @@ subdelaytime=2
 zoneforladder=3
 zoneforladdertime=90
 
-matchtype=5
+matchtype=555
 captain_can_start_game=1
 storegame=0
 loggame=0
