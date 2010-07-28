@@ -1,6 +1,6 @@
 [General]
-name=TWJD
-arena=twjd,twjd2,twjd3,twjd4,twjd5,twjd6,twjd7,twjd8,twjd9,twjd10
+name=TWDTJ
+arena=twdtj,twdtj1,twdtj2,twdtj3,twdtj4,twdtj5,twdtj6,twdtj7,twdtj8,twdtj9,twdtj10
 ship=2
 players=5
 minplayers=4
@@ -32,10 +32,10 @@ zoneforladdertime=90
 
 matchtype=5
 captain_can_start_game=1
-storegame=1
+storegame=0
 loggame=0
 squadjoined=1
-rosterjoined=1
+rosterjoined=0
 shipchanges=0
 shipswitches=0
 substitutes=1
@@ -54,7 +54,7 @@ safe2yout=400
 
 yborder=428
 outofbordertime=40
-outifexceed=1
+outifexceed=0
 
 pathcount=6
 path1x=604
