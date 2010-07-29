@@ -923,7 +923,7 @@ public class purepubbot extends ItemObserver
         for(int i = 0; i < 7; i++){
             for(int j = 0; j < 7; j++){
              m_botAction.sendUnfilteredPrivateMessage(playerName, "*objoff "+502+i+j);
-             System.out.println("Objoff: "+502+i+j);
+             //System.out.println("Objoff: "+502+i+j);
             }
         }
     }
