@@ -502,7 +502,7 @@ public class purepubbot extends ItemObserver
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub+1];// initialPub+1 if you spawn it in # arena
+    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
@@ -2471,7 +2471,7 @@ public class purepubbot extends ItemObserver
     public void startBot()
     {
         try{
-        	/*
+        	
             String commands[] = botSets.getString(m_botAction.getBotName() + "Setup").split(",");
         	for(int k = 0; k < commands.length; k++) {
         		handleModCommand(m_botAction.getBotName(), commands[k]);
@@ -2496,7 +2496,7 @@ public class purepubbot extends ItemObserver
                     Tools.printLog("Must have both toggles and number of minutes defined (!toggle;!toggle2:mins)");
                 }
             }
-        */}catch(Exception e){
+        }catch(Exception e){
             e.printStackTrace();
         }
         started = true;
