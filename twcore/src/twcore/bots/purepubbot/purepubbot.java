@@ -77,7 +77,7 @@ public class purepubbot extends ItemObserver
 {
     private boolean nextCantBuy;
     private PubPointStore pubStoreSystem;
-
+    
     private Map<String, PubPlayer> players;
     
     private Map<Integer, Integer> shipPoints;
@@ -159,7 +159,7 @@ public class purepubbot extends ItemObserver
     private List <String>authorizedChangePlayers;       // Players authorized to change ship & not lose MVP
     private List <String>mineClearedPlayers;            // Players who have already cleared mines this round
     private Objset objs;                                // For keeping track of counter
-
+    private LvzHandler lvzPubPointsHandler;
     // X and Y coords for warp points.  Note that the first X and Y should be
     // the "standard" warp; in TW this is the earwarp.  These coords are used in
     // strict flag time mode.
@@ -218,7 +218,6 @@ public class purepubbot extends ItemObserver
        
         this.shipPoints = new HashMap<Integer, Integer>();
         this.areaPoints = new HashMap<String, Integer>();
-   
         initializePoints();
         
         opList = m_botAction.getOperatorList();
@@ -238,6 +237,8 @@ public class purepubbot extends ItemObserver
         mineClearedPlayers = Collections.synchronizedList( new LinkedList<String>() );
         shipWeights = new Vector<Integer>();
         objs = m_botAction.getObjectSet();
+
+        this.lvzPubPointsHandler = new LvzHandler(m_botAction);
         
         // Small hack to use different warp coordinates with april fools map.
         GregorianCalendar now = new GregorianCalendar();
@@ -332,10 +333,11 @@ public class purepubbot extends ItemObserver
                 
                 m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
                
-                
                 if(arenaItem)
-                    m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail(), 2); //put price on levi tostring
+                    m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail(), 21); //put price on levi tostring
                 
+                int playerId = m_botAction.getPlayerID(playerName);
+                playerBought = this.lvzPubPointsHandler.handleLvzMoney(playerBought, playerId, String.valueOf( playerBought.getPoint() ), false);
                 
                 players.put(playerName, playerBought);
                 m_botAction.specificPrize(playerBought.getP_name(), lastItem.getItemNumber());
@@ -500,7 +502,7 @@ public class purepubbot extends ItemObserver
 
         Arrays.sort(arenaNames, a);
 
-    	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
+    	String arenaToJoin = arenaNames[initialPub+1];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
     		m_botAction.changeArena(arenaToJoin);
@@ -868,10 +870,23 @@ public class purepubbot extends ItemObserver
             String playerName = killer.getPlayerName();
             if(players.containsKey(playerName))
                 pubPlayer = players.get(playerName);
-            else
+            else{
                 pubPlayer = new PubPlayer(playerName);
-            
+                resetObjons(pubPlayer.getP_name());
+                
+                /*for(int i = 0; i < 7; i++){
+                    for(int j = 0; j < 7; j++){
+                     m_botAction.sendUnfilteredPrivateMessage(pubPlayer.getP_name(), "*objoff "+502+i+j);
+                     System.out.println("Objoff: "+502+i+j);
+                    }
+                }extracted method to resetObjons ( reafactoring )
+                */
+                int i[] = {0,0,0,0,0,0};
+                pubPlayer.setObjon(i);
+            }
             pubPlayer.setPoint(pubPlayer.getPoint()+points);
+            
+            pubPlayer = lvzPubPointsHandler.handleLvzMoney(pubPlayer, killer.getPlayerID(), String.valueOf(pubPlayer.getPoint()), true);
             players.put(playerName, pubPlayer);
             //Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
            
@@ -904,7 +919,14 @@ public class purepubbot extends ItemObserver
         }
     }
 
-
+    private void resetObjons(String playerName){
+        for(int i = 0; i < 7; i++){
+            for(int j = 0; j < 7; j++){
+             m_botAction.sendUnfilteredPrivateMessage(playerName, "*objoff "+502+i+j);
+             System.out.println("Objoff: "+502+i+j);
+            }
+        }
+    }
     /**
      * Handles all messages received.
      *
@@ -2449,7 +2471,8 @@ public class purepubbot extends ItemObserver
     public void startBot()
     {
         try{
-        	String commands[] = botSets.getString(m_botAction.getBotName() + "Setup").split(",");
+        	/*
+            String commands[] = botSets.getString(m_botAction.getBotName() + "Setup").split(",");
         	for(int k = 0; k < commands.length; k++) {
         		handleModCommand(m_botAction.getBotName(), commands[k]);
     		}
@@ -2473,7 +2496,7 @@ public class purepubbot extends ItemObserver
                     Tools.printLog("Must have both toggles and number of minutes defined (!toggle;!toggle2:mins)");
                 }
             }
-        }catch(Exception e){
+        */}catch(Exception e){
             e.printStackTrace();
         }
         started = true;

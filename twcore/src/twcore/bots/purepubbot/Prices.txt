@@ -1,10 +1,66 @@
-Super:100000
-Shields:35000
-Repel:5000
-Full Charge:1000
-Warp:500
-Portal:3000
-Thor:90000
-Shrapnel:600
-Leviathan:30000
-LT:10000
+You can buy items where ever you are playing, not necessary to be in safe.
+# Part of "Points"
+--------------------
+Points given:
+
+Killing @ where:
+
+Flagroom = $20
+Mid = $10
+Spawn = $5
+
+Killing @ what ship type:
+
+Warbird = $8
+Javelin = $10
+Spider = $12
+Leviathan = $11
+Terrier = $18
+Weasel = $14
+Lancaster = $9
+Shark = $12
+
+----------------------
+
+# Part of "Store" - In other page ?
+Store
+
+Prices by arena ship changes:
+Leviathan for 5 minutes = $800 !b levi5
+Leviathan for 10 minutes = $1400 !b levi10
+Javelin for 5 minutes = $700 !b jav5
+Javelin for 10 minutes = $1100 !b jav10 
+Weasel for 5 minutes = $500 !b wea5
+Weasel for 10 minutes = $900 !b wea10
+Warbird OFF for 5 minutes = $800 !b wb5
+
+Prices by 1 life ship:
+Leviathan = $800 !b levi 
+Javelin = $300 !b jav 
+Weasel = $200 !b weasel $100
+
+Prices by prized items:
+(!b 1) repel - $50
+(!b 2) rocket - $50
+(!b 3) burst - $250
+(!b 4) portal - $200
+(!b 5) shrapnel - $30
+(!b 6) warp - $10
+(!b 7) fullcharge - $20
+(!b 8) shield - $5000
+(!b 9) super - $5000
+
+
+Limits:
+
+4 PRIZED items per life 
+2 SAME items per life
+
+Introduction
+
+Buying System - PubStore, PubPoints
+You get points by the kill, formula = point = 1+pointLocation+pointShipType for each kill, gets acumulated points
+You can buy if the store is on, if not, it'll not even calculate your points.
+
+Programmer: Dexter
+Thanks to: Arobas+, Cheese!, Flared, Method and Turban for their help in graphics/ideas.

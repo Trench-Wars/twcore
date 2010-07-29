@@ -7,7 +7,6 @@ import java.util.NoSuchElementException;
 import twcore.bots.purepubbot.pubitem.PubItem;
 
 public class PubPlayer implements Comparable<PubPlayer>{
-
     
     private String p_name;
     private int id;
@@ -16,7 +15,7 @@ public class PubPlayer implements Comparable<PubPlayer>{
     private LinkedList<PubItem> boughtItems;
     private int limitBought;
     private int itemsBoughtPerLife;
-    
+    private int dataObjons[]; 
     public PubPlayer(String name){
         p_name = name;
         point = 0;
@@ -24,6 +23,15 @@ public class PubPlayer implements Comparable<PubPlayer>{
         boughtItems = new LinkedList<PubItem>();
         this.limitBought = 3;
         this.itemsBoughtPerLife = 0;
+        dataObjons = new int[7];
+    }
+    
+    public void setObjon(int[] dataObjons){
+        this.dataObjons = dataObjons;
+    }
+    
+    public int[] getObjon(){
+        return dataObjons;
     }
     
     public String getP_name() {

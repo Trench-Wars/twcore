@@ -98,7 +98,7 @@ public class PubStore {
         hashSpecificStores.put("11", specificStore17); //disable levi 10 mins
         hashSpecificStores.put("10", specificStore18); //disable jav 10 mins
                                                         //disable weasel 10 mins shud be 13
-        hashSpecificStores.put("13", specificStore19); //disable warbird 5 mins
+        hashSpecificStores.put("wboff", specificStore19); //disable warbird 5 mins
     }
     
     public PubPlayer prizeItem(String itemName, PubPlayer player, int shipType){
