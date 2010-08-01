@@ -1793,14 +1793,14 @@ public class purepubbot extends ItemObserver
                 "!startvote <num>  -- Starts voting on issue <num>.  See !listvotes for numbers.",
                 "!challenge <name> -- Issues a challenge (records kills vs eachother) to <name>",
                 "!end              -- Ends your current challenge",
-                /*"------- Pub Store (NEW) -------------------------------------------------------",
+                "------- Pub Store (NEW) ------------------------- By Dexter ---------------------",
                 "!storeon          -- Turns the store on",
                 "!storeoff         -- Turns the store off",
                 "!buy              -- Checks the list of items",
                 "!b <itemNumber>   -- Buys an item of # Number",
                 "!$                -- Checks how rich you are",
                 "!about            -- Explains my System"
-        */
+        
         };
 
         String[] playerHelpMessage =
@@ -1820,12 +1820,12 @@ public class purepubbot extends ItemObserver
                 "!startvote <num>  -- Starts voting on issue <num>.  See !listvotes for numbers.",
                 "!challenge <name> -- Issues a challenge (records kills vs eachother) to <name>",
                 "!end              -- Ends your current challenge",
-                /*"------- Pub Store (NEW) -------------------------------------------------------",
+                "------- Pub Store (NEW) ---- By Dexter --------------------------------------------",
                 "!buy              -- Checks the list of items",
                 "!b <itemNumber>   -- Buys an item of # Number",
                 "!$                -- Checks how rich you are",
                 "!about            -- Explains my System"
-        */};
+        };
 
         if( opList.isHighmod( sender ) )
             m_botAction.smartPrivateMessageSpam(sender, helpMessage);
