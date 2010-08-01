@@ -1008,7 +1008,7 @@ public class purepubbot extends ItemObserver
                 doCmdDisplayMoney(sender);
                 
             }
-            else if(command.startsWith("!b ")){
+            else if(command.startsWith("!b ") || command.startsWith("!buy ")){
                 try{
                     doCmdBuy(sender, command);
                 }catch(Exception e){
@@ -1124,6 +1124,19 @@ public class purepubbot extends ItemObserver
         //!b <item>
         //0123
         itemName = command.substring(3);
+        buyItem(sender, itemName, p.getShipType());
+    }
+    
+    private void doCmgBuy2(String sender, String command){
+        Player p = m_botAction.getPlayer(sender);
+        String itemName;
+        if(p == null)
+            return;
+        //!b 
+        //0123
+        //!buy 
+        //012345
+        itemName = command.substring(5);
         buyItem(sender, itemName, p.getShipType());
     }
     private void doCmdDisplayMoney(String sender){
