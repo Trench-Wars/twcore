@@ -36,16 +36,16 @@ public class PubStore {
         this.hashSpecificStores = new HashMap<String, PubSpecificStore>();
 
         PubItem itemsubject1 = new Leviathan(bot, "levi", 0, 800);
-        PubItem itemsubject2 = new Javelin(bot, "jav", 0, 300);
+        //PubItem itemsubject2 = new Javelin(bot, "jav", 0, 300);
         PubItem itemsubject3 = new Weasel(bot, "weasel", 0, 200);
-        PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 700);
+        //PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 700);
         PubItem itemsubject5 = new LeviHouse(bot, "leviathan", 0, 800);
         PubItem itemsubject6 = new WeaselHouse(bot, "weasel2", 0, 500);
         PubItem itemsubject7 = new LeviHouse2(bot, "leviathan2", 0, 1100);
-        PubItem itemsubject8 = new JavHouse2(bot, "javelin2", 0, 1100);
-        PubItem itemsubject9 = new LeviHouseOff(bot, "leviathan3", 0, 50);
-        PubItem itemsubject10 = new JavelinHouseOff(bot, "javelin3", 0, 50);
-        PubItem itemsubject11 = new WarbirdHouseOff(bot, "warbirdoff", 0, 800);
+        //PubItem itemsubject8 = new JavHouse2(bot, "javelin2", 0, 1100);
+        //PubItem itemsubject9 = new LeviHouseOff(bot, "leviathan3", 0, 50);
+        //PubItem itemsubject10 = new JavelinHouseOff(bot, "javelin3", 0, 50);
+        //PubItem itemsubject11 = new WarbirdHouseOff(bot, "warbirdoff", 0, 800);
         PubItem item1 = new Repel("repel", 21, 50);
         PubItem item2 = new Super("super", 17, 5000);
         PubItem item3 = new Rocket("rocket", 27, 50);
@@ -63,42 +63,42 @@ public class PubStore {
         PubSpecificStore specificStore3 = new PubStoreRocket(item3);
         PubSpecificStore specificStore7 = new PubStoreBurst(item4);
         PubSpecificStore specificStore4 = new PubStoreLeviathan(itemsubject1);
-        PubSpecificStore specificStore5 = new PubStoreJav(itemsubject2);
+        //PubSpecificStore specificStore5 = new PubStoreJav(itemsubject2);
         PubSpecificStore specificStore6 = new PubStoreWeasel(itemsubject3);
         PubSpecificStore specificStore8 = new PubStoreShield(item5);
         PubSpecificStore specificStore9 = new PubStoreFullCharge(item6);
         PubSpecificStore specificStore10 = new PubStoreWarp(item7);
-        PubSpecificStore specificStore11 = new PubStoreJav(itemsubject4);
+        //PubSpecificStore specificStore11 = new PubStoreJav(itemsubject4);
         PubSpecificStore specificStore12 = new PubStoreLeviathan(itemsubject5);
         PubSpecificStore specificStore13 = new PubStoreWeasel(itemsubject6);
         PubSpecificStore specificStore14 = new PubStoreShrapnel(item8);
         PubSpecificStore specificStore15 = new PubStoreLeviathan(itemsubject7);
-        PubSpecificStore specificStore16 = new PubStoreJav(itemsubject8);
-        PubSpecificStore specificStore17 = new PubStoreLeviathan(itemsubject9);
-        PubSpecificStore specificStore18 = new PubStoreJav(itemsubject10);
-        PubSpecificStore specificStore19 = new PubWarbirdStore(itemsubject11);
+        //PubSpecificStore specificStore16 = new PubStoreJav(itemsubject8);
+        //PubSpecificStore specificStore17 = new PubStoreLeviathan(itemsubject9);
+        //PubSpecificStore specificStore18 = new PubStoreJav(itemsubject10);
+        //PubSpecificStore specificStore19 = new PubWarbirdStore(itemsubject11);
         //more specifis stores
         
         hashSpecificStores.put("1", specificStore1); //repel
         hashSpecificStores.put("9", specificStore2); //super
         hashSpecificStores.put("2", specificStore3); //rocket
         hashSpecificStores.put("levi", specificStore4);
-        hashSpecificStores.put("jav", specificStore5);
+        //hashSpecificStores.put("jav", specificStore5);
         hashSpecificStores.put("weasel", specificStore6);
         hashSpecificStores.put("3", specificStore7); //burst
         hashSpecificStores.put("8", specificStore8); //shield
         hashSpecificStores.put("7", specificStore9); //fullcharge
         hashSpecificStores.put("6", specificStore10); //warp
-        hashSpecificStores.put("jav5", specificStore11); //enable jav arena 5 mins
+        //hashSpecificStores.put("jav5", specificStore11); //enable jav arena 5 mins
         hashSpecificStores.put("levi5", specificStore12);  //enable levi arena 5 mins
         hashSpecificStores.put("wea5", specificStore13); //enable weasel arena 5 mins
         hashSpecificStores.put("5", specificStore14);
         hashSpecificStores.put("levi10", specificStore15);//enable levi arena 10 mins
-        hashSpecificStores.put("jav10", specificStore16); //enable jav arena 10 mins
-        hashSpecificStores.put("11", specificStore17); //disable levi 10 mins
-        hashSpecificStores.put("10", specificStore18); //disable jav 10 mins
+        //hashSpecificStores.put("jav10", specificStore16); //enable jav arena 10 mins
+        //hashSpecificStores.put("11", specificStore17); //disable levi 10 mins
+        //hashSpecificStores.put("10", specificStore18); //disable jav 10 mins
                                                         //disable weasel 10 mins shud be 13
-        hashSpecificStores.put("wb5", specificStore19); //disable warbird 5 mins
+        //hashSpecificStores.put("wb5", specificStore19); //disable warbird 5 mins
     }
     
     public PubPlayer prizeItem(String itemName, PubPlayer player, int shipType){
