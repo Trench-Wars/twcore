@@ -196,7 +196,7 @@ public class purepubbot extends ItemObserver
     int m_currentVoteItem = -1;     // Current # being voted on; -1 if none
     TimerTask m_voteInfoAdvertTask;
 
-    // Challenge
+    // Challenge    
     boolean m_challengeEnabled = false;
     LinkedList <PubChallenge>m_challenges = new LinkedList<PubChallenge>();
 
@@ -317,12 +317,7 @@ public class purepubbot extends ItemObserver
 
     public void buyItem(String playerName, String itemName, int shipType){
         try{
-            
-            if(playerName.toLowerCase().equals("thrill")){
-                m_botAction.sendPrivateMessage(playerName, "you're banned from this system and not allowed to use it. congratulations!");
-                return;
-            }
-            
+       
             boolean isInSystem = players.containsKey(playerName)? true: false;
             
             if(isInSystem){
@@ -1021,8 +1016,9 @@ public class purepubbot extends ItemObserver
                     e.printStackTrace();
                 }
             }
-            else if(command.equals("!buy"))
+            /*else if(command.equals("!buy"))
                 doDisplayItems(sender);
+            */
             else if(command.equals("!about"))
                 doDisplayExplanation(sender);
             
