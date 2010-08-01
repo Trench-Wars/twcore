@@ -1820,11 +1820,11 @@ public class purepubbot extends ItemObserver
                 "!startvote <num>  -- Starts voting on issue <num>.  See !listvotes for numbers.",
                 "!challenge <name> -- Issues a challenge (records kills vs eachother) to <name>",
                 "!end              -- Ends your current challenge",
-                "------- Pub Store (NEW) ---- By Dexter --------------------------------------------",
+                /*"------- Pub Store (NEW) ---- By Dexter --------------------------------------------",
                 "!buy              -- Checks the list of items",
                 "!b <itemNumber>   -- Buys an item of # Number",
                 "!$                -- Checks how rich you are",
-                "!about            -- Explains my System"
+                "!about            -- Explains my System"*/
         };
 
         if( opList.isHighmod( sender ) )

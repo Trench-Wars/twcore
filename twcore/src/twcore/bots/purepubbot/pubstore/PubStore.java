@@ -35,17 +35,17 @@ public class PubStore {
     public PubStore(ItemObserver bot){
         this.hashSpecificStores = new HashMap<String, PubSpecificStore>();
 
-        PubItem itemsubject1 = new Leviathan(bot, "levi", 0, 250);
-        PubItem itemsubject2 = new Javelin(bot, "jav", 0, 100);
-        PubItem itemsubject3 = new Weasel(bot, "weasel", 0, 100);
-        PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 250);
-        PubItem itemsubject5 = new LeviHouse(bot, "leviathan", 0, 400);
-        PubItem itemsubject6 = new WeaselHouse(bot, "weasel2", 0, 200);
-        PubItem itemsubject7 = new LeviHouse2(bot, "leviathan2", 0, 700);
-        PubItem itemsubject8 = new JavHouse2(bot, "javelin2", 0, 600);
+        PubItem itemsubject1 = new Leviathan(bot, "levi", 0, 800);
+        PubItem itemsubject2 = new Javelin(bot, "jav", 0, 300);
+        PubItem itemsubject3 = new Weasel(bot, "weasel", 0, 200);
+        PubItem itemsubject4 = new JavHouse(bot, "javelin", 0, 700);
+        PubItem itemsubject5 = new LeviHouse(bot, "leviathan", 0, 800);
+        PubItem itemsubject6 = new WeaselHouse(bot, "weasel2", 0, 500);
+        PubItem itemsubject7 = new LeviHouse2(bot, "leviathan2", 0, 1100);
+        PubItem itemsubject8 = new JavHouse2(bot, "javelin2", 0, 1100);
         PubItem itemsubject9 = new LeviHouseOff(bot, "leviathan3", 0, 50);
         PubItem itemsubject10 = new JavelinHouseOff(bot, "javelin3", 0, 50);
-        PubItem itemsubject11 = new WarbirdHouseOff(bot, "warbirdoff", 0, 500);
+        PubItem itemsubject11 = new WarbirdHouseOff(bot, "warbirdoff", 0, 800);
         PubItem item1 = new Repel("repel", 21, 50);
         PubItem item2 = new Super("super", 17, 5000);
         PubItem item3 = new Rocket("rocket", 27, 50);
@@ -98,7 +98,7 @@ public class PubStore {
         hashSpecificStores.put("11", specificStore17); //disable levi 10 mins
         hashSpecificStores.put("10", specificStore18); //disable jav 10 mins
                                                         //disable weasel 10 mins shud be 13
-        hashSpecificStores.put("wboff", specificStore19); //disable warbird 5 mins
+        hashSpecificStores.put("wb5", specificStore19); //disable warbird 5 mins
     }
     
     public PubPlayer prizeItem(String itemName, PubPlayer player, int shipType){
