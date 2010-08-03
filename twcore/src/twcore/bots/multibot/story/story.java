@@ -1,5 +1,6 @@
 package twcore.bots.multibot.story;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
@@ -62,7 +63,10 @@ public class story extends MultiModule{
     int					NumberRounds;//the number of rounds for the game, default is 10, unless changed by a !customstart command
     boolean				custom;//boolean will be true if there is a custom number of rounds
     int					FREQ_NOTPLAYING = 666;
+    int					FREQ_SPEC = 9999;
+    ArrayList<String>   listNotplaying;
     
+
     /*
      * 
      */
@@ -71,6 +75,7 @@ public class story extends MultiModule{
         registerCommands();
         generator = new Random();
         racismSpy = new Spy( m_botAction );
+        
         
     }
 
@@ -111,7 +116,6 @@ public class story extends MultiModule{
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
         m_commandInterpreter.registerCommand( "!opener", acceptedMessages, this, "doGetOpener" );
         m_commandInterpreter.registerCommand( "!customstart", acceptedMessages, this, "doCustomStart");
-        m_commandInterpreter.registerCommand( "!forcenp", acceptedMessages, this, "doForceNp" );
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
     }
     
@@ -138,6 +142,7 @@ public class story extends MultiModule{
     public void doStartGame( String name, String message ) {
         if( m_botAction.getOperatorList().isER( name ) ) {
             if( gameState == 0 ) {
+            	listNotplaying = new ArrayList<String>();
             	gameState = -2;
             	m_botAction.sendPrivateMessage(name, name + ", you have 45 seconds to private message me with the opening line for this story. I will randomly choose one of my openers if you can't come up with an opening phrase.");
                 m_botAction.sendPrivateMessage(name, "Example: :bot:!opener All was quiet in the midnight hours of Trench Wars...");
@@ -338,7 +343,7 @@ public class story extends MultiModule{
                 	fullstory.addElement(phrasewin);
                 }
                 else	{
-                	phrasewin = "No winner this round.";
+                	phrasewin = "-No winner this round.";
                 	fullstory.addElement(phrasewin);
                 }
                 
@@ -414,7 +419,7 @@ public class story extends MultiModule{
      * will handle either votes or phrase submissions.
      */
     public void doCheckPrivate( String name, String message ) {
-        if( gameState == 1 ) {
+        if( gameState == 1 && listNotplaying.contains(name.toLowerCase()) == false) {
             String pieces[] = message.split( " " );
             String pieces2[] = curAcro.split( " " );
             if( pieces.length == pieces2.length ) {
@@ -520,6 +525,7 @@ public class story extends MultiModule{
                 "!stop                    - Stops a game currently in progress.",
                 "!opener                  - Sets the story opener in the alloted timeframe.",
                 "!showstory               - Displays the current story.",
+                "!forcenp PlayerName      - Disables/Enables a player's ability to participate.",
                 "NOTE: This event should only be hosted by Mod+!"
         };
         return help;
@@ -541,21 +547,6 @@ public class story extends MultiModule{
     }
 
     
-
-    /*
-     * Necessary method to handle incoming messages to the bot. This method will
-     * also handle the !showstory command.
-     */
- 
-    @Override
-    public void handleEvent( Message event ) {
-           	m_commandInterpreter.handleEvent( event );
-           	String name = m_botAction.getPlayerName(event.getPlayerID());
-           	if(event.getMessage().startsWith("!showstory"))
-           	    doShowStory(name);
-    }
-    
-    
     /*
      * This method will be invoked when the player sends a !showstory command
      * to the bot. The bot will create an array of the story to send to the player. 
@@ -563,20 +554,84 @@ public class story extends MultiModule{
      */
     
     public void doShowStory ( String name ) {
-        try{
-            m_botAction.privateMessageSpam( name, fullstory.toArray(new String[fullstory.size()]) );
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
+        
+        	m_botAction.sendPrivateMessage( name, "---------------- Story So Far ----------------");
+        	try{
+        		m_botAction.privateMessageSpam( name, fullstory.toArray(new String[fullstory.size()]) );
+        	}
+            catch(Exception e){
+            	m_botAction.sendPrivateMessage( name, "Currently there is no story.");
+            }
+            m_botAction.sendPrivateMessage( name, "------------ End of Current Story ------------");
+        
      
+    }
+    
+
+    /*
+     * Necessary method to handle incoming messages to the bot. This method will
+     * also handle the !showstory and !forcenp commands. 
+     */
+ 
+    @Override
+    public void handleEvent( Message event ) {
+         String name = m_botAction.getPlayerName(event.getPlayerID());
+             if(event.getMessage().startsWith("!showstory"))	{
+            	 doShowStory(name);
+	         }
+             else if (event.getMessage().startsWith("!forcenp "))	{
+            	 String message = event.getMessage();
+            	 handleNpEvent(name, message);
+             }
+	         else {
+	        	 m_commandInterpreter.handleEvent( event );
+	         }
+    }
+    
+    
+    /*
+     * This method will first check to see if the player is already on the not 
+     * playing list. If the player isn't there, it will set the freq of the player 
+     * in the message to the not playing freq.
+     */
+    
+    public void handleNpEvent (String name, String message)	{
+    	if (m_botAction.getOperatorList().isER( name ))	{
+       	 	Player npPlayer;
+       	 	message = message.substring(8).trim();
+       	 	npPlayer = m_botAction.getFuzzyPlayer(message);
+       	 	
+       	 	if (npPlayer == null) {
+       	 		m_botAction.sendPrivateMessage(name, message + " could not be found.");
+       	 		return;
+       	 	}	
+       	 	else {
+	       	 	if (listNotplaying.contains(message.toLowerCase()))	{
+	       	 		listNotplaying.remove(message);
+					m_botAction.setFreq(message, FREQ_SPEC);
+					m_botAction.spec(message);
+					m_botAction.sendPrivateMessage(name, message + " has been REMOVED from the not playing frequency.");
+					m_botAction.sendPrivateMessage(message, "You may now participate in the game.");
+					return;
+				} 
+  	 	
+	       	 	else if (! listNotplaying.contains(message.toLowerCase())){
+					listNotplaying.add(message);
+					m_botAction.setFreq(message, FREQ_NOTPLAYING);
+					m_botAction.spec(message);
+					m_botAction.sendPrivateMessage(name, message + " has been ADDED to the not playing frequency.");
+					m_botAction.sendPrivateMessage(message, "You are no longer allowed to participate in the game.");
+					return;
+	       	 	}        	
+       	 	}
+    	}
     }
     
     
     /*
      * Prior to the start of the game, this method will be invoked if the host
      * uses the !customStart command, which will allow the host to use a custom
-     * number of rounds. After type "!customstart 4" for example, this method will
+     * number of rounds. After typing "!customstart 4" for example, this method will
      * take in the 4, and store it in the CustomNumberRounds variable.
      */
     
@@ -601,8 +656,4 @@ public class story extends MultiModule{
     		openingLine = message.trim();
     	}
     } 
-    
-
-    
-   
 }
