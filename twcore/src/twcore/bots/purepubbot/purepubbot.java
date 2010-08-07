@@ -478,6 +478,7 @@ public class purepubbot extends ItemObserver
     	 */
     	if (m_botAction.getBotName().equals("GammaBot5")) {
     		m_botAction.changeArena("PubTest");
+    		startBot();
     		return;
     	}
     	
