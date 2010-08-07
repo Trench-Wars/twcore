@@ -1,5 +1,6 @@
 package twcore.bots.purepubbot;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -200,7 +201,6 @@ public class purepubbot extends ItemObserver
     boolean m_challengeEnabled = false;
     LinkedList <PubChallenge>m_challenges = new LinkedList<PubChallenge>();
 
-
     /**
      * Creates a new instance of purepub bot and initializes necessary data.
      *
@@ -213,7 +213,7 @@ public class purepubbot extends ItemObserver
         botSets = m_botAction.getBotSettings();
         
         this.allowedPlayersToUseItem = new Vector<String>();
-        this.pubStoreSystem = new PubPointStoreOn(this);
+        this.pubStoreSystem = new PubPointStoreOff();
         this.players = new HashMap<String, PubPlayer>();
        
         this.shipPoints = new HashMap<Integer, Integer>();
@@ -883,7 +883,8 @@ public class purepubbot extends ItemObserver
             
             pubPlayer = lvzPubPointsHandler.handleLvzMoney(pubPlayer, killer.getPlayerID(), String.valueOf(pubPlayer.getPoint()), true);
             players.put(playerName, pubPlayer);
-            //Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
+
+            Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
            
             //--
         } catch(RuntimeException e){
