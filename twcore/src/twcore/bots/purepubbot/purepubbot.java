@@ -213,7 +213,12 @@ public class purepubbot extends ItemObserver
         botSets = m_botAction.getBotSettings();
         
         this.allowedPlayersToUseItem = new Vector<String>();
-        this.pubStoreSystem = new PubPointStoreOff();
+        // TEMP
+        if (m_botAction.getBotName().equals("GammaBot5")) {
+        	this.pubStoreSystem = new PubPointStoreOn(this);
+        } else {
+        	this.pubStoreSystem = new PubPointStoreOff();
+        }
         this.players = new HashMap<String, PubPlayer>();
        
         this.shipPoints = new HashMap<Integer, Integer>();
@@ -473,9 +478,7 @@ public class purepubbot extends ItemObserver
     {
     	String[] arenaNames = event.getArenaNames();
 
-    	/** 
-    	 * GammaBot5 will be used to beta-test the new pub system
-    	 */
+    	// TEMP
     	if (m_botAction.getBotName().equals("GammaBot5")) {
     		m_botAction.changeArena("PubTest");
     		startBot();
