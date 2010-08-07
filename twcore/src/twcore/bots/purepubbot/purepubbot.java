@@ -473,6 +473,14 @@ public class purepubbot extends ItemObserver
     {
     	String[] arenaNames = event.getArenaNames();
 
+    	/** 
+    	 * GammaBot5 will be used to beta-test the new pub system
+    	 */
+    	if (m_botAction.getBotName().equals("GammaBot5")) {
+    		m_botAction.changeArena("PubTest");
+    		return;
+    	}
+    	
         Comparator <String>a = new Comparator<String>()
         {
             public int compare(String a, String b)
