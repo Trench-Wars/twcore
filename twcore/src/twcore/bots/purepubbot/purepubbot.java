@@ -1,30 +1,26 @@
 package twcore.bots.purepubbot;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
 
-import twcore.bots.purepubbot.pubitem.PubItem;
-import twcore.bots.purepubbot.pubsystemstate.PubPointStore;
-import twcore.bots.purepubbot.pubsystemstate.PubPointStoreOff;
-import twcore.bots.purepubbot.pubsystemstate.PubPointStoreOn;
+import twcore.bots.purepubbot.moneysystem.PubMoneySystem;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
+import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.ArenaList;
 import twcore.core.events.FlagClaimed;
@@ -33,12 +29,13 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.KotHReset;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
-import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Point;
+import twcore.core.util.PointLocation;
 import twcore.core.util.Tools;
 
 /**
@@ -74,19 +71,12 @@ import twcore.core.util.Tools;
  * @author qan / original idea and bot by Cpt. Guano!
  * @see pubbot; pubhub
  */
-public class purepubbot extends ItemObserver
+public class purepubbot extends SubspaceBot
 {
-    private boolean nextCantBuy;
-    private PubPointStore pubStoreSystem;
-    
-    private Map<String, PubPlayer> players;
-    
-    private Map<Integer, Integer> shipPoints;
-    private Map<String, Integer> areaPoints;
-    private BotSettings botSets;
+    private PubMoneySystem moneySystem;
 
- 
-    
+    private BotSettings m_botSettings;
+
     public static final int SPEC = 0;                   // Number of the spec ship
     public static final int FREQ_0 = 0;                 // Frequency 0
     public static final int FREQ_1 = 1;                 // Frequency 1
@@ -160,7 +150,7 @@ public class purepubbot extends ItemObserver
     private List <String>authorizedChangePlayers;       // Players authorized to change ship & not lose MVP
     private List <String>mineClearedPlayers;            // Players who have already cleared mines this round
     private Objset objs;                                // For keeping track of counter
-    private LvzHandler lvzPubPointsHandler;
+
     // X and Y coords for warp points.  Note that the first X and Y should be
     // the "standard" warp; in TW this is the earwarp.  These coords are used in
     // strict flag time mode.
@@ -169,37 +159,12 @@ public class purepubbot extends ItemObserver
     private int warpPtsRightX[] = { 537, 519, 522, 525, 529, 533 };
     private int warpPtsRightY[] = { 255, 260, 267, 274, 263, 279 };
 
-    // April fools map warp points
-    private int warpPtsLeftX_April1[]  = { 487, 505, 502, 499, 491, 495 };
-    private int warpPtsLeftY_April1[]  = { 255, 260, 267, 274, 279, 263 };
-    private int warpPtsRightX_April1[] = { 537, 519, 522, 525, 529, 533 };
-    private int warpPtsRightY_April1[] = { 255, 260, 267, 274, 263, 279 };
-
-    private boolean useAprilFoolsPoints = false;
-
     // Warp coords for safes (for use in strict flag time mode)
     private static final int SAFE_LEFT_X = 306;
     private static final int SAFE_LEFT_Y = 482;
     private static final int SAFE_RIGHT_X = 717;
     private static final int SAFE_RIGHT_Y = 482;
 
-    // Voting system
-    boolean m_votingEnabled = false;                // True if players can vote on gametype
-    long m_lastVote = 0;                            // Time at which last vote was started
-    // Min time between the last vote before the next can be started
-    private static final int MIN_TIME_BETWEEN_VOTES    =  5 * Tools.TimeInMillis.MINUTE;
-    private static final int TIME_BETWEEN_VOTE_ADVERTS = 20 * Tools.TimeInMillis.MINUTE;
-    // How long a vote runs for before it's stopped and the results are tallied
-    private static final int VOTE_RUN_TIME             = 40 * Tools.TimeInMillis.SECOND;
-    HashMap <String,Integer>m_votes  = new HashMap<String,Integer>(); // Mapping of playernames
-                                                                      // to # voted.
-    Vector <VoteOption>m_voteOptions = new Vector<VoteOption>();      // Options allowed for voting
-    int m_currentVoteItem = -1;     // Current # being voted on; -1 if none
-    TimerTask m_voteInfoAdvertTask;
-
-    // Challenge    
-    boolean m_challengeEnabled = false;
-    LinkedList <PubChallenge>m_challenges = new LinkedList<PubChallenge>();
 
     /**
      * Creates a new instance of purepub bot and initializes necessary data.
@@ -210,20 +175,9 @@ public class purepubbot extends ItemObserver
     {
         super(botAction);
         requestEvents();
-        botSets = m_botAction.getBotSettings();
+        m_botSettings = m_botAction.getBotSettings();
         
-        this.allowedPlayersToUseItem = new Vector<String>();
-        // TEMP
-        if (m_botAction.getBotName().equals("GammaBot5")) {
-        	this.pubStoreSystem = new PubPointStoreOn(this);
-        } else {
-        	this.pubStoreSystem = new PubPointStoreOff();
-        }
-        this.players = new HashMap<String, PubPlayer>();
-       
-        this.shipPoints = new HashMap<Integer, Integer>();
-        this.areaPoints = new HashMap<String, Integer>();
-        initializePoints();
+        moneySystem = new PubMoneySystem(m_botAction);
         
         opList = m_botAction.getOperatorList();
         freq0List = new HashSet<String>();
@@ -243,167 +197,13 @@ public class purepubbot extends ItemObserver
         shipWeights = new Vector<Integer>();
         objs = m_botAction.getObjectSet();
 
-        this.lvzPubPointsHandler = new LvzHandler(m_botAction);
-        
-        // Small hack to use different warp coordinates with april fools map.
-        GregorianCalendar now = new GregorianCalendar();
-        GregorianCalendar april1 = new GregorianCalendar(2008,GregorianCalendar.APRIL,1,0,0,0);
-        GregorianCalendar april2 = new GregorianCalendar(2008,GregorianCalendar.APRIL,2,0,0,0);
-        if( now.after(april1) && now.before(april2) )
-            useAprilFoolsPoints = true;
-
         entranceWaitTask = new TimerTask() {
             public void run() {
                 allEntered = true;
             }
         };
         m_botAction.scheduleTask( entranceWaitTask, 3000 );
-        setupVotingOptions();
-        Integer vo = botSets.getInteger(m_botAction.getBotName() + "Voting");
-        
-        if( vo == null || vo == 0 )
-            m_votingEnabled = false;
-        else {
-        	m_votingEnabled = true;
-        	m_voteInfoAdvertTask = new TimerTask() {
-        		public void run() {
-        			m_botAction.sendArenaMessage( "[Pub Voting]  !listvotes to see options; !startvote to change." );
-        		}
-        	};
-        	m_botAction.scheduleTask( m_voteInfoAdvertTask, 5 * Tools.TimeInMillis.MINUTE, TIME_BETWEEN_VOTE_ADVERTS );
-        }
-    }
 
-    /**
-     * Gets default settings for the points: area and ship
-     * */
-    public void initializePoints(){
-        
-        areaPoints.put("flagroom", botSets.getInteger("pointlocation1"));
-        areaPoints.put("mid", botSets.getInteger("pointlocation2"));
-        areaPoints.put("spawn", botSets.getInteger("pointlocation3"));
-        
-        shipPoints.put(1, botSets.getInteger("pointship1"));
-        shipPoints.put(2, botSets.getInteger("pointship2"));
-        shipPoints.put(3, botSets.getInteger("pointship3"));
-        shipPoints.put(4, botSets.getInteger("pointship4"));
-        shipPoints.put(5, botSets.getInteger("pointship5"));
-        shipPoints.put(6, botSets.getInteger("pointship6"));
-        shipPoints.put(7, botSets.getInteger("pointship7"));
-        shipPoints.put(8, botSets.getInteger("pointship8"));
-    }
-   
-    
-    @Override
-    public void update(boolean nextCanBuy){
-        this.nextCantBuy = nextCanBuy;
-    }
-    @Override
-    public void update(String playerName) {
-        // TODO Auto-generated method stub
-        boolean isInList = this.allowedPlayersToUseItem.contains(playerName) ? true : false;
-        if(!isInList)
-            this.allowedPlayersToUseItem.add(playerName);
-        else
-            allowedPlayersToUseItem.remove(playerName);
-        
-        
-    }
-    
-    @Override
-    public void update(String playerName, String whatToEnableDisable, int time) {
-        // TODO Auto-generated method stub
-        String split[] = whatToEnableDisable.split(" ");
-        String enableOrDisable = split[1].equals("1")? "enabled":"disabled";
-        doSetCmd(playerName, whatToEnableDisable);
-        m_botAction.sendPrivateMessage(playerName, "You've "+enableOrDisable+" the ship "+split[0]+" for "+time+" minutes.");
-    
-    }
-
-    public void buyItem(String playerName, String itemName, int shipType){
-        try{
-       
-            boolean isInSystem = players.containsKey(playerName)? true: false;
-            
-            if(isInSystem){
-                PubPlayer playerBought = pubStoreSystem.buyItem(itemName, players.get(playerName), shipType);
-                PubItem lastItem = playerBought.getLastItem();
-                boolean arenaItem = lastItem.isArenaItem()? true:false;
-                //System.out.println("Item q.."+lastItem.isArenaItem());
-                
-                m_botAction.sendPrivateMessage(playerName, playerBought.getLastItemDetail());
-               
-                if(arenaItem)
-                    m_botAction.sendArenaMessage("Player "+playerName+" has purchased "+playerBought.getLastItemDetail(), 21); //put price on levi tostring
-                
-                int playerId = m_botAction.getPlayerID(playerName);
-                playerBought = this.lvzPubPointsHandler.handleLvzMoney(playerBought, playerId, String.valueOf( playerBought.getPoint() ), false);
-                
-                players.put(playerName, playerBought);
-                m_botAction.specificPrize(playerBought.getP_name(), lastItem.getItemNumber());
-            } else
-                m_botAction.sendPrivateMessage(playerName, "You're not in the system to use !buy.");
-            
-        }
-        catch(NoSuchElementException e){
-            e.printStackTrace();
-        }
-        catch(RuntimeException e){
-            m_botAction.sendPrivateMessage(playerName, "Store is off today, please come back tomorrow!");
-        }
-        catch(Exception e){
-            e.printStackTrace();
-            //e.printStackTrace();
-            //throw new RuntimeException("You've bought too many items and reached the limit. It'll be reseted after you die.");
-        }
-        
-    }
-    /**
-     * Sets up the voting options, if voting is enabled in the CFG.
-     */
-    public void setupVotingOptions() {
-        VoteOption v = new VoteOption( "", "", 0, 0 );   // 0th position; don't use to make it easy
-        m_voteOptions.add( v );
-
-        v = new VoteOption( "ti1",    "Start the timed game", 60, 3 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "ti2",    "Stop the timed game", 60, 3 );
-        m_voteOptions.add( v );
-
-        // Allow the option to prevent players from voting on Levis
-        Integer vo = m_botAction.getBotSettings().getInteger(m_botAction.getBotName() + "DisableLeviVoting");
-        if( vo == null || vo == 0 ) {
-            v = new VoteOption( "le1",    "Allow Leviathans in the arena", 55, 2 );
-            m_voteOptions.add( v );
-            v = new VoteOption( "le2",    "Disallow Leviathans in the arena", 55, 2 );
-            m_voteOptions.add( v );
-        }
-        v = new VoteOption( "ja1",    "Set max # Javs allowed to 20% of the team size", 65, 3 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "ja2",    "Unrestrict Javelins", 55, 3 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "we1",    "Set max # Weasels allowed to 20% of the team size", 65, 3 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "we2",    "Unrestrict Weasels", 55, 3 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "pf1",    "Allow Private Frequencies in the arena", 55, 2 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "pf2",    "Disallow Private Frequencies in the arena", 55, 2 );
-        m_voteOptions.add( v );
-        if( vo == null || vo == 0 ) {
-            v = new VoteOption( "st1",    "Warp players to earwarps in timed game", 80, 3 );
-            m_voteOptions.add( v );
-            v = new VoteOption( "st2",    "Stop warping players to earwarps in timed game", 55, 3 );
-            m_voteOptions.add( v );
-        }
-        v = new VoteOption( "w1",     "Allow players to use !warp in timed game", 55, 3 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "w2",     "Disable players from using !warp in timed game", 70, 3 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "aw1",    "Set !warp on players who enter arena", 65, 3 );
-        m_voteOptions.add( v );
-        v = new VoteOption( "aw2",    "Stop setting !warp on players who enter arena", 55, 3 );
-        m_voteOptions.add( v );
     }
 
     public boolean isIdle() {
@@ -508,7 +308,7 @@ public class purepubbot extends ItemObserver
         };
 
         Arrays.sort(arenaNames, a);
-
+        
     	String arenaToJoin = arenaNames[initialPub];// initialPub+1 if you spawn it in # arena
     	if(Tools.isAllDigits(arenaToJoin))
     	{
@@ -527,6 +327,8 @@ public class purepubbot extends ItemObserver
      */
     public void handleEvent(FrequencyShipChange event)
     {
+    	moneySystem.handleEvent(event);
+    	
         int playerID = event.getPlayerID();
         int freq = event.getFrequency();
 		int ship = event.getShipType();
@@ -609,15 +411,14 @@ public class purepubbot extends ItemObserver
         } catch (Exception e) {
         }
         
-        boolean isAuth = this.allowedPlayersToUseItem.contains(p.getPlayerName()) ? true : false;
-        //Adapt the buying system here
-        if(started) {
-            if(!isAuth) //he didn't buy the item
-             checkPlayer(playerID);
-            if(!privFreqs) {
-                checkFreq(playerID, freq, true);
-            }
-        }
+        // Adapt the buying system here
+		if (started) {
+			checkPlayer(playerID);
+			if (!privFreqs) {
+				checkFreq(playerID, freq, true);
+			}
+		}
+
     }
 
 
@@ -688,6 +489,8 @@ public class purepubbot extends ItemObserver
      */
     public void handleEvent(PlayerEntered event)
     {
+    	moneySystem.handleEvent(event);
+    	
         try {
             int playerID = event.getPlayerID();
             Player player = m_botAction.getPlayer(playerID);
@@ -719,10 +522,6 @@ public class purepubbot extends ItemObserver
                 if( warpAllowed )
                     cmds += "!warp ";
                 cmds += "!terr !team !clearmines";
-                if( m_votingEnabled )
-                    cmds += " !listvotes !startvote";
-                if( m_challengeEnabled )
-                    cmds += " !challenge !end";
                 m_botAction.sendPrivateMessage(playerName, "Commands:  " + cmds );
                 
                 
@@ -733,13 +532,10 @@ public class purepubbot extends ItemObserver
                 if( autoWarp )      // Autowarp is "opt out" warping rather than "opt in"
                     if( player.getShipType() != Tools.Ship.SPECTATOR )
                         doWarpCmd(playerName);
-              //Point system
-                if( !this.players.containsKey(playerName) ){
-                    players.put( playerName, new PubPlayer(playerName) );
-                    //Tools.printLog("Added "+playerName);    
-                }
             }
+
         } catch (Exception e) {
+        	Tools.printStackTrace(e);
         }
 
     }
@@ -758,15 +554,7 @@ public class purepubbot extends ItemObserver
         removeFromLists(playerName);
         removeFromWarpList(playerName);
         playerTimes.remove( playerName );
-        m_votes.remove(playerName);
         checkFreqSizes();
-
-        for( PubChallenge pc : m_challenges ) {
-            if( pc.getPlayer1().getPlayerID() == event.getPlayerID() ||
-                pc.getPlayer2().getPlayerID() == event.getPlayerID() ) {
-                pc.endChallenge(pc.getPlayer1());
-            }
-        }
 
     }
 
@@ -809,153 +597,26 @@ public class purepubbot extends ItemObserver
      * @param event is the event to handle.
      */
     public void handleEvent(PlayerDeath event) {
-        Player killer = m_botAction.getPlayer( event.getKillerID() );
-        Player killed = m_botAction.getPlayer( event.getKilleeID() );
-        if( killer == null || killed == null )
-            return;
-        boolean challengeFound = false;     // Players can only be in one at once
-        
-        //buying system of ships
-        //update(killed.getPlayerName());
-        boolean wasAuth = this.allowedPlayersToUseItem.contains(killed.getPlayerName())? true : false;
-        if(wasAuth){
-            this.allowedPlayersToUseItem.remove(killed.getPlayerName());
-            m_botAction.specWithoutLock(killed.getPlayerName());
-            m_botAction.sendPrivateMessage(killed.getPlayerName(), "You just died. Now, buy an other ship please or get in any allowed ship.");
-        }
-        //--
-        
-        /*reset limit bought items per life
-        boolean isIn = players.containsKey(killed.getPlayerName())? true:false;
-        if(isIn){
-            PubPlayer pubPlayer = players.get(killed.getPlayerName());
-            pubPlayer.setItemsBoughtPerLife(0);
-            players.put(pubPlayer.getP_name(), pubPlayer);
-        }
-         */
-        
-        /** Point System */
-        try{
-            int points = 1;
-            
-            /**
-             * starts decorating the point
-            */
-            //decorates by ship number point
-           // System.out.println("SHIP TYPE: "+killer.getShipType());
-            
-            points+=shipPoints.get((int)killer.getShipType());
-            
-            Point pointXY = new Point(killer.getXTileLocation(), killer.getYTileLocation());
-            //System.out.println("X,Y: "+pointXY.x+", "+pointXY.y);
-            int location;
-            String loc;
-            
-            loc = pubStoreSystem.getLocation(pointXY);//chain of responsibility
-            
-            if(loc == null)
-                return;
-            
-            location = areaPoints.get(loc);
-            /*if(flagRoomLocation.isInside(pointXY)){
-                location = areaPoints.get("flagroom");
-                //System.out.println(killer.getPlayerName()+" killed flagroom");
-            }
-            else if(midBaseLocation.isInside(pointXY)){
-                location = areaPoints.get("mid");
-                //System.out.println(killer.getPlayerName()+" killed mid");
-            }
-            else{
-                location = areaPoints.get("spawn");
-                //System.out.println(killer.getPlayerName()+" killed spawn");
-            }
-            */
-            points+=(int)location;
-            
-            //update on the map the player
-            PubPlayer pubPlayer;
-            String playerName = killer.getPlayerName();
-            if(players.containsKey(playerName))
-                pubPlayer = players.get(playerName);
-            else{
-                pubPlayer = new PubPlayer(playerName);
-                resetObjons(pubPlayer.getP_name());
-                
-                /*for(int i = 0; i < 7; i++){
-                    for(int j = 0; j < 7; j++){
-                     m_botAction.sendUnfilteredPrivateMessage(pubPlayer.getP_name(), "*objoff "+502+i+j);
-                     System.out.println("Objoff: "+502+i+j);
-                    }
-                }extracted method to resetObjons ( reafactoring )
-                */
-                int i[] = {0,0,0,0,0,0};
-                pubPlayer.setObjon(i);
-            }
-            pubPlayer.setPoint(pubPlayer.getPoint()+points);
-            
-            pubPlayer = lvzPubPointsHandler.handleLvzMoney(pubPlayer, killer.getPlayerID(), String.valueOf(pubPlayer.getPoint()), true);
-            players.put(playerName, pubPlayer);
-
-            Tools.printLog("Added "+points+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getPoint());
-           
-            //--
-        } catch(RuntimeException e){
-          //system is on off state, won't calculate anything and returns null   
-        } catch(Exception e){
-            Tools.printLog("Exception: "+e.getMessage());
-            e.printStackTrace();
-        }
-        
-        for( PubChallenge pc : m_challenges ) {
-            if( pc.challengeActive() ) {
-                if(        killer.getPlayerID() == pc.getPlayer1().getPlayerID() ) {
-                    if(    killed.getPlayerID() == pc.getPlayer2().getPlayerID() ) {
-                        // P1 killed P2
-                        pc.reportKill(1);
-                        challengeFound = true;
-                    }
-                } else if( killer.getPlayerID() == pc.getPlayer2().getPlayerID() ) {
-                    if(    killed.getPlayerID() == pc.getPlayer1().getPlayerID() ) {
-                        // P2 killed P1
-                        pc.reportKill(2);
-                        challengeFound = true;
-                    }
-                }
-            }
-            if( challengeFound )
-                return;
-        }
+    	
+        moneySystem.handleEvent(event);
+  
     }
 
-    private void resetObjons(String playerName){
-        for(int i = 0; i < 7; i++){
-            for(int j = 0; j < 7; j++){
-             m_botAction.sendUnfilteredPrivateMessage(playerName, "*objoff "+502+i+j);
-             //System.out.println("Objoff: "+502+i+j);
-            }
-        }
-    }
     /**
      * Handles all messages received.
      *
      * @param event is the message event to handle.
      */
     public void handleEvent(Message event) {
+    	
+    	moneySystem.handleEvent(event);
+    	
         String sender = getSender(event);
         int messageType = event.getMessageType();
         String message = event.getMessage().trim();
 
         if( message == null || sender == null )
             return;
-
-        if( !message.startsWith("!") ) {
-        	if( m_currentVoteItem == -1 ) {
-        		return;
-        	} else {
-        		if( message.equals("1") || message.equals("2") )
-        			handleVote( sender, Integer.parseInt(message) );
-        	}
-        }
 
         message = message.toLowerCase();
         if((messageType == Message.PRIVATE_MESSAGE || messageType == Message.PUBLIC_MESSAGE ) )
@@ -993,47 +654,8 @@ public class purepubbot extends ItemObserver
                 doTerrCmd(sender);
             //else if(command.startsWith("!ship "))
               // doShipCmd(sender, command.substring(6));
-            else if(command.startsWith("!challenge "))
-                doChallengeCmd(sender, command.substring(11));
-            else if(command.startsWith("!end"))
-                doEndCmd(sender);
             else if(command.startsWith("!cl"))
                 doClearMinesCmd(sender);
-            else if(command.startsWith("!startvote "))
-                doStartVoteCmd(sender, command.substring(11));
-            else if(command.equals("!listvotes"))
-                doListVotesCmd(sender);
-            else if(command.equals("!loc"))
-            {
-                for(Integer i: this.areaPoints.values())
-                    Tools.printLog("Area Values: "+i);
-                
-                for(int i = 1; i < 9; i++)
-                    Tools.printLog("Ship Values "+shipPoints.get(i) );
-            }
-            else if(command.equals("!$"))
-            {
-                doCmdDisplayMoney(sender);
-                
-            }
-            else if(command.startsWith("!b ")){
-                try{
-                    doCmdBuy(sender, command);
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
-            }else if(command.startsWith("!buy ")){
-                try{
-                    doCmdBuy2(sender, command);
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
-            }
-            /*else if(command.equals("!buy"))
-                doDisplayItems(sender);
-            */
-            else if(command.equals("!about"))
-                doDisplayExplanation(sender);
             
         } catch(RuntimeException e) {
             if( e != null && e.getMessage() != null )
@@ -1052,10 +674,6 @@ public class purepubbot extends ItemObserver
         try {
             if(command.startsWith("!go "))
                 doGoCmd(sender, command.substring(4));
-            //else if(command.equals("!start"))
-            //    doStartCmd(sender);
-            //else if(command.equals("!stop"))
-            //    doStopCmd(sender);
             else if(command.equals("!privfreqs"))
                 doPrivFreqsCmd(sender);
             else if(command.startsWith("!starttime "))
@@ -1072,95 +690,12 @@ public class purepubbot extends ItemObserver
                 doAllowWarpCmd(sender);
             else if(command.equals("!die"))
                 doDieCmd(sender);
-            else if(command.equals("!storeon"))
-                enableStore(sender);
-            else if(command.equals("!storeoff"))
-                disableStore(sender);
             
         } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
     }
 
-
-    /**
-     * Handles a vote, if vote is being counted.  Does not PM player unless the vote
-     * is being changed.
-     * @param sender
-     * @param vote Number player is voting for.  1=yes, 2=no.
-     */
-    public void handleVote( String sender, Integer vote ) {
-    	if( m_votes.containsKey(sender) ) {
-    		Integer lastVote = m_votes.get(sender);
-    		if( lastVote != vote ) {
-    			m_botAction.sendPrivateMessage( sender, "Vote changed to " + (vote==1?"YES.":"NO.") );
-    		} else {
-                m_botAction.sendPrivateMessage( sender, "Vote already counted." );		    
-    		}
-    	}
-    	m_votes.put(sender, vote);
-    }
-    
-    private void doDisplayExplanation(String sender){
-        String[] explanation = {
-                
-                "Hi, I'm a new store that sells lots of items to your ship",
-                "Depending on your kill, you get money added into your cash",
-                "This money, depends on the location you are(flagroom, mid, spawn) and what ship you were using",
-                "So, you may get rich and buy items that are being sold by me. by Dex"
-                
-        };
-        m_botAction.smartPrivateMessageSpam(sender, explanation);
-    }
-    
-    private void enableStore(String sender){
-        this.pubStoreSystem = new PubPointStoreOn(this);
-        m_botAction.sendPrivateMessage(sender, "Welcome, thanks for logging me on! Now I'm selling item. Want to buy?");
-    }
-    
-    private void disableStore(String sender){
-        this.pubStoreSystem = new PubPointStoreOff();
-        m_botAction.sendPrivateMessage(sender, "It was a good day of work, but now the store is ...shutting down! Off.");
-    }
-    
-    private void doDisplayItems(String sender){
-        try{
-            List list = pubStoreSystem.displayAvailableItems();
-            m_botAction.smartPrivateMessageSpam(sender, (String[]) list.toArray(new String[list.size()]));
-        }catch(Exception e){
-            m_botAction.sendPrivateMessage(sender, "?");
-        }
-    }
-    private void doCmdBuy(String sender, String command){
-        Player p = m_botAction.getPlayer(sender);
-        String itemName;
-        if(p == null)
-            return;
-        //!b <item>
-        //0123
-        itemName = command.substring(3);
-        buyItem(sender, itemName, p.getShipType());
-    }
-    
-    private void doCmdBuy2(String sender, String command){
-        Player p = m_botAction.getPlayer(sender);
-        String itemName;
-        if(p == null)
-            return;
-        //!b 
-        //0123
-        //!buy 
-        //012345
-        itemName = command.substring(5);
-        buyItem(sender, itemName, p.getShipType());
-    }
-    private void doCmdDisplayMoney(String sender){
-        if(players.containsKey(sender)){
-            PubPlayer pubPlayer = this.players.get(sender);
-            m_botAction.sendPrivateMessage(sender, "You have $"+pubPlayer.getPoint());
-        }else
-            m_botAction.sendPrivateMessage(sender, "You're still not in the point system. Wait a bit to be added");
-    }
 
     /**
      * Moves the bot from one arena to another.  The bot must not be
@@ -1183,47 +718,6 @@ public class purepubbot extends ItemObserver
         m_botAction.changeArena(argString);
         m_botAction.sendSmartPrivateMessage(sender, "Bot going to: " + argString);
     }
-
-
-    /**
-     * Starts the pure pub settings.
-     *
-     * @param sender is the person issuing the command.
-     * @throws RuntimeException if the bot is already running pure pub settings.
-     */
-    /* With !set command, !start and !stop are obsolete.
-    public void doStartCmd(String sender)
-    {
-        if(started)
-            throw new RuntimeException("Bot is already running pure pub settings.");
-
-        started = true;
-        specRestrictedShips();
-        m_botAction.sendArenaMessage("Pure pub settings enabled.  Ship restrictions are now in effect.", 2);
-        m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully enabled.");
-    }
-    */
-
-
-    /**
-     * Stops the pure pub settings.
-     *
-     * @param sender is the person issuing the command.
-     * @throws RuntimeException if the bot is not currently running pure pub
-     * settings.
-     */
-    /* With !set command, !start and !stop are obsolete.
-    public void doStopCmd(String sender)
-    {
-        if(!started)
-            throw new RuntimeException("Bot is not currently running pure pub settings.");
-
-        started = false;
-        m_botAction.sendArenaMessage("Pure pub settings disabled.  Ship restrictions are no longer in effect.", 2);
-        m_botAction.sendSmartPrivateMessage(sender, "Pure pub succesfully disabled.");
-    }
-    */
-
 
     /**
      * Toggles if private frequencies are allowed or not.
@@ -1386,7 +880,7 @@ public class purepubbot extends ItemObserver
             m_botAction.sendSmartPrivateMessage( sender, "You will NOT be warped inside FR at every round start.  !warp again to turn back on." );
         } else {
             warpPlayers.add( sender );
-            //m_botAction.sendSmartPrivateMessage( sender, "You will be warped inside FR at every round start.  Type !warp to turn off." );
+            m_botAction.sendSmartPrivateMessage( sender, "You will be warped inside FR at every round start.  Type !warp to turn off." );
         }
     }
 
@@ -1817,10 +1311,6 @@ public class purepubbot extends ItemObserver
                 "!clearmines       -- Clears all mines you have laid, keeping MVP status.",
                 "!terr             -- Shows terriers on the team & their last seen locations",
                 "!whereis <name>   -- Shows last seen location of <name>",
-                "!listvotes        -- Lists issues you can vote on to change the way pub's played",
-                "!startvote <num>  -- Starts voting on issue <num>.  See !listvotes for numbers.",
-                "!challenge <name> -- Issues a challenge (records kills vs eachother) to <name>",
-                "!end              -- Ends your current challenge",
                 "------- Pub Store (NEW) ------------------------- By Dexter ---------------------",
                 "!storeon          -- Turns the store on",
                 "!storeoff         -- Turns the store off",
@@ -1834,7 +1324,7 @@ public class purepubbot extends ItemObserver
         String[] playerHelpMessage =
         {
                 "Hi.  I'm a bot that controls features in public arenas.",
-                "I restrict ships, manage private frequencies, handle votes, run Flag Time mode.",
+                "I restrict ships, manage private frequencies, run Flag Time mode.",
                 "Commands:",
                 "!time             -- Provides time remaining when Flag Time mode.",
                 "!warp             -- Warps you into flagroom at start of next round (flagtime)",
@@ -1844,10 +1334,6 @@ public class purepubbot extends ItemObserver
                 //"!ship <ship#>     -- Puts you in ship <ship#>, keeping MVP status.",
                 "!clearmines       -- Clears all mines you have laid, keeping MVP status.",
                 "!restrictions     -- Lists all current ship restrictions.",
-                "!listvotes        -- Lists issues you can vote on to change the way pub's played",
-                "!startvote <num>  -- Starts voting on issue <num>.  See !listvotes for numbers.",
-                "!challenge <name> -- Issues a challenge (records kills vs eachother) to <name>",
-                "!end              -- Ends your current challenge",
                 /*"------- Pub Store (NEW) ---- By Dexter --------------------------------------------",
                 "!buy              -- Checks the list of items",
                 "!b <itemNumber>   -- Buys an item of # Number",
@@ -1861,353 +1347,6 @@ public class purepubbot extends ItemObserver
             m_botAction.smartPrivateMessageSpam(sender, playerHelpMessage);
     }
 
-    /**
-     * Begins voting on a particular issue, if voting is enabled.
-     * @param sender Player sending
-     * @param argString ID of issue on which to start voting
-     */
-    public void doStartVoteCmd(String sender, String argString ) {
-        if( !m_votingEnabled ) {
-            m_botAction.sendPrivateMessage( sender, "Voting on issues in pub is not currently enabled." );
-            return;
-        }
-        if( m_currentVoteItem != -1 ) {
-            m_botAction.sendPrivateMessage( sender, "Sorry, there's already a vote going.  Try again later." );
-            return;
-        }
-        if( m_voteOptions.isEmpty() ) {
-            m_botAction.sendPrivateMessage( sender, "Unfortunately, there are no issues on which to vote." );
-            return;
-        }
-        Integer i;
-        try {
-            i = Integer.parseInt( argString );
-        } catch( NumberFormatException e ) {
-            m_botAction.sendPrivateMessage( sender, "Start a vote like this: !startvote #, where # is one of these vote numbers:" );
-            doListVotesCmd(sender);
-            return;
-        }
-        VoteOption v;
-        try {
-            v = m_voteOptions.get(i);
-        } catch( ArrayIndexOutOfBoundsException e ) {
-            m_botAction.sendPrivateMessage( sender, "That's not a valid vote number.  Use !startvote #, where # is a vote number found in !listvotes." );
-            return;
-        }
-        if( v == null || i == 0 ) {
-            m_botAction.sendPrivateMessage( sender, "That's not a valid vote number.  Use !startvote #, where # is a vote number found in !listvotes." );
-            return;
-        }
-        long timeTillVote = (m_lastVote + MIN_TIME_BETWEEN_VOTES) - System.currentTimeMillis();
-        if( timeTillVote > 0) {
-            m_botAction.sendPrivateMessage( sender, "Sorry, there hasn't been enough time since the last vote.  You'll need to wait another " + getTimeString((int)(timeTillVote/1000)) + " before you can vote again." );
-            return;
-        }
-
-        boolean canSet = setVoteOption( v, true );
-
-        if( !canSet ) {
-            m_botAction.sendPrivateMessage( sender, "That option is already set the way you want it!" );
-            return;
-        }
-
-        // Success.  Let's vote
-        m_votes.clear();
-        m_currentVoteItem = i;
-
-        m_botAction.sendArenaMessage("VOTE: " + v.displayText + "?  Type 1 for yes, 2 for no.", 1);
-
-        TimerTask t = new TimerTask() {
-        	public void run() {
-        		doEndVote();
-        	}
-        };
-        m_botAction.scheduleTask(t, VOTE_RUN_TIME );
-    }
-
-    /**
-     * Begins voting on a particular issue, if voting is enabled.
-     * @param sender Player sending
-     * @param argString ID of issue on which to start voting
-     */
-    public void doListVotesCmd(String sender ) {
-        if( !m_votingEnabled ) {
-            m_botAction.sendPrivateMessage( sender, "Voting on issues in pub is not currently enabled." );
-            return;
-        }
-        if( m_voteOptions.isEmpty() ) {
-            m_botAction.sendPrivateMessage( sender, "Unfortunately, there are no issues on which to vote." );
-            return;
-        }
-        LinkedList <String>spam = new LinkedList<String>();
-
-        for( int i=1; i<m_voteOptions.size(); i++ ) {
-            VoteOption v = m_voteOptions.get(i);
-            if( setVoteOption( v, true ) )     // Only display options that can be set
-                spam.add( "#" + i + (i>9?".   ":".    ") + v.displayText + "  (Requires " + v.percentRequired + "% majority/min " + v.minVotesRequired + " votes)" );
-        }
-        spam.add( "To start a vote, use !startvote #  (where # is the number you want to vote on)");
-        long timeTillVote = (m_lastVote + MIN_TIME_BETWEEN_VOTES) - System.currentTimeMillis();
-        if( timeTillVote > 0) {
-            m_botAction.sendPrivateMessage( sender, "NOTE: There has been a vote within the last " + (MIN_TIME_BETWEEN_VOTES / Tools.TimeInMillis.MINUTE) + " minutes; you need to wait " + getTimeString((int)(timeTillVote/1000)) + " to start another." );
-            return;
-        }
-        m_botAction.privateMessageSpam(sender, spam);
-    }
-
-    /**
-     * Set a voting option once it's been voted in, or check to see if voting on it is necessary.
-     * @param v
-     * @param justChecking
-     * @return True if option was set or can be set; false if it does not need to be set or had trouble being set
-     */
-    public boolean setVoteOption( VoteOption v, boolean justChecking ) {
-        if( v == null )
-            return false;
-        String optionName = v.name;
-        if( optionName.equals("ti1") ) {
-            if( flagTimeStarted == true )
-                return false;
-            if( justChecking )
-                return true;
-            doStartTimeCmd(m_botAction.getBotName(), "3");
-            return true;
-        } else if( optionName.equals("ti2") ) {
-            if( flagTimeStarted == false )
-                return false;
-            if( justChecking )
-                return true;
-            doStopTimeCmd(m_botAction.getBotName());
-            return true;
-        }else if( optionName.equals("st1") ) {
-            if( strictFlagTime == true )
-                return false;
-            if( justChecking )
-                return true;
-            doStrictTimeCmd(m_botAction.getBotName());
-            return true;
-        } else if( optionName.equals("st2") ) {
-            if( strictFlagTime == false )
-                return false;
-            if( justChecking )
-                return true;
-            doStrictTimeCmd(m_botAction.getBotName());
-            return true;
-        } else if( optionName.equals("le1") ) {
-            if( shipWeights.get(4) == 1 )
-                return false;
-            if( justChecking )
-                return true;
-            doSetCmd(m_botAction.getBotName(), "4 1");
-            return true;
-        } else if( optionName.equals("le2") ) {
-            if( shipWeights.get(4) == 0 )
-                return false;
-            if( justChecking )
-                return true;
-            doSetCmd(m_botAction.getBotName(), "4 0");
-            return true;
-        } else if( optionName.equals("ja1") ) {
-            if( shipWeights.get(2) == 5 )
-                return false;
-            if( justChecking )
-                return true;
-            doSetCmd(m_botAction.getBotName(), "2 5");
-            return true;
-        } else if( optionName.equals("ja2") ) {
-            if( shipWeights.get(2) == 1 )
-                return false;
-            if( justChecking )
-                return true;
-            doSetCmd(m_botAction.getBotName(), "2 1");
-            return true;
-        } else if( optionName.equals("we1") ) {
-            if( shipWeights.get(6) == 5 )
-                return false;
-            if( justChecking )
-                return true;
-            doSetCmd(m_botAction.getBotName(), "6 5");
-            return true;
-        } else if( optionName.equals("we2") ) {
-            if( shipWeights.get(6) == 1 )
-                return false;
-            if( justChecking )
-                return true;
-            doSetCmd(m_botAction.getBotName(), "6 1");
-            return true;
-        } else if( optionName.equals("pf1") ) {
-            if( privFreqs == true )
-                return false;
-            if( justChecking )
-                return true;
-            doPrivFreqsCmd(m_botAction.getBotName());
-            return true;
-        } else if( optionName.equals("pf2") ) {
-            if( privFreqs == false )
-                return false;
-            if( justChecking )
-                return true;
-            doPrivFreqsCmd(m_botAction.getBotName());
-            return true;
-        } else if( optionName.equals("w1") ) {
-            if( warpAllowed == true )
-                return false;
-            if( justChecking )
-                return true;
-            doAllowWarpCmd(m_botAction.getBotName());
-            return true;
-        } else if( optionName.equals("w2") ) {
-            if( warpAllowed == false )
-                return false;
-            if( justChecking )
-                return true;
-            doAllowWarpCmd(m_botAction.getBotName());
-            return true;
-        } else if( optionName.equals("aw1") ) {
-            if( autoWarp == true )
-                return false;
-            if( justChecking )
-                return true;
-            doAutowarpCmd(m_botAction.getBotName());
-            return true;
-        } else if( optionName.equals("aw2") ) {
-            if( autoWarp == false )
-                return false;
-            if( justChecking )
-                return true;
-            doAutowarpCmd(m_botAction.getBotName());
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Ends the vote, tallying all votes cast, changing options as needed, and displaying results.
-     */
-    public void doEndVote() {
-        m_lastVote = System.currentTimeMillis();
-    	if( m_currentVoteItem < 1 || m_currentVoteItem > m_voteOptions.size() - 1 ) {
-    		m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:Invalid vote found in PurePub voting system!" + m_currentVoteItem );
-        	m_currentVoteItem = -1;
-    		return;
-    	}
-
-    	float yes = 0, no = 0;
-    	for( Integer vote : m_votes.values() ) {
-    		if( vote != null ) {
-    			if( vote == 1 )
-    				yes++;
-    			else if( vote == 2 )
-    				no++;
-    		}
-    	}
-    	int percentage;
-    	if( yes == 0 )
-    		percentage = 0;
-    	else if( no == 0 )
-    		percentage = 100;
-    	else
-    		percentage = Math.round( (yes / (yes + no)) * 100 );
-    	String results = "Y:" + (int)yes + " v N:" + (int)no + "  (" + percentage + "%";
-
-    	VoteOption v = m_voteOptions.get(m_currentVoteItem);
-    	if( v != null ) {
-    		if( percentage >= v.percentRequired ) {
-    			if( yes >= v.minVotesRequired ) {
-    				m_botAction.sendArenaMessage("[" + v.displayText + "]  Vote PASSED.  " + results + "; needed " + v.percentRequired + "%)" );
-    				setVoteOption(v, false);
-    			} else {
-        			m_botAction.sendArenaMessage("[" + v.displayText + "]  Vote FAILED.  " + results + "; needed " + v.percentRequired + "% and " + v.minVotesRequired + " votes)" );
-    			}
-    		} else {
-    			m_botAction.sendArenaMessage(    "[" + v.displayText + "]  Vote FAILED.  " + results + "; needed " + v.percentRequired + "%)" );
-    		}
-    	}
-    	m_currentVoteItem = -1;
-    }
-
-    /**
-     * Challenges another player in pub to a tracked-kill competition.
-     * @param sender Player sending
-     * @param argString Name of the player to challenge
-     */
-    public void doChallengeCmd(String sender, String argString ) {
-        if( !m_challengeEnabled )
-            throw new RuntimeException( "Player challenges are not currently allowed." );
-        if( argString == null || argString.equals("") )
-            throw new RuntimeException( "Use !challenge <name> to challenge <name> to an informal pub duel (such as !challenge qan)" ); 
-        Player p1 = m_botAction.getPlayer(sender);
-        if( p1 == null )
-            return;
-        Player p2 = m_botAction.getPlayer(argString);
-        if( p2 == null )
-            p2 = m_botAction.getFuzzyPlayer(argString);
-        if( p2 == null )
-            throw new RuntimeException( "Can't locate player by name of '" + argString + "'." );
-
-        PubChallenge runningChal = null;
-        for( PubChallenge chal : m_challenges ) {
-            if( chal.challengeActive() ) {
-                if( chal.getPlayer1().getPlayerID() == p1.getPlayerID() || chal.getPlayer2().getPlayerID() == p1.getPlayerID() ) {
-                    runningChal = chal;
-                } else if( chal.getPlayer1().getPlayerID() == p2.getPlayerID() || chal.getPlayer2().getPlayerID() == p2.getPlayerID() ) {
-                    throw new RuntimeException( p2.getPlayerName() + " is already involved in a challenge.  Try again later." );
-                }
-            } else {
-                if( chal.getPlayer2().getPlayerID() == p1.getPlayerID() ) {
-                    // Challenge needs confirmation; do it
-                    chal.activateChallenge();
-                    return;
-                }
-            }
-        }
-
-        if( runningChal != null ) {
-            m_botAction.sendPrivateMessage( p1.getPlayerID(), "Your current challenge has been ended to run this one." );
-            m_challenges.remove(runningChal);
-            runningChal.endChallenge( p1 );
-            runningChal = null;
-        }
-
-        m_challenges.add( new PubChallenge(p1,p2) );
-        m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge recorded.  " + p2.getPlayerName() + " will now need to !challenge " + p1.getPlayerName() + " to start the challenge." );
-    }
-
-    /**
-     * Ends the current challenge.
-     * @param sender Player sending
-     * @param argString Name of the player to challenge
-     */
-    public void doEndCmd( String sender ) {
-        if( !m_challengeEnabled )
-            throw new RuntimeException( "Player challenges are not currently allowed." );
-        Player p1 = m_botAction.getPlayer(sender);
-        if( p1 == null )
-            return;
-        LinkedList <PubChallenge>deadchals = new LinkedList<PubChallenge>();
-
-        PubChallenge runningChal = null;
-        for( PubChallenge chal : m_challenges ) {
-            if( chal.getPlayer1() == null )
-                deadchals.add(chal);
-            else if( chal.challengeActive() ) {
-                if( chal.getPlayer2() == null )
-                    deadchals.add(chal);
-                else if( chal.getPlayer1().getPlayerID() == p1.getPlayerID() ||
-                    chal.getPlayer2().getPlayerID() == p1.getPlayerID() ) {
-                    m_challenges.remove(chal);
-                    chal.endChallenge( p1 );
-                    runningChal = chal;
-                }
-            }
-        }
-        for( PubChallenge dc : deadchals ) {
-            m_challenges.remove(dc);
-            dc = null;
-        }
-        if( runningChal == null )
-            throw new RuntimeException( "Challenge not found.  (Are you sure you have one running?)" );
-    }
 
     /* **********************************  SUPPORT METHODS  ************************************ */
 
@@ -2500,7 +1639,7 @@ public class purepubbot extends ItemObserver
     {
         try{
         	
-            String commands[] = botSets.getString(m_botAction.getBotName() + "Setup").split(",");
+            String commands[] = m_botSettings.getString(m_botAction.getBotName() + "Setup").split(",");
         	for(int k = 0; k < commands.length; k++) {
         		handleModCommand(m_botAction.getBotName(), commands[k]);
     		}
@@ -2551,16 +1690,6 @@ public class purepubbot extends ItemObserver
         m_botAction.hideObject(1000); //Turns off intermission lvz
         m_botAction.scheduleTaskAtFixedRate( flagTimer, 100, 1000);
 
-        //To point system
-        for(Iterator<Player> i = m_botAction.getPlayingPlayerIterator(); i.hasNext(); ){
-            Player p = i.next();
-            String playerName = p.getPlayerName();
-            
-            if(!players.containsKey(playerName)){
-                this.players.put(playerName, new PubPlayer(playerName) );
-                //Tools.printLog("Round starts: Added "+playerName);
-            }
-        }
     }
 
 
@@ -2914,13 +2043,6 @@ public class purepubbot extends ItemObserver
     private void warpPlayers() {
         if( !warpAllowed )
             return;
-
-        if( useAprilFoolsPoints ) {
-            warpPtsLeftX = warpPtsLeftX_April1;
-            warpPtsLeftY = warpPtsLeftY_April1;
-            warpPtsRightX = warpPtsRightX_April1;
-            warpPtsRightY = warpPtsRightY_April1;
-        }
 
         Iterator<?> i;
 
@@ -3482,103 +2604,5 @@ public class purepubbot extends ItemObserver
             }
         }
     }
-
-    private class VoteOption {
-        String name;                    // Name used internally by the game for this option
-        String displayText;             // Text displayed to players listing voting options
-        int percentRequired = 0;        // 50 to 100
-        int minVotesRequired = 0;       // Min # votes required, regardless of percentage
-
-        public VoteOption( String name, String display, int percent, int minVotes ) {
-            this.name = name;
-            displayText = display;
-            percentRequired = percent;
-            minVotesRequired = minVotes;
-        }
-    }
-
-    /**
-     * Class to track pub challenges.
-     * @author affirmative
-     */
-    private class PubChallenge {
-        Player p1;
-        Player p2;
-        boolean challengeActive = false;
-        int p1Points = 0;
-        int p2Points = 0;
-
-        public PubChallenge( Player challenger, Player challenged ) {
-            p1 = challenger;
-            p2 = challenged;
-        }
-
-        public void activateChallenge() {
-            if( p1 == null ) {
-                if( p2 == null )
-                    return;
-                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge can't be activated; can't find Player 1." );
-                return;
-            }
-            else if( p2 == null ) {
-                if( p1 == null )
-                    return;
-                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge can't be activated; can't find Player 2." );
-                return;
-            }
-
-            challengeActive = true;
-            m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge has begun.  " + p1.getPlayerName() + " 0  -  0 " + p2.getPlayerName() );
-            m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge has begun.  " + p1.getPlayerName() + " 0  -  0 " + p2.getPlayerName() );
-        }
-
-        public void endChallenge( Player p ) {
-            challengeActive = false;
-            if( p1 == null ) {
-                if( p2 == null )
-                    return;
-                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END.  (Player 1 left)" );
-            }
-            else if( p2 == null ) {
-                if( p1 == null )
-                    return;
-                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END.  (Player 2 left)" );
-            }
-
-            if( p1Points > p2Points ) {
-                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
-                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
-            } else if( p2Points > p1Points ) {
-                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p2.getPlayerName().toUpperCase() + " WINS!" );
-                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
-            } else {
-                m_botAction.sendPrivateMessage( p1.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  TIE!" );
-                m_botAction.sendPrivateMessage( p2.getPlayerID(), "Challenge END by " + p.getPlayerName() + ":  " + p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() + "  " + p1.getPlayerName().toUpperCase() + " WINS!" );
-            }
-        }
-
-        public void reportKill( int whoDunIt ) {
-            if( whoDunIt == 1 ) {
-                p1Points++;
-            } else {
-                p2Points++;
-            }
-            m_botAction.sendPrivateMessage( p1.getPlayerID(), p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() );
-            m_botAction.sendPrivateMessage( p2.getPlayerID(), p1.getPlayerName() + " " + p1Points + "  -  " + p2Points + " " + p2.getPlayerName() );
-        }
-
-        public boolean challengeActive() {
-            return challengeActive;
-        }
-
-        public Player getPlayer1() {
-            return p1;
-        }
-
-        public Player getPlayer2() {
-            return p2;
-        }
-    }
-
 
 }
