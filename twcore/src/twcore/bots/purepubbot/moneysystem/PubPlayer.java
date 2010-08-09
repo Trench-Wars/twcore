@@ -3,42 +3,55 @@ package twcore.bots.purepubbot.moneysystem;
 import java.util.LinkedList;
 import java.util.List;
 
+import twcore.bots.purepubbot.moneysystem.item.PubItem;
+import twcore.bots.purepubbot.moneysystem.item.PubShipItem;
 
 
 public class PubPlayer implements Comparable<PubPlayer>{
     
 	private static final int MAX_ITEM_HISTORY = 25;
 	
-    private String p_name;
-    private int id;
-    private int point;
+    private String name;
+    private int money;
     private LinkedList<PubItem> itemsBought;
     private LinkedList<PubItem> itemsBoughtThisLife;
+    
+    private PubShipItem shipItem;
+    
+    // Epoch time
+    private long lastMoneyUpdate = 0;
+    private long lastSavedState = 0;
 
     public PubPlayer(String name){
-        p_name = name;
-        point = 0;
-        itemsBought = new LinkedList<PubItem>();
-        itemsBoughtThisLife = new LinkedList<PubItem>();
+        this.name = name;
+        this.money = 0;
+        this.itemsBought = new LinkedList<PubItem>();
+        this.itemsBoughtThisLife = new LinkedList<PubItem>();
+        loadState();
+    }
+    
+    private void loadState() {
+    	// DB connection
+    	// TODO
+    }
+    
+    public void saveState() {
+    	// DB connection
+    	// TODO
+    	this.lastSavedState = System.currentTimeMillis();
     }
 
     public String getPlayerName() {
-        return p_name;
+        return name;
     }
-    public void setPlayerName(String pName) {
-        p_name = pName;
+
+    public int getMoney() {
+        return money;
     }
-    public int getId() {
-        return id;
-    }
-    public void setId(int id) {
-        this.id = id;
-    }
-    public int getPoint() {
-        return point;
-    }
-    public void setPoint(int point) {
-        this.point = point;
+    
+    public void setMoney(int money) {
+        this.money = money;
+        this.lastMoneyUpdate = System.currentTimeMillis();
     }
 
     public void addItem(PubItem item) {
@@ -63,8 +76,8 @@ public class PubPlayer implements Comparable<PubPlayer>{
     @Override
     public int compareTo(PubPlayer o) {
         // TODO Auto-generated method stub
-        if(o.getPoint() > getPoint()) return 1;
-        if(o.getPoint() < getPoint()) return 0;
+        if(o.getMoney() > getMoney()) return 1;
+        if(o.getMoney() < getMoney()) return 0;
         
         return -1;
     }

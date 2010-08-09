@@ -32,11 +32,13 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Point;
 import twcore.core.util.PointLocation;
 import twcore.core.util.Tools;
+import twcore.core.util.Tools.Weapon;
 
 /**
  * "Pure" pub bot that can enforce ship restrictions, freq restrictions, and run
@@ -176,7 +178,7 @@ public class purepubbot extends SubspaceBot
         super(botAction);
         requestEvents();
         m_botSettings = m_botAction.getBotSettings();
-        
+
         moneySystem = new PubMoneySystem(m_botAction);
         
         opList = m_botAction.getOperatorList();
@@ -2604,5 +2606,5 @@ public class purepubbot extends SubspaceBot
             }
         }
     }
-
+ 
 }

@@ -1,4 +1,4 @@
-package twcore.bots.purepubbot.moneysystem;
+package twcore.bots.purepubbot.moneysystem.item;
 
 public class PubPrizeItem extends PubItem {
 

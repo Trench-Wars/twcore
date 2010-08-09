@@ -1,6 +1,7 @@
-package twcore.bots.purepubbot.moneysystem;
+package twcore.bots.purepubbot.moneysystem.item;
 
 import twcore.bots.purepubbot.PubException;
+import twcore.bots.purepubbot.moneysystem.PubPlayer;
 
 
 public abstract class PubItem {
@@ -10,6 +11,7 @@ public abstract class PubItem {
     protected int price;
     protected boolean arenaItem;
     protected PubItemRestriction restriction;
+    protected long lastTimeUsed = 0;
 
     public PubItem(String name, String displayName, int price) {
         this.name = name;
@@ -49,6 +51,14 @@ public abstract class PubItem {
 	public void checkRestriction(PubPlayer player, int shipType) throws PubException {
 		if (restriction != null)
 			restriction.check(this, player, shipType);
+	}
+	
+	public void hasBeenBought() {
+		this.lastTimeUsed = System.currentTimeMillis();
+	}
+	
+	public long getLastTimeUsed() {
+		return lastTimeUsed;
 	}
 
 }

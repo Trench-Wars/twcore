@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import twcore.bots.purepubbot.PubException;
+import twcore.bots.purepubbot.moneysystem.item.PubItem;
 
 public class PubStore {
 
@@ -28,13 +29,15 @@ public class PubStore {
         if (item.isRestricted())
         	item.checkRestriction(player, shipType); // will throw PubException
         
-        if (player.getPoint() < item.getPrice())
+        if (player.getMoney() < item.getPrice())
         	throw new PubException("You do not have enough money to buy this item.");
         
         if (item != null) {
-	        player.setPoint(player.getPoint() - item.getPrice());
+	        player.setMoney(player.getMoney() - item.getPrice());
 	        player.addItem(item);
         }
+        
+        item.hasBeenBought();
 
         return item;
     }
