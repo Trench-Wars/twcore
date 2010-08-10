@@ -12,6 +12,7 @@ import java.util.Vector;
 import twcore.bots.purepubbot.PubException;
 import twcore.bots.purepubbot.moneysystem.item.PubCommandItem;
 import twcore.bots.purepubbot.moneysystem.item.PubItem;
+import twcore.bots.purepubbot.moneysystem.item.PubItemDuration;
 import twcore.bots.purepubbot.moneysystem.item.PubItemRestriction;
 import twcore.bots.purepubbot.moneysystem.item.PubPrizeItem;
 import twcore.bots.purepubbot.moneysystem.item.PubShipItem;
@@ -41,6 +42,8 @@ public class PubMoneySystem {
 	private PubStore store;
     private Map<String, PubPlayer> players;
     
+    private Map<PubPlayer, PubItemDuration> playersWithDurationItem;
+    
     // These variables are used to calculate the money earned for a kill
     private Map<Integer, Integer> shipKillerPoints;
     private Map<Integer, Integer> shipKilledPoints;
@@ -64,6 +67,7 @@ public class PubMoneySystem {
 		}
         
         this.players = new HashMap<String, PubPlayer>();
+        this.playersWithDurationItem = new HashMap<PubPlayer, PubItemDuration>();
         
         this.shipKillerPoints = new HashMap<Integer, Integer>();
         this.shipKilledPoints = new HashMap<Integer, Integer>();
@@ -108,26 +112,48 @@ public class PubMoneySystem {
 	
 	    		// Options?
 	    		if (data.length > optionPointer) {
+	    			
 	    			PubItemRestriction r = new PubItemRestriction();
+	    			PubItemDuration d = new PubItemDuration();
+	    			
+	    			boolean hasRestriction = false;
+	    			boolean hasDuration = false;
+	    			
 	    			for(int i=optionPointer; i<data.length; i++) {
 	    				String option = data[i];
 	    				if(option.startsWith("!s")) {
 	    					int ship = Integer.parseInt(option.substring(2));
 	    					r.addShip(ship);
+	    					hasRestriction = true;
 	    				} else if(option.startsWith("!mp")) {
 	    					int max = Integer.parseInt(option.substring(3));
 	    					r.setMaxPerLife(max);
+	    					hasRestriction = true;
 	    				} else if(option.startsWith("!mc")) {
 	    					int max = Integer.parseInt(option.substring(3));
 	    					r.setMaxConsecutive(max);
+	    					hasRestriction = true;
 	    				} else if(option.startsWith("!adm")) {
 	    					int max = Integer.parseInt(option.substring(4));
 	    					r.setMaxArenaPerMinute(max);
+	    					hasRestriction = true;
 	    				} else if(option.startsWith("!arena")) {
 	    					item.setArenaItem(true);
+	    				} else if(option.startsWith("!dd")) {
+	    					int death = Integer.parseInt(option.substring(3));
+	    					d.setDeaths(death);
+	    					hasDuration = true;
+	    				} else if(option.startsWith("!dm")) {
+	    					int minutes = Integer.parseInt(option.substring(3));
+	    					d.setMinutes(minutes);
+	    					hasDuration = true;
 	    				}
 	    			}
-	    			item.setRestriction(r);
+	    			
+	    			if (hasRestriction)
+	    				item.setRestriction(r);
+	    			if (hasDuration)
+	    				item.setDuration(d);
 	    		}
 	    	}
         }
@@ -168,29 +194,61 @@ public class PubMoneySystem {
     }
     
 
-    private void buyItem(String playerName, String itemName, String params, int shipType){
+    private void buyItem(final String playerName, String itemName, String params, int shipType){
+    	
         try{
 
             if (players.containsKey(playerName)){
             	
-            	PubPlayer player = players.get(playerName);
+            	Player player = m_botAction.getPlayer(playerName);
+            	PubPlayer pubPlayer = players.get(playerName);
+            	
             	
             	int moneyBeforeBuy = players.get(playerName).getMoney();
-                PubItem item = store.buy(itemName, players.get(playerName), shipType);
-                int moneyAfterBuy = player.getMoney();
+                PubItem item = store.buy(itemName, pubPlayer, shipType);
+                int moneyAfterBuy = pubPlayer.getMoney();
 
+                // PRIZE ITEM
                 if (item instanceof PubPrizeItem) {
-                	m_botAction.specificPrize(player.getPlayerName(), ((PubPrizeItem) item).getPrizeNumber());
+                	
+                	m_botAction.specificPrize(pubPlayer.getPlayerName(), ((PubPrizeItem) item).getPrizeNumber());
+               
                 }
+                
+                // COMMAND ITEM
                 else if (item instanceof PubCommandItem) {
+                	
                 	String command = ((PubCommandItem)item).getCommand();
             		Method method = this.getClass().getDeclaredMethod("itemCommand"+command, String.class, String.class);
             		method.invoke(this, playerName, params);
+                
                 } 
+                
+                // SHIP ITEM
                 else if (item instanceof PubShipItem) {
+                	
+                    if (item.hasDuration()) {
+                    	PubItemDuration duration = item.getDuration();
+                    	if (duration.hasTime()) {
+                    		final int currentShip = (int)player.getShipType();
+                        	TimerTask timer = new TimerTask() {
+                                public void run() {
+                                	m_botAction.setShip(playerName, currentShip);
+                                }
+                            };
+                            m_botAction.scheduleTask(timer, duration.getSeconds()*1000);
+                    	}
+                    	else if (duration.hasDeaths()) {
+                    		playersWithDurationItem.put(pubPlayer, duration);
+                    	}
+                    }
+                    
+                    pubPlayer.setShipItem((PubShipItem)item);
+                    m_botAction.setShip(playerName, ((PubShipItem) item).getShipNumber());
                 	
                 } 
                 
+
                 if (item.isArenaItem()) {
                 	 m_botAction.sendArenaMessage(playerName + " just bought a " + item.getDisplayName() + " for $" + item.getPrice() + ".",21);
                 }
@@ -212,7 +270,17 @@ public class PubMoneySystem {
         }
         
     }
-    
+
+    private void sendMoneyToPlayer(String playerName, int amount, String message) {
+    	PubPlayer player = players.get(playerName);
+    	int money = player.getMoney();
+    	player.setMoney( money + amount );
+        int playerId = m_botAction.getPlayerID(playerName);
+        this.lvzPubPointsHandler.updatePanel(playerId, String.valueOf(money), String.valueOf(money+amount), true);
+        if (message!=null) {
+        	m_botAction.sendPrivateMessage(playerName, message);
+        }
+    }
 
     private void doCmdBuy(String sender, String command){
         Player p = m_botAction.getPlayer(sender);
@@ -231,9 +299,9 @@ public class PubMoneySystem {
     private void doCmdDisplayMoney(String sender){
         if(players.containsKey(sender)){
             PubPlayer pubPlayer = this.players.get(sender);
-            m_botAction.sendPrivateMessage(sender, "You have $"+pubPlayer.getMoney());
+            m_botAction.sendPrivateMessage(sender, "You have $"+pubPlayer.getMoney() + " in your bank.");
         }else
-            m_botAction.sendPrivateMessage(sender, "You're still not in the point system. Wait a bit to be added");
+            m_botAction.sendPrivateMessage(sender, "You're still not in the system. Wait a bit to be added.");
     }
  
     public void handleEvent(Message event) {
@@ -255,30 +323,47 @@ public class PubMoneySystem {
     }
     
     public void handleEvent(PlayerDeath event) {
-    	
-    	Player killer = m_botAction.getPlayer( event.getKillerID() );
-        Player killed = m_botAction.getPlayer( event.getKilleeID() );
-        
-        // Do nothing if the bot killed someone
-        if (killer.getPlayerName().equals(m_botAction.getBotName()))
-        	return;
-        
-        // Reset item for the killed
-        PubPlayer pubPlayerKilled = players.get(killed.getPlayerName());
-        pubPlayerKilled.resetItems();
-        
+
+    	final Player killer = m_botAction.getPlayer( event.getKillerID() );
+        final Player killed = m_botAction.getPlayer( event.getKilleeID() );
+       
         if( killer == null || killed == null )
             return;
 
         try{
-        	
+
+            final PubPlayer pubPlayerKilled = players.get(killed.getPlayerName());
+            pubPlayerKilled.handleDeath(event);
+            
+            // Duration check for Ship Item
+            if (pubPlayerKilled.hasShipItem() && playersWithDurationItem.containsKey(pubPlayerKilled)) {
+            	final PubItemDuration duration = playersWithDurationItem.get(pubPlayerKilled);
+            	if (duration.getDeaths() <= pubPlayerKilled.getDeathsOnShipItem()) {
+            		// Let the player wait before setShip().. (the 4 seconds after each death)
+                	final TimerTask timer = new TimerTask() {
+                        public void run() {
+                    		pubPlayerKilled.resetShipItem();
+                    		m_botAction.setShip(killed.getPlayerName(), 1);
+                    		playersWithDurationItem.remove(pubPlayerKilled);
+                    		m_botAction.sendPrivateMessage(killed.getPlayerName(), "You lost your ship after " + duration.getDeaths() + " death(s).",22);
+                        }
+                    };
+                    m_botAction.scheduleTask(timer, 4300);
+            	}
+            	else {
+            		// TODO - Give the PubShipItemSettings
+            		// i.e: A player buys a special ship with 10 repel (PubShipItemSettings)
+            		//      for 5 deaths (PubItemDuration)
+            	}
+            }
+ 
             int money = 0;
 
-            // Points from the ship
+            // Money from the ship
             money += shipKillerPoints.get((int)killer.getShipType());
             money += shipKilledPoints.get((int)killed.getShipType());
             
-            // Points from the location
+            // Money from the location
             Point pointXY = new Point(killer.getXTileLocation(), killer.getYTileLocation());
             for(PubLocation location: locationPoints.keySet()) {
             	if (location.isInside(pointXY)) {
@@ -326,7 +411,7 @@ public class PubMoneySystem {
     	
 		PubPlayer pubPlayer = players.get(p.getPlayerName());
 		if (pubPlayer!=null) {
-			pubPlayer.resetItems();
+			pubPlayer.handleShipChange(event);
 		}
     }
 
@@ -334,12 +419,7 @@ public class PubMoneySystem {
         try {
  
             if(command.startsWith("!rich")) {
-            	PubPlayer player = players.get(sender);
-            	int pts = player.getMoney();
-            	player.setMoney( pts + 100000 );
-                int playerId = m_botAction.getPlayerID(sender);
-                this.lvzPubPointsHandler.updatePanel(playerId, String.valueOf(pts), String.valueOf(pts+100000), true);
-
+            	sendMoneyToPlayer(sender,1000000,"You are rich now!");
             }
             else if(command.equals("!$"))
             {
@@ -384,7 +464,7 @@ public class PubMoneySystem {
     /**
      * Not always working.. need to find out why.
      */
-    public void itemCommandSuddenDeath(final String sender, String params) throws PubException{
+    private void itemCommandSuddenDeath(final String sender, String params) throws PubException{
 
     	if (params.equals("")) {
     		throw new PubException("You must add 1 parameter when you buy this item.");
@@ -429,7 +509,7 @@ public class PubMoneySystem {
 	    //m_botAction.setFreq(m_botAction.getBotName(),(int)p.getFrequency());
     	m_botAction.getShip().setShip(1);
     	m_botAction.getShip().rotateDegrees(90);
-    	m_botAction.setThorAdjust(10);
+    	//m_botAction.setThorAdjust(5);
     	m_botAction.sendArenaMessage(sender + " has sent a nuke in the direction of the flagroom! Impact is imminent!",17);
         final TimerTask timerFire = new TimerTask() {
             public void run() {

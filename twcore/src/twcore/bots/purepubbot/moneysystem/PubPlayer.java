@@ -5,6 +5,8 @@ import java.util.List;
 
 import twcore.bots.purepubbot.moneysystem.item.PubItem;
 import twcore.bots.purepubbot.moneysystem.item.PubShipItem;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.PlayerDeath;
 
 
 public class PubPlayer implements Comparable<PubPlayer>{
@@ -16,7 +18,9 @@ public class PubPlayer implements Comparable<PubPlayer>{
     private LinkedList<PubItem> itemsBought;
     private LinkedList<PubItem> itemsBoughtThisLife;
     
+    // A player can only have 1 ShipItem at a time
     private PubShipItem shipItem;
+    private int deathsOnShipItem = 0;
     
     // Epoch time
     private long lastMoneyUpdate = 0;
@@ -61,7 +65,7 @@ public class PubPlayer implements Comparable<PubPlayer>{
         this.itemsBoughtThisLife.add(item);
     }
     
-    public void resetItems() {
+    private void resetItems() {
     	this.itemsBoughtThisLife.clear();
     }
 
@@ -71,6 +75,37 @@ public class PubPlayer implements Comparable<PubPlayer>{
     
     public List<PubItem> getItemsBoughtThisLife() {
     	return itemsBoughtThisLife;
+    }
+    
+    public void resetShipItem() {
+    	shipItem = null;
+    	deathsOnShipItem = 0;
+    }
+    
+    public void handleShipChange(FrequencyShipChange event) {
+    	resetItems();
+    	if (shipItem != null && event.getShipType() != shipItem.getShipNumber())
+    		resetShipItem();
+    }
+
+    public void handleDeath(PlayerDeath event) {
+    	resetItems();
+    	if (shipItem != null) {
+    		deathsOnShipItem++;
+    		System.out.println("death: " + deathsOnShipItem);
+    	}
+    }
+    
+    public int getDeathsOnShipItem() {
+    	return deathsOnShipItem;
+    }
+    
+    public boolean hasShipItem() {
+    	return shipItem != null;
+    }
+    
+    public void setShipItem(PubShipItem item) {
+    	this.shipItem = item;
     }
     
     @Override

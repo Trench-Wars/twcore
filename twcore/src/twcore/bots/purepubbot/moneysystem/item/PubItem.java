@@ -10,6 +10,7 @@ public abstract class PubItem {
     protected String displayName;
     protected int price;
     protected boolean arenaItem;
+    protected PubItemDuration duration;
     protected PubItemRestriction restriction;
     protected long lastTimeUsed = 0;
 
@@ -35,6 +36,10 @@ public abstract class PubItem {
     public void setArenaItem(boolean b) {
     	this.arenaItem = b;
     }
+    
+	public void setDuration(PubItemDuration d) {
+		this.duration = d;
+	}
 
 	public void setRestriction(PubItemRestriction r) {
 		this.restriction = r;
@@ -44,13 +49,20 @@ public abstract class PubItem {
 		return restriction != null;
 	}
 	
+	public boolean hasDuration() {
+		return duration != null;
+	}
+	
 	public boolean isArenaItem() {
 		return arenaItem;
 	}
 	
-	public void checkRestriction(PubPlayer player, int shipType) throws PubException {
-		if (restriction != null)
-			restriction.check(this, player, shipType);
+	public PubItemRestriction getRestriction() {
+		return restriction;	
+	}
+	
+	public PubItemDuration getDuration() {
+		return duration;
 	}
 	
 	public void hasBeenBought() {

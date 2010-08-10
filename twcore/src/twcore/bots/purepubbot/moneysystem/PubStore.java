@@ -5,6 +5,7 @@ import java.util.Map;
 
 import twcore.bots.purepubbot.PubException;
 import twcore.bots.purepubbot.moneysystem.item.PubItem;
+import twcore.bots.purepubbot.moneysystem.item.PubItemRestriction;
 
 public class PubStore {
 
@@ -26,9 +27,11 @@ public class PubStore {
         if (item == null)
         	throw new PubException("This item does not exist.");
         
-        if (item.isRestricted())
-        	item.checkRestriction(player, shipType); // will throw PubException
-        
+        if (item.isRestricted()) {
+        	PubItemRestriction restriction = item.getRestriction();
+        	restriction.check(item, player, shipType);
+        }
+
         if (player.getMoney() < item.getPrice())
         	throw new PubException("You do not have enough money to buy this item.");
         
