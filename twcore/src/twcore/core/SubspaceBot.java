@@ -434,5 +434,5 @@ public abstract class SubspaceBot {
     public boolean isIdle() {
         return true;
     }
-
+    
 }

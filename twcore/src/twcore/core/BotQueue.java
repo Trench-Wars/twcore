@@ -240,6 +240,7 @@ public class BotQueue extends Thread {
         if( name == null )
             return "had no name associated; no removal action taken";
         ChildBot deadBot = m_botStable.remove( name );
+
         if( deadBot != null ){
             try {
                 Session deadSesh = deadBot.getBot();
@@ -288,42 +289,6 @@ public class BotQueue extends Thread {
             if( numBots.intValue() != 0 )
                 m_botTypes.put( rawClassName, new Integer(0) );
     }
-
-    /**
-     * Reload the configuration file of a bot if the bot implements Reloadable
-     * @param className Class of bots to reload
-     */
-    void reloadConfiguration( String className, String messager ) {
-        String       rawClassName = className.toLowerCase();
-        ChildBot c;
-        LinkedList<Reloadable> names = new LinkedList<Reloadable>();
-
-        Iterator<ChildBot> i = m_botStable.values().iterator();
-        while( i.hasNext() ) {
-            c = (ChildBot)i.next();
-            if( c != null )
-                if( c.getClassName().equals( rawClassName ) ) {
-                	if ( c instanceof Reloadable ) {
-                		names.add( (Reloadable) c );
-                	} else {
-                		m_botAction.sendSmartPrivateMessage( messager, "This type of bot is not reloadable." );
-                		break;
-                	}
-                }
-        }
-
-        if (names.size() > 0) {
-        	m_botAction.sendChatMessage( 1, messager + " reloading the configuration file for bots of type " + className );
-        	Iterator<Reloadable> j = names.iterator();
-            while( j.hasNext() ) {
-            	j.next().reload();
-            }
-        } else {
-        	m_botAction.sendSmartPrivateMessage( messager, "Bot of type " + className + " not found." );
-        }
-
-    }
-
     
     
     /**
