@@ -13,7 +13,7 @@ public class LvzMoneyPanel {
     /* This algorithm try to avoid unnecessary changes when the object is already on/off
      * It works by comparing the money before and after
      */
-    public void updatePanel(int playerId, String beforeMoney, String afterMoney, boolean gainedMoney){
+    public void update(int playerId, String beforeMoney, String afterMoney, boolean gainedMoney){
 
     	if (beforeMoney.equals("0"))
     		beforeMoney = "";
@@ -54,9 +54,19 @@ public class LvzMoneyPanel {
        
     }
     
+    public void reset(String playerName, int oldValue) {
+    	
+    	String value = String.valueOf(oldValue);
+    	for(int i = 0; i < value.length(); i++) {
+    		botAction.sendUnfilteredPrivateMessage(playerName, "*objoff "+502+(value.length()-i-1)+value.charAt(i));
+    	}
+    		
+    	
+    }
+    
     public void reset(String playerName){
         for(int i = 0; i < 7; i++){
-           for(int j = 0; j < 7; j++){
+           for(int j = 0; j < 10; j++){
             botAction.sendUnfilteredPrivateMessage(playerName, "*objoff "+502+i+j);
             System.out.println("Objoff: "+502+i+j);
            }

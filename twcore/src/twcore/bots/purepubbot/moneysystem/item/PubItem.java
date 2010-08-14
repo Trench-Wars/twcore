@@ -1,5 +1,8 @@
 package twcore.bots.purepubbot.moneysystem.item;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import twcore.bots.purepubbot.PubException;
 import twcore.bots.purepubbot.moneysystem.PubPlayer;
 
@@ -13,12 +16,14 @@ public abstract class PubItem {
     protected PubItemDuration duration;
     protected PubItemRestriction restriction;
     protected long lastTimeUsed = 0;
+    protected List<String> abbreviations;
 
     public PubItem(String name, String displayName, int price) {
         this.name = name;
         this.displayName = displayName;
         this.price = price;
         this.arenaItem = false;
+        this.abbreviations = new ArrayList<String>();
     }
 
     public String getName() {
@@ -31,6 +36,14 @@ public abstract class PubItem {
     
     public int getPrice() {
         return price;
+    }
+    
+    public void addAbbreviation(String abbv) {
+    	this.abbreviations.add(abbv);
+    }
+    
+    public List<String> getAbbreviations() {
+    	return abbreviations;
     }
     
     public void setArenaItem(boolean b) {

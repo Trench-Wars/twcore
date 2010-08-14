@@ -14,6 +14,7 @@ public class PubItemRestriction {
 	private int maxPerLife = -1;
 	private int maxConsecutive = -1;
 	private int maxArenaPerMinute = -1;
+	private boolean buyableFromSpec = false;
 	
 	public PubItemRestriction() {
 		ships = new ArrayList<Integer>();
@@ -35,10 +36,36 @@ public class PubItemRestriction {
 		this.maxArenaPerMinute = max;
 	}
 	
+	public void buyableFromSpec(boolean b) {
+		this.buyableFromSpec = b;
+	}
+	
+	public int getMaxArenaPerMinute() {
+		return maxArenaPerMinute;
+	}
+	
+	public int getMaxPerLife() {
+		return maxPerLife;
+	}
+	
+	public int getMaxConsecutive() {
+		return maxConsecutive;
+	}
+	
+	public List<Integer> getRestrictedShips() {
+		return ships;
+	}
+	
 	public void check(PubItem item, PubPlayer player, int shipType) throws PubException {
 		
 		if (ships.contains(shipType))
 			throw new PubException("You cannot buy this item with your current ship.");
+		
+		if (!buyableFromSpec) {
+			if (player.isOnSpec()) {
+				throw new PubException("You cannot buy this item if you are a spectator.");
+			}
+		}
 		
 		if (maxArenaPerMinute!=-1) {
 			long diff = System.currentTimeMillis()-item.getLastTimeUsed();

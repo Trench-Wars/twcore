@@ -32,6 +32,7 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.SQLResultEvent;
 import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
@@ -244,9 +245,14 @@ public class purepubbot extends SubspaceBot
     public void handleEvent(LoggedOn event)
     {
         BotSettings botSettings = m_botAction.getBotSettings();
+ 
         initialSpawn = botSettings.getString("InitialArena");
         initialPub = (botSettings.getInt(m_botAction.getBotName() + "Pub") - 1);
-        m_botAction.joinArena(initialSpawn);
+        try {
+			m_botAction.joinArena(initialSpawn,(short)3392,(short)3392); // Max resolution
+		} catch (Exception e) {
+			m_botAction.joinArena(initialSpawn);
+		}
         shipWeights.add( new Integer(1) );		// Allow unlimited number of spec players
         for( int i = 1; i < 9; i++ )
             shipWeights.add( new Integer( botSettings.getInt(m_botAction.getBotName() + "Ship" + i) ) );
@@ -268,6 +274,8 @@ public class purepubbot extends SubspaceBot
 
     	initLogin = false;
     	m_botAction.requestArenaList();
+    	m_botAction.setReliableKills(1); 
+    	moneySystem.handleEvent(event);
     }
 
 
@@ -499,7 +507,15 @@ public class purepubbot extends SubspaceBot
             String playerName = m_botAction.getPlayerName(playerID);
 
             if(started) {
-                m_botAction.sendPrivateMessage(playerName, "Welcome to Pub.  Private Freqs: [" + (privFreqs ? "OK" : "NO") + "]" + "  Timed pub: [" + (flagTimeStarted ? "ON" : "OFF") + "]" );
+            	
+            	String message = 
+            		"Welcome to Pub.  " +
+            		"Private freqs:[" + (privFreqs ? "YES" : "NO") + "]  " + 
+            		"Timed mode:[" + (flagTimeStarted ? "ON" : "OFF") + "]  " +
+            		"Store:[" + (moneySystem.isStoreOpened() ? "ON" : "OFF") + "]";
+            	
+            	
+                m_botAction.sendPrivateMessage(playerName, message );
 
                 String restrictions = "";
                 int weight;
@@ -520,11 +536,10 @@ public class purepubbot extends SubspaceBot
                     checkFreq(playerID, player.getFrequency(), false);
                     checkFreqSizes();
                 }
-                String cmds = "";
+                String cmds = "!terr !team !clearmines";
                 if( warpAllowed )
-                    cmds += "!warp ";
-                cmds += "!terr !team !clearmines";
-                m_botAction.sendPrivateMessage(playerName, "Commands:  " + cmds );
+                    cmds += " !warp";
+                m_botAction.sendPrivateMessage(playerName, "Commands:  " + cmds + "  (!help for more)");
                 
                 
             }
@@ -642,21 +657,21 @@ public class purepubbot extends SubspaceBot
         try {
             if(command.equals("!time"))
                 doTimeCmd(sender);
-            else if(command.equals("!help"))
-                doHelpCmd(sender);
+            else if(command.equals("!help") || command.equals("!h"))
+                doHelpCmd(sender, false);
             else if(command.startsWith("!whereis "))
                 doWhereIsCmd(sender, command.substring(9), opList.isBot(sender));
-            else if(command.startsWith("!w"))
+            else if(command.startsWith("!warp") || command.startsWith("!w"))
                 doWarpCmd(sender);
             else if(command.equals("!restrictions"))
                 doRestrictionsCmd(sender);
-            else if(command.startsWith("!tea"))
+            else if(command.startsWith("!team") || command.startsWith("!tea"))
                 doShowTeamCmd(sender);
-            else if(command.startsWith("!t"))
+            else if(command.startsWith("!terr") || command.startsWith("!t"))
                 doTerrCmd(sender);
             //else if(command.startsWith("!ship "))
               // doShipCmd(sender, command.substring(6));
-            else if(command.startsWith("!cl"))
+            else if(command.startsWith("!clearmines") || command.startsWith("!cl"))
                 doClearMinesCmd(sender);
             
         } catch(RuntimeException e) {
@@ -698,6 +713,13 @@ public class purepubbot extends SubspaceBot
         }
     }
 
+    public void handleDisconnect() {
+    	moneySystem.handleDisconnect();
+    }
+    
+    public void handleEvent(SQLResultEvent event){
+        moneySystem.handleEvent(event);
+    }
 
     /**
      * Moves the bot from one arena to another.  The bot must not be
@@ -1288,9 +1310,9 @@ public class purepubbot extends SubspaceBot
      *
      * @param sender is the person issuing the command.
      */
-    public void doHelpCmd(String sender)
+    public void doHelpCmd(String sender, boolean advanced)
     {
-        String[] helpMessage =
+        String[] modHelpMessage =
         {
                 "!go <ArenaName>   -- Moves the bot to <ArenaName>.",
                 //"!start            -- Starts pure pub settings.",
@@ -1305,7 +1327,6 @@ public class purepubbot extends SubspaceBot
                 "                     0=disabled; 1=any amount; other=weighted:",
                 "                     2 = 1/2 of freq can be this ship, 5 = 1/5, ...",
                 "!die              -- Logs the bot off of the server.",
-                "!team             -- Tells you which ships your team members are in.",
                 "!restrictions     -- Lists all current ship restrictions.",
                 "!time             -- Provides time remaining when Flag Time mode.",
                 "!warp             -- Warps you into flagroom at start of next round (flagtime)",
@@ -1325,28 +1346,32 @@ public class purepubbot extends SubspaceBot
 
         String[] playerHelpMessage =
         {
-                "Hi.  I'm a bot that controls features in public arenas.",
-                "I restrict ships, manage private frequencies, run Flag Time mode.",
-                "Commands:",
-                "!time             -- Provides time remaining when Flag Time mode.",
-                "!warp             -- Warps you into flagroom at start of next round (flagtime)",
-                "!terr             -- Shows terriers on the team & their last seen locations",
-                "!whereis <name>   -- Shows last seen location of <name> (if on your team)",
-                "!team             -- Tells you which ships your team members are in.",
-                //"!ship <ship#>     -- Puts you in ship <ship#>, keeping MVP status.",
-                "!clearmines       -- Clears all mines you have laid, keeping MVP status.",
+                "Hi. I'm your space traffic controller for this arena. I restrict ships, manage private frequencies, and much more.",
+                "Perhaps you want to run a command?",
+                "=============================================================",
+                "!warp    -- Warps you into flagroom at start of next round. (abbv: !w)",
+                "!terr    -- Shows terriers on the team and their last seen locations. (abbv: !t)",
+                "!team    -- Tells you which ships your team members are in. (abbv: !tea)",
+                "",
+                "[STORE]",
+                "!items            -- Shows buyable items from the store. (abbv: !i)",
+                "!buy <item_name>  -- Item to buy on the store. (abbv: !b) ",
+                "(!more for more commands)",          
+        };
+        
+        String[] advancedPlayerHelpMessage =
+        {
+                "!whereis <name>   -- Shows last seen location of <name> (if on your team).",
+                "!clearmines       -- Clears all mines you have laid, keeping MVP status. (abbv: !cl)",
                 "!restrictions     -- Lists all current ship restrictions.",
-                /*"------- Pub Store (NEW) ---- By Dexter --------------------------------------------",
-                "!buy              -- Checks the list of items",
-                "!b <itemNumber>   -- Buys an item of # Number",
-                "!$                -- Checks how rich you are",
-                "!about            -- Explains my System"*/
         };
 
         if( opList.isHighmod( sender ) )
-            m_botAction.smartPrivateMessageSpam(sender, helpMessage);
-        else
+            m_botAction.smartPrivateMessageSpam(sender, modHelpMessage);
+        else if (!advanced)
             m_botAction.smartPrivateMessageSpam(sender, playerHelpMessage);
+        else
+        	m_botAction.smartPrivateMessageSpam(sender, advancedPlayerHelpMessage);
     }
 
 

@@ -1,7 +1,6 @@
 package twcore.bots.purepubbot.moneysystem;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedHashMap;
 
 import twcore.bots.purepubbot.PubException;
 import twcore.bots.purepubbot.moneysystem.item.PubItem;
@@ -9,17 +8,17 @@ import twcore.bots.purepubbot.moneysystem.item.PubItemRestriction;
 
 public class PubStore {
 
-    private Map<String, PubItem> items;
+    private LinkedHashMap<String, PubItem> items;
     
-    private boolean open = true;
+    private boolean opened = true;
 
     public PubStore(){
-        this.items = new HashMap<String, PubItem>();
+        this.items = new LinkedHashMap<String, PubItem>();
     }
     
     public PubItem buy(String itemName, PubPlayer player, int shipType) throws PubException {
 
-    	if (!open)
+    	if (!opened)
     		throw new PubException("The store is closed!");
     	
         PubItem item = items.get(itemName);
@@ -47,13 +46,24 @@ public class PubStore {
     
     public void addItem(PubItem item, String itemName) {
     	items.put(itemName, item);
+    	for(String abbv: item.getAbbreviations()) {
+    		items.put(abbv, item);
+    	}
+    }
+    
+    public LinkedHashMap<String, PubItem> getItems() {
+    	return items;
     }
     
     public void turnOn() {
-    	this.open = true;
+    	this.opened = true;
     }
     
     public void turnOff() {
-    	this.open = false;
+    	this.opened = false;
+    }
+    
+    public boolean isOpened() {
+    	return opened;
     }
 }

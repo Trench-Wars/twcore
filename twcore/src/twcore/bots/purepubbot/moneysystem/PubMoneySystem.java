@@ -1,9 +1,9 @@
 package twcore.bots.purepubbot.moneysystem;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TimerTask;
@@ -19,10 +19,12 @@ import twcore.bots.purepubbot.moneysystem.item.PubShipItem;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.OperatorList;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
+import twcore.core.events.SQLResultEvent;
 import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
 import twcore.core.util.Point;
@@ -39,8 +41,10 @@ public class PubMoneySystem {
 	private BotAction m_botAction;
 	private BotSettings m_botSettings;
 	
+	private String DATABASE = "local";
+	
 	private PubStore store;
-    private Map<String, PubPlayer> players;
+	private PubPlayerManager manager;
     
     private Map<PubPlayer, PubItemDuration> playersWithDurationItem;
     
@@ -53,20 +57,20 @@ public class PubMoneySystem {
 	
     public PubMoneySystem(BotAction botAction) {
 
-    	m_botAction = botAction;
-    	m_botSettings = botAction.getBotSettings();
-    	opList = m_botAction.getOperatorList();
+    	this.m_botAction = botAction;
+    	this.m_botSettings = botAction.getBotSettings();
+    	this.opList = m_botAction.getOperatorList();
     	
-    	lvzPubPointsHandler = new LvzMoneyPanel(m_botAction);
+    	this.lvzPubPointsHandler = new LvzMoneyPanel(m_botAction);
 
         this.store = new PubStore();
+        this.manager = new PubPlayerManager(botAction, m_botSettings.getString("database"));
         try {
         	initializeStore();
         } catch (Exception e) {
 			Tools.printStackTrace("Error while initializing the store", e);
 		}
-        
-        this.players = new HashMap<String, PubPlayer>();
+
         this.playersWithDurationItem = new HashMap<PubPlayer, PubItemDuration>();
         
         this.shipKillerPoints = new HashMap<Integer, Integer>();
@@ -139,6 +143,8 @@ public class PubMoneySystem {
 	    					hasRestriction = true;
 	    				} else if(option.startsWith("!arena")) {
 	    					item.setArenaItem(true);
+	    				} else if(option.startsWith("!fromspec")) {
+	    					r.buyableFromSpec(true);
 	    				} else if(option.startsWith("!dd")) {
 	    					int death = Integer.parseInt(option.substring(3));
 	    					d.setDeaths(death);
@@ -147,6 +153,9 @@ public class PubMoneySystem {
 	    					int minutes = Integer.parseInt(option.substring(3));
 	    					d.setMinutes(minutes);
 	    					hasDuration = true;
+	    				} else if(option.startsWith("!abbv")) {
+	    					String abbv = option.substring(6);
+	    					item.addAbbreviation(abbv);
 	    				}
 	    			}
 	    			
@@ -198,13 +207,13 @@ public class PubMoneySystem {
     	
         try{
 
-            if (players.containsKey(playerName)){
+            if (manager.isPlayerExists(playerName)){
             	
             	Player player = m_botAction.getPlayer(playerName);
-            	PubPlayer pubPlayer = players.get(playerName);
+            	PubPlayer pubPlayer = manager.getPlayer(playerName);
             	
             	
-            	int moneyBeforeBuy = players.get(playerName).getMoney();
+            	int moneyBeforeBuy = manager.getPlayer(playerName).getMoney();
                 PubItem item = store.buy(itemName, pubPlayer, shipType);
                 int moneyAfterBuy = pubPlayer.getMoney();
 
@@ -254,7 +263,7 @@ public class PubMoneySystem {
                 }
                 
                 int playerId = m_botAction.getPlayerID(playerName);
-                this.lvzPubPointsHandler.updatePanel(playerId, String.valueOf(moneyBeforeBuy), String.valueOf(moneyAfterBuy), false);
+                this.lvzPubPointsHandler.update(playerId, String.valueOf(moneyBeforeBuy), String.valueOf(moneyAfterBuy), false);
   
             } 
             else {
@@ -272,14 +281,103 @@ public class PubMoneySystem {
     }
 
     private void sendMoneyToPlayer(String playerName, int amount, String message) {
-    	PubPlayer player = players.get(playerName);
-    	int money = player.getMoney();
-    	player.setMoney( money + amount );
-        int playerId = m_botAction.getPlayerID(playerName);
-        this.lvzPubPointsHandler.updatePanel(playerId, String.valueOf(money), String.valueOf(money+amount), true);
+    	PubPlayer player = manager.getPlayer(playerName);
+    	player.addMoney(amount);
         if (message!=null) {
         	m_botAction.sendPrivateMessage(playerName, message);
         }
+    }
+    
+    private void doCmdItems(String sender){
+    	
+        Player p = m_botAction.getPlayer(sender);
+        
+        ArrayList<String> lines = new ArrayList<String>();
+        
+        Class currentClass = this.getClass();
+        
+        if (!store.isOpened())
+        {
+        	lines.add("The store is closed, no items available.");
+    	} 
+        else 
+    	{
+	        for(PubItem item: store.getItems().values()) {
+	        	
+	        	if (item instanceof PubPrizeItem) {
+	        		if (!currentClass.equals(PubPrizeItem.class))
+	        			lines.add("== PRIZES ===========================================================");
+	        		currentClass = PubPrizeItem.class;
+	        	} else if (item instanceof PubShipItem) {
+	        		if (!currentClass.equals(PubShipItem.class))
+	        			lines.add("== SHIPS ============================================================");
+	        		currentClass = PubShipItem.class;
+	        	} else if (item instanceof PubCommandItem) {
+	        		if (!currentClass.equals(PubCommandItem.class))
+	        			lines.add("== SPECIALS =========================================================");
+	        		currentClass = PubCommandItem.class;
+	        	}
+	        	
+	        	String abbv = "";
+		        if (item.getAbbreviations().size()>0) {
+		        	abbv+="  (";
+		        	for(String str: item.getAbbreviations()) {
+		        		abbv += "!"+str+",";
+		        	}
+		        	abbv=abbv.substring(0,abbv.length()-1)+")";
+	        	}
+	        	
+		        String line = Tools.formatString("!buy "+item.getName(), 16);
+		        line += Tools.formatString(abbv, 12);
+	        	line += Tools.formatString("($"+item.getPrice()+")", 10);
+	        	
+	        	String info = "";
+	        	
+	        	if (item.isRestricted()) {
+	        		PubItemRestriction r = item.getRestriction();
+	        		if (r.getRestrictedShips().size()==0) 
+	        			info += "All ships";
+	        		else if (r.getRestrictedShips().size()==8) {
+		        		info += "None"; // Just in case
+	        		} else {
+	        			String ships = "Ships:";
+	        			for(int i=1; i<9; i++) {
+	        				if (!r.getRestrictedShips().contains(i)) {
+	        					ships += i+",";
+	        				}
+	        			}
+	        			info += ships.substring(0, ships.length()-1);
+	        		}
+	        		info = Tools.formatString(info, 16);
+	        		if (r.getMaxPerLife()!=-1) {
+	        			info += r.getMaxPerLife()+" per life. ";
+	        		}
+	        		if (r.getMaxArenaPerMinute()!=-1) {
+	        			info += "1 every "+r.getMaxArenaPerMinute()+" minutes. ";
+	        		}
+	        		
+	        	}
+	        	
+	        	if (item.hasDuration()) {
+	        		PubItemDuration d = item.getDuration();
+	        		if (d.getDeaths()!=-1 && d.getSeconds()!=-1) {
+	        			info += "Last "+d.getDeaths()+" life(s) or "+(int)(d.getSeconds()/60)+" minute(s). ";
+	        		}
+	        		else if (d.getDeaths()!=-1) {
+	        			info += "Last "+d.getDeaths()+" life(s). ";
+	        		}
+	        		else if (d.getSeconds()!=-1) {
+	        			info += "Last "+(int)(d.getSeconds()/60)+" minute(s). ";
+	        		}
+	        		
+	        	}
+	        	
+	        	lines.add(line+info);
+	        }
+	    } 
+
+        m_botAction.smartPrivateMessageSpam(sender, lines.toArray(new String[lines.size()]));
+        
     }
 
     private void doCmdBuy(String sender, String command){
@@ -297,11 +395,19 @@ public class PubMoneySystem {
     }
     
     private void doCmdDisplayMoney(String sender){
-        if(players.containsKey(sender)){
-            PubPlayer pubPlayer = this.players.get(sender);
+        if(manager.isPlayerExists(sender)){
+            PubPlayer pubPlayer = manager.getPlayer(sender);
             m_botAction.sendPrivateMessage(sender, "You have $"+pubPlayer.getMoney() + " in your bank.");
         }else
             m_botAction.sendPrivateMessage(sender, "You're still not in the system. Wait a bit to be added.");
+    }
+    
+    public boolean isStoreOpened() {
+    	return store.isOpened();
+    }
+    
+    public boolean isDatabaseOn() {
+    	return m_botSettings.getString("database") != null;
     }
  
     public void handleEvent(Message event) {
@@ -332,7 +438,7 @@ public class PubMoneySystem {
 
         try{
 
-            final PubPlayer pubPlayerKilled = players.get(killed.getPlayerName());
+            final PubPlayer pubPlayerKilled = manager.getPlayer(killed.getPlayerName());
             pubPlayerKilled.handleDeath(event);
             
             // Duration check for Ship Item
@@ -373,13 +479,8 @@ public class PubMoneySystem {
             }
 
             String playerName = killer.getPlayerName();
-            PubPlayer pubPlayer = players.get(playerName);
-            
-            int currentMoney = pubPlayer.getMoney();
-            pubPlayer.setMoney(currentMoney+money);
-
-            lvzPubPointsHandler.updatePanel(killer.getPlayerID(), String.valueOf(currentMoney), String.valueOf(currentMoney+money), true);
-            players.put(playerName, pubPlayer);
+            PubPlayer pubPlayer = manager.getPlayer(playerName);
+            pubPlayer.addMoney(money);
 
             Tools.printLog("Added "+money+" to "+playerName+" TOTAL POINTS: "+pubPlayer.getMoney());
 
@@ -390,35 +491,23 @@ public class PubMoneySystem {
     }
     
     public void handleEvent(PlayerEntered event) {
-    	
-    	Player p = m_botAction.getPlayer(event.getPlayerID());
-    	String playerName = p.getPlayerName();
-    	
-        PubPlayer pubPlayer = this.players.get(playerName); 
-        int playerId = m_botAction.getPlayerID(playerName);
-        if(pubPlayer == null){
-            players.put( playerName, new PubPlayer(playerName) );
-            this.lvzPubPointsHandler.updatePanel(playerId, String.valueOf(0), String.valueOf(0), true);
-        } else {
-            this.lvzPubPointsHandler.updatePanel(playerId, String.valueOf(0), String.valueOf(pubPlayer.getMoney()), true);
-        }
+    	manager.handleEvent(event);
     }
     
     public void handleEvent(FrequencyShipChange event) {
-		
-        int playerID = event.getPlayerID();
-        Player p = m_botAction.getPlayer(playerID);
-    	
-		PubPlayer pubPlayer = players.get(p.getPlayerName());
-		if (pubPlayer!=null) {
-			pubPlayer.handleShipChange(event);
-		}
+		manager.handleEvent(event);
+    }
+    
+    public void handleEvent(ArenaJoined event){
+    	manager.handleEvent(event);
     }
 
     public void handlePublicCommand(String sender, String command) {
         try {
- 
-            if(command.startsWith("!rich")) {
+            if(command.startsWith("!items") || command.startsWith("!i")) {
+                doCmdItems(sender);
+            }
+            else if(command.startsWith("!rich")) {
             	sendMoneyToPlayer(sender,1000000,"You are rich now!");
             }
             else if(command.equals("!$"))
@@ -426,7 +515,7 @@ public class PubMoneySystem {
                 doCmdDisplayMoney(sender);
                 
             }
-            else if(command.startsWith("!b ") || command.startsWith("!buy ")){
+            else if(command.startsWith("!buy") || command.startsWith("!b")){
                 try{
                     doCmdBuy(sender, command);
                 }catch(Exception e){
@@ -451,6 +540,13 @@ public class PubMoneySystem {
         }
     }
     
+    public void handleDisconnect() {
+    	manager.handleDisconnect();
+    }
+    
+    public void handleEvent(SQLResultEvent event){
+        manager.handleEvent(event);
+    }
     
     private String getSender(Message event)
     {
@@ -473,7 +569,7 @@ public class PubMoneySystem {
     	final String playerName = params;
 
     	m_botAction.spectatePlayerImmediately(playerName);
-    	
+
         Player p = m_botAction.getPlayer(playerName);
     	int distance = 10*16; // distance from the player and the bot
     	
@@ -508,7 +604,9 @@ public class PubMoneySystem {
 	   	
 	    //m_botAction.setFreq(m_botAction.getBotName(),(int)p.getFrequency());
     	m_botAction.getShip().setShip(1);
+    	//m_botAction.getShip().setFreq(9999);
     	m_botAction.getShip().rotateDegrees(90);
+    	m_botAction.getShip().sendPositionPacket();
     	//m_botAction.setThorAdjust(5);
     	m_botAction.sendArenaMessage(sender + " has sent a nuke in the direction of the flagroom! Impact is imminent!",17);
         final TimerTask timerFire = new TimerTask() {
