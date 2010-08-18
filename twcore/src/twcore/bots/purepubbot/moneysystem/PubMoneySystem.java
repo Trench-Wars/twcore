@@ -45,6 +45,7 @@ public class PubMoneySystem {
 	
 	private PubStore store;
 	private PubPlayerManager manager;
+	private PubLottery pubLottery;
     
     private Map<PubPlayer, PubItemDuration> playersWithDurationItem;
     
@@ -65,6 +66,7 @@ public class PubMoneySystem {
 
         this.store = new PubStore();
         this.manager = new PubPlayerManager(botAction, m_botSettings.getString("database"));
+        this.pubLottery = new PubLottery(m_botAction);
         try {
         	initializeStore();
         } catch (Exception e) {
@@ -522,7 +524,12 @@ public class PubMoneySystem {
                     e.printStackTrace();
                 }
             }
-            
+            else if(command.startsWith("!lottery ") || command.startsWith("!l ")) {
+                pubLottery.handleTicket(sender, command);
+            }
+            else if(command.equals("!jackpot") || command.equals("!jp")) {
+                pubLottery.displayJackpot(sender);
+            }
         } catch(RuntimeException e) {
             if( e != null && e.getMessage() != null )
                 m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
@@ -535,6 +542,9 @@ public class PubMoneySystem {
             if(command.startsWith("!go "))
                 doGoCmd(sender, command.substring(4));
 			*/
+            if(command.startsWith("!lprice ")){
+                pubLottery.setTicketPrice(sender, command);
+            }
         } catch(RuntimeException e) {
             m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
         }
