@@ -75,7 +75,7 @@ public class chaos extends MultiModule {
 
     final int ITEM_PORTAL = 8;
     final int ITEM_BULLET = 9;
-    final int ITEM_MULTI2 = 10; //was SUPER2  TRY TO SEE IF SPID STILL GETS PRIZED THIS
+    final int ITEM_MULTI2 = 10;
   
     final int ITEM_aTHOR = 1;
     final int ITEM_ATTACH = 2;
@@ -406,11 +406,6 @@ public class chaos extends MultiModule {
                       PlayerDatabase sender = this.player.get(name);
                       m_botAction.sendSmartPrivateMessage(name, "You have $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
                   }
-                  else if( message.equals( ( "!rich") ) ) {
-                      PlayerDatabase sender = this.player.get(name);
-                      sender.gainMoney(5000);
-                      sender.gainExperience(5000);
-                  }
                   else if( message.equals( "!aoe" ) ){
                       PlayerDatabase sender = this.player.get(name);
                       if(!sender.hasAOE())
@@ -420,7 +415,6 @@ public class chaos extends MultiModule {
                       m_botAction.getShip().setFreq(m_humanfreq);
                       m_botAction.getShip().move(p.getXLocation(), p.getYLocation());
                       m_botAction.getShip().sendPositionPacket();
-                      //m_botAction.getShip().moveAndFire(p.getXLocation(), p.getYLocation(), WeaponFired.WEAPON_BURST);
                       for(int deg=-90; deg<280; deg+=10) {
                           m_botAction.getShip().rotateDegrees(deg);
                           for(int j=0; j<5; j++) {
