@@ -526,8 +526,8 @@ public class elim extends SubspaceBot {
     }
     
     public void cmd_scorereset(String name){
-		m_botAction.SQLBackgroundQuery(db, "scorereset", "UPDATE tblElimCasualRecs SET fnKills = 0, fnDeaths = 0 WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-		m_botAction.SQLBackgroundQuery(db, "scorereset", "DELETE FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+		m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimCasualRecs SET fnKills = 0, fnDeaths = 0 WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+		m_botAction.SQLBackgroundQuery(db, null, "DELETE FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
 		m_botAction.sendSmartPrivateMessage( name, "Your wins and losses have been reset to zero.");
     }
     
@@ -542,7 +542,7 @@ public class elim extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage( name, "You will be specced when you are out.");
             }
             
-            m_botAction.SQLBackgroundQuery(db, "classic","UPDATE tblElimPlayer SET fnSpecWhenOut = " + wantsClassic + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+            m_botAction.SQLBackgroundQuery(db, null,"UPDATE tblElimPlayer SET fnSpecWhenOut = " + wantsClassic + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
         } else {
             m_botAction.sendSmartPrivateMessage( name, "Casual play has been disabled.");
         }
@@ -698,7 +698,7 @@ public class elim extends SubspaceBot {
     		if(rs != null && rs.next()){
     			int kills = rs.getInt("fnKills"), deaths = rs.getInt("fnDeaths");
     			m_botAction.SQLClose(rs);
-    			m_botAction.SQLBackgroundQuery(db, "einfo", "DELETE FROM tblElimJavsRecs WHERE fnUserID = " + ID);
+    			m_botAction.SQLBackgroundQuery(db, null, "DELETE FROM tblElimJavsRecs WHERE fnUserID = " + ID);
     			casualPlayers.get(name).wins += kills;
     			casualPlayers.get(name).losses += deaths;    			
     			m_botAction.sendSmartPrivateMessage( name, "Your record has been updated from ?go javs. PM me with !rec to view your wins and losses.");
@@ -851,7 +851,7 @@ public class elim extends SubspaceBot {
     			if(newPlayer){
     				ep.initRating = INIT_RATING;
     				ep.ave = INIT_RATING;
-    				m_botAction.SQLBackgroundQuery(db, "gameinprogress", "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + "," + INIT_RATING + ",1,NOW())");
+    				m_botAction.SQLBackgroundQuery(db, null, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + "," + INIT_RATING + ",1,NOW())");
     			}
     		}catch(SQLException e){
     			Tools.printStackTrace(e);
@@ -878,7 +878,7 @@ public class elim extends SubspaceBot {
 			if(ep.name.equalsIgnoreCase(winner.name)){
 				if(lastWinner.equalsIgnoreCase(ep.name)){
 					winStreak++;
-					m_botAction.SQLBackgroundQuery(db, "gameover", "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
+					m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
 							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
 							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
 							", fnPE = fnPE + " + ep.eliminations + 
@@ -893,7 +893,7 @@ public class elim extends SubspaceBot {
 							"' AND fnGameType = " + cfg_gameType);
 				} else {
 					winStreak = 1;
-					m_botAction.SQLBackgroundQuery(db, "gameover", "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
+					m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
 							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
 							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
 							", fnPE = fnPE + " + ep.eliminations + 
@@ -907,7 +907,7 @@ public class elim extends SubspaceBot {
 							"' AND fnGameType = " + cfg_gameType);
 				}
 			} else {
-				m_botAction.SQLBackgroundQuery(db, "gameover", "UPDATE tblElimPlayer SET fnGamesPlayed = fnGamesPlayed + 1, " + 
+				m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnGamesPlayed = fnGamesPlayed + 1, " + 
 						"fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + 
 						", fnShots = fnShots + " + ep.shots +
 						", fnPE = fnPE + " + ep.eliminations + 
@@ -949,7 +949,7 @@ public class elim extends SubspaceBot {
     		Iterator<String> r = rankings.keySet().iterator();
     		while( r.hasNext() ){
     			String name = r.next();
-    			m_botAction.SQLBackgroundQuery(db, "gameover", "UPDATE tblElimPlayer SET fnRank = " + rankings.get(name) + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+    			m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnRank = " + rankings.get(name) + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
     		}    		
     	}catch(SQLException e){
     		Tools.printStackTrace(e);
@@ -1118,7 +1118,7 @@ private class CasualPlayer{
 			ResultSet rs = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblElimCasualRecs WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
 			if(rs == null || !rs.next()){
 				m_botAction.SQLClose(rs);
-				m_botAction.SQLBackgroundQuery(db, "casualplayer", "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths, fnGameType) VALUES ('" + Tools.addSlashesToString(name.toLowerCase()) + "', 0, 0, " + cfg_gameType + ")");
+				m_botAction.SQLBackgroundQuery(db, null, "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths, fnGameType) VALUES ('" + Tools.addSlashesToString(name.toLowerCase()) + "', 0, 0, " + cfg_gameType + ")");
 			}else m_botAction.SQLClose(rs);
 		}catch(SQLException e){
 			Tools.printStackTrace(e);
@@ -1136,7 +1136,7 @@ private class CasualPlayer{
 	private void storeStats(){
 		// avoid unnecessary updates to the database
 		if (wins != 0 || losses != 0)
-			m_botAction.SQLBackgroundQuery(db, "storestats", "UPDATE tblElimCasualRecs SET fnKills = fnKills + " + wins + ", fnDeaths = fnDeaths + " + losses + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType );
+			m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimCasualRecs SET fnKills = fnKills + " + wins + ", fnDeaths = fnDeaths + " + losses + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType );
 	}
 }
     
@@ -1190,7 +1190,7 @@ private class ElimPlayer{
 		}
 		if(streak > BKS){
 			BKS = streak;
-			m_botAction.SQLBackgroundQuery(db, "gotwin","UPDATE tblElimPlayer SET fnBKS = " + streak + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+			m_botAction.SQLBackgroundQuery(db, null,"UPDATE tblElimPlayer SET fnBKS = " + streak + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
 		}
 	}
 	
@@ -1205,7 +1205,7 @@ private class ElimPlayer{
 			streak = 0;
 		if(lstreak > WLS){
 			WLS = lstreak;
-			m_botAction.SQLBackgroundQuery(db, "gotloss", "UPDATE tblElimPlayer SET fnWLS = " + lstreak + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+			m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnWLS = " + lstreak + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
 		}
 	}
 	
@@ -1226,7 +1226,7 @@ private class ElimPlayer{
 		
 		if(quickKills > BDK){
 			BDK = quickKills;
-			m_botAction.SQLBackgroundQuery(db, "quickkill", "UPDATE tblElimPlayer SET fnBDK = " + BDK + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
+			m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnBDK = " + BDK + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
 		}
 	}
 	
