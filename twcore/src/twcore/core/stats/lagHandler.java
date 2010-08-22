@@ -449,6 +449,8 @@ public class lagHandler
     public void spamLagInfo(boolean tI, boolean present)
     {
         LagReport report;
+        
+        int ship = m_botAction.getPlayer(playerName).getShipType();
 
         if (present) {
 
@@ -466,31 +468,65 @@ public class lagHandler
 
                 boolean spec = false;
 
-                if (m_botSettings.getInt("CurPing") < currentPing && !spec) {
+                if (m_botSettings.getInt("CurPing"+ship)!=0 && m_botSettings.getInt("CurPing"+ship) < currentPing && !spec) {
+                	spec = true;
+                    lagReport = "PING Cur. [" + currentPing + "  LIMIT: " + m_botSettings.getInt("CurPing") + "]";
+                }
+                else if (m_botSettings.getInt("CurPing") < currentPing && !spec) {
                     spec = true;
                     lagReport = "PING Cur. [" + currentPing + "  LIMIT: " + m_botSettings.getInt("CurPing") + "]";
                 }
-                if (m_botSettings.getInt("AvePing") < averagePing && !spec) {
+                
+                if (m_botSettings.getInt("CurPing"+ship)!=0 && m_botSettings.getInt("CurPing"+ship) < averagePing && !spec) {
+                	spec = true;
+                    lagReport = "PING Ave. [" + averagePing + "  LIMIT: " + m_botSettings.getInt("AvePing") + "]";
+                }
+                else if (m_botSettings.getInt("AvePing") < averagePing && !spec) {
                     spec = true;
                     lagReport = "PING Ave. [" + averagePing + "  LIMIT: " + m_botSettings.getInt("AvePing") + "]";
                 }
-                if (m_botSettings.getDouble("S2CPloss") < s2C && !spec) {
+                
+                if (m_botSettings.getInt("S2CPloss"+ship)!=0 && m_botSettings.getInt("S2CPloss"+ship) < s2C && !spec) {
+                	spec = true;
+                    lagReport = "PLOSS S2C. [" + s2C + "  LIMIT: " + m_botSettings.getDouble("S2CPloss") + "]";
+                }
+                else if (m_botSettings.getDouble("S2CPloss") < s2C && !spec) {
                     spec = true;
                     lagReport = "PLOSS S2C. [" + s2C + "  LIMIT: " + m_botSettings.getDouble("S2CPloss") + "]";
                 }
-                if (m_botSettings.getDouble("C2SPloss") < c2S && !spec) {
+                
+                if (m_botSettings.getInt("C2SPloss"+ship)!=0 && m_botSettings.getInt("C2SPloss"+ship) < c2S && !spec) {
+                	spec = true;
+                    lagReport = "PLOSS C2S. [" + c2S + "  LIMIT: " + m_botSettings.getDouble("C2SPloss") + "]";
+                }
+                else if (m_botSettings.getDouble("C2SPloss") < c2S && !spec) {
                     spec = true;
                     lagReport = "PLOSS C2S. [" + c2S + "  LIMIT: " + m_botSettings.getDouble("C2SPloss") + "]";
                 }
-                if (m_botSettings.getDouble("WeaponPloss") < s2CWeapons && !spec) {
+                
+                if (m_botSettings.getInt("WeaponPloss"+ship)!=0 && m_botSettings.getInt("WeaponPloss"+ship) < s2CWeapons && !spec) {
                     spec = true;
                     lagReport = "PLOSS S2CWeapons [" + s2CWeapons + "  LIMIT: " + m_botSettings.getDouble("WeaponPloss") + "]";
                 }
-                if (m_botSettings.getDouble("SlowS2C") < s2CSlowPercent && !spec) {
+                else if (m_botSettings.getDouble("WeaponPloss") < s2CWeapons && !spec) {
+                    spec = true;
+                    lagReport = "PLOSS S2CWeapons [" + s2CWeapons + "  LIMIT: " + m_botSettings.getDouble("WeaponPloss") + "]";
+                }
+                
+                if (m_botSettings.getInt("SlowS2C"+ship)!=0 && m_botSettings.getInt("SlowS2C"+ship) < s2CSlowPercent && !spec) {
                     spec = true;
                     lagReport = "PLOSS Slow S2C [" + s2CSlowPercent + "  LIMIT: " + m_botSettings.getDouble("SlowS2C") + "]";
                 }
-                if (m_botSettings.getDouble("SlowC2S") < c2SSlowPercent && !spec) {
+                else if (m_botSettings.getDouble("SlowS2C") < s2CSlowPercent && !spec) {
+                    spec = true;
+                    lagReport = "PLOSS Slow S2C [" + s2CSlowPercent + "  LIMIT: " + m_botSettings.getDouble("SlowS2C") + "]";
+                }
+                
+                if (m_botSettings.getInt("SlowC2S"+ship)!=0 && m_botSettings.getInt("SlowC2S"+ship) < c2SSlowPercent && !spec) {
+                    spec = true;
+                    lagReport = "PLOSS Slow C2S [" + c2SSlowPercent + "  LIMIT: " + m_botSettings.getDouble("SlowC2S") + "]";
+                }
+                else if (m_botSettings.getDouble("SlowC2S") < c2SSlowPercent && !spec) {
                     spec = true;
                     lagReport = "PLOSS Slow C2S [" + c2SSlowPercent + "  LIMIT: " + m_botSettings.getDouble("SlowC2S") + "]";
                 }
