@@ -449,10 +449,13 @@ public class lagHandler
     public void spamLagInfo(boolean tI, boolean present)
     {
         LagReport report;
-        
-        int ship = m_botAction.getPlayer(playerName).getShipType();
-
+  
         if (present) {
+        	
+        	int ship=0;
+        	if (m_botAction.getPlayer(playerName) != null) {
+        		ship = m_botAction.getPlayer(playerName).getShipType();
+        	}
 
             String[] lag = new String[2];
             lag[0] = playerName + ": PING Cur: " + currentPing + "ms Ave: " + averagePing + "ms Low: " + lowPing + "ms Hi: " + highPing + "ms PLOSS S2C: " + s2C + "% C2S: " + c2S + "% S2CWeapons: " + s2CWeapons + "%";
