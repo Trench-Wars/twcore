@@ -37,22 +37,16 @@ public class chaos extends MultiModule {
     public void init() {
         killmsgs = new StringBag();
         killmsgs.add( "was consumed by the overwhelming darkness!" );
-        
-        m_botAction.sendUnfilteredPublicMessage( "?set Warbird:TurretLimit:0" );
-        
-        player = new HashMap<String, PlayerDatabase>();
-        items = new HashMap<Integer, ItemDatabase>();
-        itemdrops = new HashMap<Integer, ItemDrops>();
-        entryTimes = new HashMap<String, Long>();
-        
-        setupItemDrops();
-        setupSpecialItems();
+        setup();
     }
 
     public void requestEvents(ModuleEventRequester events)  {
         events.request(this, EventRequester.PLAYER_DEATH);
         events.request(this, EventRequester.PLAYER_ENTERED);
         events.request(this, EventRequester.PLAYER_POSITION);
+        events.request(this, EventRequester.PLAYER_LEFT);
+        events.request(this, EventRequester.FREQUENCY_CHANGE);
+        events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
     }
 
     HashSet <Integer>m_srcship = new HashSet<Integer>(); 
@@ -64,7 +58,6 @@ public class chaos extends MultiModule {
     int m_lives;
     StringBag killmsgs;
     boolean isRunning = false;
-    boolean isAOEAllowed = true;
     boolean modeSet = false;
 
     final int ITEM_REPEL = 1;
@@ -158,7 +151,7 @@ public class chaos extends MultiModule {
         String message = event.getMessage().trim();
         String name = m_botAction.getPlayerName(event.getPlayerID());
         
-        if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.PUBLIC_MESSAGE)
+        if(messageType == Message.PRIVATE_MESSAGE)
             handlePublicCommand(name, message);
         if(opList.isER(name))
             if(messageType == Message.PRIVATE_MESSAGE)
@@ -167,9 +160,11 @@ public class chaos extends MultiModule {
     
     public void handleEvent( PlayerPosition event ){
         String name = m_botAction.getPlayerName(event.getPlayerID());
+        if(name == null)
+            return;
         Player sender = m_botAction.getPlayer(name);
         PlayerDatabase p = this.player.get(name);
-        
+
         if(!player.containsKey(name) && isRunning)
             player.put( name, new PlayerDatabase(name) );
         
@@ -227,13 +222,13 @@ public class chaos extends MultiModule {
             }
             
         } catch(Exception e) {}
-        
-        
     }
     
     public void handleEvent(PlayerLeft event)
     {
         String playerName = m_botAction.getPlayerName(event.getPlayerID());
+        if(playerName == null)
+            return;
         PlayerDatabase p = this.player.get(playerName);
         ItemDatabase item = this.items.get(SPECIAL_FURY);
         try {
@@ -248,6 +243,8 @@ public class chaos extends MultiModule {
     public void handleEvent(FrequencyChange event)
     {
         String playerName = m_botAction.getPlayerName(event.getPlayerID());
+        if(playerName == null)
+            return;
         PlayerDatabase p = this.player.get(playerName);
         ItemDatabase item = this.items.get(SPECIAL_FURY);
         try {
@@ -262,6 +259,8 @@ public class chaos extends MultiModule {
     public void handleEvent(FrequencyShipChange event)
     {
         String playerName = m_botAction.getPlayerName(event.getPlayerID());
+        if(playerName == null)
+            return;
         PlayerDatabase p = this.player.get(playerName);
         ItemDatabase item = this.items.get(SPECIAL_FURY);
         try {
@@ -279,6 +278,24 @@ public class chaos extends MultiModule {
         } catch( Exception e ){
             return 1;
         }
+    }
+    
+    public void setup() {
+        m_botAction.sendUnfilteredPublicMessage( "?set Warbird:TurretLimit:0" );
+        
+        player = new HashMap<String, PlayerDatabase>();
+        items = new HashMap<Integer, ItemDatabase>();
+        itemdrops = new HashMap<Integer, ItemDrops>();
+        entryTimes = new HashMap<String, Long>();
+        
+        setupItemDrops();
+        setupSpecialItems();
+    }
+    
+    public void stop() {
+        m_botAction.sendUnfilteredPublicMessage( "?set Warbird:TurretLimit:0" );
+        player.clear();
+        items.clear();
     }
 
     public void start( String name, String[] params ){
@@ -323,22 +340,20 @@ public class chaos extends MultiModule {
             } else if( message.equals( "!stop" )){
                 m_botAction.sendPrivateMessage( name, "Chaos mode stopped" );
                 isRunning = false;
-                player.clear();
-                items.clear();
-                m_botAction.sendUnfilteredPublicMessage( "?set Warbird:TurretLimit:0" );
+                stop();
             } else if( message.startsWith( "!start " )){
                 String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
                 start( name, parameters );
                 m_botAction.scoreResetAll();
                 m_botAction.sendPrivateMessage( name, "Chaos mode started" );
-                this.init();
+                setup();
             } else if( message.equals( "!start" )){
                 setMode( 0, 1, 2, 3, 1 );
                 isRunning = true;
                 modeSet = true;
                 m_botAction.scoreResetAll();
                 m_botAction.sendPrivateMessage( name, "Chaos mode started" );
-                this.init();
+                setup();
             } else if( message.startsWith( "!del " ))
                 deleteKillMessage( name, getInteger( message.substring( 5 )));
               else if( message.startsWith( "!showinfo ") ) {
@@ -387,6 +402,7 @@ public class chaos extends MultiModule {
                   m_botAction.getShip().setShip(8);
                   m_botAction.sendSmartPrivateMessage(name, "Annihilation complete.");
               }
+            
         } catch(Exception e) {}
     }
     
@@ -411,18 +427,15 @@ public class chaos extends MultiModule {
               else if( message.equals( "!updates" )){
                   m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Prices are now cheaper so players have a chance to buy items!");
                   m_botAction.sendSmartPrivateMessage(name, "[Aug 24] You may now donate to anyone in your team without the $100 warning.");
-                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Players may now type commands in public or in private.");
                   m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Fixed F1's typo. Agamem's Rage is now Pohja's Strength.");
                   m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Only one spider may attach at a time, not 40.");
                   m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Each Angel can hold up to 30 people.");
               }
-                    
-              
               else if( message.equals( "!myinfo" )){
                   PlayerDatabase sender = this.player.get(name);
                   m_botAction.sendSmartPrivateMessage(name, "You have $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
               }
-              else if( message.equals( "!aoe" ) && isAOEAllowed ){
+              else if( message.equals( "!aoe" ) ){
                   PlayerDatabase sender = this.player.get(name);
                   if(!sender.hasAOE())
                       return;
@@ -444,8 +457,9 @@ public class chaos extends MultiModule {
                   TimerTask timer = new TimerTask() {
                       public void run() {
                           m_botAction.getShip().setShip(8);
+                          m_botAction.scoreReset(m_botAction.getBotName()); 
                       }
-                  }; m_botAction.scheduleTask(timer, 700);
+                  }; m_botAction.scheduleTask(timer, 700);  
                   
                   sender.activateAOE(false);
                   ItemDatabase item = this.items.get(SPECIAL_FURY);
@@ -459,7 +473,15 @@ public class chaos extends MultiModule {
                       PlayerDatabase sender = this.player.get(name);
                       ItemDatabase item = this.items.get(id);
                       if(item.getExp() <= sender.getExperience() && item.getPrice() <= sender.getMoney() ) {
-                          if(id > 0 && id < 4 && !item.isBoughtOnce() || id == 7) {
+                          if(id > 0 && id < 4 && !item.isBoughtOnce()) {
+                              prizeSpecialItem(name, id);
+                              sender.loseMoney(item.getPrice());
+                          }
+                          else if(id == 7) {
+                              if(item.isBoughtOnce()) {
+                                  m_botAction.sendSmartPrivateMessage( name, "[Azog's Fury] has already been bought. Please wait after it has been used.");
+                                  return;
+                              }
                               prizeSpecialItem(name, id);
                               sender.loseMoney(item.getPrice());
                           }
@@ -469,7 +491,7 @@ public class chaos extends MultiModule {
                           else if(id > 3 && id < 7) {
                               m_botAction.sendSmartPrivateMessage(name, "Request denied; item belongs to the devils.");
                           }
-                          else
+                          else if(id == 0)
                               m_botAction.sendSmartPrivateMessage(name, "Item does not exist. Please try again.");
                       }
                       else if(item.getExp() > sender.getExperience())
@@ -497,7 +519,7 @@ public class chaos extends MultiModule {
                           else if(id > 0 && id < 4) {
                               m_botAction.sendSmartPrivateMessage(name, "Request denied; item belongs to the angels.");
                           }
-                          else
+                          else if(id == 0)
                               m_botAction.sendSmartPrivateMessage(name, "Item does not exist. Please try again.");
                       }
                       else if(item.getExp() > sender.getExperience())
@@ -782,17 +804,7 @@ public class chaos extends MultiModule {
             case SPECIAL_FURY:
                 PlayerDatabase sender = this.player.get(name);
                 ItemDatabase item2 = this.items.get(SPECIAL_FURY);
-                if(item2.isBoughtOnce()) {
-                    m_botAction.sendSmartPrivateMessage( name, "[Azog's Fury] has already been bought. Please wait after it has been used.");
-                    return;
-                }
-                if(!isAOEAllowed) {
-                    m_botAction.sendSmartPrivateMessage( name, "This item has been disabled by the host.");
-                    return;
-                }
-                
                 sender.activateAOE(true);
-                
                 item2.hasBeenBought(true);
                 m_botAction.sendSmartPrivateMessage( name, "Private message me with !aoe to use this attack!");
                 m_botAction.sendArenaMessage( "I sense a great power approaching.." );
@@ -809,6 +821,10 @@ public class chaos extends MultiModule {
         teammate.gainMoney(moneyBonus);
         
         m_botAction.sendSmartPrivateMessage(player, "[Bonus] You have earned $"+Integer.toString(moneyBonus)+" from "+killer+".");
+    }
+    
+    public void giveMoneyPerKill(PlayerDatabase sender) {
+        sender.gainMoney(25);
     }
     
     public double getDistance(Player killer, Player teammate) {
@@ -938,9 +954,6 @@ public class chaos extends MultiModule {
     }
     
     public void cancel() {
-        player.clear();
-        items.clear();
-        m_botAction.sendUnfilteredPublicMessage( "?set Warbird:TurretLimit:0" );
     }
     
     public boolean isUnloadable()   {
