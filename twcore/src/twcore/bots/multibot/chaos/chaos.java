@@ -823,10 +823,6 @@ public class chaos extends MultiModule {
         m_botAction.sendSmartPrivateMessage(player, "[Bonus] You have earned $"+Integer.toString(moneyBonus)+" from "+killer+".");
     }
     
-    public void giveMoneyPerKill(PlayerDatabase sender) {
-        sender.gainMoney(25);
-    }
-    
     public double getDistance(Player killer, Player teammate) {
         return Math.sqrt(Math.pow(killer.getXLocation()-teammate.getXLocation(),2) + 
                 Math.pow(killer.getYLocation()-teammate.getYLocation(),2))/16;
