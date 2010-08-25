@@ -26,11 +26,12 @@ import twcore.core.util.Tools;
  * The old zombies module by harvey yau; modded by dugwyler and others
  * Implemented items, money and experience with other features as well!
  *      Original zombies style with RPG features
- *           Only compatible with ?go olympus due to unique settings
+ *           Only compatible with ?go chaos due to unique settings
  *           
  * TODO
  * - database to hold player stats like money/exp/items etc..
  */
+
 public class chaos extends MultiModule {
 
     public void init() {
@@ -63,6 +64,7 @@ public class chaos extends MultiModule {
     int m_lives;
     StringBag killmsgs;
     boolean isRunning = false;
+    boolean isAOEAllowed = true;
     boolean modeSet = false;
 
     final int ITEM_REPEL = 1;
@@ -74,8 +76,7 @@ public class chaos extends MultiModule {
     final int ITEM_SHIELD = 7;
 
     final int ITEM_PORTAL = 8;
-    final int ITEM_BULLET = 9;
-    final int ITEM_MULTI2 = 10;
+    final int ITEM_MULTI2 = 9;
   
     final int ITEM_aTHOR = 1;
     final int ITEM_ATTACH = 2;
@@ -85,7 +86,7 @@ public class chaos extends MultiModule {
     final int ITEM_NOATTACH = 6;
     final int SPECIAL_FURY = 7;
 
-    private int BONUS_RANGE = 40;
+    private int BONUS_RANGE = 60;
     
     ItemDrops itemdrop = new ItemDrops();
     ItemDatabase itemdb = new ItemDatabase();
@@ -157,7 +158,7 @@ public class chaos extends MultiModule {
         String message = event.getMessage().trim();
         String name = m_botAction.getPlayerName(event.getPlayerID());
         
-        if(messageType == Message.PRIVATE_MESSAGE)
+        if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.PUBLIC_MESSAGE)
             handlePublicCommand(name, message);
         if(opList.isER(name))
             if(messageType == Message.PRIVATE_MESSAGE)
@@ -400,161 +401,170 @@ public class chaos extends MultiModule {
               else if( message.equals( "!buy" )){
                   m_botAction.privateMessageSpam(name, doBuyCmd());
               }
+              else if( message.equals( "!rules" )){
+                  String rules = "Angels have a certain time period to survive! They must organize themselves"+
+                                 " in battle to form the best strategy of defense. The key is to fight and"+
+                                 " survive! Once the timer is over, Angels must head to the safes with atleast"+
+                                 " 200 experience!";
+                  m_botAction.sendSmartPrivateMessage(name, rules);
+              }
+              else if( message.equals( "!updates" )){
+                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Prices are now cheaper so players have a chance to buy items!");
+                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] You may now donate to anyone in your team without the $100 warning.");
+                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Players may now type commands in public or in private.");
+                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Fixed F1's typo. Agamem's Rage is now Pohja's Strength.");
+                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Only one spider may attach at a time, not 40.");
+                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Each Angel can hold up to 30 people.");
+              }
+                    
               
-              if(isRunning) {
-                  if( message.equals( "!myinfo" )){
-                      PlayerDatabase sender = this.player.get(name);
-                      m_botAction.sendSmartPrivateMessage(name, "You have $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
+              else if( message.equals( "!myinfo" )){
+                  PlayerDatabase sender = this.player.get(name);
+                  m_botAction.sendSmartPrivateMessage(name, "You have $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
+              }
+              else if( message.equals( "!aoe" ) && isAOEAllowed ){
+                  PlayerDatabase sender = this.player.get(name);
+                  if(!sender.hasAOE())
+                      return;
+                  Player p = m_botAction.getPlayer(name);
+                  m_botAction.getShip().setShip(0);
+                  m_botAction.getShip().setFreq(m_humanfreq);
+                  m_botAction.getShip().moveAndFire(p.getXLocation(), p.getYLocation(), WeaponFired.WEAPON_BURST);
+                  m_botAction.getShip().sendPositionPacket();
+                  m_botAction.sendArenaMessage(name+" has released a devasting attack!");
+                  for(int deg=-90; deg<280; deg+=10) {
+                      m_botAction.getShip().rotateDegrees(deg);
+                      for(int j=0; j<5; j++) {
+                          m_botAction.getShip().fire(1);
+                          try { Thread.sleep(10); } catch (InterruptedException e) {}
+                      }
+                      m_botAction.getShip().fire(WeaponFired.WEAPON_THOR);
                   }
-                  else if( message.equals( "!aoe" ) ){
+                  
+                  TimerTask timer = new TimerTask() {
+                      public void run() {
+                          m_botAction.getShip().setShip(8);
+                      }
+                  }; m_botAction.scheduleTask(timer, 700);
+                  
+                  sender.activateAOE(false);
+                  ItemDatabase item = this.items.get(SPECIAL_FURY);
+                  item.hasBeenBought(false);
+              }
+              else if( message.startsWith("!buy ") ){
+                  Player p = m_botAction.getPlayer(name);
+                  String entry = message.substring(5);
+                  int id = itemdb.alternateNames(entry);
+                  if(p.getFrequency() == m_humanfreq) {
                       PlayerDatabase sender = this.player.get(name);
-                      if(!sender.hasAOE())
-                          return;
-                      Player p = m_botAction.getPlayer(name);
-                      m_botAction.getShip().setShip(0);
-                      m_botAction.getShip().setFreq(m_humanfreq);
-                      m_botAction.getShip().move(p.getXLocation(), p.getYLocation());
-                      m_botAction.getShip().sendPositionPacket();
-                      for(int deg=-90; deg<280; deg+=10) {
-                          m_botAction.getShip().rotateDegrees(deg);
-                          for(int j=0; j<5; j++) {
-                              m_botAction.getShip().fire(1);
-                              try { Thread.sleep(10); } catch (InterruptedException e) {}
+                      ItemDatabase item = this.items.get(id);
+                      if(item.getExp() <= sender.getExperience() && item.getPrice() <= sender.getMoney() ) {
+                          if(id > 0 && id < 4 && !item.isBoughtOnce() || id == 7) {
+                              prizeSpecialItem(name, id);
+                              sender.loseMoney(item.getPrice());
                           }
-                          m_botAction.getShip().fire(WeaponFired.WEAPON_BOMB);
+                          else if(item.isBoughtOnce()) {
+                              m_botAction.sendSmartPrivateMessage(name, "There is not enough power to activate this item!");
+                          }
+                          else if(id > 3 && id < 7) {
+                              m_botAction.sendSmartPrivateMessage(name, "Request denied; item belongs to the devils.");
+                          }
+                          else
+                              m_botAction.sendSmartPrivateMessage(name, "Item does not exist. Please try again.");
                       }
-                      
-                      TimerTask timer = new TimerTask() {
-                          public void run() {
-                              m_botAction.getShip().setShip(8);
-                          }
-                      }; m_botAction.scheduleTask(timer, 700);
-                      
-                      sender.activateAOE(false);
-                      ItemDatabase item = this.items.get(SPECIAL_FURY);
-                      item.hasBeenBought(false);
+                      else if(item.getExp() > sender.getExperience())
+                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough experience.");
+                      else if(item.getPrice() > sender.getMoney())
+                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough money.");
+                      else if(item.getExp() > sender.getExperience() && item.getPrice() > sender.getMoney())
+                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough money and experience.");
                   }
-                  else if( message.startsWith("!buy ") ){
-                      Player p = m_botAction.getPlayer(name);
-                      String entry = message.substring(5);
-                      int id = itemdb.alternateNames(entry);
-                      if(p.getFrequency() == m_humanfreq) {
-                          PlayerDatabase sender = this.player.get(name);
-                          ItemDatabase item = this.items.get(id);
-                          if(item.getExp() <= sender.getExperience() && item.getPrice() <= sender.getMoney() ) {
-                              if(id > 0 && id < 4 && !item.isBoughtOnce() || id == 7) {
-                                  prizeSpecialItem(name, id);
-                                  sender.loseMoney(item.getPrice());
-                              }
-                              else if(item.isBoughtOnce()) {
-                                  m_botAction.sendSmartPrivateMessage(name, "There is not enough power to activate this item!");
-                              }
-                              else if(id > 3 && id < 7) {
-                                  m_botAction.sendSmartPrivateMessage(name, "Request denied; item belongs to the devils.");
-                              }
-                              else
-                                  m_botAction.sendSmartPrivateMessage(name, "Item does not exist. Please try again.");
-                          }
-                          else if(item.getExp() > sender.getExperience())
-                              m_botAction.sendSmartPrivateMessage(name, "You do not have enough experience.");
-                          else if(item.getPrice() > sender.getMoney())
-                              m_botAction.sendSmartPrivateMessage(name, "You do not have enough money.");
-                          else if(item.getExp() > sender.getExperience() && item.getPrice() > sender.getMoney())
-                              m_botAction.sendSmartPrivateMessage(name, "You do not have enough money and experience.");
-                      }
-                      else if(p.getFrequency() == m_zombiefreq) {
-                          PlayerDatabase sender = this.player.get(name);
-                          ItemDatabase item = this.items.get(id);
-                          ItemDatabase item2 = this.items.get(ITEM_ATTACH);
-                          if(item.getExp() <= sender.getExperience() && item.getPrice() <= sender.getMoney() ) {
-                              if(id == 6 && !item2.isBoughtOnce()) {
-                                  m_botAction.sendSmartPrivateMessage(name, "["+item2.getName()+"] has not yet been activated!");
-                              }
-                              else if(id > 3 && id < 7 && !item.isBoughtOnce()) {
-                                  prizeSpecialItem(name, id);
-                                  sender.loseMoney(item.getPrice());
-                              }
-                              else if(item.isBoughtOnce()) {
-                                  m_botAction.sendSmartPrivateMessage(name, "There is not enough power to activate this item!");
-                              }
-                              else if(id > 0 && id < 4) {
-                                  m_botAction.sendSmartPrivateMessage(name, "Request denied; item belongs to the angels.");
-                              }
-                              else
-                                  m_botAction.sendSmartPrivateMessage(name, "Item does not exist. Please try again.");
-                          }
-                          else if(item.getExp() > sender.getExperience())
-                              m_botAction.sendSmartPrivateMessage(name, "You do not have enough experience.");
-                          else if(item.getPrice() > sender.getMoney())
-                              m_botAction.sendSmartPrivateMessage(name, "You do not have enough money.");
-                          else if(item.getExp() > sender.getExperience() && item.getPrice() > sender.getMoney())
-                              m_botAction.sendSmartPrivateMessage(name, "You do not have enough money and experience.");
-                      }
-                      else
-                          m_botAction.sendSmartPrivateMessage(name, "You must be in a party to use this feature.");
-                  }
-                  else if( message.startsWith( "!give " )) {
+                  else if(p.getFrequency() == m_zombiefreq) {
                       PlayerDatabase sender = this.player.get(name);
-                      Player p = m_botAction.getPlayer( name );
-                      String playerName = message.substring(6, message.indexOf(":"));
-                      String sendee = "", money = null, mail = null;
-                      boolean isValid = false;
-                      
-                      try {
-                          money = message.substring(message.indexOf(":")+1, message.indexOf(" ", message.indexOf(":")));
-                      } catch(Exception e) {
-                          money = message.substring(message.indexOf(":")+1);
+                      ItemDatabase item = this.items.get(id);
+                      ItemDatabase item2 = this.items.get(ITEM_ATTACH);
+                      if(item.getExp() <= sender.getExperience() && item.getPrice() <= sender.getMoney() ) {
+                          if(id == 6 && !item2.isBoughtOnce()) {
+                              m_botAction.sendSmartPrivateMessage(name, "["+item2.getName()+"] has not yet been activated!");
+                          }
+                          else if(id > 3 && id < 7 && !item.isBoughtOnce()) {
+                              prizeSpecialItem(name, id);
+                              sender.loseMoney(item.getPrice());
+                          }
+                          else if(item.isBoughtOnce()) {
+                              m_botAction.sendSmartPrivateMessage(name, "There is not enough power to activate this item!");
+                          }
+                          else if(id > 0 && id < 4) {
+                              m_botAction.sendSmartPrivateMessage(name, "Request denied; item belongs to the angels.");
+                          }
+                          else
+                              m_botAction.sendSmartPrivateMessage(name, "Item does not exist. Please try again.");
                       }
+                      else if(item.getExp() > sender.getExperience())
+                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough experience.");
+                      else if(item.getPrice() > sender.getMoney())
+                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough money.");
+                      else if(item.getExp() > sender.getExperience() && item.getPrice() > sender.getMoney())
+                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough money and experience.");
+                  }
+                  else
+                      m_botAction.sendSmartPrivateMessage(name, "You must be in a party to use this feature.");
+              }
+              else if( message.startsWith( "!give " )) {
+                  PlayerDatabase sender = this.player.get(name);
+                  Player p = m_botAction.getPlayer( name );
+                  String playerName = message.substring(6, message.indexOf(":"));
+                  String sendee = "", money = null, mail = null;
+                  boolean isValid = false;
+                  
+                  try {
+                      money = message.substring(message.indexOf(":")+1, message.indexOf(" ", message.indexOf(":")));
+                  } catch(Exception e) {
+                      money = message.substring(message.indexOf(":")+1);
+                  }
 
-                      for(Iterator<Player> i = m_botAction.getFreqPlayerIterator(p.getFrequency()); i.hasNext();) {
-                          Player member = i.next();
-                          sendee = member.getPlayerName();
-                          if(member.getPlayerID() == m_botAction.getPlayerID(playerName)) {
-                              isValid = true;
-                              break;
-                          }
+                  for(Iterator<Player> i = m_botAction.getFreqPlayerIterator(p.getFrequency()); i.hasNext();) {
+                      Player member = i.next();
+                      sendee = member.getPlayerName();
+                      if(member.getPlayerID() == m_botAction.getPlayerID(playerName)) {
+                          isValid = true;
+                          break;
                       }
-                      
-                      if(!isValid) {
-                          m_botAction.sendSmartPrivateMessage(name, "Could not send money. Specified player is not in your party.");
-                          return;
-                      }
-                      
-                      // Checks if there is a message that the sender had wrote
-                      try {
-                          mail = message.substring(message.indexOf(" ", message.indexOf(":")));
-                      } catch(Exception e) {
-                          mail = null;
-                      }
-                      
-                      if(sender.getPlayerName().equalsIgnoreCase(playerName)) {
-                          m_botAction.sendSmartPrivateMessage(name, "Even I have a better name than you!");
-                          return;
-                      }
-                      
-                      // They must have atleast $100 in account if they are giving away their money
-                      int moneyLeft = sender.getMoney()-Integer.parseInt(money);
-                      if(moneyLeft < 100) {
-                          m_botAction.sendSmartPrivateMessage(name, "Must have atleast $100 in your account.");
-                          return;
-                      }
-                      
-                      // Player cannot give more than they have..
-                      if(Integer.parseInt(money) <= 0) {
-                          m_botAction.sendSmartPrivateMessage(name, "Sorry, you don't have enough money.");
-                          return;
-                      }
-                      
-                      sender.loseMoney(Integer.parseInt(money));
-                      PlayerDatabase receiver = this.player.get(sendee);
-                      receiver.gainMoney(Integer.parseInt(money));
-                      
-                      m_botAction.sendSmartPrivateMessage(sender.getPlayerName(), "You sent $"+money+" to "+receiver.getPlayerName()+".");
-                      m_botAction.sendSmartPrivateMessage(receiver.getPlayerName(), name+" has donated $"+money+" to your account.");
-                      // Displays line: '<sender> says: ' if the sender has written a message to the receiver
-                      if(mail != null)
-                          m_botAction.sendSmartPrivateMessage(receiver.getPlayerName(), sender.getPlayerName()+" says:"+mail);
                   }
+                  
+                  if(!isValid) {
+                      m_botAction.sendSmartPrivateMessage(name, "Could not send money. Specified player is not in your party.");
+                      return;
+                  }
+                  
+                  // Checks if there is a message that the sender had wrote
+                  try {
+                      mail = message.substring(message.indexOf(" ", message.indexOf(":")));
+                  } catch(Exception e) {
+                      mail = null;
+                  }
+                  
+                  if(sender.getPlayerName().equalsIgnoreCase(playerName)) {
+                      m_botAction.sendSmartPrivateMessage(name, "Even I have a better name than you!");
+                      return;
+                  }
+                  
+                  // They must have atleast $0 in account if they are giving away their money
+                  int moneyLeft = sender.getMoney()-Integer.parseInt(money);
+                  if(moneyLeft < 0) {
+                      m_botAction.sendSmartPrivateMessage(name, "Sorry, you don't have enough money.");
+                      return;
+                  }
+                  
+                  sender.loseMoney(Integer.parseInt(money));
+                  PlayerDatabase receiver = this.player.get(sendee);
+                  receiver.gainMoney(Integer.parseInt(money));
+                  
+                  m_botAction.sendSmartPrivateMessage(sender.getPlayerName(), "You sent $"+money+" to "+receiver.getPlayerName()+".");
+                  m_botAction.sendSmartPrivateMessage(receiver.getPlayerName(), name+" has donated $"+money+" to your account.");
+                  // Displays line: '<sender> says: ' if the sender has written a message to the receiver
+                  if(mail != null)
+                      m_botAction.sendSmartPrivateMessage(receiver.getPlayerName(), sender.getPlayerName()+" says:"+mail);
               }
         } catch(Exception e) {}  
     }
@@ -582,7 +592,7 @@ public class chaos extends MultiModule {
                     int expPoints = (int)(Math.random() * 130 + 50 + zombiewins);
                     int deathPoints = (int)(Math.random() * 10 + 5 + humanwins);
                     int moneyPoints = (int)(Math.random() * 160 + 50 + zombiewins);
-                    int getItemId = (int)(Math.random() * 3 + 8);
+                    int getItemId = (int)(Math.random() * 2 + 8);
                     
                     killer.gainExperience(expPoints);
                     killer.gainMoney(moneyPoints);
@@ -620,23 +630,6 @@ public class chaos extends MultiModule {
                         m_botAction.sendSmartPrivateMessage(p.getPlayerName(), "You have earned "+deathPoints+" experience.");
                     else if(killee.getMoney() > 0)
                         m_botAction.sendSmartPrivateMessage(p.getPlayerName(), "You have lost $"+moneyLoss+" but earned "+deathPoints+" experience.");
-                
-                    /*Iterator<Player> it = m_botAction.getFreqPlayerIterator(m_zombiefreq);
-                    while(it.hasNext()) {
-                        Player team = it.next();
-                        if(team.getPlayerName().equals(killer.getPlayerName()))
-                            if(it.hasNext())
-                                team = it.next();
-                            else break;
-                        
-                        double distance = this.getDistance(p2, team);
-                        int freqSize = m_botAction.getFrequencySize(m_zombiefreq);
-                        
-                        if(distance < BONUS_RANGE)
-                            this.giveBonus(killer.getPlayerName(), team.getPlayerName(), moneyPoints/freqSize);
-                    }
-
-                    killee.playerDied(true);*/
                 }
                 
                 if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq && p2.getFrequency() != m_humanfreq){
@@ -734,13 +727,13 @@ public class chaos extends MultiModule {
     }
     
     public void setupSpecialItems() {
-        items.put(1, new ItemDatabase("Blood of Adonis", 1000, 975, false));
-        items.put(2, new ItemDatabase("Selini's Direction", 500, 950, false));
-        items.put(3, new ItemDatabase("Pohja's Strength", 150, 150, false));
-        items.put(4, new ItemDatabase("Sephena's Sin", 1250, 975, false));
-        items.put(5, new ItemDatabase("Demonic Barrier", 350, 150, false));
-        items.put(6, new ItemDatabase("Salem's Curse", 500, 950, false));
-        items.put(7, new ItemDatabase("Azog's Fury", 1200, 0, false));
+        items.put(1, new ItemDatabase("Blood of Adonis", 300, 375, false));
+        items.put(2, new ItemDatabase("Selini's Direction", 200, 250, false));
+        items.put(3, new ItemDatabase("Pohja's Strength", 200, 150, false));
+        items.put(4, new ItemDatabase("Sephena's Sin", 300, 375, false));
+        items.put(5, new ItemDatabase("Demonic Barrier", 20, 0, false));
+        items.put(6, new ItemDatabase("Salem's Curse", 200, 550, false));
+        items.put(7, new ItemDatabase("Azog's Fury", 100, 0, false));
     }
     
     public void setupItemDrops() {
@@ -752,8 +745,7 @@ public class chaos extends MultiModule {
         itemdrops.put(6, new ItemDrops("Namila's Soul", 23));
         itemdrops.put(7, new ItemDrops("Shaer's Will", 18));
         itemdrops.put(8, new ItemDrops("Nisrok's Wings", 28));
-        itemdrops.put(9, new ItemDrops("Azrael's Blessing", 8));
-        itemdrops.put(10, new ItemDrops("Hajiar's Roar", 15));
+        itemdrops.put(9, new ItemDrops("Azrael's Blessing", 15));
     }
     
     public void prizeSpecialItem(String name, int itemId) {
@@ -765,12 +757,13 @@ public class chaos extends MultiModule {
             case ITEM_ATTACH:
                 ItemDatabase item = this.items.get(ITEM_ATTACH);
                 item.hasBeenBought(true);
-                m_botAction.sendUnfilteredPublicMessage( "?set Warbird:TurretLimit:1" );
+                m_botAction.sendUnfilteredPublicMessage( "?set Warbird:TurretLimit:30" );
                 m_botAction.sendArenaMessage( "-- Angel's [Selini's Direction] skill has been permitted by "+name+". Angels may now attach to friendly players!" );
                 break;
             case ITEM_MULTI:
                 m_botAction.sendArenaMessage( "-- Angel's "+name+" was blessed with [Pohja's Strength]" );
                 m_botAction.sendUnfilteredPrivateMessage( name, "*prize #15" );
+                m_botAction.sendUnfilteredPrivateMessage( name, "*prize #17" );
                 break;
             case ITEM_dTHOR:
                 m_botAction.sendArenaMessage( "-- Devil's "+name+" has been devoured by [Sephena's Sin]" );
@@ -793,6 +786,11 @@ public class chaos extends MultiModule {
                     m_botAction.sendSmartPrivateMessage( name, "[Azog's Fury] has already been bought. Please wait after it has been used.");
                     return;
                 }
+                if(!isAOEAllowed) {
+                    m_botAction.sendSmartPrivateMessage( name, "This item has been disabled by the host.");
+                    return;
+                }
+                
                 sender.activateAOE(true);
                 
                 item2.hasBeenBought(true);
@@ -861,6 +859,8 @@ public class chaos extends MultiModule {
             "|                          ,------+-----------------------------------------------------+",
             "| Player Commands         /       |          Is there anything I can do for you?        |",
             "+------------------------'        |                                                     |",
+            "|  !rules                         |   - Need help? Private message me with !rules       |",
+            "|  !updates                       |   - Latest updates on this bot.                     |",
             "|  !myinfo                        |   - Shows your money and experience points.         |",
             "|  !give <player>:<$> <message>   |   - Donates money to desired player.                |",
             "|  !iteminfo                      |   - Don't know what item you got? Check here!       |",
@@ -878,6 +878,8 @@ public class chaos extends MultiModule {
                 "|                          ,------+-----------------------------------------------------+",
                 "| Player Commands         /       |             Welcome, how may I help you?            |",
                 "+------------------------'        |                                                     |",
+                "|  !rules                         |   - Need help? Private message me with !rules       |",
+                "|  !updates                       |   - Latest updates on this bot.                     |",
                 "|  !myinfo                        |   - Shows your money and experience points.         |",
                 "|  !give <player>:<$> <message>   |   - Donates money to desired player.                |",
                 "|  !iteminfo                      |   - Don't know what item you got? Check here!       |",
@@ -895,16 +897,16 @@ public class chaos extends MultiModule {
                 "|                          ,--+----+---------+-------+------------------------------------------+",
                 "| Angel Party             /   |    |         |       |    Please.. help us escape this Hell!    |",
                 "+------------------------'    |    |         |       |                                          |",
-                "|  Blood of Adonis            | 01 |  $1000  |  975  | - Destroys everything around it. [slow]  |",
-                "|  Selini's Direction         | 02 |   $500  |  950  | - Enables friendly attach ability. [1x]  |",
-                "|  Pohja's Strength           | 03 |   $150  |  150  | - What's this?!                          |",
+                "|  Blood of Adonis            | 01 |   $300  |  375  | - Destroys everything around it. [slow]  |",
+                "|  Selini's Direction         | 02 |   $200  |  250  | - Enables friendly attach ability. [1x]  |",
+                "|  Pohja's Strength           | 03 |   $200  |  150  | - What's this?!                          |",
                 "+-----------------------------+----+---------+-------+------------------------------------------+",
                 "|                          ,--+----+---------+-------+------------------------------------------+",
                 "| Devil Party             /   |    |         |       |    Join us, we will take over Heaven!    |",
                 "+------------------------'    |    |         |       |                                          |",
-                "|  Sephena's Sin              | 04 |  $1250  |  975  | - Destroys everything around it. [fast]  |",
-                "|  Demonic Barrier            | 05 |   $350  |  150  | - Blocks anything in its way!            |",
-                "|  Salem's Curse              | 06 |   $500  |  950  | - Disables enemy's attach ability. [1x]  |",
+                "|  Sephena's Sin              | 04 |   $300  |  375  | - Destroys everything around it. [fast]  |",
+                "|  Demonic Barrier            | 05 |    $20  |    0  | - Blocks anything in its way!            |",
+                "|  Salem's Curse              | 06 |   $200  |  550  | - Disables enemy's attach ability. [1x]  |",
                 "`-----------------------------+----+---------+-------+------------------------------------------'"
         };
         return list;
@@ -929,8 +931,7 @@ public class chaos extends MultiModule {
                 "| Devil Party             /       |            |  At last.. the time has come for our reign.  |",
                 "+------------------------'        |            |                                              |",
                 "|  Nisrok's Wings                 |  Portal    | - The ability to travel to other dimensions. |",
-                "|  Azrael's Blessing              |  Gun       | - A special gift from Azrael!                |",
-                "|  Hajiar's Roar                  |  Multi     | - A bloodlust unlike any other..             |",
+                "|  Azrael's Blessing              |  Multi     | - A special gift from Azrael!                |",
                 "`---------------------------------+------------+----------------------------------------------'"
         };
         return list;
