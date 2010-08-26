@@ -1,6 +1,7 @@
 package twcore.bots.multibot.chaos;
 
 public class ItemDatabase {
+    
     private String name;
     private int price;
     private int exp;
@@ -15,27 +16,15 @@ public class ItemDatabase {
         this.exp = newExp;
         this.hasLimit = hasLimit;
     }
-    
-    public void setName( String newName ){
-        this.name = newName;
-    }
 
     public String getName(){
         return name;
     }
-
-    public void setPrice( int newPrice ){
-        this.price = newPrice;
-    }
-
+    
     public int getPrice(){
         return price;
     }
-    
-    public void setExp(int newExp){
-        this.exp = newExp;
-    }
-    
+
     public int getExp(){
         return exp;
     }

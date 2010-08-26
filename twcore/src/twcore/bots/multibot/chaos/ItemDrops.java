@@ -1,6 +1,7 @@
 package twcore.bots.multibot.chaos;
 
 public class ItemDrops {
+    
     private String name;
     private int prizeId;
 
@@ -12,16 +13,8 @@ public class ItemDrops {
         this.prizeId = prizeID;
     }
 
-    public void setName( String newName ){
-        name = newName;
-    }
-
     public String getName(){
         return name;
-    }
-
-    public void setPrizeId( int prizeID ){
-        prizeId = prizeID;
     }
 
     public int createDropRate(int wins) {

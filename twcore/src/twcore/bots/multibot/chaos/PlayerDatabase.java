@@ -29,16 +29,8 @@ public class PlayerDatabase {
         return playerName;
     }
     
-    public void setPlayerName(String name) {
-        playerName = name;
-    }
-    
     public int getId() {
         return playerID;
-    }
-    
-    public void setId(int id) {
-        this.playerID = id;
     }
     
     public int getMoney() {
@@ -84,19 +76,6 @@ public class PlayerDatabase {
         this.experience = 0;
     }
     
-    public void setExperience(int exp) {
-        if( exp < 0 ) {
-            this.experience = 0;
-            return;
-        }
-        
-        this.experience = exp;
-    }
-    
-    /**
-     * Stores all of player's bought items
-     * @param itemName
-     */
     public void loadPlayerItems(int itemId) {
         if(!items.contains(itemId))
             items.add(itemId);
@@ -154,12 +133,5 @@ public class PlayerDatabase {
     
     public boolean isDead() {
         return deathStatus;
-    }
-    
-    public void resetPlayerStats() {
-        items.clear();
-        this.cash = 100;
-        this.experience = 0;
-        this.safeStatus = false;
     }
 }
