@@ -289,7 +289,7 @@ public class chaos extends MultiModule {
                 isRunning = true;
                 modeSet = true;
             }
-        }catch( Exception e ){
+        } catch( Exception e ){
             m_botAction.sendPrivateMessage( name, "Sorry, you made a mistake; please try again." );
             isRunning = false;
             modeSet = false;
@@ -310,6 +310,7 @@ public class chaos extends MultiModule {
                 String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
                 start( name, parameters );
                 m_botAction.scoreResetAll();
+                m_botAction.shipResetAll();
                 m_botAction.sendPrivateMessage( name, "Chaos mode started" );
                 setup();
             } else if( message.equals( "!start" )){
@@ -317,66 +318,24 @@ public class chaos extends MultiModule {
                 isRunning = true;
                 modeSet = true;
                 m_botAction.scoreResetAll();
+                m_botAction.shipResetAll();
                 m_botAction.sendPrivateMessage( name, "Chaos mode started" );
                 setup();
             } else if( message.startsWith( "!del " )) {
                 deleteKillMessage( name, getInteger( message.substring( 5 )));
             } else if( message.startsWith( "!showinfo ") ) {
-                  String command = message.substring(10);
-                  String fuzzy = m_botAction.getFuzzyPlayerName(command);
-                  Set<String> players = new HashSet<String>();
-                  String members = null;
-                  boolean isValid = false;
-                  
-                  players = player.keySet();
-                  Object[] objects = players.toArray();
-
-                  for(int i = 0; i < player.size(); i++) {
-                      members = objects[i].toString();
-                      if( members.equalsIgnoreCase(fuzzy) ) {
-                          isValid = true;
-                          break;
-                      }
-                  }
-                  
-                  if(!isValid) {
-                      m_botAction.sendSmartPrivateMessage(name, "Specified player is not in either party!");
-                      return;
-                  }
-                  
-                  PlayerDatabase sender = this.player.get(members);
-                  m_botAction.sendSmartPrivateMessage(name, sender.getPlayerName()+" has $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
-              } else if( message.equals("!destroy") && isRunning ) {
-                  m_botAction.getShip().setShip(0);
-                  m_botAction.getShip().setFreq(0);
-                  
-                  for(Iterator<Integer> i = m_botAction.getFreqIDIterator(m_zombiefreq); i.hasNext(); ) {
-                      int playerID = i.next();
-                      m_botAction.sendUnfilteredPrivateMessage(playerID, "*objon 2");
-                      m_botAction.warpTo(playerID, 109, 322);
-                      m_botAction.specificPrize(playerID, 14);
-                      try { Thread.sleep(400); } catch (InterruptedException e) {}
-                      m_botAction.getShip().move(109*16+8, 329*16+8);
-                      m_botAction.getShip().sendPositionPacket();
-                      for(int j = 0; j < 5; j++) {
-                          m_botAction.getShip().fire(1);
-                          try { Thread.sleep(50); } catch (InterruptedException e) {}
-                      }
-                      try { Thread.sleep(260); } catch (InterruptedException e) {}
-                  }
-                  
-                  m_botAction.getShip().setShip(8);
-                  m_botAction.sendSmartPrivateMessage(name, "Annihilation complete.");
-              }
-            
+                getPlayerInfo(name, message.substring(10));
+            } else if( message.equals("!destroy") ) {
+                doDestroy(name);
+            }
         } catch(Exception e) {}
     }
     
     public void handlePublicCommand( String name, String message ){
         try {
-              if( message.equals( "!help" )) {
-                  m_botAction.privateMessageSpam(name, displayHelp());
-              } else if( message.equals( "!iteminfo" )) {
+            if( message.equals( "!help" )) {
+                m_botAction.privateMessageSpam(name, displayHelp());
+            } else if( message.equals( "!iteminfo" )) {
                   m_botAction.privateMessageSpam(name, displayItemInfo());
               } else if( message.equals( "!buy" )){
                   m_botAction.privateMessageSpam(name, displayBuy());
@@ -691,6 +650,55 @@ public class chaos extends MultiModule {
         sender.activateAOE(false);
         ItemDatabase item = this.items.get(SPECIAL_FURY);
         item.hasBeenBought(false);
+    }
+    
+    public void doDestroy( String name ) {
+        m_botAction.getShip().setShip(0);
+        m_botAction.getShip().setFreq(0);
+        
+        for(Iterator<Integer> i = m_botAction.getFreqIDIterator(m_zombiefreq); i.hasNext(); ) {
+            int playerID = i.next();
+            m_botAction.sendUnfilteredPrivateMessage(playerID, "*objon 2");
+            m_botAction.warpTo(playerID, 109, 322);
+            m_botAction.specificPrize(playerID, 14);
+            try { Thread.sleep(400); } catch (InterruptedException e) {}
+            m_botAction.getShip().move(109*16+8, 329*16+8);
+            m_botAction.getShip().sendPositionPacket();
+            for(int j = 0; j < 5; j++) {
+                m_botAction.getShip().fire(1);
+                try { Thread.sleep(50); } catch (InterruptedException e) {}
+            }
+            try { Thread.sleep(260); } catch (InterruptedException e) {}
+        }
+        
+        m_botAction.getShip().setShip(8);
+        m_botAction.sendSmartPrivateMessage(name, "Annihilation complete.");
+    }
+    
+    public void getPlayerInfo( String name, String entry ) {
+        String fuzzy = m_botAction.getFuzzyPlayerName(entry);
+        Set<String> players = new HashSet<String>();
+        String members = null;
+        boolean isValid = false;
+        
+        players = player.keySet();
+        Object[] objects = players.toArray();
+
+        for(int i = 0; i < player.size(); i++) {
+            members = objects[i].toString();
+            if( members.equalsIgnoreCase(fuzzy) ) {
+                isValid = true;
+                break;
+            }
+        }
+        
+        if(!isValid) {
+            m_botAction.sendSmartPrivateMessage(name, "Specified player is not in either party!");
+            return;
+        }
+        
+        PlayerDatabase sender = this.player.get(members);
+        m_botAction.sendSmartPrivateMessage(name, sender.getPlayerName()+" has $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
     }
     
     public void handleBuyCommand( String name, String entry ) {
