@@ -418,11 +418,6 @@ public class chaos extends MultiModule {
               else if( message.equals( "!buy" )){
                   m_botAction.privateMessageSpam(name, doBuyCmd());
               }
-              else if( message.equals( "!rich" )){ // REMOVE ----------------------------------
-                  PlayerDatabase p = this.player.get(name);
-                  p.gainMoney(5000);
-                  p.gainExperience(5000);
-              }
               else if( message.equals( "!rules" )){
                   String rules = "Angels have a certain time period to survive! They must organize themselves"+
                                  " in battle to form the best strategy of defense. The key is to fight and"+
@@ -431,11 +426,10 @@ public class chaos extends MultiModule {
                   m_botAction.sendSmartPrivateMessage(name, rules);
               }
               else if( message.equals( "!updates" )){
+                  m_botAction.sendSmartPrivateMessage(name, "[Aug 25] Players do not need to type the complete name to donate.");
+                  m_botAction.sendSmartPrivateMessage(name, "[Aug 25] Secret item [****'s Fury] has been tweaked.");
                   m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Prices are now cheaper so players have a chance to buy items!");
                   m_botAction.sendSmartPrivateMessage(name, "[Aug 24] You may now donate to anyone in your team without the $100 warning.");
-                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Fixed F1's typo. Agamem's Rage is now Pohja's Strength.");
-                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Only one spider may attach at a time, not 40.");
-                  m_botAction.sendSmartPrivateMessage(name, "[Aug 24] Each Angel can hold up to 30 people.");
               }
               else if( message.equals( "!myinfo" )){
                   PlayerDatabase sender = this.player.get(name);
