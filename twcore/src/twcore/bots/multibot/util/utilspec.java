@@ -41,6 +41,7 @@
  * !SpecShared <Deaths>                           -- Specs everyone on a freq at COMBINED <Deaths>.",
  * !SpecList                                      -- Shows a list of spec tasks.",
  * !SpecDel <Task Number>                         -- Removes spec task number <Task Number>.",
+ * !SaveFreq                                      -- Specs player to a freq he played on [on/off]",
  * !SpecOff                                       -- Stops watching deaths."
  *
  * NOTE: The !spec command is removed from the standard module so please !load
@@ -50,6 +51,7 @@
  * June 18, 2003
  *
  * Updated:
+ * August 26, 2010 - Added a !SaveFreq command.
  * July 06, 2003 - Changed the spec message.
  */
 
@@ -57,6 +59,7 @@ package twcore.bots.multibot.util;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -72,9 +75,10 @@ import twcore.core.EventRequester;
 public class utilspec extends MultiUtil
 {
     public static final String COLON = ":";
+    private boolean isSaveFreqOn = false;
     
     private Vector <SpecTask>specTasks;
-
+    
     /**
      * Initializes the spec module.
      */
@@ -129,6 +133,8 @@ public class utilspec extends MultiUtil
                 doSpecListCmd(sender);
             if(command.startsWith("!specdel "))
                 doSpecDelCmd(sender, command.substring(9).trim());
+            if(command.equalsIgnoreCase("!savefreq"))
+                doSaveFreqCmd(sender);
             if(command.equalsIgnoreCase("!specoff"))
                 doSpecOffCmd(sender);
             if(command.equalsIgnoreCase("!spec"))
@@ -338,7 +344,7 @@ public class utilspec extends MultiUtil
     public void doSpecPlayerCmd(String sender, String argString)
     {
         StringTokenizer argTokens = getArgTokens(argString);
-
+        
         if(argTokens.countTokens() != 2)
             throw new IllegalArgumentException("Please use the following format: !SpecPlayer <Player>:<Deaths>.");
         try
@@ -501,7 +507,18 @@ public class utilspec extends MultiUtil
             throw new IllegalArgumentException("Invalid Spec Task.");
         }
     }
-
+    
+    /**
+     * This method determines whether players should be put in their frequency when spec'd.
+     * @param sender
+     */
+    public void doSaveFreqCmd(String sender)
+    {
+        isSaveFreqOn = isSaveFreqOn ? false : true;
+        String status = isSaveFreqOn ? "enabled" : "disabled";
+        m_botAction.sendSmartPrivateMessage(sender, "Save frequency is " + status + ".");
+    }
+    
     /**
      * This method clears all of the spec tasks.
      */
@@ -545,10 +562,14 @@ public class utilspec extends MultiUtil
         String playerName = player.getPlayerName();
         int wins = player.getWins();
         int losses = player.getLosses();
+        int freq = player.getFrequency();
 
         m_botAction.sendArenaMessage(playerName + " is out.  " + wins + " wins, " + losses + " losses.");
         m_botAction.spec(playerName);
         m_botAction.spec(playerName);
+        
+        if(isSaveFreqOn)
+            m_botAction.setFreq(playerName, freq);
     }
 
     /**
@@ -584,6 +605,7 @@ public class utilspec extends MultiUtil
                 "!AddDeath <Player>                 -- Specs player <Player> at one more death.",
                 "!SpecList                          -- Shows list of all spec tasks you've entered.",
                 "!SpecDel <Task Number>             -- Removes spec task number <Task Number>.",
+                "!SaveFreq                          -- Specs player to a freq he played on [on/off]",
                 "!SpecOff                           -- Stops watching deaths."
         };
         return message;
