@@ -358,6 +358,7 @@ public class chaos extends MultiModule {
                 deleteKillMessage( name, getInteger( message.substring( 5 )));
               else if( message.startsWith( "!showinfo ") ) {
                   String command = message.substring(10);
+                  String fuzzy = m_botAction.getFuzzyPlayerName(command);
                   Set<String> players = new HashSet<String>();
                   String members = null;
                   boolean isValid = false;
@@ -367,7 +368,7 @@ public class chaos extends MultiModule {
 
                   for(int i = 0; i < player.size(); i++) {
                       members = objects[i].toString();
-                      if( members.equalsIgnoreCase(command) ) {
+                      if( members.equalsIgnoreCase(fuzzy) ) {
                           isValid = true;
                           break;
                       }
@@ -416,6 +417,11 @@ public class chaos extends MultiModule {
               }
               else if( message.equals( "!buy" )){
                   m_botAction.privateMessageSpam(name, doBuyCmd());
+              }
+              else if( message.equals( "!rich" )){ // REMOVE ----------------------------------
+                  PlayerDatabase p = this.player.get(name);
+                  p.gainMoney(5000);
+                  p.gainExperience(5000);
               }
               else if( message.equals( "!rules" )){
                   String rules = "Angels have a certain time period to survive! They must organize themselves"+
@@ -485,49 +491,40 @@ public class chaos extends MultiModule {
                               prizeSpecialItem(name, id);
                               sender.loseMoney(item.getPrice());
                           }
-                          else if(item.isBoughtOnce()) {
+                          else if(item.isBoughtOnce())
                               m_botAction.sendSmartPrivateMessage(name, "There is not enough power to activate this item!");
-                          }
-                          else if(id > 3 && id < 7) {
+                          else if(id > 3 && id < 7)
                               m_botAction.sendSmartPrivateMessage(name, "Request denied; item belongs to the devils.");
-                          }
-                          else if(id == 0)
-                              m_botAction.sendSmartPrivateMessage(name, "Item does not exist. Please try again.");
-                      }
+                      }  
+                      else if(item.getExp() > sender.getExperience() && item.getPrice() > sender.getMoney())
+                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough money and experience.");
                       else if(item.getExp() > sender.getExperience())
                           m_botAction.sendSmartPrivateMessage(name, "You do not have enough experience.");
                       else if(item.getPrice() > sender.getMoney())
                           m_botAction.sendSmartPrivateMessage(name, "You do not have enough money.");
-                      else if(item.getExp() > sender.getExperience() && item.getPrice() > sender.getMoney())
-                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough money and experience.");
                   }
                   else if(p.getFrequency() == m_zombiefreq) {
                       PlayerDatabase sender = this.player.get(name);
                       ItemDatabase item = this.items.get(id);
                       ItemDatabase item2 = this.items.get(ITEM_ATTACH);
                       if(item.getExp() <= sender.getExperience() && item.getPrice() <= sender.getMoney() ) {
-                          if(id == 6 && !item2.isBoughtOnce()) {
+                          if(id == 6 && !item2.isBoughtOnce())
                               m_botAction.sendSmartPrivateMessage(name, "["+item2.getName()+"] has not yet been activated!");
-                          }
                           else if(id > 3 && id < 7 && !item.isBoughtOnce()) {
                               prizeSpecialItem(name, id);
                               sender.loseMoney(item.getPrice());
                           }
-                          else if(item.isBoughtOnce()) {
+                          else if(item.isBoughtOnce())
                               m_botAction.sendSmartPrivateMessage(name, "There is not enough power to activate this item!");
-                          }
-                          else if(id > 0 && id < 4) {
+                          else if(id > 0 && id < 4)
                               m_botAction.sendSmartPrivateMessage(name, "Request denied; item belongs to the angels.");
-                          }
-                          else if(id == 0)
-                              m_botAction.sendSmartPrivateMessage(name, "Item does not exist. Please try again.");
                       }
+                      else if(item.getExp() > sender.getExperience() && item.getPrice() > sender.getMoney())
+                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough money and experience.");
                       else if(item.getExp() > sender.getExperience())
                           m_botAction.sendSmartPrivateMessage(name, "You do not have enough experience.");
                       else if(item.getPrice() > sender.getMoney())
                           m_botAction.sendSmartPrivateMessage(name, "You do not have enough money.");
-                      else if(item.getExp() > sender.getExperience() && item.getPrice() > sender.getMoney())
-                          m_botAction.sendSmartPrivateMessage(name, "You do not have enough money and experience.");
                   }
                   else
                       m_botAction.sendSmartPrivateMessage(name, "You must be in a party to use this feature.");
@@ -535,7 +532,8 @@ public class chaos extends MultiModule {
               else if( message.startsWith( "!give " )) {
                   PlayerDatabase sender = this.player.get(name);
                   Player p = m_botAction.getPlayer( name );
-                  String playerName = message.substring(6, message.indexOf(":"));
+                  String _playerName = message.substring(6, message.indexOf(":"));
+                  String playerName = m_botAction.getFuzzyPlayerName(_playerName);
                   String sendee = "", money = null, mail = null;
                   boolean isValid = false;
                   
