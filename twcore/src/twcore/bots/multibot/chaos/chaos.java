@@ -115,7 +115,7 @@ public class chaos extends MultiModule {
 
     public void handleEvent( Message event ){
         int messageType = event.getMessageType();
-        String message = event.getMessage().trim();
+        String message = event.getMessage().toLowerCase().trim();
         String name = m_botAction.getPlayerName(event.getPlayerID());
         
         if(messageType == Message.PRIVATE_MESSAGE)
@@ -181,6 +181,8 @@ public class chaos extends MultiModule {
                 for( int i = 0; i < p.getPlayerItemSize(); i++ ) {
                     int[] prize = p.prizePlayerItems();
                     ItemDrops itemdrop2 = this.itemdrops.get(prize[i]);
+                    if(prize[i] == 2)
+                        i++;
                     m_botAction.specificPrize(p.getPlayerName(), itemdrop2.getDropId());
                 }
                 p.playerDied(false);
@@ -303,24 +305,28 @@ public class chaos extends MultiModule {
             } else if( message.startsWith( "!add " )){
                 addKillMessage( name, message.substring( 5 ));
             } else if( message.equals( "!stop" )){
+                if(!isRunning) {
+                    m_botAction.sendPrivateMessage( name, "The game has not started yet." );
+                    return;
+                }
                 m_botAction.sendPrivateMessage( name, "Chaos mode stopped" );
                 isRunning = false;
                 stop();
             } else if( message.startsWith( "!start " )){
+                if(isRunning) {
+                    m_botAction.sendPrivateMessage( name, "This game has already started!" );
+                    return;
+                }
                 String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
                 start( name, parameters );
-                m_botAction.scoreResetAll();
-                m_botAction.shipResetAll();
-                m_botAction.sendPrivateMessage( name, "Chaos mode started" );
-                setup();
+                doPreGame();
             } else if( message.equals( "!start" )){
+                if(isRunning) {
+                    m_botAction.sendPrivateMessage( name, "This game has already started!" );
+                    return;
+                }
                 setMode( 0, 1, 2, 3, 1 );
-                isRunning = true;
-                modeSet = true;
-                m_botAction.scoreResetAll();
-                m_botAction.shipResetAll();
-                m_botAction.sendPrivateMessage( name, "Chaos mode started" );
-                setup();
+                doPreGame();
             } else if( message.startsWith( "!del " )) {
                 deleteKillMessage( name, getInteger( message.substring( 5 )));
             } else if( message.startsWith( "!showinfo ") ) {
@@ -331,32 +337,50 @@ public class chaos extends MultiModule {
         } catch(Exception e) {}
     }
     
+    public void doPreGame() {
+        m_botAction.arenaMessageSpam(displayIntro());
+        m_botAction.sendArenaMessage("-- This event will begin in 15 seconds...", 2);
+
+        TimerTask timer = new TimerTask() {
+            public void run() {
+                isRunning = true;
+                modeSet = true;
+                m_botAction.scoreResetAll();
+                m_botAction.shipResetAll();
+                m_botAction.sendArenaMessage("-- GOGOGOGO!! Let's defend our team!", 104);
+                setup();
+            }
+        }; m_botAction.scheduleTask(timer, 15000);
+    }
+    
     public void handlePublicCommand( String name, String message ){
         try {
             if( message.equals( "!help" )) {
                 m_botAction.privateMessageSpam(name, displayHelp());
+            } else if( message.equals( "!tips") ) {
+                m_botAction.privateMessageSpam(name, displayTips());
             } else if( message.equals( "!iteminfo" )) {
-                  m_botAction.privateMessageSpam(name, displayItemInfo());
-              } else if( message.equals( "!buy" )){
-                  m_botAction.privateMessageSpam(name, displayBuy());
-              } else if( message.equals( "!rules" )) {
-                  String rules = "Angels have a certain time period to survive! They must organize themselves"+
-                                 " in battle to form the best strategy of defense. The key is to fight and"+
-                                 " survive! Once the timer is over, Angels must head to the safes with atleast"+
-                                 " 200 experience!";
-                  m_botAction.sendSmartPrivateMessage(name, rules);
-              } else if( message.equals( "!updates" )) {
-                  m_botAction.smartPrivateMessageSpam(name, displayUpdates());
-              } else if( message.equals( "!myinfo" )) {
-                  PlayerDatabase sender = this.player.get(name);
-                  m_botAction.sendSmartPrivateMessage(name, "You have $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
-              } else if( message.equals( "!aoe" ) ) {
-                  doAttack(name);
-              } else if( message.startsWith("!buy ") ) {
-                  handleBuyCommand(name, message.substring(5));
-              } else if( message.startsWith( "!give " )) {
-                  handleDonateCommand(name, message);
-              }
+                m_botAction.privateMessageSpam(name, displayItemInfo());
+            } else if( message.equals( "!buy" )){
+                m_botAction.privateMessageSpam(name, displayBuy());
+            } else if( message.equals( "!rules" )) {
+                String rules = "Angels have a certain time period to survive! They must organize themselves"+
+                               " in battle to form the best strategy of defense. The key is to fight and"+
+                               " survive! Once the timer is over, Angels must head to the safes with atleast"+
+                               " 200 experience!";
+                m_botAction.sendSmartPrivateMessage(name, rules);
+            } else if( message.equals( "!updates" )) {
+                m_botAction.smartPrivateMessageSpam(name, displayUpdates());
+            } else if( message.equals( "!myinfo" )) {
+                PlayerDatabase sender = this.player.get(name);
+                m_botAction.sendSmartPrivateMessage(name, "You have $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
+            } else if( message.equals( "!aoe" ) ) {
+                doAttack(name);
+            } else if( message.startsWith("!buy ") ) {
+                handleBuyCommand(name, message.substring(5));
+            } else if( message.startsWith( "!give " )) {
+                handleDonateCommand(name, message);
+            }
         } catch(Exception e) {}  
     }
 
@@ -910,14 +934,46 @@ public class chaos extends MultiModule {
         return list;
     }
     
+    public String[] displayIntro() {
+        String[] intro = {
+                "+- Introduction ------------------------------------------------+",
+                "|   Helpful commands: !help !tips !rules   ?time                |",
+                "+- Story -------------------------------------------------------+",
+                "|   Our world is unbalanced, the darkness grows stronger...     |",
+                "|   This is the day when the darkness makes their move.         |",
+                "|   Angels must work together, share their resources, escape    |",
+                "|   this world controlled by the devils. However, the gates to  |",
+                "|   the new world will not open until the time is right.        |",
+                "|   Defend yourselves until the time is right to move on!       |",
+                "+- Notice ------------------------------------------------------+",
+                "|   Please be aware that this is an early stage of development  |",
+                "|   and small problems may occur.                               |",
+                "|   We politely ask you to report the problem to the host!      |",
+                "|   Feedback or ideas are greatly appreciated!                  |",
+                "+---------------------------------------------------------------+",
+        };
+        return intro;
+    }
+    
     public String[] displayUpdates() {
         String[] updates = {
+                "[Aug 26] Added a !tips command for players who don't know how to play.",
                 "[Aug 25] Players do not need to type the complete name to donate.",
                 "[Aug 25] Secret item [****'s Fury] has been tweaked.",
                 "[Aug 24] Prices are now cheaper so players have a chance to buy items!",
                 "[Aug 24] You may now donate to anyone in your team without the $100 warning."
         };
         return updates;
+    }
+    
+    public String[] displayTips() {
+        String[] tips = {
+                "1- Fight near your team mates for extra money",
+                "2- Buy items to strengthen your defense",
+                "3- Donate money to players so they can make good use of it",
+                "4- Your live is more important than killing",
+        };
+        return tips;
     }
     
     public void cancel() {
