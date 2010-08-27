@@ -873,7 +873,7 @@ public class chaos extends MultiModule {
             "|  !del <index>                   |   - Deletes a kill message. Index taken from !list  |",
             "|  !stop                          |   - Shuts down zombies mode.                        |",
             "|  !start                         |   - Starts a standard zombies mode.                 |",
-            "|  !autostart                     |   - Starts normally and auto-warps players to base. |",
+            "|  !autowarp                      |   - Auto-warps players to the starting points.      |",
             "|  !start <humanfreq> <humanship> <zombfreq> <zombship> <lives>                         |",
             "|  !showinfo <player>             |   - Shows the player's money and experience points. |",
             "|  !destroy                       |   - Assassinates everyone in zombie freq!           |",
