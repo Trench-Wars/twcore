@@ -968,21 +968,19 @@ public class chaos extends MultiModule {
     
     public String[] displayIntro() {
         String[] intro = {
-                "+- Introduction ------------------------------------------------+",
-                "|   Helpful commands: !help !tips !rules   ?time                |",
-                "+- Story -------------------------------------------------------+",
-                "|   Our world is unbalanced, the darkness grows stronger...     |",
-                "|   This is the day when the darkness makes their move.         |",
-                "|   Angels must work together, share their resources, escape    |",
-                "|   this world controlled by the devils. However, the gates to  |",
-                "|   the new world will not open until the time is right.        |",
-                "|   Defend yourselves until the time is right to move on!       |",
-                "+- Notice ------------------------------------------------------+",
-                "|   Please be aware that this is an early stage of development  |",
-                "|   and small problems may occur.                               |",
-                "|   We politely ask you to report the problem to the host!      |",
-                "|   Feedback or ideas are greatly appreciated!                  |",
-                "+---------------------------------------------------------------+",
+                "-- +- Story -------------------------------------------------------+",
+                "-- |   Our world is unbalanced, the darkness grows stronger...     |",
+                "-- |   This is the day when the darkness makes their move.         |",
+                "-- |   Angels must work together, share their resources, escape    |",
+                "-- |   this world controlled by the devils. However, the gates to  |",
+                "-- |   the new world will not open until the time is right.        |",
+                "-- |   Defend yourselves until the time is right to move on!       |",
+                "-- +- Notice ------------------------------------------------------+",
+                "-- |   Please be aware that this is an early stage of development  |",
+                "-- |   and small problems may occur.                               |",
+                "-- |   We politely ask you to report the problem to the host!      |",
+                "-- |   Feedback or ideas are greatly appreciated!                  |",
+                "-- +---------------------------------------------------------------+",
         };
         return intro;
     }
