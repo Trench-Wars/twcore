@@ -26,6 +26,11 @@ import twcore.core.util.Tools;
  * The old zombies module by harvey yau; modded by dugwyler and others
  * Implemented items, money and experience with other features as well!
  *      Original zombies style with RPG features
+ *      
+ * Updates:
+ * August 26, 2010 - Added an auto-warp command. (warps players to base)
+ *                 - Displays story before game starts. (pre-game)
+ * August 25, 2010 - Added tips command and updates command.
  */
 
 public class chaos extends MultiModule {
@@ -873,7 +878,7 @@ public class chaos extends MultiModule {
             "|  !del <index>                   |   - Deletes a kill message. Index taken from !list  |",
             "|  !stop                          |   - Shuts down zombies mode.                        |",
             "|  !start                         |   - Starts a standard zombies mode.                 |",
-            "|  !autowarp                      |   - Auto-warps players to the starting points.      |",
+            "|  !autowarp                      |   - Warps players to the starting points. [on/off]  |",
             "|  !start <humanfreq> <humanship> <zombfreq> <zombship> <lives>                         |",
             "|  !showinfo <player>             |   - Shows the player's money and experience points. |",
             "|  !destroy                       |   - Assassinates everyone in zombie freq!           |",
