@@ -54,7 +54,9 @@ public class chaos extends MultiModule {
     int m_lives;
     StringBag killmsgs;
     boolean isRunning = false;
+    boolean isStarting = false;
     boolean modeSet = false;
+    boolean isAuto = false;
     
     final int ITEM_THOR1 = 1;
     final int ITEM_ATTACH = 2;
@@ -267,7 +269,7 @@ public class chaos extends MultiModule {
 
     public void start( String name, String[] params ){
         try{
-            if( params.length == 6 ){
+            if( params.length == 5 ){
                 int srcfreq = Integer.parseInt(params[0]);
                 int srcship = Integer.parseInt(params[1]);
                 int destfreq = Integer.parseInt(params[2]);
@@ -276,15 +278,6 @@ public class chaos extends MultiModule {
                 setMode( srcfreq, srcship, destfreq, destship, lives );
                 isRunning = true;
                 modeSet = true;                
-            } else if( params.length == 5 ){
-                int srcfreq = Integer.parseInt(params[0]);
-                int srcship = Integer.parseInt(params[1]);
-                int destfreq = Integer.parseInt(params[2]);
-                int destship = Integer.parseInt(params[3]);
-                int lives = Integer.parseInt(params[4]);
-                setMode( srcfreq, srcship, destfreq, destship, lives );
-                isRunning = true;
-                modeSet = true;
             } else if( params.length == 1 ){
                 int lives = Integer.parseInt(params[0]);
                 setMode( 0, 1, 2, 3, lives );
@@ -305,7 +298,10 @@ public class chaos extends MultiModule {
             } else if( message.startsWith( "!add " )){
                 addKillMessage( name, message.substring( 5 ));
             } else if( message.equals( "!stop" )){
-                if(!isRunning) {
+                if(isStarting) {
+                    m_botAction.sendPrivateMessage( name, "This game is starting soon..." );
+                    return;
+                } else if(!isRunning) {
                     m_botAction.sendPrivateMessage( name, "The game has not started yet." );
                     return;
                 }
@@ -313,15 +309,21 @@ public class chaos extends MultiModule {
                 isRunning = false;
                 stop();
             } else if( message.startsWith( "!start " )){
-                if(isRunning) {
+                if(isStarting) {
+                    m_botAction.sendPrivateMessage( name, "This game is starting soon..." );
+                    return;
+                } else if(isRunning) {
                     m_botAction.sendPrivateMessage( name, "This game has already started!" );
                     return;
                 }
                 String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
                 start( name, parameters );
                 doPreGame();
-            } else if( message.equals( "!start" )){
-                if(isRunning) {
+            } else if( message.equals( "!start" ) ){
+                if(isStarting) {
+                    m_botAction.sendPrivateMessage( name, "This game is starting soon..." );
+                    return;
+                } else if(isRunning) {
                     m_botAction.sendPrivateMessage( name, "This game has already started!" );
                     return;
                 }
@@ -333,11 +335,14 @@ public class chaos extends MultiModule {
                 getPlayerInfo(name, message.substring(10));
             } else if( message.equals("!destroy") ) {
                 doDestroy(name);
+            } else if( message.equals( "!autowarp" ) ) {
+                handleAutoWarpCmd(name);
             }
         } catch(Exception e) {}
     }
     
     public void doPreGame() {
+        isStarting = true;
         m_botAction.arenaMessageSpam(displayIntro());
         m_botAction.sendArenaMessage("-- This event will begin in 15 seconds...", 2);
 
@@ -345,10 +350,18 @@ public class chaos extends MultiModule {
             public void run() {
                 isRunning = true;
                 modeSet = true;
+                isStarting = false;
                 m_botAction.scoreResetAll();
                 m_botAction.shipResetAll();
-                m_botAction.sendArenaMessage("-- GOGOGOGO!! Let's defend our team!", 104);
+                m_botAction.sendArenaMessage("-- GOGOGOGO!! Let's start this battle!", 104);
                 setup();
+                
+                if(isAuto) {
+                    if(m_botAction.getFrequencySize(m_humanfreq) > 0)
+                        m_botAction.warpFreqToLocation(m_humanfreq, 779, 553);
+                    if(m_botAction.getFrequencySize(m_zombiefreq) > 0)
+                        m_botAction.warpFreqToLocation(m_zombiefreq, 195, 407);
+                }
             }
         }; m_botAction.scheduleTask(timer, 15000);
     }
@@ -383,7 +396,7 @@ public class chaos extends MultiModule {
             }
         } catch(Exception e) {}  
     }
-
+    
     public void addKillMessage( String name, String killMessage ){
         killmsgs.add( killMessage );
         m_botAction.sendPrivateMessage( name, "<name> " + killMessage + " Added" );
@@ -725,6 +738,17 @@ public class chaos extends MultiModule {
         m_botAction.sendSmartPrivateMessage(name, sender.getPlayerName()+" has $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
     }
     
+    public void handleAutoWarpCmd( String name ) {
+        if(isRunning) {
+            m_botAction.sendSmartPrivateMessage(name, "This game has already started!");
+            return;
+        }
+        
+        isAuto = isAuto ? false : true;
+        String status = isAuto ? "enabled" : "disabled";
+        m_botAction.sendSmartPrivateMessage(name, "Auto-warp is "+status+".");
+    }
+    
     public void handleBuyCommand( String name, String entry ) {
         Player p = m_botAction.getPlayer(name);
         int id = itemdb.alternateNames(entry);
@@ -849,6 +873,7 @@ public class chaos extends MultiModule {
             "|  !del <index>                   |   - Deletes a kill message. Index taken from !list  |",
             "|  !stop                          |   - Shuts down zombies mode.                        |",
             "|  !start                         |   - Starts a standard zombies mode.                 |",
+            "|  !autostart                     |   - Starts normally and auto-warps players to base. |",
             "|  !start <humanfreq> <humanship> <zombfreq> <zombship> <lives>                         |",
             "|  !showinfo <player>             |   - Shows the player's money and experience points. |",
             "|  !destroy                       |   - Assassinates everyone in zombie freq!           |",
@@ -857,6 +882,7 @@ public class chaos extends MultiModule {
             "| Player Commands         /       |          Is there anything I can do for you?        |",
             "+------------------------'        |                                                     |",
             "|  !rules                         |   - Need help? Private message me with !rules       |",
+            "|  !tips                          |   - Additional help and strategies.                 |",
             "|  !updates                       |   - Latest updates on this bot.                     |",
             "|  !myinfo                        |   - Shows your money and experience points.         |",
             "|  !give <player>:<$> <message>   |   - Donates money to desired player.                |",
@@ -876,6 +902,7 @@ public class chaos extends MultiModule {
                 "| Player Commands         /       |             Welcome, how may I help you?            |",
                 "+------------------------'        |                                                     |",
                 "|  !rules                         |   - Need help? Private message me with !rules       |",
+                "|  !tips                          |   - Additional help and strategies.                 |",
                 "|  !updates                       |   - Latest updates on this bot.                     |",
                 "|  !myinfo                        |   - Shows your money and experience points.         |",
                 "|  !give <player>:<$> <message>   |   - Donates money to desired player.                |",
@@ -971,7 +998,7 @@ public class chaos extends MultiModule {
                 "1- Fight near your team mates for extra money",
                 "2- Buy items to strengthen your defense",
                 "3- Donate money to players so they can make good use of it",
-                "4- Your live is more important than killing",
+                "4- Your life is more important than killing",
         };
         return tips;
     }
