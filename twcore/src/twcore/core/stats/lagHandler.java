@@ -480,7 +480,7 @@ public class lagHandler
                     lagReport = "PING Cur. [" + currentPing + "  LIMIT: " + m_botSettings.getInt("CurPing") + "]";
                 }
                 
-                if (m_botSettings.getInt("CurPing"+ship)!=0 && m_botSettings.getInt("CurPing"+ship) < averagePing && !spec) {
+                if (m_botSettings.getInt("AvePing"+ship)!=0 && m_botSettings.getInt("AvePing"+ship) < averagePing && !spec) {
                 	spec = true;
                     lagReport = "PING Ave. [" + averagePing + "  LIMIT: " + m_botSettings.getInt("AvePing") + "]";
                 }
