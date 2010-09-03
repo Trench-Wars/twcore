@@ -616,7 +616,7 @@ public class chaos extends MultiModule {
                 ItemDatabase item2 = this.items.get(SPECIAL_FURY);
                 sender.activateAOE(true);
                 item2.hasBeenBought(true);
-                m_botAction.sendSmartPrivateMessage( name, "Private message me with !aoe to use this attack! (expires in 30 seconds)");
+                m_botAction.sendSmartPrivateMessage( name, "Private message me with !aoe to use this attack!");
                 m_botAction.sendArenaMessage( "I sense a great power approaching.." );
                 break;
             default:
