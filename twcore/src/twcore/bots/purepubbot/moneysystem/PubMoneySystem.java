@@ -263,10 +263,7 @@ public class PubMoneySystem {
                 if (item.isArenaItem()) {
                 	 m_botAction.sendArenaMessage(playerName + " just bought a " + item.getDisplayName() + " for $" + item.getPrice() + ".",21);
                 }
-                
-                int playerId = m_botAction.getPlayerID(playerName);
-                this.lvzPubPointsHandler.update(playerId, String.valueOf(moneyBeforeBuy), String.valueOf(moneyAfterBuy), false);
-  
+
             } 
             else {
                 m_botAction.sendPrivateMessage(playerName, "You're not in the system to use !buy.");
@@ -509,20 +506,17 @@ public class PubMoneySystem {
             if(command.startsWith("!items") || command.startsWith("!i")) {
                 doCmdItems(sender);
             }
+            else if(command.trim().equals("!buy") || command.trim().equals("!b")){
+            	doCmdItems(sender);
+            }
             else if(command.startsWith("!rich")) {
             	sendMoneyToPlayer(sender,1000000,"You are rich now!");
             }
-            else if(command.equals("!$"))
-            {
+            else if(command.equals("!$")) {
                 doCmdDisplayMoney(sender);
-                
             }
             else if(command.startsWith("!buy") || command.startsWith("!b")){
-                try{
-                    doCmdBuy(sender, command);
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
+            	doCmdBuy(sender, command);
             }
             else if(command.startsWith("!lottery ") || command.startsWith("!l ")) {
                 pubLottery.handleTicket(sender, command);

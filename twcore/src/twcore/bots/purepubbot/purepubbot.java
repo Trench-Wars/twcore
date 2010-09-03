@@ -1351,10 +1351,10 @@ public class purepubbot extends SubspaceBot
                 "=============================================================",
                 "!warp    -- Warps you into flagroom at start of next round. (abbv: !w)",
                 "!terr    -- Shows terriers on the team and their last seen locations. (abbv: !t)",
-                "!team    -- Tells you which ships your team members are in. (abbv: !tea)",
+                "!team    -- Tells you which ships your team members are in.",
                 "",
                 "[STORE]",
-                "!items            -- Shows buyable items from the store. (abbv: !i)",
+                "!buy              -- Shows buyable items from the store. (abbv: !items)",
                 "!buy <item_name>  -- Item to buy on the store. (abbv: !b) ",
                 "(!more for more commands)",          
         };

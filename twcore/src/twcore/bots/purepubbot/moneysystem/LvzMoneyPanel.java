@@ -13,7 +13,7 @@ public class LvzMoneyPanel {
     /* This algorithm try to avoid unnecessary changes when the object is already on/off
      * It works by comparing the money before and after
      */
-    public void update(int playerId, String beforeMoney, String afterMoney, boolean gainedMoney){
+	public void update(int playerId, String beforeMoney, String afterMoney, boolean gainedMoney){
 
     	if (beforeMoney.equals("0"))
     		beforeMoney = "";
