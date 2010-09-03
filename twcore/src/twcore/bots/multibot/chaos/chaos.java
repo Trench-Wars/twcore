@@ -28,6 +28,9 @@ import twcore.core.util.Tools;
  *      Original zombies style with RPG features
  *      
  * Updates:
+ * August 30, 2010 - Removed tips and updates.
+ *                 - Added the command list before game starts.
+ *                 TODO instead of a limit to buy, have a timer!
  * August 26, 2010 - Added an auto-warp command. (warps players to base)
  *                 - Displays story before game starts. (pre-game)
  * August 25, 2010 - Added tips command and updates command.
@@ -358,7 +361,7 @@ public class chaos extends MultiModule {
                 isStarting = false;
                 m_botAction.scoreResetAll();
                 m_botAction.shipResetAll();
-                m_botAction.sendArenaMessage("-- GOGOGOGO!! Let's start this battle!", 104);
+                m_botAction.sendArenaMessage("-- GOGOGOGO!! Our world depends on you!", 104);
                 setup();
                 
                 if(isAuto) {
@@ -375,8 +378,6 @@ public class chaos extends MultiModule {
         try {
             if( message.equals( "!help" )) {
                 m_botAction.privateMessageSpam(name, displayHelp());
-            } else if( message.equals( "!tips") ) {
-                m_botAction.privateMessageSpam(name, displayTips());
             } else if( message.equals( "!iteminfo" )) {
                 m_botAction.privateMessageSpam(name, displayItemInfo());
             } else if( message.equals( "!buy" )){
@@ -387,8 +388,6 @@ public class chaos extends MultiModule {
                                " survive! Once the timer is over, Angels must head to the safes with atleast"+
                                " 200 experience!";
                 m_botAction.sendSmartPrivateMessage(name, rules);
-            } else if( message.equals( "!updates" )) {
-                m_botAction.smartPrivateMessageSpam(name, displayUpdates());
             } else if( message.equals( "!myinfo" )) {
                 PlayerDatabase sender = this.player.get(name);
                 m_botAction.sendSmartPrivateMessage(name, "You have $"+sender.getMoney()+" and "+sender.getExperience()+" experience.");
@@ -617,9 +616,8 @@ public class chaos extends MultiModule {
                 ItemDatabase item2 = this.items.get(SPECIAL_FURY);
                 sender.activateAOE(true);
                 item2.hasBeenBought(true);
-                m_botAction.sendSmartPrivateMessage( name, "Private message me with !aoe to use this attack!");
+                m_botAction.sendSmartPrivateMessage( name, "Private message me with !aoe to use this attack! (expires in 30 seconds)");
                 m_botAction.sendArenaMessage( "I sense a great power approaching.." );
-                
                 break;
             default:
                 m_botAction.sendSmartPrivateMessage(name, "Item does not exist. Please try again.");
@@ -638,7 +636,7 @@ public class chaos extends MultiModule {
         return Math.sqrt(Math.pow(killer.getXLocation()-teammate.getXLocation(),2) + 
                 Math.pow(killer.getYLocation()-teammate.getYLocation(),2))/16;
     }
-    
+
     public boolean safeSpec(String name) {
         boolean delayExceeded = true;
         int delaySeconds = 1;
@@ -887,8 +885,6 @@ public class chaos extends MultiModule {
             "| Player Commands         /       |          Is there anything I can do for you?        |",
             "+------------------------'        |                                                     |",
             "|  !rules                         |   - Need help? Private message me with !rules       |",
-            "|  !tips                          |   - Additional help and strategies.                 |",
-            "|  !updates                       |   - Latest updates on this bot.                     |",
             "|  !myinfo                        |   - Shows your money and experience points.         |",
             "|  !give <player>:<$> <message>   |   - Donates money to desired player.                |",
             "|  !iteminfo                      |   - Don't know what item you got? Check here!       |",
@@ -907,8 +903,6 @@ public class chaos extends MultiModule {
                 "| Player Commands         /       |             Welcome, how may I help you?            |",
                 "+------------------------'        |                                                     |",
                 "|  !rules                         |   - Need help? Private message me with !rules       |",
-                "|  !tips                          |   - Additional help and strategies.                 |",
-                "|  !updates                       |   - Latest updates on this bot.                     |",
                 "|  !myinfo                        |   - Shows your money and experience points.         |",
                 "|  !give <player>:<$> <message>   |   - Donates money to desired player.                |",
                 "|  !iteminfo                      |   - Don't know what item you got? Check here!       |",
@@ -975,37 +969,21 @@ public class chaos extends MultiModule {
                 "-- |   this world controlled by the devils. However, the gates to  |",
                 "-- |   the new world will not open until the time is right.        |",
                 "-- |   Defend yourselves until the time is right to move on!       |",
+                "-- +- Commands ----------------------------------------------------+",
+                "-- |   !help    - Shows all the commands you need to know!         |",
+                "-- |   !rules   - Need help? Private message me with !rules        |",
+                "-- |   !myinfo    - Shows your money and experience points.        |",
+                "-- |   !give <player>:<$> <message>  - Donates money to player.    |",
+                "-- |   !iteminfo    - Don't know what item you got? Check here!    |",
+                "-- |   !buy         - Want to spend your money? I'm your best bet! |",
+                "-- |   !buy <item>  - Allows you to purchase an item.              |",
                 "-- +- Notice ------------------------------------------------------+",
-                "-- |   Please be aware that this is an early stage of development  |",
-                "-- |   and small problems may occur.                               |",
-                "-- |   We politely ask you to report the problem to the host!      |",
-                "-- |   Feedback or ideas are greatly appreciated!                  |",
-                "-- +---------------------------------------------------------------+",
+                "-- |        Private message the Robobot with your commands!        |",
+                "-- +---------------------------------------------------------------+"
         };
         return intro;
     }
-    
-    public String[] displayUpdates() {
-        String[] updates = {
-                "[Aug 26] Added a !tips command for players who don't know how to play.",
-                "[Aug 25] Players do not need to type the complete name to donate.",
-                "[Aug 25] Secret item [****'s Fury] has been tweaked.",
-                "[Aug 24] Prices are now cheaper so players have a chance to buy items!",
-                "[Aug 24] You may now donate to anyone in your team without the $100 warning."
-        };
-        return updates;
-    }
-    
-    public String[] displayTips() {
-        String[] tips = {
-                "1- Fight near your team mates for extra money",
-                "2- Buy items to strengthen your defense",
-                "3- Donate money to players so they can make good use of it",
-                "4- Your life is more important than killing",
-        };
-        return tips;
-    }
-    
+
     public void cancel() {
     }
     
