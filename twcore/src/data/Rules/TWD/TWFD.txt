@@ -39,7 +39,6 @@ maxship6=-1
 maxship8=-1
 
 # -1 indicates that the ship is NOT allowed
-# 0 indicates a minimum of 1
 # Order: Spec, Warbird, Javelin, Spider, ect.
 minship=-1,1,-1,1,-1,-1,-1,1,-1
 
