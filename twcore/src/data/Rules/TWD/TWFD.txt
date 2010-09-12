@@ -41,7 +41,7 @@ maxship8=-1
 # -1 indicates that the ship is NOT allowed
 # 0 indicates a minimum of 1
 # Order: Spec, Warbird, Javelin, Spider, ect.
-minship=-1,0,-1,0,-1,-1,-1,0,-1
+minship=-1,1,-1,1,-1,-1,-1,1,-1
 
 matchtype=2133
 captain_can_start_game=1
