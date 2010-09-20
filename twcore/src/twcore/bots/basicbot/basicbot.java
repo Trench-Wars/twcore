@@ -76,12 +76,14 @@ public class basicbot extends SubspaceBot {
         String name = event.getMessager() != null ? event.getMessager() : m_botAction.getPlayerName(event.getPlayerID());
         if (name == null) name = "-anonymous-";
 
+        /*
         m_botAction.sendPublicMessage(  "I received a Message event type ("+ event.getMessageType()+") from " + name +
                                         " containing the following text: " + event.getMessage());
-
+		*/
+        
         // Default implemented command: !die
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!die")) {
-            m_botAction.sendPublicMessage(name + " commanded me to die. Disconnecting...");
+            //m_botAction.sendPublicMessage(name + " commanded me to die. Disconnecting...");
             try { Thread.sleep(50); } catch (Exception e) {};
             m_botAction.die();
         }
