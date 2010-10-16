@@ -268,7 +268,7 @@ public class messagebot extends SubspaceBot
     	Channel c = channels.get(channel);
     	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
     	{
-	    	if(c.leaveChannel(pieces[1])) 
+	    	if(c.leaveChannel(pieces[1], true)) 
 	    	{
 	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " removed.");
 	    	} 
@@ -350,7 +350,7 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You cannot leave while you are owner.");
     		return;
     	}
-    	c.leaveChannel(name);
+    	c.leaveChannel(name, false);
     }
 
     /** Accepts a player into the channel.
@@ -1728,25 +1728,28 @@ class Channel
 	/** Removes a player from the channel
 	 *  @param Name of player leaving.
 	 */
-	public boolean leaveChannel(String name)
+	public boolean leaveChannel(String name, boolean silent)
 	{
 		if(members.containsKey(name.toLowerCase()))
 		{
 			int level = members.get(name.toLowerCase()).intValue();
 			if(level < 0)
 			{
-				m_bA.sendSmartPrivateMessage(name, "You are not on this channel.");
+				if (!silent)
+					m_bA.sendSmartPrivateMessage(name, "You are not on this channel.");
 				return false;
 			}
 			if(isOwner(name)) {
-				m_bA.sendSmartPrivateMessage(name, "You have to make a new owner before you leave.");
+				if (!silent)
+					m_bA.sendSmartPrivateMessage(name, "You have to make a new owner before you leave.");
 				return false;
 			}
 			updateSQL(name.toLowerCase(), -5);
-			m_bA.sendSmartPrivateMessage(name, "You have been removed from the channel.");
+			if (!silent)
+				m_bA.sendSmartPrivateMessage(name, "You have been removed from the channel.");
 			return true;
 		}
-		else
+		else if (!silent)
 			m_bA.sendSmartPrivateMessage(name, "You are not on this channel.");
 		return false;
 	}
