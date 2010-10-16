@@ -1712,15 +1712,15 @@ class Channel
 		}
 		if(isOpen)
 		{
+			updateSQL(name.toLowerCase(), 1);
 			if (!silent)
-				updateSQL(name.toLowerCase(), 1);
 			m_bA.sendSmartPrivateMessage(name, "You have been accepted to " + channelName + " announcement channel.");
 		}
 		else
 		{
+			updateSQL(name.toLowerCase(), 0);
 			if (!silent)
-				updateSQL(name.toLowerCase(), 0);
-			m_bA.sendSmartPrivateMessage(name, "You have been placed into the channel request list. The channel owner will make the decision.");
+				m_bA.sendSmartPrivateMessage(name, "You have been placed into the channel request list. The channel owner will make the decision.");
 		}
 		return true;
 	}
