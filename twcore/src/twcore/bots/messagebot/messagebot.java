@@ -155,6 +155,8 @@ public class messagebot extends SubspaceBot
         acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_CI.registerCommand( "!create",     acceptedMessages, this, "createChannel" );
         m_CI.registerCommand( "!destroy",    acceptedMessages, this, "destroyChannel" );
+        m_CI.registerCommand( "!add",        acceptedMessages, this, "addPlayer" );
+        m_CI.registerCommand( "!remove",     acceptedMessages, this, "removePlayer" );
         m_CI.registerCommand( "!join",       acceptedMessages, this, "joinChannel" );
         m_CI.registerCommand( "!quit",       acceptedMessages, this, "quitChannel" );
         m_CI.registerCommand( "!help",       acceptedMessages, this, "doHelp" );
@@ -249,6 +251,69 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
+    /** Remove a player to a channel
+     *  @param Name of player.
+     *  @param Name of channel they want to join.
+     */
+    public void removePlayer(String name, String message)
+    {
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	String pieces[] = message.split(":", 2);
+    	if(!channels.containsKey(channel))
+    	{
+    		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
+    		return;
+    	}
+    	
+    	Channel c = channels.get(channel);
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+    	{
+	    	if(c.leaveChannel(pieces[1])) 
+	    	{
+	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " removed.");
+	    	} 
+	    	else {
+	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " cannot be removed (owner? not a member?).");
+	    	}
+    	}
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
+    }
+    
+    /** Add a player to a channel
+     *  @param Name of player.
+     *  @param Name of channel they want to join.
+     */
+    public void addPlayer(String name, String message)
+    {
+    	String channel = getChannel(name, message, true).toLowerCase();
+    	String pieces[] = message.split(":", 2);
+    	if(!channels.containsKey(channel))
+    	{
+    		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
+    		return;
+    	}
+    	
+    	Channel c = channels.get(channel);
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+    	{
+	    	if(c.joinRequest(pieces[1], true)) 
+	    	{
+	    		if (c.acceptPlayer(name, pieces[1],true)) {
+	    			m_botAction.sendSmartPrivateMessage(name, pieces[1] + " is now a member of " + c.channelName + ".");
+	    		}
+	    		else {
+	    			m_botAction.sendSmartPrivateMessage(name, "An error has occured.");
+	    		}
+	    	} 
+	    	else {
+	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " cannot join this channel for some reason (already member? banned?).");
+	    	}
+    	}
+    	else
+    		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
+    }
+
     /** Puts in a request to join a channel.
      *  @param Name of player.
      *  @param Name of channel they want to join.
@@ -263,7 +328,7 @@ public class messagebot extends SubspaceBot
     	}
 
     	Channel c = channels.get(channel);
-    	c.joinRequest(name);
+    	c.joinRequest(name, false);
     }
 
     /** Allows a person to quit a channel.
@@ -304,7 +369,7 @@ public class messagebot extends SubspaceBot
 
     	Channel c = channels.get(channel);
     	if(c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
-  		  	c.acceptPlayer(name, pieces[1]);
+  		  	c.acceptPlayer(name, pieces[1], false);
   		else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
@@ -680,6 +745,8 @@ public class messagebot extends SubspaceBot
 	        m_botAction.sendSmartPrivateMessage(name, "    !destroy <channel>            - Destroys <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !accept <channel>:<name>      - Accepts <name>'s request to join <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !decline <channel>:<name>     - Declines <name>'s request to join <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !add <channel>:<name>         - Add <name> to <channel>.");
+	        m_botAction.sendSmartPrivateMessage(name, "    !remove <channel>:<name>      - Remove <name> from <channel>.");
 		    if(m_botAction.getOperatorList().isBot(name))   m_botAction.sendSmartPrivateMessage(name, "    !create <channel>             - Creates a channel with the name <channel>.");
 	    } else if((m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) && message.toLowerCase().startsWith("smod")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Smod+ commands:");
@@ -1629,34 +1696,39 @@ class Channel
 	/** Puts in request to join channel.
 	 *  @param Name of player wanting to join.
 	 */
-	public void joinRequest(String name)
+	public boolean joinRequest(String name, boolean silent)
 	{
 		if(members.containsKey(name.toLowerCase()))
 		{
-			m_bA.sendSmartPrivateMessage(name, "You are already on this channel.");
-			return;
+			if (!silent)
+				m_bA.sendSmartPrivateMessage(name, "You are already on this channel.");
+			return false;
 		}
 		if(banned.contains(name.toLowerCase()))
 		{
-			m_bA.sendSmartPrivateMessage(name, "You have been banned from this channel.");
-			return;
+			if (!silent)
+				m_bA.sendSmartPrivateMessage(name, "You have been banned from this channel.");
+			return false;
 		}
 		if(isOpen)
 		{
-			updateSQL(name.toLowerCase(), 1);
+			if (!silent)
+				updateSQL(name.toLowerCase(), 1);
 			m_bA.sendSmartPrivateMessage(name, "You have been accepted to " + channelName + " announcement channel.");
 		}
 		else
 		{
-			updateSQL(name.toLowerCase(), 0);
+			if (!silent)
+				updateSQL(name.toLowerCase(), 0);
 			m_bA.sendSmartPrivateMessage(name, "You have been placed into the channel request list. The channel owner will make the decision.");
 		}
+		return true;
 	}
 
 	/** Removes a player from the channel
 	 *  @param Name of player leaving.
 	 */
-	public void leaveChannel(String name)
+	public boolean leaveChannel(String name)
 	{
 		if(members.containsKey(name.toLowerCase()))
 		{
@@ -1664,17 +1736,19 @@ class Channel
 			if(level < 0)
 			{
 				m_bA.sendSmartPrivateMessage(name, "You are not on this channel.");
-				return;
+				return false;
 			}
 			if(isOwner(name)) {
 				m_bA.sendSmartPrivateMessage(name, "You have to make a new owner before you leave.");
-				return;
+				return false;
 			}
 			updateSQL(name.toLowerCase(), -5);
 			m_bA.sendSmartPrivateMessage(name, "You have been removed from the channel.");
+			return true;
 		}
 		else
 			m_bA.sendSmartPrivateMessage(name, "You are not on this channel.");
+		return false;
 	}
 
 	/** Lists all requests to join channel.
@@ -1699,17 +1773,21 @@ class Channel
 	 *  @param Name of operator.
 	 *  @param Name of player being accepted.
 	 */
-	public void acceptPlayer(String name, String player)
+	public boolean acceptPlayer(String name, String player, boolean silent)
 	{
 		if(members.containsKey(player.toLowerCase()))
 		{
 			updateSQL(player.toLowerCase(), new Integer(1));
-			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
+			if (!silent)
+				m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been accepted into " + channelName + " channel.");
-			m_bA.sendSmartPrivateMessage(name, player + " accepted.");
+			if (!silent)
+				m_bA.sendSmartPrivateMessage(name, player + " accepted.");
+			return true;
 		}
 		else
 			m_bA.sendSmartPrivateMessage(name, "This player has not requested to join.");
+		return false;
 	}
 
 	/** Rejects a player's request.
