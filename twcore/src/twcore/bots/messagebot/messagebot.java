@@ -257,7 +257,7 @@ public class messagebot extends SubspaceBot
      */
     public void removePlayer(String name, String message)
     {
-    	String channel = getChannel(name, message, true).toLowerCase();
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
     	if(!channels.containsKey(channel))
     	{
@@ -286,7 +286,7 @@ public class messagebot extends SubspaceBot
      */
     public void addPlayer(String name, String message)
     {
-    	String channel = getChannel(name, message, true).toLowerCase();
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
     	if(!channels.containsKey(channel))
     	{
