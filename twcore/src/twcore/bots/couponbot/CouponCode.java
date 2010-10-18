@@ -3,7 +3,7 @@ package twcore.bots.couponbot;
 import java.util.Calendar;
 import java.util.Date;
 
-public class MoneyCode {
+public class CouponCode {
 
 	
 	private final String code;
@@ -20,11 +20,11 @@ public class MoneyCode {
 	
 	private boolean enabled;
 	
-	public MoneyCode(String code, int money, String createdBy) {
+	public CouponCode(String code, int money, String createdBy) {
 		this(code, money, new Date(), createdBy);
 	}
 	
-	public MoneyCode(String code, int money, Date createdAt, String createdBy) {
+	public CouponCode(String code, int money, Date createdAt, String createdBy) {
 		this.code = code;
 		this.money = money;
 		this.createdAt = createdAt;

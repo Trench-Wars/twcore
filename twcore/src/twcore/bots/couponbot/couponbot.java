@@ -24,6 +24,11 @@ import twcore.core.events.SQLResultEvent;
 import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
 
+/**
+ * 
+ * @author Arobas+
+ *
+ */
 public class couponbot extends SubspaceBot {
 
 	private final static String IPC_CHANNEL = "pubmoney";
@@ -88,19 +93,46 @@ public class couponbot extends SubspaceBot {
     }
     
     public void handleEvent(InterProcessEvent event) {
-    	/*
     	if (event.getObject() instanceof IPCMessage) {
+    		
     		IPCMessage ipc = (IPCMessage) event.getObject();
-    		System.out.println(ipc.getMessage());
+
+    		if (ipc.getMessage().startsWith("couponsuccess:")) {
+    			
+    			String[] pieces = ipc.getMessage().split(":");
+    			String codeString = pieces[1];
+    			String name = pieces[2];
+
+    			CouponCode code = getCode(codeString);
+    			
+    			// +1 used
+    			code.setUsed(code.getUsed()+1);
+    			if (code.getUsed() == code.getMaxUsed())
+    				code.setEnabled(false);
+    			
+    			if (updateDB(code)) {
+    				updateHistoryDB(name, code);
+    				m_botAction.sendSmartPrivateMessage(name, "$" + code.getMoney() + " has been added to your account.");
+    			} else {
+    				m_botAction.sendSmartPrivateMessage(name, "A problem has occured. Please contact someone from the staff by using ?help");
+    			}
+    			
+    		} else if (ipc.getMessage().startsWith("couponerror")) {
+    			
+    			String[] pieces = ipc.getMessage().split(":");
+    			String codeString = pieces[1];
+    			String name = pieces[2];
+    			
+    			m_botAction.sendSmartPrivateMessage(name, "A problem has occured. Please contact someone from the staff by using ?help");
+    		}
     	}
-    	*/
     }
 
     private void handleHelpCommand(String sender) {
     	
     	String general[] = new String[] {
     		"[General]",
-    		"- !coupon <code>             -- Get the money linked to <code>."
+    		"- !coupon <code>             -- Redeem your <code>."
     	};
     	
     	String generation[] = new String[] {
@@ -130,13 +162,18 @@ public class couponbot extends SubspaceBot {
     	List<String> lines = new ArrayList<String>();
     	if (m_botAction.getOperatorList().isSmod(sender)) {
     		lines.addAll(Arrays.asList(general));
+    		lines.add(" ");
     		lines.addAll(Arrays.asList(generation));
+    		lines.add(" ");
     		lines.addAll(Arrays.asList(maintenance));
+    		lines.add(" ");
     		lines.addAll(Arrays.asList(bot));
     		
     	} else if (operators.contains(sender.toLowerCase())) {
     		lines.addAll(Arrays.asList(general));
+    		lines.add(" ");
     		lines.addAll(Arrays.asList(generation));
+    		lines.add(" ");
     		lines.addAll(Arrays.asList(maintenance));
     		
     	} else {
@@ -149,7 +186,6 @@ public class couponbot extends SubspaceBot {
     
     private void handleCommand(String sender, String command, int messageType) {
     	
-    	boolean user = true;
     	boolean operator = operators.contains(sender.toLowerCase());
     	boolean smod = m_botAction.getOperatorList().isSmod(sender);
 
@@ -217,7 +253,7 @@ public class couponbot extends SubspaceBot {
 		
 		if (!operators.contains(name.toLowerCase())) {
 			operators.add(name.toLowerCase());
-			m_botAction.sendPrivateMessage(sender, name + " is now an operator (temporary until the bot respawn).");
+			m_botAction.sendSmartPrivateMessage(sender, name + " is now an operator (temporary until the bot respawn).");
 			
 			/*
 			String operatorsString = "";
@@ -230,28 +266,28 @@ public class couponbot extends SubspaceBot {
 			*/
 			
 		} else {
-			m_botAction.sendPrivateMessage(sender, name + " is already an operator.");
+			m_botAction.sendSmartPrivateMessage(sender, name + " is already an operator.");
 		}
 	}
 
 	private void doCmdDisable(String sender, String codeString) {
 		
-		MoneyCode code = getCode(codeString);
+		CouponCode code = getCode(codeString);
 		if (code == null) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' not found.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' not found.");
 		}
 		else if (!code.isEnabled()) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' is already disabled.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' is already disabled.");
 		} 
 		else if (!code.isValid()) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' is not valid anymore, useless.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' is not valid anymore, useless.");
 		} 
 		else {
 			code.setEnabled(false);
 			if (updateDB(code)) {
-				m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' updated.");
+				m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' updated.");
 			} else {
-				m_botAction.sendPrivateMessage(sender, "A problem has occured while updating the code '" + codeString + "'.");
+				m_botAction.sendSmartPrivateMessage(sender, "A problem has occured while updating the code '" + codeString + "'.");
 			}
 		}
 		
@@ -259,31 +295,31 @@ public class couponbot extends SubspaceBot {
 
 	private void doCmdEnable(String sender, String codeString) {
 		
-		MoneyCode code = getCode(codeString);
+		CouponCode code = getCode(codeString);
 		if (code == null) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' not found.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' not found.");
 		}
 		else if (code.isEnabled()) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' is already enabled.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' is already enabled.");
 		} 
 		else if (!code.isValid()) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' is not valid anymore, useless.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' is not valid anymore, useless.");
 		} 
 		else {
 			code.setEnabled(true);
 			if (updateDB(code)) {
-				m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' updated.");
+				m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' updated.");
 			} else {
-				m_botAction.sendPrivateMessage(sender, "A problem has occured while updating the code '" + codeString + "'.");
+				m_botAction.sendSmartPrivateMessage(sender, "A problem has occured while updating the code '" + codeString + "'.");
 			}
 		}
 	}
 
 	private void doCmdInfo(String sender, String codeString) {
 		
-		MoneyCode code = getCode(codeString);
+		CouponCode code = getCode(codeString);
 		if (code == null) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' not found.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' not found.");
 		}
 		else {
 	    	String generation[] = new String[] {
@@ -303,9 +339,9 @@ public class couponbot extends SubspaceBot {
 	
 	private void doCmdUsers(String sender, String codeString) {
 		
-		MoneyCode code = getCode(codeString);
+		CouponCode code = getCode(codeString);
 		if (code == null) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' not found.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' not found.");
 		}
 		else {
 	    	
@@ -322,6 +358,7 @@ public class couponbot extends SubspaceBot {
 					message += " " + date;
 					m_botAction.sendSmartPrivateMessage(sender, message);
 				}
+				rs.close();
 
 				if (count == 0) {
 					m_botAction.sendSmartPrivateMessage(sender, "This code has not been used yet.");
@@ -339,16 +376,16 @@ public class couponbot extends SubspaceBot {
 		
 		String[] pieces = command.split(":");
 		if (pieces.length != 2) {
-			m_botAction.sendPrivateMessage(sender, "Bad argument");
+			m_botAction.sendSmartPrivateMessage(sender, "Bad argument");
 			return;
 		}
 		
 		String codeString = pieces[0];
 		String dateString = pieces[1];
 		
-		MoneyCode code = getCode(codeString);
+		CouponCode code = getCode(codeString);
 		if (code == null) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' not found.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' not found.");
 		}
 		else {
 	    	
@@ -357,15 +394,15 @@ public class couponbot extends SubspaceBot {
 			try {
 				date = df.parse(dateString);
 			} catch (ParseException e) {
-				m_botAction.sendPrivateMessage(sender, "Bad date");
+				m_botAction.sendSmartPrivateMessage(sender, "Bad date");
 				return;
 			}  
 			
 			code.setEndAt(date);
 			if (updateDB(code)) {
-				m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' updated.");
+				m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' updated.");
 			} else {
-				m_botAction.sendPrivateMessage(sender, "A problem has occured while updating the code '" + codeString + "'.");
+				m_botAction.sendSmartPrivateMessage(sender, "A problem has occured while updating the code '" + codeString + "'.");
 			}
 			
 		}
@@ -375,7 +412,7 @@ public class couponbot extends SubspaceBot {
 		
 		String[] pieces = command.split(":");
 		if (pieces.length != 2) {
-			m_botAction.sendPrivateMessage(sender, "Bad argument");
+			m_botAction.sendSmartPrivateMessage(sender, "Bad argument");
 			return;
 		}
 		
@@ -385,24 +422,24 @@ public class couponbot extends SubspaceBot {
 		try {
 			limit = Integer.valueOf(limitString);
 		} catch (NumberFormatException e) {
-			m_botAction.sendPrivateMessage(sender, "Bad number");
+			m_botAction.sendSmartPrivateMessage(sender, "Bad number");
 			return;
 		}
 		
-		MoneyCode code = getCode(codeString);
+		CouponCode code = getCode(codeString);
 		if (code == null) {
-			m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' not found.");
+			m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' not found.");
 		}
 		else {
 			if (limit > 0) {
 				code.setMaxUsed(limit);
 				if (updateDB(code)) {
-					m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' updated.");
+					m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' updated.");
 				} else {
-					m_botAction.sendPrivateMessage(sender, "A problem has occured while updating the code '" + codeString + "'.");
+					m_botAction.sendSmartPrivateMessage(sender, "A problem has occured while updating the code '" + codeString + "'.");
 				}
 			} else {
-				m_botAction.sendPrivateMessage(sender, "Must be a number higher than 0.");
+				m_botAction.sendSmartPrivateMessage(sender, "Must be a number higher than 0.");
 			}
 			
 		}
@@ -419,7 +456,7 @@ public class couponbot extends SubspaceBot {
 			try {
 				money = Integer.parseInt(pieces[0]);
 			} catch (NumberFormatException e) {
-				m_botAction.sendPrivateMessage(sender, "Bad number.");
+				m_botAction.sendSmartPrivateMessage(sender, "Bad number.");
 				return;
 			}
 			
@@ -442,11 +479,11 @@ public class couponbot extends SubspaceBot {
 				}
 			}
 			
-			MoneyCode code = new MoneyCode(codeString, money, sender);
+			CouponCode code = new CouponCode(codeString, money, sender);
 			if (insertDB(code)) {
-				m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' created.");
+				m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' created.");
 			} else {
-				m_botAction.sendPrivateMessage(sender, "A problem has occured while creating the code '" + codeString + "'.");
+				m_botAction.sendSmartPrivateMessage(sender, "A problem has occured while creating the code '" + codeString + "'.");
 			}
 			
 		// Custom code
@@ -458,55 +495,74 @@ public class couponbot extends SubspaceBot {
 			try {
 				money = Integer.parseInt(pieces[1]);
 			} catch (NumberFormatException e) {
-				m_botAction.sendPrivateMessage(sender, "Bad number.");
+				m_botAction.sendSmartPrivateMessage(sender, "Bad number.");
 				return;
 			}
 			
 			if (getCode(codeString) != null) {
-				m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' already exists.");
+				m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' already exists.");
 				return;
 			}
 			
-			MoneyCode code = new MoneyCode(codeString, money, sender);
+			CouponCode code = new CouponCode(codeString, money, sender);
 			if (insertDB(code)) {
-				m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' created.");
+				m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' created.");
 			} else {
-				m_botAction.sendPrivateMessage(sender, "A problem has occured while creating the code '" + codeString + "'.");
+				m_botAction.sendSmartPrivateMessage(sender, "A problem has occured while creating the code '" + codeString + "'.");
 			}
 			
 		} else {
-			m_botAction.sendPrivateMessage(sender, "Bad argument.");
+			m_botAction.sendSmartPrivateMessage(sender, "Bad argument.");
 			return;
 		}
 	}
 
 	private void doCmdCoupon(String sender, String codeString) {
 
-		MoneyCode code = getCode(codeString);
-		if (code == null || !code.isValid()) {
+		CouponCode code = getCode(codeString);
+		if (code == null) {
 			// no feedback to avoid bruteforce!!
-			// m_botAction.sendPrivateMessage(sender, "Code '" + codeString + "' not found.");
+			// m_botAction.sendSmartPrivateMessage(sender, "Code '" + codeString + "' not found.");
+		} 
+		else if (isPlayerRedeemAlready(sender, code)) {
+			m_botAction.sendSmartPrivateMessage(sender, "You have already used this code.");
+			return;
+		} 
+		else if (!code.isValid()) {
+			// no feedback to avoid bruteforce!!
+			return;
 		}
 		else {
-			
-			// +1 used
-			code.setUsed(code.getUsed()+1);
-			if (code.getUsed() == code.getMaxUsed())
-				code.setEnabled(false);
-			
-			if (updateDB(code)) {
-				
-				updateHistoryDB(sender, code);
-				giveMoney(sender, code.getMoney());
 
-			} else {
-				m_botAction.sendPrivateMessage(sender, "A problem has occured. Please contact someone from the staff by using ?help");
-			}
+			// We send an IPC Message to pubsystem
+			// pubsystem need to answer back with a success or error
+			// if success, we send a PM to the player and update the DB
+			sendIPCMoney(sender, code);
 			
 		}
 	}
 	
-	private boolean insertDB(MoneyCode code) {
+	private boolean isPlayerRedeemAlready(String playerName, CouponCode code) {
+		
+		ResultSet rs;
+		try {
+			rs = m_botAction.SQLQuery(database, "SELECT * FROM tblMoneyCodeUsed WHERE fnMoneyCodeId = '" + code.getId() + "' AND fcName = '" + Tools.addSlashes(playerName) + "'");
+			if (rs.first()) {
+				rs.close();
+				return true;
+			} else {
+				rs.close();
+				return false;
+			}
+			
+		} catch (SQLException e) {
+			Tools.printStackTrace(e);
+			return false;
+		}
+		
+	}
+	
+	private boolean insertDB(CouponCode code) {
 		
 		String startAtString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(code.getStartAt());
 		String endAtString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(code.getEndAt());
@@ -536,7 +592,7 @@ public class couponbot extends SubspaceBot {
 		
 	}
 	
-	private boolean updateDB(MoneyCode code) {
+	private boolean updateDB(CouponCode code) {
 		
 		String startAtString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(code.getStartAt());
 		String endAtString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(code.getEndAt());
@@ -560,7 +616,7 @@ public class couponbot extends SubspaceBot {
 		
 	}
 
-	private MoneyCode getCode(String codeString) {
+	private CouponCode getCode(String codeString) {
     	
 		try {
 			
@@ -579,7 +635,7 @@ public class couponbot extends SubspaceBot {
 				Date endAt = rs.getDate("fdEndAt");
 				Date createdAt = rs.getDate("fdCreated");
 				
-				MoneyCode code = new MoneyCode(codeString, money, createdAt, createdBy);
+				CouponCode code = new CouponCode(codeString, money, createdAt, createdBy);
 				code.setId(id);
 				code.setDescription(description);
 				code.setEnabled(enabled);
@@ -587,10 +643,11 @@ public class couponbot extends SubspaceBot {
 				code.setStartAt(startAt);
 				code.setEndAt(endAt);
 				code.setUsed(used);
-				
+				rs.close();
 				return code;
 			}
 			else {
+				rs.close();
 				return null;
 			}
 			
@@ -602,7 +659,7 @@ public class couponbot extends SubspaceBot {
     	
     }
     
-    private void updateHistoryDB(String playerName, MoneyCode code) {
+    private void updateHistoryDB(String playerName, CouponCode code) {
 
 		// Record this endorsement
 		try {
@@ -615,18 +672,13 @@ public class couponbot extends SubspaceBot {
 				
     }
     
-    private void giveMoney(String playerName, int money) {
+    private void sendIPCMoney(String playerName, CouponCode code) {
     	
-    	// IPC, Protocol>   addmoney:<name>:<money>
-    	m_botAction.sendPrivateMessage(playerName, "Please wait..");
-    	String message = "addmoney:" + playerName + ":" + money;
+    	// Protocol>   coupon:<code>:<name>:<money>
+    	m_botAction.sendSmartPrivateMessage(playerName, "Please wait..");
+    	String message = "coupon:" + code.getCode() + ":" + playerName + ":" + code.getMoney();
     	m_botAction.ipcSendMessage(IPC_CHANNEL, message, null, null);
-    	
-    	/*
-		m_botAction.SQLBackgroundQuery(database, "", "UPDATE tblPlayerStats "
-				+ "SET fnMoney = fnMoney+" + Math.abs(money) + " "
-				+ "WHERE fcName='" + playerName + "'");
-		*/
+
     }
     
     private String getSender(Message event)
