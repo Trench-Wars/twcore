@@ -69,7 +69,6 @@ public class couponbot extends SubspaceBot {
             return;
 
         if (event.getMessageType() == Message.PRIVATE_MESSAGE 
-        		|| event.getMessageType() == Message.PUBLIC_MESSAGE
         		|| event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
         	
         	handleCommand(sender, message, event.getMessageType());
