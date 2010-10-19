@@ -96,6 +96,8 @@ public class couponbot extends SubspaceBot {
     	if (event.getObject() instanceof IPCMessage) {
     		
     		IPCMessage ipc = (IPCMessage) event.getObject();
+    		if (!ipc.getRecipient().equals("couponbot"))
+    			return;
 
     		if (ipc.getMessage().startsWith("couponsuccess:")) {
     			
