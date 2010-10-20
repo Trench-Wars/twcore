@@ -681,7 +681,7 @@ public class couponbot extends SubspaceBot {
     	// Protocol>   coupon:<code>:<name>:<money>
     	m_botAction.sendSmartPrivateMessage(playerName, "Please wait..");
     	String message = "coupon:" + code.getCode() + ":" + playerName + ":" + code.getMoney();
-    	m_botAction.ipcSendMessage(IPC_CHANNEL, message, null, null);
+    	m_botAction.ipcSendMessage(IPC_CHANNEL, message, "pubsystem", "couponbot");
 
     }
     
