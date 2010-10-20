@@ -11,6 +11,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -37,10 +38,13 @@ public class couponbot extends SubspaceBot {
 	private String database;
 	
 	private HashSet<String> operators;
+	
+	private HashMap<String,Long> history; 
 
 	public couponbot(BotAction botAction) {
 		super(botAction);
 		requestEvents();
+		history = new HashMap<String,Long>();
 	}
 
     public void requestEvents() {
@@ -106,6 +110,16 @@ public class couponbot extends SubspaceBot {
     			String[] pieces = ipc.getMessage().split(":");
     			String codeString = pieces[1];
     			String name = pieces[2];
+    			
+    			if (history.containsKey(name+":"+codeString)) {
+    				long time = history.get(name+":"+codeString);
+    				if (System.currentTimeMillis()-time < 2*Tools.TimeInMillis.SECOND) {
+    					// The bot get spammed by the sender with the same message
+    					// It happens on TW but not TW Dev for some reason..
+    					// Weird!!
+    					return;
+    				}
+    			}
 
     			CouponCode code = getCode(codeString);
     			
@@ -117,9 +131,12 @@ public class couponbot extends SubspaceBot {
     			if (updateDB(code)) {
     				updateHistoryDB(name, code);
     				m_botAction.sendSmartPrivateMessage(name, "$" + code.getMoney() + " has been added to your account.");
+ 
     			} else {
     				m_botAction.sendSmartPrivateMessage(name, "A problem has occured. Please contact someone from the staff by using ?help");
     			}
+    			
+    			history.put(name+":"+codeString, System.currentTimeMillis());
     			
     		} else if (ipc.getMessage().startsWith("couponerror")) {
     			
