@@ -97,54 +97,56 @@ public class couponbot extends SubspaceBot {
     }
     
     public void handleEvent(InterProcessEvent event) {
+    	
     	if (event.getObject() instanceof IPCMessage) {
     		
     		IPCMessage ipc = (IPCMessage) event.getObject();
     		if (ipc.getRecipient() == null)
     			return;
-    		if (!ipc.getRecipient().equals("couponbot"))
-    			return;
-
-    		if (ipc.getMessage().startsWith("couponsuccess:")) {
-    			
-    			String[] pieces = ipc.getMessage().split(":");
-    			String codeString = pieces[1];
-    			String name = pieces[2];
-    			
-    			if (history.containsKey(name+":"+codeString)) {
-    				long time = history.get(name+":"+codeString);
-    				if (System.currentTimeMillis()-time < 2*Tools.TimeInMillis.SECOND) {
-    					// The bot get spammed by the sender with the same message
-    					// It happens on TW but not TW Dev for some reason..
-    					// Weird!!
-    					return;
-    				}
-    			}
-
-    			CouponCode code = getCode(codeString);
-    			
-    			// +1 used
-    			code.setUsed(code.getUsed()+1);
-    			if (code.getUsed() == code.getMaxUsed())
-    				code.setEnabled(false);
-    			
-    			if (updateDB(code)) {
-    				updateHistoryDB(name, code);
-    				m_botAction.sendSmartPrivateMessage(name, "$" + code.getMoney() + " has been added to your account.");
- 
-    			} else {
-    				m_botAction.sendSmartPrivateMessage(name, "A problem has occured. Please contact someone from the staff by using ?help");
-    			}
-    			
-    			history.put(name+":"+codeString, System.currentTimeMillis());
-    			
-    		} else if (ipc.getMessage().startsWith("couponerror")) {
-    			
-    			String[] pieces = ipc.getMessage().split(":");
-    			String codeString = pieces[1];
-    			String name = pieces[2];
-    			
-    			m_botAction.sendSmartPrivateMessage(name, "A problem has occured. Please contact someone from the staff by using ?help");
+    		
+    		if (ipc.getRecipient().equals("couponbot") && ipc.getSender().equals("pubsystem")) 
+    		{
+	    		if (ipc.getMessage().startsWith("couponsuccess:")) {
+	    			
+	    			String[] pieces = ipc.getMessage().split(":");
+	    			String codeString = pieces[1];
+	    			String name = pieces[2];
+	    			
+	    			if (history.containsKey(name+":"+codeString)) {
+	    				long time = history.get(name+":"+codeString);
+	    				if (System.currentTimeMillis()-time < 2*Tools.TimeInMillis.SECOND) {
+	    					// The bot get spammed by the sender with the same message
+	    					// It happens on TW but not TW Dev for some reason..
+	    					// Weird!!
+	    					return;
+	    				}
+	    			}
+	
+	    			CouponCode code = getCode(codeString);
+	    			
+	    			// +1 used
+	    			code.setUsed(code.getUsed()+1);
+	    			if (code.getUsed() == code.getMaxUsed())
+	    				code.setEnabled(false);
+	    			
+	    			if (updateDB(code)) {
+	    				updateHistoryDB(name, code);
+	    				m_botAction.sendSmartPrivateMessage(name, "$" + code.getMoney() + " has been added to your account.");
+	 
+	    			} else {
+	    				m_botAction.sendSmartPrivateMessage(name, "A problem has occured. Please contact someone from the staff by using ?help");
+	    			}
+	    			
+	    			history.put(name+":"+codeString, System.currentTimeMillis());
+	    			
+	    		} else if (ipc.getMessage().startsWith("couponerror")) {
+	    			
+	    			String[] pieces = ipc.getMessage().split(":");
+	    			String codeString = pieces[1];
+	    			String name = pieces[2];
+	    			
+	    			m_botAction.sendSmartPrivateMessage(name, "A problem has occured. Please contact someone from the staff by using ?help");
+	    		}
     		}
     	}
     }
