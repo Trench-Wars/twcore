@@ -1663,9 +1663,9 @@ class Channel
 			if(level > 0)
 			{
 			    // sends a ?message to all players in channel
-			    m_bA.sendUnfilteredPublicMessage("?message " + player +
+			    /*m_bA.sendUnfilteredPublicMessage("?message " + player +
                 ":You have new messages, type :MessageBot:!read to check them!");
-			    
+			    */
 			    numMsgd++;
 				leaveMessage(name, player, message);
 				m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
