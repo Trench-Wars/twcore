@@ -1,5 +1,6 @@
 package twcore.bots.pracbot;
 
+import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.StringTokenizer;
@@ -8,10 +9,12 @@ import java.util.Vector;
 import java.util.Iterator;
 
 import twcore.bots.pracbot.Projectile;
+import twcore.bots.pubsystem.PubContext;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.Message;
 import twcore.core.events.WeaponFired;
 import twcore.core.events.LoggedOn;
@@ -43,6 +46,11 @@ public class pracbot extends SubspaceBot {
 	Vector<RepeatFireTimer> repeatFireTimers = new Vector<RepeatFireTimer>();
     
 	boolean isAiming = false, isSpawning = false;
+	
+	boolean isFollowing = false;
+	private String target;
+	private int[] lastPosition = new int[]{ 0, 0 };
+	
 	int botX, botY, botFreq;
 	
 	String[] helpmsg = {
@@ -64,6 +72,7 @@ public class pracbot extends SubspaceBot {
 		"!unattach          -- don't understand? this bot isn't for you",
 		"!setaccuracy #     -- set difficulty(0-5) 0 being the highest",
 		"!move # # # #      -- move bot to coords (#,#) velocity (#,#)",
+		"!follow <optional> -- follow the first player on sight (5 tiles) or via <name>",
 		"!spec				-- puts the bot into spectator mode.",
 		"Standard Bot Commands:",
 		"!go <arena>		-- sends the bot to <arena>",
@@ -86,9 +95,28 @@ public class pracbot extends SubspaceBot {
     
     public void handleEvent(LoggedOn event) {
     	opList = m_botAction.getOperatorList();       
-    	m_botAction.joinArena(m_botSettings.getString("Arena"));
+    	try {
+			m_botAction.joinArena(m_botSettings.getString("Arena"),(short)3392,(short)3392);
+		} catch (Exception e) {
+			m_botAction.joinArena(m_botSettings.getString("Arena"));
+		}
     	m_botAction.ipcSubscribe("tutorbots");
     	m_botAction.ipcSendMessage("tutorbots", "open", null, m_botAction.getBotName());
+		m_botAction.setPlayerPositionUpdating(200);
+    }
+
+    public void handleEvent(ArenaJoined event) {
+    	
+    	String onStart = m_botSettings.getString("OnStart"+m_botAction.getBotNumber());
+    	if (onStart != null) {
+    		
+    		String[] commands = onStart.split(",");
+    		for(String command: commands) {
+    			handleCommand("null", command.trim());
+    		}
+    		
+    	}
+    	
     }
     
     public void handleEvent(InterProcessEvent event){
@@ -117,6 +145,7 @@ public class pracbot extends SubspaceBot {
         req.request(EventRequester.LOGGED_ON);
         req.request(EventRequester.PLAYER_POSITION);
         req.request(EventRequester.PLAYER_DEATH);
+        req.request(EventRequester.ARENA_JOINED);
         req.request(EventRequester.PLAYER_LEFT);
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
     }
@@ -150,24 +179,82 @@ public class pracbot extends SubspaceBot {
 	}
     
     public void handleEvent(PlayerPosition event) {
+    	
     	if(m_botAction.getShip().getShip() == 8)return;
     	Player p = m_botAction.getPlayer(event.getPlayerID());
-        if(p == null || !isAiming || (p.getFrequency() == botFreq))return;
+        if(p == null || !isAiming /*|| (p.getFrequency() == botFreq)*/)return;
         double diffY, diffX, angle;
     	diffY = (event.getYLocation() + (event.getYVelocity() * REACTION_TIME)) - botY;
     	diffX = (event.getXLocation() + (event.getXVelocity() * REACTION_TIME)) - botX;
     	angle = (180 - (Math.atan2(diffX, diffY)*180/Math.PI)) * SS_CONSTANT;
-    	doFaceCmd(m_botAction.getBotName(), Double.toString(angle));
+    	
+    	if (!isFollowing)
+    		doFaceCmd(m_botAction.getBotName(), Double.toString(angle));
+    	
+    	if (isFollowing) {
+    		
+    		if (target != null && !target.equals(p.getPlayerName()))
+    			return;
+
+    		int pX = (int)((event.getXLocation() + (event.getXVelocity() * REACTION_TIME))/16);
+    		int pY = (int)((event.getYLocation() + (event.getYVelocity() * REACTION_TIME))/16);
+    	
+    		int bX = (int)(m_botAction.getShip().getX()/16);
+    		int bY = (int)(m_botAction.getShip().getY()/16);
+    		
+    		// Distance between the player and the bot
+    		int d = (int)(Math.sqrt((pX-bX)*(pX-bX) + (pY-bY)*(pY-bY)));
+
+    		if (target == null && d < 10) {
+    			target = p.getPlayerName();
+    		} else if (target == null) {
+    			return;
+    		}
+    		
+    		// Adjust the percentage for X/Y velocity
+    		// Quick and dirty.. feel free to optimize it in 1 line of code
+    		double pctX = Math.abs(diffX)/(Math.abs(diffX)+Math.abs(diffY));
+    		double pctY = Math.abs(diffY)/(Math.abs(diffX)+Math.abs(diffY));
+    		if (diffX>0 && diffY>0) {
+    			pctX *= 1;
+    			pctY *= 1;
+    		} else if (diffX>0 && diffY<0) {
+    			pctX *= 1;
+    			pctY *= -1;
+    		} else if (diffX<0 && diffY<0) {
+    			pctX *= -1;
+    			pctY *= -1;
+    		} else if (diffX<0 && diffY>0) {
+    			pctX *= -1;
+    			pctY *= 1;
+    		}
+    		
+    		// Accelerate the velocity if the player is far
+    		// Works only with the TW settings
+    		double pctD = Math.min((int)Math.pow(1.075, d), 8);
+ 
+    		// Compute the real velocity to apply
+    		int vX = (int)(1000*pctX*pctD);
+    		int vY = (int)(1000*pctY*pctD);
+
+    		m_botAction.getShip().setVelocitiesAndDir(vX, vY, (int)angle);
+    		
+    	}
     }
     
     public void update(){
     	botX = m_botAction.getShip().getX();
  		botY = m_botAction.getShip().getY();
+
      	if(turret == -1){
      		ListIterator<Projectile> it = fired.listIterator();
      		while (it.hasNext()) {
      			Projectile b = (Projectile) it.next();     			
      			if (b.isHitting(botX, botY)) {
+     				
+     				if (m_botAction.getPlayer(b.getOwner()).getFrequency()==botFreq)
+     					return;
+     			
      				if(!isSpawning){
      					spawned = new TimerTask(){
      						public void run(){
@@ -238,6 +325,8 @@ public class pracbot extends SubspaceBot {
 			doDropBrickCmd(msg.substring(7));
 		else if(msg.equalsIgnoreCase("!brick"))
 			doDropBrickWhereBotIsCmd();
+		else if(msg.startsWith("!follow"))
+			doFollowOnSightCmd(msg.substring(7));
 		else if(msg.equalsIgnoreCase("!aim"))
 			doAimCmd();
 		else if(msg.startsWith("!attach "))
@@ -289,6 +378,16 @@ public class pracbot extends SubspaceBot {
     
     public void doAimCmd(){
     	isAiming = !isAiming;
+    }
+    
+    public void doFollowOnSightCmd(String name) {
+    	isFollowing = !isFollowing;
+    	if (isFollowing) {
+    		isAiming = true;
+    		if (!name.isEmpty())
+    			target = name.trim();
+    	}
+    	System.out.println(target);
     }
     
     private void doDieCmd(String sender) {
