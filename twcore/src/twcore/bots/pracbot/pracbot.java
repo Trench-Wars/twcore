@@ -387,7 +387,6 @@ public class pracbot extends SubspaceBot {
     		if (!name.isEmpty())
     			target = name.trim();
     	}
-    	System.out.println(target);
     }
     
     private void doDieCmd(String sender) {
