@@ -47,8 +47,8 @@ public class polls extends MultiUtil {
 				"|                               - TWScript <msg> that's sent to the bot if it wins.   |",
 				"| !removepoll <poll>            - Removes <poll> and all of its options.              |",
 				"| !removepoll <poll>:<index>    - Removes option at index <index> on poll <poll>      |",
-				"| !poll <poll> d:h:m:s          - Starts poll <poll> which will end in d:h:m:s        |",
-				"| !poll <poll> MM:DD:YYYY:h:m:s - Starts poll <poll> which will end at a specific date|",
+				"| !poll <poll>:d:h:m:s          - Starts poll <poll> which will end in d:h:m:s        |",
+				"| !poll <poll>:MM:DD:YYYY:h:m:s - Starts poll <poll> which will end at a specific date|",
 				"| !cancelpoll <poll>            - Cancels the timer and removes votes for <poll>      |",
 				"| !vote <poll>:<#>              - Votes for option <#> on poll <poll>.                |",
 				"| !results <poll>               - Displays the results of an ended poll.              |",
@@ -212,9 +212,9 @@ public class polls extends MultiUtil {
 	}
 	
 	public void do_poll(String name, String message){
-		int index = message.indexOf(" ");
+		int index = message.indexOf(":");
         if (index == -1) {
-        	m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !poll <Poll> <Days>:<Hours>:<Minutes>:<Seconds>");
+        	m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !poll <Poll>:<Days>:<Hours>:<Minutes>:<Seconds>");
         	return;
         }
         String poll = message.substring(0, index);
@@ -232,7 +232,7 @@ public class polls extends MultiUtil {
         	for(int i=0;i<timeString.length;i++)
         		time[i] = Integer.parseInt(timeString[i]);
         }catch(NumberFormatException e){
-        	m_botAction.sendSmartPrivateMessage( name, "Incorrect Usage. Example: !poll favcolor 0:0:2:0");
+        	m_botAction.sendSmartPrivateMessage( name, "Incorrect Usage. Example: !poll favcolor:0:0:2:0");
         	return;
         }
         if(time.length == 4)
@@ -242,7 +242,7 @@ public class polls extends MultiUtil {
             cal.set( time[2], time[0]-1, time[1], time[3], time[4], time[5]);
             polls.get(poll).schedule(cal);
         }else
-        	m_botAction.sendSmartPrivateMessage( name, "Incorrect Usage. Example: !poll favcolor 0:0:2:0");	
+        	m_botAction.sendSmartPrivateMessage( name, "Incorrect Usage. Example: !poll favcolor:0:0:2:0");	
 	}
 
 	public void do_cancelPoll(String name, String message){
@@ -343,12 +343,11 @@ private class CustomPoll {
 				max = x;
 				winners.clear();
 				winners.add(index);
-				index++;
 			}
 			else if( x == max && max != 0) {
 			    winners.add(index);
-			    index++;
 			}
+            index++;
 		}
 		results.clear();
 		if(winners.isEmpty()){
@@ -410,6 +409,8 @@ private class CustomPoll {
 			}
 		};
 		results.clear();
+		playerVotes.clear();
+		updateVotes();
 		m_botAction.scheduleTask(task, startTime);
 		setSchedule(startTime, (new Date()).getTime());
 		m_botAction.arenaMessageSpam(this.toStringArray());
@@ -431,6 +432,8 @@ private class CustomPoll {
 			}
 		};
 		results.clear();
+        playerVotes.clear();
+        updateVotes();
 		m_botAction.scheduleTask(task, cal.getTimeInMillis() - System.currentTimeMillis());
 		m_botAction.arenaMessageSpam(this.toStringArray());
 		this.cal = cal;
