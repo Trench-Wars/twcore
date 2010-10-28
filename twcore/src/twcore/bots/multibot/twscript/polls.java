@@ -62,13 +62,16 @@ public class polls extends MultiUtil {
 		String message = event.getMessage();
 		String name = event.getMessager() == null ? m_botAction.getPlayerName(event.getPlayerID()) : event.getMessager();
 		int messageType = event.getMessageType();
-		if(name == null || m_twscript == null)return;
-		if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE){
+		if (m_twscript == null) return;
+		else if(messageType == Message.ARENA_MESSAGE && message.startsWith("IP:")) {
+		    parseIP(message);
+	    }
+		else if(name == null) return;
+		else if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE){
 			if(opList.getAccessLevel(name) >= m_twscript.ACCESS_LEVEL || name.equalsIgnoreCase(m_botAction.getBotName()))
 				handleERCommands(name, message);
 			handlePubCommands(name, message);
-		} else if(messageType == Message.ARENA_MESSAGE && message.startsWith("IP:"))
-			parseIP(message);
+		}
 	}
 	
 	public void handleERCommands(String name, String cmd){
@@ -340,9 +343,12 @@ private class CustomPoll {
 				max = x;
 				winners.clear();
 				winners.add(index);
+				index++;
 			}
-			else if( x == max && max != 0) winners.add(index);
-			index++;
+			else if( x == max && max != 0) {
+			    winners.add(index);
+			    index++;
+			}
 		}
 		results.clear();
 		if(winners.isEmpty()){
