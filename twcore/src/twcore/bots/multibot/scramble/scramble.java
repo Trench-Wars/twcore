@@ -433,6 +433,7 @@ public class scramble extends MultiModule {
                     }
                 }
                 curPoints--;
+                m_botAction.sendSmartPrivateMessage(name, m_prec + "----------------------------");
             }
         }
     }
