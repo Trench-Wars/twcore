@@ -767,7 +767,12 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendUnfilteredPublicMessage( "?ban -a3 -e30 " + name );
                 m_botAction.sendChatMessage( "Staffer \"" + name + "\" has been banned for abuse." );
                 m_playerList.remove( name );
-            } else if( opList.isBot( name ) ){
+            } else if( !opList.isSmod(playerName) ){
+                m_botAction.sendChatMessage("Are you nuts? Just Smods+ can ban a staff member");
+            } else if( opList.isSysop(name)){
+                m_botAction.sendChatMessage("Are you nuts? You can't ban a Sysop+");
+            }
+            else if( opList.isBot( name ) ){
                 m_botAction.sendChatMessage( "Are you nuts?  You can't ban a staff member!" );
             } else {
                 helpRequest = m_playerList.get( name.toLowerCase() );
