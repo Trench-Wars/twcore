@@ -467,7 +467,7 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendChatMessage( "..." );
         } else {
             m_botAction.sendChatMessage( "I'll take it!" );
-            m_botAction.sendRemotePrivateMessage( playerName, helpRequest.getNextResponse() );
+            m_botAction.remotePrivateMessageSpam( playerName, helpRequest.getNextResponse() );
 
             if( helpRequest.hasMoreResponses() == false ){
                 helpRequest.setAllowSummons( true );
@@ -479,7 +479,7 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleNext( String playerName, String message ){
-        String          response;
+        String[]        response;
         HelpRequest     helpRequest;
 
         helpRequest = m_playerList.get( playerName.toLowerCase() );
@@ -493,7 +493,7 @@ public class robohelp extends SubspaceBot {
                     helpRequest.setAllowSummons( true );
                     m_botAction.sendRemotePrivateMessage( playerName, "I have no further information.  If you still need help, message me with !summon to get live help." );
                 } else {
-                    m_botAction.sendRemotePrivateMessage( playerName, response );
+                    m_botAction.remotePrivateMessageSpam( playerName, response );
                     if( helpRequest.hasMoreResponses() == false ){
                         m_botAction.sendRemotePrivateMessage( playerName, "If this is not helpful, type :" + m_botAction.getBotName() + ":!summon to request live help." );
                     } else {
@@ -824,7 +824,7 @@ public class robohelp extends SubspaceBot {
                     helpRequest.setAllowSummons( false );
                     m_botAction.sendRemotePrivateMessage( name, "I believe that the previous "
                             +"response you received was a sufficient answer to your question." );
-                    m_botAction.sendRemotePrivateMessage( name, helpRequest.getFirstResponse() );
+                    m_botAction.remotePrivateMessageSpam( name, helpRequest.getFirstResponse() );
                     m_botAction.sendChatMessage( "The last response has been repeated to " + name );
                 } else {
                     m_botAction.sendChatMessage( "Error repeating response to '" + name + "': response not found.  Please address this call manually.");
@@ -1197,7 +1197,7 @@ public class robohelp extends SubspaceBot {
 
     private int indexNotOf(String string, char target, int fromIndex)
     {
-      for(int index = fromIndex; index < string.length() || index < 0; index++)
+      for(int index = fromIndex; index < string.length(); index++)
         if (string.charAt(index) != target)
           return index;
       return -1;
@@ -1208,6 +1208,9 @@ public class robohelp extends SubspaceBot {
       if(fromIndex + LINE_SIZE > string.length())
         return string.length();
       int breakIndex = string.lastIndexOf((int) ' ', fromIndex + LINE_SIZE);
+      if ("?".equals(string.substring(breakIndex+1, breakIndex+2)) || "*".equals(string.substring(breakIndex+1, breakIndex+2))) {
+          breakIndex = string.lastIndexOf((int) ' ', fromIndex + LINE_SIZE - 3);
+      }
       if(breakIndex == -1)
         return fromIndex + LINE_SIZE;
       return breakIndex;
@@ -1226,8 +1229,8 @@ public class robohelp extends SubspaceBot {
         breakIndex = getBreakIndex(response, startIndex);
       }
       return formattedResp.toArray(new String[formattedResp.size()]);
-    }
-
+    }   
+    
     private void displayResponses(String name, String[] responses)
     {
       for(int counter = 0; counter < responses.length; counter++)
@@ -1331,28 +1334,28 @@ public class robohelp extends SubspaceBot {
             return m_responses;
         }
 
-        public String getFirstResponse(){
+        public String[] getFirstResponse(){
 
             if( m_responses == null ){
                 return null;
             } else {
                 if( m_responses.length != 0 )
-                    return m_responses[0];
+                    return formatResponse(m_responses[0]);
                 else
                     return null;
             }
         }
 
-        public String getLastResponse(){
+        public String[] getLastResponse(){
 
             if( m_nextResponse <= 0 || m_responses == null ){
                 return null;
             } else {
-                return m_responses[m_nextResponse - 1];
+                return formatResponse(m_responses[m_nextResponse - 1]);
             }
         }
 
-        public String getNextResponse(){
+        public String[] getNextResponse(){
 
             if( m_responses == null ){
                 return null;
@@ -1361,10 +1364,10 @@ public class robohelp extends SubspaceBot {
             if( m_nextResponse >= m_responses.length ){
                 return null;
             } else {
-                return m_responses[m_nextResponse++];
+                return formatResponse(m_responses[m_nextResponse++]);
             }
         }
-
+        
         public boolean hasMoreResponses(){
 
             if( m_responses == null ){
