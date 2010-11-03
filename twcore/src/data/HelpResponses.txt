@@ -225,8 +225,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Squad &Map|In order to get your squad map up, the squad must have 10 or more ACTIVE members and be a valid squad for at least 3 months (6 server scoreresets) and be actively playing in one of the leagues (TWL or TWD). Also, squad maps can not use .lvz in them however, we can enable a LVZ that is already on the server (such as miniset). Email maps to: twmaps@hotmail.com
 &Zone &Make &How|For information on how to make a zone, please refer to: http://www.shanky.com/server.
 &Zone &Create &How|For information on how to make a zone, please refer to: http://www.shanky.com/server.
-&Submit &Map &How|To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  maps@twdev.org.
-&Submit &Maps &How|To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  maps@twdev.org.
+&Submit &Map &How|To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
+&Submit &Maps &How|To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
 &Warbird &What|The Warbird (Ship 1), or WB, is primarily a dueling ship.  It is relatively fast and maneuverable and has bullets that can kill in one hit.  To switch to a Warbird, press <Esc> followed by <1>.
 &Wb &What|The Warbird (Ship 1), or WB, is primarily a dueling ship.  It is relatively fast and maneuverable and has bullets that can kill in one hit.  To switch to a Warbird, press <Esc> followed by <1>.
 &Javelin &What|The Javelin (Ship 2), or Jav, is an attack bomber.  It shoots a bomb that can bounce once and weak bullets out of its back.  To switch to a Javelin, press <Esc> followed by <2>.
@@ -412,6 +412,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &What &Shanky &Site|The Shanky Server website is: http://www.shanky.com/server.
 &What &TWEL &Website|The TWEL Website is: http://www.trenchwars.org/TWEL.
 &What &TWEL &Site|The TWEL Website is: http://www.trenchwars.org/TWEL.
+&Donate &How|To donate to the Trench Wars fund, http://www.trenchwars.org/donations
+&What &Donation|Beer addictions are expensive. And so is hosting a server, advertizing and organizing cash events. So donate now to support your zone ! Visit www.trenchwars.org/donations for more information.
 &What &PlayerGuide &Site|For all basics about playing Continuum, check out the Player Help Guide: http://www.trenchwars.org/index.php?v=gethelp&id=2
 &New &38 &What +0.38|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
 &Different &38 &What +0.38|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
@@ -492,6 +494,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Dezmond &Who|Dezmond is the guy that is blamed for everything bad that happens.......Dezmond> i didn't do it :(
 &Witness &Who|I bet your Mommy still thinks your cute. ROFL Your Mom is one funny person. 
 &Warthog &Who|Warthog is a benighted ninja dwarf searching for his wife's true killer. She's a disco-crazy kleptomaniac doctor with the power to bend men's minds. They fight crime!
+&Zazu &Who|Zazu needs your money as he is addicted to beer. So go to www.trenchwars.org/donations and donate NOW!
 
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
