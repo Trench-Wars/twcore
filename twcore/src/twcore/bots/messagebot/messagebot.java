@@ -266,7 +266,7 @@ public class messagebot extends SubspaceBot
     	}
     	
     	Channel c = channels.get(channel);
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || c.isOp(name) || ops.contains(name.toLowerCase()))
     	{
 	    	if(c.leaveChannel(pieces[1], true)) 
 	    	{
