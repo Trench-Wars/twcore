@@ -35,16 +35,20 @@ public class victim extends MultiModule {
     int m_freqTwo;
     int m_killCount;
     int m_time;    // in seconds
+    int specPlayers;
+    int ship;
     String bombPlayer;
 
     boolean isRunning = false;
     boolean modeSet = false;
     
-    public void setMode( int _freqOne, int _freqTwo, int _killCount, int _time ){
+    public void setMode( int _freqOne, int _freqTwo, int _killCount, int _time, int _specPlayers, int _ship ){
         m_freqOne = _freqOne;
         m_freqTwo = _freqTwo;
         m_killCount = _killCount;
         m_time = _time;
+        specPlayers = _specPlayers;
+        ship = _ship;
         modeSet = true;
     }
     
@@ -86,16 +90,23 @@ public class victim extends MultiModule {
     
     public void startGame( String name, String[] params ) {
         try{
-            if( params.length == 4 ){
+            
+            if( params.length == 6 ){
                 int _freqOne = Integer.parseInt(params[0]);
                 int _freqTwo = Integer.parseInt(params[1]);
                 int _killCount = Integer.parseInt(params[2]);
                 int _time = Integer.parseInt(params[3]);
+                int _specPlayers = Integer.parseInt(params[4]);
+                int _ship = Integer.parseInt(params[5]);
                 if(_time < 10)
                     _time = 10;
                 if(_killCount <= 0)
                     _killCount = 1;
-                setMode( _freqOne, _freqTwo, _killCount, _time );
+                if(_specPlayers <= 0)
+                    _specPlayers = 10;
+                if(_ship <= 0)
+                    _ship = 1;
+                setMode( _freqOne, _freqTwo, _killCount, _time, _specPlayers, _ship );
                 isRunning = true;
                 modeSet = true;                
             }
@@ -116,11 +127,9 @@ public class victim extends MultiModule {
     public void handleModCommand( String name, String message ) {
         try {
             if( message.startsWith("!start ") ) {
-                String[] params = message.substring(7).split(" ");
-                startGame(name, params);
-                doPreGame(name);
+                doCustomGame(name, message);
             } else if( message.equals("!start") ) {
-                setMode( 0, 1, 1, 15 );
+                setMode( 0, 1, 1, 15, 10, 1 );
                 doPreGame(name);
             } else if( message.equals("!stop") ) {
                 m_botAction.sendPrivateMessage( name, "Victim mode stopped" );
@@ -131,6 +140,19 @@ public class victim extends MultiModule {
         } catch(Exception e) {}
     }
     
+    public void doCustomGame(String name, String message) {
+        String[] params = message.substring(7).split(":");
+        for(String e:params)
+            if(e.contains(" ")) {
+                m_botAction.sendSmartPrivateMessage(name, "Syntax error! Please use ("+":)");
+                //setMode( 0, 1, 1, 15, 10, 1);
+                return;
+            }
+         startGame(name, params);
+        doPreGame(name);
+        
+}
+
     public void doPreGame( String name ) {
         if(!checkEnoughPlayers()) {
             m_botAction.sendSmartPrivateMessage(name, "Must have atleast two players playing!");
@@ -138,9 +160,11 @@ public class victim extends MultiModule {
         }
         m_botAction.scoreResetAll();
         m_botAction.setAlltoFreq(m_freqOne);
+        m_botAction.changeAllShips( ship );
         m_botAction.arenaMessageSpam(displayIntro());
         m_botAction.sendArenaMessage("-- Victim needs: " + Integer.toString(m_killCount) + " kill(s) in " + 
                                         Integer.toString(m_time) + " seconds.");
+        m_botAction.sendArenaMessage("-- Victim & Bomber has: " + Integer.toString(specPlayers) + " death(s)");
         m_botAction.sendArenaMessage("-- This event will begin in 10 seconds...", 2);
         m_botAction.sendUnfilteredPublicMessage("*lock");
         
@@ -154,7 +178,7 @@ public class victim extends MultiModule {
                 getRandomPlayer();
                 if(isRunning) {
                     m_botAction.sendSmartPrivateMessage(bombPlayer, "You have " + m_time + " seconds to get rid of the bomb!");
-                    m_botAction.sendArenaMessage("-- " + bombPlayer + " has the bomb!", 104);
+                    m_botAction.sendArenaMessage("-- " + bombPlayer + " has the bomb!", 2);
                     m_botAction.prizeAll(7);
                 }
             }
@@ -170,7 +194,8 @@ public class victim extends MultiModule {
     public void getRandomPlayer() {
         Player p;
         StringBag randomPlayerBag = new StringBag();
-        //int freqOne_SIZE = m_botAction.getPlayingFrequencySize(freqOne);
+        //int freqOne_SIZE = m_botAction.getPlayingFrequencySize(m_freqOne);
+        //int freqTwo_SIZE = m_botAction.getPlayingFrequencySize(m_freqTwo);
 
         //if(freqOne_SIZE < 2) {
         //    m_botAction.sendArenaMessage("-- This game has been cancelled due to the lack of players.");
@@ -201,16 +226,20 @@ public class victim extends MultiModule {
         if(bombPlayer.equalsIgnoreCase(m_botAction.getBotName()))
             getRandomPlayer();
         m_botAction.setFreq(bombPlayer, m_freqTwo);
+        
+
+        m_botAction.sendSmartPrivateMessage(bombPlayer, "Haha! GG! You have the bomb!");
+     
     }
     
     public void pickPlayer( String _player ) {
         String prevPlayer = bombPlayer;
         bombPlayer = _player;
         m_botAction.setFreq(prevPlayer, m_freqOne);
-        m_botAction.sendSmartPrivateMessage(bombPlayer, "You have " + m_time + " seconds to get rid of the bomb!");
-        m_botAction.sendArenaMessage("-- " + prevPlayer + " has passed the bomb to " + bombPlayer + "!", 104);
+       // m_botAction.sendSmartPrivateMessage(bombPlayer, "You have " + m_time + " seconds to get rid of the bomb!");
+        m_botAction.sendArenaMessage("-- " + prevPlayer + " has passed the bomb to " + bombPlayer + "!", 2);
         m_botAction.setFreq(bombPlayer, m_freqTwo);
-        m_botAction.scoreResetAll();
+        //m_botAction.scoreResetAll();
         
         newPlayer();
     }
@@ -226,7 +255,7 @@ public class victim extends MultiModule {
     public void gameOver() {
         Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
         Player p = i.next();
-        m_botAction.sendArenaMessage("-- NOTICE: Game over (" + p.getPlayerName() + ")");
+        m_botAction.sendArenaMessage("-- NOTICE: Game over (Winner: " + p.getPlayerName() + ")",5);
         m_botAction.sendUnfilteredPublicMessage("*lock");
         clearPlayer();
         isRunning = false;
@@ -249,15 +278,28 @@ public class victim extends MultiModule {
                 if(p2.getPlayerName().equals(bombPlayer) && p2.getFrequency() == m_freqTwo && p2.getWins() >= m_killCount) {
                     pickPlayer(p.getPlayerName());
                 }
+                if ( p.getLosses() >= specPlayers ){
+                    m_botAction.specWithoutLock( event.getKilleeID() );
+                    m_botAction.sendArenaMessage( p + " is out with " + p.getWins() + " kills, " + p.getLosses() + " losses." );
+                    }
                 
-            } catch (Exception e) { }
+                if ( p2.getLosses() >= specPlayers ){
+                    m_botAction.specWithoutLock( event.getKillerID() );
+                    m_botAction.sendArenaMessage( p2 + " is out with " + p2.getWins() + " kills, " + p2.getLosses() + " losses." );
+                    getRandomPlayer();
+                    if(isRunning) {
+                        m_botAction.sendSmartPrivateMessage(bombPlayer, "You have " + m_time + " seconds to get rid of the bomb!");
+                        m_botAction.sendArenaMessage("-- " + bombPlayer + " has the bomb!", 2);
+                        m_botAction.prizeAll(7);
+                
+                } }} catch (Exception e) { }
         }
     }
     
     public String[] getModHelpMessage() {
         String[] help = {
-            "!Start                        -- Starts a standard game of victim.",
-            "!Start <freqOne> <freqTwo> <kills> <timer>",
+            "!Start                        -- Starts a standard game of victim.(DO NOT LOCK ARENA)",
+            "!Start <PlayerFreq>:<BomberFreq>:<Kills>:<Timer(secs)>:<Deaths>:<Ship>",
             "!Stop                         -- Stops a game of victim.",
         };
         return help;
@@ -304,7 +346,7 @@ public class victim extends MultiModule {
                 if(time > 0 && time <= 5) {
                     m_botAction.sendPrivateMessage( name, "Time left: " + String.valueOf(time) );
                 } else if(time <= 0) {
-                    m_botAction.sendArenaMessage("-- " + name + " could not make it in time and blew to bits!");
+                    m_botAction.sendArenaMessage("-- " + name + " could not make it in time and blew to bits!",8);
                     removePlayer();
                     if(m_botAction.getNumPlayers() != 1)
                         getRandomPlayer();
