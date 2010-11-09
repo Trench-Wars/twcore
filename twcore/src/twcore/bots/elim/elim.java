@@ -1054,18 +1054,18 @@ public class elim extends SubspaceBot {
     public void doElimZoner(){
     	if((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE))return;
     	if(winStreak == 1)
-    		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Last round's winner was " + lastWinner + "! Type ?go " + cfg_arena + " to play");
+    		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Last round's winner was " + lastWinner + " (" + winner.wins + ":" + winner.losses + ")! Type ?go " + cfg_arena + " to play");
     	else if(winStreak > 1)
     		switch(winStreak){
-	    		case 2:m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. " + lastWinner + " has won 2 back to back! Type ?go " + cfg_arena + " to play");
+	    		case 2:m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. " + lastWinner + " (W:L " + winner.wins + ":" + winner.losses + ") has won 2 back to back! Type ?go " + cfg_arena + " to play");
 	    			break;
-	    		case 3:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " is on fire with a triple win! Type ?go " + cfg_arena + " to end the streak!", Tools.Sound.CROWD_OOO);
+	    		case 3:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is on fire with a triple win! Type ?go " + cfg_arena + " to end the streak!", Tools.Sound.CROWD_OOO);
 	    			break;
-	    		case 4:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " is on a rampage! 4 wins in a row! Type ?go " + cfg_arena + " to put a stop to the carnage!", Tools.Sound.CROWD_GEE);
+	    		case 4:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is on a rampage! 4 wins in a row! Type ?go " + cfg_arena + " to put a stop to the carnage!", Tools.Sound.CROWD_GEE);
 	    			break;
-	    		case 5:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " is dominating with a 5 game streak! Type ?go " + cfg_arena + " to end this madness!", Tools.Sound.SCREAM);
+	    		case 5:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is dominating with a 5 game streak! Type ?go " + cfg_arena + " to end this madness!", Tools.Sound.SCREAM);
 	    			break;
-	    		default:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " is bringing the zone to shame with " + winStreak + " consecutive wins! Type ?go " + cfg_arena + " to redeem yourselves!", Tools.Sound.INCONCEIVABLE);
+	    		default:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is bringing the zone to shame with " + winStreak + " consecutive wins! Type ?go " + cfg_arena + " to redeem yourselves!", Tools.Sound.INCONCEIVABLE);
 	    			break;
     		}
     	else
