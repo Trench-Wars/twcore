@@ -49,8 +49,9 @@ public class SocketCommunicator extends Thread {
 			servsock.setSoTimeout(timeout);
 			
 		} catch (IOException ioe) {
-			Tools.printLog("IOException occured opening port (" + port + "):" + ioe.getMessage());
-			Tools.printStackTrace(ioe);
+			Tools.printLog("SocketPort already opened (" + port + ")");
+			Tools.printLog("This core is probably already started. Exiting..");
+			System.exit(1);
 		}
 
 		if (debug)
