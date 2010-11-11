@@ -14,6 +14,7 @@ import twcore.core.events.ArenaJoined;
 import twcore.core.events.FileArrived;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.events.SocketMessageEvent;
 import twcore.core.util.Tools;
 
 /**
@@ -23,6 +24,9 @@ import twcore.core.util.Tools;
  * in TWCore.
  */
 public class HubBot extends SubspaceBot {
+	
+	private final static String SOCKET_CHANNEL = "HUB";
+	
     private BotQueue            m_botQueue;             // Queue of bots to spawn
     private ThreadGroup         m_kingGroup;            // Thread grouping the
                                                         // hub belongs to
@@ -53,6 +57,7 @@ public class HubBot extends SubspaceBot {
         events.request( EventRequester.LOGGED_ON );
         events.request( EventRequester.ARENA_JOINED );
         events.request( EventRequester.FILE_ARRIVED );
+
         try {
             Thread.sleep( 5000 );
         } catch( InterruptedException ie ){
@@ -118,6 +123,8 @@ public class HubBot extends SubspaceBot {
     	spawnutime = new Date().getTime();
 
         m_botAction.joinArena( m_botAction.getGeneralSettings().getString("Arena") );
+        
+        m_botAction.socketSubscribe(SOCKET_CHANNEL);
         
         // This is for the Message class where the alertcommands are stored
         m_botAction.sendUnfilteredPublicMessage( "*g*misc:alertcommand" );
@@ -209,6 +216,14 @@ public class HubBot extends SubspaceBot {
             m_botAction.getOperatorList().autoAssignFile( m_botAction.getDataFile( event.getFileName() ) );
             
         }
+    }
+    
+    /**
+     * 
+     */
+    public void handleEvent(SocketMessageEvent event) {
+    	
+    
     }
 
     /**

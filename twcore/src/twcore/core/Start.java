@@ -87,7 +87,8 @@ public class Start {
                     coreData.getGeneralSettings().getString( "Main Login" ),
                     coreData.getGeneralSettings().getString( "Main Password" ),
                     1,
-                    group );
+                    group,
+                    true );
 
             kingBot.start();
 

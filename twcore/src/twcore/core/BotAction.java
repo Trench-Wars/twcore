@@ -3256,7 +3256,7 @@ public class BotAction
      */
     public void socketSubscribe(String channelName)
     {
-        //getCoreData().getSocketCommunicator().subscribe(channelName, m_botSession.getSubspaceBot());
+        getCoreData().getSocketCommunicator().subscribe(channelName, m_botSession.getSubspaceBot());
     }
 
     /**

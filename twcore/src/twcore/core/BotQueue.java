@@ -436,9 +436,9 @@ public class BotQueue extends Thread {
             int altPort = botInfo.getInt("AltPort"+currentBotCount);
             String altSysop = botInfo.getString("AltSysop"+currentBotCount);
             if(altIP != null && altSysop != null && altPort > 0)
-            	childBot = new Session( cdata, roboClass, botName, botPassword, currentBotCount.intValue(), m_group, altIP, altPort, altSysop );
+            	childBot = new Session( cdata, roboClass, botName, botPassword, currentBotCount.intValue(), m_group, altIP, altPort, altSysop, true);
             else
-            	childBot = new Session( cdata, roboClass, botName, botPassword, currentBotCount.intValue(), m_group );
+            	childBot = new Session( cdata, roboClass, botName, botPassword, currentBotCount.intValue(), m_group, true);
         } catch( ClassNotFoundException cnfe ){
             Tools.printLog( "Class not found: " + rawClassName + ".class.  Reinstall this bot?" );
             return;

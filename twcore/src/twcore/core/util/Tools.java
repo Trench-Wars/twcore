@@ -435,6 +435,8 @@ public final class Tools {
      */
     public static File getRecursiveFileInDirectory( File directory, String fileName ){
         File[] files = directory.listFiles();
+        if (files==null)
+        	return null;
         for( int i = 0; i < files.length; i++ ){
             if( files[i].isDirectory() ){
                 File f = getRecursiveFileInDirectory( files[i], fileName );

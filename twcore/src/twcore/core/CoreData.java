@@ -37,9 +37,26 @@ public class CoreData {
         m_comm = new InterProcessCommunicator();
         m_socketComm = new SocketCommunicator(m_generalSettings.getInt( "SocketPort" ));
         m_accessList = OperatorList.getInstance();
-        File sqlFile = new File( m_generalSettings.getString( "Core Location" )
-        + "/corecfg/sql.cfg" );
+        File sqlFile = new File( m_generalSettings.getString( "Core Location" ) + "/corecfg/sql.cfg" );
         m_manager = new SQLManager( sqlFile );
+    }
+    
+    /**
+     * Lite version of the CoreData
+     * Load bot settings, SQL settings, and instantiate all member classes.
+     */
+    public CoreData( String host, int port ) {
+    	
+        m_generalSettings = new BotSettings();
+        m_generalSettings.put("Port", port);
+        m_generalSettings.put("Server", host);
+        m_generalSettings.put("LocalIP", "0");
+        m_generalSettings.put("Sysop Password", "");
+        m_generalSettings.put("Core Location", System.getProperty("user.dir"));
+        
+        m_comm = new InterProcessCommunicator();
+        m_accessList = OperatorList.getInstance();
+
     }
 
     /**

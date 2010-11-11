@@ -23,7 +23,7 @@ import twcore.core.events.SocketMessageEvent;
  * of messages from a socket along specific channels.  Also handles channel subscriptions,
  * creation/deletion of channels, and firing of SocketMessageEvent.
  *
- * @author  arobas+ (most of the code from IPC)
+ * @author Arobas+ (most of the code from IPC)
  */
 public class SocketCommunicator extends Thread {
 
@@ -65,7 +65,7 @@ public class SocketCommunicator extends Thread {
 
 			try {
 				Socket socket = servsock.accept();
-				socket.setSoTimeout(timeout);
+				socket.setSoTimeout(0);
 				DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				String response = "";
@@ -85,22 +85,25 @@ public class SocketCommunicator extends Thread {
 				if (debug) {
 					System.out.println("SocketServer: -> " + command);
 				}
+				
+				// Protocol: <name>:<channel>:<command>
+				// Example: Arobas+:HUB:LIST_BOTS 
 
-				if (command != null && command.indexOf(":") != -1) {
-					
-					String channelName = command.substring(0, command.indexOf(":"));
-					command = command.substring(command.indexOf(":")+1);
-					
+				if (command != null && command.split(":").length > 2) {
+
+					String sender = command.substring(0, command.indexOf(":"));
+					String channel = command.substring(command.indexOf(":")+1, command.indexOf(":", command.indexOf(":")+1));
+					command = command.substring(sender.length()+channel.length()+2);
+
 					if (debug)
 						System.out.println("command recognized, responding...");
 
-					SocketMessageEvent event = new SocketMessageEvent(null,
-							channelName, command);
+					SocketMessageEvent event = new SocketMessageEvent(sender, channel, command);
 					
 					Thread eventThread = new Thread(event); 
 					eventThread.start();
 					
-					broadcast(channelName, event);
+					broadcast(channel, event);
 					
 					try {
 						synchronized (eventThread) {
@@ -122,11 +125,9 @@ public class SocketCommunicator extends Thread {
 					System.out.println("SocketServer: Client disconnected");
 				}
 
-			} catch (SocketTimeoutException ste) {
-
-			} catch (IOException ioe) {
-				Tools.printLog("SocketServer TCP Communication Error: "
-								+ ioe.getMessage());
+			} catch (SocketTimeoutException e) {
+			} catch (IOException e) {
+				Tools.printLog("SocketServer Communication Error: " + e.getMessage());
 			}
 		}
 	}

@@ -50,6 +50,7 @@ public class Session extends Thread {
     private String			m_sysopPassword;
     private int				m_serverPort;
     private String			m_localIPAddress;
+    private boolean			m_registerNewUser;
 
     private GamePacketGenerator     m_packetGenerator;
     private GamePacketInterpreter   m_packetInterpreter;
@@ -62,7 +63,7 @@ public class Session extends Thread {
     public static int NOT_RUNNING = 0;
     public static int INVALID_CLASS = (-1);
 
-    public Session( CoreData cdata, Class<? extends SubspaceBot> roboClass, String name, String password, int botNum, ThreadGroup parentGroup ){
+    public Session( CoreData cdata, Class<? extends SubspaceBot> roboClass, String name, String password, int botNum, ThreadGroup parentGroup, boolean registerNewUser ){
         super(name+"-Session");
         m_group = new ThreadGroup( parentGroup, name );
         m_requester = new EventRequester();
@@ -79,9 +80,10 @@ public class Session extends Thread {
         m_serverPort = m_coreData.getServerPort();
         m_localIPAddress = m_coreData.getLocalIP();
         m_sysopPassword = m_coreData.getGeneralSettings().getString( "Sysop Password" );
+        m_registerNewUser = registerNewUser;
     }
 
-    public Session( CoreData cdata, Class<? extends SubspaceBot> roboClass, String name, String password, int botNum, ThreadGroup parentGroup, String altIP, int altPort, String altSysop ){
+    public Session( CoreData cdata, Class<? extends SubspaceBot> roboClass, String name, String password, int botNum, ThreadGroup parentGroup, String altIP, int altPort, String altSysop, boolean registerNewUser){
         super(name+"-Session");
         m_group = new ThreadGroup( parentGroup, name );
         m_requester = new EventRequester();
@@ -98,6 +100,7 @@ public class Session extends Thread {
         m_sysopPassword = altSysop;
         m_serverPort = altPort;
         m_localIPAddress = m_coreData.getLocalIP();
+        m_registerNewUser = registerNewUser;
     }
 
     public void prepare(){
@@ -130,7 +133,8 @@ public class Session extends Thread {
                 m_ssEncryption,
                 m_arenaTracker,
                 m_name,
-                login );
+                login,
+                m_registerNewUser);
 
         m_botAction = new BotAction( m_packetGenerator, m_arenaTracker, m_timer, m_botNumber, this );
         m_reliablePacketHandler = new ReliablePacketHandler( m_packetGenerator, m_packetInterpreter, m_ssEncryption );
@@ -406,16 +410,7 @@ public class Session extends Thread {
 
                 if( currentTime - lastPacketTime > TIMEOUT_DELAY ){
                 
-                	// Debug
-                	String packetType;
-                	int index = lastPacketReceived.readByte( 0 ) & 0xff;
-                    if( index == 0 ){
-                    	packetType = "S:"+Integer.toHexString(lastPacketReceived.readByte( 1 ) & 0xff);
-                    } else {
-                    	packetType = "N:"+Integer.toHexString(lastPacketReceived.readByte( 0 ) & 0xff);
-                    }
-
-                    disconnect( "connection timed out ("+packetType+", " + m_inboundQueue.getNumPacketsWaiting() + " pkts were waiting.)" );
+                    disconnect( "connection timed out, " + m_inboundQueue.getNumPacketsWaiting() + " pkts were waiting.)" );
                     return;
                 }
  
