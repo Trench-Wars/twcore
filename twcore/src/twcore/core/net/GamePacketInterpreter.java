@@ -38,6 +38,7 @@ public class GamePacketInterpreter {
     private EventRequester          m_requester;            // Checks if event req.
     private MessageLimiter          m_limiter = null;       // Limits msgs sent
     private int                     m_verboseLogin;         // 1: send verbose login msg
+    private boolean					m_registerNewUser;		// Register new user
 
     /**
      * Creates a new instance of GamePacketInterpreter.
@@ -47,10 +48,11 @@ public class GamePacketInterpreter {
      * @param arenaTracker Arena tracker to update with certain packet info
      * @param name Bot's login name, sent after encryption keys are exchanged
      * @param password Bot's password, sent after encryption keys are exchanged
+     * @param registerNewUser Allow or not the registration of a new user automatically
      */
     public GamePacketInterpreter( Session session,
     GamePacketGenerator packetGenerator, SSEncryption ssEncryption,
-    Arena arenaTracker, String name, String password ){
+    Arena arenaTracker, String name, String password, boolean registerNewUser){
         m_requester = session.getEventRequester();
         m_playerName = name;
         m_playerPassword = password;
@@ -62,6 +64,7 @@ public class GamePacketInterpreter {
         m_ssEncryption = ssEncryption;
         m_packetGenerator = packetGenerator;
         m_verboseLogin = session.getCoreData().getGeneralSettings().getInt("VerboseLogin");
+        m_registerNewUser = registerNewUser;
     }
 
     /**
@@ -1174,7 +1177,7 @@ public class GamePacketInterpreter {
             Tools.printLog( m_session.getBotName() + ": " + ppResponse.getResponseMessage() );
         }
 
-        if(ppResponse.getRegistrationFormRequest() == true) {
+        if(m_registerNewUser && ppResponse.getRegistrationFormRequest() == true) {
         	String realname = m_session.getCoreData().getGeneralSettings().getString("Real Name");
         	String email = m_session.getCoreData().getGeneralSettings().getString("E-mail");
         	String state = m_session.getCoreData().getGeneralSettings().getString("State");
@@ -1199,12 +1202,13 @@ public class GamePacketInterpreter {
     		Tools.printLog( m_session.getBotName() + ": Problem found with server: Server doesn't have a copy of subspace.exe so it sent me a zero checksum.");
     	}
 
-        if(ppResponse.getResponseValue() == PasswordPacketResponse.response_NewUser) {
+        if(m_registerNewUser && ppResponse.getResponseValue() == PasswordPacketResponse.response_NewUser) {
         		Tools.printLog( m_session.getBotName() + ": Creating account");
         		m_packetGenerator.sendPasswordPacket(true, m_playerName, m_playerPassword);
         		return;
         } else if( ppResponse.isFatal() ) {
-        	m_session.disconnect( "unsuccessful login" );
+        	
+        	m_session.disconnect( "Unsuccessful login ("+ppResponse.getResponseMessage()+")" );
         }
 
         /***** ASSS Compatible Login Sequence Fix (D1st0rt) *****/
