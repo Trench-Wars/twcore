@@ -112,19 +112,6 @@ public class basicbot extends SubspaceBot {
      */
     public void handleEvent(ArenaJoined event) {
         m_botAction.setReliableKills(1);
-        
-        // Change bot password
-        if (m_botAction.getBotSettings().getString("PasswordNew") != null) {
-	        String passwordOld = m_botAction.getBotSettings().getString("PasswordOld");
-	        String passwordNew = m_botAction.getBotSettings().getString("PasswordNew"); 
-	        String password = m_botAction.getBotSettings().getString("Password"+m_botAction.getBotNumber());
-	        if (passwordOld.equals(password)) {
-	        	m_botAction.sendUnfilteredPublicMessage("?password="+passwordNew);
-	        	m_botAction.sendPublicMessage("Password changed.");
-	        } else {
-	        	m_botAction.sendPublicMessage("Password unchanged.");
-	        }
-        }
     }
 
 }
