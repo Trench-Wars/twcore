@@ -1057,7 +1057,7 @@ public class elim extends SubspaceBot {
     		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Last round's winner was " + lastWinner + " (" + winner.wins + ":" + winner.losses + ")! Type ?go " + cfg_arena + " to play");
     	else if(winStreak > 1)
     		switch(winStreak){
-	    		case 2:m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. " + lastWinner + " (W:L " + winner.wins + ":" + winner.losses + ") has won 2 back to back! Type ?go " + cfg_arena + " to play");
+	    		case 2:m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") has won 2 back to back! Type ?go " + cfg_arena + " to play");
 	    			break;
 	    		case 3:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is on fire with a triple win! Type ?go " + cfg_arena + " to end the streak!", Tools.Sound.CROWD_OOO);
 	    			break;
