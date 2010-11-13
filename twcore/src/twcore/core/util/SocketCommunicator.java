@@ -46,7 +46,7 @@ public class SocketCommunicator extends Thread {
 		try {
 			servsock = new ServerSocket();
 			servsock.bind(new InetSocketAddress("127.0.0.1",port));
-			servsock.setSoTimeout(timeout);
+			servsock.setSoTimeout(100);
 			
 		} catch (IOException ioe) {
 			Tools.printLog("SocketPort already opened (" + port + ")");
@@ -65,7 +65,7 @@ public class SocketCommunicator extends Thread {
 
 			try {
 				Socket socket = servsock.accept();
-				socket.setSoTimeout(0);
+				socket.setSoTimeout(100);
 				DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				String response = "";
@@ -126,6 +126,7 @@ public class SocketCommunicator extends Thread {
 				}
 
 			} catch (SocketTimeoutException e) {
+				//Tools.printLog("Exception timeout..");
 			} catch (IOException e) {
 				Tools.printLog("SocketServer Communication Error: " + e.getMessage());
 			}
