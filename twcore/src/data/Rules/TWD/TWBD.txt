@@ -20,6 +20,8 @@ waitafterlagout=10
 captain_can_start_game=1
 lineuptime=7
 blueout=1
+changedelaytime=15
+
 
 # indicates whether or not the bot should zone for
 # matches between seeds. 0 - don't zone, other values
