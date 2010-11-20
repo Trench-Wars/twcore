@@ -130,7 +130,7 @@ public class utilantispawn extends MultiUtil
     {
       int playerID = event.getKilleeID();
       String playerName = m_botAction.getPlayerName(playerID);
-      m_botAction.scheduleTask(new DeathDelayTask(playerName), (long)(SPAWN_DELAY * 1000));
+      m_botAction.scheduleTask(new DeathDelayTask(playerName), (long)(spawnDelay * 1000));
     }
   }
 
@@ -164,10 +164,10 @@ public class utilantispawn extends MultiUtil
 
     public void run()
     {
-        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #18");
-        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");
-        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");
-        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");        
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #18");     
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");     
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");     
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");     
         m_botAction.scheduleTask(new ResetTask(playerName), (long)(safeTime * 1000));
     }
   }
