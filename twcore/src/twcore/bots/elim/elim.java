@@ -732,7 +732,7 @@ public class elim extends SubspaceBot {
     	    if(cfg_zone == ON)
     	        doElimZoner();
     	        for(int i=1;i<=10;i++)
-                    m_botAction.sendChatMessage(i,"A new " + cfg_gameType + " is starting! ?go " + m_botAction.getArenaName() + " to play.");  
+                    m_botAction.sendChatMessage(i, "Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play");  
                     TimerTask wait10Seconds = new TimerTask() {
                         public void run() {
                             game.moveOn();
@@ -740,8 +740,8 @@ public class elim extends SubspaceBot {
                         };
                         if (pm.size() > 0) {
                             for (int i = 0; i < pm.size(); i++) {
-                                m_botAction.sendSmartPrivateMessage(pm.get(i), "A game of " + cfg_gameName +
-                                        " is starting! Type ?go " + m_botAction.getArenaName() + " to play.");
+                                m_botAction.sendSmartPrivateMessage(pm.get(i), "Next " + cfg_gameName +
+                                        " is starting! Type ?go " + cfg_arena + " to play!");
                                 }
     	    try{
     	    	m_botAction.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
