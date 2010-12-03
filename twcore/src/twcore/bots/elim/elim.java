@@ -67,6 +67,7 @@ public class elim extends SubspaceBot {
 	public TreeMap<Integer, Integer> votes = new TreeMap<Integer, Integer>();
 	public ArrayList<String> enabled = new ArrayList<String>();
 	public ArrayList<String> classicMode = new ArrayList<String>();
+	public ArrayList<String> pm = new ArrayList<String>();
 
 	
 	//BotSettings variables
@@ -200,6 +201,7 @@ public class elim extends SubspaceBot {
 				"| !classic      - Toggles whether or not you'd like to be spec'd when out.   |",
 				"| !warp         - Warps you out of the safe if you're stuck.                 |",
 				"| !scorereset   - Resets all of your stats to zero. No going back. (!sr)     |",
+				"| !pm           - On the 30 second wait, you will be notified of a game.     |",
 
 		};List<String> reg = Arrays.asList(reghelp);
 		String[] modHelp = {
@@ -321,8 +323,24 @@ public class elim extends SubspaceBot {
     		cmd_stats(name, cmd.substring(7));
     	else if(cmd.startsWith("!rank "))
     		cmd_rank(name, cmd.substring(6));
+    	else if(cmd.equalsIgnoreCase("!pm"))
+    	    cmd_pm(name);
     }
     
+    private void cmd_pm(String name) {
+        name = name.toLowerCase();
+        
+        if (pm.contains(name)) {
+            pm.remove(name);
+            m_botAction.sendSmartPrivateMessage(name, "Remove from alert list!");
+        } else {
+            pm.add(name);
+            m_botAction.sendSmartPrivateMessage(name, "Added to alert list!");
+        }
+    }
+
+        
+
     public void handleModeratorCommands(String name, String cmd) {
         if(cmd.startsWith("!remove "))
             cmd_remove(name, cmd.substring(8));
@@ -711,21 +729,29 @@ public class elim extends SubspaceBot {
     	game.state = GameStatus.WAITING_FOR_PLAYERS;
     	int neededPlayers = cfg_minPlayers - elimPlayers.size();
     	if(neededPlayers <= 0) {
-    	    if(cfg_zone == ON)doElimZoner();
-    	    for(int i=1;i<=10;i++)
-                m_botAction.sendChatMessage(i, "Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play");
-    	    TimerTask wait10Seconds = new TimerTask() {
-    	        public void run() {
-    	            game.moveOn();
-    	        }
-    	    };
+    	    if(cfg_zone == ON)
+    	        doElimZoner();
+    	        for(int i=1;i<=10;i++)
+                    m_botAction.sendChatMessage(i,"A new " + cfg_gameType + " is starting! ?go " + m_botAction.getArenaName() + " to play.");  
+                    TimerTask wait10Seconds = new TimerTask() {
+                        public void run() {
+                            game.moveOn();
+    	                    }
+                        };
+                        if (pm.size() > 0) {
+                            for (int i = 0; i < pm.size(); i++) {
+                                m_botAction.sendSmartPrivateMessage(pm.get(i), "A game of " + cfg_gameName +
+                                        " is starting! Type ?go " + m_botAction.getArenaName() + " to play.");
+                                }
     	    try{
     	    	m_botAction.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
     	    }catch(Exception e){}
     	} else
     		m_botAction.sendArenaMessage("A new elimination match will begin when " + neededPlayers + " more player(s) enter.");
-    }
+    }}
     
+
+
     public void doVotingOnShip(){
     	game.state = GameStatus.VOTING_ON_SHIP;
     	shipType = cfg_defaultShip;
@@ -780,9 +806,12 @@ public class elim extends SubspaceBot {
     		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Get "+ kills + " kill to win");
     	else
     		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Get "+ kills + " kills to win");
+    	
     	game.moveOn(cfg_waitLength * Tools.TimeInMillis.SECOND);
     }
     
+
+
     public void doTenSeconds(){
     	game.state = GameStatus.TEN_SECONDS;
     	m_botAction.sendArenaMessage("Get ready. Game will start in 10 seconds");//No new entries
@@ -934,6 +963,7 @@ public class elim extends SubspaceBot {
     		if(p == null)continue;
     		elimPlayers.put(playerName, new ElimPlayer(playerName));
     		doWarpIntoElim(playerName);
+    		
     	}
     	
     	try{
@@ -954,6 +984,7 @@ public class elim extends SubspaceBot {
     	}catch(SQLException e){
     		Tools.printStackTrace(e);
     	}
+    	
     	game.moveOn(20 * Tools.TimeInMillis.SECOND);
     }
     
@@ -1071,6 +1102,8 @@ public class elim extends SubspaceBot {
     	else
     		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play");
     	lastZoner = System.currentTimeMillis();
+
+            
     }
     
     public void doWarpIntoElim(String name){
