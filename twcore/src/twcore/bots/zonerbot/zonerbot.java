@@ -11,7 +11,6 @@ import twcore.core.SubspaceBot;
 import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
-import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
 
 /**
@@ -47,7 +46,6 @@ public class zonerbot extends SubspaceBot
   private AdvertTimer advertTimer;
   private IdleTimer idleTimer;
   private int advertTime;
-  private int finalAdvertTime;
   private int idleTime;
   private int recentAdvertTime;
   private int maxQueueLength;
@@ -68,7 +66,6 @@ public class zonerbot extends SubspaceBot
     advertTime = 10;
     idleTime = 5;
     recentAdvertTime = 5;
-    finalAdvertTime = 5;
     maxQueueLength = 5;
     isEnabled = true;
   }
@@ -128,8 +125,6 @@ public class zonerbot extends SubspaceBot
           doOldAdvertCmd(sender, message.substring(5).trim());
         if (command.startsWith("!advert "))
           doOldAdvertCmd(sender, message.substring(8).trim());
-        if(command.startsWith("!readvert "))
-            doFinalAdvertCmd(sender, message.substring(9).trim(), messageType); 
         if (command.startsWith("!setadvert "))
           doSetAdvertCmd(sender, message.substring(11).trim());
         if (command.startsWith("!setsound "))
@@ -160,25 +155,7 @@ public class zonerbot extends SubspaceBot
       }
     }
   }
-  private void doFinalAdvertCmd(String sender, String arena, int soundCode) {
-      String hi = sender.toLowerCase();
-      String event = arena.toUpperCase();
-      Advert hey = advertQueue.get(hi);
-      
-      if(hey != advertQueue.firstValue())
-          throw new RuntimeException("Someone else holds the key to your advert :(.");
-      if(event.contains(" "))
-          throw new RuntimeException("Please do NOT add spaces or words after your arena/event name.");
-      if(hey == null)
-          throw new RuntimeException("Nice try! Please claim an advert first.");
-      m_botAction.sendZoneMessage("[" +event+"] A hosted event is just about to start! This is the last call! Type ?go " +event+ " to join. -" +sender,1);
-      m_botAction.sendSmartPrivateMessage(hi, "Well, That's all I can do for you now. Please get SMod+ authority to !advert again.");
-      setAdvertTimer(finalAdvertTime * 60 * 1000);
-      recentAdvertList.add(sender, recentAdvertTime * 60 * 1000);
-      removeFromQueue(0);
-}
-
-/**
+  /**
    * This method performs the !advert command.
    *
    * @param sender is the person sending the command.
@@ -220,7 +197,7 @@ public class zonerbot extends SubspaceBot
       zoneMessageSpam(StringTools.wrapString(advertText, LINE_LENGTH), advert.getSound());
     setAdvertTimer(advertTime * 60 * 1000);
     recentAdvertList.add(adverter, recentAdvertTime * 60 * 1000);
-    //removeFromQueue(0);
+    removeFromQueue(0);
 
     // Send an IPC message to Robohelp to record the advert
     IPCMessage msg = new IPCMessage( adverter + "@ad@" + advert.getArenaName( advertText ) + "@ad@" + advertText);
@@ -266,15 +243,6 @@ public class zonerbot extends SubspaceBot
       throw new RuntimeException("Your advert needs to be approved.  Please get a moderator to approve your advert.");
 
     zoneAdvert(advert);
-    m_botAction.sendSmartPrivateMessage(sender, "You are eligible to !readvert incase you need another *zone. If not, Please !free (2 mins)");
-    TimerTask wait2mins = new TimerTask(){ 
-        public void run(){
-            removeFromQueue(0);
-        }};
-        try{
-            m_botAction.scheduleTask(wait2mins, 2 * Tools.TimeInMillis.MINUTE);
-            
-        }catch(Exception e){}
   }
 
   /**
@@ -546,8 +514,7 @@ public class zonerbot extends SubspaceBot
       "!Claim                             -- Claim the advert for use.",
       "!Free                              -- Frees up your claim on an advert.",
       "!Status                            -- Displays the person that has currently claimed the advert, the",
-      "                                      time left till the next advert and the advert queue.",
-      "!Readvert                          -- Will do another *zone (No stat)."
+      "                                      time left till the next advert and the advert queue."
     };
     m_botAction.smartPrivateMessageSpam(sender, message);
   }
