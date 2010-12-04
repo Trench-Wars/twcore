@@ -266,13 +266,13 @@ public class zonerbot extends SubspaceBot
       throw new RuntimeException("Your advert needs to be approved.  Please get a moderator to approve your advert.");
 
     zoneAdvert(advert);
-    m_botAction.sendSmartPrivateMessage(sender, "You are eligible to !readvert incase you need another *zone. If not, Please !free (2 mins)");
-    TimerTask wait2mins = new TimerTask(){ 
+    m_botAction.sendSmartPrivateMessage(sender, "You are eligible to !readvert incase you need another *zone. If not, Please !free (10 mins)");
+    TimerTask wait10mins = new TimerTask(){ 
         public void run(){
             removeFromQueue(0);
         }};
         try{
-            m_botAction.scheduleTask(wait2mins, 2 * Tools.TimeInMillis.MINUTE);
+            m_botAction.scheduleTask(wait10mins, 10 * Tools.TimeInMillis.MINUTE);
             
         }catch(Exception e){}
   }
