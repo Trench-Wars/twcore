@@ -332,7 +332,7 @@ public class elim extends SubspaceBot {
         
         if (pm.contains(name)) {
             pm.remove(name);
-            m_botAction.sendSmartPrivateMessage(name, "Remove from alert list!");
+            m_botAction.sendSmartPrivateMessage(name, "Removed from alert list!");
         } else {
             pm.add(name);
             m_botAction.sendSmartPrivateMessage(name, "Added to alert list!");
@@ -736,19 +736,21 @@ public class elim extends SubspaceBot {
                     TimerTask wait10Seconds = new TimerTask() {
                         public void run() {
                             game.moveOn();
-    	                    }
+                        } 
                         };
-                        if (pm.size() > 0) {
+                        try{
+                            m_botAction.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
+                        }catch(Exception e){}
+                    } else
+                        m_botAction.sendArenaMessage("A new elimination match will begin when " + neededPlayers + " more player(s) enter.");
+    
+    	                if (pm.size() > 0) {
                             for (int i = 0; i < pm.size(); i++) {
                                 m_botAction.sendSmartPrivateMessage(pm.get(i), "Next " + cfg_gameName +
                                         " is starting! Type ?go " + cfg_arena + " to play!");
-                                }
-    	    try{
-    	    	m_botAction.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
-    	    }catch(Exception e){}
-    	} else
-    		m_botAction.sendArenaMessage("A new elimination match will begin when " + neededPlayers + " more player(s) enter.");
-    }}
+                                
+
+                            }}}
     
 
 
