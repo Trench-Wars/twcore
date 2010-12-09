@@ -1,5 +1,6 @@
 package twcore.bots.zonerbot;
 
+import java.util.Random;
 import java.util.TimerTask;
 import java.util.Iterator;
 
@@ -162,8 +163,22 @@ public class zonerbot extends SubspaceBot
   }
   private void doFinalAdvertCmd(String sender, String arena, int soundCode) {
       String hi = sender.toLowerCase();
+      Random rand = new Random();
       String event = arena.toUpperCase();
       Advert hey = advertQueue.get(hi);
+      String Zoners[] = {
+              "[" +event+"] A hosted event is just about to start! This is the last call! Type ?go " +event+ " to join. -" +sender,
+              "We need moar! Come join this epic event! ?go " +event+ " to play! -" +sender,
+              "If I'm playing it, it must be good! ?go " +event+ " to play before we start! -" +sender,
+              "You all have one mintue before detitination of a BOMB! Type ?go " +event+ " for shelter! -" +sender,
+              "You look bored, why not come over here and play ?go " + event+ " -"+sender,
+              "What are you doing sitting in pub? LOL! ?go " +event+ " NOW! -"+sender,
+              "Last call!! Last call!! Last call before I phone your momma!! ?go " +event+ " -"+sender,
+              "We need MOAR people!!! Phone your mom/dad/sister/brother/aunt/uncle/friends/doctor/dentist/serial killer ?go " +event+ " -"+sender,
+              "My first ad sucked. ?go "+event+ " -"+sender,
+              "No one come to this event the first time :(. Please save me the embarrassment and ?go "+event+ " -"+sender
+
+           };
       
       if(hey != advertQueue.firstValue())
           throw new RuntimeException("Someone else holds the key to your advert :(.");
@@ -171,7 +186,8 @@ public class zonerbot extends SubspaceBot
           throw new RuntimeException("Please do NOT add spaces or words after your arena/event name.");
       if(hey == null)
           throw new RuntimeException("Nice try! Please claim an advert first.");
-      m_botAction.sendZoneMessage("[" +event+"] A hosted event is just about to start! This is the last call! Type ?go " +event+ " to join. -" +sender,1);
+      int die = rand.nextInt(Zoners.length);
+      m_botAction.sendZoneMessage(Zoners[die],1);
       m_botAction.sendSmartPrivateMessage(hi, "Well, That's all I can do for you now. Please get SMod+ authority to !advert again.");
       setAdvertTimer(finalAdvertTime * 60 * 1000);
       recentAdvertList.add(sender, recentAdvertTime * 60 * 1000);
