@@ -216,7 +216,7 @@ private void event(String sender, String argString, int soundCode) {
             "Last call for something unboring! ?go "+event+ " to play "+of+ " -"+sender,
             "You look bored, why not come over here and play "+of+ " in ?go " + event+ " -"+sender,
             "TIME FOR SOME "+of+ " IN ?GO "+event+ " -"+sender,
-            "My first ad sucked. ?go "+event+ "to play "+of+ " -"+sender,
+            "My first ad sucked. ?go "+event+ " to play "+of+ " -"+sender,
             "No one come to this event the first time :(. Please save me the embarrassment and ?go "+event+ "to play "+of+ " -"+sender
 
          };
