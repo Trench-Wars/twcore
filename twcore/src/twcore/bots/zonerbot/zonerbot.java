@@ -3,6 +3,7 @@ package twcore.bots.zonerbot;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Iterator;
+import java.util.StringTokenizer;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -130,7 +131,7 @@ public class zonerbot extends SubspaceBot
         if (command.startsWith("!advert "))
           doOldAdvertCmd(sender, message.substring(8).trim());
         if (command.startsWith("!readvert "))
-          doFinalAdvertCmd(sender, message.substring(9).trim(), messageType);
+          doFinalAdvertCmd(sender, message.substring(10).trim(), command.substring(10).trim(), messageType);
         if (command.startsWith("!setadvert "))
           doSetAdvertCmd(sender, message.substring(11).trim());
         if (command.startsWith("!setsound "))
@@ -161,7 +162,12 @@ public class zonerbot extends SubspaceBot
       }
     }
   }
-  private void doFinalAdvertCmd(String sender, String arena, int soundCode) {
+  private void doFinalAdvertCmd(String sender, String arena, String argString, int soundCode) {
+      StringTokenizer argTokens = new StringTokenizer(argString, ":");
+
+      if( argTokens.countTokens() == 2 )
+          event(sender, argString, soundCode);
+  else {
       String hi = sender.toLowerCase();
       Random rand = new Random();
       String event = arena.toUpperCase();
@@ -192,6 +198,42 @@ public class zonerbot extends SubspaceBot
       setAdvertTimer(finalAdvertTime * 60 * 1000);
       recentAdvertList.add(sender, recentAdvertTime * 60 * 1000);
       removeFromQueue(0);
+}}
+
+private void event(String sender, String argString, int soundCode) {
+    StringTokenizer argTokens = new StringTokenizer(argString, ":");
+    String arena = argTokens.nextToken();
+    String kind = argTokens.nextToken();
+    String hi = sender.toLowerCase();
+    Random rand = new Random();
+    String event = arena.toUpperCase();
+    String of = kind.toUpperCase();
+    Advert hey = advertQueue.get(hi);
+    String Zoners[] = {
+            "[" +of+"] A hosted event is just about to start! This is the last call! Type ?go " +event+ " to play "+of+  "-" +sender,
+            "A game of "+of+ " is just about to start in ?go "+event+ " -" +sender,
+            "Eh! Time for you to type ?go "+event+ " to play "+of+ " -" +sender,
+            "Last call for something unboring! ?go "+event+ " to play "+of+ " -"+sender,
+            "You look bored, why not come over here and play "+of+ " in ?go " + event+ " -"+sender,
+            "TIME FOR SOME "+of+ " IN ?GO "+event+ " -"+sender,
+            "My first ad sucked. ?go "+event+ "to play "+of+ " -"+sender,
+            "No one come to this event the first time :(. Please save me the embarrassment and ?go "+event+ "to play "+of+ " -"+sender
+
+         };
+    
+    if(hey != advertQueue.firstValue())
+        throw new RuntimeException("Someone else holds the key to your advert :(.");
+    if(hey == null)
+        throw new RuntimeException("Nice try! Please claim an advert first.");
+    int die = rand.nextInt(Zoners.length);
+    m_botAction.sendZoneMessage(Zoners[die],1);
+    m_botAction.sendSmartPrivateMessage(hi, "Well, That's all I can do for you now. Please get SMod+ authority to !advert again.");
+    setAdvertTimer(finalAdvertTime * 60 * 1000);
+    recentAdvertList.add(sender, recentAdvertTime * 60 * 1000);
+    removeFromQueue(0);
+
+    // TODO Auto-generated method stub
+    
 }
 
 /**
