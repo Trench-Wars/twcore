@@ -210,7 +210,7 @@ private void event(String sender, String argString, int soundCode) {
     String of = kind.toUpperCase();
     Advert hey = advertQueue.get(hi);
     String Zoners[] = {
-            "[" +of+"] A hosted event is just about to start! This is the last call! Type ?go " +event+ " to play "+of+  "-" +sender,
+            "[" +of+"] A hosted event is just about to start! This is the last call! Type ?go " +event+ " to play "+of+ " -" +sender,
             "A game of "+of+ " is just about to start in ?go "+event+ " -" +sender,
             "Eh! Time for you to type ?go "+event+ " to play "+of+ " -" +sender,
             "Last call for something unboring! ?go "+event+ " to play "+of+ " -"+sender,
