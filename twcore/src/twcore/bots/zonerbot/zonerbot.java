@@ -175,14 +175,14 @@ public class zonerbot extends SubspaceBot
       String Zoners[] = {
               "[" +event+"] A hosted event is just about to start! This is the last call! Type ?go " +event+ " to join. -" +sender,
               "We need moar! Come join this epic event! ?go " +event+ " to play! -" +sender,
-              "If I'm playing it, it must be good! ?go " +event+ " to play before we start! -" +sender,
-              "You all have one mintue before detitination of a BOMB! Type ?go " +event+ " for shelter! -" +sender,
+              "If I'm playing it, it must be good! ?go " +event+ " -" +sender,
+              "You all have one mintue before detonation of a BOMB! Type ?go " +event+ " for shelter! -" +sender,
               "You look bored, why not come over here and play ?go " + event+ " -"+sender,
               "What are you doing sitting in pub? LOL! ?go " +event+ " NOW! -"+sender,
               "Last call!! Last call!! Last call before I phone your momma!! ?go " +event+ " -"+sender,
               "We need MOAR people!!! Phone your mom/dad/sister/brother/aunt/uncle/friends/doctor/dentist/serial killer ?go " +event+ " -"+sender,
               "My first ad sucked. ?go "+event+ " -"+sender,
-              "No one come to this event the first time :(. Please save me the embarrassment and ?go "+event+ " -"+sender
+              "No one came to this event the first time :(. Please save me the embarrassment and ?go "+event+ " -"+sender
 
            };
       
@@ -217,7 +217,7 @@ private void event(String sender, String argString, int soundCode) {
             "You look bored, why not come over here and play "+of+ " in ?go " + event+ " -"+sender,
             "TIME FOR SOME "+of+ " IN ?GO "+event+ " -"+sender,
             "My first ad sucked. ?go "+event+ " to play "+of+ " -"+sender,
-            "No one come to this event the first time :(. Please save me the embarrassment and ?go "+event+ " to play "+of+ " -"+sender
+            "No one came to this event the first time :(. Please save me the embarrassment and ?go "+event+ " to play "+of+ " -"+sender
 
          };
     
