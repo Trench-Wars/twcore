@@ -3219,8 +3219,8 @@ public class bwjsbot extends SubspaceBot {
                     " losses. (NOTICE: player can still be subbed)";
                 p_state = OUT_SUBABLE;
             } else if (reason.equals("out of border")) {
-                arenaMessage = p_name + " is out, (too long outside of base). " + getKills() + " wins " +
-                    getDeaths() + " losses";
+                arenaMessage = p_name + " has been added with a +1 death (too long outside base)";
+                died();
             } else if (reason.equals("out not playing")) {
                 arenaMessage = p_name + " is out, (set himself to notplaying). NOTICE: Player is still subable.";
                 p_state = OUT_SUBABLE;
