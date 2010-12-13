@@ -3220,7 +3220,6 @@ public class bwjsbot extends SubspaceBot {
                 p_state = OUT_SUBABLE;
             } else if (reason.equals("out of border")) {
                 arenaMessage = p_name + " has been added with a +1 death (too long outside base)";
-                died();
             } else if (reason.equals("out not playing")) {
                 arenaMessage = p_name + " is out, (set himself to notplaying). NOTICE: Player is still subable.";
                 p_state = OUT_SUBABLE;
@@ -3663,11 +3662,12 @@ public class bwjsbot extends SubspaceBot {
                     
                     if (p_outOfBorderTime == (cfg.getOutOfBorderTime() / 2) && !p_outOfBorderWarning) {
                         m_botAction.sendPrivateMessage(p_name, "Go to base! You have " + p_outOfBorderTime +
-                              " seconds before you'll get removed from the game!", Tools.Sound.BEEP3);
+                              " seconds before you'll get +1 death!", Tools.Sound.BEEP3);
                         p_outOfBorderWarning = true;
                     } else if (p_outOfBorderTime <= 0) {
                         if (cfg.getMaxDeaths() != 0) {
-                            p_ship[p_currentShip][DEATHS] = cfg.getMaxDeaths();
+                            died();
+                           // p_ship[p_currentShip][DEATHS] = cfg.getMaxDeaths();
                         }
                         out("out of border");
                     }
