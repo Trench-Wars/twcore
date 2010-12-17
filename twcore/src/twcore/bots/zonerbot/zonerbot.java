@@ -173,16 +173,9 @@ public class zonerbot extends SubspaceBot
       String event = arena.toUpperCase();
       Advert hey = advertQueue.get(hi);
       String Zoners[] = {
-              "[" +event+"] A hosted event is just about to start! This is the last call! Type ?go " +event+ " to join. -" +sender,
-              "We need moar! Come join this epic event! ?go " +event+ " to play! -" +sender,
-              "If I'm playing it, it must be good! ?go " +event+ " -" +sender,
-              "You all have one mintue before detonation of a BOMB! Type ?go " +event+ " for shelter! -" +sender,
-              "You look bored, why not come over here and play ?go " + event+ " -"+sender,
-              "What are you doing sitting in pub? LOL! ?go " +event+ " NOW! -"+sender,
-              "Last call!! Last call!! Last call before I phone your momma!! ?go " +event+ " -"+sender,
-              "We need MOAR people!!! Phone your mom/dad/sister/brother/aunt/uncle/friends/doctor/dentist/serial killer ?go " +event+ " -"+sender,
-              "My first ad sucked. ?go "+event+ " -"+sender,
-              "No one came to this event the first time :(. Please save me the embarrassment and ?go "+event+ " -"+sender
+
+              "Last call for "+event+"."+" Type ?go "+event+ " to play. -"+sender,
+              "The event "+event+ " is starting. Type ?go "+event+ " to play. -"+sender
 
            };
       
@@ -210,14 +203,9 @@ private void event(String sender, String argString, int soundCode) {
     String of = kind.toUpperCase();
     Advert hey = advertQueue.get(hi);
     String Zoners[] = {
-            "[" +of+"] A hosted event is just about to start! This is the last call! Type ?go " +event+ " to play "+of+ " -" +sender,
-            "A game of "+of+ " is just about to start in ?go "+event+ " -" +sender,
-            "Eh! Time for you to type ?go "+event+ " to play "+of+ " -" +sender,
-            "Last call for something unboring! ?go "+event+ " to play "+of+ " -"+sender,
-            "You look bored, why not come over here and play "+of+ " in ?go " + event+ " -"+sender,
-            "TIME FOR SOME "+of+ " IN ?GO "+event+ " -"+sender,
-            "My first ad sucked. ?go "+event+ " to play "+of+ " -"+sender,
-            "No one came to this event the first time :(. Please save me the embarrassment and ?go "+event+ " to play "+of+ " -"+sender
+
+            "Last call for "+of+ " in "+event+ ". Type ?go "+event+ " to play. -"+sender,
+            "The event "+of+ " is about to start in ?go "+event+ " -"+sender
 
          };
     
