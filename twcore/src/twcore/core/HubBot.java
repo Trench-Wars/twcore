@@ -78,7 +78,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage", accessRequired );
 
         // Outsider+
-        accessRequired = OperatorList.OUTSIDER_LEVEL; 
+        accessRequired = OperatorList.ER_LEVEL; 
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "handleHelp", accessRequired );
         m_commandInterpreter.registerCommand( "!listOnbots", acceptedMessages, this, "handleListBots", accessRequired );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList", accessRequired );
@@ -88,7 +88,8 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!uptime", acceptedMessages, this, "handleUptimeCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!dbstatus", acceptedMessages, this, "handleDbStatus", accessRequired );
         m_commandInterpreter.registerCommand( "!version", acceptedMessages, this, "handleVersion", accessRequired );
-        
+         
+       
         // Highmod+
         accessRequired = OperatorList.HIGHMOD_LEVEL; 
         m_commandInterpreter.registerCommand( "!spawnmax", acceptedMessages, this, "handleSpawnMaxMessage", accessRequired );
@@ -482,6 +483,26 @@ public class HubBot extends SubspaceBot {
     			m_botAction.sendSmartPrivateMessage(messager, pm);
     		}
     	}
+    	
+    	// ZHs
+        HashSet<String> zhs = (list.getAllOfAccessLevel(OperatorList.ZH_LEVEL));
+        m_botAction.sendSmartPrivateMessage( messager, " ");
+        m_botAction.sendSmartPrivateMessage( messager, "ZHs ("+zhs.size()+")");
+        if(zhs.size() > 0) {
+            String pm = "  ";
+
+            for(String zh:zhs) {
+                if(pm.length() < linelength) {
+                    pm += zh + ", ";
+                } else {
+                    m_botAction.sendSmartPrivateMessage(messager, pm);
+                    pm = "  ";
+                }
+            }
+            if(pm.length()>0) {
+                m_botAction.sendSmartPrivateMessage(messager, pm);
+            }
+        }
     	
     	// Outsiders
     	HashSet<String> outsiders = (list.getAllOfAccessLevel(OperatorList.OUTSIDER_LEVEL));
