@@ -47,13 +47,15 @@ public class OperatorList {
 	public static final int PLAYER_LEVEL = 0;
     public static final int BOT_LEVEL = 1;
     public static final int OUTSIDER_LEVEL = 2;
-    public static final int ER_LEVEL = 3;
-    public static final int MODERATOR_LEVEL = 4;
-    public static final int HIGHMOD_LEVEL = 5;
-    public static final int DEV_LEVEL = 6;
-    public static final int SMOD_LEVEL = 7;
-    public static final int SYSOP_LEVEL = 8;
-    public static final int OWNER_LEVEL = 9;
+    public static final int ZH_LEVEL = 3;
+    public static final int ER_LEVEL = 4;
+    public static final int MODERATOR_LEVEL = 5;
+    public static final int HIGHMOD_LEVEL = 6;
+    public static final int DEV_LEVEL = 7;
+    public static final int SMOD_LEVEL = 8;
+    public static final int SYSOP_LEVEL = 9;
+    public static final int OWNER_LEVEL = 10;
+    
 
     /**
      * This Hashmap contains all the operators
@@ -103,11 +105,11 @@ public class OperatorList {
 
         // temporary map for reading out the configuration
         String[] operators_keys = {
-                 "level_player", "level_bot", "level_outsider", "level_er", "level_moderator",
+                 "level_player", "level_bot", "level_outsider", "level_zh", "level_er", "level_moderator",
                  "level_highmod", "level_dev", "level_smod", "level_sysop", "level_owner"
         };
         String[] auto_assign_keys = {
-                "assign_player", "assign_bot", "assign_outsider", "assign_er", "assign_moderator",
+                "assign_player", "assign_bot", "assign_outsider", "assign_zh", "assign_er", "assign_moderator",
                 "assign_highmod", "assign_dev", "assign_smod", "assign_sysop", "assign_owner"
         };
 
@@ -340,6 +342,34 @@ public class OperatorList {
             return false;
         }
     }
+    /**
+     * Check if a given name is at least of ER status.
+     * @param name Name in question
+     * @return True if player is at least an ER
+     */
+    public boolean isZH( String name ){
+
+        if( getAccessLevel( name ) >= ZH_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Check if a given name is an ER.
+     * @param name Name in question
+     * @return True if player is an ER
+     */
+    public boolean isZHExact( String name ){
+
+        if( getAccessLevel( name ) == ZH_LEVEL ){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 
     /**
      * Check if a given name is at least of ER status.
@@ -603,13 +633,14 @@ public class OperatorList {
             case 0: return "Player [lvl " + accessLevel + "]";
             case 1: return "Bot [lvl " + accessLevel + "]";
             case 2: return "Outsider [lvl " + accessLevel + "]";
-            case 3: return "ER [lvl " + accessLevel + "]";
-            case 4: return "Mod [lvl " + accessLevel + "]";
-            case 5: return "HighMod [lvl " + accessLevel + "]";
-            case 6: return "Developer [lvl " + accessLevel + "]";
-            case 7: return "SMod [lvl " + accessLevel + "]";
-            case 8: return "Sysop [lvl " + accessLevel + "]";
-            case 9: return "Owner [lvl " + accessLevel + "]";
+            case 3: return "ZH [lvl "+ accessLevel + "]";
+            case 4: return "ER [lvl " + accessLevel + "]";
+            case 5: return "Mod [lvl " + accessLevel + "]";
+            case 6: return "HighMod [lvl " + accessLevel + "]";
+            case 7: return "Developer [lvl " + accessLevel + "]";
+            case 8: return "SMod [lvl " + accessLevel + "]";
+            case 9: return "Sysop [lvl " + accessLevel + "]";
+            case 10: return "Owner [lvl " + accessLevel + "]";
             default: return "Unknown access level! [lvl " + accessLevel + "]";
         }
     }
