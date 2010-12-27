@@ -39,6 +39,7 @@ public class zonerbot extends SubspaceBot
   public static final String ZONE_CHANNEL = "Zone Channel";
   public static final String HOSTNAME = "localhost";
   public static final String GO_STRING = "?go ";
+  public static final long CLEAR_REQUESTS_DELAY = 10 * 60 * 1000;
   public static final int LINE_LENGTH = 120;
   public static final int REQUEST_LIFE_TIME = 120;
   public static final int NATURAL_LINE_LENGTH = 200;
@@ -46,6 +47,7 @@ public class zonerbot extends SubspaceBot
   private VectorMap<String, Advert> advertQueue;
   private VectorMap<Integer, PeriodicZone> PeriodicMsgs;
   private TimedHashSet<String> recentAdvertList;
+  private VectorMap<String, RequestRecord> requestList;
   private AdvertTimer advertTimer;
   private IdleTimer idleTimer;
   private int advertTime;
@@ -64,6 +66,8 @@ public class zonerbot extends SubspaceBot
   {
     super(botAction);
     requestEvents();
+    requestList = new VectorMap<String, RequestRecord>();
+    recentAdvertList = new TimedHashSet<String>();
     advertQueue = new VectorMap<String, Advert>();
     PeriodicMsgs = new VectorMap<Integer, PeriodicZone>();
     recentAdvertList = new TimedHashSet<String>();
@@ -95,6 +99,8 @@ public class zonerbot extends SubspaceBot
           handleModCommands(sender, message, messageType);
         if(opList.isER(sender) || advertQueue.containsKey(sender.toLowerCase()))
           handleERCommands(sender, message, messageType, alertCommandType);
+        if(opList.isZH(sender))
+            handleZHCommands(sender, message, messageType);
       }
       if(messageType == Message.ARENA_MESSAGE)
         handleArenaMessage(message);
@@ -105,7 +111,88 @@ public class zonerbot extends SubspaceBot
     }
   }
   
-  // This is to catch any IPC events though none of them need to be catched to do something with the results
+  private void handleZHCommands(String sender, String message, int messageType) {
+      
+          String command = message.toLowerCase();
+
+          if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
+          {
+            if(command.startsWith("!request "))
+              doRequestCmd(sender, message.substring(9).trim());
+            if(command.equals("!requested"))
+              doRequestedCmd(sender);
+            if(command.startsWith("!delrequest "))
+              doDelRequestCmd(sender, message.substring(12).trim());
+            if(command.equals("!help"))
+              doZHHelpCmd(sender);
+          }
+        }
+    
+
+
+private void doZHHelpCmd(String sender) {
+    {
+      String message[] =
+      {
+        "=========================================== ZH Commands ============================================",
+        "!Request <Requester>:<Request>     -- Adds the hosting request, <Request> made by <Requester> to the",
+        "                                      request list.",
+        "!Requested                         -- Displays all events requested in the past hour.",
+        "!DelRequest <Requester>            -- Removes the request of <Requester> from the request list.",
+        "!Help                              -- Displays this help message."
+      };
+
+      m_botAction.smartPrivateMessageSpam(sender, message);
+    }
+    
+}
+
+private void doDelRequestCmd(String sender, String argString) {
+    String requester = argString.toLowerCase();
+
+    if(!requestList.containsKey(requester))
+      throw new IllegalArgumentException("No request was made by " + argString + ".");
+    requestList.remove(requester);
+    m_botAction.sendSmartPrivateMessage(sender, "Request made by " + argString + " was removed.");
+    
+}
+
+private void doRequestedCmd(String sender) {
+    RequestRecord requestRecord;
+
+    if(requestList.isEmpty())
+      m_botAction.sendSmartPrivateMessage(sender, "No events have been requested.");
+
+    for(int index = 0; index < requestList.size(); index++)
+    {
+      requestRecord = (RequestRecord) requestList.get(index);
+      m_botAction.sendSmartPrivateMessage(sender, requestRecord.toString());
+    }
+    
+}
+
+private void doRequestCmd(String sender, String argString) {
+    StringTokenizer argTokens = new StringTokenizer(argString, ":");
+    RequestRecord requestRecord;
+    String requester;
+    String request;
+
+    if(argTokens.countTokens() != 2)
+      throw new IllegalArgumentException("Please use the following format: !Request <Requester>:<Event>");
+    requester = argTokens.nextToken();
+    request = argTokens.nextToken();
+
+    requestRecord = new RequestRecord(requester, request);
+
+    if(requestList.containsKey(requester.toLowerCase()))
+      m_botAction.sendSmartPrivateMessage(sender, "Previous request replaced.");
+    else
+      m_botAction.sendSmartPrivateMessage(sender, "Request added.");
+    requestList.put(requester.toLowerCase(), requestRecord);
+    
+}
+
+// This is to catch any IPC events though none of them need to be catched to do something with the results
   public void handleEvent( InterProcessEvent event ) {}
 
   /**
@@ -390,7 +477,7 @@ private void event(String sender, String argString, int soundCode) {
     Advert advert = advertQueue.get(argString.toLowerCase());
     String advertText;
 
-    if(!opList.isBot(argString))
+    if(!opList.isZH(argString))
       throw new RuntimeException("You are not authorized to view that advert.");
     if(advert == null)
       throw new RuntimeException(argString + " has not yet claimed the advert.");
@@ -632,7 +719,7 @@ private void event(String sender, String argString, int soundCode) {
   {
     OperatorList opList = m_botAction.getOperatorList();
 
-    if(!opList.isBot(argString) || opList.isER(argString))
+    if(!opList.isZH(argString) || opList.isER(argString))
       throw new IllegalArgumentException("The player that you are granting the advert to must be a ZH.");
     doClaimCmd(argString, true);
     m_botAction.sendSmartPrivateMessage(sender, argString + " granted an advert.");
@@ -993,6 +1080,7 @@ private void event(String sender, String argString, int soundCode) {
     maxQueueLength = botSettings.getInt("queuelength");*/
 
     m_botAction.ipcSubscribe(ZONE_CHANNEL);
+    m_botAction.scheduleTask(new ClearRequestsTask(), CLEAR_REQUESTS_DELAY);
     m_botAction.changeArena(initialArena);
     setAdvertTimer(1000);
   }
@@ -1024,6 +1112,22 @@ private void event(String sender, String argString, int soundCode) {
         m_botAction.cancelTask(idleTimer);
     idleTimer = new IdleTimer(milliseconds);
     m_botAction.scheduleTask(idleTimer, milliseconds);
+  }
+  
+  private void clearOldRequests()
+  {
+    RequestRecord requestRecord;
+    int index = 0;
+
+    for(;;)
+    {
+      requestRecord = (RequestRecord) requestList.get(index);
+      if(requestRecord == null ||
+         System.currentTimeMillis() - requestRecord.getTimeRequested() > REQUEST_LIFE_TIME)
+        break;
+      requestList.remove(requestRecord.getRequester());
+      index++;
+    }
   }
 
   /**
@@ -1138,6 +1242,84 @@ private void event(String sender, String argString, int soundCode) {
         notifyQueuePosition(currentAdverter);
         m_botAction.sendUnfilteredPublicMessage("?find " + currentAdverter);
       }
+    }
+  }
+  
+  /**
+   * <p>Title: RequestRecord</p>
+   * <p>Description: This class keeps track of host requests.</p>
+   * <p>Copyright: Copyright (c) 2004</p>
+   * <p>Company: For SSCU Trench Wars</p>
+   * @author Cpt.Guano!
+   * @version 1.0
+   */
+  private class RequestRecord
+  {
+    private String requester;
+    private String request;
+    private long timeRequested;
+
+    /**
+     * This method creates a new request record.
+     *
+     * @param requester is the person that requested the event.
+     * @param request is the request made by the person.
+     */
+    public RequestRecord(String requester, String request)
+    {
+      this.requester = requester;
+      this.request = request;
+      timeRequested = System.currentTimeMillis();
+    }
+
+    public String getRequester()
+    {
+      return requester;
+    }
+
+    /**
+     * This method gets the time that the request was made.
+     *
+     * @return the time that the request was made is returned.
+     */
+    public long getTimeRequested()
+    {
+      return timeRequested;
+    }
+
+    /**
+     * This method returns a String representation of the request record.
+     *
+     * @return a string containing all of the request information is returned.
+     */
+    public String toString()
+    {
+      return "\"" + request + "\" Requested by: " + requester + " " + getElapsedTime() + " ago.";
+    }
+
+    /**
+     * This method gets a string in the form: "HH hours and MM mins"
+     * representing the time that has elapsed since the record has been
+     * requested.
+     *
+     * @return a string of the form "HH hours and MM mins" representing the
+     * time that has elapsed is returned.
+     */
+    private String getElapsedTime()
+    {
+      long elapsedTime = (System.currentTimeMillis() - timeRequested) / (60 * 1000);
+      int mins = (int) (elapsedTime % 60);
+      int hours = (int) (elapsedTime / 60);
+
+      return StringTools.pluralize(hours, "hour") + " and " + StringTools.pluralize(mins, "min");
+    }
+  }
+  
+  private class ClearRequestsTask extends TimerTask
+  {
+    public void run()
+    {
+      clearOldRequests();
     }
   }
 
