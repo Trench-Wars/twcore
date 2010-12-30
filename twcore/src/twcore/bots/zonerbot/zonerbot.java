@@ -1,5 +1,6 @@
 package twcore.bots.zonerbot;
 
+import java.util.HashMap;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Iterator;
@@ -48,6 +49,7 @@ public class zonerbot extends SubspaceBot
   private VectorMap<Integer, PeriodicZone> PeriodicMsgs;
   private TimedHashSet<String> recentAdvertList;
   private VectorMap<String, RequestRecord> requestList;
+  private HashMap<String, String> zhops;
   private AdvertTimer advertTimer;
   private IdleTimer idleTimer;
   private int advertTime;
@@ -71,6 +73,7 @@ public class zonerbot extends SubspaceBot
     advertQueue = new VectorMap<String, Advert>();
     PeriodicMsgs = new VectorMap<Integer, PeriodicZone>();
     recentAdvertList = new TimedHashSet<String>();
+    zhops = new HashMap<String,String>();
     advertTime = 10;
     finalAdvertTime = 5;
     idleTime = 5;
@@ -95,8 +98,8 @@ public class zonerbot extends SubspaceBot
           handleOwnerCommands(sender, message, messageType);
         if(opList.isSmod(sender))
           handleSmodCommands(sender, message, messageType);
-        if(opList.isModerator(sender))
-          handleModCommands(sender, message, messageType);
+        if(opList.isSmod(sender) || !zhops.containsKey(sender.toLowerCase()))
+          handleOpCommands(sender, message, messageType);
         if(opList.isER(sender) || advertQueue.containsKey(sender.toLowerCase()))
           handleERCommands(sender, message, messageType, alertCommandType);
         if(opList.isZH(sender))
@@ -692,7 +695,7 @@ private void event(String sender, String argString, int soundCode) {
    * @param message is the message to handle.
    * @param messageType is the message type.
    */
-  private void handleModCommands(String sender, String message, int messageType)
+  private void handleOpCommands(String sender, String message, int messageType)
   {
     String command = message.toLowerCase();
     if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
@@ -704,7 +707,7 @@ private void event(String sender, String argString, int soundCode) {
       if(command.startsWith("!approve "))
         doApproveCmd(sender ,message.substring(9).trim());
       if(command.equals("!help"))
-        doModHelpCmd(sender);
+        doOpHelpCmd(sender);
     }
   }
 
@@ -748,11 +751,11 @@ private void event(String sender, String argString, int soundCode) {
    *
    * @param sender is the player that sent the message.
    */
-  private void doModHelpCmd(String sender)
+  private void doOpHelpCmd(String sender)
   {
     String message[] =
     {
-      "========================================== Mod Commands ============================================",
+      "========================================== ZH-Op Commands ============================================",
       "!Grant <Player>                    -- Grants an advert to <Player>.",
       "!ViewAdvert <Player>               -- Views the advert of <Player>.",
       "!Approve <Player>                  -- Approves the advert of <Player>."
@@ -792,12 +795,85 @@ private void event(String sender, String argString, int soundCode) {
         doDisableCmd(sender);
       if(command.equals("!die"))
         doDieCmd();
+      if(command.startsWith("!add "))
+          addZHOp(sender, message.substring(5).trim());
+      if(command.startsWith("!remove "))
+          removeZHOp(sender, message.substring(8).trim());
+      if(command.startsWith("!listops"))
+          listZHOp(sender);
+      if(command.startsWith("!reload"))
+          load_zhops();
       if(command.equals("!help"))
         doSmodHelpCmd(sender);
     }
   }
 
-  private void handleOwnerCommands(String sender, String message, int messageType) {
+  private void listZHOp(String sender) {
+      String zhop = "ZonerBot ZH Operators: ";
+      Iterator<String> list1 = zhops.values().iterator();
+      
+      while( list1.hasNext() ) {
+          if( list1.hasNext() )
+              zhop += (String)list1.next() + ", ";
+          else
+              zhop += (String)list1.next();
+      }
+      
+      
+      zhop = zhop.substring(0, zhop.length() - 2);
+      m_botAction.sendSmartPrivateMessage( sender, zhop );
+
+    
+}
+
+private void removeZHOp(String name, String message) {
+    load_zhops();
+    BotSettings m_botSettings = m_botAction.getBotSettings();
+    String ops = m_botSettings.getString("ZHOperators");
+    
+    int spot = ops.indexOf(message);
+    if (spot == 0 && ops.length() == message.length()) {
+        ops = "";
+        m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " successful");
+    }
+    else if (spot == 0 && ops.length() > message.length()) {
+        ops = ops.substring(message.length() + 1);
+        m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " successful");
+    } 
+    else if (spot > 0 && spot + message.length() < ops.length()) {
+        ops = ops.substring(0, spot) + ops.substring(spot + message.length() + 1);
+        m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " successful");
+    }
+    else if (spot > 0 && spot == ops.length() - message.length()) {
+        ops = ops.substring(0, spot - 1);
+        m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " successful");
+    }
+    else {
+        m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " failed, operator doesn't exist");
+        return;
+    }
+    m_botSettings.put("ZHOperators", ops);
+    m_botSettings.save();
+    load_zhops();
+    
+}
+
+private void addZHOp(String name, String substring) {
+    BotSettings m_botSettings = m_botAction.getBotSettings();
+    String ops = m_botSettings.getString("ZHOperators");
+
+    if (ops.length() < 1)
+        m_botSettings.put("ZHOperators", substring);
+    else
+        m_botSettings.put("ZHOperators", ops + "," + substring);
+    m_botAction.sendSmartPrivateMessage(name, "Add Op: " + substring + " successful");
+    m_botSettings.save();
+    load_zhops();
+    }
+    
+
+
+private void handleOwnerCommands(String sender, String message, int messageType) {
     String command = message.toLowerCase();
     if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
     {
@@ -1045,7 +1121,10 @@ private void event(String sender, String argString, int soundCode) {
       "!SetQueueLength <Length>              -- Sets the number of people allowed in the advert queue.",
       "!Enable                               -- Enables Advert bot.",
       "!Disable                              -- Disables Advert bot.",
-      "!Die                                  -- Logs the bot off."
+      "!Die                                  -- Logs the bot off.",
+      "!Add <Staffer>                        -- Adds a ZH Operator (Trainer)",
+      "!Remove <Staffer>                     -- Removes a ZH Operator (Trainer)",
+      "!ListOps                              -- List ZH Operators"
     };
 
     m_botAction.smartPrivateMessageSpam(sender, message);
@@ -1083,9 +1162,28 @@ private void event(String sender, String argString, int soundCode) {
     m_botAction.scheduleTask(new ClearRequestsTask(), CLEAR_REQUESTS_DELAY);
     m_botAction.changeArena(initialArena);
     setAdvertTimer(1000);
+    load_zhops();
   }
 
-  /**
+  private void load_zhops() {
+    //Load the operators and add them
+      try {
+          BotSettings m_botSettings = m_botAction.getBotSettings();
+      zhops.clear();
+      //
+      String ops[] = m_botSettings.getString( "ZHOperators" ).split( "," );
+      for( int i = 0; i < ops.length; i++ )
+         zhops.put(ops[i].toLowerCase(), ops[i]);
+      
+      } catch (Exception e) { Tools.printStackTrace( "Method Failed: ", e ); }
+      
+
+
+  }
+    
+
+
+/**
    * This private method requests the events that the bot will use.
    */
   private void requestEvents()
