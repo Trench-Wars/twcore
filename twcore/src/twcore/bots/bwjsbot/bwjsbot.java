@@ -898,8 +898,8 @@ public class bwjsbot extends SubspaceBot {
             help.add("!die                      -- disconnects the bot");
         }
         
-        if (m_botAction.getOperatorList().isER(name)) {
-            help.add("ER commands:");
+        if (m_botAction.getOperatorList().isZH(name)) {
+            help.add("ZH+ commands:");
             help.add("!start                            -- starts the bot");
             help.add("!stop                             -- stops the bot");
             if(!cfg.getAllowAutoCaps()) {
