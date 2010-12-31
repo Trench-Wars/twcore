@@ -472,8 +472,8 @@ public class bwjsbot extends SubspaceBot {
 //            cmd_top10(name, cmd);
         }
         
-        /* Staff commands ER+ */
-        if (m_botAction.getOperatorList().isER(name)) {
+        /* Staff commands ZH+ */
+        if (m_botAction.getOperatorList().isZH(name)) {
             if (cmd.equals("!start")) {
                 cmd_start(name);
             } else if (cmd.equals("!stop")) {
