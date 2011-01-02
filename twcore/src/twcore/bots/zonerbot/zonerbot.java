@@ -98,7 +98,7 @@ public class zonerbot extends SubspaceBot
           handleOwnerCommands(sender, message, messageType);
         if(opList.isSmod(sender))
           handleSmodCommands(sender, message, messageType);
-        if(opList.isSmod(sender) || !zhops.containsKey(sender.toLowerCase()))
+        if(opList.isSmod(sender) || zhops.containsKey(sender.toLowerCase()))
           handleOpCommands(sender, message, messageType);
         if(opList.isER(sender) || advertQueue.containsKey(sender.toLowerCase()))
           handleERCommands(sender, message, messageType, alertCommandType);
@@ -720,7 +720,9 @@ private void event(String sender, String argString, int soundCode) {
    */
   private void doGrantCmd(String sender, String argString)
   {
+      
     OperatorList opList = m_botAction.getOperatorList();
+
 
     if(!opList.isZH(argString) || opList.isER(argString))
       throw new IllegalArgumentException("The player that you are granting the advert to must be a ZH.");
