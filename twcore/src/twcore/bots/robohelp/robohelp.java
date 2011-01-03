@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -272,16 +271,50 @@ public class robohelp extends SubspaceBot {
       
       String message = ipcMessage.getMessage();
       try {
-          String parts[] = message.toLowerCase().split( "@ad@" );
-          String host = parts[0];
-          String arena = parts[1];
-          String advert = parts[2];
+          if (message.startsWith("alert")) {
+              handleNewPlayer(message.substring(6));
+          } else {
+              String parts[] = message.toLowerCase().split( "@ad@" );
+              String host = parts[0];
+              String arena = parts[1];
+              String advert = parts[2];
 
-          storeAdvert( host, arena, advert );
-          m_botAction.sendSmartPrivateMessage(host, "Advert for '"+arena+"' registered."); 
+              storeAdvert( host, arena, advert );
+              m_botAction.sendSmartPrivateMessage(host, "Advert for '"+arena+"' registered."); 
+          }
       } catch (Exception e ) {
     	  Tools.printStackTrace(e);
       }
+    }
+    
+    public void handleNewPlayer(String message) {
+        String player = message.substring(message.indexOf("): ") + 3);
+        boolean send = false;
+        try {
+            ResultSet alerts = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCallNewb WHERE fcUserName = '" + Tools.addSlashesToString(player) + "'");
+            if (alerts.next()) {
+                if (alerts.getInt("fnTaken") == 0) {
+                    send = true;
+                    m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallNewb SET fdCreated = NOW() WHERE fnAlertID = " + alerts.getInt("fnAlertID"));
+                }
+            } else {
+                send = true;
+                m_botAction.SQLQueryAndClose(mySQLHost, "INSERT INTO tblCallNewb (fcUserName, fdCreated) VALUES ('" + Tools.addSlashesToString(player) + "', NOW())");
+            }
+            m_botAction.SQLClose(alerts);
+        } catch (Exception e ) { Tools.printLog( "Could not insert new player alert record." ); }
+        
+        if (send) {
+            HelpRequest request;
+            lastHelpRequestName = player;
+            callList.addElement(new EventData(true, new java.util.Date().getTime()));
+            request = m_playerList.get(player.toLowerCase());
+            if (request == null) {
+                request = new HelpRequest(player, "New player alert", null);
+                m_playerList.put(player.toLowerCase(), request);
+            }
+            m_botAction.sendChatMessage(message);
+        }
     }
     
     // This is to catch any backgroundqueries even though none of them need to be catched to do something with the results
@@ -364,19 +397,28 @@ public class robohelp extends SubspaceBot {
         String  arena;
         long    time;
         int     dups;
+        boolean newb;
 
         public EventData( String a ) {
             arena = a;
             dups  = 1;
+            newb = false;
         }
 
         public EventData( long t ) {
             time = t;
+            newb = false;
+        }
+
+        public EventData( boolean n, long t ) {
+            time = t;
+            newb = n;
         }
 
         public EventData( String a, long t ) {
             arena = a;
             time = t;
+            newb = false;
         }
 
         public void inc() {
@@ -386,6 +428,7 @@ public class robohelp extends SubspaceBot {
         public String getArena() { return arena; }
         public long getTime() { return time; }
         public int getDups() { return dups; }
+        public boolean isNewbAlert() { return newb; }
     }
 
     public void handleAdvert ( String playerName, String message ){
@@ -838,6 +881,7 @@ public class robohelp extends SubspaceBot {
      */
     public void handleClaim( String name, String message) {
         boolean record = false;
+        boolean newbAlert = false;
         Date now = new Date();
         long callTime =0;
         
@@ -849,6 +893,7 @@ public class robohelp extends SubspaceBot {
         	if( record == false && now.getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
         		// This is a non-expired call and no call has been counted yet. 
         		record = true;
+        		newbAlert = e.isNewbAlert();
         		callTime = e.getTime();
         		iter.remove();
         	} else if(now.getTime() >= e.getTime() + CALL_EXPIRATION_TIME) {
@@ -860,7 +905,7 @@ public class robohelp extends SubspaceBot {
         // if a non-expired call was found, record it to the database
         if(record) {
         	// Save
-        	if(message.startsWith("on it"))
+        	if(!newbAlert && message.startsWith("on it"))
         		updateStatRecordsONIT( name );
         	else if(message.startsWith("got it"))
         		updateStatRecordsGOTIT( name );
@@ -878,8 +923,12 @@ public class robohelp extends SubspaceBot {
             	}
             }
             
-            if(player.length()>0)
-            	m_botAction.sendRemotePrivateMessage(name, "Call claim of the player '"+player+"' recorded.");
+            if(!newbAlert && player.length()>0)
+            	m_botAction.sendRemotePrivateMessage(name, "Call claim of the player '"+player+"' recorded.");            
+            else if(newbAlert && player.length()>0) {
+                updateStatRecordsNewbONIT( name, player );
+                m_botAction.sendRemotePrivateMessage(name, "Call claim of the new player '"+player+"' recorded.");
+            }
             else
             	m_botAction.sendRemotePrivateMessage(name, "Call claim recorded.");
             
@@ -1125,6 +1174,26 @@ public class robohelp extends SubspaceBot {
         } catch ( Exception e ) {
         	//m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
         	Tools.printStackTrace(e);
+        }
+    }
+
+    public void updateStatRecordsNewbONIT( String name, String player ) {
+        if( !m_botAction.SQLisOperational())
+            return;
+        
+        try {
+            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallNewb SET fnTaken = 1, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fcUserName = '" + Tools.addSlashesToString(player) + "'");
+            String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
+            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 2 AND fdDate = '"+time+"'" );
+            if(result.next()) {
+                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 2 AND fdDate = '"+time+"'" );
+            } else {
+                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '2', '"+time+"')" );
+            }
+            m_botAction.SQLClose( result );
+        } catch ( Exception e ) {
+            //m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
+            Tools.printStackTrace(e);
         }
     }
 
