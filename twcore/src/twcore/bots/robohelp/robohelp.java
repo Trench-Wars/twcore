@@ -1321,7 +1321,7 @@ public class robohelp extends SubspaceBot {
         }
         else if (event.getMessageType() == Message.CHAT_MESSAGE) {
         	String message = event.getMessage().toLowerCase().trim();
-        	if (message.startsWith("on it") || message.startsWith("got it"))
+        	if ((message.startsWith("on it") || message.startsWith("got it")) && opList.isZH(event.getMessager()))
         		handleClaim(event.getMessager(), message);
         	else if (message.startsWith("on that") || message.startsWith("got that"))
         	    handleThat(event.getMessager());
