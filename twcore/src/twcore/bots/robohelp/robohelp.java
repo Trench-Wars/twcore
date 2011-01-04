@@ -31,6 +31,8 @@ import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
 
 public class robohelp extends SubspaceBot {
+    public static final String TWBR_CHAT = "evasion5"; // temporary until its all decided
+    
     static int TIME_BETWEEN_ADS = 390000;//6.5 * 60000;
     public static final int LINE_SIZE = 100;
     public static final int CALL_EXPIRATION_TIME = 90000;  // Time after which a call can't
@@ -257,7 +259,7 @@ public class robohelp extends SubspaceBot {
 
     public void handleEvent( LoggedOn event ){
         m_botAction.joinArena( "#robopark" );
-        m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) );
+        m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + TWBR_CHAT );
         m_botAction.sendUnfilteredPublicMessage( "?blogin " + m_botSettings.getString( "Banpassword" ) );
         m_botAction.ipcSubscribe(ZONE_CHANNEL);
     }
@@ -307,7 +309,7 @@ public class robohelp extends SubspaceBot {
         
         if (send) {
             newbs.add(new NewPlayer(player));
-            m_botAction.sendChatMessage(message + " [Use 'on that' to take this call]");
+            m_botAction.sendChatMessage(2, message + " [Use 'on that' to take this call]");
         }
     }
     
