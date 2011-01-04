@@ -55,6 +55,7 @@ public class robohelp extends SubspaceBot {
     Vector<EventData>   eventList = new Vector<EventData>();
     TreeMap<String, EventData> events = new TreeMap<String, EventData>();
     Vector<EventData>   callList = new Vector<EventData>();
+    Vector<NewPlayer> newbs = new Vector<NewPlayer>();
 
     String				findPopulation = "";
 	int					setPopID = -1;
@@ -305,15 +306,8 @@ public class robohelp extends SubspaceBot {
         } catch (Exception e ) { Tools.printLog( "Could not insert new player alert record." ); }
         
         if (send) {
-            HelpRequest request;
-            lastHelpRequestName = player;
-            callList.addElement(new EventData(true, new java.util.Date().getTime()));
-            request = m_playerList.get(player.toLowerCase());
-            if (request == null) {
-                request = new HelpRequest(player, "New player alert", null);
-                m_playerList.put(player.toLowerCase(), request);
-            }
-            m_botAction.sendChatMessage(message);
+            newbs.add(new NewPlayer(player));
+            m_botAction.sendChatMessage(message + " [Use 'on that' to take this call]");
         }
     }
     
@@ -397,28 +391,19 @@ public class robohelp extends SubspaceBot {
         String  arena;
         long    time;
         int     dups;
-        boolean newb;
 
         public EventData( String a ) {
             arena = a;
             dups  = 1;
-            newb = false;
         }
 
         public EventData( long t ) {
             time = t;
-            newb = false;
-        }
-
-        public EventData( boolean n, long t ) {
-            time = t;
-            newb = n;
         }
 
         public EventData( String a, long t ) {
             arena = a;
             time = t;
-            newb = false;
         }
 
         public void inc() {
@@ -428,7 +413,6 @@ public class robohelp extends SubspaceBot {
         public String getArena() { return arena; }
         public long getTime() { return time; }
         public int getDups() { return dups; }
-        public boolean isNewbAlert() { return newb; }
     }
 
     public void handleAdvert ( String playerName, String message ){
@@ -871,6 +855,29 @@ public class robohelp extends SubspaceBot {
             }
         }
     }
+    
+    public void handleThat(String name) {
+        boolean record = false;
+        Date now = new Date();
+        String player = "";
+        Iterator<NewPlayer> i = newbs.iterator();
+        while (i.hasNext()) {
+            NewPlayer np = i.next();
+            if (!record && now.getTime() < np.getTime() + CALL_EXPIRATION_TIME) {
+                record = true;
+                player = np.getName();
+                i.remove();
+            } else if (now.getTime() >= np.getTime() + CALL_EXPIRATION_TIME) {
+                i.remove();
+            }
+        }
+        
+        if (record) {
+            m_botAction.sendRemotePrivateMessage(name, "Call claim of the new player '" + player + "' recorded.");
+            updateStatRecordsONTHAT(name, player);            
+        } else
+            m_botAction.sendRemotePrivateMessage(name, "The call expired or no call found to match your claim.");
+    }
 
     /**
      * For strict onits, requiring the "on it" to be at the start of the message.
@@ -881,7 +888,6 @@ public class robohelp extends SubspaceBot {
      */
     public void handleClaim( String name, String message) {
         boolean record = false;
-        boolean newbAlert = false;
         Date now = new Date();
         long callTime =0;
         
@@ -893,7 +899,6 @@ public class robohelp extends SubspaceBot {
         	if( record == false && now.getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
         		// This is a non-expired call and no call has been counted yet. 
         		record = true;
-        		newbAlert = e.isNewbAlert();
         		callTime = e.getTime();
         		iter.remove();
         	} else if(now.getTime() >= e.getTime() + CALL_EXPIRATION_TIME) {
@@ -905,7 +910,7 @@ public class robohelp extends SubspaceBot {
         // if a non-expired call was found, record it to the database
         if(record) {
         	// Save
-        	if(!newbAlert && message.startsWith("on it"))
+        	if(message.startsWith("on it"))
         		updateStatRecordsONIT( name );
         	else if(message.startsWith("got it"))
         		updateStatRecordsGOTIT( name );
@@ -923,12 +928,8 @@ public class robohelp extends SubspaceBot {
             	}
             }
             
-            if(!newbAlert && player.length()>0)
-            	m_botAction.sendRemotePrivateMessage(name, "Call claim of the player '"+player+"' recorded.");            
-            else if(newbAlert && player.length()>0) {
-                updateStatRecordsNewbONIT( name, player );
-                m_botAction.sendRemotePrivateMessage(name, "Call claim of the new player '"+player+"' recorded.");
-            }
+            if(player.length()>0)
+            	m_botAction.sendRemotePrivateMessage(name, "Call claim of the player '"+player+"' recorded.");
             else
             	m_botAction.sendRemotePrivateMessage(name, "Call claim recorded.");
             
@@ -1177,7 +1178,7 @@ public class robohelp extends SubspaceBot {
         }
     }
 
-    public void updateStatRecordsNewbONIT( String name, String player ) {
+    public void updateStatRecordsONTHAT( String name, String player ) {
         if( !m_botAction.SQLisOperational())
             return;
         
@@ -1320,6 +1321,26 @@ public class robohelp extends SubspaceBot {
         	String message = event.getMessage().toLowerCase().trim();
         	if (message.startsWith("on it") || message.startsWith("got it"))
         		handleClaim(event.getMessager(), message);
+        	else if (message.startsWith("on that") || message.startsWith("got that"))
+        	    handleThat(event.getMessager());
+        }
+    }
+    
+    class NewPlayer {
+        long time;
+        String name;
+        
+        public NewPlayer(String p) {
+            this.name = p;
+            this.time = System.currentTimeMillis();
+        }
+        
+        public long getTime() {
+            return time;
+        }
+        
+        public String getName() {
+            return name;
         }
     }
 
