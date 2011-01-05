@@ -207,7 +207,7 @@ public class robohelp extends SubspaceBot {
     
     public void handleSay(String name, String msg){
 
-    m_botAction.sendChatMessage( msg );}
+    m_botAction.sendSmartPrivateMessage(name, "Command removed due to abuse. -Dezmond");}
 
    public void handleBanNumber( String name, String message ){
         String number;
