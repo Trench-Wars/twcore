@@ -1670,7 +1670,7 @@ public class robohelp extends SubspaceBot {
         	String message = event.getMessage().toLowerCase().trim();
         	if (!message.contains("that") && !message.contains("it") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(event.getMessager()))
         	    handleClaims(event.getMessager(), message);
-        	else if (message.contains("#") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(event.getMessager()))
+        	else if (!message.contains("that") && message.contains("#") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(event.getMessager()))
                 handleClaims(event.getMessager(), message);
         	else if ((message.startsWith("on it") || message.startsWith("got it")) && opList.isZH(event.getMessager()))
         		handleClaim(event.getMessager(), message);
