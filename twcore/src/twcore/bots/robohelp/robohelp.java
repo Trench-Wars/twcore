@@ -1676,7 +1676,7 @@ public class robohelp extends SubspaceBot {
         		handleClaim(event.getMessager(), message);
         	else if (message.startsWith("on that") || message.startsWith("got that"))
         	    handleThat(event.getMessager());
-            else if (message.startsWith("clean"))
+            else if (message.startsWith("cl") || message.startsWith("clean"))
                 handleClean(event.getMessage());
             else if (message.startsWith("forget"))
                 handleForget(event.getMessage());
