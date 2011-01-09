@@ -111,6 +111,7 @@ public class robohelp extends SubspaceBot {
         acceptedMessages = Message.CHAT_MESSAGE;
         
         // ER+
+        m_commandInterpreter.registerCommand( "!claimhelp", acceptedMessages, this, "claimHelpScreen", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!repeat", acceptedMessages, this, "handleRepeat", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!warn", acceptedMessages, this, "handleWarn", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!tell", acceptedMessages, this, "handleTell", OperatorList.ZH_LEVEL );
@@ -482,7 +483,7 @@ public class robohelp extends SubspaceBot {
         info.addCall(help.getID());
         calls.add(help.getID());
         m_playerList.put(playerName.toLowerCase(), info);
-        m_botAction.sendChatMessage("Call #" + help.getID() + " (for call claim commands use !claimhelp");
+        m_botAction.sendChatMessage("Call #" + help.getID() + "  (for new call claim commands use !claimhelp)");
     }
 
     public HelpRequest storeHelp(HelpRequest help) {
@@ -553,7 +554,7 @@ public class robohelp extends SubspaceBot {
         calls.add(helpRequest.getID());
 
         if (response.length <= 0) {
-            m_botAction.sendChatMessage("Call #" + helpRequest.getID() + " (for call claim commands use !claimhelp");
+            m_botAction.sendChatMessage("Call #" + helpRequest.getID() + "  (for new call claim commands use !claimhelp)");
         } else {
             m_botAction.sendChatMessage("I'll take it! (Call #" + helpRequest.getID() + ")");
             m_botAction.remotePrivateMessageSpam(playerName, helpRequest.getNextResponse());
@@ -1073,11 +1074,11 @@ public class robohelp extends SubspaceBot {
         }
 
         HelpRequest last = helpList.get(id);
+        if (last.getType() != 2) {
+            m_botAction.sendChatMessage("Only cheater calls can be cleaned.");
+            return;
+        }
         if (!last.isTaken()) {
-            if (last.getType() != 2) {
-                m_botAction.sendChatMessage("Only cheater alert calls can be cleaned.");
-                return;
-            }
             last.claim();
             calls.removeElement(last.getID());
             m_botAction.sendChatMessage("Call #" + last.getID() + " cleaned.");
