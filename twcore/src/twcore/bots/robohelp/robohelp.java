@@ -1064,6 +1064,10 @@ public class robohelp extends SubspaceBot {
         }
         
         if (id == -1) {
+            if (lastHelpRequestName == null) {
+                m_botAction.sendChatMessage("The last call could not be found.");
+                return;                
+            }
             String name = lastHelpRequestName;
             PlayerInfo info = m_playerList.get(name.toLowerCase());
             if (info == null || info.getLastCall() == -1) {
@@ -1110,6 +1114,10 @@ public class robohelp extends SubspaceBot {
         }
         
         if (id == -1) {
+            if (lastHelpRequestName == null) {
+                m_botAction.sendChatMessage("The last call could not be found.");
+                return;                
+            }
             String name = lastHelpRequestName;
             PlayerInfo info = m_playerList.get(name.toLowerCase());
             if (info == null || info.getLastCall() == -1) {
@@ -1153,6 +1161,10 @@ public class robohelp extends SubspaceBot {
         }
         
         if (id == -1) {
+            if (lastHelpRequestName == null) {
+                m_botAction.sendChatMessage("The last call could not be found.");
+                return;                
+            }
             String player = lastHelpRequestName;
             PlayerInfo info = m_playerList.get(player.toLowerCase());
             if (info == null || info.getLastCall() == -1) {
