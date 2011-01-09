@@ -977,17 +977,17 @@ public class robohelp extends SubspaceBot {
             id = i.next();
             HelpRequest call = helpList.get(id);
             if (now - call.getTime() > CALL_EXPIRATION_TIME) {
-                calls.removeElement(id);
+                i.remove();
             } else if (!call.isTaken()) {
                 if (message.startsWith("on")) {
                     message = "on";
                 } else if (message.startsWith("got"))
                     message = "got";
                 handleClaims(name, message + " #" + id);
-                calls.removeElement(id);
+                i.remove();
                 return;
             } else {
-                calls.removeElement(id);
+                i.remove();
             }
         }
         
@@ -1045,13 +1045,13 @@ public class robohelp extends SubspaceBot {
         /** } */
     }
     
-    public void handleClean(String message) {
+    public void handleClean(String name, String message) {
         int id = -1;
         if (message.contains("#")) {
             try {
                 id = Integer.valueOf(message.substring(message.indexOf("#") + 1));
             } catch (NumberFormatException e) {
-                m_botAction.sendChatMessage("Call could not be cleaned.");
+                m_botAction.sendSmartPrivateMessage(name, "Call could not be cleaned.");
                 return;
             }
         } else if (message.length() > 5) {
@@ -1063,19 +1063,19 @@ public class robohelp extends SubspaceBot {
         }
         
         if (id > -1 && !helpList.containsKey(id)) {
-            m_botAction.sendChatMessage("Call #" + id + " could not be found.");
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " could not be found.");
             return;            
         }
         
         if (id == -1) {
             if (lastHelpRequestName == null) {
-                m_botAction.sendChatMessage("The last call could not be found.");
+                m_botAction.sendSmartPrivateMessage(name, "The last call could not be found.");
                 return;                
             }
-            String name = lastHelpRequestName;
-            PlayerInfo info = m_playerList.get(name.toLowerCase());
+            String player = lastHelpRequestName;
+            PlayerInfo info = m_playerList.get(player.toLowerCase());
             if (info == null || info.getLastCall() == -1) {
-                m_botAction.sendChatMessage("Call could not be cleaned.");
+                m_botAction.sendSmartPrivateMessage(name, "Call could not be cleaned.");
                 return;
             }
             id = info.getLastCall();            
@@ -1083,25 +1083,25 @@ public class robohelp extends SubspaceBot {
 
         HelpRequest last = helpList.get(id);
         if (last.getType() != 2) {
-            m_botAction.sendChatMessage("Only cheater calls can be cleaned.");
+            m_botAction.sendSmartPrivateMessage(name, "Only cheater calls can be cleaned.");
             return;
         }
         if (!last.isTaken()) {
             last.claim();
             calls.removeElement(last.getID());
-            m_botAction.sendChatMessage("Call #" + last.getID() + " cleaned.");
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " cleaned.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 1 WHERE fnCallID = " + last.getID());
         } else
-            m_botAction.sendChatMessage("Call #" + id + " has already been claimed.");
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
     }
     
-    public void handleForget(String message) {
+    public void handleForget(String name, String message) {
         int id = -1;
         if (message.contains("#")) {
             try {
                 id = Integer.valueOf(message.substring(message.indexOf("#") + 1));
             } catch (NumberFormatException e) {
-                m_botAction.sendChatMessage("Call could not be forgotten.");
+                m_botAction.sendSmartPrivateMessage(name, "Call could not be forgotten.");
                 return;
             }
         } else if (message.length() > 6) {
@@ -1113,19 +1113,19 @@ public class robohelp extends SubspaceBot {
         }
         
         if (id > -1 && !helpList.containsKey(id)) {
-            m_botAction.sendChatMessage("Call #" + id + " could not be found.");
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " could not be found.");
             return;            
         }
         
         if (id == -1) {
             if (lastHelpRequestName == null) {
-                m_botAction.sendChatMessage("The last call could not be found.");
+                m_botAction.sendSmartPrivateMessage(name, "The last call could not be found.");
                 return;                
             }
-            String name = lastHelpRequestName;
-            PlayerInfo info = m_playerList.get(name.toLowerCase());
+            String player = lastHelpRequestName;
+            PlayerInfo info = m_playerList.get(player.toLowerCase());
             if (info == null || info.getLastCall() == -1) {
-                m_botAction.sendChatMessage("Call could not be forgotten.");
+                m_botAction.sendSmartPrivateMessage(name, "Call could not be forgotten.");
                 return;
             }
             id = info.getLastCall();            
@@ -1135,10 +1135,10 @@ public class robohelp extends SubspaceBot {
         if (!last.isTaken()) {
             last.claim();
             calls.removeElement(last.getID());
-            m_botAction.sendChatMessage("Call #" + last.getID() + " forgotten.");
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " forgotten.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 1 WHERE fnCallID = " + last.getID());
         } else
-            m_botAction.sendChatMessage("Call #" + id + " has already been claimed.");
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
 
     }
     
@@ -1148,7 +1148,7 @@ public class robohelp extends SubspaceBot {
             try {
                 id = Integer.valueOf(message.substring(message.indexOf("#") + 1));
             } catch (NumberFormatException e) {
-                m_botAction.sendChatMessage("Call could not be claimed.");
+                m_botAction.sendSmartPrivateMessage(name, "Call could not be claimed.");
                 return;
             }
         } else if (message.length() > 4) {
@@ -1160,19 +1160,19 @@ public class robohelp extends SubspaceBot {
         }
         
         if (id > -1 && !helpList.containsKey(id)) {
-            m_botAction.sendChatMessage("Call #" + id + " could not be found.");
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " could not be found.");
             return;            
         }
         
         if (id == -1) {
             if (lastHelpRequestName == null) {
-                m_botAction.sendChatMessage("The last call could not be found.");
+                m_botAction.sendSmartPrivateMessage(name, "The last call could not be found.");
                 return;                
             }
             String player = lastHelpRequestName;
             PlayerInfo info = m_playerList.get(player.toLowerCase());
             if (info == null || info.getLastCall() == -1) {
-                m_botAction.sendChatMessage("Call could not be claimed.");
+                m_botAction.sendSmartPrivateMessage(name, "Call could not be claimed.");
                 return;
             }
             id = info.getLastCall();            
@@ -1182,10 +1182,10 @@ public class robohelp extends SubspaceBot {
         if (!last.isTaken()) {
             last.setTaker(name);
             calls.removeElement(last.getID());
-            m_botAction.sendChatMessage("Call #" + last.getID() + " claimed for " + name + " but not counted.");
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " claimed for you but not counted.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 1, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fnCallID = " + last.getID());
         } else
-            m_botAction.sendChatMessage("Call #" + id + " has already been claimed.");
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
 
         
     }
@@ -1672,15 +1672,15 @@ public class robohelp extends SubspaceBot {
         	    handleClaims(event.getMessager(), message);
         	else if (!message.contains("that") && message.contains("#") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(event.getMessager()))
                 handleClaims(event.getMessager(), message);
-        	else if ((message.startsWith("on it") || message.startsWith("got it")) && opList.isZH(event.getMessager()))
+        	else if ((message.startsWith("on it") || message.startsWith("got it")) && opList.isZH(event.getMessager()) && message.length() < 8)
         		handleClaim(event.getMessager(), message);
         	else if (message.startsWith("on that") || message.startsWith("got that"))
         	    handleThat(event.getMessager());
-            else if (message.startsWith("cl") || message.startsWith("clean"))
-                handleClean(event.getMessage());
-            else if (message.startsWith("forget"))
-                handleForget(event.getMessage());
-            else if (message.startsWith("mine"))
+            else if (message.startsWith("clean") && message.length() < 17)
+                handleClean(event.getMessager(), event.getMessage());
+            else if (message.startsWith("forget") && message.length() < 18)
+                handleForget(event.getMessager(), event.getMessage());
+            else if (message.startsWith("mine") && message.length() < 15)
                 handleMine(event.getMessager(), event.getMessage());
         }
     }
