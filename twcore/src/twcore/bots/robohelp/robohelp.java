@@ -1058,7 +1058,7 @@ public class robohelp extends SubspaceBot {
             try {
                 id = Integer.valueOf(message.substring(5).trim());
             } catch (NumberFormatException e) {
-                id = -1;
+                return;
             }
         }
         
@@ -1108,7 +1108,7 @@ public class robohelp extends SubspaceBot {
             try {
                 id = Integer.valueOf(message.substring(6).trim());
             } catch (NumberFormatException e) {
-                id = -1;
+                return;
             }
         }
         
@@ -1155,7 +1155,7 @@ public class robohelp extends SubspaceBot {
             try {
                 id = Integer.valueOf(message.substring(4).trim());
             } catch (NumberFormatException e) {
-                id = -1;
+                return;
             }
         }
         
@@ -1676,11 +1676,11 @@ public class robohelp extends SubspaceBot {
         		handleClaim(event.getMessager(), message);
         	else if (message.startsWith("on that") || message.startsWith("got that"))
         	    handleThat(event.getMessager());
-            else if (message.startsWith("clean") && message.length() < 17)
+            else if (message.startsWith("clean"))
                 handleClean(event.getMessager(), event.getMessage());
-            else if (message.startsWith("forget") && message.length() < 18)
+            else if (message.startsWith("forget"))
                 handleForget(event.getMessager(), event.getMessage());
-            else if (message.startsWith("mine") && message.length() < 15)
+            else if (message.startsWith("mine"))
                 handleMine(event.getMessager(), event.getMessage());
         }
     }
