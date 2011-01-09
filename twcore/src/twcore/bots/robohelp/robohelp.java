@@ -979,6 +979,10 @@ public class robohelp extends SubspaceBot {
             if (now - call.getTime() > CALL_EXPIRATION_TIME) {
                 calls.removeElement(id);
             } else if (!call.isTaken()) {
+                if (message.startsWith("on")) {
+                    message = "on";
+                } else if (message.startsWith("got"))
+                    message = "got";
                 handleClaims(name, message + " #" + id);
                 calls.removeElement(id);
                 return;
