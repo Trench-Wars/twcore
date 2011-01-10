@@ -88,7 +88,8 @@ public class elimbot
         String chat = botSettings.getString("Chat");
         m_botAction.sendUnfilteredPublicMessage("?chat="+chat);
         m_botAction.changeArena(initialArena);
-        this.elimSystem.handleEvent(event);
+        m_botAction.sendChatMessage("Elim System successfuly logged on");
+        
     }
     
     private void requestEvents(){

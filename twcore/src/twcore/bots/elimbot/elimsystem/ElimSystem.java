@@ -10,6 +10,7 @@ import twcore.bots.elimbot.elimstate.ElimStatePreRunning;
 import twcore.bots.elimbot.elimstate.ElimStateVoting;
 import twcore.core.BotAction;
 import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 /**
@@ -42,10 +43,13 @@ public class ElimSystem {
         
     }
     
+    public void handleEvent(LoggedOn event){
+   
+    }
+    
     public void handleEvent(Message event){
         String playerName = botAction.getPlayerName(event.getPlayerID());
         this.botAction.sendPrivateMessage(playerName, "This is the new bot system under development.");
-        this.botAction.sendChatMessage("Elim System successfuly logged on");
         state.handleEvent(event);
     }
     
