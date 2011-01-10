@@ -43,6 +43,8 @@ public class ElimSystem {
     }
     
     public void handleEvent(Message event){
+        String playerName = botAction.getPlayerName(event.getPlayerID());
+        this.botAction.sendPrivateMessage(playerName, "This is the new bot system under development.");
         state.handleEvent(event);
     }
     
