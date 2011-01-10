@@ -55,6 +55,7 @@ public class elimbot
         this.elimSystem.handleEvent(event);
     }
     
+    
     @Override
     public void handleEvent(PlayerEntered event){
         
@@ -87,6 +88,7 @@ public class elimbot
         String chat = botSettings.getString("Chat");
         m_botAction.sendUnfilteredPublicMessage("?chat="+chat);
         m_botAction.changeArena(initialArena);
+        this.elimSystem.handleEvent(event);
     }
     
     private void requestEvents(){
