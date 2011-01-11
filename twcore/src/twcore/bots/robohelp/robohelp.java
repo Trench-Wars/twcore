@@ -1271,6 +1271,7 @@ public class robohelp extends SubspaceBot {
         String date2 = ym.format(cal2.getTime());
         int totalCalls = 0;
         int takenCalls = 0;
+        int realCalls = 0;
         int trueOns = 0;
         int trueGots = 0;
         int trueNewbs = 0;
@@ -1332,6 +1333,7 @@ public class robohelp extends SubspaceBot {
         totalCalls = help_lost + help_taken + gotitCalls + cheat_taken + cheat_lost;
         takenCalls = help_taken + gotitCalls + cheat_taken;
         lostCalls = totalCalls - takenCalls;
+        realCalls = trueOns + trueGots;
         // Call Claim Statistics:
         // 90% of xxx calls anwered (yyy/zzz)
         // True Calls Taken:  xxxx
@@ -1348,7 +1350,7 @@ public class robohelp extends SubspaceBot {
             msg = new String[] {
                     "Call Claim Statistics for " + my.format(cal1.getTime()) + ":",
                     "" + Math.round((double) takenCalls / totalCalls * 100) + "% calls answered (" + takenCalls + ":" + totalCalls + ")",
-                    " Real calls taken:   " + trueOns + trueGots,
+                    " Real calls taken:   " + realCalls,
                     " Unattended calls:   " + lostCalls,
                     " Written off calls:  ",
                     " Got it call total:  "  + gotitCalls,
@@ -1358,7 +1360,7 @@ public class robohelp extends SubspaceBot {
         } else {
             msg = new String[] {
                     "LIMITED Call Claim Statistics for " + my.format(cal1.getTime()) + ":",
-                    " Real calls taken: " + trueOns + trueGots,
+                    " Real calls taken: " + realCalls,
                     " On it calls:      " + trueOns,
                     " Got it calls:     " + trueGots,
                     " New player calls: " + trueNewbs
