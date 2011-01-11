@@ -1138,7 +1138,10 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(name, "Invalid call number.");
                 return;
             }
-        } else if (message.startsWith("on it") || message.startsWith("got it")) {
+        } else if (message.equalsIgnoreCase("on it") || message.equalsIgnoreCase("got it")) {
+            handleClaim(name, message);
+            return;
+        } else if (message.startsWith("on it ") || message.startsWith("got it ")) {
             try {
                 id = Integer.valueOf(message.substring(message.indexOf("it") + 3));
             } catch (NumberFormatException e) {
