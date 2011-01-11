@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -467,7 +466,7 @@ public class robohelp extends SubspaceBot {
             String msg = "I'll take it! (Call #" + helpRequest.getID();
             if (callsUntilAd == 0) {
                 callsUntilAd = 10;
-                msg += "  try !calls)";
+                msg += "  try !calls and !stats)";
             } else
                 msg += ")";
             m_botAction.sendChatMessage(msg);
@@ -1272,15 +1271,17 @@ public class robohelp extends SubspaceBot {
         String date2 = ym.format(cal2.getTime());
         int totalCalls = 0;
         int takenCalls = 0;
-        int trueCalls = 0;
+        int trueOns = 0;
+        int trueGots = 0;
+        int trueNewbs = 0;
         int lostCalls = 0;
         // int notCalls = 0;
         int help_taken = 0;
         int help_lost = 0;
         int cheat_taken = 0;
         int cheat_lost = 0;
-        int got_taken = 0;
-        int got_lost = 0;
+        int gotitCalls = 0;
+        boolean limit = false;
         
         try {
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT fnType, fnTaken, COUNT(fnCallID) FROM `tblCallHelp` WHERE fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00' GROUP BY fnTaken, fnType");
@@ -1291,26 +1292,19 @@ public class robohelp extends SubspaceBot {
                     if (taken == 0) {
                         if (type == 0)
                             help_lost = result.getInt(3);
-                        else if (type == 1)
-                            got_lost = result.getInt(3);
-                        else 
+                        else if (type == 2)
                             cheat_lost = result.getInt(3);
                     } else {
                         if (type == 0)
                             help_taken = result.getInt(3);
                         else if (type == 1)
-                            got_taken = result.getInt(3);
+                            gotitCalls = result.getInt(3);
                         else
                             cheat_taken = result.getInt(3);
                     }
                 } while (result.next());
-                m_botAction.SQLClose(result);
-            } else {
-                m_botAction.SQLClose(result);
-                m_botAction.sendSmartPrivateMessage(name, "No call information found for " + my.format(cal1.getTime()) + ".");
-                return;
-            }
-
+            } else
+                limit = true;
             m_botAction.SQLClose(result);
             
             result = m_botAction.SQLQuery(mySQLHost, "SELECT fnType, SUM(fnCount) FROM `tblCall` WHERE fdDate = '" + date + "-01' GROUP BY fnType");
@@ -1318,9 +1312,11 @@ public class robohelp extends SubspaceBot {
                 do {
                     int type = result.getInt("fnType");
                     if (type == 0)
-                        trueCalls += result.getInt(2);
+                        trueOns = result.getInt(2);
                     else if (type == 1)
-                        trueCalls += result.getInt(2);
+                        trueGots = result.getInt(2);
+                    else if (type == 2)
+                        trueNewbs = result.getInt(2);
                 } while (result.next()); 
                 m_botAction.SQLClose(result);
             } else {
@@ -1333,8 +1329,8 @@ public class robohelp extends SubspaceBot {
             e.printStackTrace();
         }
         
-        totalCalls = help_lost + help_taken + got_lost + got_taken + cheat_taken + cheat_lost;
-        takenCalls = help_taken + got_taken + cheat_taken;
+        totalCalls = help_lost + help_taken + gotitCalls + cheat_taken + cheat_lost;
+        takenCalls = help_taken + gotitCalls + cheat_taken;
         lostCalls = totalCalls - takenCalls;
         // Call Claim Statistics:
         // 90% of xxx calls anwered (yyy/zzz)
@@ -1347,16 +1343,27 @@ public class robohelp extends SubspaceBot {
         // Help Calls Missed:
         // Got It Calls Taken:
         // Got It Calls Missed:
-        String msg[] = {
-                "Call Claim Statistics for " + my.format(cal1.getTime()) + ":",
-                "" + Math.round((double) takenCalls / totalCalls * 100) + "% calls answered (" + takenCalls + ":" + totalCalls + ")",
-                " Real calls taken:  " + trueCalls,
-                " Unattended calls:  " + lostCalls,
-                " Written off calls: ",
-                " Help calls:    " + Math.round((double) help_taken / (help_lost + help_taken) * 100) + "% (" + help_lost + ":" + (help_lost + help_taken) + ")",
-                " Got it calls:  " + Math.round((double) got_taken / (got_lost + got_taken) * 100) +  "% (" + got_taken + ":" + (got_lost + got_taken) + ")",
-                " Cheater calls: " + Math.round((double) cheat_taken / (cheat_taken + cheat_lost) * 100) + "% (" + cheat_lost + ":" + (cheat_lost + cheat_taken) + ")"
-        };
+        String[] msg;
+        if (!limit) {
+            msg = new String[] {
+                    "Call Claim Statistics for " + my.format(cal1.getTime()) + ":",
+                    "" + Math.round((double) takenCalls / totalCalls * 100) + "% calls answered (" + takenCalls + ":" + totalCalls + ")",
+                    " Real calls taken:   " + trueOns + trueGots,
+                    " Unattended calls:   " + lostCalls,
+                    " Written off calls:  ",
+                    " Got it call total:  "  + gotitCalls,
+                    " Help calls:    " + Math.round((double) help_taken / (help_lost + help_taken) * 100) + "% (" + help_lost + ":" + (help_lost + help_taken) + ")",
+                    " Cheater calls: " + Math.round((double) cheat_taken / (cheat_taken + cheat_lost) * 100) + "% (" + cheat_lost + ":" + (cheat_lost + cheat_taken) + ")"
+            };
+        } else {
+            msg = new String[] {
+                    "LIMITED Call Claim Statistics for " + my.format(cal1.getTime()) + ":",
+                    " Real calls taken: " + trueOns + trueGots,
+                    " On it calls:      " + trueOns,
+                    " Got it calls:     " + trueGots,
+                    " New player calls: " + trueNewbs
+            };
+        }
         
         m_botAction.smartPrivateMessageSpam(name, msg);
     }
