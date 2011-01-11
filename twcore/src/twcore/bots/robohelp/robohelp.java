@@ -64,6 +64,7 @@ public class robohelp extends SubspaceBot {
     Vector<Integer> calls = new Vector<Integer>();
     TreeMap<String, Integer> nameList = new TreeMap<String, Integer>();
     long lastAlert;
+    int callsUntilAd = 10;
     
     String				findPopulation = "";
 	int					setPopID = -1;
@@ -477,8 +478,15 @@ public class robohelp extends SubspaceBot {
         info.addCall(help.getID());
         calls.add(help.getID());
         m_playerList.put(playerName.toLowerCase(), info);
-        if (now - lastAlert < CALL_EXPIRATION_TIME)
-            m_botAction.sendChatMessage("Call #" + help.getID());
+        callsUntilAd--;
+        String msg = "";
+        if (callsUntilAd == 0) {
+            callsUntilAd = 10;
+            msg += "Call #" + help.getID() + "  (try !calls)";
+        } else if (now - lastAlert < CALL_EXPIRATION_TIME)
+            msg += "Call #" + help.getID();
+        if (msg.length() > 0)
+            m_botAction.sendChatMessage(msg);
         lastAlert = now;
     }
 
@@ -545,11 +553,25 @@ public class robohelp extends SubspaceBot {
         long now = System.currentTimeMillis();
 
         if (response.length <= 0) {
-            if (now - lastAlert < CALL_EXPIRATION_TIME)
-                m_botAction.sendChatMessage("Call #" + helpRequest.getID());
+            callsUntilAd--;
+            String msg = "";
+            if (callsUntilAd == 0) {
+                callsUntilAd = 10;
+                msg += "Call #" + helpRequest.getID() + "  (try !calls)";
+            } else if (now - lastAlert < CALL_EXPIRATION_TIME)
+                msg += "Call #" + helpRequest.getID();
+            if (msg.length() > 0)
+                m_botAction.sendChatMessage(msg);
             lastAlert = now;
         } else {
-            m_botAction.sendChatMessage("I'll take it! (Call #" + helpRequest.getID() + ")");
+            callsUntilAd--;
+            String msg = "I'll take it! (Call #" + helpRequest.getID();
+            if (callsUntilAd == 0) {
+                callsUntilAd = 10;
+                msg += "  try !calls)";
+            } else
+                msg += ")";
+            m_botAction.sendChatMessage(msg);
             lastAlert = now;
             m_botAction.remotePrivateMessageSpam(playerName, helpRequest.getNextResponse());
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString("RoboHelp") + "', fnTaken = 1 WHERE fnCallID = " + helpRequest.getID());
