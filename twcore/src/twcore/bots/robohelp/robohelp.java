@@ -63,6 +63,7 @@ public class robohelp extends SubspaceBot {
     TreeMap<Integer, HelpRequest> helpList = new TreeMap<Integer, HelpRequest>();
     Vector<Integer> calls = new Vector<Integer>();
     TreeMap<String, Integer> nameList = new TreeMap<String, Integer>();
+    long lastAlert;
     
     String				findPopulation = "";
 	int					setPopID = -1;
@@ -74,6 +75,7 @@ public class robohelp extends SubspaceBot {
 
         m_botSettings = m_botAction.getBotSettings();
 
+        lastAlert = System.currentTimeMillis();
         populateSearch();
         opList = botAction.getOperatorList();
         m_playerList = Collections.synchronizedMap( new HashMap<String, PlayerInfo>() );
@@ -462,7 +464,8 @@ public class robohelp extends SubspaceBot {
     public void handleCheater( String playerName, String message ) {
         HelpRequest     help;
         PlayerInfo      info;
-
+        
+        long now = System.currentTimeMillis();
         lastHelpRequestName = playerName;
 
         info = m_playerList.get(playerName.toLowerCase());
@@ -473,7 +476,9 @@ public class robohelp extends SubspaceBot {
         info.addCall(help.getID());
         calls.add(help.getID());
         m_playerList.put(playerName.toLowerCase(), info);
-        m_botAction.sendChatMessage("Call #" + help.getID() + "  (!claimhelp)");
+        if (now - lastAlert < CALL_EXPIRATION_TIME)
+            m_botAction.sendChatMessage("Call #" + help.getID());
+        lastAlert = now;
     }
 
     public HelpRequest storeHelp(HelpRequest help) {
@@ -481,10 +486,10 @@ public class robohelp extends SubspaceBot {
             return help;
         
         String player = help.getPlayername();
-        String msg = help.getQuestion();
         
+        // removed the message (question) recording
         try {
-            m_botAction.SQLQueryAndClose(mySQLHost, "INSERT INTO tblCallHelp (fcUserName, fcMessage, fdCreated, fnType) VALUES('" + Tools.addSlashesToString(player) + "', '" + Tools.addSlashesToString(msg) + "', NOW(), " + help.getType() + ")");
+            m_botAction.SQLQueryAndClose(mySQLHost, "INSERT INTO tblCallHelp (fcUserName, fdCreated, fnType) VALUES('" + Tools.addSlashesToString(player) + "', NOW(), " + help.getType() + ")");
             ResultSet callid = m_botAction.SQLQuery(mySQLHost, "SELECT LAST_INSERT_ID()");
             if (callid.next())
                 help.setID(callid.getInt(1));
@@ -539,11 +544,15 @@ public class robohelp extends SubspaceBot {
         }
 
         calls.add(helpRequest.getID());
+        long now = System.currentTimeMillis();
 
         if (response.length <= 0) {
-            m_botAction.sendChatMessage("Call #" + helpRequest.getID() + "  (!claimhelp)");
+            if (now - lastAlert < CALL_EXPIRATION_TIME)
+                m_botAction.sendChatMessage("Call #" + helpRequest.getID());
+            lastAlert = now;
         } else {
             m_botAction.sendChatMessage("I'll take it! (Call #" + helpRequest.getID() + ")");
+            lastAlert = now;
             m_botAction.remotePrivateMessageSpam(playerName, helpRequest.getNextResponse());
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString("RoboHelp") + "', fnTaken = 1 WHERE fnCallID = " + helpRequest.getID());
 
@@ -944,8 +953,8 @@ public class robohelp extends SubspaceBot {
     }
 
     /**
-     * For strict onits, requiring the "on it" to be at the start of the message.
-     * For strict gotits, requiring the "got it" to be at the start of the message.
+     * For strict on its, requiring the "on it" to be at the start of the message.
+     * For strict got its, requiring the "got it" to be at the start of the message.
      * 
      * @param name Name of person claiming a call by saying 'on it' or 'got it'
      * @param message Message the chat message
@@ -1504,7 +1513,7 @@ public class robohelp extends SubspaceBot {
     
     public void claimHelpScreen( String playerName, String message ){
         final String[] helpText = {
-            "Claim commands (in staff chat):",
+            "Chat claim commands:",
             " on it                                     - Same as before, claims the earliest non-expired call",
             " on #<id>, on <id>, on it #<id>            - Claims Call #<id> if it hasn't expired",
             " got it                                    - Same as before, claims the earliest non-expired call",
@@ -1517,8 +1526,7 @@ public class robohelp extends SubspaceBot {
             " forget                                    - Prevents the most recent call from being counted as unanswered",
             " forget #<id>, forget <id>                 - Prevents Call #<id> from being counted as unanswered"
         };
-        if( m_botAction.getOperatorList().isZH( playerName ) )
-            m_botAction.remotePrivateMessageSpam( playerName, helpText );
+        m_botAction.smartPrivateMessageSpam(playerName, helpText);
     }
     
 
