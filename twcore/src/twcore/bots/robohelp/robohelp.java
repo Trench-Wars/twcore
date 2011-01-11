@@ -85,6 +85,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
         m_botAction.getEventRequester().request( EventRequester.MESSAGE );
+        
     }
 
     void registerCommands(){
@@ -1108,7 +1109,7 @@ public class robohelp extends SubspaceBot {
             last.claim("clean");
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " cleaned.");
-            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 1, fcTakerName = 'clean' WHERE fnCallID = " + last.getID());
+            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'clean' WHERE fnCallID = " + last.getID());
         } else
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
     }
@@ -1154,7 +1155,7 @@ public class robohelp extends SubspaceBot {
             last.claim("forgot");
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " forgotten.");
-            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 1, fcTakerName = 'forgot' WHERE fnCallID = " + last.getID());
+            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'forgot' WHERE fnCallID = " + last.getID());
         } else
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
     }
@@ -1200,7 +1201,7 @@ public class robohelp extends SubspaceBot {
             last.claim(name);
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " claimed for you but not counted.");
-            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 1, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fnCallID = " + last.getID());
+            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 2, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fnCallID = " + last.getID());
         } else
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
     }
@@ -1282,6 +1283,8 @@ public class robohelp extends SubspaceBot {
         int cheat_taken = 0;
         int cheat_lost = 0;
         int gotitCalls = 0;
+        int mineCalls = 0;
+        int otherCalls = 0;
         boolean limit = false;
         
         try {
@@ -1306,6 +1309,18 @@ public class robohelp extends SubspaceBot {
                 } while (result.next());
             } else
                 limit = true;
+            m_botAction.SQLClose(result);
+            
+            result = m_botAction.SQLQuery(mySQLHost, "SELECT fnTaken, fcTakerName, COUNT(fnCallID) FROM tblCallHelp WHERE fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00' AND fnTaken = 2 OR fnTaken = 3 GROUP BY fnTaken");
+            if (result.next()) {
+                do {
+                    int taken = result.getInt(1);
+                    if (taken == 2)
+                        mineCalls = result.getInt(3);
+                    else if (taken == 3)
+                        otherCalls = result.getInt(3);
+                } while (result.next());
+            }
             m_botAction.SQLClose(result);
             
             result = m_botAction.SQLQuery(mySQLHost, "SELECT fnType, SUM(fnCount) FROM `tblCall` WHERE fdDate = '" + date + "-01' GROUP BY fnType");
@@ -1334,6 +1349,7 @@ public class robohelp extends SubspaceBot {
         takenCalls = help_taken + gotitCalls + cheat_taken;
         lostCalls = totalCalls - takenCalls;
         realCalls = trueOns + trueGots;
+        int written = mineCalls + otherCalls;
         // Call Claim Statistics:
         // 90% of xxx calls anwered (yyy/zzz)
         // True Calls Taken:  xxxx
@@ -1352,7 +1368,8 @@ public class robohelp extends SubspaceBot {
                     "" + Math.round((double) takenCalls / totalCalls * 100) + "% calls answered (" + takenCalls + ":" + totalCalls + ")",
                     " Real calls taken:   " + realCalls,
                     " Unattended calls:   " + lostCalls,
-                    " Written off calls:  ",
+                    " Written off calls:  " + written,
+                    " New player calls:   " + trueNewbs,
                     " Got it call total:  "  + gotitCalls,
                     " Help calls:    " + Math.round((double) help_taken / (help_lost + help_taken) * 100) + "% (" + help_lost + ":" + (help_lost + help_taken) + ")",
                     " Cheater calls: " + Math.round((double) cheat_taken / (cheat_taken + cheat_lost) * 100) + "% (" + cheat_lost + ":" + (cheat_lost + cheat_taken) + ")"
