@@ -1368,7 +1368,7 @@ public class robohelp extends SubspaceBot {
                     "" + Math.round((double) takenCalls / totalCalls * 100) + "% calls answered (" + takenCalls + ":" + totalCalls + ")",
                     " Real calls taken:   " + realCalls,
                     " Unattended calls:   " + lostCalls,
-                    " Written off calls:  " + written,
+                    " Written off calls:  " + written + " (" + mineCalls + "/" + otherCalls + ")",
                     " New player calls:   " + trueNewbs,
                     " Got it call total:  "  + gotitCalls,
                     " Help calls:    " + Math.round((double) help_taken / (help_lost + help_taken) * 100) + "% (" + help_lost + ":" + (help_lost + help_taken) + ")",
