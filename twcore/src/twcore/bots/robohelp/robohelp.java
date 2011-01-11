@@ -546,7 +546,7 @@ public class robohelp extends SubspaceBot {
 
         if (response.length <= 0) {
             if (now - lastAlert < CALL_EXPIRATION_TIME)
-                m_botAction.sendChatMessage("Call #" + helpRequest.getID() + "  (try !calls)");
+                m_botAction.sendChatMessage("Call #" + helpRequest.getID());
             lastAlert = now;
         } else {
             m_botAction.sendChatMessage("I'll take it! (Call #" + helpRequest.getID() + ")");
@@ -1152,7 +1152,7 @@ public class robohelp extends SubspaceBot {
                 HelpRequest call = helpList.get(id);
                 String msg = "Call #" + call.getID() + " -";
                 if (call.isTaken())
-                    msg += " (" + call.getTaker() + ")";
+                    msg += " (" + call.getTaker() + ") -";
                 
                 if (call.getType() == 0)
                     msg += " help: (";
