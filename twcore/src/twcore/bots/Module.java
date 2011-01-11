@@ -23,9 +23,11 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.Prize;
+import twcore.core.events.SQLResultEvent;
 import twcore.core.events.ScoreReset;
 import twcore.core.events.ScoreUpdate;
 import twcore.core.events.SoccerGoal;
+import twcore.core.events.SocketMessageEvent;
 import twcore.core.events.SubspaceEvent;
 import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
@@ -63,6 +65,8 @@ public abstract class Module
             handleEvent((Message) event);
         else if(event instanceof InterProcessEvent)
             handleEvent((InterProcessEvent) event);
+        else if(event instanceof SocketMessageEvent)
+            handleEvent((SocketMessageEvent) event);
         else if(event instanceof PlayerLeft)
             handleEvent((PlayerLeft) event);
         else if(event instanceof PlayerDeath)
@@ -109,6 +113,8 @@ public abstract class Module
             handleEvent((FlagClaimed) event);
         else if(event instanceof PlayerBanner)
             handleEvent((PlayerBanner) event);
+        else if(event instanceof SQLResultEvent)
+            handleEvent((SQLResultEvent) event);
     }
 
     /**
@@ -116,6 +122,8 @@ public abstract class Module
      */
 
     public void handleEvent(Message event){}
+    
+    public void handleEvent(SQLResultEvent event){}
 
     public void handleEvent(PlayerEntered event){}
 
@@ -164,6 +172,8 @@ public abstract class Module
     public void handleEvent(PlayerBanner event){}
 
     public void handleEvent(InterProcessEvent event){}
+    
+    public void handleEvent(SocketMessageEvent event){}
 
     public abstract void initializeModule();
 
