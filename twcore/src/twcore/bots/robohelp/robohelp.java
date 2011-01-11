@@ -88,8 +88,11 @@ public class robohelp extends SubspaceBot {
     void registerCommands(){
         int         acceptedMessages;
 
+        acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE | Message.CHAT_MESSAGE;
+        m_commandInterpreter.registerCommand( "!claimhelp", acceptedMessages, this, "claimHelpScreen", OperatorList.ZH_LEVEL );
+        m_commandInterpreter.registerCommand( "!calls", acceptedMessages, this, "handleCalls", OperatorList.ZH_LEVEL );
+
         acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE;
-        
         // Player commands
         m_commandInterpreter.registerCommand( "!next", acceptedMessages, this, "handleNext" );
         m_commandInterpreter.registerCommand( "!summon", acceptedMessages, this, "handleSummon" );
@@ -98,7 +101,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!lookup", acceptedMessages, this, "handleLookup", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!last", acceptedMessages, this, "handleLast", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL );
-        m_commandInterpreter.registerCommand( "!claimhelp", acceptedMessages, this, "claimHelpScreen", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted", OperatorList.ZH_LEVEL );
         
@@ -113,7 +115,6 @@ public class robohelp extends SubspaceBot {
         acceptedMessages = Message.CHAT_MESSAGE;
         
         // ER+
-        m_commandInterpreter.registerCommand( "!claimhelp", acceptedMessages, this, "claimHelpScreen", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!repeat", acceptedMessages, this, "handleRepeat", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!warn", acceptedMessages, this, "handleWarn", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!tell", acceptedMessages, this, "handleTell", OperatorList.ZH_LEVEL );
@@ -516,12 +517,9 @@ public class robohelp extends SubspaceBot {
 
         if (opList.isZH(playerName)) {
             String tempMessage = "Staff members: Please use :" + m_botAction.getBotName() + ":!lookup instead of ?help!";
-
             response = new String[1];
             response[0] = tempMessage;
-
             m_botAction.sendRemotePrivateMessage(playerName, tempMessage);
-
             return;
         }
 
@@ -548,7 +546,7 @@ public class robohelp extends SubspaceBot {
 
         if (response.length <= 0) {
             if (now - lastAlert < CALL_EXPIRATION_TIME)
-                m_botAction.sendChatMessage("Call #" + helpRequest.getID());
+                m_botAction.sendChatMessage("Call #" + helpRequest.getID() + "  (try !calls)");
             lastAlert = now;
         } else {
             m_botAction.sendChatMessage("I'll take it! (Call #" + helpRequest.getID() + ")");
@@ -1131,10 +1129,45 @@ public class robohelp extends SubspaceBot {
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 1, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fnCallID = " + last.getID());
         } else
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
-
-        
     }
     
+    public void handleCalls(String name, String message) {
+        int count;
+        try {
+            count = Integer.valueOf(message);
+        } catch (NumberFormatException e) {
+            count = 5;
+        }
+        
+        if (helpList.size() < count)
+            count = helpList.size();
+        
+        if (count > 30)
+            count = 30;
+        
+        if (count > 0) {
+            m_botAction.sendSmartPrivateMessage(name, "Last " + count + " Calls:");
+            int id = helpList.lastKey();
+            do {
+                HelpRequest call = helpList.get(id);
+                String msg = "Call #" + call.getID() + " -";
+                if (call.isTaken())
+                    msg += " (" + call.getTaker() + ")";
+                
+                if (call.getType() == 0)
+                    msg += " help: (";
+                else
+                    msg += " cheater: (";
+                
+                msg +=  call.getPlayername() + ") " + call.getQuestion();
+                m_botAction.sendSmartPrivateMessage(name, msg);
+                count--;
+                id = id - 1;
+            } while (count > 0 && helpList.containsKey(id));
+        } else {
+            m_botAction.sendSmartPrivateMessage(name, "No calls found.");
+        }
+    }
     
     public void handleClaims(String name, String message) {
         long now = System.currentTimeMillis();
@@ -1189,7 +1222,6 @@ public class robohelp extends SubspaceBot {
         }
     }
     
-
     public void recordHelp(HelpRequest help) {
         if (!m_botAction.SQLisOperational())
             return;
@@ -1484,8 +1516,12 @@ public class robohelp extends SubspaceBot {
             " !javadocs term                            - Returns a link for a javadocs lookup of the term.",
             " !google word                              - Returns a link for a google search of the word.",
             " !wiki word                                - Returns a link for a wikipedia search of the word.",
+            " !calls                                    - Displays the last 5 help and cheater calls",
+            " !calls <num>                              - Displays the last <num> help and cheater calls",
             " ",
             "PM commands:",
+            " !calls                                    - Displays the last 5 help and cheater calls",
+            " !calls <num>                              - Displays the last <num> help and cheater calls",
             " !lookup <keyword>                         - Tells you the response when the specified key word",
             "                                             is given",
             " !last <optional name>                     - Tells you what the response to the specified",
@@ -1514,17 +1550,21 @@ public class robohelp extends SubspaceBot {
     public void claimHelpScreen( String playerName, String message ){
         final String[] helpText = {
             "Chat claim commands:",
-            " on it                                     - Same as before, claims the earliest non-expired call",
-            " on #<id>, on <id>, on it #<id>            - Claims Call #<id> if it hasn't expired",
-            " got it                                    - Same as before, claims the earliest non-expired call",
-            " got #<id>, got <id>, got it #<id>         - Claims Call #<id> if it hasn't expired",
-            " mine                                      - Claims the most recent call but does not affect staff stats",
-            " mine #<id>, mine <id>                     - Claims Call #<id> but does not affect staff stats",
-            "                                              Used to prevent a call from being counted as unanswered",
-            " clean                                     - Clears the most recent false positive racism alert",
-            " clean #<id>, clean <id>                   - Clears Call #<id> due to a false positive racism alert",
-            " forget                                    - Prevents the most recent call from being counted as unanswered",
-            " forget #<id>, forget <id>                 - Prevents Call #<id> from being counted as unanswered"
+            " !calls                         - Displays the last 5 help and cheater calls",
+            " !calls <num>                   - Displays the last <num> help and cheater calls",
+            " on it                          - Same as before, claims the earliest non-expired call",
+            " on it <id>, on #<id>,          - Claims Call #<id> if it hasn't expired",
+            "  or on <id>, on it #<id>",
+            " got it                         - Same as before, claims the earliest non-expired call",
+            " got it <id>, got <id>,         - Claims Call #<id> if it hasn't expired",
+            "  or got #<id>, got it #<id>",
+            " mine                           - Claims the most recent call but does not affect staff stats",
+            " mine #<id>, mine <id>          - Claims Call #<id> but does not affect staff stats",
+            "                                   Used to prevent a call from being counted as unanswered",
+            " clean                          - Clears the most recent false positive racism alert",
+            " clean #<id>, clean <id>        - Clears Call #<id> due to a false positive racism alert",
+            " forget                         - Prevents the most recent call from being counted as unanswered",
+            " forget #<id>, forget <id>      - Prevents Call #<id> from being counted as unanswered"
         };
         m_botAction.smartPrivateMessageSpam(playerName, helpText);
     }
