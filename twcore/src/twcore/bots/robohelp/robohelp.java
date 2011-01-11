@@ -1131,18 +1131,25 @@ public class robohelp extends SubspaceBot {
         long now = System.currentTimeMillis();
         int id = -1;
         
-        if (message.contains("#")) {
+        if (message.contains("#") && message.indexOf("#") < 13) {
             try {
                 id = Integer.valueOf(message.substring(message.indexOf("#") + 1));
             } catch (NumberFormatException e) {
                 m_botAction.sendSmartPrivateMessage(name, "Invalid call number.");
                 return;
             }
+        } else if (message.startsWith("on it") || message.startsWith("got it")) {
+            try {
+                id = Integer.valueOf(message.substring(message.indexOf("it") + 3));
+            } catch (NumberFormatException e) {
+                handleClaim(name, message);
+                return;
+            }
+            
         } else {
             try {
                 id = Integer.valueOf(message.substring(message.indexOf(" ") + 1));
             } catch (NumberFormatException e) {
-                m_botAction.sendSmartPrivateMessage(name, "Invalid call number.");
                 return;
             }            
         }
@@ -1577,8 +1584,8 @@ public class robohelp extends SubspaceBot {
         	    handleClaims(event.getMessager(), message);
         	else if (!message.contains("that") && message.contains("#") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(event.getMessager()))
                 handleClaims(event.getMessager(), message);
-        	else if ((message.startsWith("on it") || message.startsWith("got it")) && opList.isZH(event.getMessager()) && message.length() < 8)
-        		handleClaim(event.getMessager(), message);
+        	else if ((message.startsWith("on it") || message.startsWith("got it")) && opList.isZH(event.getMessager()))
+        		handleClaims(event.getMessager(), message);
         	else if (message.startsWith("on that") || message.startsWith("got that"))
         	    handleThat(event.getMessager());
             else if (message.startsWith("clean"))
