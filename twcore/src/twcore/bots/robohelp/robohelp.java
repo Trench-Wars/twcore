@@ -464,17 +464,7 @@ public class robohelp extends SubspaceBot {
         PlayerInfo      info;
 
         lastHelpRequestName = playerName;
-        
-        /** old way blah
-        callList.addElement( new EventData( new java.util.Date().getTime() ) ); //For Records
-        help = m_playerList.get( playerName.toLowerCase() );
-        if( help == null ){
-            help = new HelpRequest( playerName, message, null, 2 );
-            m_playerList.put( playerName.toLowerCase(), help );
-            help = storeHelp(help);
-            m_botAction.sendChatMessage("Call #" + help.getID());
-        } 
-        **/
+
         info = m_playerList.get(playerName.toLowerCase());
         if (info == null)
             info = new PlayerInfo(playerName.toLowerCase());
@@ -483,7 +473,7 @@ public class robohelp extends SubspaceBot {
         info.addCall(help.getID());
         calls.add(help.getID());
         m_playerList.put(playerName.toLowerCase(), info);
-        m_botAction.sendChatMessage("Call #" + help.getID() + "  (for new call claim commands use !claimhelp)");
+        m_botAction.sendChatMessage("Call #" + help.getID() + "  (!claimhelp)");
     }
 
     public HelpRequest storeHelp(HelpRequest help) {
@@ -527,12 +517,9 @@ public class robohelp extends SubspaceBot {
 
             m_botAction.sendRemotePrivateMessage(playerName, tempMessage);
 
-            //helpRequest = new HelpRequest(playerName, message, response);
-            //m_playerList.put(playerName.toLowerCase(), helpRequest);
             return;
         }
 
-        // callList.addElement(new EventData(new java.util.Date().getTime())); // For Records
         response = search.search(message);
 
         info = m_playerList.get(playerName.toLowerCase());
@@ -554,7 +541,7 @@ public class robohelp extends SubspaceBot {
         calls.add(helpRequest.getID());
 
         if (response.length <= 0) {
-            m_botAction.sendChatMessage("Call #" + helpRequest.getID() + "  (for new call claim commands use !claimhelp)");
+            m_botAction.sendChatMessage("Call #" + helpRequest.getID() + "  (!claimhelp)");
         } else {
             m_botAction.sendChatMessage("I'll take it! (Call #" + helpRequest.getID() + ")");
             m_botAction.remotePrivateMessageSpam(playerName, helpRequest.getNextResponse());
@@ -779,7 +766,6 @@ public class robohelp extends SubspaceBot {
 
     public void handleWarn( String playerName, String message ){
         String          name;
-        // HelpRequest     helpRequest;
         PlayerInfo      info;
 
         if( message == null ){
@@ -843,7 +829,6 @@ public class robohelp extends SubspaceBot {
 
     public void handleBan( String playerName, String message ){
         String          name;
-        // HelpRequest     helpRequest;
         PlayerInfo      info;
 
         if( message == null ){
@@ -966,9 +951,6 @@ public class robohelp extends SubspaceBot {
      * @param message Message the chat message
      */
     public void handleClaim(String name, String message) {
-        //boolean record = false;
-        //Date nowDate = new Date();
-        //long callTime = 0;
         long now = System.currentTimeMillis();
         
         Iterator<Integer> i = calls.iterator();
@@ -990,59 +972,13 @@ public class robohelp extends SubspaceBot {
                 i.remove();
             }
         }
-        
-        /** OLD WAY
-        // Clear the queue of expired calls, get the first non-expired call but leave other non-expired calls
-        Iterator<EventData> iter = callList.iterator();
-        while(iter.hasNext()) {
-        	EventData e = iter.next();
-        	
-        	if( record == false && nowDate.getTime() < e.getTime() + CALL_EXPIRATION_TIME ) {
-        		// This is a non-expired call and no call has been counted yet. 
-        		record = true;
-        		callTime = e.getTime();
-        		iter.remove();
-        	} else if(nowDate.getTime() >= e.getTime() + CALL_EXPIRATION_TIME) {
-        		// This is an expired call
-        		iter.remove();
-        	}
-        }
-        
-        // if a non-expired call was found, record it to the database
-        if(record) {
-        	// Save
-        	if(message.startsWith("on it"))
-        		updateStatRecordsONIT( name );
-        	else if(message.startsWith("got it"))
-        		updateStatRecordsGOTIT( name );
-        	
-            this.lastStafferClaimedCall = name;
-            
-            // Find the playername of the call that was claimed
-            Iterator<HelpRequest> it = m_playerList.values().iterator();
-            String player = "";
-            while(it.hasNext()) {
-            	HelpRequest helprequest = it.next();
-            	if(helprequest.getTime() == callTime) {
-            		player = helprequest.getPlayername();
-            		break;
-            	}
-            }
-            
-            if(player.length()>0)
-            	m_botAction.sendRemotePrivateMessage(name, "Call claim of the player '"+player+"' recorded.");
-            else
-            	m_botAction.sendRemotePrivateMessage(name, "Call claim recorded.");
-            
-        } else {
-        
-        **/
-        	// A staffer did "on it" while there was no call to take (or all calls were expired).
-        	if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
-        		m_botAction.sendRemotePrivateMessage(name, "The call expired or was already taken. The last person to claim a call was "+this.lastStafferClaimedCall+".");
-        	else
-        		m_botAction.sendRemotePrivateMessage(name, "The call expired or no call was found to match your claim.");
-        /** } */
+
+        // A staffer did "on it" while there was no call to take (or all calls were expired).
+        if(this.lastStafferClaimedCall != null && this.lastStafferClaimedCall.length() > 0)
+            m_botAction.sendRemotePrivateMessage(name, "The call expired or was already taken. The last person to claim a call was "+this.lastStafferClaimedCall+".");
+        else
+            m_botAction.sendRemotePrivateMessage(name, "The call expired or no call was found to match your claim.");
+
     }
     
     public void handleClean(String name, String message) {
@@ -1161,7 +1097,7 @@ public class robohelp extends SubspaceBot {
         
         if (id > -1 && !helpList.containsKey(id)) {
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " could not be found.");
-            return;            
+            return;    
         }
         
         if (id == -1) {
@@ -1210,7 +1146,6 @@ public class robohelp extends SubspaceBot {
                 return;
             }            
         }
-
         
         HelpRequest help = helpList.get(id);
         if (help == null) {
@@ -1234,6 +1169,7 @@ public class robohelp extends SubspaceBot {
             }
         }
     }
+    
 
     public void recordHelp(HelpRequest help) {
         if (!m_botAction.SQLisOperational())
@@ -1270,6 +1206,7 @@ public class robohelp extends SubspaceBot {
             }
         }
     }
+    
 
     /**
      * Returns the call statistics of the <name> staffer.
@@ -1487,25 +1424,7 @@ public class robohelp extends SubspaceBot {
 		}
     	
     }
-
-    public void updateStatRecordsONIT( String name ) {
-    	if( !m_botAction.SQLisOperational())
-            return;
-    	
-        try {
-            String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
-            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
-            if(result.next()) {
-                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
-            } else {
-                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
-            }
-            m_botAction.SQLClose( result );
-        } catch ( Exception e ) {
-        	//m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
-        	Tools.printStackTrace(e);
-        }
-    }
+    
 
     public void updateStatRecordsONTHAT( String name, String player ) {
         if( !m_botAction.SQLisOperational())
@@ -1526,24 +1445,7 @@ public class robohelp extends SubspaceBot {
             Tools.printStackTrace(e);
         }
     }
-
-    public void updateStatRecordsGOTIT( String name ) {
-        if( !m_botAction.SQLisOperational())
-            return;
-
-        try {
-            String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
-            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
-
-            if(result.next()) {
-                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 1 AND fdDate = '"+time+"'" );
-            } else
-                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`)  VALUES ('"+name+"', '1', '1', '"+time+"')" );
-        } catch ( Exception e ) { 
-        	//m_botAction.sendChatMessage(2, "Error occured when registering call claim from '"+name+"' :"+e.getMessage());
-        	Tools.printStackTrace(e);
-        }
-    }
+    
 
     public void mainHelpScreen( String playerName, String message ){
         final String[] helpText = {
@@ -1617,6 +1519,7 @@ public class robohelp extends SubspaceBot {
           return index;
       return -1;
     }
+    
 
     private int getBreakIndex(String string, int fromIndex)
     {
@@ -1630,6 +1533,7 @@ public class robohelp extends SubspaceBot {
         return fromIndex + LINE_SIZE;
       return breakIndex;
     }
+    
 
     private String[] formatResponse(String response)
     {
@@ -1644,7 +1548,8 @@ public class robohelp extends SubspaceBot {
         breakIndex = getBreakIndex(response, startIndex);
       }
       return formattedResp.toArray(new String[formattedResp.size()]);
-    }   
+    }
+
     
     private void displayResponses(String name, String[] responses)
     {
@@ -1684,6 +1589,7 @@ public class robohelp extends SubspaceBot {
                 handleMine(event.getMessager(), event.getMessage());
         }
     }
+    
     
     class NewPlayer {
         long time;
@@ -1749,6 +1655,7 @@ public class robohelp extends SubspaceBot {
         }
 
     }
+    
     
     class HelpRequest {
 
