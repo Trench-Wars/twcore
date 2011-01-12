@@ -1302,11 +1302,11 @@ public class robohelp extends SubspaceBot {
                             cheat_lost = result.getInt(3);
                     } else {
                         if (type == 0)
-                            help_taken = result.getInt(3);
+                            help_taken += result.getInt(3);
                         else if (type == 1)
-                            gotitCalls = result.getInt(3);
+                            gotitCalls += result.getInt(3);
                         else if (type == 2)
-                            cheat_taken = result.getInt(3);
+                            cheat_taken += result.getInt(3);
                     }
                 } while (result.next());
             } else
