@@ -1270,21 +1270,23 @@ public class robohelp extends SubspaceBot {
         cal2.set(cal1.get(Calendar.YEAR), cal1.get(Calendar.MONTH), 01);
         cal2.add(Calendar.MONTH, 1);
         String date2 = ym.format(cal2.getTime());
-        int totalCalls = 0;
-        int takenCalls = 0;
-        int realCalls = 0;
-        int trueOns = 0;
-        int trueGots = 0;
-        int trueNewbs = 0;
-        int lostCalls = 0;
+        
+        int realCalls = 0;  // total staff stats from tblCall where fnType = 0 or 1
+        int trueOns = 0;    // total on its from tblCall, fnType = 0
+        int trueGots = 0;   // total got its from tblCall, fnType = 1
+        int trueNewbs = 0;  // total on thats from tblCall, fnType = 2
+
+        int totalCalls = 0; // total of all calls from tblCallHelp
+        int takenCalls = 0; // total of all calls from tblCallHelp where fnTaken = 1, 2 or 3
+        int lostCalls = 0;  // calls from tblCallHelp with fnTaken = 0
         // int notCalls = 0;
-        int help_taken = 0;
-        int help_lost = 0;
-        int cheat_taken = 0;
-        int cheat_lost = 0;
-        int gotitCalls = 0;
-        int mineCalls = 0;
-        int otherCalls = 0;
+        int help_taken = 0; // total helps from tblCallHelp where fnType = 0 and fnTaken = 1, 2, 3
+        int help_lost = 0;  // total helps from tblCallHelp where fnType = 0 and fnTaken = 0
+        int cheat_taken = 0;// total cheaters from tblCallHelp where fnType = 2 and fnTaken = 1, 2, 3
+        int cheat_lost = 0; // total cheaters from tblCallHelp where fnType = 2 and fnTaken = 0
+        int gotitCalls = 0; // total got its from tblCallHelp where fnType = 1 and fnTaken = 1, 2, 3
+        int mineCalls = 0;  // total mine from tblCallHelp where fnTaken = 2
+        int otherCalls = 0; // total clean/forget from tblCallHelp where fnTaken = 3
         boolean limit = false;
         
         try {
@@ -1303,7 +1305,7 @@ public class robohelp extends SubspaceBot {
                             help_taken = result.getInt(3);
                         else if (type == 1)
                             gotitCalls = result.getInt(3);
-                        else
+                        else if (type == 2)
                             cheat_taken = result.getInt(3);
                     }
                 } while (result.next());
@@ -1311,7 +1313,7 @@ public class robohelp extends SubspaceBot {
                 limit = true;
             m_botAction.SQLClose(result);
             
-            result = m_botAction.SQLQuery(mySQLHost, "SELECT fnTaken, fcTakerName, COUNT(fnCallID) FROM tblCallHelp WHERE fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00' AND fnTaken = 2 OR fnTaken = 3 GROUP BY fnTaken");
+            result = m_botAction.SQLQuery(mySQLHost, "SELECT fnTaken, fcTakerName, COUNT(fnCallID) FROM tblCallHelp WHERE fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00' AND (fnTaken = 2 OR fnTaken = 3) GROUP BY fnTaken");
             if (result.next()) {
                 do {
                     int taken = result.getInt(1);
@@ -1350,17 +1352,7 @@ public class robohelp extends SubspaceBot {
         lostCalls = totalCalls - takenCalls;
         realCalls = trueOns + trueGots;
         int written = mineCalls + otherCalls;
-        // Call Claim Statistics:
-        // 90% of xxx calls anwered (yyy/zzz)
-        // True Calls Taken:  xxxx
-        // Unattended Calls:  xxxx
-        // Calls Written Off: xxxx
-        // Cheater Calls Taken:
-        // Cheater Calls Missed:
-        // Help Calls Taken:
-        // Help Calls Missed:
-        // Got It Calls Taken:
-        // Got It Calls Missed:
+
         String[] msg;
         if (!limit) {
             msg = new String[] {
