@@ -1352,6 +1352,8 @@ public class robohelp extends SubspaceBot {
         lostCalls = totalCalls - takenCalls;
         realCalls = trueOns + trueGots;
         int written = mineCalls + otherCalls;
+        int helps = help_lost + help_taken;
+        int cheats = cheat_lost + cheat_taken;
 
         String[] msg;
         if (!limit) {
@@ -1363,8 +1365,8 @@ public class robohelp extends SubspaceBot {
                     " Written off calls:  " + written + " (" + mineCalls + "/" + otherCalls + ")",
                     " New player calls:   " + trueNewbs,
                     " Got it call total:  "  + gotitCalls,
-                    " Help calls:    " + Math.round((double) help_taken / (help_lost + help_taken) * 100) + "% (" + help_lost + ":" + (help_lost + help_taken) + ")",
-                    " Cheater calls: " + Math.round((double) cheat_taken / (cheat_taken + cheat_lost) * 100) + "% (" + cheat_lost + ":" + (cheat_lost + cheat_taken) + ")"
+                    " Help calls:    " + Math.round((double) help_taken / helps * 100) + "% (" + help_taken + ":" + helps + ")",
+                    " Cheater calls: " + Math.round((double) cheat_taken / cheats * 100) + "% (" + cheat_taken + ":" + cheats + ")"
             };
         } else {
             msg = new String[] {
