@@ -1488,7 +1488,7 @@ public class robohelp extends SubspaceBot {
             };
         } else {
             msg = new String[] {
-                    "LIMITED Call Claim Statistics for " + my.format(cal1.getTime()) + ":",
+                    "LIMITED Call Claim Statistics for " + cal1.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.US) + ", " + yr.format(cal1.getTime())+ ":",
                     " Real calls taken: " + realCalls,
                     " On it calls:      " + trueOns,
                     " Got it calls:     " + trueGots,
