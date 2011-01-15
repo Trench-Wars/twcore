@@ -1067,7 +1067,7 @@ public class robohelp extends SubspaceBot {
     
     public void handleClean(String name, String message) {
         int id = -1;
-        if (message.contains("#")) {
+        if (!message.contains(",") && !message.contains("-") && message.contains("#")) {
             try {
                 id = Integer.valueOf(message.substring(message.indexOf("#") + 1));
             } catch (NumberFormatException e) {
@@ -1247,7 +1247,7 @@ public class robohelp extends SubspaceBot {
     
     public void handleMine(String name, String message) {
         int id = -1;
-        if (message.contains("#")) {
+        if (!message.contains(",") && !message.contains("-") && message.contains("#")) {
             try {
                 id = Integer.valueOf(message.substring(message.indexOf("#") + 1));
             } catch (NumberFormatException e) {
