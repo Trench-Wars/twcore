@@ -1080,15 +1080,10 @@ public class robohelp extends SubspaceBot {
             Integer num;
             for (int i = 0; i < numbas.length; i++) {
                 try {
-                    num = (Integer.valueOf(numbas[i]));
-                    handleForget(name, "clean #" + num);
+                    num = (Integer.valueOf(numbas[i].replaceAll("#", "")));
+                    handleClean(name, "clean #" + num);
                 } catch (NumberFormatException e) {
-                    if (numbas[i].contains("#")) {
-                        numbas[i] = numbas[i].substring(numbas[i].indexOf("#") + 1);
-                        i--;
-                    } else {
-                        m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
-                    }
+                    m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
                 }
             }
             return;
@@ -1169,15 +1164,10 @@ public class robohelp extends SubspaceBot {
             Integer num;
             for (int i = 0; i < numbas.length; i++) {
                 try {
-                    num = (Integer.valueOf(numbas[i]));
+                    num = (Integer.valueOf(numbas[i].replaceAll("#", "")));
                     handleForget(name, "forget #" + num);
                 } catch (NumberFormatException e) {
-                    if (numbas[i].contains("#")) {
-                        numbas[i] = numbas[i].substring(numbas[i].indexOf("#") + 1);
-                        i--;
-                    } else {
-                        m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
-                    }
+                    m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
                 }
             }
             return;
@@ -1254,15 +1244,10 @@ public class robohelp extends SubspaceBot {
             Integer num;
             for (int i = 0; i < numbas.length; i++) {
                 try {
-                    num = (Integer.valueOf(numbas[i]));
-                    handleForget(name, "mine #" + num);
+                    num = (Integer.valueOf(numbas[i].replaceAll("#", "")));
+                    handleMine(name, "mine #" + num);
                 } catch (NumberFormatException e) {
-                    if (numbas[i].contains("#")) {
-                        numbas[i] = numbas[i].substring(numbas[i].indexOf("#") + 1);
-                        i--;
-                    } else {
-                        m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
-                    }
+                    m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
                 }
             }
             return;
@@ -1476,7 +1461,7 @@ public class robohelp extends SubspaceBot {
         DateFormat yr = new SimpleDateFormat("yyyy");
         if (!limit) {
             msg = new String[] {
-                    "Call Claim Statistics for " + cal1.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.US) + ", " + yr.format(cal1.getTime()) + ":",
+                    "Call Claim Statistics for " + cal1.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.US) + ", " + yr.format(cal1.getTime()) + ":",
                     "Real calls taken: " + realCalls,
                     "" + Math.round((double) takenCalls / totalCalls * 100) + "% calls answered (" + takenCalls + ":" + totalCalls + ")",
                     " Unattended calls:   " + lostCalls,
@@ -1488,7 +1473,7 @@ public class robohelp extends SubspaceBot {
             };
         } else {
             msg = new String[] {
-                    "LIMITED Call Claim Statistics for " + cal1.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.US) + ", " + yr.format(cal1.getTime())+ ":",
+                    "LIMITED Call Claim Statistics for " + cal1.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.US) + ", " + yr.format(cal1.getTime())+ ":",
                     " Real calls taken: " + realCalls,
                     " On it calls:      " + trueOns,
                     " Got it calls:     " + trueGots,
