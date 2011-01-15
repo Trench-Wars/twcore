@@ -1077,6 +1077,10 @@ public class robohelp extends SubspaceBot {
         } else if (message.startsWith("clean ") && message.contains(",") && !message.contains("-")) { 
             String msg = message.substring(message.indexOf(" ") + 1);
             String[] numbas = msg.split(",");
+            if (numbas.length > 10) {
+                m_botAction.sendSmartPrivateMessage(name, "Call modification limit per command is 10");
+                return;
+            }
             Integer num;
             for (int i = 0; i < numbas.length; i++) {
                 try {
@@ -1102,11 +1106,15 @@ public class robohelp extends SubspaceBot {
                 return;
             }
             
-            if (hi >= lo) {
+            if (hi >= lo && hi - lo < 11) {
                 for (;lo <= hi; lo++)
-                    handleForget(name, "clean #" + lo);
-            } else
-                m_botAction.sendSmartPrivateMessage(name, "Incorrect syntax (low-high): " + msg);
+                    handleClean(name, "clean #" + lo);
+            } else {
+                if (hi < lo)
+                    m_botAction.sendSmartPrivateMessage(name, "Incorrect syntax (low-high): " + msg);
+                else
+                    m_botAction.sendSmartPrivateMessage(name, "Call modification limit per command is 10");
+            }
             return;
         } else if (message.length() > 5) {
             try {
@@ -1162,6 +1170,10 @@ public class robohelp extends SubspaceBot {
             String msg = message.substring(message.indexOf(" ") + 1);
             String[] numbas = msg.split(",");
             Integer num;
+            if (numbas.length > 10) {
+                m_botAction.sendSmartPrivateMessage(name, "Call modification limit per command is 10");
+                return;
+            }
             for (int i = 0; i < numbas.length; i++) {
                 try {
                     num = (Integer.valueOf(numbas[i].replaceAll("#", "")));
@@ -1186,11 +1198,15 @@ public class robohelp extends SubspaceBot {
                 return;
             }
             
-            if (hi >= lo) {
+            if (hi >= lo && hi - lo < 11) {
                 for (;lo <= hi; lo++)
                     handleForget(name, "forget #" + lo);
-            } else
-                m_botAction.sendSmartPrivateMessage(name, "Incorrect syntax (low-high): " + msg);
+            } else {
+                if (hi < lo)
+                    m_botAction.sendSmartPrivateMessage(name, "Incorrect syntax (low-high): " + msg);
+                else
+                    m_botAction.sendSmartPrivateMessage(name, "Call modification limit per command is 10");
+            }
             return;
         } else if (message.length() > 6) {
             try {
@@ -1241,6 +1257,10 @@ public class robohelp extends SubspaceBot {
         } else if (message.startsWith("mine ") && message.contains(",") && !message.contains("-")) { 
             String msg = message.substring(message.indexOf(" ") + 1);
             String[] numbas = msg.split(",");
+            if (numbas.length > 10) {
+                m_botAction.sendSmartPrivateMessage(name, "Call modification limit per command is 10");
+                return;
+            }
             Integer num;
             for (int i = 0; i < numbas.length; i++) {
                 try {
@@ -1266,11 +1286,15 @@ public class robohelp extends SubspaceBot {
                 return;
             }
             
-            if (hi >= lo) {
+            if (hi >= lo && hi - lo < 11) {
                 for (;lo <= hi; lo++)
-                    handleForget(name, "mine #" + lo);
-            } else
-                m_botAction.sendSmartPrivateMessage(name, "Incorrect syntax (low-high): " + msg);
+                    handleMine(name, "mine #" + lo);
+            } else {
+                if (hi < lo)
+                    m_botAction.sendSmartPrivateMessage(name, "Incorrect syntax (low-high): " + msg);
+                else
+                    m_botAction.sendSmartPrivateMessage(name, "Call modification limit per command is 10");
+            }
             return;
         } else if (message.length() > 4) {
             try {
