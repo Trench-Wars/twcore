@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -403,7 +404,7 @@ public class robohelp extends SubspaceBot {
         String msg = "";
         if (callsUntilAd == 0) {
             callsUntilAd = 7;
-            msg += "Call #" + help.getID() + "  (try !calls and also !stats)";
+            msg += "Call #" + help.getID() + "  (call spam? Modify multiple calls! See !claimhelp)";
         } else if (now - lastAlert < CALL_EXPIRATION_TIME)
             msg += "Call #" + help.getID();
         if (msg.length() > 0)
@@ -456,7 +457,7 @@ public class robohelp extends SubspaceBot {
             String msg = "";
             if (callsUntilAd == 0) {
                 callsUntilAd = 7;
-                msg += "Call #" + helpRequest.getID() + "  (try !calls and also !stats)";
+                msg += "Call #" + helpRequest.getID() + "  (call spam? Modify multiple calls! See !claimhelp)";
             } else if (now - lastAlert < CALL_EXPIRATION_TIME)
                 msg += "Call #" + helpRequest.getID();
             if (msg.length() > 0)
@@ -467,7 +468,7 @@ public class robohelp extends SubspaceBot {
             String msg = "I'll take it! (Call #" + helpRequest.getID();
             if (callsUntilAd == 0) {
                 callsUntilAd = 10;
-                msg += "  try !calls and !stats)";
+                msg += "  call spam? Modify multiple calls! See !claimhelp)";
             } else
                 msg += ")";
             m_botAction.sendChatMessage(msg);
@@ -503,7 +504,7 @@ public class robohelp extends SubspaceBot {
         
         if (send) {
             newbs.add(new NewPlayer(player));
-            m_botAction.sendChatMessage(2, message + " [Use 'on that' to take this call]");
+            m_botAction.sendChatMessage(2, message + " [Use 'on that']");
         }
     }
 
@@ -1073,6 +1074,45 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(name, "Call could not be cleaned.");
                 return;
             }
+        } else if (message.startsWith("clean ") && message.contains(",") && !message.contains("-")) { 
+            String msg = message.substring(message.indexOf(" ") + 1);
+            String[] numbas = msg.split(",");
+            Integer num;
+            for (int i = 0; i < numbas.length; i++) {
+                try {
+                    num = (Integer.valueOf(numbas[i]));
+                    handleForget(name, "clean #" + num);
+                } catch (NumberFormatException e) {
+                    if (numbas[i].contains("#")) {
+                        numbas[i] = numbas[i].substring(numbas[i].indexOf("#") + 1);
+                        i--;
+                    } else {
+                        m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
+                    }
+                }
+            }
+            return;
+        } else if (message.startsWith("clean ") && !message.contains(",") && message.contains("-")) {
+            String msg = message.substring(message.indexOf(" ") + 1);
+            msg = msg.replaceAll("#", "");
+            String[] numbas = msg.split("-");
+            if (numbas.length != 2) 
+                return;
+            int hi, lo;
+            try {
+                lo = Integer.valueOf(numbas[0]);
+                hi = Integer.valueOf(numbas[1]);
+            } catch (NumberFormatException e) {
+                m_botAction.sendSmartPrivateMessage(name, "Could not convert: " + msg);
+                return;
+            }
+            
+            if (hi >= lo) {
+                for (;lo <= hi; lo++)
+                    handleForget(name, "clean #" + lo);
+            } else
+                m_botAction.sendSmartPrivateMessage(name, "Incorrect syntax (low-high): " + msg);
+            return;
         } else if (message.length() > 5) {
             try {
                 id = Integer.valueOf(message.substring(5).trim());
@@ -1116,13 +1156,52 @@ public class robohelp extends SubspaceBot {
     
     public void handleForget(String name, String message) {
         int id = -1;
-        if (message.contains("#")) {
+        if (!message.contains(",") && !message.contains("-") && message.contains("#")) {
             try {
                 id = Integer.valueOf(message.substring(message.indexOf("#") + 1));
             } catch (NumberFormatException e) {
                 m_botAction.sendSmartPrivateMessage(name, "Call could not be forgotten.");
                 return;
             }
+        } else if (message.startsWith("forget ") && message.contains(",") && !message.contains("-")) { 
+            String msg = message.substring(message.indexOf(" ") + 1);
+            String[] numbas = msg.split(",");
+            Integer num;
+            for (int i = 0; i < numbas.length; i++) {
+                try {
+                    num = (Integer.valueOf(numbas[i]));
+                    handleForget(name, "forget #" + num);
+                } catch (NumberFormatException e) {
+                    if (numbas[i].contains("#")) {
+                        numbas[i] = numbas[i].substring(numbas[i].indexOf("#") + 1);
+                        i--;
+                    } else {
+                        m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
+                    }
+                }
+            }
+            return;
+        } else if (message.startsWith("forget ") && !message.contains(",") && message.contains("-")) {
+            String msg = message.substring(message.indexOf(" ") + 1);
+            msg = msg.replaceAll("#", "");
+            String[] numbas = msg.split("-");
+            if (numbas.length != 2) 
+                return;
+            int hi, lo;
+            try {
+                lo = Integer.valueOf(numbas[0]);
+                hi = Integer.valueOf(numbas[1]);
+            } catch (NumberFormatException e) {
+                m_botAction.sendSmartPrivateMessage(name, "Could not convert: " + msg);
+                return;
+            }
+            
+            if (hi >= lo) {
+                for (;lo <= hi; lo++)
+                    handleForget(name, "forget #" + lo);
+            } else
+                m_botAction.sendSmartPrivateMessage(name, "Incorrect syntax (low-high): " + msg);
+            return;
         } else if (message.length() > 6) {
             try {
                 id = Integer.valueOf(message.substring(6).trim());
@@ -1169,6 +1248,45 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(name, "Call could not be claimed.");
                 return;
             }
+        } else if (message.startsWith("mine ") && message.contains(",") && !message.contains("-")) { 
+            String msg = message.substring(message.indexOf(" ") + 1);
+            String[] numbas = msg.split(",");
+            Integer num;
+            for (int i = 0; i < numbas.length; i++) {
+                try {
+                    num = (Integer.valueOf(numbas[i]));
+                    handleForget(name, "mine #" + num);
+                } catch (NumberFormatException e) {
+                    if (numbas[i].contains("#")) {
+                        numbas[i] = numbas[i].substring(numbas[i].indexOf("#") + 1);
+                        i--;
+                    } else {
+                        m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
+                    }
+                }
+            }
+            return;
+        } else if (message.startsWith("mine ") && !message.contains(",") && message.contains("-")) {
+            String msg = message.substring(message.indexOf(" ") + 1);
+            msg = msg.replaceAll("#", "");
+            String[] numbas = msg.split("-");
+            if (numbas.length != 2) 
+                return;
+            int hi, lo;
+            try {
+                lo = Integer.valueOf(numbas[0]);
+                hi = Integer.valueOf(numbas[1]);
+            } catch (NumberFormatException e) {
+                m_botAction.sendSmartPrivateMessage(name, "Could not convert: " + msg);
+                return;
+            }
+            
+            if (hi >= lo) {
+                for (;lo <= hi; lo++)
+                    handleForget(name, "mine #" + lo);
+            } else
+                m_botAction.sendSmartPrivateMessage(name, "Incorrect syntax (low-high): " + msg);
+            return;
         } else if (message.length() > 4) {
             try {
                 id = Integer.valueOf(message.substring(4).trim());
@@ -1354,19 +1472,19 @@ public class robohelp extends SubspaceBot {
         int written = mineCalls + otherCalls;
         int helps = help_lost + help_taken;
         int cheats = cheat_lost + cheat_taken;
-
         String[] msg;
+        DateFormat yr = new SimpleDateFormat("yyyy");
         if (!limit) {
             msg = new String[] {
-                    "Call Claim Statistics for " + my.format(cal1.getTime()) + ":",
+                    "Call Claim Statistics for " + cal1.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.US) + ", " + yr.format(cal1.getTime()) + ":",
+                    "Real calls taken: " + realCalls,
                     "" + Math.round((double) takenCalls / totalCalls * 100) + "% calls answered (" + takenCalls + ":" + totalCalls + ")",
-                    " Real calls taken:   " + realCalls,
                     " Unattended calls:   " + lostCalls,
-                    " Written off calls:  " + written + " (" + mineCalls + "/" + otherCalls + ")",
+                    " Written off calls:  " + written,
                     " New player calls:   " + trueNewbs,
                     " Got it call total:  "  + gotitCalls,
-                    " Help calls:    " + Math.round((double) help_taken / helps * 100) + "% (" + help_taken + ":" + helps + ")",
-                    " Cheater calls: " + Math.round((double) cheat_taken / cheats * 100) + "% (" + cheat_taken + ":" + cheats + ")"
+                    " Help calls:        " + Math.round((double) help_taken / helps * 100) + "% (" + help_taken + ":" + helps + ")",
+                    " Cheater calls:     " + Math.round((double) cheat_taken / cheats * 100) + "% (" + cheat_taken + ":" + cheats + ")"
             };
         } else {
             msg = new String[] {
@@ -1681,13 +1799,19 @@ public class robohelp extends SubspaceBot {
             " got it                         - Same as before, claims the earliest non-expired call",
             " got it <id>, got <id>,         - Claims Call #<id> if it hasn't expired",
             "  or got #<id>, got it #<id>",
+            "Claim modifier commands:",
             " mine                           - Claims the most recent call but does not affect staff stats",
             " mine #<id>, mine <id>          - Claims Call #<id> but does not affect staff stats",
             "                                   Used to prevent a call from being counted as unanswered",
             " clean                          - Clears the most recent false positive racism alert",
             " clean #<id>, clean <id>        - Clears Call #<id> due to a false positive racism alert",
             " forget                         - Prevents the most recent call from being counted as unanswered",
-            " forget #<id>, forget <id>      - Prevents Call #<id> from being counted as unanswered"
+            " forget #<id>, forget <id>      - Prevents Call #<id> from being counted as unanswered",
+            "Multiple call claim modification (mine/clean/forget)",
+            " - To claim multiple calls at once, just add the call numbers separated by commas",
+            "    ie mine 6,49,3,#4,1",
+            " - To claim multiple consecutive calls at once, specify a range using a dash (-)",
+            "    ie forget 5-#32"
         };
         m_botAction.smartPrivateMessageSpam(playerName, helpText);
     }
