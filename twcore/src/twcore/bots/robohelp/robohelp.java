@@ -36,6 +36,8 @@ public class robohelp extends SubspaceBot {
     public static final String ALERT_CHAT = "training"; // chat that the new player alerts get sent to
     
     static int TIME_BETWEEN_ADS = 390000;//6.5 * 60000;
+    public static final int CALL_INTERVAL = 10;
+    public static final String CALL_AD = "  (!claimhelp)";
     public static final int LINE_SIZE = 100;
     public static final int CALL_EXPIRATION_TIME = 90000;  // Time after which a call can't
                                                            // can't be claimed (onit/gotit)
@@ -403,8 +405,8 @@ public class robohelp extends SubspaceBot {
         callsUntilAd--;
         String msg = "";
         if (callsUntilAd == 0) {
-            callsUntilAd = 7;
-            msg += "Call #" + help.getID() + "  (call spam? Modify multiple calls! See !claimhelp)";
+            callsUntilAd = CALL_INTERVAL;
+            msg += "Call #" + help.getID() + CALL_AD;
         } else if (now - lastAlert < CALL_EXPIRATION_TIME)
             msg += "Call #" + help.getID();
         if (msg.length() > 0)
@@ -456,8 +458,8 @@ public class robohelp extends SubspaceBot {
             callsUntilAd--;
             String msg = "";
             if (callsUntilAd == 0) {
-                callsUntilAd = 7;
-                msg += "Call #" + helpRequest.getID() + "  (call spam? Modify multiple calls! See !claimhelp)";
+                callsUntilAd = CALL_INTERVAL;
+                msg += "Call #" + helpRequest.getID() + CALL_AD;
             } else if (now - lastAlert < CALL_EXPIRATION_TIME)
                 msg += "Call #" + helpRequest.getID();
             if (msg.length() > 0)
@@ -467,8 +469,8 @@ public class robohelp extends SubspaceBot {
             callsUntilAd--;
             String msg = "I'll take it! (Call #" + helpRequest.getID();
             if (callsUntilAd == 0) {
-                callsUntilAd = 10;
-                msg += "  call spam? Modify multiple calls! See !claimhelp)";
+                callsUntilAd = CALL_INTERVAL;
+                msg += "  See !claimhelp for detailed claim info)";
             } else
                 msg += ")";
             m_botAction.sendChatMessage(msg);
@@ -504,7 +506,7 @@ public class robohelp extends SubspaceBot {
         
         if (send) {
             newbs.add(new NewPlayer(player));
-            m_botAction.sendChatMessage(2, message + " [Use 'on that']");
+            m_botAction.sendChatMessage(2, message + "   [Use 'on that' to claim]");
         }
     }
 
