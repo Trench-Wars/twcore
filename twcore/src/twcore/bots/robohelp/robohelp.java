@@ -1356,7 +1356,7 @@ public class robohelp extends SubspaceBot {
             do {
                 HelpRequest call = helpList.get(id);
                 String msg = "Call #" + call.getID() + " -";
-                if (call.isTaken())
+                if (call.isTaken() || call.getTaker().equals("RoboHelp"))
                     msg += " " + call.getTaker() + " -";
                 
                 if (call.getType() == 0)
@@ -2026,6 +2026,7 @@ public class robohelp extends SubspaceBot {
             m_time = System.currentTimeMillis();
             m_type = -1;
             m_claimed = false;
+            m_claimer = "";
         }
 
         public HelpRequest( int id, String playerName, String question, String[] responses ){
@@ -2039,6 +2040,7 @@ public class robohelp extends SubspaceBot {
             m_time = System.currentTimeMillis();
             m_type = -1;
             m_claimed = false;
+            m_claimer = "";
         }
 
         public HelpRequest( String playerName, String question, String[] responses, int type ){
@@ -2052,6 +2054,7 @@ public class robohelp extends SubspaceBot {
             m_time = System.currentTimeMillis();
             m_type = type;
             m_claimed = false;
+            m_claimer = "";
         }
         
         public void reset() {
