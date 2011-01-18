@@ -474,6 +474,7 @@ public class robohelp extends SubspaceBot {
             } else
                 msg += ")";
             m_botAction.sendChatMessage(msg);
+            helpRequest.setTaker("RoboHelp");
             lastAlert = now;
             m_botAction.remotePrivateMessageSpam(playerName, helpRequest.getNextResponse());
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString("RoboHelp") + "', fnTaken = 1 WHERE fnCallID = " + helpRequest.getID());
@@ -2065,6 +2066,10 @@ public class robohelp extends SubspaceBot {
         
         public String getTaker() {
             return m_claimer;
+        }
+        
+        public void setTaker(String name) {
+            m_claimer = name;
         }
         
         public boolean isTaken() {
