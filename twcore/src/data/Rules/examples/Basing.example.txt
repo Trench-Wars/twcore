@@ -19,6 +19,7 @@ waitafterlagout=15
 lineuptime=7
 blueout=0
 aliascheck=0
+subcansub=1
 
 squadjoined=0
 rosterjoined=0

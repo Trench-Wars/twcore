@@ -23,6 +23,7 @@ lagoutextension=60
 subdelaytime=2
 blueout=0
 aliascheck=0
+subcansub=1
 
 matchtype=4
 storegame=0

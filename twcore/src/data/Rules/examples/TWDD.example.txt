@@ -20,6 +20,7 @@ pingmax=350
 lagoutextension=60
 blueout=1
 aliascheck=1
+subcansub=0
 
 matchtype=4
 captain_can_start_game=1
