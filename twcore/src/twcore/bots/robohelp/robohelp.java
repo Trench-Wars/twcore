@@ -575,7 +575,7 @@ public class robohelp extends SubspaceBot {
             } catch (Exception e) {
                 Tools.printStackTrace(e);
             }
-        } else if (help.getType() == 1) {
+        } else if (help.getType() == 1 || help.getType() == 4) {
             try {
                 ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '" + Tools.addSlashesToString(help.getTaker()) + "' AND fnType = 1 AND fdDate = '" + time + "'");
                 if (result.next()) {
@@ -632,9 +632,14 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has expired.");
             } else {
                 help.claim(name);
-                if (message.startsWith("got")) 
-                    help.setType(1);
-                else if (message.startsWith("on") && help.getType() == -1) {
+                if (message.startsWith("got")) { 
+                    if (help.getType() == 2)
+                        help.setType(4);
+                    else if (help.getType() == 0)
+                        help.setType(1);
+                    else
+                        help.setType(5);
+                } else if (message.startsWith("on") && help.getType() == -1) {
                     help.setType(0);
                 }
                 lastStafferClaimedCall = name;
@@ -1359,10 +1364,12 @@ public class robohelp extends SubspaceBot {
                 if (call.isTaken() || call.getTaker().equals("RoboHelp"))
                     msg += " " + call.getTaker() + " -";
                 
-                if (call.getType() == 0)
+                if (call.getType() == 0 || call.getType() == 1)
                     msg += " help: (";
-                else
+                else if (call.getType() == 2 || call.getType() == 4)
                     msg += " cheater: (";
+                else 
+                    msg += " ERROR: (";
                 
                 msg +=  call.getPlayername() + ") " + call.getQuestion();
                 m_botAction.sendSmartPrivateMessage(name, msg);
