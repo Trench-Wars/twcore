@@ -1342,6 +1342,7 @@ public class robohelp extends SubspaceBot {
     }
     
     public void handleCalls(String name, String message) {
+        DateFormat t = new SimpleDateFormat("[kk:mm]");
         int count;
         try {
             count = Integer.valueOf(message);
@@ -1360,7 +1361,7 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = "Call #" + call.getID() + " -";
+                String msg = t.format(call.getTime()) + " #" + call.getID() + " -";
                 if (call.isTaken() || call.getTaker().equals("RoboHelp"))
                     msg += " " + call.getTaker() + " -";
                 
