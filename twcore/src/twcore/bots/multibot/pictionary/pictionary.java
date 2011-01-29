@@ -313,6 +313,7 @@ public class pictionary extends MultiModule {
             }
             gameProgress = GAME_STARTING;
             m_botAction.specAll();
+            m_botAction.toggleLocked();
             m_botAction.arenaMessageSpam(displayrules);
             
             if (m_botAction.getArenaSize() > minPlayers) {
@@ -353,6 +354,7 @@ public class pictionary extends MultiModule {
                 m_botAction.cancelTasks();
             } catch (Exception e) {}
             m_botAction.specAll();
+            m_botAction.toggleLocked();
         }
     }
     
@@ -914,6 +916,7 @@ public class pictionary extends MultiModule {
             m_botAction.cancelTasks();
         } catch (Exception e) {}
         m_botAction.specAll();
+        m_botAction.toggleLocked();
     }
     
 }
