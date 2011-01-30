@@ -56,14 +56,14 @@ lagouts=3
 aliascheck=1
 
 [Arena]
-safe1x=511
-safe1y=345
-safe1xout=511
-safe1yout=359
-safe2x=511
-safe2y=679
-safe2xout=511
-safe2yout=665
+safe1x=341
+safe1y=512
+safe1xout=367
+safe1yout=512
+safe2x=683
+safe2y=512
+safe2xout=657
+safe2yout=512
 obj_countdown10=1
 obj_countdown54321=2
 obj_gogogo=3
