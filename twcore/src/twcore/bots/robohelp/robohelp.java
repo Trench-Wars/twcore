@@ -1634,7 +1634,7 @@ public class robohelp extends SubspaceBot {
     	} else if (message.startsWith("that")) {
             // Staffer> !mystats that
             date = date + "-01";
-            query       = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=2 ORDER BY fcUserName";
+            query       = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=2 ORDER BY fcUserName, fnType";
             rankQuery   = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=2 ORDER BY fnCount DESC";
             title =  "Top 5 that count | "+displayDate;
             title2 = "Your that count";
@@ -1690,9 +1690,9 @@ public class robohelp extends SubspaceBot {
 				if (stats.containsKey(staffer)) {
 				    // query sets the fnType=1 as second, so this is the "got it"s
 				    if (type == 2)
-				        stats.put(staffer, Tools.formatString(stats.get(staffer)+" ["+count+"]",3));
+				        stats.put(staffer, stats.get(staffer)+" ["+count+"]");
 				    else
-				        stats.put(staffer, Tools.formatString(stats.get(staffer)+" ("+count+")",3));
+				        stats.put(staffer, Tools.formatString(stats.get(staffer)+" ("+count+")",6));
 				} else {
 				    // query sets the fnType=0 as first, so this is the "on it"s
 				    stats.put(staffer, Tools.formatString(count,3));
