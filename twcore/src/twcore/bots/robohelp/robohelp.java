@@ -1538,7 +1538,7 @@ public class robohelp extends SubspaceBot {
     	HashMap<String, String> stats = new HashMap<String, String>();
     	ArrayList<String> rank = new ArrayList<String>();
     	message = message.trim().toLowerCase();
-    	boolean showPersonalStats = true, showTopStats = true, showSingleStats = false, topThats = false;
+    	boolean showPersonalStats = true, showTopStats = true, showSingleStats = false, showTopThats = false;
     	int topNumber = 5;
     	
     	
@@ -1572,6 +1572,7 @@ public class robohelp extends SubspaceBot {
     		showTopStats = true;
     		showPersonalStats = true;
     		showSingleStats = false;
+    		showTopThats = false;
 			topNumber = 5;
     		
     		if(message.length() > 3) {
@@ -1594,6 +1595,7 @@ public class robohelp extends SubspaceBot {
     		showPersonalStats = true;
     		showTopStats = true;
     		showSingleStats = false;
+            showTopThats = false;
     		topNumber = 5;
     		
     		if(message.length() > 2) {
@@ -1617,6 +1619,7 @@ public class robohelp extends SubspaceBot {
     		showPersonalStats = true;
     		showTopStats = true;
     		showSingleStats = false;
+            showTopThats = false;
     		topNumber = 5;
     		
     		if(message.length() > 2) {
@@ -1638,7 +1641,7 @@ public class robohelp extends SubspaceBot {
             showPersonalStats = true;
             showTopStats = true;
             showSingleStats = false;
-            topThats = true;
+            showTopThats = true;
             topNumber = 5;
             
             if(message.length() > 4) {
@@ -1671,6 +1674,7 @@ public class robohelp extends SubspaceBot {
 			showPersonalStats = false;
     		showTopStats = false;
     		showSingleStats = true;
+    		showTopThats = false;
 		}
     		
 		// Order and create a list out of the results
@@ -1683,17 +1687,19 @@ public class robohelp extends SubspaceBot {
 				String staffer = results.getString(1);
 				String count = results.getString(2);
 				int type = results.getInt("fnType");
-				if (topThats && type == 2 && stats.containsKey(staffer)) {
-                    stats.put(staffer, Tools.formatString(stats.get(staffer)+" "+count+"",3));
-				} else if (!topThats && stats.containsKey(staffer)) {
-	                    // query sets the fnType=1 as second, so this is the "got it"s
-	                    if (type == 2)
-	                        stats.put(staffer, Tools.formatString(stats.get(staffer)+" ["+count+"]",3));
-	                    else
-	                        stats.put(staffer, Tools.formatString(stats.get(staffer)+" ("+count+")",3));
-				} else if (!topThats) {
-	                // query sets the fnType=0 as first, so this is the "on it"s
-	                stats.put(staffer, Tools.formatString(count,3));
+				if (!showTopThats && stats.containsKey(staffer)) {
+				    // query sets the fnType=1 as second, so this is the "got it"s
+				    if (type == 2)
+				        stats.put(staffer, Tools.formatString(stats.get(staffer)+" ["+count+"]",3));
+				    else
+				        stats.put(staffer, Tools.formatString(stats.get(staffer)+" ("+count+")",3));
+				} else {
+				    if (showTopThats && type == 2)
+	                    stats.put(staffer, Tools.formatString(count,3));
+				    else {
+				        // query sets the fnType=0 as first, so this is the "on it"s
+				        stats.put(staffer, Tools.formatString(count,3));
+				    }
 				}
 			}
             m_botAction.SQLClose(results);
