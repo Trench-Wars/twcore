@@ -1606,7 +1606,7 @@ public class robohelp extends SubspaceBot {
     			showPersonalStats = false;
     		}
     		
-    	} else if((opList.isBotExact(name) && message.length() == 0) || message.startsWith("zh")) {
+    	} else if((opList.isZHExact(name) && message.length() == 0) || message.startsWith("zh")) {
     		// Staffer> !mystats
         	// Staffer> !mystats zh
     		date = date + "-01";
@@ -1628,6 +1628,27 @@ public class robohelp extends SubspaceBot {
         		}
     			showPersonalStats = false;
     		}
+    	} else if (message.startsWith("that")) {
+            // Staffer> !mystats that
+            date = date + "-01";
+            query       = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' ORDER BY fcUserName, fnType";
+            rankQuery   = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='"+date+"' AND fnType=2 ORDER BY fnCount DESC";
+            title =  "Top 5 call count | "+displayDate;
+            title2 = "Your call count";
+            showPersonalStats = true;
+            showTopStats = true;
+            showSingleStats = false;
+            topNumber = 5;
+            
+            if(message.length() > 2) {
+                // Staffer> !mystats zh #
+                String number = message.substring(3);
+                if(Tools.isAllDigits(number)) {
+                    topNumber = Integer.parseInt(number);
+                    title =  "Top "+topNumber+" call count | "+displayDate;
+                }
+                showPersonalStats = false;
+            }
     		
 		} else {
 			// Staffer> !mystats <name>
@@ -1660,10 +1681,13 @@ public class robohelp extends SubspaceBot {
 			while(results != null && results.next()) {
 				String staffer = results.getString(1);
 				String count = results.getString(2);
-				
+				int type = results.getInt("fnType");
 				if(stats.containsKey(staffer)) {
 					// query sets the fnType=1 as second, so this is the "got it"s
-					stats.put(staffer, stats.get(staffer)+" ("+count+")");
+				    if (type == 2)
+	                    stats.put(staffer, stats.get(staffer)+" ["+count+"]");
+				    else
+				        stats.put(staffer, stats.get(staffer)+" ("+count+")");
 				} else {
 					// query sets the fnType=0 as first, so this is the "on it"s
 					stats.put(staffer, Tools.formatString(count,3));
