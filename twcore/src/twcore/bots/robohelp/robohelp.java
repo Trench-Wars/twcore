@@ -1641,7 +1641,7 @@ public class robohelp extends SubspaceBot {
             topThats = true;
             topNumber = 5;
             
-            if(message.length() > 2) {
+            if(message.length() > 4) {
                 // Staffer> !mystats zh #
                 String number = message.substring(3);
                 if(Tools.isAllDigits(number)) {
