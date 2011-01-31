@@ -1,0 +1,84 @@
+[General]
+name=TWFD
+arena=
+ship=0
+players=6
+minplayers=3
+deaths=10
+time=20
+rounds=1
+maxrounds=1
+winby=kills
+ondraw=extension
+extensiontime=5
+pickbyturn=1
+lineuptime=5
+forfeit_loser_score=0
+forfeit_winner_score=50
+captainsfixed=0
+pingmax=250
+lagoutextension=60
+subdelaytime=2
+blueout=0
+
+# indicates whether or not the bot should zone for
+# matches between seeds. 0 - don't zone, other values
+# indicate how many ranks of the ladder should be zoned for.
+# (e.g. if set to 3 the bot will zone when squads within the 
+# top three play each other) zoneforladdertime sets the amount
+# of time to wait before zoning again in minutes.
+zoneforladder=0
+zoneforladdertime=90
+
+# assign the maximum number of ships allowed per shiptype.
+# -1 indicates that the ship is NOT allowed
+maxship2=-1
+maxship4=-1
+maxship5=-1
+maxship6=-1
+maxship8=-1
+
+# -1 indicates that the ship is NOT allowed
+# -10 in case ship changes are made (see code to understand why)
+# Order: Spec, Warbird, Javelin, Spider, ect.
+minship=-10,1,-1,1,-1,-1,-1,1,-1
+
+matchtype=2133
+captain_can_start_game=1
+storegame=0
+loggame=0
+squadjoined=0
+rosterjoined=0
+shipchanges=10
+shipswitches=5
+substitutes=3
+lagouts=3
+aliascheck=0
+
+[Arena]
+safe1x=341
+safe1y=512
+safe1xout=367
+safe1yout=512
+safe2x=683
+safe2y=512
+safe2xout=657
+safe2yout=512
+obj_countdown10=1
+obj_countdown54321=2
+obj_gogogo=3
+obj_gameover=4
+
+CurPing=250
+AvePing=250
+S2CPloss=3
+C2SPloss=3
+WeaponPloss=2
+SlowS2C=5
+SlowC2S=5
+Med=75
+SpikeCount=5
+
+EnableLagLimits=1
+strictmidip=0
+specialaccess=
