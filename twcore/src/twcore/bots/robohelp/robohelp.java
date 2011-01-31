@@ -1692,7 +1692,7 @@ public class robohelp extends SubspaceBot {
 				    if (type == 2)
 				        stats.put(staffer, stats.get(staffer)+" ["+count+"]");
 				    else
-				        stats.put(staffer, Tools.formatString(stats.get(staffer)+" ("+count+")",6));
+				        stats.put(staffer, stats.get(staffer)+" (" +Tools.formatString(count + ")",4));
 				} else {
 				    // query sets the fnType=0 as first, so this is the "on it"s
 				    stats.put(staffer, Tools.formatString(count,3));
