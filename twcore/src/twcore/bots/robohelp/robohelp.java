@@ -1413,6 +1413,7 @@ public class robohelp extends SubspaceBot {
         int trueOns = 0;    // total on its from tblCall, fnType = 0
         int trueGots = 0;   // total got its from tblCall, fnType = 1
         int trueNewbs = 0;  // total on thats from tblCall, fnType = 2
+        int allNewbs = 0;   // total newb alerts from tblCallNewb
 
         int totalCalls = 0; // total of all calls from tblCallHelp
         int takenCalls = 0; // total of all calls from tblCallHelp where fnTaken = 1, 2 or 3
@@ -1481,6 +1482,11 @@ public class robohelp extends SubspaceBot {
                 return;                
             }
             
+            result = m_botAction.SQLQuery(mySQLHost, "SELECT COUNT(fnAlertID) FROM tblCallNewb WHERE fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00'");
+            if (result.next()) {
+                allNewbs = result.getInt(1);
+            }
+            m_botAction.SQLClose(result);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1501,8 +1507,8 @@ public class robohelp extends SubspaceBot {
                     "" + Math.round((double) takenCalls / totalCalls * 100) + "% calls answered (" + takenCalls + ":" + totalCalls + ")",
                     " Unattended calls:   " + lostCalls,
                     " Written off calls:  " + written,
-                    " New player calls:   " + trueNewbs,
                     " Got it call total:  "  + gotitCalls,
+                    " New player calls:   " + Math.round((double) trueNewbs / allNewbs * 100) + "% (" + trueNewbs + ":" + allNewbs + ")",
                     " Help calls:        " + Math.round((double) help_taken / helps * 100) + "% (" + help_taken + ":" + helps + ")",
                     " Cheater calls:     " + Math.round((double) cheat_taken / cheats * 100) + "% (" + cheat_taken + ":" + cheats + ")"
             };
