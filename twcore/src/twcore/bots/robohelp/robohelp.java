@@ -1544,7 +1544,7 @@ public class robohelp extends SubspaceBot {
     	HashMap<String, String> stats = new HashMap<String, String>();
     	ArrayList<String> rank = new ArrayList<String>();
     	message = message.trim().toLowerCase();
-    	boolean showPersonalStats = true, showTopStats = true, showSingleStats = false, showTopThats = false;
+    	boolean showPersonalStats = true, showTopStats = true, showSingleStats = false, er = false;
     	int topNumber = 5;
     	
     	
@@ -1578,7 +1578,6 @@ public class robohelp extends SubspaceBot {
     		showTopStats = true;
     		showPersonalStats = true;
     		showSingleStats = false;
-    		showTopThats = false;
 			topNumber = 5;
     		
     		if(message.length() > 3) {
@@ -1594,6 +1593,7 @@ public class robohelp extends SubspaceBot {
     	} else if((opList.isERExact(name) && message.length() == 0) || message.startsWith("er")) { 	
     		// Staffer> !mystats
         	// Staffer> !mystats er
+    	    er = true;
     		query 	  = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' GROUP BY fcUserName ORDER BY count DESC";
     		rankQuery = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' GROUP BY fcUserName ORDER BY count DESC";
     		title =  "Top 5 advert count | "+displayDate;
@@ -1601,7 +1601,6 @@ public class robohelp extends SubspaceBot {
     		showPersonalStats = true;
     		showTopStats = true;
     		showSingleStats = false;
-            showTopThats = false;
     		topNumber = 5;
     		
     		if(message.length() > 2) {
@@ -1625,7 +1624,6 @@ public class robohelp extends SubspaceBot {
     		showPersonalStats = true;
     		showTopStats = true;
     		showSingleStats = false;
-            showTopThats = false;
     		topNumber = 5;
     		
     		if(message.length() > 2) {
@@ -1647,7 +1645,6 @@ public class robohelp extends SubspaceBot {
             showPersonalStats = true;
             showTopStats = true;
             showSingleStats = false;
-            showTopThats = true;
             topNumber = 5;
             
             if(message.length() > 4) {
@@ -1666,6 +1663,7 @@ public class robohelp extends SubspaceBot {
 			
 			if(opList.isBot(playername)) {
 				if(opList.isERExact(playername)) {
+				    er = true;
 					query 	  = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' AND fcUserName LIKE '"+playername+"' GROUP BY fcUserName";
 		    		rankQuery = "SELECT fcUserName, COUNT(fnAdvertID) as count FROM tblAdvert WHERE fdTime LIKE '"+date+"%' AND fcUserName LIKE '"+playername+"' GROUP BY fcUserName";
 				} else {
@@ -1680,7 +1678,6 @@ public class robohelp extends SubspaceBot {
 			showPersonalStats = false;
     		showTopStats = false;
     		showSingleStats = true;
-    		showTopThats = false;
 		}
     		
 		// Order and create a list out of the results
@@ -1692,8 +1689,8 @@ public class robohelp extends SubspaceBot {
 			while(results != null && results.next()) {
 				String staffer = results.getString(1);
 				String count = results.getString(2);
-				int type = results.getInt("fnType");
-				if (stats.containsKey(staffer)) {
+				if (!er && stats.containsKey(staffer)) {
+	                int type = results.getInt("fnType");
 				    // query sets the fnType=1 as second, so this is the "got it"s
 				    if (type == 2)
 				        stats.put(staffer, stats.get(staffer)+" ["+count+"]");
