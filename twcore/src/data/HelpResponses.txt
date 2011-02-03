@@ -488,7 +488,8 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Arobas+ &Who|ALL YOUR BASE ARE BELONG TO US!!!
 &Pinkstar &Who|Roses are red,                                                                                                 Violets are corny,                                                                                                 When I think of you                                                                                                 Ohhh baby I get horny!!!
 &EvilDeed &Who|hi my name is EvilDeed and i like to play the javelin
-&Dexter &Who|Dexter is the guy that hides on a laboratory to do scientific studies, then Dee Dee comes and KBOOM! 
+&Dexter &Who|Dexter is the guy that hides in a laboratory to do scientific studies, then Dee Dee comes and KABOOM!
+&Cheese &Who|Cheese is a dairy product.
 &Jacklyn &Who|Huhhhhhhh!~?!?!?!?! ...where'd the cookies go?
 &Dominant &Who|I'll kill you where you stand
 &Dezmond &Who|Dezmond is the guy that is blamed for everything bad that happens.......Dezmond> i didn't do it :(
