@@ -7,6 +7,7 @@ import static twcore.core.EventRequester.PLAYER_ENTERED;
 import static twcore.core.EventRequester.PLAYER_LEFT;
 import static twcore.core.EventRequester.PLAYER_POSITION;
 import static twcore.core.EventRequester.TURRET_EVENT;
+import static twcore.core.EventRequester.ARENA_JOINED;
 
 import java.sql.ResultSet;
 import java.util.Iterator;
@@ -1748,7 +1749,24 @@ public class bship extends MultiModule implements TSChangeListener
 			}
 		}
 	}
+	
+	public void handleEvent(ArenaJoined event)
+	{
+		//switching arenas means a game should not be running
+		//must be done here because there is no exit arena event
+		if(state != IDLE)
+		{
+			//Destroy tasks
+			startWarp.cancel();
+			notify.cancel();
+			timeMode.cancel();
 
+			//Update internal game state
+			state = IDLE;
+			gameId = -1;
+		}
+	}
+	
 	//////////////////////////////////
 	/*		   	 TimerTasks			*/
 	//////////////////////////////////
