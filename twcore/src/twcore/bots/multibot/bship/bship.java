@@ -1340,6 +1340,7 @@ public class bship extends MultiModule implements TSChangeListener
 		events.request(this, FREQUENCY_SHIP_CHANGE);
 		events.request(this, FREQUENCY_CHANGE);
 		events.request(this, PLAYER_POSITION);
+		events.request(this, ARENA_JOINED);
 	 }
 
 	/**
