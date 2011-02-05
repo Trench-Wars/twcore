@@ -147,6 +147,8 @@ public class duel2bot extends SubspaceBot{
                 player_acceptScrim(name, command(msg));
             else if (msg.startsWith("!lagout"))
                 player_lagout(name);
+            else if (msg.startsWith("!help") || (msg.startsWith("!h")))
+                player_help(name);
         }
         
         if (type == Message.PRIVATE_MESSAGE && m_opList.isModerator(name)) {
