@@ -880,7 +880,7 @@ private void handleOwnerCommands(String sender, String message, int messageType)
     if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
     {
       if(command.startsWith("!staffadv "))
-        m_botAction.sendZoneMessage(message.substring(10).trim() + " -TW Staff", 2);
+        m_botAction.sendZoneMessage(message.substring(10).trim(), 2);
     }
   }
   
