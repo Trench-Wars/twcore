@@ -1342,7 +1342,7 @@ public class robohelp extends SubspaceBot {
     }
     
     public void handleCalls(String name, String message) {
-        DateFormat t = new SimpleDateFormat("[kk:mm]");
+        DateFormat t = new SimpleDateFormat("HH:mm");
         int count;
         try {
             count = Integer.valueOf(message);
@@ -1361,7 +1361,7 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = t.format(call.getTime()) + " #" + call.getID() + " -";
+                String msg = t.format(call.getTime()) + " Call #" + call.getID() + " -";
                 if (call.isTaken() || call.getTaker().equals("RoboHelp"))
                     msg += " " + call.getTaker() + " -";
                 
@@ -1508,9 +1508,9 @@ public class robohelp extends SubspaceBot {
                     " Unattended calls:   " + lostCalls,
                     " Written off calls:  " + written,
                     " Got it call total:  "  + gotitCalls,
-                    " New player calls:  " + Math.round((double) trueNewbs / allNewbs * 100) + "% (" + trueNewbs + ":" + allNewbs + ")",
-                    " Help calls:        " + Math.round((double) help_taken / helps * 100) + "% (" + help_taken + ":" + helps + ")",
-                    " Cheater calls:     " + Math.round((double) cheat_taken / cheats * 100) + "% (" + cheat_taken + ":" + cheats + ")"
+                    " New player calls:   " + Math.round((double) trueNewbs / allNewbs * 100) + "% (" + trueNewbs + ":" + allNewbs + ")",
+                    " Help calls:         " + Math.round((double) help_taken / helps * 100) + "% (" + help_taken + ":" + helps + ")",
+                    " Cheater calls:      " + Math.round((double) cheat_taken / cheats * 100) + "% (" + cheat_taken + ":" + cheats + ")"
             };
         } else {
             msg = new String[] {
@@ -1693,9 +1693,9 @@ public class robohelp extends SubspaceBot {
 	                int type = results.getInt("fnType");
 				    // query sets the fnType=1 as second, so this is the "got it"s
 				    if (type == 2)
-				        stats.put(staffer, stats.get(staffer)+" ["+count+"]");
+				        stats.put(staffer, stats.get(staffer)+"["+count+"]");
 				    else
-				        stats.put(staffer, stats.get(staffer)+" (" +Tools.formatString(count + ")",4));
+				        stats.put(staffer, stats.get(staffer)+"(" +Tools.formatString(count + ")",4));
 				} else {
 				    // query sets the fnType=0 as first, so this is the "on it"s
 				    stats.put(staffer, Tools.formatString(count,3));
