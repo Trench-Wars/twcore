@@ -1508,9 +1508,9 @@ public class robohelp extends SubspaceBot {
                     " Unattended calls:   " + lostCalls,
                     " Written off calls:  " + written,
                     " Got it call total:  "  + gotitCalls,
-                    " New player calls:   " + Math.round((double) trueNewbs / allNewbs * 100) + "% (" + trueNewbs + ":" + allNewbs + ")",
-                    " Help calls:         " + Math.round((double) help_taken / helps * 100) + "% (" + help_taken + ":" + helps + ")",
-                    " Cheater calls:      " + Math.round((double) cheat_taken / cheats * 100) + "% (" + cheat_taken + ":" + cheats + ")"
+                    " New player calls:  " + Math.round((double) trueNewbs / allNewbs * 100) + "% (" + trueNewbs + ":" + allNewbs + ")",
+                    " Help calls:        " + Math.round((double) help_taken / helps * 100) + "% (" + help_taken + ":" + helps + ")",
+                    " Cheater calls:     " + Math.round((double) cheat_taken / cheats * 100) + "% (" + cheat_taken + ":" + cheats + ")"
             };
         } else {
             msg = new String[] {
@@ -1695,7 +1695,7 @@ public class robohelp extends SubspaceBot {
 				    if (type == 2)
 				        stats.put(staffer, stats.get(staffer)+"["+count+"]");
 				    else
-				        stats.put(staffer, stats.get(staffer)+"(" +Tools.formatString(count + ")",4));
+				        stats.put(staffer, stats.get(staffer)+"(" +Tools.formatString(count + ")",3));
 				} else {
 				    // query sets the fnType=0 as first, so this is the "on it"s
 				    stats.put(staffer, Tools.formatString(count,3));
