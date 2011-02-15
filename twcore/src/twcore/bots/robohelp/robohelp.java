@@ -1693,9 +1693,9 @@ public class robohelp extends SubspaceBot {
 	                int type = results.getInt("fnType");
 				    // query sets the fnType=1 as second, so this is the "got it"s
 				    if (type == 2)
-				        stats.put(staffer, stats.get(staffer)+"["+count+"]");
+				        stats.put(staffer, stats.get(staffer)+" ["+count+"]");
 				    else
-				        stats.put(staffer, stats.get(staffer)+"(" +Tools.formatString(count + ")",3));
+				        stats.put(staffer, stats.get(staffer)+" (" +Tools.formatString(count + ")",3));
 				} else {
 				    // query sets the fnType=0 as first, so this is the "on it"s
 				    stats.put(staffer, Tools.formatString(count,3));
