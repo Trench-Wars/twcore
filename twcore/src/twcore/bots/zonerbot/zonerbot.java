@@ -50,6 +50,7 @@ public class zonerbot extends SubspaceBot
   private TimedHashSet<String> recentAdvertList;
   private VectorMap<String, RequestRecord> requestList;
   private HashMap<String, String> zhops;
+  private HashMap<String, String> hops;
   private AdvertTimer advertTimer;
   private IdleTimer idleTimer;
   private int advertTime;
@@ -74,6 +75,7 @@ public class zonerbot extends SubspaceBot
     PeriodicMsgs = new VectorMap<Integer, PeriodicZone>();
     recentAdvertList = new TimedHashSet<String>();
     zhops = new HashMap<String,String>();
+    hops = new HashMap<String,String>();
     advertTime = 10;
     finalAdvertTime = 5;
     idleTime = 5;
@@ -98,6 +100,8 @@ public class zonerbot extends SubspaceBot
           handleOwnerCommands(sender, message, messageType);
         if(opList.isSmod(sender))
           handleSmodCommands(sender, message, messageType);
+        if(hops.containsKey(sender.toLowerCase()))
+            handleHopsCommands(sender, message, messageType);
         if(opList.isSmod(sender) || zhops.containsKey(sender.toLowerCase()))
           handleOpCommands(sender, message, messageType);
         if(opList.isER(sender) || advertQueue.containsKey(sender.toLowerCase()))
@@ -795,8 +799,6 @@ private void event(String sender, String argString, int soundCode) {
         doEnableCmd(sender);
       if(command.equals("!disable"))
         doDisableCmd(sender);
-      if(command.equals("!die"))
-        doDieCmd();
       if(command.startsWith("!add "))
           addZHOp(sender, message.substring(5).trim());
       if(command.startsWith("!remove "))
@@ -805,9 +807,45 @@ private void event(String sender, String argString, int soundCode) {
           listZHOp(sender);
       if(command.startsWith("!reload"))
           load_zhops();
+      if(command.equals("!die"))
+        doDieCmd();
       if(command.equals("!help"))
         doSmodHelpCmd(sender);
     }
+  }
+  
+  private void doHopsHelpCmd(String sender) {
+      {
+        String message[] =
+        {
+          "=========================================== Head Trainer Commands ============================================",
+          "!add <name>                        -- Adds staffer to ZH Op",
+          "!remove <name>                     -- Removes staffer from ZH Op",
+          "!listops                           -- Lists ZH Ops",
+          "!Help                              -- Displays this help message."
+        };
+
+        m_botAction.smartPrivateMessageSpam(sender, message);
+      }
+      
+  }
+  
+  private void handleHopsCommands(String sender, String message, int messageType)
+  {
+      String command = message.toLowerCase();
+      if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE)
+      {
+          if(command.startsWith("!add "))
+              addZHOp(sender, message.substring(5).trim());
+          if(command.startsWith("!remove "))
+              removeZHOp(sender, message.substring(8).trim());
+          if(command.startsWith("!listops"))
+              listZHOp(sender);
+          if(command.startsWith("!reload"))
+              load_zhops();
+          if(command.equals("!help"))
+              doHopsHelpCmd(sender);
+      }
   }
 
   private void listZHOp(String sender) {
@@ -1172,10 +1210,15 @@ private void handleOwnerCommands(String sender, String message, int messageType)
       try {
           BotSettings m_botSettings = m_botAction.getBotSettings();
       zhops.clear();
+      hops.clear();
       //
       String ops[] = m_botSettings.getString( "ZHOperators" ).split( "," );
       for( int i = 0; i < ops.length; i++ )
          zhops.put(ops[i].toLowerCase(), ops[i]);
+      
+      String hopsd[] = m_botSettings.getString( "Head Ops" ).split( "," );
+      for( int j = 0; j < hopsd.length; j++ )
+          hops.put(hopsd[j].toLowerCase(), hopsd[j]);
       
       } catch (Exception e) { Tools.printStackTrace( "Method Failed: ", e ); }
       
