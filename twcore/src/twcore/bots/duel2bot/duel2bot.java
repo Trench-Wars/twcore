@@ -242,17 +242,17 @@ public class duel2bot extends SubspaceBot{
     
     public void player_help(String name) {
         String[] help = { 
-                "+-ABOUT------------------------------------------------------------------------------------------------------------+  ",
-                "          2v2 scrimmage dueling (non-league) currently being developed for TWEL. No signup necessary for now, so ",
-                "          try it out and let us know what you think! Please alert WingZero if there are bugs/problems, thanks.",
-                "          When complete you'll be able to play league 2v2 or just for fun 2v2 like how it is now in the same arena.",
-                "+-COMMANDS---------------------------------------------------------------------------------------------------------+                                                                                                         ",
-                "  !ch <player>:<division number>                - Challenges the freq with <player> to a duel in <division num>",
-                "                                                  * You must have exactly 2 players per freq",
-                "                                                  * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
-                "  !a <player>                                   - Accepts a challenge from <player>",
-                "  !score <player>                               - Displays the score of <player>'s duel, if dueling",
-                "... more to come                             ",
+                "+-ABOUT-------------------------------------------------------------------------------------------------------+  ",
+                "   2v2 scrimmage dueling (non-league) is currently being developed for TWEL. No signup necessary for now, so ",
+                "   try it out and let us know what you think! Please message WingZero if there are any bugs/problems, thanks.",
+                "   When complete you'll be able to play 2v2 league duels or 2v2 scrim duels (like how it is now but together).",
+                "+-COMMANDS----------------------------------------------------------------------------------------------------+                                                                                                         ",
+                "  !ch <player>:<division number>          - Challenges the freq with <player> to a duel in <division num>",
+                "                                            * You must have exactly 2 players per freq",
+                "                                            * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
+                "  !a <player>                             - Accepts a challenge from <player>",
+                "  !score <player>                         - Displays the score of <player>'s duel, if dueling",
+                "   ... more to come                             ",
                 "" 
         };
         
