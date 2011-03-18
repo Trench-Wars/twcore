@@ -125,13 +125,13 @@ public class DuelGame {
             return;
         
         m_state = SETUP;
-        String[] names;
-        names = m_team1.getNames();
-        m_bot.m_playing.put(names[0].toLowerCase(), m_id);
-        m_bot.m_playing.put(names[1].toLowerCase(), m_id);
-        names = m_team2.getNames();
-        m_bot.m_playing.put(names[0].toLowerCase(), m_id);
-        m_bot.m_playing.put(names[1].toLowerCase(), m_id);
+        String[] names1, names2;
+        names1 = m_team1.getNames();
+        m_bot.m_playing.put(names1[0].toLowerCase(), m_id);
+        m_bot.m_playing.put(names1[1].toLowerCase(), m_id);
+        names2 = m_team2.getNames();
+        m_bot.m_playing.put(names2[0].toLowerCase(), m_id);
+        m_bot.m_playing.put(names2[1].toLowerCase(), m_id);
 
         m_score = new int[] { 0, 0 };
         if (m_type == 5) {
@@ -141,6 +141,7 @@ public class DuelGame {
             m_team1.startGame(false, m_team2.getNames());
             m_team2.startGame(false, m_team1.getNames());            
         }
+        m_botAction.sendTeamMessage("A " + getDivision() + " duel is starting: '" + names1[0] + "' and '" + names1[1] + "' VS '" + names2[0] + "' and '" + names2[1] + "'");
     }
     
     public void endGame(int team1, int team2) {
@@ -163,7 +164,7 @@ public class DuelGame {
         m_botAction.sendPrivateMessage(winner[1], "You and '" + winner[0] + "' have defeated '" + loser[0] + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
         m_botAction.sendPrivateMessage(loser[0], "You and '" + loser[1] + "' have been defeated by '" + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore + ")");
         m_botAction.sendPrivateMessage(loser[1], "You and '" + loser[0] + "' have been defeated by '" + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore + ")");
-        m_botAction.sendTeamMessage(winner[0] + " and " + winner[1] + " defeat " + loser[0] + " and " + loser[1] + " in " + getDivision() + " score: (" + winnerScore + "-" + loserScore + ")", 21);
+        m_botAction.sendTeamMessage("'" + winner[0] + " and '" + winner[1] + "' defeat '" + loser[0] + "' and '" + loser[1] + "' in " + getDivision() + " score: (" + winnerScore + "-" + loserScore + ")", 21);
         
         team1 = m_team1.getTeamID();
         team2 = m_team2.getTeamID();
@@ -233,17 +234,17 @@ public class DuelGame {
     public void playerOut(DuelPlayer player) {
         int why = player.getReason();
         if (why == DuelPlayer.NORMAL) { 
-            m_botAction.sendOpposingTeamMessageByFrequency(m_team1.getFreq(), player.getName() + " is out with " + player.getKills() + ":" + player.getDeaths(), 26);
-            m_botAction.sendOpposingTeamMessageByFrequency(m_team2.getFreq(), player.getName() + " is out with " + player.getKills() + ":" + player.getDeaths(), 26);
+            m_botAction.sendOpposingTeamMessageByFrequency(m_team1.getFreq(), "'" + player.getName() + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
+            m_botAction.sendOpposingTeamMessageByFrequency(m_team2.getFreq(), "'" + player.getName() + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
         } else if (why == DuelPlayer.WARPS) {
-            m_botAction.sendOpposingTeamMessageByFrequency(m_team1.getFreq(), player.getName() + " is out due to warp abuse", 26);
-            m_botAction.sendOpposingTeamMessageByFrequency(m_team2.getFreq(), player.getName() + " is out due to warp abuse", 26); 
+            m_botAction.sendOpposingTeamMessageByFrequency(m_team1.getFreq(), "'" + player.getName() + "' is out due to warp abuse", 26);
+            m_botAction.sendOpposingTeamMessageByFrequency(m_team2.getFreq(), "'" + player.getName() + "' is out due to warp abuse", 26); 
         } else if (why == DuelPlayer.LAGOUTS) {
-            m_botAction.sendOpposingTeamMessageByFrequency(m_team1.getFreq(), player.getName() + " is out due to lagouts", 26);
-            m_botAction.sendOpposingTeamMessageByFrequency(m_team2.getFreq(), player.getName() + " is out due to lagouts", 26); 
+            m_botAction.sendOpposingTeamMessageByFrequency(m_team1.getFreq(), "'" + player.getName() + "' is out due to lagouts", 26);
+            m_botAction.sendOpposingTeamMessageByFrequency(m_team2.getFreq(), "'" + player.getName() + "' is out due to lagouts", 26); 
         } else if (why == DuelPlayer.SPAWNS) {
-            m_botAction.sendOpposingTeamMessageByFrequency(m_team1.getFreq(), player.getName() + " is out due to spawn kill abuse", 26);
-            m_botAction.sendOpposingTeamMessageByFrequency(m_team2.getFreq(), player.getName() + " is out due to spawn kill abuse", 26); 
+            m_botAction.sendOpposingTeamMessageByFrequency(m_team1.getFreq(), "'" + player.getName() + "' is out due to spawn kill abuse", 26);
+            m_botAction.sendOpposingTeamMessageByFrequency(m_team2.getFreq(), "'" + player.getName() + "' is out due to spawn kill abuse", 26); 
         }
         updateScore();
     }
