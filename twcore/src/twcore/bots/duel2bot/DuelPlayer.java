@@ -92,6 +92,10 @@ public class DuelPlayer {
         m_rules = null;
         m_freq = p.getFrequency();
         m_ship = p.getShipType();
+        if (m_ship > 0) 
+            m_status = IN;
+        else 
+            m_status = SPEC;
         d_season = m_bot.d_season;
         d_noCount = m_bot.d_noCount;
         d_deathTime = m_bot.d_deathTime;
@@ -410,7 +414,7 @@ public class DuelPlayer {
             return;
         status(WARPING);
         long now = System.currentTimeMillis();
-        DuelPlayer killer = m_team.getPlayer(killerName);
+        DuelPlayer killer = m_bot.m_players.get(killerName.toLowerCase());
 
         m_team.safe(this);
         // DoubleKill check - remember to add a timer in case its the last death
