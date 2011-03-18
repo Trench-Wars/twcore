@@ -142,9 +142,9 @@ public class duel2bot extends SubspaceBot{
         int type = event.getMessageType();
 
         if (!m_opList.isBotExact(name) && (type == Message.PRIVATE_MESSAGE || type == Message.PUBLIC_MESSAGE)) {
-            if (msg.startsWith("!ch "))
+            if (msg.startsWith("!ch ") || msg.startsWith("!challenge "))
                 player_challenge(name, command(msg));
-            else if (msg.startsWith("!a "))
+            else if (msg.startsWith("!a ") || msg.startsWith("!accept "))
                 player_acceptScrim(name, command(msg));
             else if (msg.startsWith("!lagout"))
                 player_lagout(name);
@@ -242,11 +242,17 @@ public class duel2bot extends SubspaceBot{
     
     public void player_help(String name) {
         String[] help = { 
-                "!ch <player name>:<division number>             - Challenges the freq with that <player name> to a duel",
-                "                                                  You may only have 2 players per freq or it won't challenge",
-                "                                                  Division #s: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
-                "!a <player name>                                - Accepts a challenge from <player name>",
-                "... more to come                               ",
+                "+-ABOUT------------------------------------------------------------------------------------------------------------+  ",
+                "          2v2 scrimmage dueling (non-league) currently being developed for TWEL. No signup necessary for now, so ",
+                "          try it out and let us know what you think! Please alert WingZero if there are bugs/problems, thanks.",
+                "          When complete you'll be able to play league 2v2 or just for fun 2v2 like how it is now in the same arena.",
+                "+-COMMANDS---------------------------------------------------------------------------------------------------------+                                                                                                         ",
+                "  !ch <player>:<division number>                - Challenges the freq with <player> to a duel in <division num>",
+                "                                                  * You must have exactly 2 players per freq",
+                "                                                  * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
+                "  !a <player>                                   - Accepts a challenge from <player>",
+                "  !score <player>                               - Displays the score of <player>'s duel, if dueling",
+                "... more to come                             ",
                 "" 
         };
         

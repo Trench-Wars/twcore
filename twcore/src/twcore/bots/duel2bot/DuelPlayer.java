@@ -347,7 +347,7 @@ public class DuelPlayer {
         if (m_team.m_game.m_state == DuelGame.IN_PROGRESS)
             m_lagouts++;
         
-        if (m_lagouts < d_maxLagouts) {
+        if (m_lagouts <= d_maxLagouts) {
             m_botAction.sendSmartPrivateMessage(m_name, "You have 1 minute to return (!lagout) to your duel or you will forfeit! (!lagout)");
             lagout = new TimerTask() {
                 @Override
