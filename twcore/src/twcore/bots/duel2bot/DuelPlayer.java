@@ -421,7 +421,8 @@ public class DuelPlayer {
         if ((killer != null) && (killer.timeFromLastDeath() < 2001) && (m_name.equalsIgnoreCase(killer.getLastKiller()))) {
             m_botAction.sendSmartPrivateMessage(m_name, "Double kill, doesn't count.");
             m_botAction.sendSmartPrivateMessage(killerName, "Double kill, doesn't count.");
-            killer.removeDeath();        
+            killer.removeDeath();      
+            m_kills--;
         } else if (!m_team.wasTK(m_name, killerName)) {
             if ((now - m_lastDeath) < ((d_spawnTime + d_deathTime) * 1000)) {
                 m_botAction.sendPrivateMessage(m_name, "Spawn Kill, doesn't count.");
