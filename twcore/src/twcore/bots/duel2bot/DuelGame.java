@@ -101,8 +101,10 @@ public class DuelGame {
         m_team2.setScore(team2);
         m_score = new int[] { team1, team2 };
         
-        if (m_team1.out() || m_team2.out())
+        if (m_team1.out() || m_team2.out()) {
             endGame(team1, team2);
+            return;
+        }
         
         m_botAction.sendOpposingTeamMessageByFrequency(m_team1.getFreq(), "Score: " + m_score[0] + "-" + m_score[1], 26);
         m_botAction.sendOpposingTeamMessageByFrequency(m_team2.getFreq(), "Score: " + m_score[0] + "-" + m_score[1], 26);
