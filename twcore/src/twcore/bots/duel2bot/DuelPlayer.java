@@ -25,7 +25,7 @@ public class DuelPlayer {
 
     // Regular game stats
     int m_ship = 1;
-    int m_specAt = 5;
+    int m_specAt = 2;
     int m_freq = 0;
     int m_lagouts = 0;
     int m_status = 0;
@@ -410,7 +410,7 @@ public class DuelPlayer {
             return;
         status(WARPING);
         long now = System.currentTimeMillis();
-        DuelPlayer killer = m_bot.m_players.get(killerName.toLowerCase());
+        DuelPlayer killer = m_team.getPlayer(killerName);
 
         m_team.safe(this);
         // DoubleKill check - remember to add a timer in case its the last death
@@ -479,6 +479,10 @@ public class DuelPlayer {
     }
     
     public void endGame() {
+        if (m_ship > 0)
+            m_status = SPEC;
+        else
+            m_status = IN;
         m_team = null;
         m_botAction.cancelTask(lagout);
         m_botAction.cancelTask(spawner);
