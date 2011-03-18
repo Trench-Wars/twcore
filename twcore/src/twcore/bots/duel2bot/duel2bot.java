@@ -246,7 +246,7 @@ public class duel2bot extends SubspaceBot{
                 "   2v2 scrimmage dueling (non-league) is currently being developed for TWEL. No signup necessary for now, so ",
                 "   try it out and let us know what you think! Please message WingZero if there are any bugs/problems, thanks.",
                 "   When complete you'll be able to play 2v2 league duels or 2v2 scrim duels (like how it is now but together).",
-                "+-COMMANDS----------------------------------------------------------------------------------------------------+                                                                                                         ",
+                "+-COMMANDS----------------------------------------------------------------------------------------------------+",
                 "  !ch <player>:<division number>          - Challenges the freq with <player> to a duel in <division num>",
                 "                                            * You must have exactly 2 players per freq",
                 "                                            * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
