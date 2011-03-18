@@ -36,6 +36,7 @@ public class DuelTeam {
     boolean m_out;
     boolean record;
 
+    TimerTask go;
     String[] m_name;
     int[] m_userID;
     DuelPlayer[] m_player;
@@ -176,7 +177,7 @@ public class DuelTeam {
         m_player[0].starting(m_ship, safe1[0], safe1[1]);
         m_player[1].starting(m_ship, safe2[0], safe2[1]);
         
-        TimerTask go = new TimerTask() {
+        go = new TimerTask() {
             @Override
             public void run() {
                 m_game.m_state = DuelGame.IN_PROGRESS;
@@ -204,6 +205,7 @@ public class DuelTeam {
     }
     
     public void endGame() {
+        m_botAction.cancelTask(go);
         m_bot.m_freqs.removeElement(m_freq);
         m_bot.m_playing.remove(m_name[0].toLowerCase());
         m_bot.m_playing.remove(m_name[1].toLowerCase());
@@ -213,8 +215,6 @@ public class DuelTeam {
         m_score = 0;
         m_status = HERE;
         m_ship = 0;
-        m_botAction.shipReset(m_name[0]);
-        m_botAction.shipReset(m_name[1]);
         m_player[0].endGame();
         m_player[1].endGame();
         
@@ -241,6 +241,11 @@ public class DuelTeam {
     public void warp(DuelPlayer player) {
         WarpPoint wp = m_game.m_box.getRandomWarpPoint();
         player.warp(wp.getXCoord(), wp.getYCoord());
+    }
+    
+    public void warpWarper(DuelPlayer player) {
+        WarpPoint wp = m_game.m_box.getRandomWarpPoint();
+        player.warpWarper(wp.getXCoord(), wp.getYCoord());
     }
     
     public void spawn() {

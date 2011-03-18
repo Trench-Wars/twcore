@@ -50,8 +50,8 @@ public class duel2bot extends SubspaceBot{
     
     // non-league teams will be identified by negative numbers :: i may not use this at all and just go by player names
     HashMap<Integer, DuelGame> m_games;
-    // list of players who are playing tied to their duel
-    HashMap<String, DuelGame> m_playing;
+    // list of players who are playing tied to their duel id
+    HashMap<String, Integer> m_playing;
     HashMap<String, DuelBox> m_boxes;
     // list of players and associated profile
     HashMap<String, DuelPlayer> m_players;
@@ -62,7 +62,6 @@ public class duel2bot extends SubspaceBot{
     HashMap<String, Scrim> m_scrims;
     // list of used frequencies
     Vector<Integer> m_freqs;
-    
     
     public duel2bot(BotAction botAction) {
         super(botAction);
@@ -85,7 +84,7 @@ public class duel2bot extends SubspaceBot{
         m_games = new HashMap<Integer, DuelGame>();
         m_teams = new HashMap<Integer, DuelTeam>();
         m_players = new HashMap<String, DuelPlayer>();
-        m_playing = new HashMap<String, DuelGame>();
+        m_playing = new HashMap<String, Integer>();
         m_laggers = new HashMap<String, DuelPlayer>();
         m_scrims = new HashMap<String, Scrim>();
         m_freqs = new Vector<Integer>();
@@ -128,6 +127,8 @@ public class duel2bot extends SubspaceBot{
         String arena = m_botAction.getArenaName();
         if (!arena.equalsIgnoreCase("duel2"))
             return;
+        m_botAction.shipResetAll();
+        m_botAction.warpAllToLocation(512, 502);
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while (i.hasNext()) {
             Player p = i.next();
@@ -149,6 +150,8 @@ public class duel2bot extends SubspaceBot{
                 player_lagout(name);
             else if (msg.startsWith("!help") || (msg.startsWith("!h")))
                 player_help(name);
+            else if (msg.startsWith("!score"))
+                player_score(name, msg);
         }
         
         if (type == Message.PRIVATE_MESSAGE && m_opList.isModerator(name)) {
@@ -156,7 +159,43 @@ public class duel2bot extends SubspaceBot{
                 m_botAction.die();
             else if (msg.startsWith("!cancel")) {
                 command_cancel(name, msg);
+            } else if (msg.startsWith("!players")) {
+                playerList();
+            } else if (msg.startsWith("!games")) {
+                gameList();
+            } else if (msg.startsWith("!freqs")) {
+                freqList();
+            } else if (msg.startsWith("!challs")) {
+                challList();
             }
+        }
+    }
+    
+    public void playerList() {
+        for (String s : m_players.keySet()) {
+            m_botAction.sendSmartPrivateMessage("WingZero", "" + s);
+        }
+    }
+    
+    public void gameList() {
+        for (Integer s : m_games.keySet()) {
+            m_botAction.sendSmartPrivateMessage("WingZero", "" + s);
+        }
+    }
+    
+    public void challList() {
+        for (String s : m_scrims.keySet()) {
+            m_botAction.sendSmartPrivateMessage("WingZero", "" + s);
+        }
+    }
+    
+    public void freqList() {
+        for (Integer s : m_teams.keySet()) {
+            m_botAction.sendSmartPrivateMessage("WingZero", "" + s);
+        }
+        
+        for (Integer s : m_freqs) {
+            m_botAction.sendSmartPrivateMessage("WingZero", "" + s);            
         }
     }
     
@@ -368,19 +407,20 @@ public class duel2bot extends SubspaceBot{
         m_players.get(n2[1].toLowerCase()).scrim(n2[0], freq2);
         final String key = "" + freq1 + " " + freq2 + "";
         if (m_scrims.containsKey(key)) {
-            m_botAction.sendPrivateMessage(name, "This challenge already exists, so try again once it expires.");
-            return;
-        }
-        m_scrims.put(key, new Scrim(freq1, freq2, n1, n2, type));
-        TimerTask scrim = new TimerTask() {
-            @Override
-            public void run() {
+            Scrim ch = m_scrims.get(key);
+            if (ch.type() != type) {
+                m_botAction.cancelTask(ch);
                 m_scrims.remove(key);
+            } else {
+                m_botAction.sendPrivateMessage(name, "This challenge already exists, but you may try it again after it expires.");
+                return;
             }
-        };
-        m_botAction.scheduleTask(scrim, 60000);
-        m_botAction.sendOpposingTeamMessageByFrequency(freq1, "You have challenged " + n2[0] + " and " + n2[1] + " to a " + getDivision(type) + " duel. The challenge will expire in 1 minute.");
-        m_botAction.sendOpposingTeamMessageByFrequency(freq2, "You are being challenged to a " + getDivision(type) + " duel by " + n1[0] + " and " + n1[1] + ". Use !a and one of their names to accept.");
+        }
+        Scrim chall = new Scrim(this, m_botAction, freq1, freq2, n1, n2, type);
+        m_scrims.put(key, chall);
+        m_botAction.scheduleTask(chall, 60000);
+        m_botAction.sendOpposingTeamMessageByFrequency(freq1, "You have challenged " + n2[0] + " and " + n2[1] + " to a " + getDivision(type) + " duel. This challenge will expire in 1 minute.", 26);
+        m_botAction.sendOpposingTeamMessageByFrequency(freq2, "You are being challenged to a " + getDivision(type) + " duel by " + n1[0] + " and " + n1[1] + ". Use !a <name> (<name> is one of your opponenents) to accept.", 26);
 
     }
 
@@ -402,15 +442,64 @@ public class duel2bot extends SubspaceBot{
         }
         
         Scrim scrim = m_scrims.remove(key);
+        m_botAction.cancelTask(scrim);
         if (scrim.type() == 2 && boxOpen(2)) {
             DuelGame game = new DuelGame(getDuelBox(2), scrim, m_botAction, this);
             game.startGame();
+            removeScrimChalls(nme.getFrequency(), p.getFrequency());
         } else if (scrim.type() != 2 && boxOpen(1)) {
             DuelGame game = new DuelGame(getDuelBox(1), scrim, m_botAction, this);      
             game.startGame();      
+            removeScrimChalls(nme.getFrequency(), p.getFrequency());
         } else {
-            m_botAction.sendOpposingTeamMessageByFrequency(scrim.freq1(), "No duel boxes are currently available for this division. Please try again later.");
-            m_botAction.sendOpposingTeamMessageByFrequency(scrim.freq2(), "No duel boxes are currently available for this division. Please try again later.");
+            m_botAction.sendOpposingTeamMessageByFrequency(scrim.freq1(), "No duel boxes are currently available for this division. Please try again later.", 26);
+            m_botAction.sendOpposingTeamMessageByFrequency(scrim.freq2(), "No duel boxes are currently available for this division. Please try again later.", 26);
+        }
+    }
+    
+    public void removeScrimChalls(int freq1, int freq2) {
+        Vector<String> keys = new Vector<String>();
+        for (String k : m_scrims.keySet()) {
+            if (k.contains("" + freq1) || k.contains("" + freq2)) {
+                keys.add(k);
+            }
+        }
+        
+        while (!keys.isEmpty()) {
+            String k = keys.remove(0);
+            m_botAction.cancelTask(m_scrims.remove(k));
+        }
+    }
+    
+    public void removeScrimChalls(int freq) {
+        Vector<String> keys = new Vector<String>();
+        for (String k : m_scrims.keySet()) {
+            if (k.contains("" + freq)) {
+                keys.add(k);
+            }
+        }
+        
+        while (!keys.isEmpty()) {
+            String k = keys.remove(0);
+            m_botAction.cancelTask(m_scrims.remove(k));
+        }
+    }
+    
+    public void player_score(String name, String msg) {
+        String p = msg.substring(msg.indexOf(" ") + 1);
+        if (p == null || p.length() < 1) {
+            m_botAction.sendPrivateMessage(name, "Invalid player name entered");
+            return;
+        }
+        if (m_playing.containsKey(p.toLowerCase())) {
+            m_botAction.sendPrivateMessage(name, m_games.get(m_playing.get(p.toLowerCase())).getScore());
+        } else {
+            p = m_botAction.getFuzzyPlayerName(p);
+            if (p != null && m_playing.containsKey(p.toLowerCase())) {
+                m_botAction.sendPrivateMessage(name, m_games.get(m_playing.get(p.toLowerCase())).getScore());                
+            } else {
+                m_botAction.sendPrivateMessage(name, "Player or duel not found");
+            }
         }
     }
     
@@ -487,16 +576,24 @@ public class duel2bot extends SubspaceBot{
 
 }
 
-class Scrim {
+class Scrim extends TimerTask {
     int freq1, freq2, type;
     String[] team1, team2;
+    duel2bot m_bot;
+    BotAction m_botAction;
     
-    public Scrim(int f1, int f2, String[] n1, String[] n2, int div) {
+    public Scrim(duel2bot bot, BotAction action, int f1, int f2, String[] n1, String[] n2, int div) {
         freq1 = f1;
         freq2 = f2;
         team1 = n1;
         team2 = n2;
         type = div;
+        m_bot = bot;
+        m_botAction = action;
+    }
+    
+    public void setType(int t) {
+        type = t;
     }
     
     public int freq1() {
@@ -517,5 +614,13 @@ class Scrim {
     
     public int type() {
         return type;
+    }
+
+    @Override
+    public void run() {
+        Scrim chall = m_bot.m_scrims.remove("" + freq1 + " " + freq2 + "");
+        if (chall != null) {
+            m_botAction.sendOpposingTeamMessageByFrequency(chall.freq1(), "Your " + m_bot.getDivision(type) + " challenge to " + team2[0] + " and " + team2[1] + " has expired.", 26);
+        }
     }
 }

@@ -176,16 +176,9 @@ public class DuelPlayer {
         
         int x = event.getXLocation() / 16;
         int y = event.getYLocation() / 16;
-        Player p = m_botAction.getPlayer(m_name);
+        //Player p = m_botAction.getPlayer(m_name);
         // 416 591
-        if (m_team == null) {
-            if ((x < 416) || (y < 416) || (x > 591) || (y > 591)) {
-                m_botAction.shipReset(m_name);
-                m_botAction.warpTo(m_name, 528, 512);
-                p.updatePlayerPositionManuallyAfterWarp(528, 512);
-                m_botAction.sendPrivateMessage(m_name, "Please do not leave the center of the map.");
-            }
-        } else {
+        if (m_team != null) {
             if ((x < m_team.m_game.m_box.getAreaMinX()) || (y < m_team.m_game.m_box.getAreaMinY()) || (x > m_team.m_game.m_box.getAreaMaxX()) || (y > m_team.m_game.m_box.getAreaMaxY())) {
                 warped(true);
             }
@@ -199,18 +192,18 @@ public class DuelPlayer {
         status(WARPING);
 
         long now = System.currentTimeMillis();
-        if ((now - m_lastFoul > 1500) && (m_team.m_game.m_state == DuelGame.IN_PROGRESS))
+        if ((now - m_lastFoul > 500) && (m_team.m_game.m_state == DuelGame.IN_PROGRESS))
             m_warps++;
         
         if (m_warps < 5 && m_team.m_game.m_state == DuelGame.IN_PROGRESS) {
-            if (now - m_lastFoul > 1500) {
+            if (now - m_lastFoul > 500) {
                 if (pos)
                     m_botAction.sendPrivateMessage(m_name, "Warping is illegal in this league and if you warp again, you will forfeit.");
                 else {
                     m_botAction.sendPrivateMessage(m_name, "Changing freq or ship is illegal in this league and if you do this again, you will forfeit.");
                 }
             }
-            m_team.warp(this);
+            m_team.warpWarper(this);
         } else if (m_team.m_game.m_state != DuelGame.IN_PROGRESS) {
             m_team.safe(this);
         }else {
@@ -235,6 +228,7 @@ public class DuelPlayer {
                 } else if (m_status == PLAYING){
                     status(WARPING);
                     m_botAction.setFreq(m_name, m_freq);
+                    m_botAction.specificPrize(m_name, -13);
                     status(PLAYING);
                     warped(false);
                 } else if (m_status == OUT) {
@@ -243,10 +237,13 @@ public class DuelPlayer {
                     status(OUT);
                 }
             }
-        } else if (m_bot.m_freqs.contains(freq))
+        } else if (m_bot.m_freqs.contains(freq)) {
+            if (m_freq == 9999)
+                m_botAction.specWithoutLock(m_name);
             m_botAction.setFreq(m_name, m_freq);
-        else {
+        } else {
             if (freq != m_scrimFreq) {
+                m_bot.removeScrimChalls(m_scrimFreq);
                 m_challPartner = null;
                 m_scrimFreq = -1;
             }
@@ -283,6 +280,11 @@ public class DuelPlayer {
                 else
                     m_botAction.specWithoutLock(m_name);
                 m_botAction.sendPrivateMessage(m_name, "Invalid ship!");
+            } else if (ship == 0 && m_scrimFreq > -1 && m_challPartner != null) {
+                m_bot.removeScrimChalls(m_scrimFreq);
+                m_scrimFreq = -1;
+                m_challPartner = null;
+                m_ship = ship;
             } else 
                 m_ship = ship;
             
@@ -312,6 +314,7 @@ public class DuelPlayer {
             if ((ship != m_ship) && (m_team.m_game.m_state != DuelGame.SETUP)) {
                 foul = true;
                 m_botAction.setShip(m_name, m_ship);
+                m_botAction.specificPrize(m_name, -13);
             } else if ((m_team.m_game.m_type == 5) && (m_team.m_game.m_state == DuelGame.SETUP)) {
                 if (ship == 6 || ship == 4)
                     m_botAction.setShip(m_name, m_ship);
@@ -383,6 +386,23 @@ public class DuelPlayer {
         m_botAction.setFreq(m_name, m_freq);
         m_botAction.sendPrivateMessage(m_name, "To return to your duel, reply with !lagout");
         status(LAGGED);
+    }
+    
+    public void warpDelay(DuelPlayer p) {
+        status(WARPING);
+        m_team.safe(this);
+        
+        spawner = new TimerTask() {
+            @Override
+            public void run() {
+                if (m_status == PLAYING)
+                    m_team.warp(DuelPlayer.this);
+                else if (m_status == OUT)
+                    remove(NORMAL);
+            }
+        };
+        m_botAction.scheduleTask(spawner, d_deathTime * 1000);
+        
     }
     
     public void handleDeath(String killerName) {
@@ -463,17 +483,14 @@ public class DuelPlayer {
         m_botAction.cancelTask(lagout);
         m_botAction.cancelTask(spawner);
         m_botAction.cancelTask(dying);
-        m_botAction.setShip(m_name, 1);
-        m_botAction.specWithoutLock(m_name);
-        m_ship = 0;
-        status(SPEC);
+        m_botAction.shipReset(m_name);
+        m_botAction.warpTo(m_name, 512, 502);
         m_spawns = 0;
         m_deaths = 0;
         m_kills = 0;
         m_lagouts = 0;
         m_warps = 0;
         m_out = -1;
-        m_freq = 9999;
     }
     
     public void removeDeath() {
@@ -526,6 +543,14 @@ public class DuelPlayer {
         status(WARPING);
         Player p1 = m_botAction.getPlayer(m_name);
         m_botAction.shipReset(m_name);
+        m_botAction.warpTo(m_name, x, y);
+        p1.updatePlayerPositionManuallyAfterWarp(x, y);
+        status(PLAYING);
+    }
+    
+    public void warpWarper(int x, int y) {
+        status(WARPING);
+        Player p1 = m_botAction.getPlayer(m_name);
         m_botAction.warpTo(m_name, x, y);
         p1.updatePlayerPositionManuallyAfterWarp(x, y);
         status(PLAYING);
