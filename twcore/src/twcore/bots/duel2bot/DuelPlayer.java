@@ -25,7 +25,7 @@ public class DuelPlayer {
 
     // Regular game stats
     int m_ship = 1;
-    int m_specAt = 10;
+    int m_specAt = 5;
     int m_freq = 0;
     int m_lagouts = 0;
     int m_status = 0;
