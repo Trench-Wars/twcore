@@ -131,7 +131,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!say", acceptedMessages, this, "handleSay", OperatorList.SMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!banned", acceptedMessages, this, "handleListTellBanned", OperatorList.SMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "unbanTell", OperatorList.SMOD_LEVEL );
-        m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleAddBan", OperatorList.SMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!addban", acceptedMessages, this, "handleAddBan", OperatorList.SMOD_LEVEL );
 
 
 
@@ -1928,6 +1928,16 @@ public class robohelp extends SubspaceBot {
         };
         if( m_botAction.getOperatorList().isZH( playerName ) )
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
+        
+        String[] SMod = {
+                "!banned                               - Who's banned from using tell?!?!",
+                "!addban                               - Add a tell ban",
+                "!unban                                - Remove a tell ban",
+                "!say                                  - SMod fun!"     
+        };
+        if( m_botAction.getOperatorList().isSmod( playerName ))
+            m_botAction.remotePrivateMessageSpam( playerName, SMod );
+    
                 
         String[] SysopHelpText = {
             " !reload                                   - Reloads the HelpResponses database from file",
