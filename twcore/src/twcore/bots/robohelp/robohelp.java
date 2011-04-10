@@ -795,6 +795,40 @@ public class robohelp extends SubspaceBot {
         }
     }
     
+    public void unbanTell ( String playerName, String message ) {
+        
+        
+        loadBanned();
+        BotSettings m_botSettings = m_botAction.getBotSettings();
+        String ops = m_botSettings.getString("Bad People");
+
+        
+        
+        int spot = ops.indexOf(message);
+        if (spot == 0 && ops.length() == message.length()) {
+            ops = "";
+            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+        }
+        else if (spot == 0 && ops.length() > message.length()) {
+            ops = ops.substring(message.length() + 1);
+            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+        } 
+        else if (spot > 0 && spot + message.length() < ops.length()) {
+            ops = ops.substring(0, spot) + ops.substring(spot + message.length() + 1);
+            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+        }
+        else if (spot > 0 && spot == ops.length() - message.length()) {
+            ops = ops.substring(0, spot - 1);
+            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+        }
+        else {
+            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+        }  
+        
+        m_botSettings.put("Bad People", ops);
+        m_botSettings.save();
+    }
+    
     public void handleAddBan( String playerName, String message ){
         //SMod+ only command.
         if(!opList.isSmod(playerName))
@@ -817,39 +851,7 @@ public class robohelp extends SubspaceBot {
         loadBanned();
     }
     
-    private void unbanTell (String name, String message) {
-        if(!opList.isSmod(name))
-            return;
-        loadBanned();
-        BotSettings m_botSettings = m_botAction.getBotSettings();
-        String ops = m_botSettings.getString("Bad People");
 
-        
-        
-        int spot = ops.indexOf(message);
-        if (spot == 0 && ops.length() == message.length()) {
-            ops = "";
-            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
-        }
-        else if (spot == 0 && ops.length() > message.length()) {
-            ops = ops.substring(message.length() + 1);
-            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
-        } 
-        else if (spot > 0 && spot + message.length() < ops.length()) {
-            ops = ops.substring(0, spot) + ops.substring(spot + message.length() + 1);
-            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
-        }
-        else if (spot > 0 && spot == ops.length() - message.length()) {
-            ops = ops.substring(0, spot - 1);
-            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
-        }
-        else {
-            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
-        }  
-        
-        m_botSettings.put("Bad People", ops);
-        m_botSettings.save();
-    }
     
     public void handleListTellBanned( String playerName, String message){
         loadBanned();
