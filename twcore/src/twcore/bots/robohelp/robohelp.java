@@ -63,6 +63,7 @@ public class robohelp extends SubspaceBot {
     TreeMap<String, EventData> events = new TreeMap<String, EventData>();
     Vector<EventData>   callList = new Vector<EventData>();
     Vector<NewPlayer> newbs = new Vector<NewPlayer>();
+    HashMap<String,String> banned = new HashMap<String,String>();
 
     /** Wing's way */
     TreeMap<Integer, HelpRequest> helpList = new TreeMap<Integer, HelpRequest>();
@@ -89,6 +90,20 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter = new CommandInterpreter( m_botAction );
         registerCommands();
         m_botAction.getEventRequester().request( EventRequester.MESSAGE );
+        loadBanned();
+        
+    }
+
+    private void loadBanned() {
+        try {
+            BotSettings m_botSettings = m_botAction.getBotSettings();
+        banned.clear();
+        //
+        String ops[] = m_botSettings.getString( "Bad People" ).split( "," );
+        for( int i = 0; i < ops.length; i++ )
+           banned.put(ops[i].toLowerCase(), ops[i]);
+        } catch (Exception e) { Tools.printStackTrace( "Method Failed: ", e );}
+       
         
     }
 
@@ -114,6 +129,13 @@ public class robohelp extends SubspaceBot {
         
         // Smod
         m_commandInterpreter.registerCommand( "!say", acceptedMessages, this, "handleSay", OperatorList.SMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!banned", acceptedMessages, this, "handleListTellBanned", OperatorList.SMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "unbanTell", OperatorList.SMOD_LEVEL );
+        m_commandInterpreter.registerCommand( "!ban", acceptedMessages, this, "handleAddBan", OperatorList.SMOD_LEVEL );
+
+
+
+        
         
         // Sysop+ 
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload", OperatorList.SYSOP_LEVEL );
@@ -225,7 +247,7 @@ public class robohelp extends SubspaceBot {
     
     public void handleSay(String name, String msg){
 
-    m_botAction.sendSmartPrivateMessage(name, "Command removed due to abuse. -Dezmond");}
+    m_botAction.sendChatMessage(msg);}
 
    public void handleBanNumber( String name, String message ){
         String number;
@@ -772,6 +794,75 @@ public class robohelp extends SubspaceBot {
             }
         }
     }
+    
+    public void handleAddBan( String playerName, String message ){
+        //SMod+ only command.
+        if(!opList.isSmod(playerName))
+            return;
+        
+        BotSettings m_botSettings = m_botAction.getBotSettings();
+        String ops = m_botSettings.getString("Bad People");
+
+
+        if(ops.contains(message)){
+            m_botAction.sendSmartPrivateMessage(playerName, message + " is already on my bad list!");
+            return;
+            }
+        if (ops.length() < 1)
+            m_botSettings.put("Bad People", message);
+        else
+            m_botSettings.put("Bad People", ops + "," + message);
+        m_botAction.sendSmartPrivateMessage(playerName, "Added "+message+" to my bad list!");
+        m_botSettings.save();
+        loadBanned();
+    }
+    
+    private void unbanTell (String name, String message) {
+        if(!opList.isSmod(name))
+            return;
+        loadBanned();
+        BotSettings m_botSettings = m_botAction.getBotSettings();
+        String ops = m_botSettings.getString("Bad People");
+
+        
+        
+        int spot = ops.indexOf(message);
+        if (spot == 0 && ops.length() == message.length()) {
+            ops = "";
+            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
+        }
+        else if (spot == 0 && ops.length() > message.length()) {
+            ops = ops.substring(message.length() + 1);
+            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
+        } 
+        else if (spot > 0 && spot + message.length() < ops.length()) {
+            ops = ops.substring(0, spot) + ops.substring(spot + message.length() + 1);
+            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
+        }
+        else if (spot > 0 && spot == ops.length() - message.length()) {
+            ops = ops.substring(0, spot - 1);
+            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
+        }
+        else {
+            m_botAction.sendSmartPrivateMessage(name, "Delete Op: " + message + " successful");
+        }  
+        
+        m_botSettings.put("Bad People", ops);
+        m_botSettings.save();
+    }
+    
+    public void handleListTellBanned( String playerName, String message){
+        loadBanned();
+        String hops = "People banned from using !tell: ";
+        Iterator<String> it1 = banned.values().iterator();
+        while( it1.hasNext() ) {
+            if( it1.hasNext() )
+                hops += (String)it1.next() + ", ";
+            else
+                hops += (String)it1.next();
+        }
+        
+    }
 
     public void handleLast( String playerName, String message ){
         if (!opList.isBot(playerName))
@@ -800,6 +891,10 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleTell( String messager, String message ){
+        if(!banned.containsKey(messager.toLowerCase())){
+    
+            
+        
         String          name;
         String          keyword;
         int             seperator;
@@ -892,7 +987,7 @@ public class robohelp extends SubspaceBot {
                     m_botAction.sendChatMessage( "Told " + name + " about " + keyword + "."  );
                 }
             }
-        }
+        }}
     }
 
     public void handleLookup( String name, String message ){
