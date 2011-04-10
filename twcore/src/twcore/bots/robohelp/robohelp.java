@@ -807,26 +807,27 @@ public class robohelp extends SubspaceBot {
         int spot = ops.indexOf(message);
         if (spot == 0 && ops.length() == message.length()) {
             ops = "";
-            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+            m_botAction.sendSmartPrivateMessage(playerName, "Removed: " + message + " successful");
         }
         else if (spot == 0 && ops.length() > message.length()) {
             ops = ops.substring(message.length() + 1);
-            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+            m_botAction.sendSmartPrivateMessage(playerName, "Removed: " + message + " successful");
         } 
         else if (spot > 0 && spot + message.length() < ops.length()) {
             ops = ops.substring(0, spot) + ops.substring(spot + message.length() + 1);
-            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+            m_botAction.sendSmartPrivateMessage(playerName, "Removed: " + message + " successful");
         }
         else if (spot > 0 && spot == ops.length() - message.length()) {
             ops = ops.substring(0, spot - 1);
-            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+            m_botAction.sendSmartPrivateMessage(playerName, "Removed: " + message + " successful");
         }
         else {
-            m_botAction.sendSmartPrivateMessage(playerName, "Delete Op: " + message + " successful");
+            m_botAction.sendSmartPrivateMessage(playerName, "Removed: " + message + " successful");
         }  
         
         m_botSettings.put("Bad People", ops);
         m_botSettings.save();
+        loadBanned();
     }
     
     public void handleAddBan( String playerName, String message ){
@@ -862,8 +863,9 @@ public class robohelp extends SubspaceBot {
                 hops += (String)it1.next() + ", ";
             else
                 hops += (String)it1.next();
+            
         }
-        
+        m_botAction.sendSmartPrivateMessage(playerName, hops);
     }
 
     public void handleLast( String playerName, String message ){
