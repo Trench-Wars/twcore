@@ -903,7 +903,7 @@ public class bwjsbot extends SubspaceBot {
             help.add("!start                            -- starts the bot");
             help.add("!stop                             -- stops the bot");
             if(!cfg.getAllowAutoCaps()) {
-                help.add("!zone                             -- sends time-restricted advert");
+                help.add("!zone <message>                   -- sends time-restricted advert, message is optional");
             }
             help.add("!forcenp <player>                 -- Sets <player> to !notplaying");
             if (state.getCurrentState() > BWJSState.OFF) {
@@ -1709,8 +1709,8 @@ public class bwjsbot extends SubspaceBot {
      */
     private void cmd_zone(String name, String message) {
         
-        //grab message from !zoner message
-        String msg = message.substring(7);
+        //grab message from !zone message
+        String msg = message.substring(6);
 
         if (!allowManualZoner()) {
             m_botAction.sendPrivateMessage(name, "Zoner not allowed yet.");
