@@ -478,7 +478,7 @@ public class bwjsbot extends SubspaceBot {
                 cmd_start(name);
             } else if (cmd.equals("!stop")) {
                 cmd_stop(name);
-            } else if (cmd.equals("!zone") && !cfg.getAllowAutoCaps()) {
+            } else if (cmd.startsWith("!zone") && !cfg.getAllowAutoCaps()) {
                 cmd_zone(name, command);
             } else if (cmd.equals("!off")) {
                 cmd_off(name);
@@ -1709,8 +1709,11 @@ public class bwjsbot extends SubspaceBot {
      */
     private void cmd_zone(String name, String message) {
         
-        //grab message from !zone message
-        String msg = message.substring(6);
+        //grab message from !zone message if there
+        String msg = null;
+        if (message.length() > 6) {
+            msg = message.substring(6);
+        }
 
         if (!allowManualZoner()) {
             m_botAction.sendPrivateMessage(name, "Zoner not allowed yet.");
@@ -1959,7 +1962,7 @@ public class bwjsbot extends SubspaceBot {
         if (message == null || message.isEmpty()) {
             message = "A game of " + cfg.getGameTypeString() +
                     " is starting! Type ?go " + m_botAction.getArenaName() +
-                    " to play.";
+                    " to play. - " + m_botAction.getBotName();
         }
 
         //Alert Chats
