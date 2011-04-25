@@ -29,6 +29,8 @@ public class utilstandard extends MultiUtil {
 
     private final static String[] help = {
             "!random <sizeOfFreqs>   - Randomizes players to freqs of a given size.",
+            "!increment <sizeOfFreqs> <initialFreq> <freqIncrement>",
+            "                        - Randomizes players to freqs with size and freq increment",
             "!teams <numberTeams>    - Makes the requested number of teams.",
             "!door <-2 to 255>       - Changes door mode.  -2 and -1 are random/on-off modes.",
             "!restart                - Restarts the ball game. (*restart)",
@@ -85,6 +87,14 @@ public class utilstandard extends MultiUtil {
         if( message.startsWith( "!random " )){
             m_botAction.createRandomTeams( getInteger( message.substring(8) ));
             m_botAction.sendSmartPrivateMessage(name, "Teams were created successfully.");
+        } else if (message.startsWith("!increment ")) {
+            String[] msg = message.split(" ");
+            if (msg.length == 4) {
+                m_botAction.createIncrementingTeams(getInteger(msg[1]), getInteger(msg[2]), getInteger(msg[3]));
+                m_botAction.sendSmartPrivateMessage(name, "Teams were created successfully.");
+            } else {
+                m_botAction.sendSmartPrivateMessage(name, "Team creation failed!");
+            }
         } else if( message.startsWith( "!teams " )){
             createNumberofTeams( getInteger( message.substring(7) ));
             m_botAction.sendSmartPrivateMessage(name, "Teams were created successfully.");

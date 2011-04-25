@@ -1904,6 +1904,40 @@ public class BotAction
     }
 
     /**
+     * Creates incremented team frequencies with non-spectating players with 
+     * defined team sizes, starting frequency, and increment of frequencies.
+     * @param teamSize Number of players per team frequency.
+     * @param startFreq Starting frequency for first team.
+     * @param increment Increment of frequency between teams.
+     */
+    public void createIncrementingTeams(int teamSize, int startFreq, int increment) {
+        StringBag plist = new StringBag();
+        int freq = startFreq;
+        String name;
+
+        //stick all of the players in randomizer
+        Iterator<Player> i = m_arenaTracker.getPlayingPlayerIterator();
+        while(i.hasNext())
+            plist.add(i.next().getPlayerName());
+
+        while(!plist.isEmpty() && freq > -1)
+        {
+            for(int x = 0; x < teamSize; x++)
+            {
+                name = plist.grabAndRemove();
+                if(name != null)
+                    setFreq(name, freq);
+                else
+                {
+                    freq = -2;
+                    break;
+                }
+            }
+            freq += increment; //that freq is done, move on to the next
+        }
+    }
+
+    /**
      * Creates a certain number of random teams from non-specced players.  Starts
      * with freq 0 and goes up to number specified - 1, in an even distribution.
      * @param howMany Number of random teams to create.
