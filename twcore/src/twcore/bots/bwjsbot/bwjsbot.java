@@ -417,8 +417,8 @@ public class bwjsbot extends SubspaceBot {
      * @param cmd command
      * @param override Override number, -1 for default, 0 for Freq 0, 1 for Freq 1
      */
-    private void handleCommand(String name, String cmd, int override) {
-        cmd = cmd.toLowerCase();
+    private void handleCommand(String name, String command, int override) {
+        String cmd = command.toLowerCase();
         
         /* Captain commands */
         if (isCaptain(name) || override != -1) {
@@ -479,7 +479,7 @@ public class bwjsbot extends SubspaceBot {
             } else if (cmd.equals("!stop")) {
                 cmd_stop(name);
             } else if (cmd.equals("!zone") && !cfg.getAllowAutoCaps()) {
-                cmd_zone(name);
+                cmd_zone(name, command);
             } else if (cmd.equals("!off")) {
                 cmd_off(name);
             } else if (cmd.startsWith("!forcenp ")) {
@@ -1705,8 +1705,13 @@ public class bwjsbot extends SubspaceBot {
      * Handles the !zone command
      * 
      * @param name name of the player that issued the command
+     * @param message message to use for zoner
      */
-    private void cmd_zone(String name) {
+    private void cmd_zone(String name, String message) {
+        
+        //grab message from !zoner message
+        String msg = message.substring(7);
+
         if (!allowManualZoner()) {
             m_botAction.sendPrivateMessage(name, "Zoner not allowed yet.");
             return;
@@ -1719,7 +1724,7 @@ public class bwjsbot extends SubspaceBot {
             return;
         }
         
-        newGameAlert();
+        newGameAlert(msg);
     }
     
     /*
@@ -1790,7 +1795,7 @@ public class bwjsbot extends SubspaceBot {
         }
         
         if (cfg.getAllowAutoCaps()) {
-            newGameAlert();
+            newGameAlert(null);
         }
         
         for (BWJSTeam t : team) {
@@ -1948,25 +1953,30 @@ public class bwjsbot extends SubspaceBot {
      * - Send alert to subscribers
      * - Send alert to zone 
      */
-    private void newGameAlert() {
+    private void newGameAlert(String message) {
+
+        //Build generic message in one is not passed
+        if (message == null || message.isEmpty()) {
+            message = "A game of " + cfg.getGameTypeString() +
+                    " is starting! Type ?go " + m_botAction.getArenaName() +
+                    " to play.";
+        }
+
         //Alert Chats
         for (int i = 1; i < 11; i++) {
-            m_botAction.sendChatMessage(i, "A game of " + cfg.getGameTypeString() + " is starting! Type ?go " +
-                    m_botAction.getArenaName() + " to play.");
+            m_botAction.sendChatMessage(i, message);
         }
         
         //Alert Subscribers
         if (listAlert.size() > 0) {
             for (int i = 0; i < listAlert.size(); i++) {
-                m_botAction.sendSmartPrivateMessage(listAlert.get(i), "A game of " + cfg.getGameTypeString() +
-                        " is starting! Type ?go " + m_botAction.getArenaName() + " to play.");
+                m_botAction.sendSmartPrivateMessage(listAlert.get(i), message);
             }
         }
         
         //Alert zoner, (max once every ZONER_WAIT_TIME (minutes))
         if ((allowZoner() && cfg.getAllowZoner()) || (allowManualZoner() && !cfg.getAllowAutoCaps())) {
-            m_botAction.sendZoneMessage("A game of " + cfg.getGameTypeString() + " is starting! Type ?go " +
-                    m_botAction.getArenaName() + " to play. -" + m_botAction.getBotName(), Tools.Sound.BEEP2);
+            m_botAction.sendZoneMessage(message, Tools.Sound.BEEP2);
             zonerTimestamp = System.currentTimeMillis();
             manualZonerTimestamp = zonerTimestamp;
         }
