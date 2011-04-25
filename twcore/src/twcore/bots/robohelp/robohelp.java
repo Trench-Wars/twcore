@@ -1193,7 +1193,7 @@ public class robohelp extends SubspaceBot {
             Integer num;
             for (int i = 0; i < numbas.length; i++) {
                 try {
-                    num = (Integer.valueOf(numbas[i].replaceAll("#", "")));
+                    num = (Integer.valueOf(numbas[i].trim().replaceAll("#", "")));
                     handleClean(name, "clean #" + num);
                 } catch (NumberFormatException e) {
                     m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
@@ -1285,7 +1285,7 @@ public class robohelp extends SubspaceBot {
             }
             for (int i = 0; i < numbas.length; i++) {
                 try {
-                    num = (Integer.valueOf(numbas[i].replaceAll("#", "")));
+                    num = (Integer.valueOf(numbas[i].trim().replaceAll("#", "")));
                     handleForget(name, "forget #" + num);
                 } catch (NumberFormatException e) {
                     m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
@@ -1373,7 +1373,7 @@ public class robohelp extends SubspaceBot {
             Integer num;
             for (int i = 0; i < numbas.length; i++) {
                 try {
-                    num = (Integer.valueOf(numbas[i].replaceAll("#", "")));
+                    num = (Integer.valueOf(numbas[i].trim().replaceAll("#", "")));
                     handleMine(name, "mine #" + num);
                 } catch (NumberFormatException e) {
                     m_botAction.sendSmartPrivateMessage(name, "Could not find or unable to convert: " + numbas[i]);
