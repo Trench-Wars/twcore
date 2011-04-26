@@ -6,6 +6,7 @@ import java.util.TimerTask;
 
 import twcore.bots.MultiUtil;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.StringBag;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
@@ -90,7 +91,7 @@ public class utilstandard extends MultiUtil {
         } else if (message.startsWith("!increment ")) {
             String[] msg = message.split(" ");
             if (msg.length == 4) {
-                m_botAction.createIncrementingTeams(getInteger(msg[1]), getInteger(msg[2]), getInteger(msg[3]));
+                createIncrementingTeams(getInteger(msg[1]), getInteger(msg[2]), getInteger(msg[3]));
                 m_botAction.sendSmartPrivateMessage(name, "Teams were created successfully.");
             } else {
                 m_botAction.sendSmartPrivateMessage(name, "Team creation failed!");
@@ -214,6 +215,40 @@ public class utilstandard extends MultiUtil {
                 }
             };
             m_botAction.scheduleTask(ezT, 5000);
+        }
+    }
+
+    /**
+     * Creates incremented team frequencies with non-spectating players with 
+     * defined team sizes, starting frequency, and increment of frequencies.
+     * @param teamSize Number of players per team frequency.
+     * @param startFreq Starting frequency for first team.
+     * @param increment Increment of frequency between teams.
+     */
+    public void createIncrementingTeams(int teamSize, int startFreq, int increment) {
+        StringBag plist = new StringBag();
+        int freq = startFreq;
+        String name;
+
+        //stick all of the players in randomizer
+        Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+        while(i.hasNext())
+            plist.add(i.next().getPlayerName());
+
+        while(!plist.isEmpty() && freq > -1)
+        {
+            for(int x = 0; x < teamSize; x++)
+            {
+                name = plist.grabAndRemove();
+                if(name != null)
+                    m_botAction.setFreq(name, freq);
+                else
+                {
+                    freq = -2;
+                    break;
+                }
+            }
+            freq += increment; //that freq is done, move on to the next
         }
     }
 
