@@ -905,52 +905,56 @@ public class elim extends SubspaceBot {
     	while( i.hasNext() ){
     		ElimPlayer ep = i.next();
     		avg_rating += ep.initRating;
-    		
-			if(ep.name.equalsIgnoreCase(winner.name)){
-				if(lastWinner.equalsIgnoreCase(ep.name)){
-					winStreak++;
-					m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
-							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
-							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
-							", fnPE = fnPE + " + ep.eliminations + 
-							", fnSB = fnSB + " + ep.streakBreaks + 
-							", fnDK = fnDK + " + ep.doublekills +
-							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
-							" ELSE ((fnKills/fnShots)*100) END), " + 
-							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
-							", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
-							"fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
-							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
-							"' AND fnGameType = " + cfg_gameType);
-				} else {
-					winStreak = 1;
-					m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
-							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
-							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
-							", fnPE = fnPE + " + ep.eliminations + 
-							", fnSB = fnSB + " + ep.streakBreaks + 
-							", fnDK = fnDK + " + ep.doublekills +
-							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
-							" ELSE ((fnKills/fnShots)*100) END), " + 
-							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
-							", fnCWS = 1, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
-							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
-							"' AND fnGameType = " + cfg_gameType);
-				}
-			} else {
-				m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnGamesPlayed = fnGamesPlayed + 1, " + 
-						"fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + 
-						", fnShots = fnShots + " + ep.shots +
-						", fnPE = fnPE + " + ep.eliminations + 
-						", fnSB = fnSB + " + ep.streakBreaks +
-						", fnDK = fnDK + " + ep.doublekills +
-						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
-						" ELSE ((fnKills/fnShots)*100) END), " + 
-						"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
-						", fnCWS = 0, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
-						"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
-						"' AND fnGameType = " + cfg_gameType);
-			}
+
+    		try {
+    		    if(ep.name.equalsIgnoreCase(winner.name)){
+    		        if(lastWinner.equalsIgnoreCase(ep.name)){
+    		            winStreak++;
+    		            m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
+    		                    "fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
+    		                    ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
+    		                    ", fnPE = fnPE + " + ep.eliminations + 
+    		                    ", fnSB = fnSB + " + ep.streakBreaks + 
+    		                    ", fnDK = fnDK + " + ep.doublekills +
+    		                    ", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
+    		                    " ELSE ((fnKills/fnShots)*100) END), " + 
+    		                    "fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
+    		                    ", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
+    		                    "fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
+    		                    "WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
+    		                    "' AND fnGameType = " + cfg_gameType);
+    		        } else {
+    		            winStreak = 1;
+    		            m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
+    		                    "fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
+    		                    ", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
+    		                    ", fnPE = fnPE + " + ep.eliminations + 
+    		                    ", fnSB = fnSB + " + ep.streakBreaks + 
+    		                    ", fnDK = fnDK + " + ep.doublekills +
+    		                    ", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
+    		                    " ELSE ((fnKills/fnShots)*100) END), " + 
+    		                    "fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
+    		                    ", fnCWS = 1, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
+    		                    "WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
+    		                    "' AND fnGameType = " + cfg_gameType);
+    		        }
+    		    } else {
+    		        m_botAction.SQLQueryAndClose(db, "UPDATE tblElimPlayer SET fnGamesPlayed = fnGamesPlayed + 1, " + 
+    		                "fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + 
+    		                ", fnShots = fnShots + " + ep.shots +
+    		                ", fnPE = fnPE + " + ep.eliminations + 
+    		                ", fnSB = fnSB + " + ep.streakBreaks +
+    		                ", fnDK = fnDK + " + ep.doublekills +
+    		                ", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
+    		                " ELSE ((fnKills/fnShots)*100) END), " + 
+    		                "fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
+    		                ", fnCWS = 0, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
+    		                "WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
+    		                "' AND fnGameType = " + cfg_gameType);
+    		    }
+    		} catch(SQLException e) {
+    		    Tools.printStackTrace(e);
+    		}
     	}
     	avg_rating /= losers.size();
 	    List<ElimPlayer> l = Arrays.asList(losers.values().toArray(new ElimPlayer[losers.values().size()]));
