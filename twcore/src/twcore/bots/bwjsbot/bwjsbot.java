@@ -1962,24 +1962,24 @@ public class bwjsbot extends SubspaceBot {
         if (message == null || message.isEmpty()) {
             message = "A game of " + cfg.getGameTypeString() +
                     " is starting! Type ?go " + m_botAction.getArenaName() +
-                    " to play. - " + m_botAction.getBotName();
+                    " to play.";
         }
 
         //Alert Chats
         for (int i = 1; i < 11; i++) {
-            m_botAction.sendChatMessage(i, message);
+            m_botAction.sendChatMessage(i, message + " -" + m_botAction.getBotName());
         }
         
         //Alert Subscribers
         if (listAlert.size() > 0) {
             for (int i = 0; i < listAlert.size(); i++) {
-                m_botAction.sendSmartPrivateMessage(listAlert.get(i), message);
+                m_botAction.sendSmartPrivateMessage(listAlert.get(i), message + " -" + m_botAction.getBotName());
             }
         }
         
         //Alert zoner, (max once every ZONER_WAIT_TIME (minutes))
         if ((allowZoner() && cfg.getAllowZoner()) || (allowManualZoner() && !cfg.getAllowAutoCaps())) {
-            m_botAction.sendZoneMessage(message, Tools.Sound.BEEP2);
+            m_botAction.sendZoneMessage(message + " -" + m_botAction.getBotName(), Tools.Sound.BEEP2);
             zonerTimestamp = System.currentTimeMillis();
             manualZonerTimestamp = zonerTimestamp;
         }
