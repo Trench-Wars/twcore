@@ -85,6 +85,7 @@ INSERT INTO `tblQuestionType` (`fnQuestionTypeID`, `fcQuestionTypeName`, `fnNumb
 
 CREATE TABLE `tblUserTriviaStats` (
   `fnUserID` int(11) NOT NULL default '0',
+  `fnUserName` varchar(50) NOT NULL default '',
   `fnPlayed` mediumint(9) NOT NULL default '0',
   `fnWon` mediumint(9) NOT NULL default '0',
   `fnPoints` mediumint(9) NOT NULL default '0',
