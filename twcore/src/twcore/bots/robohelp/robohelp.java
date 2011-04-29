@@ -427,7 +427,10 @@ public class robohelp extends SubspaceBot {
         m_playerList.put(playerName.toLowerCase(), info);
         callsUntilAd--;
         String msg = "";
-        if (callsUntilAd == 0) {
+        if (playerName.startsWith("MatchBot") && message.contains("blueout")) {
+            msg += "Auto-forgot #" + help.getID();
+            handleForget(m_botAction.getBotName(), "forget #" + help.getID());
+        } else if (callsUntilAd == 0) {
             callsUntilAd = CALL_INTERVAL;
             msg += "Call #" + help.getID() + CALL_AD;
         } else if (now - lastAlert < CALL_EXPIRATION_TIME)
@@ -1324,6 +1327,9 @@ public class robohelp extends SubspaceBot {
                 return;
             }
         }
+        
+        if (opList.isBotExact(name))
+            return;
         
         if (id > -1 && !helpList.containsKey(id)) {
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " could not be found.");
