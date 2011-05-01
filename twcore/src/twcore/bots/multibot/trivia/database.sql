@@ -83,13 +83,12 @@ INSERT INTO `tblQuestionType` (`fnQuestionTypeID`, `fcQuestionTypeName`, `fnNumb
 -- Table structure for table `tblUserTriviaStats`
 -- 
 
-CREATE TABLE `tblUserTriviaStats` (
-  `fnUserID` int(11) NOT NULL default '0',
-  `fcUserName` varchar(50) NOT NULL default '',
-  `fnPlayed` mediumint(9) NOT NULL default '0',
-  `fnWon` mediumint(9) NOT NULL default '0',
-  `fnPoints` mediumint(9) NOT NULL default '0',
-  `fnPossible` mediumint(9) NOT NULL default '0',
-  `fnRating` mediumint(9) NOT NULL default '0',
-  PRIMARY KEY  (`fnUserID`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+CREATE TABLE IF NOT EXISTS `tblUserTriviaStats` (
+  `fcUserName` varchar(35) NOT NULL DEFAULT '',
+  `fnPoints` int(11) DEFAULT NULL,
+  `fnPlayed` int(11) DEFAULT NULL,
+  `fnWon` int(11) DEFAULT NULL,
+  `fnPossible` int(11) DEFAULT NULL,
+  `fnRating` int(11) DEFAULT NULL,
+  PRIMARY KEY (`fcUserName`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
