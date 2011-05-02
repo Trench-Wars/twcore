@@ -1268,7 +1268,7 @@ public class robohelp extends SubspaceBot {
             last.claim("clean");
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " cleaned.");
-            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'clean' WHERE fnCallID = " + last.getID());
+            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'clean' WHERE fnCallID = " + last.getCallID());
         } else
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
     }
@@ -1359,7 +1359,7 @@ public class robohelp extends SubspaceBot {
             last.claim("forgot");
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " forgotten.");
-            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'forgot' WHERE fnCallID = " + last.getID());
+            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'forgot' WHERE fnCallID = " + last.getCallID());
         } else
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
     }
@@ -1447,7 +1447,7 @@ public class robohelp extends SubspaceBot {
             last.claim(name);
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " claimed for you but not counted.");
-            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 2, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fnCallID = " + last.getID());
+            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 2, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fnCallID = " + last.getCallID());
         } else
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed.");
     }
