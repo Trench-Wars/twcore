@@ -32,6 +32,10 @@ import twcore.core.util.SearchableStructure;
 import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
 
+/*
+ * IMPORTANT NOTICE: In effort to make call claiming easier, call ID# 'aliases' 
+ */
+
 public class robohelp extends SubspaceBot {
     public static final String ALERT_CHAT = "training"; // chat that the new player alerts get sent to
     public static final String ALERT_CHAT2 = "ssbrvision"; // chat that the new player alerts get sent to
@@ -71,7 +75,7 @@ public class robohelp extends SubspaceBot {
     TreeMap<String, Integer> nameList = new TreeMap<String, Integer>();
     long lastAlert;
     int callsUntilAd = 7;
-    
+    int currentID = 1;
     String				findPopulation = "";
 	int					setPopID = -1;
 
@@ -503,7 +507,7 @@ public class robohelp extends SubspaceBot {
             helpRequest.setTaker("RoboHelp");
             lastAlert = now;
             m_botAction.remotePrivateMessageSpam(playerName, helpRequest.getNextResponse());
-            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString("RoboHelp") + "', fnTaken = 1 WHERE fnCallID = " + helpRequest.getID());
+            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString("RoboHelp") + "', fnTaken = 1 WHERE fnCallID = " + helpRequest.getCallID());
 
             if (helpRequest.hasMoreResponses() == false) {
                 helpRequest.setAllowSummons(true);
@@ -612,7 +616,7 @@ public class robohelp extends SubspaceBot {
                 }
                 m_botAction.SQLClose(result);
                 
-                m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString(help.getTaker()) + "', fnTaken = 1, fnType = 1 WHERE fnCallID = " + help.getID());
+                m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString(help.getTaker()) + "', fnTaken = 1, fnType = 1 WHERE fnCallID = " + help.getCallID());
             } catch (Exception e) {
                 Tools.printStackTrace(e);
             }
@@ -2167,7 +2171,8 @@ public class robohelp extends SubspaceBot {
         String      m_playerName;
         int         m_nextResponse;
         boolean     m_allowSummons;
-        int         m_callID;
+        int         m_callID;  // id used in the database
+        int         m_id;      // id used locally
         int         m_type;
         boolean     m_claimed;
         String      m_claimer;
@@ -2175,6 +2180,7 @@ public class robohelp extends SubspaceBot {
         public HelpRequest( String playerName, String question, String[] responses ){
 
             m_callID = -1;
+            m_id= -1;
             m_nextResponse = 0;
             m_question = question;
             m_allowSummons = false;
@@ -2189,6 +2195,8 @@ public class robohelp extends SubspaceBot {
         public HelpRequest( int id, String playerName, String question, String[] responses ){
 
             m_callID = id;
+            m_id = currentID;
+            currentID++;
             m_nextResponse = 0;
             m_question = question;
             m_allowSummons = false;
@@ -2203,6 +2211,7 @@ public class robohelp extends SubspaceBot {
         public HelpRequest( String playerName, String question, String[] responses, int type ){
 
             m_callID = -1;
+            m_id = -1;
             m_nextResponse = 0;
             m_question = question;
             m_allowSummons = false;
@@ -2242,10 +2251,14 @@ public class robohelp extends SubspaceBot {
         
         public int getType() { return m_type; }
         
-        public int getID() { return m_callID; }
+        public int getID() { return m_id; }
+        
+        public int getCallID() { return m_callID; }
         
         public void setID(int id) {
             m_callID = id;
+            m_id = currentID;
+            currentID++;
         }
 
         public void setQuestion( String question, String[] responses ){
