@@ -602,7 +602,7 @@ public class robohelp extends SubspaceBot {
                 }
                 m_botAction.SQLClose(result);
                 
-                m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString(help.getTaker()) + "', fnTaken = 1 WHERE fnCallID = " + help.getID());
+                m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString(help.getTaker()) + "', fnTaken = 1 WHERE fnCallID = " + help.getCallID());
             } catch (Exception e) {
                 Tools.printStackTrace(e);
             }
