@@ -37,6 +37,9 @@ public class acro extends MultiModule{
         registerCommands();
         generator = new Random();
         racismSpy = new Spy( m_botAction );
+
+        //for testing over chat
+        m_botAction.sendUnfilteredPublicMessage( "?chat=acro,games" );
     }
 
     public void requestEvents(ModuleEventRequester events)    {
@@ -54,15 +57,23 @@ public class acro extends MultiModule{
         gameState = 0;
     }
 
+    private void spamChatMessage(String message) {
+        m_botAction.sendChatMessage(1, message);
+        m_botAction.sendChatMessage(2, message);
+    }
+
     public void registerCommands()  {
         int acceptedMessages;
 
-        acceptedMessages = Message.PRIVATE_MESSAGE;
+        acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "doStartGame" );
         m_commandInterpreter.registerCommand( "!stop", acceptedMessages, this, "doStopGame" );
         m_commandInterpreter.registerCommand( "!showanswers", acceptedMessages, this, "doShowAnswers" );
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
-        m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "doCheckPrivate" );
+        m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doCheckPrivate" );
+
+        acceptedMessages = Message.CHAT_MESSAGE | Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
+        m_commandInterpreter.registerCommand( "!pm", acceptedMessages, this, "doPm" );
     }
 
     public void doStartGame( String name, String message ) {
@@ -70,6 +81,7 @@ public class acro extends MultiModule{
             if( gameState == 0 ) {
                 gameState = -1;
                 m_botAction.sendArenaMessage( "A randomly generated Acronym will be displayed, your goal is to write a sentence/phrase that matches the acronym then vote for the best! -" + m_botAction.getBotName(), 22 );
+                spamChatMessage( "A randomly generated Acronym will be displayed, your goal is to write a sentence/phrase that matches the acronym then vote for the best! -" + m_botAction.getBotName());
                 TimerTask preStart = new TimerTask() {
                     public void run() {
                         setUpShow();
@@ -85,6 +97,7 @@ public class acro extends MultiModule{
             m_botAction.cancelTasks();
             gameState = 0;
             m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
+            spamChatMessage("This game has been slaughtered by: " + name);
         }
     }
 
@@ -96,10 +109,10 @@ public class acro extends MultiModule{
                 while (it.hasNext()) {
                     player = it.next();
                     answer = playerIdeas.get(player);
-                    m_botAction.sendPrivateMessage( name, player + ":  " + answer );
+                    m_botAction.sendSmartPrivateMessage( name, player + ":  " + answer );
                 }
             } else {
-                m_botAction.sendPrivateMessage( name, "Currently the game isn't in the voting stage." );
+                m_botAction.sendSmartPrivateMessage( name, "Currently the game isn't in the voting stage." );
             }
         }
     }
@@ -108,12 +121,14 @@ public class acro extends MultiModule{
         gameState = 1;
         length = Math.abs( generator.nextInt() ) % 2 + 4;
         m_botAction.sendArenaMessage( "Challenge #" + round + " : " + generateAcro( length ) );
+        spamChatMessage( "Challenge #" + round + " : " + generateAcro( length ) );
 
         TimerTask end = new TimerTask() {
             public void run() {
                 phrases = new Vector<String>();
                 gameState = 2;
                 m_botAction.sendArenaMessage( "Submitted Answers: " );
+                spamChatMessage( "Submitted Answers: " );
                 int i = 0;
                 Set<String> set = playerIdeas.keySet();
                 Iterator<String> it = set.iterator();
@@ -121,11 +136,13 @@ public class acro extends MultiModule{
                     i++;
                     String curAnswer = (String) it.next();
                     m_botAction.sendArenaMessage( " " + i + "- " + playerIdeas.get( curAnswer ) );
+                    spamChatMessage( " " + i + "- " + playerIdeas.get( curAnswer ) );
                     phrases.addElement( curAnswer + "%" + playerIdeas.get( curAnswer ) );
                 }
                 votes = new int[i];
                 numIdeas = i;
                 m_botAction.sendArenaMessage( "Vote: Private Message me the # of your favorite phrase! -" + m_botAction.getBotName(), 103 );
+                spamChatMessage( "Vote: Private Message me the # of your favorite phrase! -" + m_botAction.getBotName());
                 setUpVotes();
             }
         };
@@ -136,6 +153,7 @@ public class acro extends MultiModule{
         TimerTask vote = new TimerTask() {
             public void run() {
                 m_botAction.sendArenaMessage( "Round Winners: " );
+                spamChatMessage( "Round Winners: " );
                 for( int i = 0; i < phrases.size(); i++ ) {
                     if( votes[i] == maxVote ) {
                         String piece[] = Tools.stringChopper( phrases.elementAt( i ), '%' );
@@ -148,8 +166,11 @@ public class acro extends MultiModule{
                             } else
                                 playerScores.put( piece[0], "10" );
                             m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
+                            spamChatMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
                         } else {
+                            //TODO happens every message
                             m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) + " (no vote/score)" );
+                            spamChatMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) + " (no vote/score)" );
                         }
                     }
                 }
@@ -177,11 +198,13 @@ public class acro extends MultiModule{
         TimerTask game = new TimerTask() {
             public void run() {
                 m_botAction.sendArenaMessage( "Game Over, Scores: ", 5 );
+                spamChatMessage( "Game Over, Scores: ");
                 Set<String> set = playerScores.keySet();
                 Iterator<String> it = set.iterator();
                 while (it.hasNext()) {
                     String curAnswer = (String) it.next();
                     m_botAction.sendArenaMessage( Tools.formatString( curAnswer, 30 ) +"- " + playerScores.get( curAnswer ) );
+                    spamChatMessage( Tools.formatString( curAnswer, 30 ) +"- " + playerScores.get( curAnswer ) );
                 }
                 playerScores.clear();
                 gameState = 0;
@@ -207,20 +230,20 @@ public class acro extends MultiModule{
                 if( valid ) {
                 	if( racismSpy.isRacist(message) ) {
                         m_botAction.sendUnfilteredPublicMessage("?cheater Racist acro: (" + name + "): " + message);
-                        m_botAction.sendPrivateMessage( name, "You have been reported for attempting to use racism in your answer." );
+                        m_botAction.sendSmartPrivateMessage( name, "You have been reported for attempting to use racism in your answer." );
                 		return;
                 	}
                     if( !playerIdeas.containsKey( name ) ) {
                         playerIdeas.put( name, message );
-                        m_botAction.sendPrivateMessage( name, "Your answer has been recorded." );
+                        m_botAction.sendSmartPrivateMessage( name, "Your answer has been recorded." );
                     } else {
                         playerIdeas.remove( name );
                         playerIdeas.put( name, message );
-                        m_botAction.sendPrivateMessage( name, "Your answer has been changed." );
+                        m_botAction.sendSmartPrivateMessage( name, "Your answer has been changed." );
                     }
-                } else m_botAction.sendPrivateMessage( name, "You have submitted an invalid acronym.  It must match the letters and not contain dashes/underscores." );
+                } else m_botAction.sendSmartPrivateMessage( name, "You have submitted an invalid acronym.  It must match the letters and not contain dashes/underscores." );
 
-            } else m_botAction.sendPrivateMessage( name, "You must use the correct number of letters!" );
+            } else m_botAction.sendSmartPrivateMessage( name, "You must use the correct number of letters!" );
         } else if( gameState == 2 ) {
             int vote = 0;
             try { vote = Integer.parseInt( message ); } catch (Exception e ) {}
@@ -230,7 +253,7 @@ public class acro extends MultiModule{
                     String parts[] = Tools.stringChopper( cur, '%' );
 
                     if( playerVotes.containsKey( name.toLowerCase() ) ) {
-                        m_botAction.sendPrivateMessage( name, "You have already voted!." );
+                        m_botAction.sendSmartPrivateMessage( name, "You have already voted!." );
                         return;
                     }
 
@@ -238,12 +261,12 @@ public class acro extends MultiModule{
                         votes[vote-1]++;
                         playerVotes.put( name.toLowerCase(), name );
                         if( votes[vote-1] > maxVote ) maxVote = votes[vote-1];
-                        m_botAction.sendPrivateMessage( name, "Your vote has been counted." );
-                    } else m_botAction.sendPrivateMessage( name, "You cannot vote for your own." );
+                        m_botAction.sendSmartPrivateMessage( name, "Your vote has been counted." );
+                    } else m_botAction.sendSmartPrivateMessage( name, "You cannot vote for your own." );
                 } catch (Exception e) {
-                    m_botAction.sendPrivateMessage( name, "Unable to process your vote!  Please notify the host." );
+                    m_botAction.sendSmartPrivateMessage( name, "Unable to process your vote!  Please notify the host." );
                 }
-            } else m_botAction.sendPrivateMessage( name, "Please enter a valid vote." );
+            } else m_botAction.sendSmartPrivateMessage( name, "Please enter a valid vote." );
         }
     }
 
@@ -285,9 +308,10 @@ public class acro extends MultiModule{
 
     public void doShowHelp( String name, String message ) {
         if( ! m_botAction.getOperatorList().isER( name ) )
-            m_botAction.privateMessageSpam( name, getPlayerHelpMessage() );
+            m_botAction.privateMessageSpam(name, getPlayerHelpMessage());
     }
 
+    @Override
     public String[] getModHelpMessage() {
         String[] help = {
                 "!start       - Starts a game of Acromania.",
@@ -308,6 +332,11 @@ public class acro extends MultiModule{
         return help;
     }
 
+    public void doPm( String name, String message ){
+        m_botAction.sendSmartPrivateMessage( name, "Now you can use :: to submit your answers." );
+    }
+
+    @Override
     public void handleEvent( Message event ) {
         m_commandInterpreter.handleEvent( event );
     }

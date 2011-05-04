@@ -70,7 +70,7 @@ public class trivia extends MultiModule {
         registerCommands();
         m_rnd = new Random();
         BotSettings m_botSettings = moduleSettings;
-        m_botAction.sendUnfilteredPublicMessage( "?chat=trivia" );
+        m_botAction.sendUnfilteredPublicMessage( "?chat=trivia,games" );
 
         //Gets variables from .cfg
         m_timeQuestion =  m_botSettings.getInt("QuestionTime");
@@ -100,6 +100,11 @@ public class trivia extends MultiModule {
     	gameProgress = -1;
     	playerMap.clear();
         m_botAction.cancelTasks();
+    }
+
+    private void spamChatMessage(String message) {
+        m_botAction.sendChatMessage(1, message);
+        m_botAction.sendChatMessage(2, message);
     }
 
     /****************************************************************/
@@ -136,9 +141,9 @@ public class trivia extends MultiModule {
             }
             catch (Exception e) {}
             gameProgress = 0;
-            m_botAction.sendChatMessage(1, m_prec + "A game of Trivia is starting | Win by getting " + toWin + " pts!");
-            m_botAction.sendChatMessage(1, m_prec + "  - This chat is for remote players, please PM me the answer.");
-            m_botAction.sendChatMessage(1, m_prec + "  - Use !help in chat to get a list of commands.");
+            spamChatMessage(m_prec + "A game of Trivia is starting | Win by getting " + toWin + " pts!");
+            spamChatMessage(m_prec + "  - This chat is for remote players, please PM me the answer.");
+            spamChatMessage(m_prec + "  - Use !help in chat to get a list of commands.");
             m_botAction.sendArenaMessage(m_prec + "A game of Trivia is starting | Win by getting " + toWin + " pts!", 22);
             m_botAction.sendArenaMessage(m_prec + "  - Use !help sent privately for a list of commands..");
             startGame = new TimerTask() {
@@ -159,7 +164,7 @@ public class trivia extends MultiModule {
     public void doCancelGame( String name, String message) {
         if( (m_botAction.getOperatorList().isER( name ) || accessList.containsKey( name ) ) && gameProgress != -1 ){
             gameProgress = -1;
-            m_botAction.sendChatMessage( 1, m_prec + "This game of Trivia has been canceled." );
+            spamChatMessage(m_prec + "This game of Trivia has been canceled." );
             m_botAction.sendArenaMessage( m_prec + "This game of Trivia has been canceled." );
             playerMap.clear();
             m_botAction.cancelTasks();
@@ -171,7 +176,7 @@ public class trivia extends MultiModule {
     /****************************************************************/
     public void displayQuestion() {
         gameProgress = 1;
-        m_botAction.sendChatMessage( 1, m_prec + "Question #" + questionNumber + " | Category: " + t_category );
+        spamChatMessage(m_prec + "Question #" + questionNumber + " | Category: " + t_category );
         m_botAction.sendArenaMessage( m_prec + "Question #" + questionNumber + " | Category: " + t_category,103 );
 
         timerQuestion = new TimerTask() {
@@ -180,7 +185,7 @@ public class trivia extends MultiModule {
                     gameProgress = 2;
                     //Date d = new Date();
                     giveTime = new java.util.Date().getTime();
-                    m_botAction.sendChatMessage( 1, m_prec + "Question: " + t_question );
+                    spamChatMessage(m_prec + "Question: " + t_question );
                     m_botAction.sendArenaMessage( m_prec + "Question: " + t_question );
                     displayHint();
                 }
@@ -207,7 +212,7 @@ public class trivia extends MultiModule {
                         if( pieces.length > 1 )
                         hint = pieces[1].substring(0, 1);
                     }
-                    m_botAction.sendChatMessage( 1, m_prec + "Hint: Starts with '" + hint + "'");
+                    spamChatMessage(m_prec + "Hint: Starts with '" + hint + "'");
                     m_botAction.sendArenaMessage(m_prec + "Hint: Starts with '" + hint + "'");
                     displayAnswer();
                 }
@@ -224,7 +229,7 @@ public class trivia extends MultiModule {
             public void run() {
                 if( gameProgress == 3 ) {
                     gameProgress = 4;
-                    m_botAction.sendChatMessage( 1, m_prec + "No one has given the correct answer of '" + f_answer + "'");
+                    spamChatMessage(m_prec + "No one has given the correct answer of '" + f_answer + "'");
                     m_botAction.sendArenaMessage( m_prec + "No one has given the correct answer of '" + f_answer + "'", 103);
                     doCheckScores();
                     startNextRound();
@@ -257,9 +262,9 @@ public class trivia extends MultiModule {
         gameProgress = -1;
         curLeader = 0;
         questionNumber = 1;
-        m_botAction.sendChatMessage(1, m_prec + name + " got the correct answer, '" + f_answer + "'" );
+        spamChatMessage(m_prec + name + " got the correct answer, '" + f_answer + "'" );
         m_botAction.sendArenaMessage( m_prec + name + " got the correct answer, '" + f_answer + "'" );
-        m_botAction.sendChatMessage( 1, m_prec + "Player: " + name + " has won this round of trivia!" );
+        spamChatMessage(m_prec + "Player: " + name + " has won this round of trivia!" );
         m_botAction.sendArenaMessage( m_prec + "Player: " + name + " has won this round of trivia!", 5 );
         //Save stats
         Iterator<String> it = playerMap.keySet().iterator();
@@ -369,7 +374,7 @@ public class trivia extends MultiModule {
                     twcore.core.stats.PlayerProfile tempP = playerMap.get( name );
                     if( gameProgress == 2 || gameProgress == 3 ) {
                         String trail = getRank( tempP.getData(0) );
-                        m_botAction.sendChatMessage(1, m_prec + name + " got the correct answer, '"+ f_answer + "', " + trail);
+                        spamChatMessage(m_prec + name + " got the correct answer, '"+ f_answer + "', " + trail);
                         m_botAction.sendArenaMessage(m_prec + name + " got the correct answer, '"+ f_answer + "', " + trail, 103 );
                     }
                     if( gameProgress != -1 ) {
@@ -404,9 +409,9 @@ public class trivia extends MultiModule {
     public void doCheckScores() {
         if(Math.round(questionNumber / 5.0) == (questionNumber / 5.0)) {
             int numberShown = 0, curPoints = curLeader;
-            m_botAction.sendChatMessage(1, "--|-------------------------------|");
-            m_botAction.sendChatMessage(1, "--|-- " + doTrimString("     Current Scores",28) + "|");
-            m_botAction.sendChatMessage(1, "--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
+            spamChatMessage("--|-------------------------------|");
+            spamChatMessage("--|-- " + doTrimString("     Current Scores",28) + "|");
+            spamChatMessage("--|-- " + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
             while( numberShown < 8 && curPoints != 0) {
                 Iterator<String> it = playerMap.keySet().iterator();
                 while (it.hasNext()) {
@@ -415,14 +420,14 @@ public class trivia extends MultiModule {
                     tempPlayer = playerMap.get(curPlayer);
                     if(tempPlayer.getData(0) == curPoints) {
                         numberShown++;
-                        m_botAction.sendChatMessage(1, "--|-- " + doTrimString(curPlayer,20) + doTrimString("" + tempPlayer.getData( 0 ), 8) + "|");
+                        spamChatMessage("--|-- " + doTrimString(curPlayer,20) + doTrimString("" + tempPlayer.getData( 0 ), 8) + "|");
                     }
                 }
                 curPoints--;
             }
             if(curPoints != 0)
-                m_botAction.sendChatMessage(1, "--|-- Low scores not shown.       |");
-            m_botAction.sendChatMessage(1, "--|-------------------------------|");
+                spamChatMessage("--|-- Low scores not shown.       |");
+            spamChatMessage("--|-------------------------------|");
             //Public Chat
             numberShown = 0;
             curPoints = curLeader;
@@ -474,7 +479,7 @@ public class trivia extends MultiModule {
             public void run() {
                 if(gameProgress != -1) {
                     m_botAction.sendArenaMessage("Please PM your answers to TriviaBot.");
-                    m_botAction.sendChatMessage(1, "Please PM your answers to TriviaBot. Hint: use !pm");
+                    spamChatMessage("Please PM your answers to TriviaBot. Hint: use !pm");
                     doTimedArena();
                 }
             }

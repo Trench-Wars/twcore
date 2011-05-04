@@ -92,6 +92,9 @@ public class scramble extends MultiModule {
         registerCommands();
         m_rnd = new Random();
         BotSettings m_botSettings = moduleSettings;
+
+        m_botAction.sendUnfilteredPublicMessage( "?chat=scramble,games" );
+
         String access[] = m_botSettings.getString("SpecialAccess").split(":");
         for (int i = 0; i < access.length; i++)
             accessList.put(access[i], access[i]);
@@ -118,28 +121,35 @@ public class scramble extends MultiModule {
         playerMap.clear();
         m_botAction.cancelTasks();
     }
-    
+
+    private void spamChatMessage(String message) {
+        m_botAction.sendChatMessage(1, message);
+        m_botAction.sendChatMessage(2, message);
+    }
+
     /** ************************************************************* */
     /** * Registers the bot commands. ** */
     /** ************************************************************* */
     public void registerCommands() {
         int acceptedMessages;
         
-        acceptedMessages = Message.PRIVATE_MESSAGE;
+        acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand("!start", acceptedMessages, this, "doStartGame");
         m_commandInterpreter.registerCommand("!cancel", acceptedMessages, this, "doCancelGame");
         m_commandInterpreter.registerCommand("!difficulty", acceptedMessages, this, "doDifficulty");
         m_commandInterpreter.registerCommand("!showanswer", acceptedMessages, this, "doShowAnswer");
         
-        acceptedMessages = Message.PRIVATE_MESSAGE;
+        acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand("!repeat", acceptedMessages, this, "doRepeat");
         m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "doHelp");
         m_commandInterpreter.registerCommand("!topten", acceptedMessages, this, "doTopTen");
         m_commandInterpreter.registerCommand("!stats", acceptedMessages, this, "doStats");
         m_commandInterpreter.registerCommand("!score", acceptedMessages, this, "doScore");
-        m_commandInterpreter.registerCommand("!pm", acceptedMessages, this, "doPm");
         m_commandInterpreter.registerCommand("!rules", acceptedMessages, this, "doRules");
         
+        acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE | Message.CHAT_MESSAGE;
+        m_commandInterpreter.registerCommand("!pm", acceptedMessages, this, "doPm");
+
         m_commandInterpreter.registerDefaultCommand(Message.PRIVATE_MESSAGE, this, "doCheckPrivate");
     }
     
@@ -161,10 +171,13 @@ public class scramble extends MultiModule {
     public void doDifficulty(String name, String message) {
         if (m_botAction.getOperatorList().isER(name) || accessList.containsKey(name)) {
             if (gameProgress != -1) {
-                if (difficulty)
+                if (difficulty) {
                     m_botAction.sendArenaMessage("The difficulty has been changed to nerd mode.");
-                else
+                    spamChatMessage("The difficulty has been changed to nerd mode.");
+                } else {
                     m_botAction.sendArenaMessage("The difficulty has been changed to normal mode.");
+                    spamChatMessage("The difficulty has been changed to normal mode.");
+                }
             }
             if (difficulty) {
                 difficulty = false;
@@ -193,11 +206,16 @@ public class scramble extends MultiModule {
             } catch (Exception e) {}
             gameProgress = 0;
             m_botAction.sendArenaMessage(m_prec + "A game of Scramble is starting | Win by getting " + toWin + " pts!", 22);
-            if (difficulty)
+            spamChatMessage(m_prec + "A game of Scramble is starting | Win by getting " + toWin + " pts!");
+            if (difficulty) {
                 m_botAction.sendArenaMessage(m_prec + "Difficulty set to normal mode.");
-            else
+                spamChatMessage(m_prec + "Difficulty set to normal mode.");
+            } else {
                 m_botAction.sendArenaMessage(m_prec + "Difficulty set to nerd mode.");
+                spamChatMessage(m_prec + "Difficulty set to nerd mode.");
+            }
             m_botAction.sendArenaMessage(m_prec + "  - PM !help to " + m_botAction.getBotName() + " for a list of commands...");
+            spamChatMessage(m_prec + "  - PM !help to " + m_botAction.getBotName() + " for a list of commands...");
             startGame = new TimerTask() {
                 public void run() {
                     grabWord();
@@ -216,6 +234,7 @@ public class scramble extends MultiModule {
         if ((m_botAction.getOperatorList().isER(name) || accessList.containsKey(name)) && gameProgress != -1) {
             gameProgress = -1;
             m_botAction.sendArenaMessage(m_prec + "This game of Scramble has been canceled.");
+            spamChatMessage(m_prec + "This game of Scramble has been canceled.");
             playerMap.clear();
             m_botAction.cancelTasks();
         }
@@ -246,7 +265,9 @@ public class scramble extends MultiModule {
     public void displayWord() {
         gameProgress = 1;
         m_botAction.sendArenaMessage(m_prec + "Please PM your answers to " + m_botAction.getBotName() + ".");
+        spamChatMessage(m_prec + "Please PM your answers to " + m_botAction.getBotName() + ".");
         m_botAction.sendArenaMessage(m_prec + "Scramble #" + scrambleNumber + ":");
+        spamChatMessage(m_prec + "Scramble #" + scrambleNumber + ":");
         timerQuestion = new TimerTask() {
             public void run() {
                 if (gameProgress == 1) {
@@ -258,6 +279,7 @@ public class scramble extends MultiModule {
                         s_word = scrambleWord(t_word);
                     } while (s_word.equals(t_word) && s_word.substring(0, 1).equals(t_word.substring(0, 1)));
                     m_botAction.sendArenaMessage(m_prec + "Un-Scramble: " + s_word);
+                    spamChatMessage(m_prec + "Un-Scramble: " + s_word);
                     displayHint();
                 }
             }
@@ -285,6 +307,7 @@ public class scramble extends MultiModule {
                 if (gameProgress == 2) {
                     gameProgress = 3;
                     m_botAction.sendArenaMessage(m_prec + "Hint: " + t_definition);
+                    spamChatMessage(m_prec + "Hint: " + t_definition);
                     
                     displayAnswer();
                 }
@@ -303,6 +326,7 @@ public class scramble extends MultiModule {
                 if (gameProgress == 3) {
                     gameProgress = 4;
                     m_botAction.sendArenaMessage(m_prec + "No one has given the correct answer of '" + t_word + "'", 103);
+                    spamChatMessage(m_prec + "No one has given the correct answer of '" + t_word + "'");
                     
                     doCheckScores();
                     startNextRound();
@@ -339,7 +363,9 @@ public class scramble extends MultiModule {
         curLeader = 0;
         scrambleNumber = 1;
         m_botAction.sendArenaMessage(m_prec + "Answer: '" + t_word + "'");
+        spamChatMessage(m_prec + "Answer: '" + t_word + "'");
         m_botAction.sendArenaMessage(m_prec + "Player: " + name + " has won this round of scramble!", 5);
+        spamChatMessage(m_prec + "Player: " + name + " has won this round of scramble!");
         Set<String> set = playerMap.keySet();
         Iterator<String> it = set.iterator();
         while (it.hasNext()) {
@@ -467,12 +493,15 @@ public class scramble extends MultiModule {
                         if (answerSpeed < 2) {
                             String trail = getRank(tempP.getData(0));
                             m_botAction.sendArenaMessage(m_prec + "Inconceivable! " + name + " got the correct answer, '" + t_word + "' in only " + trail, 7);
+                            spamChatMessage(m_prec + "Inconceivable! " + name + " got the correct answer, '" + t_word + "' in only " + trail);
                         } else if (answerSpeed < 5 && answerSpeed > 2) {
                             String trail = getRank(tempP.getData(0));
                             m_botAction.sendArenaMessage(m_prec + "Jeez! " + name + " got the correct answer, '" + t_word + "' in only " + trail, 20);
+                            spamChatMessage(m_prec + "Jeez! " + name + " got the correct answer, '" + t_word + "' in only " + trail);
                         } else {
                             String trail = getRank(tempP.getData(0));
                             m_botAction.sendArenaMessage(m_prec + name + " got the correct answer, '" + t_word + "', " + trail, 103);
+                            spamChatMessage(m_prec + name + " got the correct answer, '" + t_word + "', " + trail);
                         }
                     }
                     if (gameProgress != -1) {
@@ -515,9 +544,13 @@ public class scramble extends MultiModule {
         if ((scrambleNumber % 5 == 0) && (curLeader != 0)) {
             int numberShown = 0, curPoints = curLeader;
             m_botAction.sendArenaMessage("--|-------------------------------|");
+            spamChatMessage("--|-------------------------------|");
             m_botAction.sendArenaMessage("--|-- " + doTrimString("Top Scores", 28) + "|");
+            spamChatMessage("--|-- " + doTrimString("Top Scores", 28) + "|");
             m_botAction.sendArenaMessage("--|-------------------------------|");
+            spamChatMessage("--|-------------------------------|");
             m_botAction.sendArenaMessage(m_prec + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
+            spamChatMessage(m_prec + doTrimString("Player Name", 20) + doTrimString("Points", 8) + "|");
             while (numberShown < 5 && curPoints != 0) {
                 Set<String> set = playerMap.keySet();
                 Iterator<String> it = set.iterator();
@@ -528,11 +561,13 @@ public class scramble extends MultiModule {
                     if (tempPlayer.getData(0) == curPoints) {
                         numberShown++;
                         m_botAction.sendArenaMessage("--|-- " + doTrimString(curPlayer, 20) + doTrimString("" + tempPlayer.getData(0), 8) + "|");
+                        spamChatMessage("--|-- " + doTrimString(curPlayer, 20) + doTrimString("" + tempPlayer.getData(0), 8) + "|");
                     }
                 }
                 curPoints--;
             }
             m_botAction.sendArenaMessage("--|-------------------------------|");
+            spamChatMessage("--|-------------------------------|");
         }
     }
     
