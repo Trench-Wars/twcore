@@ -479,7 +479,7 @@ public class bwjsbot extends SubspaceBot {
             } else if (cmd.equals("!stop")) {
                 cmd_stop(name);
             } else if (cmd.startsWith("!zone") && !cfg.getAllowAutoCaps()) {
-                cmd_zone(name, cmd);
+                cmd_zone(name, command);
             } else if (cmd.equals("!off")) {
                 cmd_off(name);
             } else if (cmd.startsWith("!forcenp ")) {
@@ -1718,12 +1718,12 @@ public class bwjsbot extends SubspaceBot {
      * @param name name of the player that issued the command
      * @param message message to use for zoner
      */
-    private void cmd_zone(String name, String cmd) {
+    private void cmd_zone(String name, String message) {
         
         //grab message from !zone message if there
         String msg = null;
-        if (cmd.length() > 6) {
-            msg = cmd.substring(6);
+        if (message.length() > 6) {
+            msg = message.substring(6);
         }
 
         if (!allowManualZoner()) {
@@ -1973,14 +1973,15 @@ public class bwjsbot extends SubspaceBot {
      * - Send alert to subscribers
      * - Send alert to zone 
      */
-    private void newGameAlert(String name, String msg) {
+    private void newGameAlert(String name, String message) {
 
         String nameTag = " -" + m_botAction.getBotName();
-        String msgs = msg.toLowerCase();
+        
+        String msg = message.toLowerCase();
         
         //Build generic message in one is not passed
-        if (msg == null || msg.isEmpty()) {
-            msg = "A game of " + cfg.getGameTypeString() +
+        if (message == null || message.isEmpty()) {
+            message = "A game of " + cfg.getGameTypeString() +
                     " is starting! Type ?go " + m_botAction.getArenaName() +
                     " to play.";
         } else if (msg.contains("?go")) {
@@ -1990,23 +1991,23 @@ public class bwjsbot extends SubspaceBot {
             m_botAction.sendPrivateMessage(name, "Please do not include your name in the zoner as I will provide mine automatically.");
             return;
         } else
-            msg += " ?go " + m_botAction.getArenaName();
+            message += " ?go " + m_botAction.getArenaName();
 
         //Alert Chats
         for (int i = 1; i < 11; i++) {
-            m_botAction.sendChatMessage(i, msg + nameTag);
+            m_botAction.sendChatMessage(i, message + nameTag);
         }
         
         //Alert Subscribers
         if (name == null && listAlert.size() > 0) {
             for (int i = 0; i < listAlert.size(); i++) {
-                m_botAction.sendSmartPrivateMessage(listAlert.get(i), msg);
+                m_botAction.sendSmartPrivateMessage(listAlert.get(i), message);
             }
         }
         
         //Alert zoner, (max once every ZONER_WAIT_TIME (minutes))
         if ((allowZoner() && cfg.getAllowZoner()) || (allowManualZoner() && !cfg.getAllowAutoCaps())) {
-            m_botAction.sendZoneMessage(msg + nameTag, Tools.Sound.BEEP2);
+            m_botAction.sendZoneMessage(message + nameTag, Tools.Sound.BEEP2);
             zonerTimestamp = System.currentTimeMillis();
             manualZonerTimestamp = zonerTimestamp;
         }
