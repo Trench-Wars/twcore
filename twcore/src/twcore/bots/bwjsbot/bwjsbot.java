@@ -479,7 +479,7 @@ public class bwjsbot extends SubspaceBot {
             } else if (cmd.equals("!stop")) {
                 cmd_stop(name);
             } else if (cmd.startsWith("!zone") && !cfg.getAllowAutoCaps()) {
-                cmd_zone(name, command);
+                cmd_zone(name, cmd);
             } else if (cmd.equals("!off")) {
                 cmd_off(name);
             } else if (cmd.startsWith("!forcenp ")) {
@@ -1718,12 +1718,12 @@ public class bwjsbot extends SubspaceBot {
      * @param name name of the player that issued the command
      * @param message message to use for zoner
      */
-    private void cmd_zone(String name, String message) {
+    private void cmd_zone(String name, String cmd) {
         
         //grab message from !zone message if there
         String msg = null;
-        if (message.length() > 6) {
-            msg = message.substring(6);
+        if (cmd.length() > 6) {
+            msg = cmd.substring(6);
         }
 
         if (!allowManualZoner()) {
