@@ -1977,17 +1977,15 @@ public class bwjsbot extends SubspaceBot {
 
         String nameTag = " -" + m_botAction.getBotName();
         
-        String msg = message.toLowerCase();
-        
         //Build generic message in one is not passed
         if (message == null || message.isEmpty()) {
             message = "A game of " + cfg.getGameTypeString() +
                     " is starting! Type ?go " + m_botAction.getArenaName() +
                     " to play.";
-        } else if (msg.contains("?go")) {
+        } else if (message.toLowerCase().contains("?go")) {
             m_botAction.sendPrivateMessage(name, "Please do not include ?go base in the zoner as I will add this for you automatically.");
             return;
-        } else if (msg.contains("-" + name.toLowerCase())) {
+        } else if (message.toLowerCase().contains("-" + name.toLowerCase())) {
             m_botAction.sendPrivateMessage(name, "Please do not include your name in the zoner as I will provide mine automatically.");
             return;
         } else
