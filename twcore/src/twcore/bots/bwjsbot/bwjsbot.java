@@ -1973,14 +1973,14 @@ public class bwjsbot extends SubspaceBot {
      * - Send alert to subscribers
      * - Send alert to zone 
      */
-    private void newGameAlert(String name, String message) {
+    private void newGameAlert(String name, String msg) {
 
         String nameTag = " -" + m_botAction.getBotName();
-        String msg = message.toLowerCase();
+        String msgs = msg.toLowerCase();
         
         //Build generic message in one is not passed
-        if (message == null || message.isEmpty()) {
-            message = "A game of " + cfg.getGameTypeString() +
+        if (msg == null || msg.isEmpty()) {
+            msg = "A game of " + cfg.getGameTypeString() +
                     " is starting! Type ?go " + m_botAction.getArenaName() +
                     " to play.";
         } else if (msg.contains("?go")) {
@@ -1990,23 +1990,23 @@ public class bwjsbot extends SubspaceBot {
             m_botAction.sendPrivateMessage(name, "Please do not include your name in the zoner as I will provide mine automatically.");
             return;
         } else
-            message += " ?go " + m_botAction.getArenaName();
+            msg += " ?go " + m_botAction.getArenaName();
 
         //Alert Chats
         for (int i = 1; i < 11; i++) {
-            m_botAction.sendChatMessage(i, message + nameTag);
+            m_botAction.sendChatMessage(i, msg + nameTag);
         }
         
         //Alert Subscribers
         if (name == null && listAlert.size() > 0) {
             for (int i = 0; i < listAlert.size(); i++) {
-                m_botAction.sendSmartPrivateMessage(listAlert.get(i), message);
+                m_botAction.sendSmartPrivateMessage(listAlert.get(i), msg);
             }
         }
         
         //Alert zoner, (max once every ZONER_WAIT_TIME (minutes))
         if ((allowZoner() && cfg.getAllowZoner()) || (allowManualZoner() && !cfg.getAllowAutoCaps())) {
-            m_botAction.sendZoneMessage(message + nameTag, Tools.Sound.BEEP2);
+            m_botAction.sendZoneMessage(msg + nameTag, Tools.Sound.BEEP2);
             zonerTimestamp = System.currentTimeMillis();
             manualZonerTimestamp = zonerTimestamp;
         }
