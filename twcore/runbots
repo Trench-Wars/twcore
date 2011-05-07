@@ -1,1 +1,0 @@
-while true; do java -Xmx386m -cp twcore.jar:twcore/misc/googleapi.jar:twcore/misc/aim.jar:twcore/misc/mysql-connector-java-5.0.7-bin.jar twcore.core.Start setup.cfg; done
