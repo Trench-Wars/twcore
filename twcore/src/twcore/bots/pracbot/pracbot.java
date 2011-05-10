@@ -9,7 +9,6 @@ import java.util.Vector;
 import java.util.Iterator;
 
 import twcore.bots.pracbot.Projectile;
-import twcore.bots.pubsystem.PubContext;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
