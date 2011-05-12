@@ -37,6 +37,7 @@ public class conquer extends MultiModule {
             return;
 
         m_botAction.setFreq( event.getKilleeID(), killer.getFrequency() );
+        m_botAction.setShip( event.getKilleeID(), killer.getShipType() );
         String killeename = m_botAction.getPlayerName( event.getKilleeID() );
         String killername = m_botAction.getPlayerName( event.getKillerID() );
         m_botAction.sendArenaMessage( killeename + " conquered by "
