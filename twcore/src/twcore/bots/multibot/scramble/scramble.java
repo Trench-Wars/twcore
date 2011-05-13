@@ -595,7 +595,7 @@ public class scramble extends MultiModule {
         if (difficulty) {
             try {
                 ResultSet qryWordData;
-                qryWordData = m_botAction.SQLQuery(mySQLHost, "SELECT WordID, Word FROM tblScramble_Norm WHERE TimesUsed=" + getMinTimesUsed() + " AND CHAR_LENGTH(Word) > 4 ORDER BY RAND(" + m_rnd.nextInt() + ") LIMIT 1");
+                qryWordData = m_botAction.SQLQuery(mySQLHost, "SELECT WordID, Word FROM tblScramble_Norm WHERE TimesUsed=" + getMinTimesUsed() + " ORDER BY RAND(" + m_rnd.nextInt() + ") LIMIT 1");
                 if (qryWordData.next()) {
                     t_word = qryWordData.getString("Word");
                     t_definition = "The word begins with '" + t_word.substring(0, 1) + "'.";
