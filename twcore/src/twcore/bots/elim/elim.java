@@ -863,30 +863,30 @@ public class elim extends SubspaceBot {
         	m_botAction.specificPrize(ep.name, Tools.Prize.MULTIFIRE);
     		ep.resetScore();
     		m_botAction.scoreReset(ep.name);
-    		try{
-    			boolean newPlayer = false;
-    			ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-    			if(rs != null && rs.next()){
-    				ep.ave = rs.getFloat("fnAve");
-    				ep.BDK = rs.getInt("fnBDK");
-    				ep.streak = rs.getInt("fnCKS");
-    				ep.BKS = rs.getInt("fnBKS");
-    				ep.lstreak = rs.getInt("fnCLS");
-    				ep.WLS = rs.getInt("fnWLS");
-    				ep.initWins = rs.getInt("fnKills");
-    				ep.initLosses = rs.getInt("fnDeaths");
-    				ep.initRating = rs.getInt("fnRating");
-    			}
-    			else newPlayer = true;
-    			m_botAction.SQLClose(rs);
-    			if(newPlayer){
-    				ep.initRating = INIT_RATING;
-    				ep.ave = INIT_RATING;
-    				m_botAction.SQLBackgroundQuery(db, null, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + "," + INIT_RATING + ",1,NOW())");
-    			}
-    		}catch(SQLException e){
-    			Tools.printStackTrace(e);
-    		}
+    		    try{
+    		        boolean newPlayer = false;
+    		        ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
+    		        if(rs != null && rs.next()){
+    		            ep.ave = rs.getFloat("fnAve");
+    		            ep.BDK = rs.getInt("fnBDK");
+    		            ep.streak = rs.getInt("fnCKS");
+    		            ep.BKS = rs.getInt("fnBKS");
+    		            ep.lstreak = rs.getInt("fnCLS");
+    		            ep.WLS = rs.getInt("fnWLS");
+    		            ep.initWins = rs.getInt("fnKills");
+    		            ep.initLosses = rs.getInt("fnDeaths");
+    		            ep.initRating = rs.getInt("fnRating");
+    		        }
+    		        else newPlayer = true;
+    		        m_botAction.SQLClose(rs);
+    		        if(newPlayer){
+    		            ep.initRating = INIT_RATING;
+    		            ep.ave = INIT_RATING;
+    		            m_botAction.SQLBackgroundQuery(db, null, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + "," + INIT_RATING + ",1,NOW())");
+    		        }
+    		    }catch(SQLException e){
+    		        Tools.printStackTrace(e);
+    		    }
     	}
     }
     
@@ -1087,22 +1087,22 @@ public class elim extends SubspaceBot {
     public void doElimZoner(){
     	if((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE))return;
     	if(winStreak == 1)
-    		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Last round's winner was " + lastWinner + " (" + winner.wins + ":" + winner.losses + ")! Type ?go " + cfg_arena + " to play");
+    		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Last round's winner was " + lastWinner + " (" + winner.wins + ":" + winner.losses + ")! Type ?go " + cfg_arena + " to play -" + m_botAction.getBotName());
     	else if(winStreak > 1)
     		switch(winStreak){
-	    		case 2:m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") has won 2 back to back! Type ?go " + cfg_arena + " to play");
+	    		case 2:m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") has won 2 back to back! Type ?go " + cfg_arena + " to play -" + m_botAction.getBotName());
 	    			break;
-	    		case 3:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is on fire with a triple win! Type ?go " + cfg_arena + " to end the streak!", Tools.Sound.CROWD_OOO);
+	    		case 3:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is on fire with a triple win! Type ?go " + cfg_arena + " to end the streak! -" + m_botAction.getBotName(), Tools.Sound.CROWD_OOO);
 	    			break;
-	    		case 4:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is on a rampage! 4 wins in a row! Type ?go " + cfg_arena + " to put a stop to the carnage!", Tools.Sound.CROWD_GEE);
+	    		case 4:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is on a rampage! 4 wins in a row! Type ?go " + cfg_arena + " to put a stop to the carnage! -" + m_botAction.getBotName(), Tools.Sound.CROWD_GEE);
 	    			break;
-	    		case 5:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is dominating with a 5 game streak! Type ?go " + cfg_arena + " to end this madness!", Tools.Sound.SCREAM);
+	    		case 5:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is dominating with a 5 game streak! Type ?go " + cfg_arena + " to end this madness! -" + m_botAction.getBotName(), Tools.Sound.SCREAM);
 	    			break;
-	    		default:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is bringing the zone to shame with " + winStreak + " consecutive wins! Type ?go " + cfg_arena + " to redeem yourselves!", Tools.Sound.INCONCEIVABLE);
+	    		default:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is bringing the zone to shame with " + winStreak + " consecutive wins! Type ?go " + cfg_arena + " to redeem yourselves! -" + m_botAction.getBotName(), Tools.Sound.INCONCEIVABLE);
 	    			break;
     		}
     	else
-    		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play");
+    		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play -" + m_botAction.getBotName());
     	lastZoner = System.currentTimeMillis();
 
             
