@@ -367,7 +367,12 @@ public class GamePacketInterpreter {
                 Tools.printConnectionLog("RECV    : (0x36) Received object (further info unknown) (" + m_session.getBotName() + ")");
                 break;
             // 0x37 - Toggle whether to send damage info: Unhandled
+            case 0x37:
+                Tools.printConnectionLog("RECV    : (0x37) Toggle Send Damage (" + m_session.getBotName() + ")");
+                break;
+            // 0x38 - Watch damage info: Unhandled
             case 0x38:
+                Tools.printConnectionLog("RECV    : (0x38) Watch Damage (" + m_session.getBotName() + ")");
                 handleWatchDamage( array, alreadyDecrypted );
                 break;
             // 0x3B - *sendto packet: See http://forums.minegoboom.com/viewtopic.php?p=75317#75317
