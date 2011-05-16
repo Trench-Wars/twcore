@@ -760,9 +760,10 @@ public class GamePacketGenerator {
     /**
     * Sends a request to pick up a ball.
     * @param ballID ID of ball to pick up
+    * @param timestamp Timestamp of last known ball position
     * @author Cheese
     */
-    public void sendBallPickupPacket(byte ballID)
+    public void sendBallPickupPacket(byte ballID, int timestamp)
     {
         Tools.printConnectionLog("SEND BP: (0x20) Ball Pickup");
         
@@ -770,7 +771,11 @@ public class GamePacketGenerator {
         ByteArray bytearray = new ByteArray(6);
         bytearray.addByte(0x20); //Type Byte
         bytearray.addByte(ballID);
-        bytearray.addLittleEndianInt((int)(System.currentTimeMillis()/10) + m_serverTimeDifference);
+/*
+This is pointless, the server will just ignore the packet unless the Timestamp is the same as the last Ball update.
+        bytearray.addLittleEndianInt((int)(System.currentTimeMillis()/10) + m_serverTimeDifference); 
+ */
+        bytearray.addLittleEndianInt(timestamp);
         
         sendReliableMessage(bytearray);
     }

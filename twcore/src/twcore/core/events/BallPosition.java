@@ -42,7 +42,7 @@ public class BallPosition extends SubspaceEvent {
         m_xVelocity = array.readLittleEndianShort( 6 );
         m_yVelocity = array.readLittleEndianShort( 8 );
         m_playerID = array.readLittleEndianShort( 10 );
-        m_timeStamp = array.readInt( 12 );
+        m_timeStamp = array.readLittleEndianInt( 12 );
         if(m_timeStamp == 0)
         	m_carrier = m_playerID;
         else

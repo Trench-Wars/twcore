@@ -2491,11 +2491,15 @@ public class BotAction
         return flags;
     }
 
-    public void getBall(){
-        
-        m_packetGenerator.sendBallPickupPacket((byte) 0);
+    /**
+     * Grabs a ball. 
+    * @param ballID ID of ball to pick up
+    * @param timestamp Timestamp of last known ball position.
+     */
+    public void getBall( byte ballID, int timestamp ) {
+        m_packetGenerator.sendBallPickupPacket(ballID, timestamp);
     }
-    
+
     /**
      * Drops all flags the bot is carrying.
      */
