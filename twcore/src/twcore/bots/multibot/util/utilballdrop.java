@@ -1,24 +1,16 @@
 package twcore.bots.multibot.util;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Random;
-import java.util.StringTokenizer;
 
 import twcore.bots.MultiUtil;
 import twcore.core.EventRequester;
 import twcore.core.events.BallPosition;
 import twcore.core.events.Message;
-import twcore.core.events.TurretEvent;
-import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
 /**
- * 
- * 
+ * Utility to drop a ball at a given location.
+ * Currently only the first ball will be moved.
  * @author JoyRider
- *
  */
 
 public class utilballdrop extends MultiUtil {
@@ -91,8 +83,7 @@ public class utilballdrop extends MultiUtil {
         }
 
         if( !valid )
-            m_botAction.sendPrivateMessage(sender,
-                    "Invalid usage, the correct usage is !ball <x>:<y>. Coordinates range from 1 to 1024");
+            m_botAction.sendPrivateMessage(sender, "Invalid usage, the correct usage is !ball <x>:<y>. Coordinates range from 1 to 1024");
         else {
             doDropBall(x, y);
             m_botAction.sendPrivateMessage(sender, "Ball dropped at " + x + " " + y);
