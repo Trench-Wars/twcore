@@ -82,7 +82,12 @@ public class CoreData {
     
     
     public String getLocalIP() {
-    	return m_generalSettings.getString("LocalIP");
+    	String name = m_generalSettings.getString("LocalIP");
+        if( name.equalsIgnoreCase( "localhost" )){
+            name = "127." + ( m_lastIP >> 16 ) + "." + (( m_lastIP & 0x00FF00 ) >> 8 ) + "." + ( m_lastIP & 0x0000FF );
+            m_lastIP++;
+        }
+        return name;
     }
     
     /**

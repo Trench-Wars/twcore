@@ -106,8 +106,14 @@ public class Session extends Thread {
     public void prepare(){
         try {
             InetAddress inet = InetAddress.getByName( m_ipAddress );
-            InetSocketAddress local = new InetSocketAddress(m_localIPAddress, 0);
-            m_socket = new DatagramSocket(local);
+            InetAddress local = InetAddress.getByName(m_localIPAddress);
+            InetSocketAddress localSocket;
+            if (local.isLoopbackAddress()) {
+                localSocket = new InetSocketAddress(InetAddress.getLocalHost(), 0);
+            } else {
+                localSocket = new InetSocketAddress(local, 0);
+            }
+            m_socket = new DatagramSocket(localSocket);
             m_socket.connect( inet, m_serverPort );
             Tools.printLog( m_name + " bound to " + m_socket.getLocalAddress().getHostAddress() + ":" + m_socket.getLocalPort() );
 
