@@ -192,7 +192,7 @@ public class elim extends SubspaceBot {
             case Game.OFF_MODE:
                 return "Elimination is temporarily disabled.";
             case Game.WAITING_FOR_PLAYERS:
-                return "A new elimination match will begin when " + (cfg_minPlayers - elimers.size()) + " more player(s) enter.";
+                return "A new elimination match will begin when " + cfg_minPlayers + " more player(s) enter.";
             case Game.VOTING_ON_SHIP:
                 return "We are currently voting on ship type.";
             case Game.VOTING_ON_DEATHS:
@@ -451,6 +451,7 @@ public class elim extends SubspaceBot {
                 else if((System.currentTimeMillis() - ep.outOfBounds) > BOUNDARY_TIME * Tools.TimeInMillis.SECOND){
                     ep.status = ElimPlayer.OUT;
                     ba.specWithoutLock(ep.name);
+                    elimers.remove(p.getPlayerName().toLowerCase());
                     ba.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Too long outside base)");
                 }
                 else if((System.currentTimeMillis() - ep.outOfBounds) > (BOUNDARY_TIME/2) * Tools.TimeInMillis.SECOND && !ep.outsideWarn){
