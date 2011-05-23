@@ -1057,7 +1057,7 @@ public class elim extends SubspaceBot {
             vote = -1;
             lastKill = 0;
             lastSpawn = System.currentTimeMillis();
-            outOfBounds = System.currentTimeMillis();
+            outOfBounds = 0;
             lagouts = MAX_LAGOUT;
             Player p = ba.getPlayer(name);
             ship = p.getShipType();
