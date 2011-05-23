@@ -97,6 +97,7 @@ public class elim extends SubspaceBot {
     public int winStreak = 0;                   
     public long lastZoner = 0;
     public long lastChat = 0;
+    public long lastArena = 0;
     public ElimPlayer winner;
     public int shrap = OFF;                     //Used for ship types that use shrap
     public int shipType = 1;                    //Current game ship type
@@ -440,22 +441,25 @@ public class elim extends SubspaceBot {
         Player p = ba.getPlayer(event.getPlayerID());
         if (p == null) return;
         doWarpIntoElim(p.getPlayerName());
-        if(cfg_gameType == ELIM)return;
+        if (cfg_gameType == ELIM)
+            return;
         ElimPlayer ep = elimers.get(p.getPlayerName());
-        if(ep != null && game.isInProgress()){
-            if(p.getYTileLocation() < cfg_border)
+        if (ep != null && game.state == Game.GAME_IN_PROGRESS) {
+            long now = System.currentTimeMillis();
+            long out = ep.outOfBounds;
+            int y = event.getYLocation() / 16;
+            if (y < cfg_border)
                 ep.clearBorderInfo();
-            else if(p.getYTileLocation() > cfg_border){         
-                if(ep.outOfBounds == 0)
-                    ep.outOfBounds = System.currentTimeMillis();
-                else if((System.currentTimeMillis() - ep.outOfBounds) > BOUNDARY_TIME * Tools.TimeInMillis.SECOND){
+            else if (y > cfg_border) {
+                if (ep.outOfBounds == 0)
+                    ep.outOfBounds = now;
+                else if ((now - out) > BOUNDARY_TIME * Tools.TimeInMillis.SECOND) {
                     ep.status = ElimPlayer.OUT;
                     ba.specWithoutLock(ep.name);
-                    elimers.remove(p.getPlayerName().toLowerCase());
+                    elimers.remove(ep.name.toLowerCase());
                     ba.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Too long outside base)");
-                }
-                else if((System.currentTimeMillis() - ep.outOfBounds) > (BOUNDARY_TIME/2) * Tools.TimeInMillis.SECOND && !ep.outsideWarn){
-                    ba.sendSmartPrivateMessage( ep.name, "Get in the base!");
+                } else if((now - out) > (BOUNDARY_TIME/2) * Tools.TimeInMillis.SECOND && !ep.outsideWarn){
+                    ba.sendSmartPrivateMessage(ep.name, "Get in the base!");
                     ep.outsideWarn = true;
                 }           
             }
@@ -513,6 +517,7 @@ public class elim extends SubspaceBot {
      */
     public void doWaitingForPlayers() {
         game.state = Game.WAITING_FOR_PLAYERS;
+        ba.toggleLocked();
         int needs = cfg_minPlayers - elimers.size();
         if (needs <= 0) {
             if (cfg_zone == ON)
@@ -525,8 +530,10 @@ public class elim extends SubspaceBot {
                 }
             };
             ba.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
-        } else
+        } else if (System.currentTimeMillis() - lastArena > 30 * 1000) {
+            lastArena = System.currentTimeMillis();
             ba.sendArenaMessage("A new elimination match will begin when " + needs + " more player(s) enter.");
+        }
 
         for (String name : alert)
             ba.sendSmartPrivateMessage(name, "Next " + cfg_gameName + " is starting! Type ?go " + cfg_arena + " to play!");
@@ -1138,7 +1145,7 @@ public class elim extends SubspaceBot {
             return here;
         }
         
-        private void clearBorderInfo(){
+        public void clearBorderInfo(){
             outOfBounds = 0;
             outsideWarn = false;
         }
