@@ -439,11 +439,12 @@ public class elim extends SubspaceBot {
      */
     public void handleEvent(PlayerPosition event) {
         Player p = ba.getPlayer(event.getPlayerID());
-        if (p == null) return;
+        if (p == null) 
+            return;
         doWarpIntoElim(p.getPlayerName());
         if (cfg_gameType == ELIM)
             return;
-        ElimPlayer ep = elimers.get(p.getPlayerName());
+        ElimPlayer ep = elimers.get(p.getPlayerName().toLowerCase());
         if (ep != null && game.state == Game.GAME_IN_PROGRESS) {
             long now = System.currentTimeMillis();
             long out = ep.outOfBounds;
