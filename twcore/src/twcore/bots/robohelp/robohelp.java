@@ -121,7 +121,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!calls", acceptedMessages, this, "handleCalls", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!stats", acceptedMessages, this, "handleStats", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!newbs", acceptedMessages, this, "handleNewbs", OperatorList.ZH_LEVEL );
-        m_commandInterpreter.registerCommand( "!false", acceptedMessages, this, "handleFalseNewb", OperatorList.ZH_LEVEL );
 
         acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE;
         // Player commands
@@ -2179,6 +2178,9 @@ public class robohelp extends SubspaceBot {
         	String message = event.getMessage().toLowerCase().trim();
         	if (message.equalsIgnoreCase("!alert"))
         	    toggleAlert(name);
+        	else if (message.startsWith("!false"))
+        	    handleFalseNewb(name, message);
+        	
         	if (!message.contains("that") && !message.contains("it") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(name))
         	    handleClaims(name, message);
         	else if (!message.contains("that") && message.contains("#") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(name))
