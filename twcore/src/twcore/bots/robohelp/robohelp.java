@@ -547,9 +547,9 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendChatMessage(2, message + "   [Use 'on that' to claim]");
             m_botAction.sendChatMessage(3, message + " ");
         }
-        
+        newbHistory.setSize(15);
         for (String n : alert)
-            m_botAction.sendSmartPrivateMessage(n, message + " ");
+            m_botAction.sendSmartPrivateMessage(n, message + " ");        
     }
     
     public void toggleAlert(String name, String msg) {
@@ -1538,7 +1538,7 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Database offline.");
             return;
         }
-        m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fnTaken = 2 WHERE fcUserName = '" + Tools.addSlashesToString(msg) + "'");
+        m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fnTaken = 3 WHERE fcUserName = '" + Tools.addSlashesToString(player) + "' ORDER BY fnAlertID DESC");
         m_botAction.sendSmartPrivateMessage(name, "All database entries for '" + player + "' have been falsified.");
     }
     
@@ -1712,7 +1712,7 @@ public class robohelp extends SubspaceBot {
                 return;                
             }
             
-            result = m_botAction.SQLQuery(mySQLHost, "SELECT COUNT(fnAlertID) FROM tblCallNewb WHERE fnTaken != 2 fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00'");
+            result = m_botAction.SQLQuery(mySQLHost, "SELECT COUNT(fnAlertID) FROM tblCallNewb WHERE fnTaken != 2 AND fnTaken != 3 AND fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00'");
             if (result.next()) {
                 allNewbs = result.getInt(1);
             }
