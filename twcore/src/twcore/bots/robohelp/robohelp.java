@@ -1538,7 +1538,7 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Database offline.");
             return;
         }
-        m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fnTaken = 2 WHERE fcPlayerName = '" + Tools.addSlashesToString(msg) + "'");
+        m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fnTaken = 2 WHERE fcUserName = '" + Tools.addSlashesToString(msg) + "'");
         m_botAction.sendSmartPrivateMessage(name, "All database entries for '" + player + "' have been falsified.");
     }
     
