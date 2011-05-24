@@ -70,7 +70,9 @@ public class robohelp extends SubspaceBot {
     Vector<NewPlayer> newbs = new Vector<NewPlayer>();
     HashMap<String,String> banned = new HashMap<String,String>();
     LinkedList<String> alert = new LinkedList<String>(); // new player alert pms
-    Vector<NewPlayer> newbHistory = new Vector<NewPlayer>(); // holds last 30 new players
+    Vector<String> newbNames = new Vector<String>(); // holds last 20 new players
+    TreeMap<String, NewPlayer> newbHistory = new TreeMap<String, NewPlayer>();
+    
 
     /** Wing's way */
     TreeMap<Integer, HelpRequest> helpList = new TreeMap<Integer, HelpRequest>();
@@ -543,11 +545,14 @@ public class robohelp extends SubspaceBot {
             NewPlayer newb = new NewPlayer(player);
             lastNewPlayerName = player;
             newbs.add(newb);
-            newbHistory.add(0, newb);
+            newbHistory.put(player.toLowerCase(), newb);
+            newbNames.add(player.toLowerCase());
+            if (newbNames.size() > 20)
+                newbHistory.remove(newbNames.remove(0).toLowerCase());
             m_botAction.sendChatMessage(2, message + "   [Use 'on that' to claim]");
             m_botAction.sendChatMessage(3, message + " ");
         }
-        newbHistory.setSize(15);
+        
         for (String n : alert)
             m_botAction.sendSmartPrivateMessage(n, message + " ");        
     }
@@ -752,38 +757,19 @@ public class robohelp extends SubspaceBot {
         }
         
         if (record) {
-            updateNewbs(name, player, true);            
+            if (newbHistory.containsKey(player.toLowerCase())) {
+                NewPlayer newb = newbHistory.get(player.toLowerCase());
+                if (newb.taken != NewPlayer.FREE) {
+                    m_botAction.sendSmartPrivateMessage(name, "The new player alert was already claimed or falsified.");                    
+                    return;
+                }
+                newb.claimer = name;
+                newb.taken = NewPlayer.TAKEN;
+            }
             m_botAction.sendRemotePrivateMessage(name, "Call claim of the new player '" + player + "' recorded.");
             updateStatRecordsONTHAT(name, player, true);            
         } else
             m_botAction.sendRemotePrivateMessage(name, "The call expired or no call found to match your claim.");
-    }
-    
-    private void updateNewbs(String name, String player, boolean real) {
-        boolean found = false;
-        int j = 0;
-        NewPlayer newb = null;
-        Iterator<NewPlayer> x = newbHistory.iterator();
-        while (x.hasNext()) {
-            newb = x.next();
-            if (newb.name.equalsIgnoreCase(player)) {
-                found = true;
-                x.remove();
-                break;
-            }
-            j++;
-        }
-        
-        if (found) {
-            if (real) {
-                newb.claimer = name;
-                newb.taken = NewPlayer.TAKEN;
-            } else {
-                newb.claimer = "FALSE:POSITIVE";
-                newb.taken = NewPlayer.FALSE;
-            }
-            newbHistory.insertElementAt(newb, j);
-        }
     }
 
     public void handleNext( String playerName, String message ){
@@ -1240,7 +1226,13 @@ public class robohelp extends SubspaceBot {
         }
         
         if (player.length() > 1) {
-            updateNewbs(name, player, true);
+            if (newbHistory.containsKey(player.toLowerCase())) {
+                NewPlayer newb = newbHistory.get(player.toLowerCase());
+                if (newb.taken != NewPlayer.FREE) {
+                    m_botAction.sendSmartPrivateMessage(name, "That new player alert has already been claimed as " + newb.claimer);
+                    return;
+                }
+            }
             updateStatRecordsONTHAT(name, player, false);
             m_botAction.sendSmartPrivateMessage(name, "New Player alert for '" + player + "' has been claimed for you but not counted.");
         }
@@ -1532,7 +1524,15 @@ public class robohelp extends SubspaceBot {
 
         if (player.isEmpty())
             return;
-        updateNewbs(name, player, false);
+        
+        if (newbHistory.containsKey(player.toLowerCase())) {
+            NewPlayer newb = newbHistory.get(player.toLowerCase());
+            if (newb.taken == NewPlayer.TAKEN && !name.equalsIgnoreCase(newb.claimer)) {
+                m_botAction.sendSmartPrivateMessage(name, "The new player alert has already been claimed and only the claimer may falsify it.");
+                return;
+            }
+            newb.falsePos();
+        }
         
         if (!m_botAction.SQLisOperational()) {
             m_botAction.sendSmartPrivateMessage(name, "Database offline.");
@@ -1551,20 +1551,22 @@ public class robohelp extends SubspaceBot {
                 num = 5;
             }
         }
-        int size = newbHistory.size();
+        int size = newbNames.size();
         if (size > 0 && num > 0) {
-            if (size < num || num > 15)
+            if (size < num)
                 num = size;
 
             m_botAction.sendSmartPrivateMessage(name, "Last " + num + " new player alerts:");
             for (int i = 0; i < num; i++) {
-                NewPlayer newb = newbs.elementAt(i);
+                NewPlayer newb = newbHistory.get(newbNames.elementAt(i).toLowerCase());
                 String m = "";
                 m += "" + newb.name + " - ";
                 if (newb.taken == NewPlayer.FREE) 
                     m += "[MISSED]";
-                else
+                else if (newb.taken == NewPlayer.TAKEN)
                     m += "(" + newb.claimer + ")";
+                else
+                    m += newb.claimer;
                 m_botAction.sendSmartPrivateMessage(name, m);
             }
         } else
@@ -2259,6 +2261,11 @@ public class robohelp extends SubspaceBot {
         
         public String getName() {
             return name;
+        }
+        
+        public void falsePos() {
+            taken = FALSE;
+            claimer = "[FALSE-POSITIVE]";
         }
     }
 
