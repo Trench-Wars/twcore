@@ -531,13 +531,10 @@ public class elim extends SubspaceBot {
                 }
             };
             ba.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
-        } else if (System.currentTimeMillis() - lastArena > 30 * 1000) {
+        } else if (System.currentTimeMillis() - lastArena > 60 * 1000) {
             lastArena = System.currentTimeMillis();
             ba.sendArenaMessage("A new elimination match will begin when " + needs + " more player(s) enter.");
         }
-
-        for (String name : alert)
-            ba.sendSmartPrivateMessage(name, "Next " + cfg_gameName + " is starting! Type ?go " + cfg_arena + " to play!");
     }
 
     /**
@@ -593,6 +590,8 @@ public class elim extends SubspaceBot {
      */
     public void doWaitingToStart() {
         game.state = Game.WAITING_TO_START;
+        for (String name : alert)
+            ba.sendSmartPrivateMessage(name, "Next " + cfg_gameName + " is starting! Type ?go " + cfg_arena + " to play!");
         ba.sendArenaMessage("Enter to play. Game will begin in " + (cfg_waitLength + 10) + " seconds");
         ba.toggleLocked();
         if(deathElim == 1 && gameStyle == ELIM)
@@ -641,6 +640,8 @@ public class elim extends SubspaceBot {
                 ba.setShip(p.getPlayerName(), shipType);
             }
             freq++;
+            if (cfg_gameType == BASEELIM)
+                ep.clearBorderInfo();
         }
         if(elimers.size() >= 15)
             ba.setDoors("00001000");
