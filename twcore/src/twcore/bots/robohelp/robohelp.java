@@ -121,6 +121,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!calls", acceptedMessages, this, "handleCalls", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!stats", acceptedMessages, this, "handleStats", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!newbs", acceptedMessages, this, "handleNewbs", OperatorList.ZH_LEVEL );
+        m_commandInterpreter.registerCommand( "!alert", acceptedMessages, this, "toggleAlert", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand( "!false", acceptedMessages, this, "handleFalseNewb", OperatorList.ZH_LEVEL );
 
         acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE;
@@ -134,7 +135,6 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted", OperatorList.ZH_LEVEL );
-        m_commandInterpreter.registerCommand( "!alert", acceptedMessages, this, "toggleAlert", OperatorList.ZH_LEVEL);
         
         // Smod
         m_commandInterpreter.registerCommand( "!say", acceptedMessages, this, "handleSay", OperatorList.SMOD_LEVEL );
