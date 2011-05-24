@@ -61,7 +61,7 @@ public class robohelp extends SubspaceBot {
 
     CommandInterpreter  m_commandInterpreter;
     String              lastHelpRequestName = null;
-    String              lastNewPlayerName = null;
+    String              lastNewPlayerName = "";
 
     final String        mySQLHost = "website";
     Vector<EventData>   eventList = new Vector<EventData>();
@@ -133,6 +133,8 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted", OperatorList.ZH_LEVEL );
+        m_commandInterpreter.registerCommand( "!false", acceptedMessages, this, "handleFalseNewb", OperatorList.ZH_LEVEL );
+        m_commandInterpreter.registerCommand( "!alert", acceptedMessages, this, "toggleAlert", OperatorList.ZH_LEVEL );
         
         // Smod
         m_commandInterpreter.registerCommand( "!say", acceptedMessages, this, "handleSay", OperatorList.SMOD_LEVEL );
@@ -550,7 +552,7 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(n, message + " ");
     }
     
-    public void toggleAlert(String name) {
+    public void toggleAlert(String name, String msg) {
         if (!alert.remove(name.toLowerCase())) {
             alert.add(name.toLowerCase());
             m_botAction.sendSmartPrivateMessage(name, "Personal new player alerts ENABLED");
@@ -1537,7 +1539,7 @@ public class robohelp extends SubspaceBot {
             return;
         }
         m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fnTaken = 2 WHERE fcPlayerName = '" + Tools.addSlashesToString(msg) + "'");
-        m_botAction.sendSmartPrivateMessage(name, "All database entries for '" + msg + "' have been falsified.");
+        m_botAction.sendSmartPrivateMessage(name, "All database entries for '" + player + "' have been falsified.");
     }
     
     public void handleNewbs(String name, String msg) {
@@ -2177,11 +2179,10 @@ public class robohelp extends SubspaceBot {
                 return;
         	String message = event.getMessage().toLowerCase().trim();
         	if (message.equalsIgnoreCase("!alert"))
-        	    toggleAlert(name);
+        	    toggleAlert(name, "");
         	else if (message.startsWith("!false"))
         	    handleFalseNewb(name, message);
-        	
-        	if (!message.contains("that") && !message.contains("it") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(name))
+        	else if (!message.contains("that") && !message.contains("it") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(name))
         	    handleClaims(name, message);
         	else if (!message.contains("that") && message.contains("#") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")) && opList.isZH(name))
                 handleClaims(name, message);
