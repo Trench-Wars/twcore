@@ -533,7 +533,7 @@ public class robohelp extends SubspaceBot {
             if (alerts.next()) {
                 if (alerts.getInt("fnTaken") == 0) {
                     send = true;
-                    m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallNewb SET fdCreated = NOW() WHERE fnAlertID = " + alerts.getInt("fnAlertID"));
+                    m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fdCreated = NOW() WHERE fnAlertID = " + alerts.getInt("fnAlertID"));
                 }
             } else {
                 send = true;
@@ -546,7 +546,7 @@ public class robohelp extends SubspaceBot {
             lastNewPlayerName = player;
             newbs.add(newb);
             newbHistory.put(player.toLowerCase(), newb);
-            newbNames.add(player.toLowerCase());
+            newbNames.addElement(player.toLowerCase());
             if (newbNames.size() > 20)
                 newbHistory.remove(newbNames.remove(0).toLowerCase());
             m_botAction.sendChatMessage(2, message + "   [Use 'on that' to claim]");
@@ -1544,7 +1544,7 @@ public class robohelp extends SubspaceBot {
     
     public void handleNewbs(String name, String msg) {
         int num = 5;
-        if (msg.contains(" ") && msg.length() > 7) {
+        if (msg.length() > 0) {
             try {
                 num = Integer.valueOf(msg.substring(msg.indexOf(" ") + 1).trim());
             } catch (NumberFormatException e) {
@@ -2089,32 +2089,32 @@ public class robohelp extends SubspaceBot {
     public void claimHelpScreen( String playerName, String message ){
         final String[] helpText = {
             "Chat claim commands:",
-            " !calls                         - Displays the last 5 help and cheater calls",
-            " !calls <num>                   - Displays the last <num> help and cheater calls",
-            " on it                          - (on)Same as before, claims the earliest non-expired call",
-            " on it <id>, on it #<id>,       - (on)Claims Call <id> if it hasn't expired",
-            " got it                         - (got)Same as before, claims the earliest non-expired call",
-            " got it <id>, got it #<id>,     - (got)Claims Call #<id> if it hasn't expired",
+            "  !calls                         - Displays the last 5 help and cheater calls",
+            "  !calls <num>                   - Displays the last <num> help and cheater calls",
+            "  on it                          - (on)Same as before, claims the earliest non-expired call",
+            "  on it <id>, on it #<id>,       - (on)Claims Call <id> if it hasn't expired",
+            "  got it                         - (got)Same as before, claims the earliest non-expired call",
+            "  got it <id>, got it #<id>,     - (got)Claims Call #<id> if it hasn't expired",
             "Claim modifier commands:",
-            " mine                           - Claims the most recent call but does not affect staff stats",
-            " mine #<id>, mine <id>          - Claims Call #<id> but does not affect staff stats",
-            " clean                          - Clears the most recent false positive racism alert",
-            " clean #<id>, clean <id>        - Clears Call #<id> due to a false positive racism alert",
-            " forget                         - Prevents the most recent call from being counted as unanswered",
-            " forget #<id>, forget <id>      - Prevents Call #<id> from being counted as unanswered",
+            "  mine                           - Claims the most recent call but does not affect staff stats",
+            "  mine #<id>, mine <id>          - Claims Call #<id> but does not affect staff stats",
+            "  clean                          - Clears the most recent false positive racism alert",
+            "  clean #<id>, clean <id>        - Clears Call #<id> due to a false positive racism alert",
+            "  forget                         - Prevents the most recent call from being counted as unanswered",
+            "  forget #<id>, forget <id>      - Prevents Call #<id> from being counted as unanswered",
             "Multiple call claim modification (mine/clean/forget)",
-            " - To claim multiple calls at once, just add the call numbers separated by commas",
-            "    ie mine 6,49,3,#4,1",
-            " - To claim multiple consecutive calls at once, specify a range using a dash (-)",
-            "    ie forget 5-#32",
+            "  - To claim multiple calls at once, just add the call numbers separated by commas",
+            "     ie mine 6,49,3,#4,1",
+            "  - To claim multiple consecutive calls at once, specify a range using a dash (-)",
+            "     ie forget 5-#32",
             "New Player commands:",
-            " on that                        - Claims the most recent new player call",
-            " ihave                          - Claims the most recent new player call but does not affect stats",
-            " ihave <Player>                 - Claims the <Player> but does not affect stats (doesn't have to be in !newbs)",
-            " !false                         - Falsifies the last new player alert so that it won't affect stats",
-            " !false <Player>                - Falsifies all new player alerts for <Player> (doesn't have to be in !newbs)",
-            " !newbs                         - Lists recent new player alerts and claimer information",
-            " !newbs <num>                   - Lists the last <nuM> new player alerts and claimer information"            
+            "  on that                        - Claims the most recent new player call",
+            "  ihave                          - Claims the most recent new player call but does not affect stats",
+            "  ihave <Player>                 - Claims the <Player> but does not affect stats (doesn't have to be in !newbs)",
+            "  !false                         - Falsifies the last new player alert so that it won't affect stats",
+            "  !false <Player>                - Falsifies all new player alerts for <Player> (doesn't have to be in !newbs)",
+            "  !newbs                         - Lists recent new player alerts and claimer information",
+            "  !newbs <num>                   - Lists the last <nuM> new player alerts and claimer information"            
         };
         m_botAction.smartPrivateMessageSpam(playerName, helpText);
     }
