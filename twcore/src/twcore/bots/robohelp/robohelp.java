@@ -546,9 +546,9 @@ public class robohelp extends SubspaceBot {
             lastNewPlayerName = player;
             newbs.add(newb);
             newbHistory.put(player.toLowerCase(), newb);
-            newbNames.addElement(player.toLowerCase());
-            if (newbNames.size() > 20)
-                newbHistory.remove(newbNames.remove(0).toLowerCase());
+            newbNames.add(0, player.toLowerCase());
+            while (newbNames.size() > 20)
+                newbHistory.remove(newbNames.remove(20).toLowerCase());
             m_botAction.sendChatMessage(2, message + "   [Use 'on that' to claim]");
             m_botAction.sendChatMessage(3, message + " ");
         }
@@ -1558,7 +1558,7 @@ public class robohelp extends SubspaceBot {
 
             m_botAction.sendSmartPrivateMessage(name, "Last " + num + " new player alerts:");
             for (int i = 0; i < num; i++) {
-                NewPlayer newb = newbHistory.get(newbNames.elementAt(i).toLowerCase());
+                NewPlayer newb = newbHistory.get(newbNames.get(i).toLowerCase());
                 String m = "";
                 m += "" + newb.name + " - ";
                 if (newb.taken == NewPlayer.FREE) 
