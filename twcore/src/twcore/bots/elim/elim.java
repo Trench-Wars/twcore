@@ -321,7 +321,7 @@ public class elim extends SubspaceBot {
         else {
             ElimPlayer ep = check(name);
             ba.sendSmartPrivateMessage(name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
-            if (game.state != Game.GAME_IN_PROGRESS && game.state != Game.TEN_SECONDS && ep.ship > 0)
+            if (!game.isInProgress() && ep.ship > 0)
                 elimers.put(name.toLowerCase(), ep);
         }
 
@@ -376,8 +376,8 @@ public class elim extends SubspaceBot {
         if (game.state != Game.GAME_IN_PROGRESS || killerName == null || killeeName == null)
             return;
         
-        ElimPlayer killer = players.get(killerName.toLowerCase());
-        ElimPlayer killee = players.get(killeeName.toLowerCase());
+        ElimPlayer killer = elimers.get(killerName.toLowerCase());
+        ElimPlayer killee = elimers.get(killeeName.toLowerCase());
         if (killer == null || killer == null) {
             if (killer == null) {
                 ba.specWithoutLock(killerName);
@@ -511,6 +511,29 @@ public class elim extends SubspaceBot {
     }
     
     // Bot functions
+    private void doFixList() {
+        TreeMap<String, ElimPlayer> copy = new TreeMap<String, ElimPlayer>();
+        Iterator<Player> i = ba.getPlayingPlayerIterator();
+        while (i.hasNext()) {
+            Player p = i.next();
+            String name = ba.getPlayerName(p.getPlayerID());
+            if (name == null || name.length() < 1)
+                continue;
+            
+            if (elimers.containsKey(name.toLowerCase())) {
+                copy.put(name.toLowerCase(), elimers.remove(name.toLowerCase()));
+            } else {
+                copy.put(name.toLowerCase(), check(name));
+            }
+        }
+
+        for (String n : elimers.keySet()) {
+            elimers.remove(n);
+            ba.specWithoutLock(n);
+        }
+        
+        elimers = copy;
+    }
 
     /**
      * Checks to see if there are enough players to begin a game
@@ -519,6 +542,10 @@ public class elim extends SubspaceBot {
     public void doWaitingForPlayers() {
         game.state = Game.WAITING_FOR_PLAYERS;
         ba.toggleLocked();
+
+        if (ba.getNumPlaying() != elimers.size())
+            doFixList();
+        
         int needs = cfg_minPlayers - elimers.size();
         if (needs <= 0) {
             if (cfg_zone == ON)
