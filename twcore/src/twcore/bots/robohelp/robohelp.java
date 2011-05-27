@@ -541,20 +541,21 @@ public class robohelp extends SubspaceBot {
             }
             m_botAction.SQLClose(alerts);
         } catch (Exception e ) { Tools.printLog( "Could not insert new player alert record." ); }
-        if (send) {
+        if (send && !lastNewPlayerName.equalsIgnoreCase(player)) {
             NewPlayer newb = new NewPlayer(player);
             lastNewPlayerName = player;
             newbs.add(newb);
             newbHistory.put(player.toLowerCase(), newb);
             newbNames.add(0, player.toLowerCase());
+
             while (newbNames.size() > 20)
                 newbHistory.remove(newbNames.remove(20).toLowerCase());
             m_botAction.sendChatMessage(2, message + "   [Use 'on that' to claim]");
             m_botAction.sendChatMessage(3, message + " ");
+            for (String n : alert)
+                m_botAction.sendSmartPrivateMessage(n, message + " ");      
         }
-        
-        for (String n : alert)
-            m_botAction.sendSmartPrivateMessage(n, message + " ");        
+          
     }
     
     public void toggleAlert(String name, String msg) {
