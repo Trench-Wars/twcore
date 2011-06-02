@@ -38,7 +38,6 @@ import twcore.core.util.ipc.IPCMessage;
 
 public class robohelp extends SubspaceBot {
     public static final String ALERT_CHAT = "training"; // chat that the new player alerts get sent to
-    public static final String ALERT_CHAT2 = "ssbrvision"; // chat that the new player alerts get sent to
     
     static int TIME_BETWEEN_ADS = 390000;//6.5 * 60000;
     public static final int CALL_INTERVAL = 10;
@@ -310,7 +309,7 @@ public class robohelp extends SubspaceBot {
 
     public void handleEvent( LoggedOn event ){
         m_botAction.joinArena( "#robopark" );
-        m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + ALERT_CHAT + "," + ALERT_CHAT2 );
+        m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Staff Chat" ) + "," + ALERT_CHAT);
         m_botAction.sendUnfilteredPublicMessage( "?blogin " + m_botSettings.getString( "Banpassword" ) );
         m_botAction.ipcSubscribe(ZONE_CHANNEL);
     }
@@ -551,7 +550,6 @@ public class robohelp extends SubspaceBot {
             while (newbNames.size() > 20)
                 newbHistory.remove(newbNames.remove(20).toLowerCase());
             m_botAction.sendChatMessage(2, message + "   [Use 'on that' to claim]");
-            m_botAction.sendChatMessage(3, message + " ");
             for (String n : alert)
                 m_botAction.sendSmartPrivateMessage(n, message + " ");      
         }
