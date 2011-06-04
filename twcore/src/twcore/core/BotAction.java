@@ -3509,6 +3509,19 @@ public class BotAction
         }
         return m_botSession.getCoreData().getBotConfig(botName);
     }
+    
+    /**
+     * Gets a BotSettings path FILE for this bot (from botname.cfg, where botname
+     * is the main class name of the bot).
+     * @return A File object containing the bot's .cfg
+     */  
+    public File getBotSettingsPath() {
+        String botName = m_botSession.getBotClass().getName();
+        if (botName.indexOf(".") != -1 ) {
+            botName = botName.substring(botName.lastIndexOf(".") + 1);
+        }
+        return m_botSession.getCoreData().getBotConfigFile(botName);        
+    }
 
     /**
      * Gets the Ship object for this bot, which allows you to control the bot

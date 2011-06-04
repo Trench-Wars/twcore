@@ -156,4 +156,22 @@ public class CoreData {
             return new BotSettings( botConfig );
         }
     }
+
+    /**
+     * Given the class name of a bot, return its associated cfg file.
+     * If unable to find a configuration file, return null.
+     * @param botType Class name of the bot to retrieve the CFG of
+     * @return BotSettings containing the CFG information (null if CFG not found)
+     */
+    public File getBotConfigFile( String botType ){
+        botType = botType.trim().toLowerCase();
+        File botBase = new File( m_generalSettings.getString( "Core Location" ) + "/twcore/bots" );
+        File botConfig = Tools.getRecursiveFileInDirectory( botBase, botType + ".cfg" );
+
+        if( botConfig == null ){
+            return null;
+        } else {
+            return botConfig;
+        }
+    }
 }
