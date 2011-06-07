@@ -1542,6 +1542,7 @@ public class robohelp extends SubspaceBot {
     }
     
     public void handleNewbs(String name, String msg) {
+        DateFormat t = new SimpleDateFormat("HH:mm");
         int num = 5;
         if (msg.length() > 0) {
             try {
@@ -1558,7 +1559,7 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Last " + num + " new player alerts:");
             for (int i = 0; i < num; i++) {
                 NewPlayer newb = newbHistory.get(newbNames.get(i).toLowerCase());
-                String m = "";
+                String m = "" + t.format(newb.getTime()) + " ";
                 m += "" + newb.name + " - ";
                 if (newb.taken == NewPlayer.FREE) 
                     m += "[MISSED]";
