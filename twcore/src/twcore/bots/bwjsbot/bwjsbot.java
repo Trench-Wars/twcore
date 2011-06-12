@@ -3710,7 +3710,8 @@ public class bwjsbot extends SubspaceBot {
                                 out("out of border");
                             } else {
                                 p_ship[p_currentShip][DEATHS]++;
-                                m_botAction.sendArenaMessage(p_name + " has been given 1 death for being out of base too long.");                                
+                                m_botAction.sendArenaMessage(p_name + " has been given 1 death for being out of base too long.");
+                                resetOutOfBorderTime();                                
                             }
                         }
                     }
