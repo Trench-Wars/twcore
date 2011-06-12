@@ -3701,13 +3701,18 @@ public class bwjsbot extends SubspaceBot {
                     
                     if (p_outOfBorderTime == (cfg.getOutOfBorderTime() / 2) && !p_outOfBorderWarning) {
                         m_botAction.sendPrivateMessage(p_name, "Go to base! You have " + p_outOfBorderTime +
-                              " seconds before you'll get removed from the game!", Tools.Sound.BEEP3);
+                              " seconds before you'll get a +1 death added!", Tools.Sound.BEEP3);
                         p_outOfBorderWarning = true;
                     } else if (p_outOfBorderTime <= 0) {
                         if (cfg.getMaxDeaths() != 0) {
-                            p_ship[p_currentShip][DEATHS] = cfg.getMaxDeaths();
+                            if (p_ship[p_currentShip][DEATHS] == cfg.getMaxDeaths() - 1) {
+                                p_ship[p_currentShip][DEATHS] = cfg.getMaxDeaths();
+                                out("out of border");
+                            } else {
+                                p_ship[p_currentShip][DEATHS]++;
+                                m_botAction.sendArenaMessage(p_name + " has been given 1 death for being out of base too long.");                                
+                            }
                         }
-                        out("out of border");
                     }
                 }
             }
