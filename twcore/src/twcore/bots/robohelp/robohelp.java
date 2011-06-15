@@ -1388,7 +1388,7 @@ public class robohelp extends SubspaceBot {
             }
         }
         
-        if (opList.isBotExact(name))
+        if (!name.equals(m_botAction.getBotName()) && opList.isBotExact(name))
             return;
         
         if (id > -1 && !helpList.containsKey(id)) {
