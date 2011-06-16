@@ -546,6 +546,11 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
+            if (m_botAction.getOperatorList().isBotExact(p.getPlayerName())) {
+                m_botAction.sendPrivateMessage(name, "Bots don't make for very good players :(");
+                return;                
+            }
+            
             p_lc = p.getPlayerName().toLowerCase();
             
             /* Check if p is a bot */
