@@ -50,6 +50,7 @@ public class PubStatsPlayer {
     private long lastSave;
     private boolean scorereset = false;
     private boolean periodReset = false;
+    private boolean inArena = false;
     
     private String countryCode = null;
     
@@ -89,6 +90,7 @@ public class PubStatsPlayer {
 	}
 	public void seen() {
 	    this.lastSeen = System.currentTimeMillis();
+        inArena = true;
 	}
 	
 	public void shipchange(short newShip) {
@@ -502,6 +504,21 @@ public class PubStatsPlayer {
      */
     public long getLastSeen() {
         return lastSeen;
+    }
+    
+    /**
+     * @param here true if the player is still in the arena 
+     *             (has not left) false after PlayerLeft event
+     */
+    public void setStatus(boolean here) {
+        inArena = here;
+    }
+    
+    /**
+     * @return true if the player has not left the arena or is still in the arena
+     */
+    public boolean inArena() {
+        return inArena;
     }
 
     /* (non-Javadoc)
