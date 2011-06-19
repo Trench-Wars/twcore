@@ -79,7 +79,7 @@ public class whobot extends SubspaceBot {
         locating = "";
         debugger = "WingZero";
         DEBUG = true;
-        String[] nogos = ba.getBotSettings().getString("NoGoArenas").split(",");
+        String[] nogos = ba.getBotSettings().getString("NoGoArenas").split(" ");
         for (String n : nogos)
             nogo.add(n);
     }
