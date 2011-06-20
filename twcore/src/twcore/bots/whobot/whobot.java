@@ -29,9 +29,9 @@ public class whobot extends SubspaceBot {
     
     private static final String IPC = "whoonline";
     private static final long CHECK_TIME = 3 * Tools.TimeInMillis.MINUTE; // ms
-    private static final long IDLE_TIME = 1 * Tools.TimeInMillis.MINUTE; // ms
+    private static final long IDLE_TIME = 4 * Tools.TimeInMillis.MINUTE; // ms
     private static final long LOCATE_WAIT = 3 * Tools.TimeInMillis.SECOND; // ms
-    private static final long GO_TIME = 10 * Tools.TimeInMillis.SECOND;
+    private static final long GO_TIME = 20 * Tools.TimeInMillis.SECOND;
     private static final String PUBBOT = "TW-Guard";
     private static final String WHOHUB = "TWChat";
     private static final String HOME = "#robopark";
