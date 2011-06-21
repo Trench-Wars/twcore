@@ -28,13 +28,15 @@ import twcore.core.util.ipc.IPCMessage;
 public class whobot extends SubspaceBot {
     
     private static final String IPC = "whoonline";
-    private static final long CHECK_TIME = 3 * Tools.TimeInMillis.MINUTE; // ms
+    private static final long CHECK_TIME = 1 * Tools.TimeInMillis.MINUTE; // ms
     private static final long IDLE_TIME = 4 * Tools.TimeInMillis.MINUTE; // ms
     private static final long LOCATE_WAIT = 3 * Tools.TimeInMillis.SECOND; // ms
     private static final long GO_TIME = 20 * Tools.TimeInMillis.SECOND;
+    private static final long GO_DELAY = 60 * Tools.TimeInMillis.SECOND;
     private static final String PUBBOT = "TW-Guard";
     private static final String WHOHUB = "TWChat";
     private static final String HOME = "#robopark";
+    private static final int MAX_SPAM = 5;
     
     public BotAction ba;
     public OperatorList ops;
@@ -48,6 +50,7 @@ public class whobot extends SubspaceBot {
     
     private Vector<String> arenaQueue;
     
+    private int arenas;
     private String locating;
     // true if roaming arenas
     private boolean roaming;
@@ -55,6 +58,7 @@ public class whobot extends SubspaceBot {
     private boolean start;
     // true if the bot is stopped
     private boolean stop;
+    private boolean dcWait;
     private TimerTask wait;
     // checks for *locate to return or next 
     private TimerTask locate;
@@ -73,9 +77,11 @@ public class whobot extends SubspaceBot {
         arenaQueue = new Vector<String>();
         locateQueue = new Vector<String>();
         
+        arenas = 0;
         start = true;
         stop = false;
         roaming = false;
+        dcWait = false;
         locating = "";
         debugger = "WingZero";
         DEBUG = true;
@@ -91,22 +97,43 @@ public class whobot extends SubspaceBot {
         er.request(EventRequester.ARENA_JOINED);
         er.request(EventRequester.ARENA_LIST);
         er.request(EventRequester.MESSAGE);
+        ba.sendUnfilteredPublicMessage("?chat=robodev");
     }
 
     public void handleEvent(ArenaJoined event) {
+        if (!ba.getArenaName().equalsIgnoreCase(HOME))
+            arenas++;
         processPlayers();
-        if (start && ba.getArenaName().equalsIgnoreCase(HOME)) {
-            debug("Starting..");
-            start = false;
-            ba.requestArenaList();
+        if (ba.getArenaName().equalsIgnoreCase(HOME)) {
+            if (start) {
+                debug("Starting..");
+                start = false;
+                ba.requestArenaList();
+            } else if (dcWait) {
+                dcWait = false;
+                go = new TimerTask() {
+                    public void run() {
+                        if (!arenaQueue.isEmpty()) {
+                            ba.changeArena(arenaQueue.remove(0));
+                        } else {
+                            roaming = false;
+                            ba.changeArena(HOME);
+                        }
+                    }
+                };
+                ba.scheduleTask(go, GO_DELAY);
+            }
         } else if (roaming) {
             debug("Roaming true, processing players..");
             go = new TimerTask() {
                 public void run() {
                     String arena = HOME;
                     if (!arenaQueue.isEmpty()) {
-                        // go to next arena
-                        arena = arenaQueue.remove(0);
+                        if (arenas < MAX_SPAM) {
+                            // go to next arena
+                            arena = arenaQueue.remove(0);
+                        } else
+                            dcWait = true;
                     } else 
                         roaming = false;
                     ba.changeArena(arena);
@@ -182,8 +209,12 @@ public class whobot extends SubspaceBot {
                 die(name);
             else if (msg.equals("!pro"))
                 processPlayers();
-        } else 
+            else
+                ba.sendChatMessage(name + " said: " + msg);
+        } else {
+            ba.sendChatMessage(name + " said: " + msg);
             ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
+        }
     }
     
     public void handleEvent(InterProcessEvent event) {
