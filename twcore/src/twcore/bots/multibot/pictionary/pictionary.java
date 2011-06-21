@@ -409,7 +409,7 @@ public class pictionary extends MultiModule {
                 randomPlayerBag.add(addPlayerName);
             }
             addPlayerName = randomPlayerBag.grabAndRemove();
-            if (!addPlayerName.equals(m_botAction.getBotName()) && !notPlaying.contains(addPlayerName))
+            if (!m_botAction.getOperatorList().isBotExact(addPlayerName) && !addPlayerName.equals(m_botAction.getBotName()) && !notPlaying.contains(addPlayerName))
                 curArtist = addPlayerName;
             else
                 pickPlayer();
