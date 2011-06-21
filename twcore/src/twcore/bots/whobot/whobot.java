@@ -111,6 +111,7 @@ public class whobot extends SubspaceBot {
                 ba.requestArenaList();
             } else if (dcWait) {
                 dcWait = false;
+                arenas = 0;
                 go = new TimerTask() {
                     public void run() {
                         if (!arenaQueue.isEmpty()) {
