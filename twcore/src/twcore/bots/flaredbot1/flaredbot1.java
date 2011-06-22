@@ -285,8 +285,8 @@ public class flaredbot1 extends SubspaceBot {
 		}
 		else {
 			m_botAction.sendArenaMessage("Score: " + freq0Score + " - " + freq1Score);
-			m_botAction.warpFreqToLocation(0,477,454);
-			m_botAction.warpFreqToLocation(1,543,454);
+			m_botAction.warpFreqToLocation(0,477,512);
+			m_botAction.warpFreqToLocation(1,543,512);
 			m_botAction.shipResetAll();
 			m_botAction.resetFlagGame();
 			dropBall();
@@ -306,11 +306,11 @@ public class flaredbot1 extends SubspaceBot {
         s.setFreq(1234);
         final TimerTask drop = new TimerTask() {
             public void run() {
-                m_botAction.getShip().move(512*16, 512*16);
+                m_botAction.getShip().move(512*16, 557*16);
                 m_botAction.getShip().sendPositionPacket();
                 try { Thread.sleep(75); } catch (InterruptedException e) {}
                 m_botAction.getBall(ball.getBallID(), (int)ball.getTimeStamp());
-                m_botAction.getShip().move(511*16, 455*16);
+                m_botAction.getShip().move(512*16, 512*16);
                 m_botAction.getShip().sendPositionPacket();
                 try { Thread.sleep(75); } catch (InterruptedException e) {}
             }
