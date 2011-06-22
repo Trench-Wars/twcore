@@ -1,6 +1,5 @@
 package twcore.core;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -84,6 +83,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList", accessRequired );
         m_commandInterpreter.registerCommand( "!billerdown", acceptedMessages, this, "handleBillerDownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "displayListBots", accessRequired );
+        m_commandInterpreter.registerCommand( "!totalbots", acceptedMessages, this, "handleTotalBots", accessRequired );
         // Moderator+
         m_commandInterpreter.registerCommand( "!uptime", acceptedMessages, this, "handleUptimeCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!dbstatus", acceptedMessages, this, "handleDbStatus", accessRequired );
@@ -107,6 +107,7 @@ public class HubBot extends SubspaceBot {
         accessRequired = OperatorList.SYSOP_LEVEL;
         m_commandInterpreter.registerCommand( "!forcespawn", acceptedMessages, this, "handleForceSpawnMessage", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdowncore", acceptedMessages, this, "handleShutdownCommand", accessRequired );
+        m_commandInterpreter.registerCommand( "!sdc", acceptedMessages, this, "handleShutdownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!smartshutdown", acceptedMessages, this, "handleSmartShutdownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdownidlebots", acceptedMessages, this, "handleShutdownIdleBotsCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdownallbots", acceptedMessages, this, "handleShutdownAllBotsCommand", accessRequired );
@@ -262,6 +263,15 @@ public class HubBot extends SubspaceBot {
      */
     public void handleInvalidMessage( String messager, String message ){
         m_botAction.sendChatMessage( 1, messager + " said this: " + message );
+    }
+    
+    /**
+     * Gets the total number of bots currently logged in under this core
+     * @param messager Name of the player who sent the message
+     * @param message Text of the message
+     */
+    public void handleTotalBots( String messager, String message ) {
+        m_botAction.sendSmartPrivateMessage(messager, "Total: " + m_botQueue.getTotalBotCount());
     }
 
     /**
@@ -955,11 +965,6 @@ public class HubBot extends SubspaceBot {
     	BotSettings botInfo = m_botAction.getCoreData().getBotConfig(bottype);
     	Integer maxBots = botInfo.getInteger("Max Bots");
     	
-    	if( botInfo == null ){
-            m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + message + ".  Invalid bot type or missing CFG file." );
-            m_botAction.sendSmartPrivateMessage( messager, "That bot type does not exist, or the CFG file for it is missing." );
-            return;
-        }
     	if( maxBots == null ){
             m_botAction.sendChatMessage( 1, messager + " tried to spawn bot of type " + message + ".  Invalid settings file. (MaxBots improperly defined)" );
             m_botAction.sendSmartPrivateMessage( messager, "The CFG file for that bot type is invalid. (MaxBots improperly defined)" );

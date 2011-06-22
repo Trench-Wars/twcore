@@ -182,6 +182,17 @@ public class BotQueue extends Thread {
             }
         }
     }
+    
+    /**
+     * Returns the total number of bots spawned and active from this core
+     * @return Total number of bots logged on
+     */
+    int getTotalBotCount() {
+        int t = 0;
+        for (Integer i : m_botTypes.values())
+            t += i;
+        return t;
+    }
 
     /**
      * Returns the next free bot number of a class of bots, given the bot's
