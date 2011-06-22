@@ -695,6 +695,32 @@ public class Arena {
     // *** PLAYER OBJECT UPDATING ***
 
     /**
+     * Dedicates all position updates to one freq for a short period of time
+     * so as to obtain stronger reliable position information.
+     * @param freqID Frequency of the players to track
+     */
+    public void addFreqToTracker( Integer freq ) {
+        synchronized(m_tracker) {
+            m_tracker.clear();
+            for (Integer p : m_frequencyList.get(freq).keySet())
+                m_tracker.add(p);
+        }
+    }
+    
+    /**
+     * After tampering with the tracker elements this will re-add all
+     * the players in the arena back into the tracker.
+     */
+    public void resetPlayerTracker() {
+        synchronized(m_tracker) {
+            m_tracker.clear();
+            for (Integer p : m_playerList.keySet())
+                m_tracker.add(p);
+        }
+    }
+    
+    
+    /**
      * Adds a playing player into the tracker queue to be spectated by the bot
      * and receive position packets from.  Can be used to force the player to
      * the back of the queue.

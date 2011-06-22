@@ -1225,14 +1225,6 @@ public class BotAction
         sendUnfilteredPrivateMessage(playerName, "*setfreq " + freqNum);
     }
 
-    /**
-     * Warps a player to the given tile coordinates.  Exact positioning is not
-     * offered by this command, operating on the 1 to 1024 scheme rather than
-     * the more accurate 1 to 16384 (scale of 16).  512,512 is nearly center.
-     * @param playerID PlayerID of the player to be warped
-     * @param xTiles X coordinate (1 to 1024)
-     * @param yTiles Y coordinate (1 to 1024)
-     */
     
     /**
      * Splits a frequence in two teams & warps each team to a location. Example:
@@ -1283,6 +1275,14 @@ public class BotAction
 
   	}
 
+    /**
+     * Warps a player to the given tile coordinates.  Exact positioning is not
+     * offered by this command, operating on the 1 to 1024 scheme rather than
+     * the more accurate 1 to 16384 (scale of 16).  512,512 is nearly center.
+     * @param playerID PlayerID of the player to be warped
+     * @param xTiles X coordinate (1 to 1024)
+     * @param yTiles Y coordinate (1 to 1024)
+     */
     public void warpTo(int playerID, int xTiles, int yTiles)
     {
         sendUnfilteredPrivateMessage(playerID, "*warpto " + xTiles + " " + yTiles);
@@ -1364,6 +1364,14 @@ public class BotAction
         int id = getPlayerID( playerName );
         if( id != -1 )
             spectatePlayer( id );
+    }
+    
+    public void focusFreqUpdate(Integer freq) {
+        m_arenaTracker.addFreqToTracker(freq);
+    }
+    
+    public void resetPlayerTracker() {
+        m_arenaTracker.resetPlayerTracker();
     }
 
     /**
