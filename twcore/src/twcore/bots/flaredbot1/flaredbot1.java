@@ -236,8 +236,6 @@ public class flaredbot1 extends SubspaceBot {
 	public void startGame(String name, String msg) {
 		if(oplist.isER(name)) {
 			m_botAction.sendArenaMessage("Get ready, game will start in 10 seconds.",1);
-			m_botAction.warpFreqToLocation(0,477,454);
-			m_botAction.warpFreqToLocation(1,543,454);
 			TimerTask t = new TimerTask() {
 				public void run() {
 					runGame();
