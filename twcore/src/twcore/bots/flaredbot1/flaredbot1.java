@@ -269,8 +269,8 @@ public class flaredbot1 extends SubspaceBot {
 		flag3owner = -1;
 		*/
 		m_botAction.shipResetAll();
-		m_botAction.warpFreqToLocation(0,477,454);
-		m_botAction.warpFreqToLocation(1,543,454);
+		m_botAction.warpFreqToLocation(0,477,512);
+		m_botAction.warpFreqToLocation(1,543,512);
 		m_botAction.sendArenaMessage("GOGOGO!!!",104);		
 		m_botAction.scoreResetAll();
 		m_botAction.resetFlagGame();
