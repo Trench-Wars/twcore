@@ -32,7 +32,7 @@ public class whobot extends SubspaceBot {
     private static final long IDLE_TIME = 4 * Tools.TimeInMillis.MINUTE; // ms
     private static final long LOCATE_WAIT = 3 * Tools.TimeInMillis.SECOND; // ms
     private static final long GO_TIME = 20 * Tools.TimeInMillis.SECOND;
-    private static final long GO_DELAY = 60 * Tools.TimeInMillis.SECOND;
+    private static final long GO_DELAY = 120 * Tools.TimeInMillis.SECOND;
     private static final String PUBBOT = "TW-Guard";
     private static final String WHOHUB = "TWChat";
     private static final String HOME = "#robopark";
@@ -110,6 +110,7 @@ public class whobot extends SubspaceBot {
                 start = false;
                 ba.requestArenaList();
             } else if (dcWait) {
+                debug("Returning home to prevent a potential DC...");
                 dcWait = false;
                 arenas = 0;
                 go = new TimerTask() {
@@ -125,7 +126,6 @@ public class whobot extends SubspaceBot {
                 ba.scheduleTask(go, GO_DELAY);
             }
         } else if (roaming) {
-            debug("Roaming true, processing players..");
             go = new TimerTask() {
                 public void run() {
                     String arena = HOME;
@@ -167,16 +167,13 @@ public class whobot extends SubspaceBot {
                 arenaQueue.add(a);
         }
         roaming = true;
-        String msg = "Arenas: ";
-        for (String a : arenaQueue)
-            msg += a + " ";
         go = new TimerTask() {
             public void run() {
                 ba.changeArena(arenaQueue.remove(0));
             }
         };
         ba.scheduleTask(go, GO_TIME);
-        debug("Arena list received and initiating roaming. " + msg);
+        debug("Arena list received and initiating roaming. ");
     }
     
     public void handleEvent(Message event) {
@@ -212,9 +209,10 @@ public class whobot extends SubspaceBot {
                 processPlayers();
             else
                 ba.sendChatMessage(name + " said: " + msg);
-        } else {
+        } else if (isNotBot(name)){
             ba.sendChatMessage(name + " said: " + msg);
-            ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
+            if (ba.getArenaName().contains("#"))
+                ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
         }
     }
     
