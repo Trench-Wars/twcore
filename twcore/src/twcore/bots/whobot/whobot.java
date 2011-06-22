@@ -59,7 +59,7 @@ public class whobot extends SubspaceBot {
     
     private Vector<String> arenaQueue;
     
-    private int arenas;
+    private int arenaCount;
     private String locating;
     private TimerTask wait;
     // checks for *locate to return or next 
@@ -79,7 +79,7 @@ public class whobot extends SubspaceBot {
         arenaQueue = new Vector<String>();
         locateQueue = new Vector<String>();
         
-        arenas = 0;
+        arenaCount = 0;
         status = STARTING;
         locating = "";
         debugger = "WingZero";
@@ -101,21 +101,20 @@ public class whobot extends SubspaceBot {
 
     public void handleEvent(ArenaJoined event) {
         boolean home = ba.getArenaName().equalsIgnoreCase(HOME);
-        if (!home)
-            arenas++;
         processPlayers();
         if (status == STARTING && home) {
             debug("Starting..");
             status = IDLE;
             ba.requestArenaList();
-        } else if (status == ROAMING && home) {
-            status = PAUSED;
+        } else if (status == PAUSED && home) {
+            // if PAUSED then reached arenaCount so reset and roam after delay
             debug("Returning home to prevent a potential DC...");
-            arenas = 0;
+            arenaCount = 0;
             go = new TimerTask() {
                 public void run() {
                     if (!arenaQueue.isEmpty()) {
                         status = ROAMING;
+                        arenaCount++;
                         ba.changeArena(arenaQueue.remove(0));
                     } else {
                         status = IDLE;
@@ -126,22 +125,24 @@ public class whobot extends SubspaceBot {
             ba.scheduleTask(go, GO_DELAY);
             startLocate();
         } else if (status == ROAMING) {
+            // arena to arena method used when ROAMING
             go = new TimerTask() {
                 public void run() {
                     String arena = HOME;
                     if (!arenaQueue.isEmpty()) {
-                        if (arenas < MAX_SPAM) {
-                            // go to next arena
+                        if (arenaCount < MAX_SPAM) {
+                            // go to next arena and stay roaming
+                            arenaCount++;
                             arena = arenaQueue.remove(0);
                         } else
-                            status = PAUSED;
+                            status = PAUSED; // reached max consecutive arenas so return home and PAUSE
                     } else 
-                        status = IDLE;
+                        status = IDLE; // out of arenas to visit so IDLE at home
                     ba.changeArena(arena);
                 }
             };
             ba.scheduleTask(go, GO_TIME);
-        } else {
+        } else if (status == IDLE){
             wait = new TimerTask() {
                 public void run() {
                     debug("Requesting arena list.");
@@ -155,6 +156,7 @@ public class whobot extends SubspaceBot {
     }
     
     public void handleEvent(ArenaList event) {
+        arenaQueue.clear();
         Map<String, Integer> arenas = event.getArenaList();
         for (String a : arenas.keySet()) {
             if (!a.equalsIgnoreCase(HOME) && !Tools.isAllDigits(a) && ((arenas.get(a) < 3 && !nogo.contains(a.toLowerCase()) || a.contains("#"))))
@@ -163,9 +165,10 @@ public class whobot extends SubspaceBot {
         go = new TimerTask() {
             public void run() {
                 status = ROAMING;
-                if (!arenaQueue.isEmpty())
+                if (!arenaQueue.isEmpty()) {
+                    arenaCount++;
                     ba.changeArena(arenaQueue.remove(0));
-                else {
+                } else {
                     status = IDLE;
                     ba.changeArena(HOME);
                 }
@@ -378,7 +381,7 @@ public class whobot extends SubspaceBot {
     }
     
     private void status(String name) {
-        String msg = "Currently " + getStatus() + " in " + ba.getArenaName() + " | Queues: Locate=" + locateQueue.size() + " Arena=" + arenaQueue.size() + " with " + (MAX_SPAM-arenas) + " until pause";
+        String msg = "Currently " + getStatus() + " in " + ba.getArenaName() + " | Queues: Locate=" + locateQueue.size() + " Arena=" + arenaQueue.size() + " with " + (MAX_SPAM-arenaCount) + " until pause";
         ba.sendSmartPrivateMessage(name, msg);
     }
     
