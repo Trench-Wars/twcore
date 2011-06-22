@@ -7,10 +7,10 @@ import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.LoggedOn;
-import twcore.core.events.FlagClaimed;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.SoccerGoal;
+import twcore.core.game.Ship;
 
 /**
  * This class runs the BallGame event. Two teams trying to score on their enemy's
@@ -69,7 +69,8 @@ public class flaredbot1 extends SubspaceBot {
 	 * Joins #newtwfd arena.
 	 */
 	public void handleEvent(LoggedOn event) {
-        m_botAction.joinArena("attack");
+        m_botAction.joinArena("diak2");
+
 	}
 	
 	/**
@@ -218,8 +219,8 @@ public class flaredbot1 extends SubspaceBot {
 	public void startGame(String name, String msg) {
 		if(oplist.isER(name)) {
 			m_botAction.sendArenaMessage("Get ready, game will start in 30 seconds.",1);
-			m_botAction.warpFreqToLocation(0,306,512);
-			m_botAction.warpFreqToLocation(1,684,512);
+			m_botAction.warpFreqToLocation(0,477,454);
+			m_botAction.warpFreqToLocation(1,543,454);
 			TimerTask t = new TimerTask() {
 				public void run() {
 					runGame();
@@ -243,11 +244,12 @@ public class flaredbot1 extends SubspaceBot {
 		flag3owner = -1;
 		*/
 		m_botAction.shipResetAll();
-		m_botAction.warpFreqToLocation(0,477,511);
-		m_botAction.warpFreqToLocation(1,543,511);
+		m_botAction.warpFreqToLocation(0,477,454);
+		m_botAction.warpFreqToLocation(1,543,454);
 		m_botAction.sendArenaMessage("GOGOGO!!!",104);		
 		m_botAction.scoreResetAll();
 		m_botAction.resetFlagGame();
+		dropBall();
 		//m_botAction.setDoors(255);
 
 	}
@@ -268,10 +270,11 @@ public class flaredbot1 extends SubspaceBot {
 		}
 		else {
 			m_botAction.sendArenaMessage("Score: " + freq0Score + " - " + freq1Score);
-			m_botAction.warpFreqToLocation(0,477,511);
-			m_botAction.warpFreqToLocation(1,543,511);
+			m_botAction.warpFreqToLocation(0,477,454);
+			m_botAction.warpFreqToLocation(1,543,454);
 			m_botAction.shipResetAll();
 			m_botAction.resetFlagGame();
+			dropBall();
 			/*
 			m_botAction.setDoors(255);			 
 			flag0owner = -1;
@@ -280,6 +283,20 @@ public class flaredbot1 extends SubspaceBot {
 			flag3owner = -1;
 			*/
 		}
+	}
+	
+	public void dropBall() {
+		m_botAction.getShip().sendPositionPacket();
+		Ship s = m_botAction.getShip();
+		s.setShip(2);
+		m_botAction.getShip().sendPositionPacket();
+		s.move(512*16, 512*16);
+		m_botAction.getShip().sendPositionPacket();
+		s.move(511*16, 455*16);
+		m_botAction.getShip().sendPositionPacket();
+		s.setShip(8);
+		
+		
 	}
 }
 
