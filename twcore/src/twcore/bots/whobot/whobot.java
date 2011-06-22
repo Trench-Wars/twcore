@@ -37,6 +37,15 @@ public class whobot extends SubspaceBot {
     private static final String WHOHUB = "TWChat";
     private static final String HOME = "#robopark";
     private static final int MAX_SPAM = 5;
+
+    private static final int OFF = -1;
+    private static final int IDLE = 0;
+    private static final int STARTING = 1;
+    private static final int ROAMING = 2;
+    private static final int PAUSED = 3;
+    private static final int LOCATING = 4;
+    
+    private int status = -1;
     
     public BotAction ba;
     public OperatorList ops;
@@ -52,13 +61,6 @@ public class whobot extends SubspaceBot {
     
     private int arenas;
     private String locating;
-    // true if roaming arenas
-    private boolean roaming;
-    // true if the bot is starting up
-    private boolean start;
-    // true if the bot is stopped
-    private boolean stop;
-    private boolean dcWait;
     private TimerTask wait;
     // checks for *locate to return or next 
     private TimerTask locate;
@@ -78,10 +80,7 @@ public class whobot extends SubspaceBot {
         locateQueue = new Vector<String>();
         
         arenas = 0;
-        start = true;
-        stop = false;
-        roaming = false;
-        dcWait = false;
+        status = STARTING;
         locating = "";
         debugger = "WingZero";
         DEBUG = true;
@@ -101,31 +100,32 @@ public class whobot extends SubspaceBot {
     }
 
     public void handleEvent(ArenaJoined event) {
-        if (!ba.getArenaName().equalsIgnoreCase(HOME))
+        boolean home = ba.getArenaName().equalsIgnoreCase(HOME);
+        if (!home)
             arenas++;
         processPlayers();
-        if (ba.getArenaName().equalsIgnoreCase(HOME)) {
-            if (start) {
-                debug("Starting..");
-                start = false;
-                ba.requestArenaList();
-            } else if (dcWait) {
-                debug("Returning home to prevent a potential DC...");
-                dcWait = false;
-                arenas = 0;
-                go = new TimerTask() {
-                    public void run() {
-                        if (!arenaQueue.isEmpty()) {
-                            ba.changeArena(arenaQueue.remove(0));
-                        } else {
-                            roaming = false;
-                            ba.changeArena(HOME);
-                        }
+        if (status == STARTING && home) {
+            debug("Starting..");
+            status = IDLE;
+            ba.requestArenaList();
+        } else if (status == ROAMING && home) {
+            status = PAUSED;
+            debug("Returning home to prevent a potential DC...");
+            arenas = 0;
+            go = new TimerTask() {
+                public void run() {
+                    if (!arenaQueue.isEmpty()) {
+                        status = ROAMING;
+                        ba.changeArena(arenaQueue.remove(0));
+                    } else {
+                        status = IDLE;
+                        ba.changeArena(HOME);
                     }
-                };
-                ba.scheduleTask(go, GO_DELAY);
-            }
-        } else if (roaming) {
+                }
+            };
+            ba.scheduleTask(go, GO_DELAY);
+            startLocate();
+        } else if (status == ROAMING) {
             go = new TimerTask() {
                 public void run() {
                     String arena = HOME;
@@ -134,9 +134,9 @@ public class whobot extends SubspaceBot {
                             // go to next arena
                             arena = arenaQueue.remove(0);
                         } else
-                            dcWait = true;
+                            status = PAUSED;
                     } else 
-                        roaming = false;
+                        status = IDLE;
                     ba.changeArena(arena);
                 }
             };
@@ -160,9 +160,9 @@ public class whobot extends SubspaceBot {
             if (!a.equalsIgnoreCase(HOME) && !Tools.isAllDigits(a) && ((arenas.get(a) < 3 && !nogo.contains(a.toLowerCase()) || a.contains("#"))))
                 arenaQueue.add(a);
         }
-        roaming = true;
         go = new TimerTask() {
             public void run() {
+                status = ROAMING;
                 ba.changeArena(arenaQueue.remove(0));
             }
         };
@@ -173,7 +173,7 @@ public class whobot extends SubspaceBot {
     public void handleEvent(Message event) {
         String msg = event.getMessage();
         
-        if (event.getMessageType() == Message.ARENA_MESSAGE && !stop) {
+        if (event.getMessageType() == Message.ARENA_MESSAGE && status != OFF) {
             if (locating.length() > 0 && msg.contains(" - ")) {
                 String found = msg.substring(0, msg.lastIndexOf(" - ")).toLowerCase();
                 if (locateQueue.remove(found)) {
@@ -190,7 +190,9 @@ public class whobot extends SubspaceBot {
         else if (event.getMessageType() == Message.PRIVATE_MESSAGE)
             name = ba.getPlayerName(event.getPlayerID());
         else return;
-        if (ops.isSmod(name) || ops.isDeveloperExact(name)) {
+        if (msg.equals("!about"))
+            about(name);
+        if (ops.isHighmod(name) || ops.isDeveloperExact(name)) {
             if (msg.equals("!stop"))
                 stop(name);
             else if (msg.equals("!start"))
@@ -203,6 +205,8 @@ public class whobot extends SubspaceBot {
                 processPlayers();
             else if (msg.equals("!help"))
                 sendHelp(name);
+            else if (msg.equals("!status"))
+                status(name);
             else
                 ba.sendChatMessage(name + " said: " + msg);
         } else if (isNotBot(name)){
@@ -212,20 +216,35 @@ public class whobot extends SubspaceBot {
         }
     }
     
+    private void about(String name) {
+        String[] msg = {
+                ",-------------------------| WhoBot |---------------------------+",
+                "|      Roaming bot that keeps track of what players are online |",
+                "| but in private or low population arenas. Synchronizes with   |",
+                "| TWChat bot keeping the online player list up to date. While  |",
+                "| idling, player information is updated using *locate.         |",
+                "`--------------------------------------------------------------+"
+        };
+        ba.smartPrivateMessageSpam(name, msg);
+    }
+    
     private void sendHelp(String name) {
         String[] msg = {
                 "+-WhoBot SMOD Commands--+",
-                " !stop      - Haults all processes, retracts player records and returns home",
-                " !start     - Starts all processes and begins roaming low population arenas",
-                " !debug     - Debug toggle sets/removes/hijacks the requester as the debugger",
-                " !pro       - Forces WhoBot to processs the players in the current arena"     
+                "!about     - What the hell is this bot and why is it in this arena?",
+                "!status    - Displays current process and statistical information",
+                "!debug     - Debug toggle sets/removes/hijacks the requester as the debugger",
+                "!stop      - Haults all processes, retracts player records and returns home",
+                "!start     - Starts all processes and begins roaming low population arenas",
+                "!pro       - Forces WhoBot to processs the players in the current arena",
+                "!die       - Retracts player information and logs off"
         };
         ba.smartPrivateMessageSpam(name, msg);
     }
     
     public void handleEvent(InterProcessEvent event) {
         // used to talk with TWChat
-        if (!event.getChannel().equals(IPC) || stop)
+        if (!event.getChannel().equals(IPC) || status == OFF)
             return;
         
         if (!event.getSenderName().equals(ba.getBotName()) && event.getObject() instanceof IPCEvent) {
@@ -258,7 +277,7 @@ public class whobot extends SubspaceBot {
     }
     
     public void processPlayers() {
-        if (stop)
+        if (status == OFF)
             ba.changeArena(HOME);
         debug("Starting player processing in " + ba.getArenaName());
         String test = ba.getFuzzyPlayerName("" + PUBBOT);
@@ -285,6 +304,7 @@ public class whobot extends SubspaceBot {
     }
     
     private void startLocate() {
+        status = LOCATING;
         debug("Locate processesing engaged...");
         long recent = System.currentTimeMillis() - CHECK_TIME;
         for (String n : online.keySet()) {
@@ -295,9 +315,11 @@ public class whobot extends SubspaceBot {
     }
     
     private void locateNext() {
-        if (locateQueue.isEmpty() || stop) {
+        if (locateQueue.isEmpty()) {
             debug("Locate queue is empty or forced to stop at locateNext.");
             locating = "";
+            if (status != OFF)
+                status = IDLE;
             return;
         }
         final String name = locateQueue.get(0);
@@ -306,7 +328,7 @@ public class whobot extends SubspaceBot {
         debug("Attempting to locate " + name);
         locate = new TimerTask() {
             public void run() {
-                if (stop) return;
+                if (status == OFF) return;
                 debug("Locate did not return " + name);
                 locateQueue.remove(name.toLowerCase());
                 online.remove(name.toLowerCase());
@@ -318,10 +340,12 @@ public class whobot extends SubspaceBot {
     }
     
     private void stop(String name) {
+        if (status == OFF) {
+            ba.sendSmartPrivateMessage(name, "I am stopped already.");
+            return;
+        }
         ba.cancelTasks();
-        stop = true;
-        start = false;
-        roaming = false;
+        status = OFF;
         ba.sendSmartPrivateMessage(name, "Yes, sir! Haulting processes, resetting and returning home.");
         online.clear();
         locateQueue.clear();
@@ -333,7 +357,7 @@ public class whobot extends SubspaceBot {
     
     private void start(String name) {
         ba.cancelTasks();
-        stop = false;
+        status = STARTING;
         ba.sendChatMessage("STARTING all functions as requested by " + name);
         ba.sendSmartPrivateMessage(name, "Yes, sir! Setting the wheels in motion...");
         ba.requestArenaList();        
@@ -344,6 +368,31 @@ public class whobot extends SubspaceBot {
             return false;
         else
             return true;
+    }
+    
+    private void status(String name) {
+        String msg = "Currently " + getStatus() + " in " + ba.getArenaName() + " | Queues: Locate=" + locateQueue.size() + " Arena=" + arenaQueue.size() + " with " + (MAX_SPAM-arenas) + " until pause";
+        ba.sendSmartPrivateMessage(name, msg);
+    }
+    
+    private String getStatus() {
+        switch (status) {
+        case OFF:
+            return "OFF";
+        case IDLE:
+            return "IDLING";
+        case STARTING:
+            return "STARTING";
+        case ROAMING:
+            return "ROAMING";
+        case PAUSED:
+            return "PAUSING";
+        case LOCATING:
+            return "LOCATING";
+        default:
+            return "";
+        }
+        
     }
     
     private void debugger(String name) {
