@@ -202,8 +202,6 @@ public class whobot extends SubspaceBot {
         if (ops.isHighmod(name) || ops.isDeveloperExact(name)) {
             if (msg.equals("!stop"))
                 stop(name);
-            else if (msg.startsWith("!test "))
-                test(name, msg);
             else if (msg.equals("!start"))
                 start(name);
             else if (msg.equals("!debug")) 
@@ -223,13 +221,6 @@ public class whobot extends SubspaceBot {
             if (ba.getArenaName().contains("#"))
                 ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
         }
-    }
-    
-    private void test(String name, String msg) {
-        locating = msg.substring(msg.indexOf(" ") + 1);
-        ba.sendSmartPrivateMessage(name, "testing locate of " + locating);
-        locateQueue.add(locating.toLowerCase());
-        locateNext();
     }
     
     private void about(String name) {
