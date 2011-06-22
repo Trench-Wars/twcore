@@ -8,6 +8,7 @@ import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.command.CommandInterpreter;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.BallPosition;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.FrequencyShipChange;
@@ -34,7 +35,6 @@ public class flaredbot1 extends SubspaceBot {
 	*/
 	public int 							freq0Score = 0;			//total goals scored by freq 0
 	public int 							freq1Score = 0;			//total goals scored by freq 1
-	public CommandInterpreter    		cmds;					//command interpreter
 	public EventRequester        		events;					//event requester
 	public OperatorList          		oplist;					//operator list
 	public Ball                         ball;
@@ -44,7 +44,6 @@ public class flaredbot1 extends SubspaceBot {
 	 */
 	public flaredbot1(BotAction botAction) {
 		super(botAction);
-		cmds = new CommandInterpreter(m_botAction);
 		oplist = m_botAction.getOperatorList();
 		events = m_botAction.getEventRequester();
 		events.request(EventRequester.FLAG_CLAIMED);
@@ -53,7 +52,7 @@ public class flaredbot1 extends SubspaceBot {
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.SOCCER_GOAL);
         events.request(EventRequester.BALL_POSITION);
-		addCommands();
+        events.request(EventRequester.ARENA_JOINED);
 	}
 	
 	/**
@@ -75,22 +74,12 @@ public class flaredbot1 extends SubspaceBot {
 	 * Joins #newtwfd arena.
 	 */
 	public void handleEvent(LoggedOn event) {
-        m_botAction.joinArena("attack");
+        m_botAction.joinArena(m_botAction.getBotSettings().getString("InitialArena"));
         ball = new Ball();
-
 	}
 	
-	/**
-	 * Command handler.
-	 */
-	public void handleEvent(Message event) {
-	    String name = m_botAction.getPlayerName(event.getPlayerID());
-	    if (name == null)
-	        name = event.getMessager();
-	    if (event.getMessageType() == Message.PRIVATE_MESSAGE)
-	        if (event.getMessage().equals("!drop"))
-	            dropBall();
-		cmds.handleEvent(event);
+	public void handleEvent(ArenaJoined event) {
+        ball = new Ball();	    
 	}
 	
 	/*
@@ -152,24 +141,50 @@ public class flaredbot1 extends SubspaceBot {
 	public void handleEvent(BallPosition event) {
 	    ball.update(event);
 	}
-	
-	/**
-	 * Help commands.
-	 */
-	public void addCommands() {
-		int ok = Message.PRIVATE_MESSAGE;
-		cmds.registerCommand("!help",ok,this,"help");
-		cmds.registerCommand("!die",ok,this,"die");
-		cmds.registerCommand("!start",ok,this,"startGame");
-		cmds.registerCommand("!stop",ok,this,"stopGame");
-		cmds.registerCommand("!status",ok,this,"getStatus");
-	}
+    
+    /**
+     * Command handler.
+     */
+    public void handleEvent(Message event) {
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+        if (name == null)
+            name = event.getMessager();
+        String msg = event.getMessage();
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
+            
+            if (msg.equalsIgnoreCase("!help")) 
+                help(name);
+            else if (msg.equalsIgnoreCase("!status"))
+                getStatus(name);
+            
+            if (oplist.isER(name)) {
+                if (msg.equalsIgnoreCase("!drop"))
+                    dropBall();
+                else if (msg.equalsIgnoreCase("!start"))
+                    startGame(name);
+                else if (msg.equalsIgnoreCase("!stop"))
+                    stopGame(name);
+                else if (msg.equalsIgnoreCase("!die"))
+                    die();
+                else if (msg.startsWith("!go "))
+                    go(name, msg);
+            }
+        }
+    }
+    
+    public void go(String name, String cmd) {
+        String arena = cmd.substring(cmd.indexOf(" ") + 1);
+        if (arena.length() > 0) {
+            m_botAction.sendSmartPrivateMessage(name, "Moving to " + arena);
+            m_botAction.changeArena(arena);
+        }
+    }
 	
 	/**
 	 * !help
 	 * Displays help message.
 	 */
-	public void help(String name, String msg) {
+	public void help(String name) {
 		if (oplist.isER(name)) {
 			String[] helpMod =
 			{"!help     - this message",
@@ -192,34 +207,31 @@ public class flaredbot1 extends SubspaceBot {
 	 * !die
 	 * Kills bot.
 	 */
-	public void die(String name, String msg) {
-		if (oplist.isER(name))
-			m_botAction.die();
+	public void die() {
+	    m_botAction.die();
 	}
 	
 	/**
 	 * !stop
 	 * Stops a game if one is running.
 	 */
-	public void stopGame(String name, String msg) {
-		if (oplist.isER(name)) {
-			if (isRunning) {
-				m_botAction.sendArenaMessage("This game has been killed by " + name);
-				isRunning = false;
-				freq0Score = 0;
-				freq1Score = 0;
-			}
-			else if (isRunning == false) {
-				m_botAction.sendPrivateMessage(name, "There is no game currently running.");
-			}
-		}
+	public void stopGame(String name) {
+	    if (isRunning) {
+	        m_botAction.sendArenaMessage("This game has been killed by " + name);
+	        isRunning = false;
+	        freq0Score = 0;
+	        freq1Score = 0;
+	    }
+	    else if (isRunning == false) {
+	        m_botAction.sendPrivateMessage(name, "There is no game currently running.");
+	    }
 	}
 
 	/**
 	 * !status
 	 * Displays the score to player if a game is running.
 	 */
-	public void getStatus(String name, String msg) {
+	public void getStatus(String name) {
 		if (isRunning) {
 			m_botAction.sendPrivateMessage(name, "[---  SCORE  ---]");
 			m_botAction.sendPrivateMessage(name, "[--Freq 0: " + freq0Score + " --]");
@@ -233,16 +245,14 @@ public class flaredbot1 extends SubspaceBot {
 	 * !start
 	 * Starts a game. Warps players to safe for 30 seconds and calls the runGame() method.
 	 */
-	public void startGame(String name, String msg) {
-		if(oplist.isER(name)) {
-			m_botAction.sendArenaMessage("Get ready, game will start in 10 seconds.",1);
-			TimerTask t = new TimerTask() {
-				public void run() {
-					runGame();
-				}
-			};
-			m_botAction.scheduleTask(t, 10000);
-		}
+	public void startGame(String name) {
+	    m_botAction.sendArenaMessage("Get ready, game will start in 10 seconds.",1);
+	    TimerTask t = new TimerTask() {
+	        public void run() {
+	            runGame();
+	        }
+	    };
+	    m_botAction.scheduleTask(t, 10000);
 	}
 	
 	/**
