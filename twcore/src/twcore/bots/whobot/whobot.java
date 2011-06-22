@@ -207,7 +207,7 @@ public class whobot extends SubspaceBot {
                 sendHelp(name);
             else if (msg.equals("!status"))
                 status(name);
-            else
+            else if (isNotBot(name))
                 ba.sendChatMessage(name + " said: " + msg);
         } else if (isNotBot(name)){
             ba.sendChatMessage(name + " said: " + msg);
@@ -326,6 +326,7 @@ public class whobot extends SubspaceBot {
         final long time = System.currentTimeMillis();
         locating = name;
         debug("Attempting to locate " + name);
+        ba.sendUnfilteredPublicMessage("*locate " + locating);
         locate = new TimerTask() {
             public void run() {
                 if (status == OFF) return;
