@@ -149,13 +149,7 @@ public class whobot extends SubspaceBot {
                 }
             };
             ba.scheduleTask(wait, IDLE_TIME);
-            
-            long recent = System.currentTimeMillis() - CHECK_TIME;
-            for (String n : online.keySet()) {
-                if (online.get(n) < recent && !locateQueue.contains(n.toLowerCase()))
-                    locateQueue.add(n.toLowerCase());
-            }
-            locateNext();
+            startLocate();
         }
 
     }
@@ -207,6 +201,8 @@ public class whobot extends SubspaceBot {
                 die(name);
             else if (msg.equals("!pro"))
                 processPlayers();
+            else if (msg.equals("!help"))
+                sendHelp(name);
             else
                 ba.sendChatMessage(name + " said: " + msg);
         } else if (isNotBot(name)){
@@ -214,6 +210,17 @@ public class whobot extends SubspaceBot {
             if (ba.getArenaName().contains("#"))
                 ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
         }
+    }
+    
+    private void sendHelp(String name) {
+        String[] msg = {
+                "+-WhoBot SMOD Commands--+",
+                " !stop      - Haults all processes, retracts player records and returns home",
+                " !start     - Starts all processes and begins roaming low population arenas",
+                " !debug     - Debug toggle sets/removes/hijacks the requester as the debugger",
+                " !pro       - Forces WhoBot to processs the players in the current arena"     
+        };
+        ba.smartPrivateMessageSpam(name, msg);
     }
     
     public void handleEvent(InterProcessEvent event) {
@@ -277,6 +284,16 @@ public class whobot extends SubspaceBot {
         }
     }
     
+    private void startLocate() {
+        debug("Locate processesing engaged...");
+        long recent = System.currentTimeMillis() - CHECK_TIME;
+        for (String n : online.keySet()) {
+            if (online.get(n) < recent && !locateQueue.contains(n.toLowerCase()))
+                locateQueue.add(n.toLowerCase());
+        }
+        locateNext();
+    }
+    
     private void locateNext() {
         if (locateQueue.isEmpty() || stop) {
             debug("Locate queue is empty or forced to stop at locateNext.");
@@ -310,12 +327,14 @@ public class whobot extends SubspaceBot {
         locateQueue.clear();
         locating = "";
         ba.ipcTransmit(IPC, new IPCEvent(new Vector<String>(), System.currentTimeMillis(), EventRequester.PLAYER_LEFT));
+        ba.sendChatMessage("STOPPING all functions as requested by " + name);
         ba.changeArena(HOME);
     }
     
     private void start(String name) {
         ba.cancelTasks();
         stop = false;
+        ba.sendChatMessage("STARTING all functions as requested by " + name);
         ba.sendSmartPrivateMessage(name, "Yes, sir! Setting the wheels in motion...");
         ba.requestArenaList();        
     }
@@ -337,6 +356,7 @@ public class whobot extends SubspaceBot {
             DEBUG = false;
             ba.sendSmartPrivateMessage(name, "Debugging DISABLED and debugger reset.");
         } else {
+            ba.sendChatMessage(name + " has overriden " + debugger + " as the target of debug messages.");
             ba.sendSmartPrivateMessage(name, "Debugging still ENABLED and you have replaced " + debugger + " as the debugger.");
             debugger = name;
         }
