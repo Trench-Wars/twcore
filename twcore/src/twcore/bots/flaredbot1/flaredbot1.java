@@ -69,7 +69,7 @@ public class flaredbot1 extends SubspaceBot {
 	 * Joins #newtwfd arena.
 	 */
 	public void handleEvent(LoggedOn event) {
-        m_botAction.joinArena("diak");
+        m_botAction.joinArena("attack");
 	}
 	
 	/**
