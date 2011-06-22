@@ -146,9 +146,9 @@ public class flaredbot1 extends SubspaceBot {
      * Command handler.
      */
     public void handleEvent(Message event) {
-        String name = m_botAction.getPlayerName(event.getPlayerID());
+        String name = event.getMessager();
         if (name == null)
-            name = event.getMessager();
+            name = m_botAction.getPlayerName(event.getPlayerID());
         String msg = event.getMessage();
         if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
             
