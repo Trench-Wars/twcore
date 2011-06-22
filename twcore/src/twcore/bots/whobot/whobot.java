@@ -163,7 +163,12 @@ public class whobot extends SubspaceBot {
         go = new TimerTask() {
             public void run() {
                 status = ROAMING;
-                ba.changeArena(arenaQueue.remove(0));
+                if (!arenaQueue.isEmpty())
+                    ba.changeArena(arenaQueue.remove(0));
+                else {
+                    status = IDLE;
+                    ba.changeArena(HOME);
+                }
             }
         };
         ba.scheduleTask(go, GO_TIME);
@@ -179,6 +184,8 @@ public class whobot extends SubspaceBot {
                 if (locateQueue.remove(found)) {
                     if (online.containsKey(found.toLowerCase()))
                         online.put(found, System.currentTimeMillis());
+                    ba.cancelTask(locate);
+                    debug("Located " + found);
                 }
                 locateNext();
             }
@@ -195,6 +202,8 @@ public class whobot extends SubspaceBot {
         if (ops.isHighmod(name) || ops.isDeveloperExact(name)) {
             if (msg.equals("!stop"))
                 stop(name);
+            else if (msg.startsWith("!test "))
+                test(name, msg);
             else if (msg.equals("!start"))
                 start(name);
             else if (msg.equals("!debug")) 
@@ -214,6 +223,13 @@ public class whobot extends SubspaceBot {
             if (ba.getArenaName().contains("#"))
                 ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
         }
+    }
+    
+    private void test(String name, String msg) {
+        locating = msg.substring(msg.indexOf(" ") + 1);
+        ba.sendSmartPrivateMessage(name, "testing locate of " + locating);
+        locateQueue.add(locating.toLowerCase());
+        locateNext();
     }
     
     private void about(String name) {
@@ -316,7 +332,6 @@ public class whobot extends SubspaceBot {
     
     private void locateNext() {
         if (locateQueue.isEmpty()) {
-            debug("Locate queue is empty or forced to stop at locateNext.");
             locating = "";
             if (status != OFF)
                 status = IDLE;
@@ -326,7 +341,6 @@ public class whobot extends SubspaceBot {
         final long time = System.currentTimeMillis();
         locating = name;
         debug("Attempting to locate " + name);
-        ba.sendUnfilteredPublicMessage("*locate " + locating);
         locate = new TimerTask() {
             public void run() {
                 if (status == OFF) return;
@@ -337,6 +351,7 @@ public class whobot extends SubspaceBot {
                 locateNext();
             }
         };
+        ba.sendUnfilteredPublicMessage("*locate " + locating);
         ba.scheduleTask(locate, LOCATE_WAIT);
     }
     
