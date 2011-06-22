@@ -1,16 +1,20 @@
 package twcore.bots.flaredbot1;
 
+import java.util.Stack;
 import java.util.TimerTask;
+
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.command.CommandInterpreter;
+import twcore.core.events.BallPosition;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.SoccerGoal;
 import twcore.core.game.Ship;
+import twcore.core.util.Point;
 
 /**
  * This class runs the BallGame event. Two teams trying to score on their enemy's
@@ -33,6 +37,7 @@ public class flaredbot1 extends SubspaceBot {
 	public CommandInterpreter    		cmds;					//command interpreter
 	public EventRequester        		events;					//event requester
 	public OperatorList          		oplist;					//operator list
+	public Ball                         ball;
 
 	/**
 	 * Requests events, sets up bot. 
@@ -47,6 +52,7 @@ public class flaredbot1 extends SubspaceBot {
 		events.request(EventRequester.LOGGED_ON);
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.SOCCER_GOAL);
+        events.request(EventRequester.BALL_POSITION);
 		addCommands();
 	}
 	
@@ -70,6 +76,7 @@ public class flaredbot1 extends SubspaceBot {
 	 */
 	public void handleEvent(LoggedOn event) {
         m_botAction.joinArena("diak2");
+        ball = new Ball();
 
 	}
 	
@@ -77,6 +84,12 @@ public class flaredbot1 extends SubspaceBot {
 	 * Command handler.
 	 */
 	public void handleEvent(Message event) {
+	    String name = m_botAction.getPlayerName(event.getPlayerID());
+	    if (name == null)
+	        name = event.getMessager();
+	    if (event.getMessageType() == Message.PRIVATE_MESSAGE)
+	        if (event.getMessage().equals("!drop"))
+	            dropBall();
 		cmds.handleEvent(event);
 	}
 	
@@ -134,6 +147,10 @@ public class flaredbot1 extends SubspaceBot {
 			}	
 		handleGoal();
 		}
+	}
+	
+	public void handleEvent(BallPosition event) {
+	    ball.update(event);
 	}
 	
 	/**
@@ -286,18 +303,169 @@ public class flaredbot1 extends SubspaceBot {
 	}
 	
 	public void dropBall() {
-		m_botAction.getShip().sendPositionPacket();
-		Ship s = m_botAction.getShip();
-		s.setShip(2);
-		m_botAction.getShip().sendPositionPacket();
-		s.move(512*16, 512*16);
-		m_botAction.getShip().sendPositionPacket();
-		s.move(511*16, 455*16);
-		m_botAction.getShip().sendPositionPacket();
-		s.setShip(8);
-		
-		
+        Ship s = m_botAction.getShip();
+        s.setShip(0);
+        s.setFreq(1234);
+        final TimerTask drop = new TimerTask() {
+            public void run() {
+                m_botAction.getShip().move(512*16, 512*16);
+                m_botAction.getShip().sendPositionPacket();
+                try { Thread.sleep(75); } catch (InterruptedException e) {}
+                m_botAction.getBall(ball.getBallID(), (int)ball.getTimeStamp());
+                m_botAction.getShip().move(511*16, 455*16);
+                m_botAction.getShip().sendPositionPacket();
+                try { Thread.sleep(75); } catch (InterruptedException e) {}
+            }
+        };
+        drop.run();
+        m_botAction.specWithoutLock(m_botAction.getBotName());
 	}
+	
+    private class Ball {
+
+        private byte ballID;
+        private long timestamp;
+        private short ballX;
+        private short ballY;
+        private short veloX;
+        private boolean carried;
+        private String carrier;
+        private final Stack<String> carriers;
+        private Stack<Point> releases;
+        private boolean holding;
+        private Point lastPickup;
+
+        public Ball() {
+            carrier = null;
+            carriers = new Stack<String>();
+            releases = new Stack<Point>();
+            carried = false;
+            holding = false;
+            lastPickup = null;
+        }
+
+        /**
+         * Called by handleEvent(BallPosition event)
+         * @param event the ball position
+         */
+        public void update(BallPosition event) {
+            ballID = event.getBallID();
+            this.timestamp = event.getTimeStamp();
+            ballX = event.getXLocation();
+            ballY = event.getYLocation();
+            if (event.getXVelocity() != 0) {
+                veloX = event.getXVelocity();
+            }
+            short carrierID = event.getCarrier();
+            if (carrierID != -1) {
+                carrier = m_botAction.getPlayerName(carrierID);
+            } else {
+                carrier = null;
+            }
+
+            if (carrier != null && !carrier.equals(m_botAction.getBotName())) {
+                if (!carried && isRunning) {
+                    carriers.push(carrier);
+                    lastPickup = new Point(ballX, ballY);
+                }
+                carried = true;
+            } else if (carrier == null && carried) {
+                if (carried && isRunning) {
+                    releases.push(new Point(ballX, ballY));
+                }
+                carried = false;
+            } else if (carrier != null && carrier.equals(m_botAction.getBotName())) {
+                holding = true;
+            } else if (carrier == null && holding) {
+                if (holding && isRunning) {
+                    releases.push(new Point(ballX, ballY));
+                }
+                holding = false;
+            }
+
+        }
+
+        /**
+         * clears local data for puck
+         */
+        public void clear() {
+            carrier = null;
+            try {
+                carriers.clear();
+                releases.clear();
+                lastPickup = null;
+            } catch (Exception e) {
+            }
+        }
+
+        public byte getBallID() {
+            return ballID;
+        }
+
+        public long getTimeStamp() {
+            return timestamp;
+        }
+
+        public short getBallX() {
+            return ballX;
+        }
+
+        public short getBallY() {
+            return ballY;
+        }
+
+        public boolean isCarried() {
+            return carried;
+        }
+
+        /**
+         * Peeks at last ball carrier without removing them from stack
+         * @return short player id or null if empty
+         */
+        public String peekLastCarrierName() {
+            String id = null;
+            if (!carriers.empty()) {
+                id = carriers.peek();
+            }
+            return id;
+        }
+
+        /**
+         * Gets last ball carrier (removes it from stack)
+         * @return short player id or null if empty
+         */
+        public String getLastCarrierName() {
+            String id = null;
+            if (!carriers.empty()) {
+                id = carriers.pop();
+            }
+            return id;
+        }
+
+        /**
+         * Peeks at last ball release without removing them from stack
+         * @return point last point released or null if empty
+         */
+        public Point peekLastReleasePoint() {
+            Point p = null;
+            if (!releases.empty()) {
+                p = releases.peek();
+            }
+            return p;
+        }
+
+        /**
+         * Get last ball release (removes it from stack)
+         * @return point last point released or null if empty
+         */
+        public Point getLastReleasePoint() {
+            Point p = null;
+            if (!releases.empty()) {
+                p = releases.pop();
+            }
+            return p;
+        }
+    }
 }
 
 
