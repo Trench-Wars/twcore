@@ -75,7 +75,6 @@ public class flaredbot1 extends SubspaceBot {
 	 */
 	public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botAction.getBotSettings().getString("InitialArena"));
-        ball = new Ball();
 	}
 	
 	public void handleEvent(ArenaJoined event) {
@@ -126,16 +125,16 @@ public class flaredbot1 extends SubspaceBot {
 	 * Monitors goals scored.
 	 */
 	public void handleEvent(SoccerGoal event) {		
-		if (isRunning) {
-			short scoringFreq = event.getFrequency();
-			if (scoringFreq == 0) {
-				freq0Score++;
-			}
-			else if (scoringFreq == 1) {
-				freq1Score++;
-			}	
-		handleGoal();
-		}
+	    if (isRunning) {
+	        short scoringFreq = event.getFrequency();
+	        if (scoringFreq == 0) {
+	            freq0Score++;
+	        }
+	        else if (scoringFreq == 1) {
+	            freq1Score++;
+	        }	
+	        handleGoal();
+	    }
 	}
 	
 	public void handleEvent(BallPosition event) {
@@ -269,8 +268,8 @@ public class flaredbot1 extends SubspaceBot {
 		flag3owner = -1;
 		*/
 		m_botAction.shipResetAll();
-		m_botAction.warpFreqToLocation(0,477,512);
-		m_botAction.warpFreqToLocation(1,543,512);
+		m_botAction.warpFreqToLocation(0,477,511);
+		m_botAction.warpFreqToLocation(1,543,511);
 		m_botAction.sendArenaMessage("GOGOGO!!!",104);		
 		m_botAction.scoreResetAll();
 		m_botAction.resetFlagGame();
@@ -295,10 +294,10 @@ public class flaredbot1 extends SubspaceBot {
 		}
 		else {
 			m_botAction.sendArenaMessage("Score: " + freq0Score + " - " + freq1Score);
-			m_botAction.warpFreqToLocation(0,477,512);
-			m_botAction.warpFreqToLocation(1,543,512);
-			m_botAction.shipResetAll();
-			m_botAction.resetFlagGame();
+            m_botAction.shipResetAll();
+            m_botAction.resetFlagGame();
+			m_botAction.warpFreqToLocation(0,477,511);
+			m_botAction.warpFreqToLocation(1,543,511);
 			dropBall();
 			/*
 			m_botAction.setDoors(255);			 
