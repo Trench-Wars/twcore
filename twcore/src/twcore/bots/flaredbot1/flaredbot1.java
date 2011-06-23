@@ -146,7 +146,7 @@ public class flaredbot1 extends SubspaceBot {
      */
     public void handleEvent(Message event) {
         String name = event.getMessager();
-        if (name == null)
+        if (name == null || name.length() < 1)
             name = m_botAction.getPlayerName(event.getPlayerID());
         String msg = event.getMessage();
         if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
@@ -164,7 +164,7 @@ public class flaredbot1 extends SubspaceBot {
                 else if (msg.equalsIgnoreCase("!stop"))
                     stopGame(name);
                 else if (msg.equalsIgnoreCase("!die"))
-                    die();
+                    die(name);
                 else if (msg.startsWith("!go "))
                     go(name, msg);
             }
@@ -206,7 +206,9 @@ public class flaredbot1 extends SubspaceBot {
 	 * !die
 	 * Kills bot.
 	 */
-	public void die() {
+	public void die(String name) {
+	    m_botAction.sendSmartPrivateMessage(name, "I'm melting! I'm melting...");
+	    m_botAction.cancelTasks();
 	    m_botAction.die();
 	}
 	
