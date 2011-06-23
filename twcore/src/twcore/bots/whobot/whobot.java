@@ -250,8 +250,11 @@ public class whobot extends SubspaceBot {
             }
         } else if (event.getObject() instanceof IPCMessage && event.getSenderName().equalsIgnoreCase(WHOHUB)) {
             IPCMessage ipc = (IPCMessage) event.getObject();
-            if (ipc.getMessage().equals("who:refresh")) {
+            if (ipc.getMessage().equals("who:refresh"))
                 ba.ipcTransmit(IPC, new IPCEvent(online, System.currentTimeMillis(), EventRequester.PLAYER_ENTERED));
+            else if (ipc.getMessage().equals("who:deviates")) {
+                HashSet<String> dev = (HashSet<String>) online.keySet();
+                ba.ipcTransmit(IPC, new IPCEvent(dev, System.currentTimeMillis(), EventRequester.PLAYER_POSITION));
             }
         }
     }
