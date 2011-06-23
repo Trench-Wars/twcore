@@ -221,6 +221,10 @@ public class whobot extends SubspaceBot {
                 sendHelp(name);
             else if (msg.equals("!status"))
                 status(name);
+            else if (msg.equals("!online"))
+                online(name);
+            else if (msg.equals("!arenas"))
+                arenas(name);
             else if (isNotBot(name))
                 ba.sendChatMessage(name + " said: " + msg);
         } else if (isNotBot(name)){
@@ -230,33 +234,6 @@ public class whobot extends SubspaceBot {
             else if (ba.getArenaName().contains("#"))
                 ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
         }
-    }
-    
-    private void about(String name) {
-        String[] msg = {
-                ",---------------------------| WhoBot |---------------------------+",
-                "| WhoBot is a roaming bot that keeps track of online players in  |",
-                "| private and low population arenas. WhoBot is synchronized with |",
-                "| the TWChat botso that information remains accurate. WhoBot, in |",
-                "| addition to roaming, periodically uses *locate to make up for  |",
-                "| update delays caused by arena change restrictions.             |",
-                "`----------------------------------------------------------------+"
-        };
-        ba.smartPrivateMessageSpam(name, msg);
-    }
-    
-    private void sendHelp(String name) {
-        String[] msg = {
-                "+-WhoBot SMOD Commands--+",
-                "!about     - What the hell is this bot and why is it in this arena?",
-                "!status    - Displays current process and statistical information",
-                "!debug     - Debug toggle sets/removes/hijacks the requester as the debugger",
-                "!stop      - Haults all processes, retracts player records and returns home",
-                "!start     - Starts all processes and begins roaming low population arenas",
-                "!pro       - Forces WhoBot to processs the players in the current arena",
-                "!die       - Retracts player information and logs off"
-        };
-        ba.smartPrivateMessageSpam(name, msg);
     }
     
     public void handleEvent(InterProcessEvent event) {
@@ -277,6 +254,50 @@ public class whobot extends SubspaceBot {
                 ba.ipcTransmit(IPC, new IPCEvent(online, System.currentTimeMillis(), EventRequester.PLAYER_ENTERED));
             }
         }
+    }
+    
+    private void online(String name) {
+        String msg = "Online: ";
+        for (String p : online.keySet())
+            msg += p + ", ";
+        ba.sendSmartPrivateMessage(name, msg.substring(0, msg.length()-2));
+    }
+    
+    private void arenas(String name) {
+        String msg = "Arenas: ";
+        for (String a : arenaQueue)
+            msg += a + " ";
+        ba.sendSmartPrivateMessage(name, msg);
+    }
+    
+    private void about(String name) {
+        String[] msg = {
+                ",---------------------------| WhoBot |---------------------------+",
+                "| WhoBot is a roaming bot that keeps track of online players in  |",
+                "| private and low population arenas. WhoBot synchronizes with    |",
+                "| TWChat bot so that the online player information remains as    |",
+                "| accurate as possible. After roaming, WhoBot also uses *locate  |",
+                "| to reduce update delays caused by SS arena change restrictions.|",
+                "`----------------------------------------------------------------+"
+        };
+        ba.smartPrivateMessageSpam(name, msg);
+    }
+    
+    private void sendHelp(String name) {
+        String[] msg = {
+                ",---------------------------| WhoBot SMOD Commands |----------------------------+",
+                "| !about     - What the hell is this bot and why is it in this arena?           |",
+                "| !status    - Displays current process and statistical information             |",
+                "| !online    - Displays local list of online players (outsiders)                |",
+                "| !arenas    - Displays all the arenas currently enqueud                        |",
+                "| !stop      - Haults all processes, retracts player records and returns home   |",
+                "| !start     - Starts all processes and begins roaming low population arenas    |",
+                "| !debug     - Debug toggle sets/removes/hijacks the requester as the debugger  |",
+                "| !pro       - Forces WhoBot to processs the players in the current arena       |",
+                "| !die       - Retracts player information and logs off                         |",
+                "`-------------------------------------------------------------------------------+"
+        };
+        ba.smartPrivateMessageSpam(name, msg);
     }
     
     public void handleDisconnect() {
