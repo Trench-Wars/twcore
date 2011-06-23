@@ -82,8 +82,8 @@ public class whobot extends SubspaceBot {
         arenaCount = 0;
         status = STARTING;
         locating = "";
-        debugger = "WingZero";
-        DEBUG = true;
+        debugger = "";
+        DEBUG = false;
         String[] nogos = ba.getBotSettings().getString("NoGoArenas").split(" ");
         for (String n : nogos)
             nogo.add(n);
@@ -200,8 +200,12 @@ public class whobot extends SubspaceBot {
         else if (event.getMessageType() == Message.PRIVATE_MESSAGE)
             name = ba.getPlayerName(event.getPlayerID());
         else return;
-        if (msg.equals("!about"))
+        
+        if (msg.equals("!about")) {
             about(name);
+            return;
+        }
+        
         if (ops.isHighmod(name) || ops.isDeveloperExact(name)) {
             if (msg.equals("!stop"))
                 stop(name);
@@ -221,19 +225,22 @@ public class whobot extends SubspaceBot {
                 ba.sendChatMessage(name + " said: " + msg);
         } else if (isNotBot(name)){
             ba.sendChatMessage(name + " said: " + msg);
-            if (ba.getArenaName().contains("#"))
+            if (msg.startsWith("!"))
+                about(name);
+            else if (ba.getArenaName().contains("#"))
                 ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
         }
     }
     
     private void about(String name) {
         String[] msg = {
-                ",-------------------------| WhoBot |---------------------------+",
-                "|      Roaming bot that keeps track of what players are online |",
-                "| but in private or low population arenas. Synchronizes with   |",
-                "| TWChat bot keeping the online player list up to date. While  |",
-                "| idling, player information is updated using *locate.         |",
-                "`--------------------------------------------------------------+"
+                ",---------------------------| WhoBot |---------------------------+",
+                "| WhoBot is a roaming bot that keeps track of online players in  |",
+                "| private and low population arenas. WhoBot is synchronized with |",
+                "| the TWChat botso that information remains accurate. WhoBot, in |",
+                "| addition to roaming, periodically uses *locate to make up for  |",
+                "| update delays caused by arena change restrictions.             |",
+                "`----------------------------------------------------------------+"
         };
         ba.smartPrivateMessageSpam(name, msg);
     }
@@ -381,7 +388,7 @@ public class whobot extends SubspaceBot {
     }
     
     private void status(String name) {
-        String msg = "Currently " + getStatus() + " in " + ba.getArenaName() + " | Queues: Locate=" + locateQueue.size() + " Arena=" + arenaQueue.size() + " with " + (MAX_SPAM-arenaCount) + " until pause";
+        String msg = "Currently " + getStatus() + " in " + ba.getArenaName() + " | Outsiders=" + online.size() + " | Queues: Locates=" + locateQueue.size() + " Arenas=" + arenaQueue.size() + " with " + (MAX_SPAM-arenaCount) + " arenas until IDLE";
         ba.sendSmartPrivateMessage(name, msg);
     }
     
