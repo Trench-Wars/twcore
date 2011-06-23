@@ -102,6 +102,8 @@ public class whobot extends SubspaceBot {
 
     public void handleEvent(ArenaJoined event) {
         boolean home = ba.getArenaName().equalsIgnoreCase(HOME);
+        if (home && status == OFF)
+            return;
         processPlayers();
         if (status == STARTING && home) {
             debug("Starting..");
