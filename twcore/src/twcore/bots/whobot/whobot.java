@@ -193,46 +193,45 @@ public class whobot extends SubspaceBot {
                 locateNext();
             }
         }
-        
-        String name = "";
-        if (event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE)
-            name = event.getMessager();
-        else if (event.getMessageType() == Message.PRIVATE_MESSAGE)
-            name = ba.getPlayerName(event.getPlayerID());
-        else return;
-        
-        if (msg.equals("!about")) {
-            about(name);
-            return;
-        }
-        
-        if (ops.isHighmod(name) || ops.isDeveloperExact(name)) {
-            if (msg.equals("!stop"))
-                stop(name);
-            else if (msg.equals("!start"))
-                start(name);
-            else if (msg.equals("!debug")) 
-                debugger(name);
-            else if (msg.equals("!die"))
-                die(name);
-            else if (msg.equals("!pro"))
-                processPlayers();
-            else if (msg.equals("!help"))
-                sendHelp(name);
-            else if (msg.equals("!status"))
-                status(name);
-            else if (msg.equals("!online"))
-                online(name);
-            else if (msg.equals("!arenas"))
-                arenas(name);
-            else if (isNotBot(name))
-                ba.sendChatMessage(name + " said: " + msg);
-        } else if (isNotBot(name)){
-            ba.sendChatMessage(name + " said: " + msg);
-            if (msg.startsWith("!"))
+
+        if (event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE || event.getMessageType() == Message.PRIVATE_MESSAGE) {
+            String name = m_botAction.getPlayerName(event.getPlayerID());
+            if (name == null || name.length() < 1) 
+                name = event.getMessager();
+
+            if (msg.equals("!about")) {
                 about(name);
-            else if (ba.getArenaName().contains("#"))
-                ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
+                return;
+            }
+
+            if (ops.isHighmod(name) || ops.isDeveloperExact(name)) {
+                if (msg.equals("!stop"))
+                    stop(name);
+                else if (msg.equals("!start"))
+                    start(name);
+                else if (msg.equals("!debug"))
+                    debugger(name);
+                else if (msg.equals("!die"))
+                    die(name);
+                else if (msg.equals("!pro"))
+                    processPlayers();
+                else if (msg.equals("!help"))
+                    sendHelp(name);
+                else if (msg.equals("!status"))
+                    status(name);
+                else if (msg.equals("!online"))
+                    online(name);
+                else if (msg.equals("!arenas"))
+                    arenas(name);
+                else if (isNotBot(name))
+                    ba.sendChatMessage(name + " said: " + msg);
+            } else if (isNotBot(name)) {
+                ba.sendChatMessage(name + " said: " + msg);
+                if (msg.startsWith("!"))
+                    about(name);
+                else if (ba.getArenaName().contains("#"))
+                    ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
+            }
         }
     }
     
