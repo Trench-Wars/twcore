@@ -342,7 +342,6 @@ public class flaredbot1 extends SubspaceBot {
         private final Stack<String> carriers;
         private Stack<Point> releases;
         private boolean holding;
-        private Point lastPickup;
 
         public Ball() {
             carrier = null;
@@ -350,7 +349,6 @@ public class flaredbot1 extends SubspaceBot {
             releases = new Stack<Point>();
             carried = false;
             holding = false;
-            lastPickup = null;
         }
 
         /**
@@ -375,7 +373,6 @@ public class flaredbot1 extends SubspaceBot {
             if (carrier != null && !carrier.equals(m_botAction.getBotName())) {
                 if (!carried && isRunning) {
                     carriers.push(carrier);
-                    lastPickup = new Point(ballX, ballY);
                 }
                 carried = true;
             } else if (carrier == null && carried) {
@@ -402,7 +399,6 @@ public class flaredbot1 extends SubspaceBot {
             try {
                 carriers.clear();
                 releases.clear();
-                lastPickup = null;
             } catch (Exception e) {
             }
         }
@@ -425,54 +421,6 @@ public class flaredbot1 extends SubspaceBot {
 
         public boolean isCarried() {
             return carried;
-        }
-
-        /**
-         * Peeks at last ball carrier without removing them from stack
-         * @return short player id or null if empty
-         */
-        public String peekLastCarrierName() {
-            String id = null;
-            if (!carriers.empty()) {
-                id = carriers.peek();
-            }
-            return id;
-        }
-
-        /**
-         * Gets last ball carrier (removes it from stack)
-         * @return short player id or null if empty
-         */
-        public String getLastCarrierName() {
-            String id = null;
-            if (!carriers.empty()) {
-                id = carriers.pop();
-            }
-            return id;
-        }
-
-        /**
-         * Peeks at last ball release without removing them from stack
-         * @return point last point released or null if empty
-         */
-        public Point peekLastReleasePoint() {
-            Point p = null;
-            if (!releases.empty()) {
-                p = releases.peek();
-            }
-            return p;
-        }
-
-        /**
-         * Get last ball release (removes it from stack)
-         * @return point last point released or null if empty
-         */
-        public Point getLastReleasePoint() {
-            Point p = null;
-            if (!releases.empty()) {
-                p = releases.pop();
-            }
-            return p;
         }
     }
 }
