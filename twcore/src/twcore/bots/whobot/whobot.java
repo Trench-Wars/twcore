@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.Vector;
 
@@ -252,7 +253,7 @@ public class whobot extends SubspaceBot {
             if (ipc.getMessage().equals("who:refresh"))
                 ba.ipcTransmit(IPC, new IPCEvent(online, System.currentTimeMillis(), EventRequester.PLAYER_ENTERED));
             else if (ipc.getMessage().equals("who:deviates")) {
-                HashSet<String> dev = (HashSet<String>) online.keySet();
+                Set<String> dev = (Set<String>) online.keySet();
                 ba.ipcTransmit(IPC, new IPCEvent(dev, System.currentTimeMillis(), EventRequester.PLAYER_POSITION));
             }
         }
