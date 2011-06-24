@@ -204,6 +204,7 @@ public class whobot extends SubspaceBot {
 
             if (msg.equals("!about")) {
                 about(name);
+                ba.ipcTransmit(IPC, new IPCEvent(name + ":" + msg, System.currentTimeMillis(), EventRequester.MESSAGE));
                 return;
             }
 
@@ -230,9 +231,10 @@ public class whobot extends SubspaceBot {
                     ba.sendChatMessage(name + " said: " + msg);
             } else if (isNotBot(name)) {
                 ba.sendChatMessage(name + " said: " + msg);
-                if (msg.startsWith("!"))
+                if (msg.startsWith("!")) {
                     about(name);
-                else if (ba.getArenaName().contains("#"))
+                    ba.ipcTransmit(IPC, new IPCEvent(name + ":" + msg, System.currentTimeMillis(), EventRequester.MESSAGE));
+                } else if (ba.getArenaName().contains("#"))
                     ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
             }
         }
@@ -294,11 +296,10 @@ public class whobot extends SubspaceBot {
                 "| !about     - What the hell is this bot and why is it in this arena?           |",
                 "| !status    - Displays current process and statistical information             |",
                 "| !online    - Displays local list of online players (outsiders)                |",
-                "| !arenas    - Displays all the arenas currently enqueud                        |",
+                "| !arenas    - Displays all the arenas currently enqueued                       |",
                 "| !stop      - Haults all processes, retracts player records and returns home   |",
                 "| !start     - Starts all processes and begins roaming low population arenas    |",
                 "| !debug     - Debug toggle sets/removes/hijacks the requester as the debugger  |",
-                "| !pro       - Forces WhoBot to processs the players in the current arena       |",
                 "| !die       - Retracts player information and logs off                         |",
                 "`-------------------------------------------------------------------------------+"
         };
