@@ -208,8 +208,10 @@ public class whobot extends SubspaceBot {
                 return;
             }
             
-            if (ops.isSmod(name) && msg.startsWith("!say "))
+            if (ops.isSmod(name) && msg.startsWith("!say ")) {
                 say(name, msg);
+                return;
+            }
 
             if (ops.isHighmod(name) || ops.isDeveloperExact(name)) {
                 if (msg.equals("!stop"))
