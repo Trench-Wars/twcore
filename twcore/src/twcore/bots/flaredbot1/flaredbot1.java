@@ -44,7 +44,6 @@ public class flaredbot1 extends SubspaceBot {
 		super(botAction);
 		oplist = m_botAction.getOperatorList();
 		events = m_botAction.getEventRequester();
-		events.request(EventRequester.FLAG_CLAIMED);
 		events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
 		events.request(EventRequester.LOGGED_ON);
 		events.request(EventRequester.MESSAGE);
