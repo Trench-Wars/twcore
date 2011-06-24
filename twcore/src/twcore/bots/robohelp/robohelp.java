@@ -1576,8 +1576,20 @@ public class robohelp extends SubspaceBot {
     }
     
     private String stringHelper(String str, int spaces) {
+        if (spaces == -1) {
+            // -1 for defaults dynamic
+            if (str.length() < 11)
+                spaces = 10;
+            else if (str.length() < 16)
+                spaces = 15;
+            else if (str.length() < 21)
+                spaces = 20;
+            else
+                spaces = 23;
+        }
         for (int i = str.length(); i < spaces; i++)
             str += " ";
+        str = str.substring(0, spaces);
         return str;
     }
     
@@ -1601,9 +1613,9 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = t.format(call.getTime()) + " #" + call.getID() + " ";
+                String msg = " #" + call.getID() + " " + t.format(call.getTime());
                 if (call.isTaken() || call.getTaker().equals("RoboHelp"))
-                    msg += " " + call.getTaker() + " -";
+                    msg += " " + stringHelper(call.getTaker(), -1) + " -";
                 
                 if (call.getType() == 0 || call.getType() == 1)
                     msg += " help: (";
