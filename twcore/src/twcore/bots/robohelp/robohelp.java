@@ -1625,7 +1625,7 @@ public class robohelp extends SubspaceBot {
                     else if (ct == HelpRequest.CLEAN)
                         msg += " " + stringHelper(call.getTaker() , -1) + " -";
                 } else if (call.getClaimType() == HelpRequest.FREE)
-                    msg += " " + stringHelper("*", -1) + " -";
+                    msg += " " + stringHelper("    *   ", -1) + " -";
                 
                 if (call.getType() == 0 || call.getType() == 1)
                     msg += " help: (";
