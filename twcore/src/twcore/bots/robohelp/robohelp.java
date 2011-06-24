@@ -1323,7 +1323,7 @@ public class robohelp extends SubspaceBot {
             return;
         }
         if (!last.isTaken()) {
-            last.claim("clean");
+            last.claim("[clean]");
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " cleaned.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'clean' WHERE fnCallID = " + last.getCallID());
@@ -1414,7 +1414,7 @@ public class robohelp extends SubspaceBot {
 
         HelpRequest last = helpList.get(id);
         if (!last.isTaken()) {
-            last.claim("forgot");
+            last.claim("[forgot]");
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " forgotten.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'forgot' WHERE fnCallID = " + last.getCallID());
@@ -1502,7 +1502,7 @@ public class robohelp extends SubspaceBot {
 
         HelpRequest last = helpList.get(id);
         if (!last.isTaken()) {
-            last.claim(name);
+            last.claim("(" + name + ")");
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " claimed for you but not counted.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 2, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fnCallID = " + last.getCallID());
@@ -1562,13 +1562,13 @@ public class robohelp extends SubspaceBot {
             for (int i = 0; i < num; i++) {
                 NewPlayer newb = newbHistory.get(newbNames.get(i).toLowerCase());
                 String m = "" + t.format(newb.getTime()) + " ";
-                m += stringHelper("" + newb.name, 24);
                 if (newb.taken == NewPlayer.FREE) 
-                    m += "[MISSED]";
+                    m += stringHelper("[MISSED]", 20);
                 else if (newb.taken == NewPlayer.TAKEN)
-                    m += "(" + newb.claimer + ")";
+                    m += stringHelper("(" + newb.claimer + ")", 20);
                 else
-                    m += newb.claimer;
+                    m += stringHelper(newb.claimer, 20);
+                m += "" + newb.name;
                 m_botAction.sendSmartPrivateMessage(name, m);
             }
         } else
@@ -1601,7 +1601,7 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = t.format(call.getTime()) + " Call #" + call.getID() + " -";
+                String msg = t.format(call.getTime()) + " #" + call.getID() + " ";
                 if (call.isTaken() || call.getTaker().equals("RoboHelp"))
                     msg += " " + call.getTaker() + " -";
                 
