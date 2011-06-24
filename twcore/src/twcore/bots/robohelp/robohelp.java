@@ -2020,14 +2020,16 @@ public class robohelp extends SubspaceBot {
                 NewPlayer np = new NewPlayer(newb);
                 np.time = time;
                 np.taken = taken;
-                if (taken == NewPlayer.FALSE)
+                if (taken == 3)
                     np.falsePos();
-                else if (taken == NewPlayer.TAKEN)
+                else if (taken == 1 || taken == 2) {
                     np.claimer = rs.getString("staff");
+                    np.taken = NewPlayer.TAKEN;
+                }
                 temp.add(np);
             }
             for (int i = 0; i < temp.size(); i++) {
-                NewPlayer np = temp.remove(0);
+                NewPlayer np = temp.get(i);
                 lastNewPlayerName = np.getName();
                 newbs.add(np);
                 newbHistory.put(lastNewPlayerName.toLowerCase(), np);
@@ -2047,16 +2049,16 @@ public class robohelp extends SubspaceBot {
         
         try {
             if (!record) {
-                m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallNewb SET fnTaken = 2, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fcUserName = '" + Tools.addSlashesToString(player) + "'");
+                m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fnTaken = 2, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fcUserName = '" + Tools.addSlashesToString(player) + "'");
                 return;
             }
-            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallNewb SET fnTaken = 1, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fcUserName = '" + Tools.addSlashesToString(player) + "'");
+            m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fnTaken = 1, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fcUserName = '" + Tools.addSlashesToString(player) + "'");
             String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '"+name+"' AND fnType = 2 AND fdDate = '"+time+"'" );
             if(result.next()) {
-                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+Tools.addSlashesToString(name)+"' AND fnType = 2 AND fdDate = '"+time+"'" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblCall SET fnCount = fnCount + 1 WHERE fcUserName = '"+Tools.addSlashesToString(name)+"' AND fnType = 2 AND fdDate = '"+time+"'" );
             } else {
-                m_botAction.SQLBackgroundQuery( mySQLHost, "robohelp", "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+Tools.addSlashesToString(name)+"', '1', '2', '"+time+"')" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblCall (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+Tools.addSlashesToString(name)+"', '1', '2', '"+time+"')" );
             }
             m_botAction.SQLClose( result );
         } catch ( Exception e ) {
