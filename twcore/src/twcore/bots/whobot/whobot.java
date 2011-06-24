@@ -227,8 +227,10 @@ public class whobot extends SubspaceBot {
                     online(name);
                 else if (msg.equals("!arenas"))
                     arenas(name);
-                else if (isNotBot(name))
+                if (isNotBot(name)) {
                     ba.sendChatMessage(name + " said: " + msg);
+                    ba.ipcTransmit(IPC, new IPCEvent(name + ":" + msg, System.currentTimeMillis(), EventRequester.MESSAGE));
+                }
             } else if (isNotBot(name)) {
                 ba.sendChatMessage(name + " said: " + msg);
                 if (msg.startsWith("!")) {
