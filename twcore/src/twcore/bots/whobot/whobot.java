@@ -207,6 +207,9 @@ public class whobot extends SubspaceBot {
                 ba.ipcTransmit(IPC, new IPCEvent(name + ":" + msg, System.currentTimeMillis(), EventRequester.MESSAGE));
                 return;
             }
+            
+            if (ops.isSmod(name) && msg.startsWith("!say "))
+                say(name, msg);
 
             if (ops.isHighmod(name) || ops.isDeveloperExact(name)) {
                 if (msg.equals("!stop"))
@@ -239,6 +242,17 @@ public class whobot extends SubspaceBot {
                 } else if (ba.getArenaName().contains("#"))
                     ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
             }
+        }
+    }
+    
+    private void say(String name, String cmd) {
+        if (!cmd.contains(":")) {
+            ba.sendSmartPrivateMessage(name, "I can only do pms.");
+        } else {
+            String[] msg = cmd.substring(cmd.indexOf(" ")+1).split(":");
+            ba.sendSmartPrivateMessage(msg[0], msg[1]);
+            ba.sendChatMessage(name + " says to " + msg[0] + ": " + msg[1]);
+            ba.sendSmartPrivateMessage(name, "Message sent.");
         }
     }
     
