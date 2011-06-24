@@ -1562,13 +1562,13 @@ public class robohelp extends SubspaceBot {
             for (int i = 0; i < num; i++) {
                 NewPlayer newb = newbHistory.get(newbNames.get(i).toLowerCase());
                 String m = "" + t.format(newb.getTime()) + " ";
+                m += stringHelper("" + newb.name, 23);
                 if (newb.taken == NewPlayer.FREE) 
-                    m += stringHelper("[MISSED]", 20);
+                    m += "[MISSED]";
                 else if (newb.taken == NewPlayer.TAKEN)
-                    m += stringHelper("(" + newb.claimer + ")", 20);
+                    m += "(" + newb.claimer + ")";
                 else
-                    m += stringHelper(newb.claimer, 20);
-                m += "" + newb.name;
+                    m += newb.claimer;
                 m_botAction.sendSmartPrivateMessage(name, m);
             }
         } else
@@ -2308,7 +2308,7 @@ public class robohelp extends SubspaceBot {
         
         public void falsePos() {
             taken = FALSE;
-            claimer = "[FALSE+]";
+            claimer = "[FALSE-POSITIVE]";
         }
     }
 
