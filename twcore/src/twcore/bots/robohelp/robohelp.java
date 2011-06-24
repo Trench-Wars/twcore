@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -150,6 +151,7 @@ public class robohelp extends SubspaceBot {
         // Sysop+ 
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReload", OperatorList.SYSOP_LEVEL );
         m_commandInterpreter.registerCommand( "!die", acceptedMessages, this, "handleDie", OperatorList.SYSOP_LEVEL );
+        m_commandInterpreter.registerCommand( "!loadnewbs", acceptedMessages, this, "loadLastNewbs", OperatorList.SYSOP_LEVEL );
         
         
         acceptedMessages = Message.CHAT_MESSAGE;
@@ -1560,7 +1562,7 @@ public class robohelp extends SubspaceBot {
             for (int i = 0; i < num; i++) {
                 NewPlayer newb = newbHistory.get(newbNames.get(i).toLowerCase());
                 String m = "" + t.format(newb.getTime()) + " ";
-                m += "" + newb.name + " - ";
+                m += stringHelper("" + newb.name, 24);
                 if (newb.taken == NewPlayer.FREE) 
                     m += "[MISSED]";
                 else if (newb.taken == NewPlayer.TAKEN)
@@ -1571,6 +1573,12 @@ public class robohelp extends SubspaceBot {
             }
         } else
             m_botAction.sendSmartPrivateMessage(name, "No alerts found.");
+    }
+    
+    private String stringHelper(String str, int spaces) {
+        for (int i = str.length(); i < spaces; i++)
+            str += " ";
+        return str;
     }
     
     public void handleCalls(String name, String message) {
@@ -1999,6 +2007,39 @@ public class robohelp extends SubspaceBot {
 		}
     	
     }
+    
+    public void loadLastNewbs(String sender, String msg) {
+        String query = "SELECT fcUserName as newb, fcTakerName as staff, fdCreated as time, fnTaken as taken FROM tblCallNewb ORDER BY fdCreated DESC LIMIT 5";
+        try {
+            Vector<NewPlayer> temp = new Vector<NewPlayer>();
+            ResultSet rs = m_botAction.SQLQuery(mySQLHost, query);
+            while (rs.next()) {
+                String newb = rs.getString("newb");
+                int taken = rs.getInt("taken");
+                long time = rs.getTimestamp("time").getTime();
+                NewPlayer np = new NewPlayer(newb);
+                np.time = time;
+                np.taken = taken;
+                if (taken == NewPlayer.FALSE)
+                    np.falsePos();
+                else if (taken == NewPlayer.TAKEN)
+                    np.claimer = rs.getString("staff");
+                temp.add(np);
+            }
+            for (int i = 0; i < temp.size(); i++) {
+                NewPlayer np = temp.remove(0);
+                lastNewPlayerName = np.getName();
+                newbs.add(np);
+                newbHistory.put(lastNewPlayerName.toLowerCase(), np);
+                newbNames.add(0, lastNewPlayerName.toLowerCase());
+            }
+            m_botAction.SQLClose(rs);
+            m_botAction.sendSmartPrivateMessage(sender, "Great success!");
+        } catch (Exception e) {
+            m_botAction.sendSmartPrivateMessage(sender, "Failure :(");
+            Tools.printStackTrace(e);
+        }
+    }
 
     public void updateStatRecordsONTHAT( String name, String player, boolean record ) {
         if( !m_botAction.SQLisOperational())
@@ -2265,7 +2306,7 @@ public class robohelp extends SubspaceBot {
         
         public void falsePos() {
             taken = FALSE;
-            claimer = "[FALSE-POSITIVE]";
+            claimer = "[FALSE+]";
         }
     }
 
