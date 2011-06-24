@@ -1323,7 +1323,7 @@ public class robohelp extends SubspaceBot {
             return;
         }
         if (!last.isTaken()) {
-            last.claim("[clean]");
+            last.clean();
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " cleaned.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'clean' WHERE fnCallID = " + last.getCallID());
@@ -1414,7 +1414,7 @@ public class robohelp extends SubspaceBot {
 
         HelpRequest last = helpList.get(id);
         if (!last.isTaken()) {
-            last.claim("[forgot]");
+            last.forget();
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " forgotten.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'forgot' WHERE fnCallID = " + last.getCallID());
@@ -1502,7 +1502,7 @@ public class robohelp extends SubspaceBot {
 
         HelpRequest last = helpList.get(id);
         if (!last.isTaken()) {
-            last.claim("(" + name + ")");
+            last.mine(name);
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " claimed for you but not counted.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 2, fcTakerName = '" + Tools.addSlashesToString(name) + "' WHERE fnCallID = " + last.getCallID());
@@ -1614,11 +1614,21 @@ public class robohelp extends SubspaceBot {
             do {
                 HelpRequest call = helpList.get(id);
                 String msg = " #" + call.getID() + " " + t.format(call.getTime());
-                if (call.isTaken() || call.getTaker().equals("RoboHelp"))
-                    msg += " " + stringHelper(call.getTaker(), -1) + " -";
+                if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
+                    int ct = call.getClaimType();
+                    if (ct == HelpRequest.TAKEN)
+                        msg += " " + stringHelper(call.getTaker(), -1) + " -";
+                    else if (ct == HelpRequest.MINE)
+                        msg += " " + stringHelper("[" + call.getTaker() + "]", -1) + " -";
+                    else if (ct == HelpRequest.FORGOT)
+                        msg += " " + stringHelper(call.getTaker() , -1) + " -";
+                    else if (ct == HelpRequest.CLEAN)
+                        msg += " " + stringHelper(call.getTaker() , -1) + " -";
+                } else if (call.getClaimType() == HelpRequest.FREE)
+                    msg += " " + stringHelper("[missed]", -1) + " -";
                 
                 if (call.getType() == 0 || call.getType() == 1)
-                    msg += " help: (";
+                    msg += "    help: (";
                 else if (call.getType() == 2 || call.getType() == 4)
                     msg += " cheater: (";
                 else 
@@ -2371,6 +2381,12 @@ public class robohelp extends SubspaceBot {
     
     class HelpRequest {
 
+        static final int FREE = 0;
+        static final int TAKEN = 1;
+        static final int MINE = 2;
+        static final int FORGOT = 3;
+        static final int CLEAN = 4;
+        
         long        m_time;
         String      m_question;
         String[]    m_responses;
@@ -2382,6 +2398,8 @@ public class robohelp extends SubspaceBot {
         int         m_type;
         boolean     m_claimed;
         String      m_claimer;
+        int         m_claimType;
+        
 
         public HelpRequest( String playerName, String question, String[] responses ){
 
@@ -2396,6 +2414,7 @@ public class robohelp extends SubspaceBot {
             m_type = -1;
             m_claimed = false;
             m_claimer = "";
+            m_claimType = FREE;
         }
 
         public HelpRequest( int id, String playerName, String question, String[] responses ){
@@ -2412,6 +2431,7 @@ public class robohelp extends SubspaceBot {
             m_type = -1;
             m_claimed = false;
             m_claimer = "";
+            m_claimType = FREE;
         }
 
         public HelpRequest( String playerName, String question, String[] responses, int type ){
@@ -2427,16 +2447,41 @@ public class robohelp extends SubspaceBot {
             m_type = type;
             m_claimed = false;
             m_claimer = "";
+            m_claimType = FREE;
         }
         
         public void reset() {
             m_claimer = "";
             m_claimed = false;
+            m_claimType = FREE;
         }
         
         public void claim(String name) {
             m_claimer = name;
             m_claimed = true;
+            m_claimType = TAKEN;
+        }
+        
+        public void mine(String name) {
+            m_claimer = name;
+            m_claimed = true;
+            m_claimType = MINE;
+        }
+        
+        public void forget() {
+            m_claimer = "[forgot]";
+            m_claimed = true;
+            m_claimType = FORGOT;
+        }
+        
+        public void clean() {
+            m_claimer = "[clean]";
+            m_claimed = true;
+            m_claimType = CLEAN;
+        }
+        
+        public int getClaimType() {
+            return m_claimType;
         }
         
         public String getTaker() {
