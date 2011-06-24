@@ -1575,21 +1575,21 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "No alerts found.");
     }
     
-    private String stringHelper(String str, int spaces) {
-        if (spaces == -1) {
+    private String stringHelper(String str, int length) {
+        if (length == -1) {
             // -1 for defaults dynamic
             if (str.length() < 11)
-                spaces = 10;
+                length = 10;
             else if (str.length() < 16)
-                spaces = 15;
+                length = 15;
             else if (str.length() < 21)
-                spaces = 20;
+                length = 20;
             else
-                spaces = 23;
+                length = 23;
         }
-        for (int i = str.length(); i < spaces; i++)
+        for (int i = str.length(); i < length; i++)
             str += " ";
-        str = str.substring(0, spaces);
+        str = str.substring(0, length);
         return str;
     }
     
@@ -1613,11 +1613,11 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = " #" + call.getID() + " " + t.format(call.getTime());
+                String msg = "#" + call.getID() + " " + t.format(call.getTime());
                 if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
                     int ct = call.getClaimType();
                     if (ct == HelpRequest.TAKEN)
-                        msg += " " + stringHelper(call.getTaker(), -1) + " -";
+                        msg += " " + stringHelper("(" + call.getTaker() + ")", -1) + " -";
                     else if (ct == HelpRequest.MINE)
                         msg += " " + stringHelper("[" + call.getTaker() + "]", -1) + " -";
                     else if (ct == HelpRequest.FORGOT)
@@ -1625,10 +1625,10 @@ public class robohelp extends SubspaceBot {
                     else if (ct == HelpRequest.CLEAN)
                         msg += " " + stringHelper(call.getTaker() , -1) + " -";
                 } else if (call.getClaimType() == HelpRequest.FREE)
-                    msg += " " + stringHelper("[missed]", -1) + " -";
+                    msg += " " + stringHelper("*", -1) + " -";
                 
                 if (call.getType() == 0 || call.getType() == 1)
-                    msg += "    help: (";
+                    msg += " help: (";
                 else if (call.getType() == 2 || call.getType() == 4)
                     msg += " cheater: (";
                 else 
