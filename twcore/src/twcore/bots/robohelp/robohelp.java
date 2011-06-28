@@ -1616,16 +1616,19 @@ public class robohelp extends SubspaceBot {
                 String msg = t.format(call.getTime()) + " #" + call.getID();
                 if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
                     int ct = call.getClaimType();
+                    String taker = call.getTaker();
+                    if (taker.equals("24"))
+                        taker = "( . v . )";
                     if (ct == HelpRequest.TAKEN)
-                        msg += " " + stringHelper("(" + call.getTaker() + ")", 19) + " -";
+                        msg += " (" + taker + ") -";
                     else if (ct == HelpRequest.MINE || call.getTaker().equals("RoboHelp"))
-                        msg += " " + stringHelper("[" + call.getTaker() + "]", 19) + " -";
+                        msg += " [" + taker + "] -";
                     else if (ct == HelpRequest.FORGOT)
-                        msg += " " + stringHelper(call.getTaker() , 19) + " -";
+                        msg += " " + taker + " -";
                     else if (ct == HelpRequest.CLEAN)
-                        msg += " " + stringHelper(call.getTaker() , 19) + " -";
+                        msg += " " + taker + " -";
                 } else if (call.getClaimType() == HelpRequest.FREE)
-                    msg += " " + stringHelper("*", 19) + " -";
+                    msg += " * -";
                 
                 if (call.getType() == 0 || call.getType() == 1)
                     msg += " help: (";
