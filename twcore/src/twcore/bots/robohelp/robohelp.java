@@ -1613,19 +1613,19 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = "#" + call.getID() + " " + t.format(call.getTime());
+                String msg = t.format(call.getTime()) + " #" + call.getID();
                 if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
                     int ct = call.getClaimType();
                     if (ct == HelpRequest.TAKEN)
-                        msg += " " + stringHelper("(" + call.getTaker() + ")", -1) + " -";
-                    else if (ct == HelpRequest.MINE)
-                        msg += " " + stringHelper("[" + call.getTaker() + "]", -1) + " -";
+                        msg += " " + stringHelper("(" + call.getTaker() + ")", 19) + " -";
+                    else if (ct == HelpRequest.MINE || call.getTaker().equals("RoboHelp"))
+                        msg += " " + stringHelper("[" + call.getTaker() + "]", 19) + " -";
                     else if (ct == HelpRequest.FORGOT)
-                        msg += " " + stringHelper(call.getTaker() , -1) + " -";
+                        msg += " " + stringHelper(call.getTaker() , 19) + " -";
                     else if (ct == HelpRequest.CLEAN)
-                        msg += " " + stringHelper(call.getTaker() , -1) + " -";
+                        msg += " " + stringHelper(call.getTaker() , 19) + " -";
                 } else if (call.getClaimType() == HelpRequest.FREE)
-                    msg += " " + stringHelper("    *   ", -1) + " -";
+                    msg += " " + stringHelper("*", 19) + " -";
                 
                 if (call.getType() == 0 || call.getType() == 1)
                     msg += " help: (";
