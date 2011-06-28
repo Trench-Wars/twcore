@@ -314,7 +314,7 @@ public class flaredbot1 extends SubspaceBot {
         s.setFreq(1234);
         final TimerTask drop = new TimerTask() {
             public void run() {
-                m_botAction.getShip().move(512*16, 557*16);
+                m_botAction.getShip().move(512*16, 600*16);
                 m_botAction.getShip().sendPositionPacket();
                 try { Thread.sleep(75); } catch (InterruptedException e) {}
                 m_botAction.getBall(ball.getBallID(), (int)ball.getTimeStamp());
