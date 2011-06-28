@@ -267,7 +267,7 @@ public class flaredbot1 extends SubspaceBot {
 		flag3owner = -1;
 		*/
 		m_botAction.shipResetAll();
-		m_botAction.warpFreqToLocation(0,477,511);
+		m_botAction.warpFreqToLocation(0,478,511);
 		m_botAction.warpFreqToLocation(1,543,511);
 		m_botAction.sendArenaMessage("GOGOGO!!!",104);		
 		m_botAction.scoreResetAll();
@@ -295,7 +295,7 @@ public class flaredbot1 extends SubspaceBot {
 			m_botAction.sendArenaMessage("Score: " + freq0Score + " - " + freq1Score);
             m_botAction.shipResetAll();
             m_botAction.resetFlagGame();
-			m_botAction.warpFreqToLocation(0,477,511);
+			m_botAction.warpFreqToLocation(0,478,512);
 			m_botAction.warpFreqToLocation(1,543,511);
 			dropBall();
 			/*
