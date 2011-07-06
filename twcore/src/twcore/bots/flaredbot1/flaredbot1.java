@@ -36,6 +36,8 @@ public class flaredbot1 extends SubspaceBot {
 	public EventRequester        		events;					//event requester
 	public OperatorList          		oplist;					//operator list
 	public Ball                         ball;
+	public int[]                        attack;                 //attack arena coords
+    public int[]                        attack2;                //attack2 arena coords
 
 	/**
 	 * Requests events, sets up bot. 
@@ -72,6 +74,10 @@ public class flaredbot1 extends SubspaceBot {
 	 */
 	public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botAction.getBotSettings().getString("InitialArena"));
+        attack = new int[] {478, 511, 544, 511};
+        attack2 = new int[] {475, 512, 549, 512};
+        //475 512, 549 512 attack2
+        //478 511, 544 511 attack
 	}
 	
 	public void handleEvent(ArenaJoined event) {
@@ -267,14 +273,20 @@ public class flaredbot1 extends SubspaceBot {
 		flag3owner = -1;
 		*/
 		m_botAction.shipResetAll();
-		m_botAction.warpFreqToLocation(0,478,511);
-		m_botAction.warpFreqToLocation(1,543,511);
+		if (m_botAction.getArenaName().equalsIgnoreCase("attack")) {
+	        m_botAction.warpFreqToLocation(0,attack[0], attack[1]);
+	        m_botAction.warpFreqToLocation(1,attack[2], attack[3]);
+		} else {
+            m_botAction.warpFreqToLocation(0,attack2[0], attack2[1]);
+            m_botAction.warpFreqToLocation(1,attack2[2], attack2[3]);		    
+		}
 		m_botAction.sendArenaMessage("GOGOGO!!!",104);		
 		m_botAction.scoreResetAll();
 		m_botAction.resetFlagGame();
 		dropBall();
 		//m_botAction.setDoors(255);
-
+		//475 512, 549 512 attack2
+		//478 511, 544 511 attack
 	}
 	
 	/**
