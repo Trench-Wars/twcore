@@ -226,9 +226,10 @@ public class whobot extends SubspaceBot {
                     processPlayers();
                 else if (msg.equals("!help"))
                     sendHelp(name);
-                else if (msg.equals("!status"))
+                else if (msg.startsWith("!stat")) {
                     status(name);
-                else if (msg.equals("!online"))
+                    ba.ipcTransmit(IPC, new IPCEvent(name + ":!stats", System.currentTimeMillis(), EventRequester.MESSAGE));
+                } else if (msg.equals("!online"))
                     online(name);
                 else if (msg.equals("!arenas"))
                     arenas(name);
