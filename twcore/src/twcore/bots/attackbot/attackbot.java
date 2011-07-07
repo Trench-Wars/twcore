@@ -307,8 +307,13 @@ public class attackbot extends SubspaceBot {
 			m_botAction.sendArenaMessage("Score: " + freq0Score + " - " + freq1Score);
             m_botAction.shipResetAll();
             m_botAction.resetFlagGame();
-			m_botAction.warpFreqToLocation(0,478,512);
-			m_botAction.warpFreqToLocation(1,543,511);
+            if (m_botAction.getArenaName().equalsIgnoreCase("attack")) {
+                m_botAction.warpFreqToLocation(0,attack[0],attack[1]);
+                m_botAction.warpFreqToLocation(1,attack[2],attack[3]);
+            } else {
+                m_botAction.warpFreqToLocation(0,attack2[0],attack2[1]);
+                m_botAction.warpFreqToLocation(1,attack2[2],attack2[3]);                
+            }
 			dropBall();
 			/*
 			m_botAction.setDoors(255);			 
