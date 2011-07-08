@@ -23,8 +23,8 @@ import twcore.core.events.SQLResultEvent;
 public final class radiobot extends SubspaceBot {
     private EventRequester m_req;
     private OperatorList m_opList;
-    private LinkedList<String> m_loggedInList;
-    private String m_currentPassword = "";
+    //private LinkedList<String> m_loggedInList;
+    //private String m_currentPassword = "";
     private LinkedList<String> m_alreadyZoned;
     private String m_currentHost = "";
     private String m_url = "";
@@ -32,9 +32,12 @@ public final class radiobot extends SubspaceBot {
     private boolean m_announcing = false;
     private boolean m_someoneHosting = false;
     private long m_timeStarted;
-    private long m_timeStartedToHost;
+    private long m_timeStartedToHost = 0;
     private long m_timeToClearZone;
     private long m_timeOfLastZone = 0;
+    
+    HashMap <String,String> operators   = new HashMap<String,String>();
+    HashMap <String,String> hosts = new HashMap<String,String>();
    
 
     private RadioQueue m_shoutouts;
@@ -54,6 +57,7 @@ public final class radiobot extends SubspaceBot {
     private String m_welcome = "";
     final String        mySQLHost = "website";
     BotSettings         m_botSettings;
+    
 
     /** Creates a new instance of radiobot */
     public radiobot(BotAction botAction) {
@@ -64,12 +68,13 @@ public final class radiobot extends SubspaceBot {
         m_req.request(EventRequester.PLAYER_ENTERED);
         m_req.request( EventRequester.ARENA_JOINED );
         m_opList = botAction.getOperatorList();
-        m_loggedInList = new LinkedList<String>();
+        //m_loggedInList = new LinkedList<String>();
         m_alreadyZoned = new LinkedList<String>();
         
-        m_currentPassword = m_botAction.getBotSettings().getString("ServPass");
-        if(m_currentPassword == null)
-        	m_currentPassword = "";
+        
+        //m_currentPassword = m_botAction.getBotSettings().getString("ServPass");
+       // if(m_currentPassword == null)
+        	//m_currentPassword = "";
 
         m_shoutouts = new RadioQueue("Shoutout");
         m_requests = new RadioQueue("Song");
@@ -91,9 +96,11 @@ public final class radiobot extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + chat );
         m_botAction.joinArena("radio");
         m_botAction.setMessageLimit(10);
+        load_authorize();
        
     }
     
+        
     public void handleEvent (ArenaJoined event) {
         m_botAction.sendChatMessage(m_botAction.getBotName() + " is here!");
     }
@@ -119,8 +126,9 @@ public final class radiobot extends SubspaceBot {
              if(name == null)
              	return;
 		String message = event.getMessage();
-		boolean isLoggedIn = m_loggedInList.contains(name);
-		boolean isCurrentHost = m_someoneHosting && isLoggedIn && m_currentHost.equals(name);
+		boolean isHost = hosts.containsKey(name);
+		boolean isOp = operators.containsKey(name);
+		boolean isCurrentHost = m_someoneHosting && isHost && m_currentHost.equals(name);
 		boolean isER = m_opList.isER(name);
 
 		//make command part lowercase
@@ -137,8 +145,10 @@ public final class radiobot extends SubspaceBot {
 		if(message.startsWith("!help")) {
 			m_botAction.sendPrivateMessage(id, m_someoneHosting ? "The current host is " + m_currentHost : NO_HOST);
             m_botAction.privateMessageSpam(id, pubHelp);
-			if(isLoggedIn) {
+			if(isHost || isOp) {
             	m_botAction.privateMessageSpam(id, staffHelp);
+            	if(isOp)
+            	    m_botAction.privateMessageSpam(id, operatorHelp);
 	            if(isCurrentHost) {
     	    		m_botAction.privateMessageSpam(id, currentRadioHostHelp);
 	            }
@@ -152,7 +162,7 @@ public final class radiobot extends SubspaceBot {
         /**
          * Handle logged in commands
          */
-        if(isLoggedIn && handleStaffMessage(name, id, message)) {
+        if(isHost || isOp && handleStaffMessage(name, id, message)) {
         	return;
         }
 
@@ -176,6 +186,11 @@ public final class radiobot extends SubspaceBot {
 		if(isER && handleModMessage(name, id, message)) {
 			return;
 		}
+		
+		/**
+		 * Handle Op Commands
+		 */
+		if(isOp && handleOpMessage(name, id, message)){
 
 		/**
 		 * Handle poll votes
@@ -184,10 +199,107 @@ public final class radiobot extends SubspaceBot {
 			m_currentPoll.handlePollCount(name, message);
         }
     }
+        }
+        private void load_authorize() {
+            try {
+                BotSettings m_botSettings = m_botAction.getBotSettings();
+            hosts.clear();
+            operators.clear();
+            //
+            String host[] = m_botSettings.getString( "Hosts" ).split( "," );
+            for( int i = 0; i < host.length; i++ )
+               hosts.put(host[i].toLowerCase(), host[i]);
+            
+            //
+            String ops[] = m_botSettings.getString( "Operators" ).split( "," );
+            for( int j = 0; j < ops.length; j++ )
+                operators.put(ops[j].toLowerCase(), ops[j]);
+            
+            } catch (Exception e) { Tools.printStackTrace( "Method Failed: ", e ); }
+            
 
+
+        }
+
+        private void removeHost(String name, String message) {
+            load_authorize();
+            BotSettings m_botSettings = m_botAction.getBotSettings();
+            String ops = m_botSettings.getString("Hosts");
+    
+            int spot = ops.indexOf(message);
+            if (spot == 0 && ops.length() == message.length()) {
+                ops = "";
+                m_botAction.sendSmartPrivateMessage(name, "Delete Host: " + message + " successful");
+            }
+            else if (spot == 0 && ops.length() > message.length()) {
+                ops = ops.substring(message.length() + 1);
+                m_botAction.sendSmartPrivateMessage(name, "Delete Host: " + message + " successful");
+            } 
+            else if (spot > 0 && spot + message.length() < ops.length()) {
+                ops = ops.substring(0, spot) + ops.substring(spot + message.length() + 1);
+                m_botAction.sendSmartPrivateMessage(name, "Delete Host: " + message + " successful");
+            }
+            else if (spot > 0 && spot == ops.length() - message.length()) {
+                ops = ops.substring(0, spot - 1);
+                m_botAction.sendSmartPrivateMessage(name, "Delete Host: " + message + " successful");
+            }
+            else {
+                m_botAction.sendSmartPrivateMessage(name, "Delete Host: " + message + " successful");
+            }  
+            
+            m_botSettings.put("Hosts", ops);
+            m_botSettings.save();
+            load_authorize();
+            }
+        
+        private void addHost(String name, String substring) {
+            
+            BotSettings m_botSettings = m_botAction.getBotSettings();
+            String host = m_botSettings.getString("Hosts");
+
+
+            if(host.contains(substring)){
+                m_botAction.sendSmartPrivateMessage(name, substring + " is already listed as a host.");
+                return;
+                }
+            if (host.length() < 1)
+                m_botSettings.put("Hosts", substring);
+            else
+                m_botSettings.put("Hosts", host + "," + substring);
+            m_botAction.sendSmartPrivateMessage(name, "Add Host: " + substring + " successful");
+            m_botSettings.save();
+            m_botAction.sendChatMessage("Host "+substring+" has offically joined Radio!");
+            load_authorize();
+            }
+        
+        
+        public void showHosts (String name, String message){
+            
+            load_authorize();
+            String hops = "Radio Operators";
+            Iterator<String> it1 = operators.values().iterator();
+            while( it1.hasNext() ) {
+            if( it1.hasNext() )
+                hops += (String)it1.next() + ", ";
+            else
+                hops += (String)it1.next();
+        }
+        String ops = "Hosts";
+        Iterator<String> it2 = hosts.values().iterator();
+        while( it2.hasNext() ) {
+            if( it2.hasNext() )
+                ops += (String)it2.next() + ", ";
+            else
+                ops += (String)it2.next();
+        }
+        hops = hops.substring(0, hops.length() - 2);
+        ops = ops.substring(0, ops.length() - 2);
+        m_botAction.sendPrivateMessage( name, hops );
+        m_botAction.sendPrivateMessage( name, ops );
+        }
 
 	/**
-	 * Handle logged in commands
+	 * Handle host commands
 	 */
     private boolean handleStaffMessage(String name, int id, String message) {
 
@@ -211,15 +323,16 @@ public final class radiobot extends SubspaceBot {
                 
             }
 
-        } else if(message.startsWith("!who")) {
+        /*} else if(message.startsWith("!who")) {
         	handled = true;
-            m_botAction.sendPrivateMessage(id, "Radio hosts who are logged in:");
+           m_botAction.sendPrivateMessage(id, "Radio hosts who are logged in:");
             Iterator<String> i = m_loggedInList.iterator();
             String who;
             while(i.hasNext()) {
             	who = i.next();
-                m_botAction.sendPrivateMessage(id, who + (who.equals(m_currentHost) ? " (current host)" : ""));
-            }
+                m_botAction.sendPrivateMessage(id, who + (who.equals(m_currentHost) ? " (current host)" : ""));}*/
+        	
+            
 
         } else if(message.startsWith("!status")) {
         	handled = true;
@@ -298,11 +411,25 @@ public final class radiobot extends SubspaceBot {
             if(result.next()) {
                 m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             } else {
-                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (`fcUserName`, `fnCount`, `fnType`, `fdDate`, 'fnDuration') VALUES ('"+name+"', '1', '0', '"+time+"', '0')" );
             }
             m_botAction.SQLClose( result );
             m_botAction.sendSmartPrivateMessage(name, "Host count recorded, Start time enabled..");
+            this.m_timeStartedToHost = System.currentTimeMillis();
         } catch ( Exception e ) {
+            m_botAction.sendChatMessage("Error occured when registering host count :"+e.getMessage());
+            Tools.printStackTrace(e);
+        }
+    }
+    
+    private void clear(String name){
+        if( !m_botAction.SQLisOperational())
+            return;
+        
+        try {
+            m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = 0 AND fnDuration = 0");
+            
+        } catch ( Exception e ){
             m_botAction.sendChatMessage("Error occured when registering host count :"+e.getMessage());
             Tools.printStackTrace(e);
         }
@@ -534,10 +661,27 @@ public final class radiobot extends SubspaceBot {
             m_botAction.sendChatMessage(name +" has finished hosting radio.");
             m_currentHost = "";
             m_someoneHosting = false;
-            long now = System.currentTimeMillis();
-            long start = now - m_timeStartedToHost;
-            m_botAction.sendPrivateMessage(id, "You hosted for " + (start / 1000 / 60 / 60) + " hours and " + (start / 1000 / 60 % 60) + " minutes. Please ?message the Radio Operator this time.");
-
+            long diff = System.currentTimeMillis()-m_timeStartedToHost;
+            int minute = (int)(diff/(1000*60));
+            m_botAction.sendPrivateMessage(id, "You hosted for " + (diff / 1000 / 60 / 60) + " hours and " + minute + " minutes.");
+            if( !m_botAction.SQLisOperational())
+                return handled;
+            
+            try {
+                String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
+                ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                if(result.next()) {
+                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = '"+minute+"' WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                } else {
+                    m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Error!");
+                }
+                m_botAction.SQLClose( result );
+                this.m_timeStartedToHost = 0;
+            } catch ( Exception e ) {
+                m_botAction.sendChatMessage("Error occured when registering host duration :"+e.getMessage());
+                Tools.printStackTrace(e);
+            }
+        
 
             
         } else if(message.startsWith("!ask")) {
@@ -549,6 +693,32 @@ public final class radiobot extends SubspaceBot {
         
         return handled;
     }
+	
+	/**
+	 * Handle Op Commands
+	 */
+	private boolean handleOpMessage(String name, int id, String message){
+	    
+	    boolean handled = false;
+	    
+	    if(message.equalsIgnoreCase("!clear")){
+	        handled = true;
+	        clear(name);
+	        
+	    } else if(message.startsWith("!addhost ")){
+	        handled = true;
+	        String host = message.substring(9);
+	        addHost(name, host);
+	        
+	    } else if(message.startsWith("!removehost ")){
+	        handled = true;
+	        String host = message.substring(12);
+	        removeHost(name, host);
+	    }
+    
+    return handled;
+
+	}
 
 
 	/**
@@ -585,9 +755,14 @@ public final class radiobot extends SubspaceBot {
 	    } else if(message.equals("!how")) {
     		handled = true;
     		m_botAction.sendSmartPrivateMessage(name, "TW Radio is managed by a Radio Server. If you want to be a DJ fill out an application at ...");
+    		
+	    } else if(message.equalsIgnoreCase("!staff")){
+	        handled = true;
+	        showHosts(name, message);
+	        
 			
 
-	    } else if(message.startsWith("!login ")) {
+	    /*} else if(message.startsWith("!login ")) {
 			handled = true;
         	if(m_currentPassword.equals("")) {
         		m_botAction.sendPrivateMessage(id, "Login currently disabled.");
@@ -602,7 +777,7 @@ public final class radiobot extends SubspaceBot {
             } else {
                 m_botAction.sendPrivateMessage(id, "Incorrect password.");
                 m_botAction.sendChatMessage(name + " has attempted to login and failed. Is he/she a host?.");
-            }
+            }*/
         }
         return handled;
     }
@@ -615,12 +790,12 @@ public final class radiobot extends SubspaceBot {
 
 		boolean handled = false;
 
-    	if(message.startsWith("!setpw ")) {
+    	/*if(message.startsWith("!setpw ")) {
     		handled = true;
     		m_currentPassword = message.substring(7);
-    		m_botAction.sendPrivateMessage(id, "Password changed.");
+    		m_botAction.sendPrivateMessage(id, "Password changed.");*/
 
-		} else if(message.startsWith("!go ")) {
+		 if(message.startsWith("!go ")) {
     		handled = true;
     		String arena = message.substring(4);
     		if(Tools.isAllDigits(arena)) {
@@ -868,7 +1043,7 @@ public final class radiobot extends SubspaceBot {
         "|!setwelcome <msg>     - Sets welcome message (!welcomeoff to disable).           |",
         "|!seturl               - Sets the URL that appears in your announcement.          |",
         "|!ask                  - Sends a ?help asking for another zoner.                  |",
-        "|!time                 - Displays how long you haave currently hosted for.        |",                                       
+        "|!time                 - Displays how long you have currently hosted for.        |",                                       
         "+---------------------------------------------------------------------------------+",
         "|    Read requests (append a number to retrieve several at once)                  |",
         "+---------------------------------------------------------------------------------|",
@@ -879,12 +1054,19 @@ public final class radiobot extends SubspaceBot {
         "+---------------------------------------------------------------------------------+"   
     
     };
+    
+    private final static String[] operatorHelp = {
+        "+--------------------------Operator Help------------------------------------------+",
+        "|!clear                - Reset Stats of Hosts                                     |",
+        "|!addhost              - Adds a host to use RadioBot                              |",
+        "|!removehost           - Removes a host to use RadioBot                           |",
+        "+---------------------------------------------------------------------------------+"  
+    };
 
     private final static String[] modHelp = {
     	"+-------------------------ER Commands--------------------------------------------",
     	"|!go <arena>           - Moves bot to <arena>.                                    |",
     	"|!die                  - Disconnects bot.                                         |",
-    	"|!setpw <password>     - Changes login password for this session.                 |",
     	"|!seturl <url>         - Sets the URL that appears in the announcements.          |",
     	"|!grantzone            - Grants the radio host another zoner.                     |",
     	"|!unhost               - Removes the current host.                                |",
