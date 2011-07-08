@@ -126,6 +126,7 @@ public final class radiobot extends SubspaceBot {
              if(name == null)
              	return;
 		String message = event.getMessage();
+		load_authorize();
 		boolean isHost = hosts.containsKey(name);
 		boolean isOp = operators.containsKey(name);
 		boolean isCurrentHost = m_someoneHosting && isHost && m_currentHost.equals(name);
@@ -147,11 +148,11 @@ public final class radiobot extends SubspaceBot {
             m_botAction.privateMessageSpam(id, pubHelp);
 			if(isHost || isOp) {
             	m_botAction.privateMessageSpam(id, staffHelp);
-            	if(isOp)
+            	if(isOp) {
             	    m_botAction.privateMessageSpam(id, operatorHelp);
 	            if(isCurrentHost) {
     	    		m_botAction.privateMessageSpam(id, currentRadioHostHelp);
-	            }
+	            }}
 			}
 			if(isER) {
 				m_botAction.privateMessageSpam(id, modHelp);
@@ -191,6 +192,8 @@ public final class radiobot extends SubspaceBot {
 		 * Handle Op Commands
 		 */
 		if(isOp && handleOpMessage(name, id, message)){
+		    return;
+		}
 
 		/**
 		 * Handle poll votes
@@ -199,7 +202,7 @@ public final class radiobot extends SubspaceBot {
 			m_currentPoll.handlePollCount(name, message);
         }
     }
-        }
+        
         private void load_authorize() {
             try {
                 BotSettings m_botSettings = m_botAction.getBotSettings();
@@ -1083,7 +1086,6 @@ public final class radiobot extends SubspaceBot {
         "|!question <question>  - Ask the radio host a question to be answered on air.     |",
         "|!shoutout <shoutout>  - Request a shoutout to the radio host.                    |",
         "|!how                  - Shows how you could host Radio and how its done.         |",
-        "|!login <password>     - If you are a current radio host, please log into the bot.|",
         "+---------------------------------------------------------------------------------+"
     };
     
