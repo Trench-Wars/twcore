@@ -256,10 +256,6 @@ public final class radiobot extends SubspaceBot {
 
         }
 
-
-
-        
-
         /**
          * Handle current host only commands
          */
@@ -623,9 +619,9 @@ public final class radiobot extends SubspaceBot {
             
             try {
                 String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
-                ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
                 if(result.next()) {
-                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = '"+minute+"' WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = '"+minute+"' WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
                 } else {
                     m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Error!");
                 }
@@ -716,7 +712,7 @@ public final class radiobot extends SubspaceBot {
         public void showHosts (String name, String message){
             
             load_authorize();
-            String hops = "Radio Operators";
+            String hops = "Radio Operators: ";
             Iterator<String> it1 = operators.values().iterator();
             while( it1.hasNext() ) {
             if( it1.hasNext() )
@@ -724,7 +720,7 @@ public final class radiobot extends SubspaceBot {
             else
                 hops += (String)it1.next();
         }
-        String ops = "Hosts";
+        String ops = "Hosts: ";
         Iterator<String> it2 = hosts.values().iterator();
         while( it2.hasNext() ) {
             if( it2.hasNext() )
@@ -746,9 +742,9 @@ public final class radiobot extends SubspaceBot {
         
         try {
             String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
-            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"' AND fnDuration = fnDuration" );
             if(result.next()) {
-                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"' AND fnDuration = fnDuration" );
             } else {
                 m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (`fcUserName`, `fnCount`, `fnType`, `fdDate`, 'fnDuration') VALUES ('"+name+"', '1', '0', '"+time+"', '0')" );
             }
