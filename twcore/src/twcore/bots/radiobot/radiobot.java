@@ -84,6 +84,7 @@ public final class radiobot extends SubspaceBot {
         m_timeStarted = System.currentTimeMillis();
         m_timeStartedToHost = System.currentTimeMillis();
         m_timeToClearZone = m_timeStarted + SIX_HOURS;
+        load_authorize();
     }
 
     public boolean isIdle() {
@@ -127,9 +128,9 @@ public final class radiobot extends SubspaceBot {
              	return;
 		String message = event.getMessage();
 		load_authorize();
-		boolean isHost = hosts.containsKey(name);
-		boolean isOp = operators.containsKey(name);
-		boolean isCurrentHost = m_someoneHosting && isHost && m_currentHost.equals(name);
+		//boolean isHost = hosts.containsKey(name);
+		//boolean isOp = operators.containsKey(name);
+		boolean isCurrentHost = m_someoneHosting && hosts.containsKey(name.toLowerCase()) && m_currentHost.equals(name);
 		boolean isER = m_opList.isER(name);
 
 		//make command part lowercase
@@ -146,9 +147,9 @@ public final class radiobot extends SubspaceBot {
 		if(message.startsWith("!help")) {
 			m_botAction.sendPrivateMessage(id, m_someoneHosting ? "The current host is " + m_currentHost : NO_HOST);
             m_botAction.privateMessageSpam(id, pubHelp);
-			if(isHost || isOp) {
+			if(hosts.containsKey(name.toLowerCase()) || operators.containsKey(name.toLowerCase())){
             	m_botAction.privateMessageSpam(id, staffHelp);
-            	if(isOp) {
+            	if(operators.containsKey(name.toLowerCase())) {
             	    m_botAction.privateMessageSpam(id, operatorHelp);
 	            if(isCurrentHost) {
     	    		m_botAction.privateMessageSpam(id, currentRadioHostHelp);
@@ -163,7 +164,7 @@ public final class radiobot extends SubspaceBot {
         /**
          * Handle logged in commands
          */
-        if(isHost || isOp && handleStaffMessage(name, id, message)) {
+        if(hosts.containsKey(name.toLowerCase()) || operators.containsKey(name.toLowerCase()) && handleStaffMessage(name, id, message)) {
         	return;
         }
 
@@ -191,7 +192,7 @@ public final class radiobot extends SubspaceBot {
 		/**
 		 * Handle Op Commands
 		 */
-		if(isOp && handleOpMessage(name, id, message)){
+		if(operators.containsKey(name.toLowerCase()) && handleOpMessage(name, id, message)){
 		    return;
 		}
 
@@ -1086,6 +1087,7 @@ public final class radiobot extends SubspaceBot {
         "|!question <question>  - Ask the radio host a question to be answered on air.     |",
         "|!shoutout <shoutout>  - Request a shoutout to the radio host.                    |",
         "|!how                  - Shows how you could host Radio and how its done.         |",
+        "|!staff                - Show Radio Staff                                         |",
         "+---------------------------------------------------------------------------------+"
     };
     
