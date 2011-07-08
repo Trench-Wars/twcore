@@ -132,6 +132,7 @@ public final class radiobot extends SubspaceBot {
 		//boolean isOp = operators.containsKey(name);
 		boolean isCurrentHost = m_someoneHosting && hosts.containsKey(name.toLowerCase()) && m_currentHost.equals(name);
 		boolean isER = m_opList.isER(name);
+		
 
 		//make command part lowercase
 		message = message.trim();
@@ -262,30 +263,343 @@ public final class radiobot extends SubspaceBot {
         /**
          * Handle current host only commands
          */
-        if(isCurrentHost && handleCurrentHostOnly(name, id, message, event.getSoundCode())) {
-        	return;
+        if(isCurrentHost) {
+            int sound = event.getSoundCode();
+            if(message.startsWith("!arena ") && name.equals(m_currentHost)) {
+                m_botAction.sendArenaMessage(message.substring(7) + " -" + m_currentHost
+                    , sound == 12 ? 2 : sound);
+
+            } else if(message.startsWith("!poll ")) {
+                if(m_currentPoll != null) {
+                    m_botAction.sendPrivateMessage(name, "A poll is currently in session."
+                        + " End this poll before beginning another one.");
+                }
+                StringTokenizer izer = new StringTokenizer(message.substring(6), ":");
+                int tokens = izer.countTokens();
+                if(tokens < 2) {
+                    m_botAction.sendPrivateMessage(id, "Sorry but the poll format is wrong.");
+                }
+
+                String[] polls = new String[tokens];
+                int i = 0;
+                while(izer.hasMoreTokens()) {
+                    polls[i] = izer.nextToken();
+                    i++;
+                }
+
+                m_currentPoll = new Poll(polls);
+
+            } else if(message.startsWith("!endpoll")) {
+                if(m_currentPoll == null) {
+                    m_botAction.sendPrivateMessage(id, "There is no poll running right now.");
+                } else {
+                    m_currentPoll.endPoll();
+                    m_currentPoll = null;
+                }
+
+            } else if(message.startsWith("!zone ")) {
+                long now = System.currentTimeMillis();
+                if(now >= m_timeToClearZone) {
+                    m_alreadyZoned.clear();
+                    m_timeToClearZone += SIX_HOURS;
+                }
+                if(m_alreadyZoned.contains(name)) {
+                    m_botAction.sendPrivateMessage(id, "Sorry, you've already used your zone message. Get an <ER>+ to grant you another.");
+                } else if(now < m_timeOfLastZone + THIRTY_MINUTES) {
+                    m_botAction.sendPrivateMessage(id, "Sorry, you must wait "
+                        + ((m_timeOfLastZone + THIRTY_MINUTES - now) / 1000 / 60) + " minutes and "
+                        + ((m_timeOfLastZone + THIRTY_MINUTES - now) / 1000 % 60) + " seconds before you may zone.");
+                } else {
+                    m_botAction.sendZoneMessage(message.substring(6) + " -" + name, 2);
+                    m_alreadyZoned.add(name);
+                    m_timeOfLastZone = now;
+                }
+                
+            } else if(message.startsWith("!time")) {
+                long now = System.currentTimeMillis();
+                long start = now - m_timeStartedToHost;
+                m_botAction.sendPrivateMessage(id, "You have hosted for " + (start / 1000 / 60 / 60) + " hours and " + (start / 1000 / 60 % 60) + " minutes.");
+
+
+            } else if(message.startsWith("!nextshout")) {
+                int i = 1;
+                if(message.startsWith("!nextshout ")) {
+                    try {
+                        i = Integer.parseInt(message.substring(11));
+                    } catch(NumberFormatException e) {
+                        i = 1;
+                    }
+                }
+                i = i < m_shoutouts.size() ? i : m_shoutouts.size();
+                for(; i > 0; i--) {
+                    m_botAction.sendPrivateMessage(id, "Shout: " + m_shoutouts.remove());
+                }
+
+            } else if(message.startsWith("!nextreq")) {
+                int i = 1;
+                if(message.startsWith("!nextreq ")) {
+                    try {
+                        i = Integer.parseInt(message.substring(9));
+                    } catch(NumberFormatException e) {
+                        i = 1;
+                    }
+                }
+                i = i < m_requests.size() ? i : m_requests.size();
+                for(; i > 0; i--) {
+                    m_botAction.sendPrivateMessage(id, "Reqst: " + m_requests.remove());
+                }
+
+            } else if(message.startsWith("!nexttop")) {
+                int i = 1;
+                if(message.startsWith("!nexttop ")) {
+                    try {
+                        i = Integer.parseInt(message.substring(9));
+                    } catch(NumberFormatException e) {
+                        i = 1;
+                    }
+                }
+                i = i < m_topics.size() ? i : m_topics.size();
+                for(; i > 0; i--) {
+                    m_botAction.sendPrivateMessage(id, "Topic: " + m_topics.remove());
+                }
+
+            } else if(message.startsWith("!nextques")) {
+                int i = 1;
+                if(message.startsWith("!nextques ")) {
+                    try {
+                        i = Integer.parseInt(message.substring(10));
+                    } catch(NumberFormatException e) {
+                        i = 1;
+                    }
+                }
+                i = i < m_questions.size() ? i : m_questions.size();
+                for(; i > 0; i--) {
+                    m_botAction.sendPrivateMessage(id, "Quest: " + m_questions.remove());
+                }
+
+            } else if(message.startsWith("!nextall")) {
+                m_botAction.sendPrivateMessage(id, "Shout: " + m_shoutouts.remove());
+                m_botAction.sendPrivateMessage(id, "Reqst: " + m_requests.remove());
+                m_botAction.sendPrivateMessage(id, "Topic: " + m_topics.remove());
+                m_botAction.sendPrivateMessage(id, "Quest: " + m_questions.remove());
+
+            } else if(message.startsWith("!clear")) {
+                m_shoutouts.clear();
+                m_requests.clear();
+                m_topics.clear();
+                m_questions.clear();
+                m_botAction.sendPrivateMessage(id, "All requests cleared.");
+
+            } else if(message.startsWith("!addannounce ")) {
+                if(m_announceLength >= MAX_ANNOUNCE_LINES) {
+                    m_botAction.sendPrivateMessage(id, "Too many announce lines. (Do !clrannounce)");
+                } else {
+                    m_announcement[m_announceLength++] = message.substring(13);
+                    m_botAction.sendPrivateMessage(id, "Message added.");
+                }
+
+            } else if(message.startsWith("!clrannounce")) {
+                m_announceLength = 0;
+                m_botAction.sendPrivateMessage(id, "Announcement cleared.");
+
+            } else if(message.startsWith("!setmax ")) {
+
+                String[] params = message.substring(8).split(" +");
+                int count = params.length;
+                int[] nums = new int[count];
+
+                for(int i = 0, j; i < count; i++) {
+                    try {
+                        j = Integer.parseInt(params[i]);
+                        if(j < 0) j = 0;
+                        else if(j > 100) j = 100;
+                    } catch(NumberFormatException e) {
+                        j = 20;
+                    }
+                    nums[i] = j;
+                }
+                switch(count) {
+                    case 4:
+                        m_shoutouts.setMax(nums[3]);
+                    case 3:
+                        m_questions.setMax(nums[2]);
+                    case 2:
+                        m_requests.setMax(nums[1]);
+                    case 1:
+                        m_topics.setMax(nums[0]);
+                        m_botAction.sendPrivateMessage(id, "New limits: Topics=" + m_topics.getMax()
+                            + " Requests=" + m_requests.getMax()
+                            + " Questions=" + m_questions.getMax()
+                            + " Shoutouts=" + m_shoutouts.getMax());
+                        break;
+                    default:
+                        m_botAction.sendPrivateMessage(id, "Too many parameters.");
+                }
+
+            } else if(message.startsWith("!viewannounce")) {
+                for(int i = 0; i < m_announceLength; i++) {
+                    m_botAction.sendPrivateMessage(id, m_announcement[i]);
+                
+                
+           }} else if(message.startsWith("!setwelcome ")) {
+                m_welcome = message.substring(12);
+                m_botAction.sendPrivateMessage(id, "Welcome message set.");
+
+           } else if(message.startsWith("!welcomeoff")) {
+                m_welcome = "";
+                m_botAction.sendPrivateMessage(id, "Welcome message turned off.");
+                
+           } else if(message.startsWith("!seturl ")) {
+               m_url = message.substring(8);
+               m_botAction.sendPrivateMessage(id, "URL set to " + m_url);
+
+            } else if(message.startsWith("!unhost")) {
+               unhost(name, message);
+            
+
+                
+            } else if(message.startsWith("!ask")) {
+                long now = System.currentTimeMillis();
+                m_botAction.sendUnfilteredPublicMessage("?help The radio host is requesting a zoner (" + ((now - m_timeOfLastZone) / 1000 / 60) + " minutes and "
+                        + ((now - m_timeOfLastZone) / 1000 % 60) + " seconds since last zone)" );
+            }
+            
         }
 
-        /**
-         * Handle public commands
-         */
-        if(handlePrivateMessage(name, id, message)) {
-        	return;
-        }
 
 		/**
 		 * Handle <ER>+ commands
 		 */
-		if(isER && handleModMessage(name, id, message)) {
-			return;
+		if(isER) {
+		    /*if(message.startsWith("!setpw ")) {
+            handled = true;
+            m_currentPassword = message.substring(7);
+            m_botAction.sendPrivateMessage(id, "Password changed.");*/
+
+         if(message.startsWith("!go ")) {
+            String arena = message.substring(4);
+            if(Tools.isAllDigits(arena)) {
+                m_botAction.sendPrivateMessage(id, "You cannot move me to a public arena.");
+            } else {
+                m_botAction.changeArena(arena);
+            }
+
+        } else if(message.equals("!die")) {
+            m_botAction.sendChatMessage(name + " Just killed me!");
+            m_botAction.die();
+
+        } else if(message.startsWith("!grantzone")) {
+            long now = System.currentTimeMillis();
+            if(m_alreadyZoned.contains(m_currentHost)) {
+                if(now < m_timeOfLastZone + THIRTY_MINUTES) {
+                    m_botAction.sendPrivateMessage(id, "Sorry, you may only grantzone 30 minutes from the last zone which was "
+                        + ((now - m_timeOfLastZone) / 1000 / 60) + " minutes ago.");
+                } else {
+                    m_alreadyZoned.remove(m_currentHost);
+                    m_botAction.sendPrivateMessage(id, "Zoner granted to " + m_currentHost);
+                    m_botAction.sendPrivateMessage(m_currentHost, name + " has granted you another zone message.");
+                }
+            } else {
+                m_botAction.sendPrivateMessage(id, "No current host or host is already granted a zone.");
+            }
+
+        
+
+        } else if(message.startsWith("!unhost")) {
+            if(m_someoneHosting) {
+                unhost(name, message);
+            } else {
+                m_botAction.sendPrivateMessage(id, NO_HOST);
+            }
+            
+        } else if(message.startsWith("!setwelcome ")) {
+            m_welcome = message.substring(12);
+            m_botAction.sendPrivateMessage(id, "Welcome message set.");
+
+       } else if(message.startsWith("!welcomeoff")) {
+            m_welcome = "";
+            m_botAction.sendPrivateMessage(id, "Welcome message turned off.");
+
+        } else if(message.startsWith("!seturl ")) {
+            m_url = message.substring(8);
+            m_botAction.sendPrivateMessage(id, "URL set to " + m_url);
+            
+        } else if(message.startsWith("!dbcon")) {
+            if( !m_botAction.SQLisOperational() ){
+                m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
+                
+            }
+            try {
+                m_botAction.SQLQueryAndClose( mySQLHost, "SELECT * FROM tblRadio_Host LIMIT 0,1" );
+                m_botAction.sendChatMessage( "The Database is online. I can connect to it!" );
+            } catch (Exception e ) {
+                m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
+            }
+        }
 		}
 		
 		/**
 		 * Handle Op Commands
 		 */
-		if(operators.containsKey(name.toLowerCase()) && handleOpMessage(name, id, message)){
-		    return;
+		if(operators.containsKey(name.toLowerCase())){
+		      if(message.equalsIgnoreCase("!clear")){
+		            clear(name);
+		            
+		        } else if(message.startsWith("!addhost ")){
+		            String host = message.substring(9);
+		            addHost(name, host);
+		            
+		        } else if(message.startsWith("!removehost ")){
+		            String host = message.substring(12);
+		            removeHost(name, host);
+		        
 		}
+		if(!m_someoneHosting
+                && (message.startsWith("!shoutout ")
+                || message.startsWith("!request ")
+                || message.startsWith("!topic ")
+                || message.startsWith("!question "))) {
+            m_botAction.sendPrivateMessage(id, NO_HOST);
+
+        } else if(message.startsWith("!shoutout ")) {
+            m_shoutouts.handleAdd(id, name, message.substring(10));
+
+        } else if(message.startsWith("!request ")) {
+            m_requests.handleAdd(id, name, message.substring(9));
+
+        } else if(message.startsWith("!topic ")) {
+            m_topics.handleAdd(id, name, message.substring(7));
+
+        } else if(message.startsWith("!question ")) {
+            m_questions.handleAdd(id, name, message.substring(10));
+            
+        } else if(message.equals("!how")) {
+            m_botAction.sendSmartPrivateMessage(name, "TW Radio is managed by a Radio Server. If you want to be a DJ fill out an application at ...");
+            
+        } else if(message.equalsIgnoreCase("!staff")){
+            showHosts(name, message);
+            
+            
+
+        /*} else if(message.startsWith("!login ")) {
+            handled = true;
+            if(m_currentPassword.equals("")) {
+                m_botAction.sendPrivateMessage(id, "Login currently disabled.");
+            } else if(m_currentPassword.equals(message.substring(7))) {
+                if(!m_loggedInList.contains(m_botAction.getPlayerName(id))) {
+                    m_loggedInList.add(name);
+                    m_botAction.sendChatMessage(name +" has logged in successfully.");
+                    m_botAction.sendSmartPrivateMessage(name,"Login Successfull.");
+                } else {
+                    m_botAction.sendPrivateMessage(id, "You are already logged in.");
+                }
+            } else {
+                m_botAction.sendPrivateMessage(id, "Incorrect password.");
+                m_botAction.sendChatMessage(name + " has attempted to login and failed. Is he/she a host?.");
+            }*/
+        }
+		}
+
 
 		/**
 		 * Handle poll votes
@@ -295,6 +609,35 @@ public final class radiobot extends SubspaceBot {
         }
     }
         
+        private void unhost(String name, String message) {
+            m_botAction.cancelTasks();
+            m_announcing = false;
+            m_botAction.sendArenaMessage(m_currentHost + " has signed off the radio, thank you for listening!",5);
+            m_botAction.sendChatMessage(name +" has finished hosting radio.");
+            m_currentHost = "";
+            m_someoneHosting = false;
+            long diff = System.currentTimeMillis()-m_timeStartedToHost;
+            int minute = (int)(diff/(1000*60));
+            m_botAction.sendPrivateMessage(name, "You hosted for " + (diff / 1000 / 60 / 60) + " hours and " + minute + " minutes.");
+            if( !m_botAction.SQLisOperational())
+            
+            try {
+                String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
+                ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                if(result.next()) {
+                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = '"+minute+"' WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                } else {
+                    m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Error!");
+                }
+                m_botAction.SQLClose( result );
+                this.m_timeStartedToHost = 0;
+            } catch ( Exception e ) {
+                m_botAction.sendChatMessage("Error occured when registering host duration :"+e.getMessage());
+                Tools.printStackTrace(e);
+            }
+            
+        }
+
         private void load_authorize() {
             try {
                 BotSettings m_botSettings = m_botAction.getBotSettings();
@@ -395,12 +738,6 @@ public final class radiobot extends SubspaceBot {
         m_botAction.sendPrivateMessage( name, ops );
         }
 
-	/**
-	 * Handle host commands
-	 */
-   /* private boolean handleStaffMessage(String name, int id, String message) {
-
-    	boolean handled = false;*/
 
 
     private void updateStatRecordsHOST(String name) {
@@ -437,443 +774,9 @@ public final class radiobot extends SubspaceBot {
         }
     }
         
-    
-
-    /**
-	 * Handle current host only commands
-	 */
-	@SuppressWarnings("fallthrough")
-    private boolean handleCurrentHostOnly(String name, int id, String message, int sound) {
-
-    	boolean handled = false;
-
-		if(message.startsWith("!arena ") && name.equals(m_currentHost)) {
-        	handled = true;
-			m_botAction.sendArenaMessage(message.substring(7) + " -" + m_currentHost
-				, sound == 12 ? 2 : sound);
-
-		} else if(message.startsWith("!poll ")) {
-        	handled = true;
-            if(m_currentPoll != null) {
-                m_botAction.sendPrivateMessage(name, "A poll is currently in session."
-                	+ " End this poll before beginning another one.");
-                return true;
-            }
-            StringTokenizer izer = new StringTokenizer(message.substring(6), ":");
-            int tokens = izer.countTokens();
-            if(tokens < 2) {
-                m_botAction.sendPrivateMessage(id, "Sorry but the poll format is wrong.");
-                return true;
-            }
-
-            String[] polls = new String[tokens];
-            int i = 0;
-            while(izer.hasMoreTokens()) {
-                polls[i] = izer.nextToken();
-                i++;
-            }
-
-            m_currentPoll = new Poll(polls);
-
-        } else if(message.startsWith("!endpoll")) {
-        	handled = true;
-            if(m_currentPoll == null) {
-                m_botAction.sendPrivateMessage(id, "There is no poll running right now.");
-            } else {
-                m_currentPoll.endPoll();
-                m_currentPoll = null;
-            }
-
-        } else if(message.startsWith("!zone ")) {
-        	handled = true;
-        	long now = System.currentTimeMillis();
-   	        if(now >= m_timeToClearZone) {
-	            m_alreadyZoned.clear();
-	            m_timeToClearZone += SIX_HOURS;
-	        }
-            if(m_alreadyZoned.contains(name)) {
-                m_botAction.sendPrivateMessage(id, "Sorry, you've already used your zone message. Get an <ER>+ to grant you another.");
-            } else if(now < m_timeOfLastZone + THIRTY_MINUTES) {
-            	m_botAction.sendPrivateMessage(id, "Sorry, you must wait "
-            		+ ((m_timeOfLastZone + THIRTY_MINUTES - now) / 1000 / 60) + " minutes and "
-            		+ ((m_timeOfLastZone + THIRTY_MINUTES - now) / 1000 % 60) + " seconds before you may zone.");
-            } else {
-                m_botAction.sendZoneMessage(message.substring(6) + " -" + name, 2);
-                m_alreadyZoned.add(name);
-                m_timeOfLastZone = now;
-            }
-            
-        } else if(message.startsWith("!time")) {
-            handled = true;
-            long now = System.currentTimeMillis();
-            long start = now - m_timeStartedToHost;
-            m_botAction.sendPrivateMessage(id, "You have hosted for " + (start / 1000 / 60 / 60) + " hours and " + (start / 1000 / 60 % 60) + " minutes.");
-
-
-        } else if(message.startsWith("!nextshout")) {
-        	handled = true;
-        	int i = 1;
-        	if(message.startsWith("!nextshout ")) {
-	        	try {
-	        		i = Integer.parseInt(message.substring(11));
-	        	} catch(NumberFormatException e) {
-	        		i = 1;
-	        	}
-        	}
-        	i = i < m_shoutouts.size() ? i : m_shoutouts.size();
-        	for(; i > 0; i--) {
-        		m_botAction.sendPrivateMessage(id, "Shout: " + m_shoutouts.remove());
-        	}
-
-        } else if(message.startsWith("!nextreq")) {
-        	handled = true;
-        	int i = 1;
-        	if(message.startsWith("!nextreq ")) {
-	        	try {
-	        		i = Integer.parseInt(message.substring(9));
-	        	} catch(NumberFormatException e) {
-	        		i = 1;
-	        	}
-        	}
-        	i = i < m_requests.size() ? i : m_requests.size();
-        	for(; i > 0; i--) {
-        		m_botAction.sendPrivateMessage(id, "Reqst: " + m_requests.remove());
-        	}
-
-        } else if(message.startsWith("!nexttop")) {
-        	handled = true;
-        	int i = 1;
-        	if(message.startsWith("!nexttop ")) {
-	        	try {
-	        		i = Integer.parseInt(message.substring(9));
-	        	} catch(NumberFormatException e) {
-	        		i = 1;
-	        	}
-        	}
-        	i = i < m_topics.size() ? i : m_topics.size();
-        	for(; i > 0; i--) {
-        		m_botAction.sendPrivateMessage(id, "Topic: " + m_topics.remove());
-        	}
-
-        } else if(message.startsWith("!nextques")) {
-        	handled = true;
-        	int i = 1;
-        	if(message.startsWith("!nextques ")) {
-	        	try {
-	        		i = Integer.parseInt(message.substring(10));
-	        	} catch(NumberFormatException e) {
-	        		i = 1;
-	        	}
-        	}
-        	i = i < m_questions.size() ? i : m_questions.size();
-        	for(; i > 0; i--) {
-        		m_botAction.sendPrivateMessage(id, "Quest: " + m_questions.remove());
-        	}
-
-        } else if(message.startsWith("!nextall")) {
-        	handled = true;
-       		m_botAction.sendPrivateMessage(id, "Shout: " + m_shoutouts.remove());
-       		m_botAction.sendPrivateMessage(id, "Reqst: " + m_requests.remove());
-    		m_botAction.sendPrivateMessage(id, "Topic: " + m_topics.remove());
-    		m_botAction.sendPrivateMessage(id, "Quest: " + m_questions.remove());
-
-        } else if(message.startsWith("!clear")) {
-        	handled = true;
-        	m_shoutouts.clear();
-        	m_requests.clear();
-        	m_topics.clear();
-        	m_questions.clear();
-        	m_botAction.sendPrivateMessage(id, "All requests cleared.");
-
-        } else if(message.startsWith("!addannounce ")) {
-        	handled = true;
-        	if(m_announceLength >= MAX_ANNOUNCE_LINES) {
-        		m_botAction.sendPrivateMessage(id, "Too many announce lines. (Do !clrannounce)");
-        	} else {
-	        	m_announcement[m_announceLength++] = message.substring(13);
-	        	m_botAction.sendPrivateMessage(id, "Message added.");
-        	}
-
-        } else if(message.startsWith("!clrannounce")) {
-        	handled = true;
-			m_announceLength = 0;
-			m_botAction.sendPrivateMessage(id, "Announcement cleared.");
-
-        } else if(message.startsWith("!setmax ")) {
-        	handled = true;
-
-			String[] params = message.substring(8).split(" +");
-			int count = params.length;
-			int[] nums = new int[count];
-
-			for(int i = 0, j; i < count; i++) {
-				try {
-					j = Integer.parseInt(params[i]);
-					if(j < 0) j = 0;
-					else if(j > 100) j = 100;
-				} catch(NumberFormatException e) {
-					j = 20;
-				}
-				nums[i] = j;
-			}
-			switch(count) {
-				case 4:
-					m_shoutouts.setMax(nums[3]);
-				case 3:
-					m_questions.setMax(nums[2]);
-				case 2:
-					m_requests.setMax(nums[1]);
-				case 1:
-					m_topics.setMax(nums[0]);
-		        	m_botAction.sendPrivateMessage(id, "New limits: Topics=" + m_topics.getMax()
-		        		+ " Requests=" + m_requests.getMax()
-		        		+ " Questions=" + m_questions.getMax()
-		        		+ " Shoutouts=" + m_shoutouts.getMax());
-					break;
-				default:
-					m_botAction.sendPrivateMessage(id, "Too many parameters.");
-			}
-
-        } else if(message.startsWith("!viewannounce")) {
-        	handled = true;
-        	for(int i = 0; i < m_announceLength; i++) {
-        		m_botAction.sendPrivateMessage(id, m_announcement[i]);
-        	
-        	
-       }} else if(message.startsWith("!setwelcome ")) {
-			handled = true;
-			m_welcome = message.substring(12);
-			m_botAction.sendPrivateMessage(id, "Welcome message set.");
-
-       } else if(message.startsWith("!welcomeoff")) {
-			handled = true;
-			m_welcome = "";
-			m_botAction.sendPrivateMessage(id, "Welcome message turned off.");
-			
-       } else if(message.startsWith("!seturl ")) {
-           handled = true;
-           m_url = message.substring(8);
-           m_botAction.sendPrivateMessage(id, "URL set to " + m_url);
-
-        } else if(message.startsWith("!unhost")) {
-        	handled = true;
-            m_botAction.cancelTasks();
-            m_announcing = false;
-            m_botAction.sendArenaMessage(m_currentHost + " has signed off the radio, thank you for listening!",5);
-            m_botAction.sendChatMessage(name +" has finished hosting radio.");
-            m_currentHost = "";
-            m_someoneHosting = false;
-            long diff = System.currentTimeMillis()-m_timeStartedToHost;
-            int minute = (int)(diff/(1000*60));
-            m_botAction.sendPrivateMessage(id, "You hosted for " + (diff / 1000 / 60 / 60) + " hours and " + minute + " minutes.");
-            if( !m_botAction.SQLisOperational())
-                return handled;
-            
-            try {
-                String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
-                ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
-                if(result.next()) {
-                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = '"+minute+"' WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
-                } else {
-                    m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Error!");
-                }
-                m_botAction.SQLClose( result );
-                this.m_timeStartedToHost = 0;
-            } catch ( Exception e ) {
-                m_botAction.sendChatMessage("Error occured when registering host duration :"+e.getMessage());
-                Tools.printStackTrace(e);
-            }
-        
-
-            
-        } else if(message.startsWith("!ask")) {
-            handled = true;
-            long now = System.currentTimeMillis();
-            m_botAction.sendUnfilteredPublicMessage("?help The radio host is requesting a zoner (" + ((now - m_timeOfLastZone) / 1000 / 60) + " minutes and "
-                    + ((now - m_timeOfLastZone) / 1000 % 60) + " seconds since last zone)" );
-        }
-        
-        return handled;
-    }
 	
-	/**
-	 * Handle Op Commands
-	 */
-	private boolean handleOpMessage(String name, int id, String message){
-	    
-	    boolean handled = false;
-	    
-	    if(message.equalsIgnoreCase("!clear")){
-	        handled = true;
-	        clear(name);
-	        
-	    } else if(message.startsWith("!addhost ")){
-	        handled = true;
-	        String host = message.substring(9);
-	        addHost(name, host);
-	        
-	    } else if(message.startsWith("!removehost ")){
-	        handled = true;
-	        String host = message.substring(12);
-	        removeHost(name, host);
-	    }
-    
-    return handled;
+	
 
-	}
-
-
-	/**
-	 * Handle public commands
-	 */
-    private boolean handlePrivateMessage(String name, int id, String message) {
-
-    	boolean handled = false;
-
-		if(!m_someoneHosting
-				&& (message.startsWith("!shoutout ")
-				|| message.startsWith("!request ")
-				|| message.startsWith("!topic ")
-				|| message.startsWith("!question "))) {
-			handled = true;
-			m_botAction.sendPrivateMessage(id, NO_HOST);
-
-		} else if(message.startsWith("!shoutout ")) {
-			handled = true;
-			m_shoutouts.handleAdd(id, name, message.substring(10));
-
-	    } else if(message.startsWith("!request ")) {
-			handled = true;
-			m_requests.handleAdd(id, name, message.substring(9));
-
-	    } else if(message.startsWith("!topic ")) {
-			handled = true;
-			m_topics.handleAdd(id, name, message.substring(7));
-
-	    } else if(message.startsWith("!question ")) {
-			handled = true;
-			m_questions.handleAdd(id, name, message.substring(10));
-			
-	    } else if(message.equals("!how")) {
-    		handled = true;
-    		m_botAction.sendSmartPrivateMessage(name, "TW Radio is managed by a Radio Server. If you want to be a DJ fill out an application at ...");
-    		
-	    } else if(message.equalsIgnoreCase("!staff")){
-	        handled = true;
-	        showHosts(name, message);
-	        
-			
-
-	    /*} else if(message.startsWith("!login ")) {
-			handled = true;
-        	if(m_currentPassword.equals("")) {
-        		m_botAction.sendPrivateMessage(id, "Login currently disabled.");
-        	} else if(m_currentPassword.equals(message.substring(7))) {
-                if(!m_loggedInList.contains(m_botAction.getPlayerName(id))) {
-                    m_loggedInList.add(name);
-                    m_botAction.sendChatMessage(name +" has logged in successfully.");
-                    m_botAction.sendSmartPrivateMessage(name,"Login Successfull.");
-                } else {
-                	m_botAction.sendPrivateMessage(id, "You are already logged in.");
-                }
-            } else {
-                m_botAction.sendPrivateMessage(id, "Incorrect password.");
-                m_botAction.sendChatMessage(name + " has attempted to login and failed. Is he/she a host?.");
-            }*/
-        }
-        return handled;
-    }
-
-
-	/**
-	 * Handle Mod commands
-	 */
-	private boolean handleModMessage(String name, int id, String message) {
-
-		boolean handled = false;
-
-    	/*if(message.startsWith("!setpw ")) {
-    		handled = true;
-    		m_currentPassword = message.substring(7);
-    		m_botAction.sendPrivateMessage(id, "Password changed.");*/
-
-		 if(message.startsWith("!go ")) {
-    		handled = true;
-    		String arena = message.substring(4);
-    		if(Tools.isAllDigits(arena)) {
-    			m_botAction.sendPrivateMessage(id, "You cannot move me to a public arena.");
-    		} else {
-				m_botAction.changeArena(arena);
-    		}
-
-		} else if(message.equals("!die")) {
-    		m_botAction.sendChatMessage(name + " Just killed me!");
-			m_botAction.die();
-
-		} else if(message.startsWith("!grantzone")) {
-    		handled = true;
-    		long now = System.currentTimeMillis();
-			if(m_alreadyZoned.contains(m_currentHost)) {
-				if(now < m_timeOfLastZone + THIRTY_MINUTES) {
-					m_botAction.sendPrivateMessage(id, "Sorry, you may only grantzone 30 minutes from the last zone which was "
-						+ ((now - m_timeOfLastZone) / 1000 / 60) + " minutes ago.");
-				} else {
-					m_alreadyZoned.remove(m_currentHost);
-					m_botAction.sendPrivateMessage(id, "Zoner granted to " + m_currentHost);
-					m_botAction.sendPrivateMessage(m_currentHost, name + " has granted you another zone message.");
-				}
-			} else {
-				m_botAction.sendPrivateMessage(id, "No current host or host is already granted a zone.");
-			}
-
-		
-
-		} else if(message.startsWith("!unhost")) {
-			handled = true;
-			if(m_someoneHosting) {
-				handleCurrentHostOnly(name, id, "!unhost", 0);
-			} else {
-				m_botAction.sendPrivateMessage(id, NO_HOST);
-			}
-			
-		} else if(message.startsWith("!setwelcome ")) {
-			handled = true;
-			m_welcome = message.substring(12);
-			m_botAction.sendPrivateMessage(id, "Welcome message set.");
-
-       } else if(message.startsWith("!welcomeoff")) {
-			handled = true;
-			m_welcome = "";
-			m_botAction.sendPrivateMessage(id, "Welcome message turned off.");
-
-		} else if(message.startsWith("!seturl ")) {
-			handled = true;
-			m_url = message.substring(8);
-			m_botAction.sendPrivateMessage(id, "URL set to " + m_url);
-			
-		} else if(message.startsWith("!dbcon")) {
-		    handled = true;
-		    if( !m_botAction.SQLisOperational() ){
-	            m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
-	            
-	        }
-	        try {
-	            m_botAction.SQLQueryAndClose( mySQLHost, "SELECT * FROM tblRadio_Host LIMIT 0,1" );
-	            m_botAction.sendChatMessage( "The Database is online. I can connect to it!" );
-	        } catch (Exception e ) {
-	            m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
-	        }
-	    }
-			
-		
-        return handled;
-        
-       
-        
-		} {
-    	
-
-	}
 
 
     private class Poll {
