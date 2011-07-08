@@ -164,9 +164,100 @@ public final class radiobot extends SubspaceBot {
         /**
          * Handle logged in commands
          */
-        if(hosts.containsKey(name.toLowerCase()) || operators.containsKey(name.toLowerCase()) && handleStaffMessage(name, id, message)) {
-        	return;
+        if(hosts.containsKey(name.toLowerCase()) || operators.containsKey(name.toLowerCase())) {
+
+            if(message.startsWith("!host")) {
+                updateStatRecordsHOST( name );
+                if(!m_someoneHosting){
+                    m_currentHost = name;
+                    if(!m_announcing) {
+                        m_botAction.scheduleTaskAtFixedRate(
+                            new AnnounceTask(), 10000, 150000);
+                        m_announcing = true;
+                    }
+                    m_someoneHosting = true;
+                    m_botAction.sendPrivateMessage(id, "You are now the current host. Do not abuse the green messages, or write anything inappropriate. Thanks!");
+                    m_botAction.sendChatMessage(name +" has enabled current hosting commands.");
+                } else {
+                    m_botAction.sendPrivateMessage(id, "Someone is already hosting. Wait until they are done, or get an <ER>+ to !unhost them first.");
+                    
+                }
+
+            /*} else if(message.startsWith("!who")) {
+                handled = true;
+               m_botAction.sendPrivateMessage(id, "Radio hosts who are logged in:");
+                Iterator<String> i = m_loggedInList.iterator();
+                String who;
+                while(i.hasNext()) {
+                    who = i.next();
+                    m_botAction.sendPrivateMessage(id, who + (who.equals(m_currentHost) ? " (current host)" : ""));}*/
+                
+                
+
+            } else if(message.startsWith("!status")) {
+                long now = System.currentTimeMillis();
+                long ontime = now - m_timeStarted;
+
+                if(!m_someoneHosting) {
+                    m_botAction.sendPrivateMessage(id, NO_HOST);
+                } else {
+                    long nextzone = (m_timeOfLastZone + TEN_MINUTES - now) / 1000;
+                    m_botAction.sendPrivateMessage(id, "Current host: " + m_currentHost + " - Can zone: "
+                        + (m_alreadyZoned.contains(m_currentHost) ? "no"
+                        : (nextzone <= 0) ? "yes" : "in " + (nextzone / 60) + " mins " + (nextzone % 60) + " secs"));
+                }
+                m_botAction.sendPrivateMessage(id,
+                    "Topics:" + m_topics.size() + "/" + m_topics.getMax()
+                    + " Requests:" + m_requests.size() + "/" + m_requests.getMax()
+                    + " Questions:" + m_questions.size() + "/" + m_questions.getMax()
+                    + " Shoutouts:" + m_shoutouts.size() + "/" + m_shoutouts.getMax());
+                m_botAction.sendPrivateMessage(id, "Poll running: " + (m_currentPoll != null));
+                m_botAction.sendPrivateMessage(id, "Welcome: " + m_welcome);
+                m_botAction.sendPrivateMessage(id, "URL: " + m_url);
+                
+
+                m_botAction.sendPrivateMessage(id, "Online for " + (ontime / 1000 / 60 / 60) + " hours and " + (ontime / 1000 / 60 % 60) + " minutes.");
+
+            } else if(!m_currentHost.equals(name)
+                    && (message.startsWith("!poll ")
+                    || message.startsWith("!arena ")
+                    || message.startsWith("!zone ")
+                    || message.startsWith("!endpoll"))) {
+                m_botAction.sendPrivateMessage(id, "Sorry, only the current radio host may use that command."
+                    + " If you are hosting, use the !host command.");
+            
+       
+            } else if (message.startsWith("!sex")) {
+                Random r = new Random();
+                  int randInt = Math.abs(r.nextInt()) % 14;
+                if( randInt == 1 ){
+                m_botAction.sendChatMessage( "O yea baby keep hosting it that way OMG OMG YAAAA BABY!" );
+                } else if(randInt == 2){
+                m_botAction.sendChatMessage( "You're so sexy...GOD YEA!" );
+                } else if(randInt == 3){
+                m_botAction.sendChatMessage( "Unf Unf!!" );
+                } else if(randInt == 4){
+                m_botAction.sendChatMessage( "Why Do you want sex now?" );
+                } else if(randInt == 5){
+                m_botAction.sendChatMessage( "I'M BUSY!" );
+                } else if(randInt == 6){
+                m_botAction.sendChatMessage( "Can you repeat that?" );
+                } else if(randInt == 7){
+                m_botAction.sendChatMessage( "Gonna Ride you like a horse!" );
+                } else if(randInt == 8){
+                m_botAction.sendChatMessage( "I'm here to amuse the hosts!" );
+
+                } 
+                  
+                
+                
+                }
+
         }
+
+
+
+        
 
         /**
          * Handle current host only commands
@@ -219,7 +310,9 @@ public final class radiobot extends SubspaceBot {
             for( int j = 0; j < ops.length; j++ )
                 operators.put(ops[j].toLowerCase(), ops[j]);
             
-            } catch (Exception e) { Tools.printStackTrace( "Method Failed: ", e ); }
+            } catch (Exception e) {
+                Tools.printStackTrace( "Method Failed: ", e ); 
+                }
             
 
 
@@ -305,104 +398,9 @@ public final class radiobot extends SubspaceBot {
 	/**
 	 * Handle host commands
 	 */
-    private boolean handleStaffMessage(String name, int id, String message) {
+   /* private boolean handleStaffMessage(String name, int id, String message) {
 
-    	boolean handled = false;
-
-		if(message.startsWith("!host")) {
-		    updateStatRecordsHOST( name );
-        	handled = true;
-            if(!m_someoneHosting){
-                m_currentHost = name;
-                if(!m_announcing) {
-                    m_botAction.scheduleTaskAtFixedRate(
-                    	new AnnounceTask(), 10000, 150000);
-                    m_announcing = true;
-                }
-                m_someoneHosting = true;
-                m_botAction.sendPrivateMessage(id, "You are now the current host. Do not abuse the green messages, or write anything inappropriate. Thanks!");
-                m_botAction.sendChatMessage(name +" has enabled current hosting commands.");
-            } else {
-                m_botAction.sendPrivateMessage(id, "Someone is already hosting. Wait until they are done, or get an <ER>+ to !unhost them first.");
-                
-            }
-
-        /*} else if(message.startsWith("!who")) {
-        	handled = true;
-           m_botAction.sendPrivateMessage(id, "Radio hosts who are logged in:");
-            Iterator<String> i = m_loggedInList.iterator();
-            String who;
-            while(i.hasNext()) {
-            	who = i.next();
-                m_botAction.sendPrivateMessage(id, who + (who.equals(m_currentHost) ? " (current host)" : ""));}*/
-        	
-            
-
-        } else if(message.startsWith("!status")) {
-        	handled = true;
-        	long now = System.currentTimeMillis();
-            long ontime = now - m_timeStarted;
-
-        	if(!m_someoneHosting) {
-        		m_botAction.sendPrivateMessage(id, NO_HOST);
-        	} else {
-	            long nextzone = (m_timeOfLastZone + TEN_MINUTES - now) / 1000;
-        		m_botAction.sendPrivateMessage(id, "Current host: " + m_currentHost + " - Can zone: "
-        			+ (m_alreadyZoned.contains(m_currentHost) ? "no"
-        			: (nextzone <= 0) ? "yes" : "in " + (nextzone / 60) + " mins " + (nextzone % 60) + " secs"));
-        	}
-            m_botAction.sendPrivateMessage(id,
-            	"Topics:" + m_topics.size() + "/" + m_topics.getMax()
-            	+ " Requests:" + m_requests.size() + "/" + m_requests.getMax()
-            	+ " Questions:" + m_questions.size() + "/" + m_questions.getMax()
-            	+ " Shoutouts:" + m_shoutouts.size() + "/" + m_shoutouts.getMax());
-            m_botAction.sendPrivateMessage(id, "Poll running: " + (m_currentPoll != null));
-            m_botAction.sendPrivateMessage(id, "Welcome: " + m_welcome);
-            m_botAction.sendPrivateMessage(id, "URL: " + m_url);
-            
-
-            m_botAction.sendPrivateMessage(id, "Online for " + (ontime / 1000 / 60 / 60) + " hours and " + (ontime / 1000 / 60 % 60) + " minutes.");
-
-        } else if(!m_currentHost.equals(name)
-        		&& (message.startsWith("!poll ")
-        		|| message.startsWith("!arena ")
-		        || message.startsWith("!zone ")
-		        || message.startsWith("!endpoll"))) {
-        	handled = true;
-            m_botAction.sendPrivateMessage(id, "Sorry, only the current radio host may use that command."
-            	+ " If you are hosting, use the !host command.");
-        
-   
-        } else if (message.startsWith("!sex")) {
-		    Random r = new Random();
-		      int randInt = Math.abs(r.nextInt()) % 14;
-		    if( randInt == 1 ){
-		    m_botAction.sendChatMessage( "O yea baby keep hosting it that way OMG OMG YAAAA BABY!" );
-		    } else if(randInt == 2){
-		    m_botAction.sendChatMessage( "You're so sexy...GOD YEA!" );
-		    } else if(randInt == 3){
-		    m_botAction.sendChatMessage( "Unf Unf!!" );
-		    } else if(randInt == 4){
-		    m_botAction.sendChatMessage( "Why Do you want sex now?" );
-		    } else if(randInt == 5){
-		    m_botAction.sendChatMessage( "I'M BUSY!" );
-		    } else if(randInt == 6){
-		    m_botAction.sendChatMessage( "Can you repeat that?" );
-		    } else if(randInt == 7){
-		    m_botAction.sendChatMessage( "Gonna Ride you like a horse!" );
-		    } else if(randInt == 8){
-		    m_botAction.sendChatMessage( "I'm here to amuse the hosts!" );
-
-		    } 
-		      
-		    
-		    
-		    }
-
-        return handled;
-    }
-
-
+    	boolean handled = false;*/
 
 
     private void updateStatRecordsHOST(String name) {
