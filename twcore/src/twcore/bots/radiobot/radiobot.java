@@ -643,7 +643,7 @@ public final class radiobot extends SubspaceBot {
                 String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
                 ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
                 if(result.next()) {
-                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fnDuration = '"+minute+"' AND fdDate = '"+time+"'" );
+                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fnDuration = "+minute+" AND fdDate = '"+time+"'" );
                 } else {
                     m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Error!");
                 }
@@ -864,7 +864,9 @@ public final class radiobot extends SubspaceBot {
 
     private class AnnounceTask extends TimerTask {
         public void run() {
-            if(m_pub == false){
+            if(m_pub == true){
+                m_botAction.sendArenaMessage("Radio: Host - "+m_currentHost+" - Use !help to RadioBot for commands! - "+(m_url.equals("") ? "" : "  Radio - "+m_url));
+            } else {
             m_botAction.sendArenaMessage("Current Host: " + m_currentHost
             	+ (m_url.equals("") ? "" : "  (To listen, open " + m_url + " in your media player)"));
             for(int i = 0; i < m_announceLength; i++) {
