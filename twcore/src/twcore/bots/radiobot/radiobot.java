@@ -614,6 +614,10 @@ public final class radiobot extends SubspaceBot {
             int minute = (int)(diff/(1000*60));
             m_botAction.sendPrivateMessage(name, "You hosted for " + (diff / 1000 / 60 / 60) + " hours and " + minute + " minutes.");
             this.m_timeStartedToHost = 0;
+            unhostStats(name);
+        }
+
+        private void unhostStats(String name) {
             if( !m_botAction.SQLisOperational()){
                 m_botAction.sendChatMessage("Database Error, non functioning database.");
             } else
@@ -622,8 +626,7 @@ public final class radiobot extends SubspaceBot {
                 String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
                 ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
                 if(result.next()) {
-                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fnDuration = '"+String.valueOf((int)((System.currentTimeMillis()-m_timeStartedToHost)/1000*60))
-+"' AND fdDate = '"+time+"'" );
+                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fnDuration = "+String.valueOf((int)((System.currentTimeMillis()-m_timeStartedToHost)/1000*60))+" AND fdDate = '"+time+"'" );
                 } else {
                     m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Error!");
                 }
