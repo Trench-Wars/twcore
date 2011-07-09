@@ -128,7 +128,7 @@ public final class radiobot extends SubspaceBot {
 		load_authorize();
 		//boolean isHost = hosts.containsKey(name);
 		//boolean isOp = operators.containsKey(name);
-		boolean isCurrentHost = m_someoneHosting && hosts.containsKey(name.toLowerCase()) && m_currentHost.equals(name);
+		//boolean isCurrentHost = m_someoneHosting && hosts.containsKey(name.toLowerCase()) && m_currentHost.equals(name);
 		boolean isER = m_opList.isER(name);
 		
 
@@ -150,7 +150,7 @@ public final class radiobot extends SubspaceBot {
             	m_botAction.privateMessageSpam(id, staffHelp);
             	if(operators.containsKey(name.toLowerCase())) {
             	    m_botAction.privateMessageSpam(id, operatorHelp);
-	            if(isCurrentHost) {
+	            if(m_someoneHosting && hosts.containsKey(name.toLowerCase()) && m_currentHost.equals(name)) {
     	    		m_botAction.privateMessageSpam(id, currentRadioHostHelp);
 	            }}
 			}
@@ -251,13 +251,14 @@ public final class radiobot extends SubspaceBot {
                 
                 
                 }
+            return;
 
         }
 
         /**
          * Handle current host only commands
          */
-        if(isCurrentHost) {
+        if(m_someoneHosting && hosts.containsKey(name.toLowerCase()) && m_currentHost.equals(name)) {
             int sound = event.getSoundCode();
             if(message.startsWith("!arena ") && name.equals(m_currentHost)) {
                 m_botAction.sendArenaMessage(message.substring(7) + " -" + m_currentHost
@@ -432,10 +433,9 @@ public final class radiobot extends SubspaceBot {
 
             } else if(message.startsWith("!viewannounce")) {
                 for(int i = 0; i < m_announceLength; i++) {
-                    m_botAction.sendPrivateMessage(id, m_announcement[i]);
+                    m_botAction.sendPrivateMessage(id, m_announcement[i]);}                
                 
-                
-           }} else if(message.startsWith("!setwelcome ")) {
+           } else if(message.startsWith("!setwelcome ")) {
                 m_welcome = message.substring(12);
                 m_botAction.sendPrivateMessage(id, "Welcome message set.");
 
@@ -457,10 +457,11 @@ public final class radiobot extends SubspaceBot {
                 m_botAction.sendUnfilteredPublicMessage("?help The radio host is requesting a zoner (" + ((now - m_timeOfLastZone) / 1000 / 60) + " minutes and "
                         + ((now - m_timeOfLastZone) / 1000 % 60) + " seconds since last zone)" );
             }
+            return;
             
         }
 
-
+        
 		/**
 		 * Handle <ER>+ commands
 		 */
@@ -531,6 +532,7 @@ public final class radiobot extends SubspaceBot {
                 m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
             }
         }
+         return;
 		}
 		
 		/**
@@ -550,6 +552,8 @@ public final class radiobot extends SubspaceBot {
 		            removeHost(name, host);
 		        
 		}
+		      return;
+		} else {
 		if(!m_someoneHosting
                 && (message.startsWith("!shoutout ")
                 || message.startsWith("!request ")
@@ -576,7 +580,7 @@ public final class radiobot extends SubspaceBot {
             showHosts(name, message);
             
             
-
+        
         /*} else if(message.startsWith("!login ")) {
             handled = true;
             if(m_currentPassword.equals("")) {
@@ -594,7 +598,10 @@ public final class radiobot extends SubspaceBot {
                 m_botAction.sendChatMessage(name + " has attempted to login and failed. Is he/she a host?.");
             }*/
         }
+		
 		}
+		
+		
 
 
 		/**
@@ -603,7 +610,8 @@ public final class radiobot extends SubspaceBot {
 		if(m_currentPoll != null){
 			m_currentPoll.handlePollCount(name, message);
         }
-    }
+		}
+    
         
         private void unhost(String name, String message) {
             m_botAction.cancelTasks();
