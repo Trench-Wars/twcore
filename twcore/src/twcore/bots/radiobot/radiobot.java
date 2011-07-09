@@ -643,7 +643,7 @@ public final class radiobot extends SubspaceBot {
                 String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
                 ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
                 if(result.next()) {
-                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = "+minute+" WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = '"+minute+"' WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
                 } else {
                     m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Error!");
                 }
@@ -766,9 +766,9 @@ public final class radiobot extends SubspaceBot {
             String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
             ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
             if(result.next()) {
-                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fnDuration = 0 AND fdDate = '"+time+"'" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 fdDate = '"+time+"'" );
             } else {
-                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (`fcUserName`, `fnCount`, `fnType`, 'fnDuration', `fdDate`) VALUES ('"+name+"', '1', '0', '0', '"+time+"')" );
+                m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
             }
             m_botAction.SQLClose( result );
             m_botAction.sendSmartPrivateMessage(name, "Host count recorded, Start time enabled..");
