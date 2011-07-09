@@ -159,6 +159,35 @@ public final class radiobot extends SubspaceBot {
 			}
 			return;
         }
+		
+		/**
+		 * Player
+		 */
+		if(!m_someoneHosting
+                && (message.startsWith("!shoutout ")
+                || message.startsWith("!request ")
+                || message.startsWith("!topic ")
+                || message.startsWith("!question "))) {
+            m_botAction.sendPrivateMessage(id, NO_HOST);
+
+        } else if(message.startsWith("!shoutout ")) {
+            m_shoutouts.handleAdd(id, name, message.substring(10));
+
+        } else if(message.startsWith("!request ")) {
+            m_requests.handleAdd(id, name, message.substring(9));
+
+        } else if(message.startsWith("!topic ")) {
+            m_topics.handleAdd(id, name, message.substring(7));
+
+        } else if(message.startsWith("!question ")) {
+            m_questions.handleAdd(id, name, message.substring(10));
+            
+        } else if(message.equals("!how")) {
+            m_botAction.sendSmartPrivateMessage(name, "TW Radio is managed by a Radio Server. If you want to be a DJ fill out an application at ...");
+            
+        } else if(message.equalsIgnoreCase("!staff")){
+            showHosts(name, message);
+        }
 
         /**
          * Handle logged in commands
@@ -551,33 +580,9 @@ public final class radiobot extends SubspaceBot {
 		            String host = message.substring(12);
 		            removeHost(name, host);
 		        
-		}
+		}}
 		      
-		} else {
-		if(!m_someoneHosting
-                && (message.startsWith("!shoutout ")
-                || message.startsWith("!request ")
-                || message.startsWith("!topic ")
-                || message.startsWith("!question "))) {
-            m_botAction.sendPrivateMessage(id, NO_HOST);
-
-        } else if(message.startsWith("!shoutout ")) {
-            m_shoutouts.handleAdd(id, name, message.substring(10));
-
-        } else if(message.startsWith("!request ")) {
-            m_requests.handleAdd(id, name, message.substring(9));
-
-        } else if(message.startsWith("!topic ")) {
-            m_topics.handleAdd(id, name, message.substring(7));
-
-        } else if(message.startsWith("!question ")) {
-            m_questions.handleAdd(id, name, message.substring(10));
-            
-        } else if(message.equals("!how")) {
-            m_botAction.sendSmartPrivateMessage(name, "TW Radio is managed by a Radio Server. If you want to be a DJ fill out an application at ...");
-            
-        } else if(message.equalsIgnoreCase("!staff")){
-            showHosts(name, message);
+		
             
             
         
@@ -597,9 +602,9 @@ public final class radiobot extends SubspaceBot {
                 m_botAction.sendPrivateMessage(id, "Incorrect password.");
                 m_botAction.sendChatMessage(name + " has attempted to login and failed. Is he/she a host?.");
             }*/
-        }
+        
 		
-		}
+		
 		
 		
 
@@ -609,8 +614,8 @@ public final class radiobot extends SubspaceBot {
 		 */
 		if(m_currentPoll != null){
 			m_currentPoll.handlePollCount(name, message);
-        }
-		}
+		}}
+		
     
         
         private void unhost(String name, String message) {
