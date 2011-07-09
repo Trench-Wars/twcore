@@ -552,7 +552,7 @@ public final class radiobot extends SubspaceBot {
 		            removeHost(name, host);
 		        
 		}
-		      return;
+		      
 		} else {
 		if(!m_someoneHosting
                 && (message.startsWith("!shoutout ")
