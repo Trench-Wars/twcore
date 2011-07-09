@@ -150,7 +150,7 @@ public final class radiobot extends SubspaceBot {
             	m_botAction.privateMessageSpam(id, staffHelp);
             	if(operators.containsKey(name.toLowerCase())) {
             	    m_botAction.privateMessageSpam(id, operatorHelp);
-	            if(m_someoneHosting && hosts.containsKey(name.toLowerCase()) && m_currentHost.equals(name)) {
+	            if(m_someoneHosting && m_currentHost.equals(name)) {
     	    		m_botAction.privateMessageSpam(id, currentRadioHostHelp);
 	            }}
 			}
@@ -251,14 +251,14 @@ public final class radiobot extends SubspaceBot {
                 
                 
                 }
-            return;
+            
 
         }
 
         /**
          * Handle current host only commands
          */
-        if(m_someoneHosting && hosts.containsKey(name.toLowerCase()) && m_currentHost.equals(name)) {
+        if(m_someoneHosting && m_currentHost.equals(name)) {
             int sound = event.getSoundCode();
             if(message.startsWith("!arena ") && name.equals(m_currentHost)) {
                 m_botAction.sendArenaMessage(message.substring(7) + " -" + m_currentHost
@@ -457,7 +457,7 @@ public final class radiobot extends SubspaceBot {
                 m_botAction.sendUnfilteredPublicMessage("?help The radio host is requesting a zoner (" + ((now - m_timeOfLastZone) / 1000 / 60) + " minutes and "
                         + ((now - m_timeOfLastZone) / 1000 % 60) + " seconds since last zone)" );
             }
-            return;
+            
             
         }
 
@@ -532,7 +532,7 @@ public final class radiobot extends SubspaceBot {
                 m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
             }
         }
-         return;
+         
 		}
 		
 		/**
