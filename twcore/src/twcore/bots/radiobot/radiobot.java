@@ -30,6 +30,7 @@ public final class radiobot extends SubspaceBot {
     private Poll m_currentPoll = null;
     private boolean m_announcing = false;
     private boolean m_someoneHosting = false;
+    private boolean m_pub = false;
     private long m_timeStarted;
     private long m_timeStartedToHost = 0;
     private long m_timeToClearZone;
@@ -472,7 +473,8 @@ public final class radiobot extends SubspaceBot {
          if(message.startsWith("!go ")) {
             String arena = message.substring(4);
             if(Tools.isAllDigits(arena)) {
-                m_botAction.sendPrivateMessage(id, "You cannot move me to a public arena.");
+                m_pub = true;
+                m_botAction.changeArena("0");
             } else {
                 m_botAction.changeArena(arena);
             }
@@ -623,10 +625,12 @@ public final class radiobot extends SubspaceBot {
             } else
             
             try {
+                long diff = System.currentTimeMillis()-m_timeStartedToHost;
+                int minute = (int)(diff/(1000*60));
                 String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
                 ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
                 if(result.next()) {
-                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fnDuration = "+String.valueOf((int)((System.currentTimeMillis()-m_timeStartedToHost)/1000*60))+" AND fdDate = '"+time+"'" );
+                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET WHERE fnCount = fnCount, fcUserName = '"+name+"' AND fnType = 0 AND fnDuration = '"+minute+"' AND fdDate = '"+time+"'" );
                 } else {
                     m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Error!");
                 }
@@ -847,11 +851,12 @@ public final class radiobot extends SubspaceBot {
 
     private class AnnounceTask extends TimerTask {
         public void run() {
+            if(m_pub == false){
             m_botAction.sendArenaMessage("Current Host: " + m_currentHost
             	+ (m_url.equals("") ? "" : "  (To listen, open " + m_url + " in your media player)"));
             for(int i = 0; i < m_announceLength; i++) {
                 m_botAction.sendArenaMessage(m_announcement[i]);
-            }
+            }}
             m_botAction.sendSmartPrivateMessage(m_currentHost,
             	"Shoutouts:" + m_shoutouts.size()
             	+ " Requests:" + m_requests.size()
