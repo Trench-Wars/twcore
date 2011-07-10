@@ -10,6 +10,7 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
+import twcore.core.events.SQLResultEvent;
 import twcore.core.util.Tools;
 
 /**
@@ -100,6 +101,8 @@ public final class radiobot extends SubspaceBot {
         load_authorize();
        
     }
+    
+    public void handleEvent( SQLResultEvent event) {} 
     
         
     public void handleEvent (ArenaJoined event) {
