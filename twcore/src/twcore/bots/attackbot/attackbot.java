@@ -326,6 +326,11 @@ public class attackbot extends SubspaceBot {
             return;
         }
         
+        if (isCaptain(cap)) {
+            ba.sendPrivateMessage(name, cap + " is already the captain of a team.");
+            return;
+        }
+        
         try {
             int freq = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":")));
             if (freq == 0 || freq == 1) {
