@@ -50,7 +50,7 @@ public class attackbot extends SubspaceBot {
     public static final int STARTING = 1;
     public static final int PLAYING = 2;
     
-    public static final int NP_FREQ = 99;
+    public static final int NP_FREQ = 666;
     public static final int SPEC_FREQ = 9999;
     public static int[] SHIP_LIMITS;
     
@@ -132,8 +132,11 @@ public class attackbot extends SubspaceBot {
     /** Handles the PlayerEntered event **/
     public void handleEvent(PlayerEntered event) {
         if (state == IDLE) return;
-        String name = ba.getPlayerName(event.getPlayerID());
+        String name = event.getPlayerName();
+        if (name == null) 
+            name = ba.getPlayerName(event.getPlayerID());
         if (name == null) return;
+        
         if (state == IDLE)
             ba.sendPrivateMessage(name, "A new game will begin after two players PM me with !cap");
         else if (state == STARTING) {
