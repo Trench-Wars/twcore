@@ -236,6 +236,8 @@ public class attackbot extends SubspaceBot {
                 sendTeams(name);
             else if (msg.equalsIgnoreCase("!notplaying") || msg.equalsIgnoreCase("!np"))
                 notPlaying(name);
+            else if (msg.equalsIgnoreCase("!removecap"))
+                removeCap(name);
 
             if (oplist.isER(name)) {
                 if (msg.equalsIgnoreCase("!drop"))
@@ -818,6 +820,8 @@ public class attackbot extends SubspaceBot {
             ships[players.remove(name.toLowerCase())-1]--;
             ba.specWithoutLock(name);
             ba.sendArenaMessage(name + " has been removed from the game. (not playing)");
+            if (isCap(name))
+                removeCap();
         }
         
         /**
