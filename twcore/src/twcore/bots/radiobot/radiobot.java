@@ -208,11 +208,11 @@ public final class radiobot extends SubspaceBot {
                     m_someoneHosting = true;
                     m_botAction.sendPrivateMessage(id, "You are now the current host. Do not abuse the green messages, or write anything inappropriate. Thanks!");
                     m_botAction.sendChatMessage(name +" has enabled current hosting commands.");
+                    updateStatRecordsHOST( name );
                 } else {
                     m_botAction.sendPrivateMessage(id, "Someone is already hosting. Wait until they are done, or get an <ER>+ to !unhost them first.");
                     
                 }
-                updateStatRecordsHOST( name );
 
             /*} else if(message.startsWith("!who")) {
                 handled = true;
@@ -763,8 +763,9 @@ public final class radiobot extends SubspaceBot {
 
 
     public void updateStatRecordsHOST(String name) {
-       if( !m_botAction.SQLisOperational() && !m_someoneHosting)
+       if( !m_botAction.SQLisOperational())
            return;
+       
                     
        //try {
            String[] fields = {
