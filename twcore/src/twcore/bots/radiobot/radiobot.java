@@ -760,12 +760,26 @@ public final class radiobot extends SubspaceBot {
 
 
 
-    private void updateStatRecordsHOST(String name) {
+    public void updateStatRecordsHOST(String name) {
        if( !m_botAction.SQLisOperational())
            return;
                     
        try {
-               m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (fcUserName, fnCount, fnType, fdDate) VALUES ('"+name+"', 1, 0, CURDATE())" );
+           String[] fields = {
+                   "fcUserName",
+                   "fnCount",
+                   "fnType",
+                   "fdDate"
+               };
+               
+               String[] values = {
+                       Tools.addSlashes(name),
+                       Tools.addSlashes("1"),
+                       Tools.addSlashes("0"),
+                       new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+               };
+               
+               //( mySQLHost, null, "INSERT INTO tblRadio_Host (fcUserName, fnCount, fnType, fdDate) VALUES ('"+name+"', 1, 0, CURDATE())" );
                 m_botAction.sendSmartPrivateMessage(name, "Host count recorded, Start time enabled..");
                 this.m_timeStartedToHost = System.currentTimeMillis();
             } catch ( Exception e ) {
