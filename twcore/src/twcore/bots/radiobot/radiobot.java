@@ -645,7 +645,7 @@ public final class radiobot extends SubspaceBot {
                 int minute = (int)(diff/(1000*60));
                 ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT fnHostID FROM tblRadio_Host WHERE fcUserName = '"+name+"' ORDER BY fnHostID DESC LIMIT 1");
                 if(result.next()) {
-                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = "+minute+" WHERE fnHostID = "+result);
+                    m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblRadio_Host SET fnDuration = "+minute+" WHERE fnHostID = "+result);
                 } else {
                     m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Not in the database table.");
                 }
