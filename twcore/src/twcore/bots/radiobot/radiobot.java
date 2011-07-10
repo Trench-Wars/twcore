@@ -644,8 +644,8 @@ public final class radiobot extends SubspaceBot {
                 long diff = System.currentTimeMillis()-m_timeStartedToHost;
                 int minute = (int)(diff/(1000*60));
                 ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT fnHostID FROM tblRadio_Host WHERE fcUserName = '"+name+"' ORDER BY fnHostID DESC LIMIT 1");
-                String id = result.getString("fnHostID");
                 if(result.next()) {
+                    short id = result.getShort("fnHostID");
                     m_botAction.SQLQueryAndClose( mySQLHost, "UPDATE tblRadio_Host SET fnDuration = "+minute+" WHERE fnHostID = "+id);
                 } else {
                     m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Not in the database table.");
