@@ -628,9 +628,8 @@ public final class radiobot extends SubspaceBot {
             long diff = System.currentTimeMillis()-m_timeStartedToHost;
             int minute = (int)(diff/(1000*60));
             m_botAction.sendPrivateMessage(name, "You hosted for " + (diff / 1000 / 60 / 60) + " hours and " + minute + " minutes.");
-            if( !m_botAction.SQLisOperational()){
-                m_botAction.sendChatMessage("Database Error, non functioning database.");
-            } else {
+            if( !m_botAction.SQLisOperational())
+                return;
             
             try {
                 String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
@@ -647,7 +646,7 @@ public final class radiobot extends SubspaceBot {
                 Tools.printStackTrace(e);
             }
             
-        }}
+        }
 
 
         private void load_authorize() {
@@ -760,17 +759,19 @@ public final class radiobot extends SubspaceBot {
            String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
            ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
            if(result.next()) {
-               m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+               m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"'" );
            } else {
-               m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (`fcUserName`, `fnCount`, `fnType`, `fdDate`) VALUES ('"+name+"', '1', '0', '"+time+"')" );
+               m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (fcUserName, fnCount, fnType, fdDate) VALUES ('"+name+"', 1, 0, '"+time+"')" );
 
            }
                 m_botAction.SQLClose( result );
                 m_botAction.sendSmartPrivateMessage(name, "Host count recorded, Start time enabled..");
+                this.m_timeStartedToHost = System.currentTimeMillis();
             } catch ( Exception e ) {
                 m_botAction.sendChatMessage("Error occured when registering host count :"+e.getMessage());
                 Tools.printStackTrace(e);
-            }   }
+            }
+            }
                     
     
     private void clear(String name){
