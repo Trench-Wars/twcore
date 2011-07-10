@@ -640,12 +640,11 @@ public final class radiobot extends SubspaceBot {
             try {
                 long diff = System.currentTimeMillis()-m_timeStartedToHost;
                 int minute = (int)(diff/(1000*60));
-                String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
-                ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT fnHostID FROM tblRadio_Host WHERE fcUserName = '"+name+"' ORDER BY fnHostID DESC LIMIT 1");
                 if(result.next()) {
-                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = '"+minute+"' WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
+                    m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnDuration = "+minute+" WHERE fnHostID = "+result);
                 } else {
-                    m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Error!");
+                    m_botAction.sendChatMessage("Host duration of "+name+" cannot be recorded. Not in the database table.");
                 }
                 m_botAction.SQLClose( result );
                 this.m_timeStartedToHost = 0;
@@ -763,16 +762,7 @@ public final class radiobot extends SubspaceBot {
            return;
                     
        try {
-           String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
-           ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblRadio_Host WHERE fcUserName = '"+name+"' AND fnType = 0 AND fdDate = '"+time+"'" );
-           if(result.next()) {
-               m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = fnCount + 1 WHERE fcUserName = '"+name+"'" );
-           } else {
-               m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (fcUserName, fnCount, fnType, fdDate) VALUES ('"+name+"', 1, 0, '"+time+"')" );
-               m_botAction.sendPrivateMessage(name, time);
-
-           }
-                m_botAction.SQLClose( result );
+               m_botAction.SQLBackgroundQuery( mySQLHost, null, "INSERT INTO tblRadio_Host (fcUserName, fnCount, fnType, fdDate) VALUES ('"+name+"', 1, 0, CURDATE())" );
                 m_botAction.sendSmartPrivateMessage(name, "Host count recorded, Start time enabled..");
                 this.m_timeStartedToHost = System.currentTimeMillis();
             } catch ( Exception e ) {
@@ -787,8 +777,7 @@ public final class radiobot extends SubspaceBot {
             return;
         
         try {
-            String time = new SimpleDateFormat("yyyy-MM").format( Calendar.getInstance().getTime() ) + "-01";
-            m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = 0 AND fdDate = '"+time+"'");
+            m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = 0 AND fdDate = CURDATE()");
             
         } catch ( Exception e ){
             m_botAction.sendChatMessage("Error occured when registering host count :"+e.getMessage());
