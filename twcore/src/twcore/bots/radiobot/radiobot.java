@@ -536,8 +536,6 @@ public final class radiobot extends SubspaceBot {
         } else if(message.startsWith("!unhost")) {
             if(m_someoneHosting) {
                 unhost(name, message);
-            } else {
-                m_botAction.sendPrivateMessage(id, NO_HOST);
             }
             
         } else if(message.startsWith("!setwelcome ")) {
@@ -582,6 +580,9 @@ public final class radiobot extends SubspaceBot {
 		        } else if(message.startsWith("!removehost ")){
 		            String host = message.substring(12);
 		            removeHost(name, host);
+		            
+		        } else if(message.equalsIgnoreCase("!reload")){
+		            load_authorize();
 		        
 		}}
 		      
@@ -625,13 +626,13 @@ public final class radiobot extends SubspaceBot {
             m_botAction.cancelTasks();
             m_announcing = false;
             m_botAction.sendArenaMessage(m_currentHost + " has signed off the radio, thank you for listening!",5);
-            m_botAction.sendChatMessage(name +" has finished hosting radio.");
+            m_botAction.sendChatMessage(m_currentHost +" has finished hosting radio.");
             m_currentHost = "";
             m_someoneHosting = false;
             long diff = System.currentTimeMillis()-m_timeStartedToHost;
             int minute = (int)(diff/(1000*60));
-            m_botAction.sendPrivateMessage(name, "You hosted for " + (diff / 1000 / 60 / 60) + " hours and " + minute + " minutes.");
-            unhostStats(name);
+            m_botAction.sendPrivateMessage(m_currentHost, "You hosted for " + (diff / 1000 / 60 / 60) + " hours and " + minute + " minutes.");
+            unhostStats(m_currentHost);
             
         }
 
@@ -770,17 +771,15 @@ public final class radiobot extends SubspaceBot {
                    "fcUserName",
                    "fnCount",
                    "fdDate",
-                   "fnType"
                };
                
                String[] values = {
                        Tools.addSlashes(name),
                        "1",
                        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
-                       "0"
                };
                m_botAction.SQLInsertInto(mySQLHost, "tblRadio_Host", fields, values);
-               //( mySQLHost, null, "INSERT INTO tblRadio_Host (fcUserName, fnCount, fnType, fdDate) VALUES ('"+name+"', 1, 0, CURDATE())" );
+               //( mySQLHost, null, "INSERT INTO tblRadio_Host (fcUserName, fnCount, fnType, fdDate) VALUES ('"+name+"', 1, 0 CURDATE())" );
                 m_botAction.sendSmartPrivateMessage(name, "Host count recorded, Start time enabled..");
                 this.m_timeStartedToHost = System.currentTimeMillis();
             /*} catch ( Exception e ) {
@@ -795,7 +794,7 @@ public final class radiobot extends SubspaceBot {
             return;
         
         try {
-            m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = 0 AND fdDate = CURDATE()");
+            m_botAction.SQLBackgroundQuery( mySQLHost, null, "UPDATE tblRadio_Host SET fnCount = 0 AND fnDuration = 0 AND fdDate = CURDATE()");
             
         } catch ( Exception e ){
             m_botAction.sendChatMessage("Error occured when registering host count :"+e.getMessage());
@@ -993,9 +992,10 @@ public final class radiobot extends SubspaceBot {
     
     private final static String[] operatorHelp = {
         "+--------------------------Operator Help------------------------------------------+",
-        "|!clear                - Reset Stats of Hosts                                     |",
+        "|!reset                - Reset Stats of Hosts                                     |",
         "|!addhost              - Adds a host to use RadioBot                              |",
         "|!removehost           - Removes a host to use RadioBot                           |",
+        "|!reload               - Reloads Powers from the .cfg of file                     |",
         "+---------------------------------------------------------------------------------+"  
     };
 
