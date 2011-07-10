@@ -480,7 +480,7 @@ public final class radiobot extends SubspaceBot {
                m_botAction.sendPrivateMessage(id, "URL set to " + m_url);
 
             } else if(message.startsWith("!unhost")) {
-               unhost(name, message);
+               unhost(name);
             
 
                 
@@ -535,7 +535,7 @@ public final class radiobot extends SubspaceBot {
 
         } else if(message.startsWith("!unhost")) {
             if(m_someoneHosting) {
-                unhost(name, message);
+                unhost(m_currentHost);
             }
             
         } else if(message.startsWith("!setwelcome ")) {
@@ -622,12 +622,11 @@ public final class radiobot extends SubspaceBot {
 		
     
         
-        private void unhost(String name, String message) {
+        private void unhost(String name) {
             m_botAction.cancelTasks();
             m_announcing = false;
             m_botAction.sendArenaMessage(m_currentHost + " has signed off the radio, thank you for listening!",5);
             m_botAction.sendChatMessage(m_currentHost +" has finished hosting radio.");
-            m_currentHost = "";
             m_someoneHosting = false;
             long diff = System.currentTimeMillis()-m_timeStartedToHost;
             int minute = (int)(diff/(1000*60));
@@ -653,6 +652,7 @@ public final class radiobot extends SubspaceBot {
                 }
                 m_botAction.SQLClose( result );
                 this.m_timeStartedToHost = 0;
+                m_currentHost = "";
             } catch ( Exception e ) {
                 m_botAction.sendChatMessage("Error occured when registering host duration :"+e.getMessage());
                 Tools.printStackTrace(e);
@@ -763,7 +763,7 @@ public final class radiobot extends SubspaceBot {
 
 
     public void updateStatRecordsHOST(String name) {
-       if( !m_botAction.SQLisOperational())
+       if( !m_botAction.SQLisOperational() && !m_someoneHosting)
            return;
                     
        //try {
