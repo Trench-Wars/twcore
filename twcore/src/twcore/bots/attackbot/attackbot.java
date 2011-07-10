@@ -331,6 +331,8 @@ public class attackbot extends SubspaceBot {
             if (freq == 0 || freq == 1) {
                 team[freq].cap = cap;
                 ba.sendArenaMessage(cap + " has been assigned captain of freq " + team[freq].freq, Tools.Sound.BEEP1);
+                if (state == IDLE && team[0].cap != null && team[1].cap != null)
+                    startPicking();
                 return;
             }
         } catch (NumberFormatException e) {
