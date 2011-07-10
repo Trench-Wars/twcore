@@ -778,7 +778,7 @@ public final class radiobot extends SubspaceBot {
                        Tools.addSlashes("0"),
                        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
                };
-               
+               m_botAction.SQLBackgroundInsertInto(mySQLHost, "tblRadio_Host", fields, values);
                //( mySQLHost, null, "INSERT INTO tblRadio_Host (fcUserName, fnCount, fnType, fdDate) VALUES ('"+name+"', 1, 0, CURDATE())" );
                 m_botAction.sendSmartPrivateMessage(name, "Host count recorded, Start time enabled..");
                 this.m_timeStartedToHost = System.currentTimeMillis();
