@@ -195,7 +195,6 @@ public final class radiobot extends SubspaceBot {
         if(hosts.containsKey(name.toLowerCase()) || operators.containsKey(name.toLowerCase())) {
 
             if(message.startsWith("!host")) {
-                updateStatRecordsHOST( name );
                 if(!m_someoneHosting){
                     m_currentHost = name;
                     if(!m_announcing) {
@@ -210,6 +209,7 @@ public final class radiobot extends SubspaceBot {
                     m_botAction.sendPrivateMessage(id, "Someone is already hosting. Wait until they are done, or get an <ER>+ to !unhost them first.");
                     
                 }
+                updateStatRecordsHOST( name );
 
             /*} else if(message.startsWith("!who")) {
                 handled = true;
