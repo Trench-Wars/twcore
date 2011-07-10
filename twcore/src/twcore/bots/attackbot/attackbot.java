@@ -27,7 +27,7 @@ import twcore.core.util.Tools;
  * four flags in the middle, the doors at the enemy goal will open. First team
  * to 3 wins.
  * 
- * Made by fLaReD.
+ * Made by fLaReD & WingZero.
  */
 public class attackbot extends SubspaceBot {
     public BotAction ba;
@@ -330,7 +330,7 @@ public class attackbot extends SubspaceBot {
             int freq = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":")));
             if (freq == 0 || freq == 1) {
                 team[freq].cap = cap;
-                ba.sendArenaMessage(cap + " has been assigned captain of freq " + team[0].freq, Tools.Sound.BEEP1);
+                ba.sendArenaMessage(cap + " has been assigned captain of freq " + team[freq].freq, Tools.Sound.BEEP1);
                 return;
             }
         } catch (NumberFormatException e) {
