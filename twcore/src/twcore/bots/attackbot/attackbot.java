@@ -34,15 +34,15 @@ public class attackbot extends SubspaceBot {
     public EventRequester events; // event requester
     public OperatorList oplist; // operator list
     public BotSettings rules;
-    public Ball ball;
-    public int[] attack; // attack arena coords
-    public int[] attack2; // attack2 arena coords
-    public int goals, pick;
-    public boolean autoMode; // if true then game is run with caps who volunteer via !cap
-    public LinkedList<String> notplaying;
-    public LinkedList<String> lagouts;
+    private Ball ball;
+    private int[] attack; // attack arena coords
+    private int[] attack2; // attack2 arena coords
+    private int goals, pick;
+    private boolean autoMode; // if true then game is run with caps who volunteer via !cap
+    private LinkedList<String> notplaying;
+    private LinkedList<String> lagouts;
     
-    public Team[] team;
+    private Team[] team;
     
     // Bot states
     public int state;
@@ -331,20 +331,22 @@ public class attackbot extends SubspaceBot {
             return;
         }
         
+        
         try {
             int freq = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":")));
             if (freq == 0 || freq == 1) {
+                if (isPlaying(cap) && getTeam(cap).freq == freq) {
+                    ba.sendPrivateMessage(name, cap + " is playing on the other team.");
+                    return;
+                }
                 team[freq].cap = cap;
                 ba.sendArenaMessage(cap + " has been assigned captain of freq " + team[freq].freq, Tools.Sound.BEEP1);
                 if (state == IDLE && team[0].cap != null && team[1].cap != null)
                     startPicking();
-                return;
             }
         } catch (NumberFormatException e) {
+            ba.sendPrivateMessage(name, "Invalid team number (must be 0 or 1).");
         }
-        
-        ba.sendPrivateMessage(name, "Invalid team number (must be 0 or 1).");
-        return;
     }
     
     /**
@@ -409,17 +411,6 @@ public class attackbot extends SubspaceBot {
         team[0].sendTeam(name);
         ba.sendPrivateMessage(name, "`");
         team[1].sendTeam(name);
-    }
-    
-    /** Begins the player picking process if both team's have a captain **/
-    private void startPicking() {
-        if (team[0].cap == null || team[1].cap == null)
-            return;
-        state = STARTING;
-        pick = 0;
-        team[0].pick = true;
-        team[1].pick = false;
-        ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);        
     }
 
     /** Handles the !add command if given by a captain **/
@@ -498,44 +489,6 @@ public class attackbot extends SubspaceBot {
         String res = t.switchPlayers(players[0], players[1]);
         if (res != null)
             ba.sendPrivateMessage(name, res);
-    }
-    
-    /**
-     * Gets the Team object of a player
-     * @param name
-     * @return Team object or null if player is not on a team
-     */
-    private Team getTeam(String name) {
-        if (team[0].isPlayersTeam(name) || team[0].isCap(name))
-            return team[0];
-        else if (team[1].isPlayersTeam(name) || team[1].isCap(name))
-            return team[1];
-        else return null;
-    }
-    
-    /** Determines which team should have the next pick turn and executes **/
-    private void nextPick() {
-        if (pick == 0) {
-            if (team[1].size() <= team[0].size()) {
-                if (!team[1].isFull()) {
-                    pick = 1;
-                    team[1].pick = true;
-                    team[0].pick = false;
-                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);  
-                }
-            } else if (!team[0].isFull())
-                ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
-        } else {
-            if (team[0].size() <= team[1].size()) {
-                if (!team[0].isFull()) {
-                    pick = 0;
-                    team[0].pick = true;
-                    team[1].pick = false;
-                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2); 
-                }
-            } else if (!team[1].isFull())
-                ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
-        }
     }
     
     /** Handles the !ready command if given by a team captain **/
@@ -640,6 +593,17 @@ public class attackbot extends SubspaceBot {
             ba.sendPrivateMessage(name, msg);
         }
     }
+    
+    /** Begins the player picking process if both team's have a captain **/
+    private void startPicking() {
+        if (team[0].cap == null || team[1].cap == null)
+            return;
+        state = STARTING;
+        pick = 0;
+        team[0].pick = true;
+        team[1].pick = false;
+        ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);        
+    }
 
     /**
      * !start Starts a game. Warps players to safe for 10 seconds and calls the
@@ -675,6 +639,44 @@ public class attackbot extends SubspaceBot {
         ba.scoreResetAll();
         ba.resetFlagGame();
         dropBall();
+    }    
+    
+    /**
+     * Gets the Team object of a player
+     * @param name
+     * @return Team object or null if player is not on a team
+     */
+    private Team getTeam(String name) {
+        if (team[0].isPlayersTeam(name) || team[0].isCap(name))
+            return team[0];
+        else if (team[1].isPlayersTeam(name) || team[1].isCap(name))
+            return team[1];
+        else return null;
+    }
+    
+    /** Determines which team should have the next pick turn and executes **/
+    private void nextPick() {
+        if (pick == 0) {
+            if (team[1].size() <= team[0].size()) {
+                if (!team[1].isFull()) {
+                    pick = 1;
+                    team[1].pick = true;
+                    team[0].pick = false;
+                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);  
+                }
+            } else if (!team[0].isFull())
+                ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
+        } else {
+            if (team[0].size() <= team[1].size()) {
+                if (!team[0].isFull()) {
+                    pick = 0;
+                    team[0].pick = true;
+                    team[1].pick = false;
+                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2); 
+                }
+            } else if (!team[1].isFull())
+                ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
+        }
     }
 
     /**
@@ -748,6 +750,20 @@ public class attackbot extends SubspaceBot {
     /** Determines if the given player is assigned as captain of a team **/
     private boolean isCaptain(String name) {
         return team[0].isCap(name) || team[1].isCap(name);
+    }    
+    
+    /** Helper determines if player is a bot (oplist doesn't work for bots on other cores) **/
+    private boolean isNotBot(String name) {
+        if (oplist.isBotExact(name) || (oplist.isSysop(name) && !oplist.isOwner(name) && !name.equalsIgnoreCase("flared") && !name.equalsIgnoreCase("Witness") && !name.equalsIgnoreCase("Pure_Luck")))
+            return false;
+        else return true;
+    }
+    
+    /** Helper method adds spaces to a string to meet a certain length **/
+    private String padString(String str, int length) {
+        for (int i = str.length(); i < length; i++)
+            str += " ";
+        return str.substring(0, length);
     }
     
     /**
@@ -1079,6 +1095,7 @@ public class attackbot extends SubspaceBot {
         /**
          * clears local data for puck
          */
+        @SuppressWarnings("unused")
         public void clear() {
             carrier = null;
             try {
@@ -1094,29 +1111,20 @@ public class attackbot extends SubspaceBot {
             return timestamp;
         }
 
+        @SuppressWarnings("unused")
         public short getBallX() {
             return ballX;
         }
 
+        @SuppressWarnings("unused")
         public short getBallY() {
             return ballY;
         }
 
+        @SuppressWarnings("unused")
         public boolean isCarried() {
             return carried;
         }
     }
-    
-    private boolean isNotBot(String name) {
-        if (oplist.isBotExact(name) || (oplist.isSysop(name) && !oplist.isOwner(name) && !name.equalsIgnoreCase("flared") && !name.equalsIgnoreCase("Witness") && !name.equalsIgnoreCase("Pure_Luck")))
-            return false;
-        else return true;
-    }
-    
-    /** Helper method adds spaces to a string to meet a certain length **/
-    private String padString(String str, int length) {
-        for (int i = str.length(); i < length; i++)
-            str += " ";
-        return str.substring(0, length);
-    }
+
 }
