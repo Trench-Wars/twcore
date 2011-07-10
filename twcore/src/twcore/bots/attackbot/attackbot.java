@@ -50,7 +50,7 @@ public class attackbot extends SubspaceBot {
     public static final int STARTING = 1;
     public static final int PLAYING = 2;
     
-    public static final int NP_FREQ = 666;
+    public static final int NP_FREQ = 99;
     public static final int SPEC_FREQ = 9999;
     public static int[] SHIP_LIMITS;
     
@@ -124,7 +124,7 @@ public class attackbot extends SubspaceBot {
         ball = new Ball();
         ba.toggleLocked();
         if (autoMode)
-            ba.sendArenaMessage("A new game will begin when two players pm me with !cap to captain each team!", Tools.Sound.CROWD_GEE);
+            ba.sendArenaMessage("A new game will begin when two players PM me with !cap", Tools.Sound.CROWD_GEE);
         ba.specAll();
         ba.setAlltoFreq(SPEC_FREQ);
     }
@@ -134,11 +134,29 @@ public class attackbot extends SubspaceBot {
         if (state == IDLE) return;
         String name = ba.getPlayerName(event.getPlayerID());
         if (name == null) return;
+        if (state == IDLE)
+            ba.sendPrivateMessage(name, "A new game will begin after two players PM me with !cap");
+        else if (state == STARTING) {
+            String msg = "A game is about to start. ";
+            if (team[0].cap != null)
+                msg += team[0].cap + " and ";
+            else
+                msg += "-no captain- and ";
+            if (team[1].cap != null)
+                msg += team[1].cap + " ";
+            else
+                msg += "-no captain- ";
+            msg += "are picking teams.";
+            ba.sendPrivateMessage(name, msg);
+        } else if (state == PLAYING) {
+            ba.sendPrivateMessage(name, "A game is currently being played. Score: " + team[0].score + " - " + team[1].score);
+        }
+        
         if (lagouts.contains(name.toLowerCase()))
             ba.sendPrivateMessage(name, "Use !lagout to return to the game.");
         if (notplaying.contains(name.toLowerCase())) {
             ba.setFreq(name, NP_FREQ);
-            ba.sendPrivateMessage(name, "You are still set as NotPlaying and captains will be unable to pick you. If you want to play, use !notplaying again.");
+            ba.sendPrivateMessage(name, "You are still set as not playing and captains will be unable to pick you. If you want to play, use !notplaying again.");
         }
     }
     
@@ -158,13 +176,12 @@ public class attackbot extends SubspaceBot {
      * Monitors goals scored.
      */
     public void handleEvent(SoccerGoal event) {
-        if (state > 0) {
+        if (state == PLAYING) {
             short scoringFreq = event.getFrequency();
-            if (scoringFreq == 0) {
+            if (scoringFreq == 0)
                 team[0].score++;
-            } else if (scoringFreq == 1) {
+            else if (scoringFreq == 1)
                 team[1].score++;
-            }
             handleGoal();
         }
     }
@@ -239,38 +256,40 @@ public class attackbot extends SubspaceBot {
      */
     public void help(String name) {
         String[] help = {
-                "+-- AttackBot Commands ----------------------------------------------------------------------",
-                " !status                  - Displays the current game status",
-                " !lagout                  - Returns a player to the game after lagging out",
-                " !notplaying              - (!np) Toggles not playing which will prevent being added when on",
-                " !list                    - Displays list of each teams player information",
-                " !caps                    - Displays the captains of each team",
-                " !cap                     - Volunteers for assignment to captain of a team",
+                "+-- AttackBot Commands ---------------------------------------------------------------------.",
+                "| !status                  - Displays the current game status                               |",
+                "| !lagout                  - Returns a player to the game after lagging out                 |",
+                "| !notplaying              - (!np) Toggles not playing which will prevent being added if on |",
+                "| !list                    - Displays list of each teams player information                 |",
+                "| !caps                    - Displays the captains of each team                             |",
+                "| !cap                     - Volunteers for assignment to captain of a team                 |",
         };
         String[] cap = {
-                "+-- Captain Commands ------------------------------------------------------------------------",
-                " !ready                   - Use after picking when ready to begin the game",
-                " !add <name>:<ship>       - Adds <name> to game in ship number <ship>",
-                " !remove <name>           - Removes <name> from game (during picking)",
-                " !change <name>:<ship>    - Changes <name> to ship number <ship>",
-                " !switch <name1>:<name2>  - Switches the ships of <name1> and <name2>",
-                " !sub <player>:<specer>   - Substitutes <player> for <specer>",
-                " !list                    - Lists players, ships, and statuses for each team",
-                //" !cap                     - Removes you from captain allowing someone else to cap",
+                "+-- Captain Commands -----------------------------------------------------------------------+",
+                "| !ready                   - Use after picking when ready to begin the game                 |",
+                "| !add <name>:<ship>       - Adds <name> to game in ship number <ship>                      |",
+                "| !remove <name>           - Removes <name> from game (during picking)                      |",
+                "| !change <name>:<ship>    - Changes <name> to ship number <ship>                           |",
+                "| !switch <name1>:<name2>  - Switches the ships of <name1> and <name2>                      |",
+                "| !sub <player>:<specer>   - Substitutes <player> for <specer>                              |",
+                "| !list                    - Lists players, ships, and statuses for each team               |",
+                "| !removecap               - Removes you from captain allowing someone else to cap          |",
         };
         
         String[] staff = {
-                "+-- Staff Commands --------------------------------------------------------------------------",
-                " !setcap <team>:<name>    - Sets <name> as captain of <team> (0 or 1)",
-                " !go <arena>              - Sends bot to <arena>",
-                " !die                     - Kills bot",
-                " !killgame                - Abruptly kills the current game",
+                "+-- Staff Commands -------------------------------------------------------------------------+",
+                "| !setcap <team>:<name>    - Sets <name> as captain of <team> (0 or 1)                      |",
+                "| !go <arena>              - Sends bot to <arena>                                           |",
+                "| !die                     - Kills bot                                                      |",
+                "| !killgame                - Abruptly kills the current game                                |",
         };
+        String end = "`-------------------------------------------------------------------------------------------'";
         ba.privateMessageSpam(name, help);
         if (isCaptain(name))
             ba.privateMessageSpam(name, cap);
         if (oplist.isZH(name))
             ba.privateMessageSpam(name, staff);
+        ba.sendPrivateMessage(name, end);
     }
     
     /** Handles the !notplaying command which prevents a player from being added and/or removes them from the game **/
@@ -279,17 +298,17 @@ public class attackbot extends SubspaceBot {
             if (!notplaying.contains(name.toLowerCase())) {
                 notplaying.add(name.toLowerCase());
                 ba.setFreq(name, NP_FREQ);
-                ba.sendPrivateMessage(name, "You have been added to NotPlaying. Captains will not be able to add you. If you wish to return, do !notplaying again.");
+                ba.sendPrivateMessage(name, "You have been added to not playing. Captains will not be able to add you. If you wish to return, do !notplaying again.");
             } else {
                 notplaying.remove(name.toLowerCase());
                 ba.setShip(name, 1);
                 ba.specWithoutLock(name);
-                ba.sendPrivateMessage(name, "You have been removed from NotPlaying. Captains will be able to add you.");
+                ba.sendPrivateMessage(name, "You have been removed from not playing. Captains will be able to add you.");
             }
         } else {
             getTeam(name).notPlaying(name);
             ba.setFreq(name, NP_FREQ);
-            ba.sendPrivateMessage(name, "You have been added to NotPlaying. Captains will not be able to add you. If you wish to return, do !notplaying again.");
+            ba.sendPrivateMessage(name, "You have been added to not playing. Captains will not be able to add you. If you wish to return, do !notplaying again.");
         }
     }
     
@@ -354,6 +373,12 @@ public class attackbot extends SubspaceBot {
         }
     }
     
+    /** Handles the !removecap command which removes the captain from being captain **/
+    public void removeCap(String name) {
+        if (!isCaptain(name)) return;
+        getTeam(name).removeCap();
+    }
+    
     /** Handles the !caps command which returns the current team captains **/
     public void getCaps(String name) {
         String msg = "";
@@ -412,7 +437,7 @@ public class attackbot extends SubspaceBot {
 
     /** Handles the !remove command if given by a captain **/
     public void remove(String name, String msg) {
-        if (state == IDLE || !isCaptain(name) || !msg.contains(" ") || msg.length() < 8) return;
+        if (state != STARTING || !isCaptain(name) || !msg.contains(" ") || msg.length() < 8) return;
         Team t = getTeam(name);
         if (t == null) return;
         String res = t.remove(msg.substring(msg.indexOf(" ") + 1));
@@ -645,7 +670,6 @@ public class attackbot extends SubspaceBot {
      * winner.
      */
     public void handleGoal() {
-        if (state != PLAYING) return;
         if (team[0].score == goals) {
             ba.sendArenaMessage("GAME OVER: Freq 0 wins!", 5);
             ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score);
@@ -893,6 +917,12 @@ public class attackbot extends SubspaceBot {
                 }
             }
             return result;
+        }
+        
+        /** Used by the current captain to remove themselves from captain **/
+        public void removeCap() {
+            ba.sendArenaMessage(cap + " has been removed from captain of Freq " + freq + ". Use !cap to claim captainship.", Tools.Sound.GAME_SUCKS);
+            cap = null;
         }
         
         /**
