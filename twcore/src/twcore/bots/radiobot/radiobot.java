@@ -764,28 +764,28 @@ public final class radiobot extends SubspaceBot {
        if( !m_botAction.SQLisOperational())
            return;
                     
-       try {
+       //try {
            String[] fields = {
                    "fcUserName",
                    "fnCount",
-                   "fnType",
-                   "fdDate"
+                   "fdDate",
+                   "fnType"
                };
                
                String[] values = {
                        Tools.addSlashes(name),
-                       Tools.addSlashes("1"),
-                       Tools.addSlashes("0"),
-                       new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())
+                       "1",
+                       new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                       "0"
                };
                m_botAction.SQLBackgroundInsertInto(mySQLHost, "tblRadio_Host", fields, values);
                //( mySQLHost, null, "INSERT INTO tblRadio_Host (fcUserName, fnCount, fnType, fdDate) VALUES ('"+name+"', 1, 0, CURDATE())" );
                 m_botAction.sendSmartPrivateMessage(name, "Host count recorded, Start time enabled..");
                 this.m_timeStartedToHost = System.currentTimeMillis();
-            } catch ( Exception e ) {
+            /*} catch ( Exception e ) {
                 m_botAction.sendChatMessage("Error occured when registering host count :"+e.getMessage());
                 Tools.printStackTrace(e);
-            }
+            }*/
             }
                     
     
