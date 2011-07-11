@@ -803,10 +803,10 @@ public class attackbot extends SubspaceBot {
                 return "Could not find " + name;
             if (!isNotBot(name))
                 return "Unable to add bot " + name;
-            if (notplaying.contains(name.toLowerCase()))
-                return "" + name + " is currently not playing";
-            if (isPlaying(name) || (!p.equalsIgnoreCase(cap) && isCaptain(p)))
-                return "" + name + " is already on a team";
+            if (notplaying.contains(p.toLowerCase()))
+                return "" + p + " is currently not playing";
+            if (isPlaying(p) || (!p.equalsIgnoreCase(cap) && isCaptain(p)))
+                return "" + p + " is already on a team";
             if (ships[ship-1] >= SHIP_LIMITS[ship-1])
                 return "Only " + SHIP_LIMITS[ship-1] + " " + Tools.shipName(ship) + "(s) are allowed per team";
             if (players.size() >= rules.getInt("MaxPlayers"))
@@ -865,7 +865,7 @@ public class attackbot extends SubspaceBot {
                 if (isPlaying(subin))
                     return in + " is already playing in this game";
                 if (notplaying.contains(subin.toLowerCase()))
-                    return "" + subout + " is currently not playing";
+                    return "" + subin + " is currently not playing";
                 int ship = players.remove(subout.toLowerCase());
                 ba.specWithoutLock(subout);
                 ba.setFreq(subout, freq);
