@@ -818,7 +818,7 @@ public class attackbot extends SubspaceBot {
             players.put(p.toLowerCase(), ship);
             result = "Player " + p + " added to game";
             ba.sendPrivateMessage(p, "You have been put in the game");
-            ba.sendArenaMessage(p + " in for " + cap + " with ship " + ship);
+            ba.sendArenaMessage(p + " in for Freq " + freq + " with ship " + ship);
             return result;
         }
         
