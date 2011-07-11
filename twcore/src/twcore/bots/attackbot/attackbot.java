@@ -89,7 +89,7 @@ public class attackbot extends SubspaceBot {
             lagouts.add(name.toLowerCase());
             ba.sendPrivateMessage(name, "Use !lagout to return to the game.");
             Team t = getTeam(name);
-            if (!t.isCap(name) && t.cap != null)
+            if (t != null && !t.isCap(name) && t.cap != null)
                 ba.sendPrivateMessage(t.cap, name + " has lagged out.");
         }
         
@@ -168,10 +168,11 @@ public class attackbot extends SubspaceBot {
         if (state == IDLE) return;
         String name = ba.getPlayerName(event.getPlayerID());
         if (name == null) return;
+        
         if (isPlaying(name) && !lagouts.contains(name.toLowerCase()))
             lagouts.add(name.toLowerCase());
         Team t = getTeam(name);
-        if (!t.isCap(name))
+        if (t != null && t.cap != null && !t.isCap(name))
             ba.sendPrivateMessage(t.cap, name + " has lagged out or left the arena.");
     }
 
@@ -528,6 +529,7 @@ public class attackbot extends SubspaceBot {
         if (lagouts.contains(name.toLowerCase())) {
             lagouts.remove(name.toLowerCase());
             Team t = getTeam(name);
+            if (t == null) return;
             ba.setShip(name, t.getShip(name));
             ba.setFreq(name, t.freq);
         } else 
