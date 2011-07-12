@@ -38,14 +38,17 @@ public class attackbot extends SubspaceBot {
     private Ball ball;
     private int[] attack; // attack arena coords
     private int[] attack2; // attack2 arena coords
-    private int goals, pick;
+    private int goals, pick, timer;
     private boolean autoMode; // if true then game is run with caps who volunteer via !cap
+    private boolean timed;
     private boolean DEBUG;
     private String debugger;
     private LinkedList<String> notplaying;
     private LinkedList<String> lagouts;
     
     private Team[] team;
+    
+    private MasterControl mc;
     
     // Bot states
     public int state;
@@ -54,6 +57,8 @@ public class attackbot extends SubspaceBot {
     public static final int PLAYING = 2;
     
     public static final int NP_FREQ = 666;
+    public static final int MAX_GOALS = 15;
+    public static final int MAX_TIME = 20;
     public static final int SPEC_FREQ = 9999;
     public static final long MAX_POS = 15000; // 15 seconds max carry time
     public static int[] SHIP_LIMITS;
@@ -80,6 +85,7 @@ public class attackbot extends SubspaceBot {
         notplaying  = new LinkedList<String>();
         lagouts = new LinkedList<String>();
         autoMode = true;
+        timed = false;
         DEBUG = false;
         debugger = "";
     }
@@ -131,6 +137,9 @@ public class attackbot extends SubspaceBot {
             ba.sendArenaMessage("A new game will begin when two players PM me with !cap", Tools.Sound.CROWD_GEE);
         ba.specAll();
         ba.setAlltoFreq(SPEC_FREQ);
+        ba.setPlayerPositionUpdating(300);
+        ba.receiveAllPlayerDeaths();
+        mc = new MasterControl();
     }
     
     /** Handles the PlayerEntered event **/
@@ -204,7 +213,7 @@ public class attackbot extends SubspaceBot {
                         p.addGoal();
                 }
             }
-            handleGoal();
+            mc.checkGameOver();
         }
     }
     
@@ -276,7 +285,7 @@ public class attackbot extends SubspaceBot {
                 if (msg.equalsIgnoreCase("!drop"))
                     dropBall();
                 else if (msg.equalsIgnoreCase("!start"))
-                    startGame();
+                    mc.startGame();
                 else if (msg.startsWith("!kill"))
                     stopGame(name, true);
                 else if (msg.startsWith("!end"))
@@ -289,6 +298,11 @@ public class attackbot extends SubspaceBot {
                     setCaptain(name, msg);
                 else if (msg.equalsIgnoreCase("!debug"))
                     debugger(name);
+            } else if (oplist.isER(name)) {
+                if (msg.startsWith("!settime "))
+                    setTime(name, msg);
+                else if (msg.startsWith("!setgoals "))
+                    setGoals(name, msg);
             }
         }
     }
@@ -322,6 +336,8 @@ public class attackbot extends SubspaceBot {
         String[] staff = {
                 "+-- Staff Commands -------------------------------------------------------------------------+",
                 "| !setcap <team>:<name>    - Sets <name> as captain of <team> (0 or 1)                      |",
+                "| !settime <mins>          - Changes game to a timed game to <mins> minutes                 |",
+                "| !setgoals <goals>        - Changes game rules to first to <goals> goals wins              |",
                 "| !go <arena>              - Sends bot to <arena>                                           |",
                 "| !die                     - Kills bot                                                      |",
                 "| !endgame                 - Prematurely ends the current game with stats and scores        |",
@@ -380,8 +396,7 @@ public class attackbot extends SubspaceBot {
                 }
                 team[freq].cap = cap;
                 ba.sendArenaMessage(cap + " has been assigned captain of freq " + team[freq].freq, Tools.Sound.BEEP1);
-                if (state == IDLE && team[0].cap != null && team[1].cap != null)
-                    startPicking();
+                mc.checkCaps();
             }
         } catch (NumberFormatException e) {
             ba.sendPrivateMessage(name, "Invalid team number (must be 0 or 1).");
@@ -411,8 +426,7 @@ public class attackbot extends SubspaceBot {
                 return;
             }
             
-            if (team[0].cap != null && team[1].cap != null)
-                startPicking();
+            mc.checkCaps();
         } else if (!isCaptain(name)) {
             if (isPlaying(name)) {
                 Team t = getTeam(name);
@@ -481,7 +495,7 @@ public class attackbot extends SubspaceBot {
             String res = t.addPlayer(player, ship);
             ba.sendPrivateMessage(name, res);
             if (state == STARTING && res.contains("added to game"))
-                nextPick();
+                mc.nextPick();
         }
     }
 
@@ -548,7 +562,7 @@ public class attackbot extends SubspaceBot {
             } else if (team[1].ready) {
                 team[0].ready = true;
                 ba.sendArenaMessage("Freq " + team[0].freq + " is ready", Tools.Sound.BEEP1);
-                startGame();
+                mc.startGame();
             } else {
                 team[0].ready = true;
                 ba.sendArenaMessage("Freq " + team[0].freq + " is ready", Tools.Sound.BEEP1);
@@ -560,7 +574,7 @@ public class attackbot extends SubspaceBot {
             } else if (team[0].ready) {
                 team[1].ready = true;
                 ba.sendArenaMessage("Freq " + team[1].freq + " is ready", Tools.Sound.BEEP1);
-                startGame();
+                mc.startGame();
             } else {
                 team[1].ready = true;
                 ba.sendArenaMessage("Freq " + team[1].freq + " is ready", Tools.Sound.BEEP1);
@@ -584,6 +598,9 @@ public class attackbot extends SubspaceBot {
     public void go(String name, String cmd) {
         String arena = cmd.substring(cmd.indexOf(" ") + 1);
         if (arena.length() > 0) {
+            if (state > IDLE) {
+                stopGame(name, true);
+            }
             ba.sendSmartPrivateMessage(name, "Moving to " + arena);
             ba.changeArena(arena);
         }
@@ -591,9 +608,81 @@ public class attackbot extends SubspaceBot {
 
     /** Handles !die command which kills the bot **/
     public void die(String name) {
+        if (state > IDLE) {
+            stopGame(name, true);
+        }
         ba.sendSmartPrivateMessage(name, "I'm melting! I'm melting...");
         ba.cancelTasks();
         ba.die();
+    }
+
+    /** Handles !setgoals which will change the game to first to goals win if possible **/
+    public void setGoals(String name, String cmd) {
+        if (cmd.length() < 9 || !cmd.contains(" ")) return;
+        int winGoal = 0;
+        try {
+            winGoal = Integer.valueOf(cmd.substring(cmd.indexOf(" ")+1));
+        } catch (NumberFormatException e) {
+            ba.sendPrivateMessage(name, "Syntax error: please use !setgoals <goals>");
+            return;
+        }
+        if (winGoal < 1 || winGoal > MAX_GOALS) {
+            ba.sendPrivateMessage(name, "Goals must be between 1 and " + MAX_GOALS + ".");
+            return;
+        } 
+        if (!timed) {
+            if (goals != winGoal) {
+                if (state == PLAYING && (winGoal <= team[0].score || winGoal <= team[1].score))
+                    ba.sendPrivateMessage(name, "Setting goals to " + winGoal + " would interfere with the current game.");
+                else {
+                    goals = winGoal;
+                    ba.sendPrivateMessage(name, "Rules changed to first to " + goals + " goals");
+                    ba.sendArenaMessage("Game rules set to first to " + goals + " goals");                    
+                }
+            } else
+                ba.sendPrivateMessage(name, "Goals already set to " + goals + ".");
+        } else {
+            if (state == PLAYING)
+                ba.sendPrivateMessage(name, "Rules cannot be changed to goals while a timed game is taking place.");
+            else {
+                if (goals != winGoal) {
+                    timed = false;
+                    goals = winGoal;
+                    ba.sendPrivateMessage(name, "Rules changed from timed to first to " + goals + " goals");
+                    ba.sendArenaMessage("Game rules set to first to " + goals + " goals"); 
+                } else
+                    ba.sendPrivateMessage(name, "Goals already set to " + goals + ".");
+            }
+        }
+    }
+    
+    /** Handles !settime which will change the game to a timed game if possible **/
+    public void setTime(String name, String cmd) {
+        if (cmd.length() < 9 || !cmd.contains(" ")) return;
+        int mins = 0;
+        try {
+            mins = Integer.valueOf(cmd.substring(cmd.indexOf(" ")+1));
+        } catch (NumberFormatException e) {
+            ba.sendPrivateMessage(name, "Syntax error: please use !settime <minutes>");
+            return;
+        }
+        if (mins < 2 || mins > MAX_TIME) {
+            ba.sendPrivateMessage(name, "Time must be between 2 and " + MAX_TIME + ".");
+        } else if (timed && mins == timer) {
+            ba.sendPrivateMessage(name, "Game duration was already set to " + timer + " minutes.");
+        } else if (state == PLAYING) {
+            ba.sendPrivateMessage(name, "Game rules cannot be changed to timed while there is a game taking place.");
+            return;            
+        } else if (timed) {
+            timer = mins;
+            ba.sendPrivateMessage(name, "Game duration set to " + timer + " minutes");
+            ba.sendArenaMessage("Timed game set to " + timer + " minutes");
+        } else {
+            timed = true;
+            timer = mins;
+            ba.sendPrivateMessage(name, "Game changed from " + goals + " goals to a timed game of " + timer + " minutes");
+            ba.sendArenaMessage("Game rules set to timed game of " + timer + " minutes");
+        }
     }
 
     /**
@@ -604,20 +693,18 @@ public class attackbot extends SubspaceBot {
      */
     public void stopGame(String name, boolean kill) {
         if (state > 0) {
+            mc.killGame();
             if (kill) {
                 ba.sendArenaMessage("This game has been killed by " + name);
-                state = IDLE;
                 lagouts.clear();
-                team[0].reset();
-                team[1].reset();
                 ba.specAll();
             } else if (state == PLAYING) {
                 if (team[0].score > team[1].score)
-                    gameOver(team[0].freq);
+                    mc.gameOver(team[0].freq);
                 else if (team[1].score > team[0].score)
-                    gameOver(team[1].freq);
+                    mc.gameOver(team[1].freq);
                 else
-                    gameOver(-1);
+                    mc.gameOver(-1);
             }
         } else if (state == IDLE)
             ba.sendPrivateMessage(name, "There is no game currently running.");
@@ -647,48 +734,7 @@ public class attackbot extends SubspaceBot {
                 msg += "[needs captain]";
             ba.sendPrivateMessage(name, msg);
         }
-    }
-    
-    /** Begins the player picking process if both team's have a captain **/
-    private void startPicking() {
-        if (team[0].cap == null || team[1].cap == null)
-            return;
-        state = STARTING;
-        pick = 0;
-        team[0].pick = true;
-        team[1].pick = false;
-        ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);        
-    }
-
-    /** Begins the game starter sequence **/
-    public void startGame() {
-        state = PLAYING;
-        ba.sendArenaMessage("Both teams are ready, game will start in 10 seconds!", 1);
-        TimerTask t = new TimerTask() {
-            public void run() {
-                runGame();
-            }
-        };
-        ba.scheduleTask(t, 10000);
-    }
-
-    /** Starts the game after reseting ships and scores **/
-    public void runGame() {
-        team[0].score = 0;
-        team[1].score = 0;
-        ba.shipResetAll();
-        if (ba.getArenaName().equalsIgnoreCase("attack")) {
-            ba.warpFreqToLocation(0, attack[0], attack[1]);
-            ba.warpFreqToLocation(1, attack[2], attack[3]);
-        } else {
-            ba.warpFreqToLocation(0, attack2[0], attack2[1]);
-            ba.warpFreqToLocation(1, attack2[2], attack2[3]);
-        }
-        ba.sendArenaMessage("GOGOGO!!!", 104);
-        ba.scoreResetAll();
-        ba.resetFlagGame();
-        dropBall();
-    }    
+    }   
     
     /**
      * Gets the Team object of a player
@@ -715,99 +761,6 @@ public class attackbot extends SubspaceBot {
         if (p == null)
             p = team[1].getPlayerStats(name);
         return p;
-    }
-    
-    /** Determines which team should have the next pick turn and executes **/
-    private void nextPick() {
-        if (pick == 0) {
-            if (team[1].size() <= team[0].size()) {
-                if (!team[1].isFull()) {
-                    pick = 1;
-                    team[1].pick = true;
-                    team[0].pick = false;
-                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);  
-                }
-            } else if (!team[0].isFull())
-                ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
-        } else {
-            if (team[0].size() <= team[1].size()) {
-                if (!team[0].isFull()) {
-                    pick = 0;
-                    team[0].pick = true;
-                    team[1].pick = false;
-                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2); 
-                }
-            } else if (!team[1].isFull())
-                ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
-        }
-    }
-
-    /** Handles goals. Determines total score of each team and ends game if a team has won, otherwise warps and drops ball. **/
-    public void handleGoal() {
-        if (team[0].score == goals)
-            gameOver(team[0].freq);
-        else if (team[1].score == goals)
-            gameOver(team[1].freq);
-        else {
-            ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
-            ba.shipResetAll();
-            ba.resetFlagGame();
-            if (ba.getArenaName().equalsIgnoreCase("attack")) {
-                ba.warpFreqToLocation(0, attack[0], attack[1]);
-                ba.warpFreqToLocation(1, attack[2], attack[3]);
-            } else {
-                ba.warpFreqToLocation(0, attack2[0], attack2[1]);
-                ba.warpFreqToLocation(1, attack2[2], attack2[3]);
-            }
-            dropBall();
-        }
-    }
-    
-    /**
-     * Helper method prints winning freq and game stats in arena messages
-     * @param freq Winning freq
-     */
-    private void gameOver(int freq) {
-        printTotals();
-        if (freq > -1)
-            ba.sendArenaMessage("GAME OVER: Freq " + freq + " wins!", 5);
-        else
-            ba.sendArenaMessage("GAME OVER: Tie!", 5);
-        ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score);
-        state = IDLE;
-        lagouts.clear();
-        team[0].reset();
-        team[1].reset();
-        if (autoMode) {
-            pick = 0;
-            ba.sendArenaMessage("A new game will begin when two players PM me !cap");
-            ba.specAll();
-        }
-    }
-
-    /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
-    public void dropBall() {
-        Ship s = ba.getShip();
-        s.setShip(0);
-        s.setFreq(1234);
-        final TimerTask drop = new TimerTask() {
-            public void run() {
-                ba.getShip().move(512 * 16, 600 * 16);
-                ba.getShip().sendPositionPacket();
-                try {
-                    Thread.sleep(75);
-                } catch (InterruptedException e) {}
-                ba.getBall(ball.getBallID(), (int) ball.getTimeStamp());
-                ba.getShip().move(512 * 16, 512 * 16);
-                ba.getShip().sendPositionPacket();
-                try {
-                    Thread.sleep(75);
-                } catch (InterruptedException e) {}
-            }
-        };
-        drop.run();
-        ba.specWithoutLock(ba.getBotName());
-        ball.clear();
     }
     
     /** Determines if the given player is playing in the game or not **/
@@ -945,9 +898,9 @@ public class attackbot extends SubspaceBot {
         ba.arenaMessageSpam(msgs);
         for (Player p : stats.values()) {
             if (p.ship == -1)
-                msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
+                msg = "|  " + padString("-" + p.name, 25) + "  " + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
             else
-                msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
+                msg = "|  " + padString(p.name, 25) + "  " + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
             ba.sendArenaMessage(msg);
         }
         
@@ -967,6 +920,216 @@ public class attackbot extends SubspaceBot {
             str += " ";
         return str + x;
     }
+    
+    /**
+     * Helper method used to get the opposing team freq
+     * @param f freq
+     * @return freq of the opposing team
+     */
+    private int getOpFreq(int f) {
+        if (team[0].freq == f)
+            return team[1].freq;
+        else return team[0].freq;
+    }
+
+    /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
+    public void dropBall() {
+        Ship s = ba.getShip();
+        s.setShip(0);
+        s.setFreq(1234);
+        final TimerTask drop = new TimerTask() {
+            public void run() {
+                ba.getShip().move(512 * 16, 600 * 16);
+                ba.getShip().sendPositionPacket();
+                try {
+                    Thread.sleep(75);
+                } catch (InterruptedException e) {}
+                ba.getBall(ball.getBallID(), (int) ball.getTimeStamp());
+                ba.getShip().move(512 * 16, 512 * 16);
+                ba.getShip().sendPositionPacket();
+                try {
+                    Thread.sleep(75);
+                } catch (InterruptedException e) {}
+            }
+        };
+        drop.run();
+        ba.specWithoutLock(ba.getBotName());
+        ball.clear();
+    }
+
+    /** Handles post-goal operations **/
+    private void handleGoal() {
+        ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
+        ba.shipResetAll();
+        ba.resetFlagGame();
+        if (ba.getArenaName().equalsIgnoreCase("attack")) {
+            ba.warpFreqToLocation(0, attack[0], attack[1]);
+            ba.warpFreqToLocation(1, attack[2], attack[3]);
+        } else {
+            ba.warpFreqToLocation(0, attack2[0], attack2[1]);
+            ba.warpFreqToLocation(1, attack2[2], attack2[3]);
+        }
+        dropBall();
+    }
+
+    /** MasterControl is responsible for the start and end of the game as well as time keeping if game is timed or goal checking if not **/
+    private class MasterControl {
+
+        TimerTask time;
+        boolean suddenDeath;
+        
+        public MasterControl() {
+            suddenDeath = false;
+        }
+        
+        /** Begins the player picking process if both team's have a captain **/
+        public void checkCaps() {
+            if (team[0].cap == null || team[1].cap == null)
+                return;
+            state = STARTING;
+            pick = 0;
+            team[0].pick = true;
+            team[1].pick = false;
+            ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);        
+        }
+        
+        /** Determines which team should have the next pick turn and executes **/
+        private void nextPick() {
+            if (pick == 0) {
+                if (team[1].size() <= team[0].size()) {
+                    if (!team[1].isFull()) {
+                        pick = 1;
+                        team[1].pick = true;
+                        team[0].pick = false;
+                        ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);  
+                    }
+                } else if (!team[0].isFull())
+                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
+            } else {
+                if (team[0].size() <= team[1].size()) {
+                    if (!team[0].isFull()) {
+                        pick = 0;
+                        team[0].pick = true;
+                        team[1].pick = false;
+                        ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2); 
+                    }
+                } else if (!team[1].isFull())
+                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
+            }
+        }
+
+        /** Begins the game starter sequence **/
+        public void startGame() {
+            state = PLAYING;
+            ba.sendArenaMessage("Both teams are ready, game will start in 10 seconds!", 1);
+            TimerTask t = new TimerTask() {
+                public void run() {
+                    runGame();
+                }
+            };
+            ba.scheduleTask(t, 10000);
+        }
+
+        /** Starts the game after reseting ships and scores **/
+        public void runGame() {
+            team[0].reset();
+            team[1].reset();
+            team[0].score = 0;
+            team[1].score = 0;
+            ba.shipResetAll();
+            if (ba.getArenaName().equalsIgnoreCase("attack")) {
+                ba.warpFreqToLocation(0, attack[0], attack[1]);
+                ba.warpFreqToLocation(1, attack[2], attack[3]);
+            } else {
+                ba.warpFreqToLocation(0, attack2[0], attack2[1]);
+                ba.warpFreqToLocation(1, attack2[2], attack2[3]);
+            }
+            
+            if (timed) {
+                time = new TimerTask() {
+                    public void run() {
+                        suddenDeath = true;
+                        checkGameOver();
+                    }
+                };
+                ba.setTimer(timer);
+                ba.scheduleTask(time, timer*Tools.TimeInMillis.MINUTE - 1900);
+                ba.sendArenaMessage("RULES: Most goals after " + timer + " minutes wins or sudden death if tied.");
+            } else 
+                ba.sendArenaMessage("RULES: First to " + goals + " goals.");
+
+            ba.sendArenaMessage("GO GO GO!!!", 104);
+            ba.scoreResetAll();
+            ba.resetFlagGame();
+            dropBall();
+        } 
+        
+        public void checkGameOver() {
+            if (state != PLAYING) return;
+            if (!timed && !suddenDeath) {
+                if (team[0].score == goals)
+                    gameOver(team[0].freq);
+                else if (team[1].score == goals)
+                    gameOver(team[1].freq);
+                else
+                    handleGoal();
+            } else if (timed && suddenDeath){
+                int wins = -1;
+                if (team[0].score > team[1].score)
+                    wins = team[0].freq;
+                else if (team[1].score > team[0].score)
+                    wins = team[1].freq;
+                if (wins < 0) {
+                    ba.setTimer(0);
+                    timed = false;
+                    ba.sendArenaMessage("NOTICE: End of regulation period -- Score TIED -- BEGIN SUDDEN DEATH", Tools.Sound.SCREAM);
+                } else {
+                    final int f = wins;
+                    TimerTask end = new TimerTask() {
+                        public void run() {
+                            gameOver(f);
+                        }
+                    };
+                    ba.scheduleTask(end, 2100);
+                }
+            } else if (!timed && suddenDeath) {
+                if (team[0].score > team[1].score)
+                    gameOver(team[0].freq);
+                else if (team[1].score > team[0].score)
+                    gameOver(team[1].freq);
+                else
+                    handleGoal(); //uhh no?
+            }
+        }
+        
+        
+        /**
+         * Helper method prints winning freq and game stats in arena messages
+         * @param freq Winning freq
+         */
+        private void gameOver(int freq) {
+            printTotals();
+            if (freq > -1)
+                ba.sendArenaMessage("GAME OVER: Freq " + freq + " wins!", 5);
+            else
+                ba.sendArenaMessage("GAME OVER: Tie!", 5);
+            ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score);
+            state = IDLE;
+            lagouts.clear();
+            if (autoMode) {
+                pick = 0;
+                ba.sendArenaMessage("A new game will begin when two players PM me !cap");
+                ba.specAll();
+            }
+        }
+        
+        public void killGame() {
+            if (state == PLAYING && timed && !suddenDeath)
+                ba.cancelTask(time);
+        }
+        
+    }
+    
     /** Player object holding all the stats of a player for one ship **/
     private class Player {
         String name;
@@ -1522,17 +1685,6 @@ public class attackbot extends SubspaceBot {
             ready = false;
         }
     }
-    
-    /**
-     * Helper method used to get the opposing team freq
-     * @param f freq
-     * @return freq of the opposing team
-     */
-    private int getOpFreq(int f) {
-        if (team[0].freq == f)
-            return team[1].freq;
-        else return team[0].freq;
-    }
 
     /** Ball object holds and maintains all relevant information about the game ball **/
     private class Ball {
@@ -1597,8 +1749,10 @@ public class attackbot extends SubspaceBot {
                     }
                     carryTime = now;
                 }
-                if (state == PLAYING)
+                if (state == PLAYING && isNotBot(newCarrier)) {
+                    carriers.push(newCarrier);
                     absCarrier = newCarrier;
+                }
             } else if (carrier != null && newCarrier == null) {
                 // loss of possession
                 debug("Case 2: " + carrier + " lost possession");
@@ -1628,74 +1782,13 @@ public class attackbot extends SubspaceBot {
                     absCarrier = newCarrier;
                 }
                 carryTime = now;
+                if (state == PLAYING && isNotBot(newCarrier))
+                    carriers.push(newCarrier);
             } else {
                 debug("Case 4: All nulls");
                 carryTime = now;
             }
             carrier = newCarrier;
-            
-            /*
-            // Player has the ball
-            if (newCarrier != null && !newCarrier.equals(ba.getBotName())) {
-                // Ball has been picked up
-                if (state == PLAYING) {
-                    if (!carried) {
-                        if (!newCarrier.equalsIgnoreCase(absCarrier)) {
-                            // Current carrier is not the same as prior despite there being some time when the ball was free
-                            Team curr = getTeam(newCarrier);
-                            if (curr != null) {
-                                if (lastTeam == getOpFreq(curr.freq)) {
-                                    // Possession changed from one team to another so increment possession change stats
-                                    curr.getPlayerStats(newCarrier).addSteal();
-                                    getPlayer(absCarrier).addTurnover();
-                                }
-                                lastTeam = curr.freq;
-                            }
-                        }
-                        carriers.push(newCarrier);
-                        carryTime = now;
-                    } else if (carrier != null && !newCarrier.equalsIgnoreCase(carrier)) {
-                        // Ball has been passed between carriers
-                        if (!newCarrier.equalsIgnoreCase(absCarrier)) {
-                            Team curr = getTeam(newCarrier);
-                            if (curr != null) {
-                                if (lastTeam == getOpFreq(curr.freq)) {
-                                    // Possession changed from one team to another so increment possession change stats
-                                    curr.getPlayerStats(newCarrier).addSteal();
-                                    getPlayer(absCarrier).addTurnover();
-                                }
-                                lastTeam = curr.freq;
-                            }
-                        }
-                        // Possession change so add time to player possession stat
-                        carryTime = now - carryTime;
-                        getPlayer(carrier).addPoss(carryTime);
-                        carryTime = now;
-                    }
-                }
-                absCarrier = newCarrier;
-                carried = true;
-            } else if (newCarrier == null && carried) {
-                // Ball has been released from the carrier's possession
-                if (state == PLAYING) {
-                    if (carrier != null && isNotBot(carrier)) {
-                        // Possession change so add time to player possession stat
-                        carryTime = now - carryTime;
-                        getPlayer(carrier).addPoss(carryTime);
-                        carryTime = now;
-                        lastTeam = getTeam(absCarrier).freq;
-                    }
-                }
-                carried = false;
-            } else if (newCarrier != null && newCarrier.equals(ba.getBotName())) {
-                // Bot picked up ball
-                holding = true;
-                lastTeam = -1;
-            } else if (newCarrier == null && holding)
-                holding = false; // Bot no longer has ball
-            carrier = newCarrier;
-            */
-            
         }
 
         /**
@@ -1710,7 +1803,7 @@ public class attackbot extends SubspaceBot {
         }
 
         /**
-         * clears carrier data for puck
+         * clears carrier data for ball
          */
         public void clear() {
             carryTime = System.currentTimeMillis();
@@ -1740,9 +1833,9 @@ public class attackbot extends SubspaceBot {
         public short getBallY() {
             return ballY;
         }
-    }
+    }  
     
-    public void debugger(String name) {
+    private void debugger(String name) {
         if (!DEBUG) {
             debugger = name;
             DEBUG = true;
@@ -1758,7 +1851,7 @@ public class attackbot extends SubspaceBot {
         }
     }
     
-    public void debug(String msg) {
+    private void debug(String msg) {
         if (DEBUG)
             ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
     }
