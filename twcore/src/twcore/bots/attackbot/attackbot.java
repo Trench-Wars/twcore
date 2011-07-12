@@ -891,9 +891,9 @@ public class attackbot extends SubspaceBot {
         ba.arenaMessageSpam(msgs);
         for (Player p : stats.values()) {
             if (p.ship == -1)
-                msg = "|  " + padString("-" + p.name, 25) + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
+                msg = "|  " + padString("-" + p.name, 25) + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
             else
-                msg = "|  " + padString(p.name, 25) + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
+                msg = "|  " + padString(p.name, 25) + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
             ba.sendArenaMessage(msg);
         }
         stats = team[1].getStatMap();
@@ -912,7 +912,7 @@ public class attackbot extends SubspaceBot {
             ba.sendArenaMessage(msg);
         }
         
-        ba.sendArenaMessage("`-------------------------------+------+------+------+----+--------+--------+----------+-------'");
+        ba.sendArenaMessage("`----------------------------------+------+------+------+----+--------+--------+----------+-------'");
     }
     
     /**
@@ -1061,7 +1061,7 @@ public class attackbot extends SubspaceBot {
                     }
                 };
                 ba.setTimer(timer);
-                ba.scheduleTask(time, timer*Tools.TimeInMillis.MINUTE - 2000);
+                ba.scheduleTask(time, timer*Tools.TimeInMillis.MINUTE - 1500);
                 ba.sendArenaMessage("RULES: Most goals after " + timer + " minutes wins or sudden death if tied.");
             } else 
                 ba.sendArenaMessage("RULES: First to " + goals + " goals.");
@@ -1088,17 +1088,24 @@ public class attackbot extends SubspaceBot {
                 else if (team[1].score > team[0].score)
                     wins = team[1].freq;
                 if (wins < 0) {
-                    ba.setTimer(0);
-                    timed = false;
-                    ba.sendArenaMessage("NOTICE: End of regulation period -- Score TIED -- BEGIN SUDDEN DEATH", Tools.Sound.SCREAM);
+                    TimerTask end = new TimerTask() {
+                        public void run() {
+                            ba.setTimer(0);
+                            timed = false;
+                            ba.sendArenaMessage("NOTICE: End of regulation period -- Score TIED -- BEGIN SUDDEN DEATH", Tools.Sound.SCREAM);
+                        }
+                    };
+                    ba.scheduleTask(end, 1500);
                 } else {
+                    ba.setTimer(0);
+                    suddenDeath = false;
                     final int f = wins;
                     TimerTask end = new TimerTask() {
                         public void run() {
                             gameOver(f);
                         }
                     };
-                    ba.scheduleTask(end, 2500);
+                    ba.scheduleTask(end, 1500);
                 }
             } else if (timed && !suddenDeath) {
                 handleGoal();
