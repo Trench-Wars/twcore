@@ -131,6 +131,7 @@ public class attackbot extends SubspaceBot {
 
     /** Handles the PlayerDeath event **/
     public void handleEvent(ArenaJoined event) {
+        mc = new MasterControl();
         ball = new Ball();
         ba.toggleLocked();
         if (autoMode)
@@ -139,7 +140,6 @@ public class attackbot extends SubspaceBot {
         ba.setAlltoFreq(SPEC_FREQ);
         ba.setPlayerPositionUpdating(300);
         ba.receiveAllPlayerDeaths();
-        mc = new MasterControl();
     }
     
     /** Handles the PlayerEntered event **/
@@ -213,7 +213,7 @@ public class attackbot extends SubspaceBot {
                         p.addGoal();
                 }
             }
-            mc.checkGameOver();
+            mc.checkGameScore();
         }
     }
     
@@ -280,6 +280,8 @@ public class attackbot extends SubspaceBot {
                 removeCap(name);
             else if (msg.equalsIgnoreCase("!stats"))
                 printStats(name);
+            else if (msg.equalsIgnoreCase("!rules"))
+                getRules(name);
 
             if (oplist.isZH(name)) {
                 if (msg.equalsIgnoreCase("!drop"))
@@ -319,6 +321,7 @@ public class attackbot extends SubspaceBot {
                 "| !caps                    - Displays the captains of each team                             |",
                 "| !np                      - Not playing toggler prevents/enables being added (!notplaying) |",
                 "| !lagout                  - Returns a player to the game after lagging out                 |",
+                "| !rules                   - Briefly displays the rules the bot is currently set to         |",
         };
         String[] cap = {
                 "+-- Captain Commands -----------------------------------------------------------------------+",
@@ -349,6 +352,13 @@ public class attackbot extends SubspaceBot {
         if (oplist.isZH(name))
             ba.privateMessageSpam(name, staff);
         ba.sendPrivateMessage(name, end);
+    }
+    
+    public void getRules(String name) {
+        if (timed)
+            ba.sendPrivateMessage(name, "RULES: Timed game to " + timer + " minutes most goals wins or sudden death. 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
+        else
+            ba.sendPrivateMessage(name, "RULES: First to " + goals + " goals wins. Max of 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
     }
     
     /** Handles the !notplaying command which prevents a player from being added and/or removes them from the game **/
@@ -635,8 +645,8 @@ public class attackbot extends SubspaceBot {
                     ba.sendPrivateMessage(name, "Setting goals to " + winGoal + " conflicts with the current game's score.");
                 else {
                     goals = winGoal;
-                    ba.sendPrivateMessage(name, "Rules changed to first to " + goals + " goals");
-                    ba.sendArenaMessage("Game rules set to first to " + goals + " GOALS");                    
+                    ba.sendPrivateMessage(name, "Game changed to FIRST to " + goals + " GOALS");
+                    ba.sendArenaMessage("Game set to FIRST to " + goals + " GOALS");                    
                 }
             } else
                 ba.sendPrivateMessage(name, "Goals already set to " + goals + ".");
@@ -647,8 +657,8 @@ public class attackbot extends SubspaceBot {
                 if (goals != winGoal) {
                     timed = false;
                     goals = winGoal;
-                    ba.sendPrivateMessage(name, "Rules changed from TIMED to first to " + goals + " GOALS");
-                    ba.sendArenaMessage("Game rules set to first to " + goals + " GOALS"); 
+                    ba.sendPrivateMessage(name, "Game changed from TIMED to FIRST to " + goals + " GOALS");
+                    ba.sendArenaMessage("Game changed to FIRST to " + goals + " GOALS"); 
                 } else
                     ba.sendPrivateMessage(name, "Goals were already set to " + goals + ".");
             }
@@ -674,12 +684,12 @@ public class attackbot extends SubspaceBot {
         } else if (timed) {
             timer = mins;
             ba.sendPrivateMessage(name, "Game time set to " + timer + " minutes");
-            ba.sendArenaMessage("Game rules set to TIMED game to " + timer + " minutes");
+            ba.sendArenaMessage("Game set to TIMED to " + timer + " minutes");
         } else {
             timed = true;
             timer = mins;
             ba.sendPrivateMessage(name, "Game changed from goals to a TIMED to " + timer + " minutes");
-            ba.sendArenaMessage("Game rules set to TIMED game to " + timer + " minutes");
+            ba.sendArenaMessage("Game set to TIMED to " + timer + " minutes");
         }
     }
 
@@ -985,6 +995,8 @@ public class attackbot extends SubspaceBot {
             if (team[0].cap == null || team[1].cap == null)
                 return;
             state = STARTING;
+            team[0].reset();
+            team[1].reset();
             pick = 0;
             team[0].pick = true;
             team[1].pick = false;
@@ -1030,8 +1042,6 @@ public class attackbot extends SubspaceBot {
 
         /** Starts the game after reseting ships and scores **/
         public void runGame() {
-            team[0].reset();
-            team[1].reset();
             team[0].score = 0;
             team[1].score = 0;
             ba.shipResetAll();
@@ -1047,7 +1057,7 @@ public class attackbot extends SubspaceBot {
                 time = new TimerTask() {
                     public void run() {
                         suddenDeath = true;
-                        checkGameOver();
+                        checkGameScore();
                     }
                 };
                 ba.setTimer(timer);
@@ -1062,7 +1072,7 @@ public class attackbot extends SubspaceBot {
             dropBall();
         } 
         
-        public void checkGameOver() {
+        public void checkGameScore() {
             if (state != PLAYING) return;
             if (!timed && !suddenDeath) {
                 if (team[0].score == goals)
@@ -1090,6 +1100,8 @@ public class attackbot extends SubspaceBot {
                     };
                     ba.scheduleTask(end, 2100);
                 }
+            } else if (timed && !suddenDeath) {
+                handleGoal();
             } else if (!timed && suddenDeath) {
                 if (team[0].score > team[1].score)
                     gameOver(team[0].freq);
@@ -1111,7 +1123,7 @@ public class attackbot extends SubspaceBot {
                 ba.sendArenaMessage("GAME OVER: Freq " + freq + " wins!", 5);
             else
                 ba.sendArenaMessage("GAME OVER: Tie!", 5);
-            ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score);
+            ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score + "  Detailed stats available until picking starts using !stats");
             state = IDLE;
             lagouts.clear();
             if (autoMode) {
@@ -1673,7 +1685,6 @@ public class attackbot extends SubspaceBot {
         
         /** Resets all team variables to defaults **/
         public void reset() {
-            cap = null;
             score = 0;
             players.clear();
             stats.clear();
