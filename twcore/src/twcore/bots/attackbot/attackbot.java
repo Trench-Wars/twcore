@@ -298,8 +298,7 @@ public class attackbot extends SubspaceBot {
                     setCaptain(name, msg);
                 else if (msg.equalsIgnoreCase("!debug"))
                     debugger(name);
-            } else if (oplist.isER(name)) {
-                if (msg.startsWith("!settime "))
+                else if (msg.startsWith("!settime "))
                     setTime(name, msg);
                 else if (msg.startsWith("!setgoals "))
                     setGoals(name, msg);
@@ -618,7 +617,7 @@ public class attackbot extends SubspaceBot {
 
     /** Handles !setgoals which will change the game to first to goals win if possible **/
     public void setGoals(String name, String cmd) {
-        if (cmd.length() < 9 || !cmd.contains(" ")) return;
+        if (cmd.length() < 10 || !cmd.contains(" ")) return;
         int winGoal = 0;
         try {
             winGoal = Integer.valueOf(cmd.substring(cmd.indexOf(" ")+1));
