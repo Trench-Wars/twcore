@@ -632,25 +632,25 @@ public class attackbot extends SubspaceBot {
         if (!timed) {
             if (goals != winGoal) {
                 if (state == PLAYING && (winGoal <= team[0].score || winGoal <= team[1].score))
-                    ba.sendPrivateMessage(name, "Setting goals to " + winGoal + " would interfere with the current game.");
+                    ba.sendPrivateMessage(name, "Setting goals to " + winGoal + " conflicts with the current game's score.");
                 else {
                     goals = winGoal;
                     ba.sendPrivateMessage(name, "Rules changed to first to " + goals + " goals");
-                    ba.sendArenaMessage("Game rules set to first to " + goals + " goals");                    
+                    ba.sendArenaMessage("Game rules set to first to " + goals + " GOALS");                    
                 }
             } else
                 ba.sendPrivateMessage(name, "Goals already set to " + goals + ".");
         } else {
             if (state == PLAYING)
-                ba.sendPrivateMessage(name, "Rules cannot be changed to goals while a timed game is taking place.");
+                ba.sendPrivateMessage(name, "Game rules cannot be changed to goals in the middle of a timed game.");
             else {
                 if (goals != winGoal) {
                     timed = false;
                     goals = winGoal;
-                    ba.sendPrivateMessage(name, "Rules changed from timed to first to " + goals + " goals");
-                    ba.sendArenaMessage("Game rules set to first to " + goals + " goals"); 
+                    ba.sendPrivateMessage(name, "Rules changed from TIMED to first to " + goals + " GOALS");
+                    ba.sendArenaMessage("Game rules set to first to " + goals + " GOALS"); 
                 } else
-                    ba.sendPrivateMessage(name, "Goals already set to " + goals + ".");
+                    ba.sendPrivateMessage(name, "Goals were already set to " + goals + ".");
             }
         }
     }
@@ -668,19 +668,18 @@ public class attackbot extends SubspaceBot {
         if (mins < 2 || mins > MAX_TIME) {
             ba.sendPrivateMessage(name, "Time must be between 2 and " + MAX_TIME + ".");
         } else if (timed && mins == timer) {
-            ba.sendPrivateMessage(name, "Game duration was already set to " + timer + " minutes.");
+            ba.sendPrivateMessage(name, "Timed game was already set to " + timer + " minutes.");
         } else if (state == PLAYING) {
-            ba.sendPrivateMessage(name, "Game rules cannot be changed to timed while there is a game taking place.");
-            return;            
+            ba.sendPrivateMessage(name, "Game cannot be changed to timed while being played."); 
         } else if (timed) {
             timer = mins;
-            ba.sendPrivateMessage(name, "Game duration set to " + timer + " minutes");
-            ba.sendArenaMessage("Timed game set to " + timer + " minutes");
+            ba.sendPrivateMessage(name, "Game time set to " + timer + " minutes");
+            ba.sendArenaMessage("Game rules set to TIMED game to " + timer + " minutes");
         } else {
             timed = true;
             timer = mins;
-            ba.sendPrivateMessage(name, "Game changed from " + goals + " goals to a timed game of " + timer + " minutes");
-            ba.sendArenaMessage("Game rules set to timed game of " + timer + " minutes");
+            ba.sendPrivateMessage(name, "Game changed from goals to a TIMED to " + timer + " minutes");
+            ba.sendArenaMessage("Game rules set to TIMED game to " + timer + " minutes");
         }
     }
 
