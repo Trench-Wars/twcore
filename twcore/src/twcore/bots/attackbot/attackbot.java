@@ -636,7 +636,7 @@ public class attackbot extends SubspaceBot {
             return;
         }
         if (winGoal < 1 || winGoal > MAX_GOALS) {
-            ba.sendPrivateMessage(name, "Goals must be between 1 and " + MAX_GOALS + ".");
+            ba.sendPrivateMessage(name, "Goals can only be set between 1 and " + MAX_GOALS + ".");
             return;
         } 
         if (!timed) {
@@ -646,7 +646,7 @@ public class attackbot extends SubspaceBot {
                 else {
                     goals = winGoal;
                     ba.sendPrivateMessage(name, "Game changed to FIRST to " + goals + " GOALS");
-                    ba.sendArenaMessage("Game set to FIRST to " + goals + " GOALS");                    
+                    ba.sendArenaMessage("Game set to first to " + goals + " GOALS");                    
                 }
             } else
                 ba.sendPrivateMessage(name, "Goals already set to " + goals + ".");
@@ -654,13 +654,9 @@ public class attackbot extends SubspaceBot {
             if (state == PLAYING)
                 ba.sendPrivateMessage(name, "Game rules cannot be changed to goals in the middle of a timed game.");
             else {
-                if (goals != winGoal) {
-                    timed = false;
-                    goals = winGoal;
-                    ba.sendPrivateMessage(name, "Game changed from TIMED to FIRST to " + goals + " GOALS");
-                    ba.sendArenaMessage("Game changed to FIRST to " + goals + " GOALS"); 
-                } else
-                    ba.sendPrivateMessage(name, "Goals were already set to " + goals + ".");
+                timed = false;
+                goals = winGoal;
+                ba.sendArenaMessage("Game set to first to " + goals + " GOALS"); 
             }
         }
     }
@@ -676,20 +672,18 @@ public class attackbot extends SubspaceBot {
             return;
         }
         if (mins < 2 || mins > MAX_TIME) {
-            ba.sendPrivateMessage(name, "Time must be between 2 and " + MAX_TIME + ".");
+            ba.sendPrivateMessage(name, "Time must be between 2 and " + MAX_TIME + " minutes.");
         } else if (timed && mins == timer) {
-            ba.sendPrivateMessage(name, "Timed game was already set to " + timer + " minutes.");
+            ba.sendPrivateMessage(name, "Time was already set to " + timer + " minutes.");
         } else if (state == PLAYING) {
             ba.sendPrivateMessage(name, "Game cannot be changed to timed while being played."); 
         } else if (timed) {
             timer = mins;
-            ba.sendPrivateMessage(name, "Game time set to " + timer + " minutes");
-            ba.sendArenaMessage("Game set to TIMED to " + timer + " minutes");
+            ba.sendArenaMessage("Game set to " + timer + " minute TIMED");
         } else {
             timed = true;
             timer = mins;
-            ba.sendPrivateMessage(name, "Game changed from goals to a TIMED to " + timer + " minutes");
-            ba.sendArenaMessage("Game set to TIMED to " + timer + " minutes");
+            ba.sendArenaMessage("Game set to " + timer + " minute TIMED");
         }
     }
 
@@ -912,7 +906,7 @@ public class attackbot extends SubspaceBot {
             ba.sendArenaMessage(msg);
         }
         
-        ba.sendArenaMessage("`----------------------------------+------+------+------+----+--------+--------+----------+-------'");
+        ba.sendArenaMessage("`---------------------------------+------+------+------+----+--------+--------+----------+-------'");
     }
     
     /**
@@ -1130,7 +1124,7 @@ public class attackbot extends SubspaceBot {
                 ba.sendArenaMessage("GAME OVER: Freq " + freq + " wins!", 5);
             else
                 ba.sendArenaMessage("GAME OVER: Tie!", 5);
-            ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score + "  Detailed stats available until picking starts using !stats");
+            ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score + "  Detailed stats (!stats) available until picking starts");
             state = IDLE;
             lagouts.clear();
             team[0].cap = null;
