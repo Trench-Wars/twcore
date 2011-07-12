@@ -130,7 +130,6 @@ public class attackbot extends SubspaceBot {
     
     /** Handles the PlayerEntered event **/
     public void handleEvent(PlayerEntered event) {
-        if (state == IDLE) return;
         String name = event.getPlayerName();
         if (name == null) 
             name = ba.getPlayerName(event.getPlayerID());
