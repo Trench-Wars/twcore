@@ -40,6 +40,8 @@ public class attackbot extends SubspaceBot {
     private int[] attack2; // attack2 arena coords
     private int goals, pick;
     private boolean autoMode; // if true then game is run with caps who volunteer via !cap
+    private boolean DEBUG;
+    private String debugger;
     private LinkedList<String> notplaying;
     private LinkedList<String> lagouts;
     
@@ -53,6 +55,7 @@ public class attackbot extends SubspaceBot {
     
     public static final int NP_FREQ = 666;
     public static final int SPEC_FREQ = 9999;
+    public static final long MAX_POS = 15000; // 15 seconds max carry time
     public static int[] SHIP_LIMITS;
     
 
@@ -77,6 +80,8 @@ public class attackbot extends SubspaceBot {
         notplaying  = new LinkedList<String>();
         lagouts = new LinkedList<String>();
         autoMode = true;
+        DEBUG = false;
+        debugger = "";
     }
 
     /** Handles the FrequencyShipChange event indicating potential lagouts **/
@@ -282,6 +287,8 @@ public class attackbot extends SubspaceBot {
                     go(name, msg);
                 else if (msg.startsWith("!setcap "))
                     setCaptain(name, msg);
+                else if (msg.equalsIgnoreCase("!debug"))
+                    debugger(name);
             }
         }
     }
@@ -689,6 +696,7 @@ public class attackbot extends SubspaceBot {
      * @return Team object or null if player is not on a team
      */
     private Team getTeam(String name) {
+        if (!isNotBot(name)) return null;
         if (team[0].isPlayersTeam(name) || team[0].isCap(name))
             return team[0];
         else if (team[1].isPlayersTeam(name) || team[1].isCap(name))
@@ -702,6 +710,7 @@ public class attackbot extends SubspaceBot {
      * @return Player object or null if player is not in the game
      */
     private Player getPlayer(String name) {
+        if (!isNotBot(name)) return null;
         Player p = team[0].getPlayerStats(name);
         if (p == null)
             p = team[1].getPlayerStats(name);
@@ -759,7 +768,7 @@ public class attackbot extends SubspaceBot {
      * @param freq Winning freq
      */
     private void gameOver(int freq) {
-        printStats();
+        printTotals();
         if (freq > -1)
             ba.sendArenaMessage("GAME OVER: Freq " + freq + " wins!", 5);
         else
@@ -904,6 +913,45 @@ public class attackbot extends SubspaceBot {
             ba.sendArenaMessage(msg);
         }
         ba.sendArenaMessage("`-------------------------------+------+------+------+------+----+--------+--------+----------+-------'");
+    }
+    
+    /** Helper method prints all the game statistics usually after game ends **/
+    private void printTotals() {
+        String msg = "Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score;
+        ba.sendArenaMessage(msg);
+        HashMap<String, Player> stats = team[0].getStatMap();
+        String[] msgs = {
+                "+---------------------------------+------+------+------+----+--------+--------+----------+-------+",
+                "|                               K |    D |   TK |  TeK | LO |     TO | Steals |  Poss(s) | Goals |",
+                "|                          ,------+------+------+------+----+--------+--------+----------+-------+",
+                "| Freq " + team[0].freq + "                  / " + padNumber(team[0].getKills(), 5) + " |" + padNumber(team[0].getDeaths(), 5) + " |" + padNumber(team[0].getTeamKills(), 5) + " |" + padNumber(team[0].getTerrKills(), 5) + " |" + padNumber(team[0].getLagouts(), 3) + " |" + padNumber(team[0].getTurnovers(), 7) + " |"+ padNumber(team[0].getSteals(), 7) + " |" + padNumber(team[0].getPossession(), 9) + " |" + padNumber(team[0].score, 6) + " |",
+                "+------------------------'        |      |      |      |    |        |        |          |       |",
+        };
+        ba.arenaMessageSpam(msgs);
+        for (Player p : stats.values()) {
+            if (p.ship == -1)
+                msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
+            else
+                msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
+            ba.sendArenaMessage(msg);
+        }
+        stats = team[1].getStatMap();
+        msgs = new String[] {
+                "+---------------------------------+------+------+------+----+--------+--------+----------+-------+",
+                "|                          ,------+------+------+------+----+--------+--------+----------+-------+",
+                "| Freq " + team[1].freq + "                  / " + padNumber(team[1].getKills(), 5) + " |" + padNumber(team[1].getDeaths(), 5) + " |" + padNumber(team[1].getTeamKills(), 5) + " |" + padNumber(team[1].getTerrKills(), 5) + " |" + padNumber(team[1].getLagouts(), 3) + " |" + padNumber(team[1].getTurnovers(), 7) + " |"+ padNumber(team[1].getSteals(), 7) + " |" + padNumber(team[1].getPossession(), 9) + " |" + padNumber(team[1].score, 6) + " |",
+                "+------------------------'        |      |      |      |    |        |        |          |       |",
+        };
+        ba.arenaMessageSpam(msgs);
+        for (Player p : stats.values()) {
+            if (p.ship == -1)
+                msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
+            else
+                msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 6) + " |";
+            ba.sendArenaMessage(msg);
+        }
+        
+        ba.sendArenaMessage("`-------------------------------+------+------+------+----+--------+--------+----------+-------'");
     }
     
     /**
@@ -1403,6 +1451,65 @@ public class attackbot extends SubspaceBot {
             return x;
         }
         
+        public HashMap<String, Player> getStatMap() {
+            HashMap<String, Player> result = new HashMap<String, Player>();
+            for (Player p : stats.values()) {
+                if (!result.containsKey(p.name.toLowerCase())) {
+                    Player tot = new Player(p.name, p.ship);
+                    tot.deaths = p.deaths;
+                    tot.kills = p.kills;
+                    tot.lagouts = p.lagouts;
+                    tot.goals = p.goals;
+                    tot.teamKills = p.teamKills;
+                    tot.steals = p.steals;
+                    tot.terrKills = p.terrKills;
+                    tot.turnovers = p.turnovers;
+                    tot.possession = p.possession;
+                    result.put(p.name.toLowerCase(), tot);
+                } else {
+                    Player tot = result.get(p.name.toLowerCase());
+                    tot.deaths += p.deaths;
+                    tot.kills += p.kills;
+                    tot.lagouts += p.lagouts;
+                    tot.goals += p.goals;
+                    tot.teamKills += p.teamKills;
+                    tot.steals += p.steals;
+                    tot.terrKills += p.terrKills;
+                    tot.turnovers += p.turnovers;
+                    tot.possession += p.possession;
+                    result.put(tot.name.toLowerCase(), tot);
+                }
+            }
+            for (Player p : oldStats) {
+                if (!result.containsKey(p.name.toLowerCase())) {
+                    Player tot = new Player(p.name, -1);
+                    tot.deaths = p.deaths;
+                    tot.kills = p.kills;
+                    tot.lagouts = p.lagouts;
+                    tot.goals = p.goals;
+                    tot.teamKills = p.teamKills;
+                    tot.steals = p.steals;
+                    tot.terrKills = p.terrKills;
+                    tot.turnovers = p.turnovers;
+                    tot.possession = p.possession;
+                    result.put(p.name.toLowerCase(), tot);
+                } else {
+                    Player tot = result.get(p.name.toLowerCase());
+                    tot.deaths += p.deaths;
+                    tot.kills += p.kills;
+                    tot.lagouts += p.lagouts;
+                    tot.goals += p.goals;
+                    tot.teamKills += p.teamKills;
+                    tot.steals += p.steals;
+                    tot.terrKills += p.terrKills;
+                    tot.turnovers += p.turnovers;
+                    tot.possession += p.possession;
+                    result.put(tot.name.toLowerCase(), tot);
+                }
+            }
+            return result;
+        }
+        
         /** Resets all team variables to defaults **/
         public void reset() {
             cap = null;
@@ -1435,20 +1542,14 @@ public class attackbot extends SubspaceBot {
         private long carryTime;
         private short ballX;
         private short ballY;
-        private boolean carried;
         // absCarrier = Absolute carrier -> always contains the last player to have the ball (no nulls)
         private String carrier, absCarrier;
         private final Stack<String> carriers;
-        private boolean holding;
-        private int lastTeam;
 
         public Ball() {
             carrier = null;
             carriers = new Stack<String>();
-            carried = false;
-            holding = false;
             carryTime = 0;
-            lastTeam = -1;
         }
 
         /**
@@ -1460,7 +1561,7 @@ public class attackbot extends SubspaceBot {
         public void update(BallPosition event) {
             ballID = event.getBallID();
             this.timestamp = event.getTimeStamp();
-            long newTime = System.currentTimeMillis();
+            long now = System.currentTimeMillis();
             ballX = event.getXLocation();
             ballY = event.getYLocation();
             short carrierID = event.getCarrier();
@@ -1470,6 +1571,70 @@ public class attackbot extends SubspaceBot {
             else
                 newCarrier = null;
             
+            // Possibilities:
+            // Carrier a player & Carrier passed to enemy
+            // Carrier a player & Carrier passed to teammate
+            // Carrier a player & no newCarrier
+            // Carrier was null & Ball picked up by NewCarrier
+            // Carrier was null & no newCarrier
+            
+            if (carrier != null && newCarrier != null) {
+                if (state == PLAYING && !carrier.equalsIgnoreCase(newCarrier)) {
+                    // Player passes to another player
+                    Player last = getPlayer(carrier);
+                    Player curr = getPlayer(newCarrier);
+                    Team passer = getTeam(carrier);
+                    if (passer != null && !passer.isPlayersTeam(newCarrier) && last != null && curr != null) {
+                        debug("Case 1: " + carrier + " passed to enemy " + newCarrier);
+                        // steal + turnover
+                        last.addTurnover();
+                        curr.addSteal();
+                    }
+                    if (last != null) {
+                        long pos = now - carryTime;
+                        if (pos < MAX_POS)
+                            last.addPoss(pos);
+                    }
+                    carryTime = now;
+                }
+                if (state == PLAYING)
+                    absCarrier = newCarrier;
+            } else if (carrier != null && newCarrier == null) {
+                // loss of possession
+                debug("Case 2: " + carrier + " lost possession");
+                if (state == PLAYING) {
+                    Player last = getPlayer(carrier);
+                    if (last != null) {
+                        long pos = now - carryTime;
+                        last.addPoss(pos);                    
+                    }
+                }
+                carryTime = now;
+            } else if (carrier == null && newCarrier != null) {
+                // ball wasn't passed but was picked up
+                    // need to check exactly who had it last to see if it was a turnover
+                Team ct = getTeam(newCarrier);
+                if (state == PLAYING && ct != null && absCarrier != null && isNotBot(absCarrier)) {
+                    if (!absCarrier.equalsIgnoreCase(newCarrier)) {
+                        Player last = getPlayer(absCarrier);
+                        Player curr = getPlayer(newCarrier);
+                        if (!ct.isPlayersTeam(absCarrier) && last != null && curr != null) {
+                            debug("Case 3: abs" + absCarrier + " passed to enemy " + newCarrier);
+                            // steal + turnover
+                            last.addTurnover();
+                            curr.addSteal();
+                        }
+                    }
+                    absCarrier = newCarrier;
+                }
+                carryTime = now;
+            } else {
+                debug("Case 4: All nulls");
+                carryTime = now;
+            }
+            carrier = newCarrier;
+            
+            /*
             // Player has the ball
             if (newCarrier != null && !newCarrier.equals(ba.getBotName())) {
                 // Ball has been picked up
@@ -1477,35 +1642,35 @@ public class attackbot extends SubspaceBot {
                     if (!carried) {
                         if (!newCarrier.equalsIgnoreCase(absCarrier)) {
                             // Current carrier is not the same as prior despite there being some time when the ball was free
-                            Team now = getTeam(newCarrier);
-                            if (now != null) {
-                                if (lastTeam == getOpFreq(now.freq)) {
+                            Team curr = getTeam(newCarrier);
+                            if (curr != null) {
+                                if (lastTeam == getOpFreq(curr.freq)) {
                                     // Possession changed from one team to another so increment possession change stats
-                                    now.getPlayerStats(newCarrier).addSteal();
+                                    curr.getPlayerStats(newCarrier).addSteal();
                                     getPlayer(absCarrier).addTurnover();
                                 }
-                                lastTeam = now.freq;
+                                lastTeam = curr.freq;
                             }
                         }
                         carriers.push(newCarrier);
-                        carryTime = newTime;
+                        carryTime = now;
                     } else if (carrier != null && !newCarrier.equalsIgnoreCase(carrier)) {
                         // Ball has been passed between carriers
                         if (!newCarrier.equalsIgnoreCase(absCarrier)) {
-                            Team now = getTeam(newCarrier);
-                            if (now != null) {
-                                if (lastTeam == getOpFreq(now.freq)) {
+                            Team curr = getTeam(newCarrier);
+                            if (curr != null) {
+                                if (lastTeam == getOpFreq(curr.freq)) {
                                     // Possession changed from one team to another so increment possession change stats
-                                    now.getPlayerStats(newCarrier).addSteal();
+                                    curr.getPlayerStats(newCarrier).addSteal();
                                     getPlayer(absCarrier).addTurnover();
                                 }
-                                lastTeam = now.freq;
+                                lastTeam = curr.freq;
                             }
                         }
                         // Possession change so add time to player possession stat
-                        carryTime = newTime - carryTime;
+                        carryTime = now - carryTime;
                         getPlayer(carrier).addPoss(carryTime);
-                        carryTime = newTime;
+                        carryTime = now;
                     }
                 }
                 absCarrier = newCarrier;
@@ -1515,9 +1680,9 @@ public class attackbot extends SubspaceBot {
                 if (state == PLAYING) {
                     if (carrier != null && isNotBot(carrier)) {
                         // Possession change so add time to player possession stat
-                        carryTime = newTime - carryTime;
+                        carryTime = now - carryTime;
                         getPlayer(carrier).addPoss(carryTime);
-                        carryTime = newTime;
+                        carryTime = now;
                         lastTeam = getTeam(absCarrier).freq;
                     }
                 }
@@ -1527,8 +1692,10 @@ public class attackbot extends SubspaceBot {
                 holding = true;
                 lastTeam = -1;
             } else if (newCarrier == null && holding)
-                holding = false; // Bot no long has ball
+                holding = false; // Bot no longer has ball
             carrier = newCarrier;
+            */
+            
         }
 
         /**
@@ -1546,6 +1713,8 @@ public class attackbot extends SubspaceBot {
          * clears carrier data for puck
          */
         public void clear() {
+            carryTime = System.currentTimeMillis();
+            absCarrier = ba.getBotName();
             carrier = null;
             try {
                 carriers.clear();
@@ -1571,5 +1740,26 @@ public class attackbot extends SubspaceBot {
         public short getBallY() {
             return ballY;
         }
+    }
+    
+    public void debugger(String name) {
+        if (!DEBUG) {
+            debugger = name;
+            DEBUG = true;
+            ba.sendSmartPrivateMessage(name, "Debugging ENABLED. You are now set as the debugger.");
+        } else if (debugger.equalsIgnoreCase(name)){
+            debugger = "";
+            DEBUG = false;
+            ba.sendSmartPrivateMessage(name, "Debugging DISABLED and debugger reset.");
+        } else {
+            ba.sendChatMessage(name + " has overriden " + debugger + " as the target of debug messages.");
+            ba.sendSmartPrivateMessage(name, "Debugging still ENABLED and you have replaced " + debugger + " as the debugger.");
+            debugger = name;
+        }
+    }
+    
+    public void debug(String msg) {
+        if (DEBUG)
+            ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
     }
 }
