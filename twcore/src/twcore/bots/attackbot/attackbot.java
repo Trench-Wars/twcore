@@ -681,11 +681,11 @@ public class attackbot extends SubspaceBot {
             ba.sendPrivateMessage(name, "Game type cannot be changed to timed if a game is being played."); 
         } else if (timed) {
             timer = mins;
-            ba.sendArenaMessage("Game type changed to " + timer + " minute TIMED.");
+            ba.sendArenaMessage("Game type changed to " + timer + " minute timed");
         } else {
             timed = true;
             timer = mins;
-            ba.sendArenaMessage("Game type changed to " + timer + " minute TIMED");
+            ba.sendArenaMessage("Game type changed to " + timer + " minute timed");
         }
     }
 
@@ -1437,10 +1437,12 @@ public class attackbot extends SubspaceBot {
                 getPlayerStats(killer).addTeamKill();
                 getPlayerStats(name).addDeath();
             } else {
-                debug("PlayerDeath event for " + name + " killer: " + killer);
+                Integer get = players.get(name.toLowerCase());
                 Player ker = getPlayer(killer);
-                if (players.get(name.toLowerCase()) == 5)
+                if (get != null && players.get(name.toLowerCase()) == 5)
                     ker.addTerrKill();
+                else if (get == null)
+                    debug("PlayerDeath event for " + name + " killer: " + killer + " caused a NULL get");
                 ker.addKill();
                 getPlayerStats(name).addDeath();
             }
