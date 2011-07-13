@@ -1,5 +1,6 @@
 package twcore.bots.attackbot;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Stack;
@@ -18,8 +19,11 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
 import twcore.core.events.SoccerGoal;
+import twcore.core.game.Player;
 import twcore.core.game.Ship;
+import twcore.core.lvz.Objset;
 import twcore.core.util.Tools;
 
 /**
@@ -35,16 +39,18 @@ public class attackbot extends SubspaceBot {
     public EventRequester events; // event requester
     public OperatorList oplist; // operator list
     public BotSettings rules;
+    private Objset scoreboard; 
     private Ball ball;
     private int[] attack; // attack arena coords
     private int[] attack2; // attack2 arena coords
-    private int goals, pick, timer;
+    private int goals, pick, gameTime;
     private boolean autoMode; // if true then game is run with caps who volunteer via !cap
     private boolean timed;
     private boolean DEBUG;
     private String debugger;
     private LinkedList<String> notplaying;
     private LinkedList<String> lagouts;
+    private String[] pastStats;
     
     private Team[] team;
     
@@ -52,13 +58,15 @@ public class attackbot extends SubspaceBot {
     
     // Bot states
     public int state;
-    public static final int IDLE = 0;
-    public static final int STARTING = 1;
-    public static final int PLAYING = 2;
+    public static final int OFF = -1;
+    public static final int WAITING = 0;
+    public static final int PICKING = 1;
+    public static final int STARTING = 2;
+    public static final int PLAYING = 3;
     
     public static final int NP_FREQ = 666;
     public static final int MAX_GOALS = 15;
-    public static final int MAX_TIME = 20;
+    public static final int MAX_TIME = 30;
     public static final int SPEC_FREQ = 9999;
     public static final long MAX_POS = 15000; // 15 seconds max carry time
     public static int[] SHIP_LIMITS;
@@ -82,17 +90,162 @@ public class attackbot extends SubspaceBot {
         events.request(EventRequester.PLAYER_ENTERED);
         events.request(EventRequester.PLAYER_LEFT);
         events.request(EventRequester.PLAYER_DEATH);
+        events.request(EventRequester.PLAYER_POSITION);
         notplaying  = new LinkedList<String>();
         lagouts = new LinkedList<String>();
         autoMode = true;
-        timed = false;
+        pastStats = null;
+        timed = true;
+        gameTime = 10;
         DEBUG = false;
         debugger = "";
     }
 
+    /** Handles the LoggedOn event **/
+    public void handleEvent(LoggedOn event) {
+        ba.joinArena(ba.getBotSettings().getString("InitialArena"));
+        state = WAITING;
+        attack = new int[] { 478, 511, 544, 511 };
+        attack2 = new int[] { 475, 512, 549, 512 };
+        team = new Team[] { new Team(0), new Team(1) };
+        goals = rules.getInt("Goals");
+        SHIP_LIMITS = rules.getIntArray("Ships", ",");
+        if (SHIP_LIMITS.length != 8)
+            SHIP_LIMITS = new int[] { 1, 1, rules.getInt("MaxPlayers"), 0, 2, 0, rules.getInt("MaxPlayers"), 2 };
+    }
+
+    /** Handles the PlayerDeath event **/
+    public void handleEvent(ArenaJoined event) {
+        scoreboard = ba.getObjectSet();
+        ba.setPlayerPositionUpdating(300);
+        ba.setReliableKills(1);  //Reliable kills so the bot receives every packet
+        try {
+            mc.cancel();
+        } catch (Exception e) {};
+        mc = new MasterControl();
+        ba.scheduleTaskAtFixedRate(mc, Tools.TimeInMillis.SECOND, Tools.TimeInMillis.SECOND);
+        ball = new Ball();
+        ba.toggleLocked();
+        if (autoMode)
+            ba.sendArenaMessage("A new game will begin when two players PM me with !cap -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
+        ba.specAll();
+        ba.setAlltoFreq(SPEC_FREQ);
+        ba.setTimer(0);
+    }
+    
+    /** Handles the PlayerEntered event **/
+    public void handleEvent(PlayerEntered event) {
+        String name = event.getPlayerName();
+        if (name == null) 
+            name = ba.getPlayerName(event.getPlayerID());
+        if (name == null) return;
+        
+        if (state == WAITING)
+            ba.sendPrivateMessage(name, "A new game will begin after two players PM me with !cap");
+        else if (state == PICKING) {
+            String msg = "A game is about to start. ";
+            if (team[0].cap != null)
+                msg += team[0].cap + " and ";
+            else
+                msg += "-no captain- and ";
+            if (team[1].cap != null)
+                msg += team[1].cap + " ";
+            else
+                msg += "-no captain- ";
+            msg += "are picking teams.";
+            ba.sendPrivateMessage(name, msg);
+        } else if (state >= STARTING) {
+            if (timed) 
+                ba.sendPrivateMessage(name, "A timed game to " + gameTime + " minutes is currently being played. Score: " + team[0].score + " - " + team[1].score);
+            else
+                ba.sendPrivateMessage(name, "A game to " + goals + " goals is currently being played. Score: " + team[0].score + " - " + team[1].score);
+        }
+        
+        if (lagouts.contains(name.toLowerCase()))
+            ba.sendPrivateMessage(name, "Use !lagout to return to the game.");
+        if (notplaying.contains(name.toLowerCase())) {
+            ba.setFreq(name, NP_FREQ);
+            ba.sendPrivateMessage(name, "You are still set as not playing and captains will be unable to pick you. If you want to play, use !notplaying again.");
+        }
+    }
+    
+    /** Handles the PlayerLeft event (lagouts) **/
+    public void handleEvent(PlayerLeft event) {
+        if (state < PICKING) return;
+        String name = ba.getPlayerName(event.getPlayerID());
+        if (name == null) return;
+        
+        if (isPlaying(name) && !lagouts.contains(name.toLowerCase())) {
+            lagouts.add(name.toLowerCase());
+            getPlayer(name).addLagout();
+        }
+        Team t = getTeam(name);
+        if (t != null && t.cap != null && !t.isCap(name))
+            ba.sendPrivateMessage(t.cap, name + " has lagged out or left the arena.");
+    }
+
+    /** Monitors goal scoring **/
+    public void handleEvent(SoccerGoal event) {
+        if (state == PLAYING) {
+            short scoringFreq = event.getFrequency();
+            if (scoringFreq == team[0].freq) {
+                team[0].score++;
+                String name = ball.getLastCarrierName();
+                if (name != null && isNotBot(name)) {
+                    Attacker p = team[0].getPlayerStats(name);
+                    if (p != null)
+                        p.addGoal();
+                }
+            } else if (scoringFreq == team[1].freq) {
+                team[1].score++;
+                String name = ball.getLastCarrierName();
+                if (name != null && isNotBot(name)) {
+                    Attacker p = team[1].getPlayerStats(name);
+                    if (p != null)
+                        p.addGoal();
+                }
+            }
+            TimerTask drop = new TimerTask() {
+                public void run() {
+                    if (state == PLAYING) {
+                        ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
+                        ba.resetFlagGame();
+                        warpTeams();
+                        dropBall();            
+                    }
+                }
+            };
+            ba.scheduleTask(drop, 1100);
+        }
+    }
+    
+    public void handleEvent(PlayerDeath event) {
+        if (state != PLAYING) return;
+        String killer = ba.getPlayerName(event.getKillerID());
+        String killee = ba.getPlayerName(event.getKilleeID());
+        if (killer != null && killee != null) {
+            Team t = getTeam(killee);
+            if (t != null)
+                t.handleDeath(killee, killer);
+        }
+    }
+    
+    public void handleEvent(PlayerPosition event) {
+        Player p = ba.getPlayer(event.getPlayerID());
+        if (p.getShipType() != 5) return;
+        Team t = getTeam(p.getPlayerName());
+        if (t != null)
+            t.updateTerr(p.getPlayerName(), event.getXLocation(), event.getYLocation());
+        
+    }
+
+    public void handleEvent(BallPosition event) {
+        ball.update(event);
+    }
+
     /** Handles the FrequencyShipChange event indicating potential lagouts **/
     public void handleEvent(FrequencyShipChange event) {
-        if (state == IDLE) return;
+        if (state < PICKING) return;
         String name = ba.getPlayerName(event.getPlayerID());
         if (name == null) return;
         if (event.getShipType() == 0 && isPlaying(name) && !lagouts.contains(name.toLowerCase())) {
@@ -116,126 +269,6 @@ public class attackbot extends SubspaceBot {
         }
     }
 
-    /** Handles the LoggedOn event **/
-    public void handleEvent(LoggedOn event) {
-        ba.joinArena(ba.getBotSettings().getString("InitialArena"));
-        state = IDLE;
-        attack = new int[] { 478, 511, 544, 511 };
-        attack2 = new int[] { 475, 512, 549, 512 };
-        team = new Team[] { new Team(0), new Team(1) };
-        goals = rules.getInt("Goals");
-        SHIP_LIMITS = rules.getIntArray("Ships", ",");
-        if (SHIP_LIMITS.length != 8)
-            SHIP_LIMITS = new int[] { 1, 1, rules.getInt("MaxPlayers"), 0, 2, 0, rules.getInt("MaxPlayers"), 2 };
-    }
-
-    /** Handles the PlayerDeath event **/
-    public void handleEvent(ArenaJoined event) {
-        mc = new MasterControl();
-        ball = new Ball();
-        ba.toggleLocked();
-        if (autoMode)
-            ba.sendArenaMessage("A new game will begin when two players PM me with !cap -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
-        ba.specAll();
-        ba.setAlltoFreq(SPEC_FREQ);
-        ba.setPlayerPositionUpdating(300);
-        ba.receiveAllPlayerDeaths();
-    }
-    
-    /** Handles the PlayerEntered event **/
-    public void handleEvent(PlayerEntered event) {
-        String name = event.getPlayerName();
-        if (name == null) 
-            name = ba.getPlayerName(event.getPlayerID());
-        if (name == null) return;
-        
-        if (state == IDLE)
-            ba.sendPrivateMessage(name, "A new game will begin after two players PM me with !cap");
-        else if (state == STARTING) {
-            String msg = "A game is about to start. ";
-            if (team[0].cap != null)
-                msg += team[0].cap + " and ";
-            else
-                msg += "-no captain- and ";
-            if (team[1].cap != null)
-                msg += team[1].cap + " ";
-            else
-                msg += "-no captain- ";
-            msg += "are picking teams.";
-            ba.sendPrivateMessage(name, msg);
-        } else if (state == PLAYING) {
-            if (timed) 
-                ba.sendPrivateMessage(name, "A timed game to " + timer + " minutes is currently being played. Score: " + team[0].score + " - " + team[1].score);
-            else
-                ba.sendPrivateMessage(name, "A game to " + goals + " goals is currently being played. Score: " + team[0].score + " - " + team[1].score);
-        }
-        
-        if (lagouts.contains(name.toLowerCase()))
-            ba.sendPrivateMessage(name, "Use !lagout to return to the game.");
-        if (notplaying.contains(name.toLowerCase())) {
-            ba.setFreq(name, NP_FREQ);
-            ba.sendPrivateMessage(name, "You are still set as not playing and captains will be unable to pick you. If you want to play, use !notplaying again.");
-        }
-    }
-    
-    /** Handles the PlayerLeft event (lagouts) **/
-    public void handleEvent(PlayerLeft event) {
-        if (state == IDLE) return;
-        String name = ba.getPlayerName(event.getPlayerID());
-        if (name == null) return;
-        
-        if (isPlaying(name) && !lagouts.contains(name.toLowerCase())) {
-            lagouts.add(name.toLowerCase());
-            getPlayer(name).addLagout();
-        }
-        Team t = getTeam(name);
-        if (t != null && t.cap != null && !t.isCap(name))
-            ba.sendPrivateMessage(t.cap, name + " has lagged out or left the arena.");
-    }
-
-    /**
-     * Monitors goals scored.
-     */
-    public void handleEvent(SoccerGoal event) {
-        if (state == PLAYING) {
-            short scoringFreq = event.getFrequency();
-            if (scoringFreq == 0 && team[0].freq == 0) {
-                team[0].score++;
-                String name = ball.getLastCarrierName();
-                if (name != null && isNotBot(name)) {
-                    Player p = team[0].getPlayerStats(name);
-                    if (p != null)
-                        p.addGoal();
-                }
-            } else if (scoringFreq == 1 && team[1].freq == 1) {
-                team[1].score++;
-                String name = ball.getLastCarrierName();
-                if (name != null && isNotBot(name)) {
-                    Player p = team[1].getPlayerStats(name);
-                    if (p != null)
-                        p.addGoal();
-                }
-            }
-            mc.checkGameScore();
-        }
-    }
-    
-    public void handleEvent(PlayerDeath event) {
-        if (state != PLAYING) return;
-        String killer = ba.getPlayerName(event.getKillerID());
-        String killee = ba.getPlayerName(event.getKilleeID());
-        if (killer == null || killee == null) return;
-        
-        Team t = getTeam(killee);
-        if (t != null)
-            t.handleDeath(killee, killer);
-        
-    }
-
-    public void handleEvent(BallPosition event) {
-        ball.update(event);
-    }
-
     /**
      * Command handler.
      */
@@ -254,37 +287,41 @@ public class attackbot extends SubspaceBot {
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
 
             if (msg.equalsIgnoreCase("!help"))
-                help(name);
+                cmd_help(name);
+            else if (msg.equalsIgnoreCase("!about"))
+                cmd_about(name);
             else if (msg.equalsIgnoreCase("!status"))
-                getStatus(name);
+                cmd_status(name);
             else if (msg.equalsIgnoreCase("!caps"))
-                getCaps(name);
+                cmd_caps(name);
             else if (msg.equalsIgnoreCase("!ready"))
-                ready(name);
+                cmd_ready(name);
             else if (msg.equalsIgnoreCase("!cap"))
-                setCaptain(name);
+                cmd_cap(name);
             else if (msg.startsWith("!add "))
-                add(name, msg);
+                cmd_add(name, msg);
             else if (msg.startsWith("!remove "))
-                remove(name, msg);
+                cmd_remove(name, msg);
             else if (msg.startsWith("!change "))
-                changeShip(name, msg);
+                cmd_changeShip(name, msg);
             else if (msg.startsWith("!sub "))
-                sub(name, msg);
+                cmd_sub(name, msg);
             else if (msg.startsWith("!switch "))
-                switchShips(name, msg);
+                cmd_switchShips(name, msg);
             else if (msg.equalsIgnoreCase("!lagout"))
-                lagout(name);
+                cmd_lagout(name);
             else if (msg.equalsIgnoreCase("!list"))
-                sendTeams(name);
+                cmd_list(name);
             else if (msg.equalsIgnoreCase("!notplaying") || msg.equalsIgnoreCase("!np"))
-                notPlaying(name);
+                cmd_notPlaying(name);
             else if (msg.equalsIgnoreCase("!removecap"))
-                removeCap(name);
+                cmd_removeCap(name);
             else if (msg.equalsIgnoreCase("!stats"))
-                printStats(name);
+                cmd_stats(name);
             else if (msg.equalsIgnoreCase("!rules"))
-                getRules(name);
+                cmd_rules(name);
+            else if (msg.startsWith("!t"))
+                cmd_terrs(name);
 
             if (oplist.isZH(name)) {
                 if (msg.equalsIgnoreCase("!drop"))
@@ -298,23 +335,52 @@ public class attackbot extends SubspaceBot {
                 else if (msg.equalsIgnoreCase("!die"))
                     die(name);
                 else if (msg.startsWith("!go "))
-                    go(name, msg);
+                    cmd_go(name, msg);
                 else if (msg.startsWith("!setcap "))
-                    setCaptain(name, msg);
+                    cmd_setCap(name, msg);
                 else if (msg.equalsIgnoreCase("!debug"))
-                    debugger(name);
+                    cmd_debug(name);
                 else if (msg.startsWith("!settime "))
-                    setTime(name, msg);
+                    cmd_setTime(name, msg);
                 else if (msg.startsWith("!setgoals "))
-                    setGoals(name, msg);
+                    cmd_setGoals(name, msg);
+                else if (msg.startsWith("!al"))
+                    cmd_allTerrs(name);
             }
         }
+    }
+
+    public void cmd_about(String name) {
+        String[] about = { 
+                "+-- Rules of Attack ------------------------------------------------------------------------.",
+                "| The goal of attack is to score more points than the opposing team in the given amount of  |",
+                "| time. Work as a team to move the ball in to the enemy base and shoot the ball in to their |",
+                "| goal to score a point.                                                                    |",
+                "+-- Ship Restrictions --------------------------------------------------------------------- |",
+                "| Teams may use a maximum of:                                                               |",
+                "|  -1 Warbird          -2 Terriers                                                          |",
+                "|  -1 Javelin          -0 Weasels                                                           |",
+                "|  -10 Spiders         -10 Lancasters                                                       |",
+                "|  -0 Leviathans       -2 Sharks                                                            |",
+                "+-- Tips ---------------------------------------------------------------------------------- |",
+                "| -When holding the ball, your ship will receive upgraded guns, bombs, and mines. Use this  |",
+                "|  to your advantage.                                                                       |",
+                "| -Use the doors located on the far end of each base as a way to escape your base with the  |",
+                "|  the ball. If you are carrying the ball when the door changes states, you will be warped  |",
+                "|  to your spawn area.                                                                      |",
+                "| -Collect greens to help your Terriers increase bounty. When a Terrier has 20 bounty, he   |",
+                "|  may attach to the other Terrier.                                                         |",
+                "| -Use both of your Terriers. When one Terrier is attacking, the other terr can start a     |",
+                "|  flank to help destroy the enemy. Just be sure not to leave your base unguarded!          |",
+                "`-------------------------------------------------------------------------------------------'", 
+        };
+        ba.privateMessageSpam(name, about);
     }
 
     /**
      * !help Displays help message.
      */
-    public void help(String name) {
+    public void cmd_help(String name) {
         String[] help = {
                 "+-- AttackBot Commands ---------------------------------------------------------------------.",
                 "| !cap                     - Claims captain of a team if a team is missing a cap            |",
@@ -357,15 +423,15 @@ public class attackbot extends SubspaceBot {
         ba.sendPrivateMessage(name, end);
     }
     
-    public void getRules(String name) {
+    public void cmd_rules(String name) {
         if (timed)
-            ba.sendPrivateMessage(name, "RULES: Timed game to " + timer + " minutes most goals wins or sudden death. 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
+            ba.sendPrivateMessage(name, "RULES: Timed game to " + gameTime + " minutes most goals wins or sudden death. 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
         else
             ba.sendPrivateMessage(name, "RULES: First to " + goals + " goals wins. Max of 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
     }
     
     /** Handles the !notplaying command which prevents a player from being added and/or removes them from the game **/
-    public void notPlaying(String name) {
+    public void cmd_notPlaying(String name) {
         if (!isPlaying(name)) {
             if (!notplaying.contains(name.toLowerCase())) {
                 notplaying.add(name.toLowerCase());
@@ -384,8 +450,105 @@ public class attackbot extends SubspaceBot {
         }
     }
     
+    private String getLocation(int x, int y, boolean team0) {
+        final int SPAWN = 0;
+        final int LEFT = 1;
+        final int RIGHT = 2;
+        final int ENTRANCE = 0;
+        final int FRONT = 1;
+        final int BACK = 2;
+        final int MIDDLE = 0;
+        final int TOP = 1;
+        final int BOTTOM = 2;
+        String pos = " ";
+        int base = -1; // spawn, left, right
+        int hor = -1;  // entrance, front, back
+        int ver = -1;  // center, top, bottom
+
+        debug("" + x + " and " + y);
+        if (y > 7904 && y < 87680)
+            ver = MIDDLE;
+        else if (y < 7904)
+            ver = TOP;
+        else if (y > 87680)
+            ver = BOTTOM;
+        
+        if (x < 7440) {
+            base = LEFT;
+            if (x > 6080 && y > 7680 && y < 8800)
+                hor = ENTRANCE;
+            else if (x > 5120)
+                hor = FRONT;
+            else
+                hor = BACK;
+                
+            if (hor == ENTRANCE) {
+                pos = "ENTRANCE";
+            } else if (hor == FRONT) {
+                if (ver == MIDDLE)
+                    pos = "GOAL ROOM";
+                else if (ver == TOP)
+                    pos = "TOP-RIGHT corner of base";
+                else if (ver == BOTTOM)
+                    pos = "LOWER-RIGHT corner of base";
+            } else if (hor == BACK) {
+                if (ver == TOP)
+                    pos = "UPPER BACK end of base";
+                else if (ver == BOTTOM) 
+                    pos = "LOWER BACK end of base";
+                else
+                    pos = "CENTRAL BACK end of base";
+            }
+        } else if (x > 8944) {
+            base = RIGHT;
+            if (x < 10304 && y > 7680 && y < 8800)
+                hor = ENTRANCE;
+            else if (x < 11264)
+                hor = FRONT;
+            else
+                hor = BACK;
+            
+            if (hor == ENTRANCE) {
+                pos = "ENTRANCE";
+            } else if (hor == FRONT) {
+                if (ver == MIDDLE)
+                    pos = "GOAL ROOM";
+                else if (ver == TOP)
+                    pos = "TOP-LEFT corner of base";
+                else if (ver == BOTTOM) {
+                    pos = "LOWER-LEFT corner of base";
+                }
+            } else if (hor == BACK) {
+                if (ver == TOP)
+                    pos = "UPPER BACK end of base";
+                else if (ver == BOTTOM) 
+                    pos = "LOWER BACK end of base";
+                else
+                    pos = "CENTRAL BACK end of base";
+            }
+        } else {
+            base = SPAWN;
+            pos = " in SPAWN AREA";
+        }
+        
+        if (base != SPAWN) {
+            if (base == LEFT) {
+                if (team0)
+                    pos = " @ HOME in " + pos;
+                else
+                    pos = " @ ENEMY in " + pos;
+            } else if (base == RIGHT) {
+                if (team0)
+                    pos = " @ ENEMY in " + pos;
+                else
+                    pos = " @ HOME in " + pos;
+            }
+        }
+        return pos;
+    }
+    
     /** Handles the !setcap command which assigns a player as captain of a team (0 or 1) **/
-    public void setCaptain(String name, String cmd) {
+    public void cmd_setCap(String name, String cmd) {
         if (cmd.length() < 8 || !cmd.contains(" ") || !cmd.contains(":")) return;
         String cap = ba.getFuzzyPlayerName(cmd.substring(cmd.indexOf(":") + 1));
         if (cap == null) {
@@ -396,8 +559,10 @@ public class attackbot extends SubspaceBot {
         if (isCaptain(cap)) {
             ba.sendPrivateMessage(name, cap + " is already the captain of a team.");
             return;
+        } else if (!isNotBot(cap)) {
+            ba.sendPrivateMessage(name, cap + " is a bot.");
+            return;
         }
-        
         
         try {
             int freq = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":")));
@@ -408,7 +573,6 @@ public class attackbot extends SubspaceBot {
                 }
                 team[freq].cap = cap;
                 ba.sendArenaMessage(cap + " has been assigned captain of freq " + team[freq].freq, Tools.Sound.BEEP1);
-                mc.checkCaps();
             }
         } catch (NumberFormatException e) {
             ba.sendPrivateMessage(name, "Invalid team number (must be 0 or 1).");
@@ -421,12 +585,12 @@ public class attackbot extends SubspaceBot {
      * sender will replace the absent captain unless sender is on opposite team.
      * @param name
      */
-    public void setCaptain(String name) {
+    public void cmd_cap(String name) {
         if (isCaptain(name)) {
-            getCaps(name);
+            cmd_caps(name);
             return;
         }
-        if (state == IDLE) {
+        if (state == WAITING) {
             if (team[0].cap == null) {
                 team[0].cap = name;
                 ba.sendArenaMessage(name + " has been assigned captain of Freq " + team[0].freq, Tools.Sound.BEEP1);
@@ -434,40 +598,37 @@ public class attackbot extends SubspaceBot {
                 team[1].cap = name;
                 ba.sendArenaMessage(name + " has been assigned captain of Freq " + team[1].freq, Tools.Sound.BEEP1);                
             } else {
-                getCaps(name);
-                return;
+                cmd_caps(name);
             }
-            
-            mc.checkCaps();
         } else if (!isCaptain(name)) {
             if (isPlaying(name)) {
                 Team t = getTeam(name);
                 if (ba.getFuzzyPlayerName(t.cap) == null) {
+                    ba.sendArenaMessage(name + " has replaced " + t.cap + " as captain of Freq " + t.freq);
                     t.cap = name;
-                    ba.sendArenaMessage(name + " is now the captain of Freq " + t.freq);
                 } else
-                    getCaps(name);
+                    cmd_caps(name);
             } else {
                 if (ba.getFuzzyPlayerName(team[0].cap) == null) {
+                    ba.sendArenaMessage(name + " has replaced " + team[0].cap + " as captain of Freq " + team[0].freq);
                     team[0].cap = name;
-                    ba.sendArenaMessage(name + " is now the captain of Freq " + team[0].freq);
                 } else if (ba.getFuzzyPlayerName(team[1].cap) == null) {
+                    ba.sendArenaMessage(name + " has replaced " + team[1].cap + " as captain of Freq " + team[1].freq);
                     team[1].cap = name;
-                    ba.sendArenaMessage(name + " is now the captain of Freq " + team[1].freq);
                 } else
-                    getCaps(name);
+                    cmd_caps(name);
             }
         }
     }
     
     /** Handles the !removecap command which removes the captain from being captain **/
-    public void removeCap(String name) {
+    public void cmd_removeCap(String name) {
         if (!isCaptain(name)) return;
         getTeam(name).removeCap();
     }
     
     /** Handles the !caps command which returns the current team captains **/
-    public void getCaps(String name) {
+    public void cmd_caps(String name) {
         String msg = "";
         if (team[0].cap != null)
             msg = team[0].cap + " is captain of Freq " + team[0].freq + ".";
@@ -480,18 +641,18 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !list command which sends a list of team players with ships and statuses **/
-    public void sendTeams(String name) {
+    public void cmd_list(String name) {
         team[0].sendTeam(name);
         ba.sendPrivateMessage(name, "`");
         team[1].sendTeam(name);
     }
 
     /** Handles the !add command if given by a captain **/
-    public void add(String name, String msg) {
-        if (state == IDLE || !isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 5) return;
+    public void cmd_add(String name, String msg) {
+        if (state < PICKING || !isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 5) return;
         Team t = getTeam(name);
         if (t == null) return;
-        if (state == STARTING && !t.pick) {
+        if (state == PICKING && !t.pick) {
             ba.sendPrivateMessage(name, "It is not your turn");
             return;
         }
@@ -506,14 +667,12 @@ public class attackbot extends SubspaceBot {
         if (ship > 0 && ship < 9) {
             String res = t.addPlayer(player, ship);
             ba.sendPrivateMessage(name, res);
-            if (state == STARTING && res.contains("added to game"))
-                mc.nextPick();
         }
     }
 
     /** Handles the !remove command if given by a captain **/
-    public void remove(String name, String msg) {
-        if (state != STARTING || !isCaptain(name) || !msg.contains(" ") || msg.length() < 8) return;
+    public void cmd_remove(String name, String msg) {
+        if (state != PICKING || !isCaptain(name) || !msg.contains(" ") || msg.length() < 8) return;
         Team t = getTeam(name);
         if (t == null) return;
         String res = t.remove(msg.substring(msg.indexOf(" ") + 1));
@@ -523,8 +682,8 @@ public class attackbot extends SubspaceBot {
     }
 
     /** Handles the !sub command if given by a captain **/
-    public void sub(String name, String msg) {
-        if (state == IDLE || !isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 5) return;
+    public void cmd_sub(String name, String msg) {
+        if (state < STARTING|| !isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 5) return;
         Team t = getTeam(name);
         if (t == null) return;
         String[] players = msg.substring(msg.indexOf(" ") + 1).split(":");
@@ -534,7 +693,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !change command if given by a captain **/
-    public void changeShip(String name, String msg) {
+    public void cmd_changeShip(String name, String msg) {
         if (!isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 8) return;
         Team t = getTeam(name);
         if (t == null) return;
@@ -554,7 +713,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !switch command if given by a captain **/
-    public void switchShips(String name, String msg) {
+    public void cmd_switchShips(String name, String msg) {
         if (!isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 8) return;
         Team t = getTeam(name);
         if (t == null) return;
@@ -565,16 +724,12 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !ready command if given by a team captain **/
-    public void ready(String name) {
-        if (state != STARTING || !isCaptain(name)) return;
+    public void cmd_ready(String name) {
+        if (state != PICKING || !isCaptain(name)) return;
         if (team[0].isCap(name)) {
             if (team[0].ready) {
                 team[0].ready = false;
                 ba.sendArenaMessage("Freq " + team[0].freq + " is not ready", Tools.Sound.BEEP1);
-            } else if (team[1].ready) {
-                team[0].ready = true;
-                ba.sendArenaMessage("Freq " + team[0].freq + " is ready", Tools.Sound.BEEP1);
-                mc.startGame();
             } else {
                 team[0].ready = true;
                 ba.sendArenaMessage("Freq " + team[0].freq + " is ready", Tools.Sound.BEEP1);
@@ -583,10 +738,6 @@ public class attackbot extends SubspaceBot {
             if (team[1].ready) {
                 team[1].ready = false;
                 ba.sendArenaMessage("Freq " + team[1].freq + " is not ready", Tools.Sound.BEEP1);
-            } else if (team[0].ready) {
-                team[1].ready = true;
-                ba.sendArenaMessage("Freq " + team[1].freq + " is ready", Tools.Sound.BEEP1);
-                mc.startGame();
             } else {
                 team[1].ready = true;
                 ba.sendArenaMessage("Freq " + team[1].freq + " is ready", Tools.Sound.BEEP1);
@@ -595,7 +746,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Returns a lagged out player to the game **/
-    public void lagout(String name) {
+    public void cmd_lagout(String name) {
         if (lagouts.contains(name.toLowerCase())) {
             lagouts.remove(name.toLowerCase());
             Team t = getTeam(name);
@@ -605,12 +756,25 @@ public class attackbot extends SubspaceBot {
         } else 
             ba.sendPrivateMessage(name, "You are not lagged out and/or not in the game.");
     }
+    
+    public void cmd_terrs(String name) {
+        Team t = getTeam(name);
+        if (t != null)
+            t.locateTerrs(name);
+    }
+    
+    public void cmd_allTerrs(String name) {
+        ba.sendPrivateMessage(name, "Freq " + team[0].freq + " terrs:");
+        team[0].locateTerrs(name);
+        ba.sendPrivateMessage(name, "Freq " + team[1].freq + " terrs:");
+        team[1].locateTerrs(name);
+    }
 
     /** Sends the bot to a specified arena (only attack and attack2 are currently supported) **/
-    public void go(String name, String cmd) {
+    public void cmd_go(String name, String cmd) {
         String arena = cmd.substring(cmd.indexOf(" ") + 1);
         if (arena.length() > 0) {
-            if (state > IDLE) {
+            if (state > WAITING) {
                 stopGame(name, true);
             }
             ba.sendSmartPrivateMessage(name, "Moving to " + arena);
@@ -620,7 +784,7 @@ public class attackbot extends SubspaceBot {
 
     /** Handles !die command which kills the bot **/
     public void die(String name) {
-        if (state > IDLE) {
+        if (state > WAITING) {
             stopGame(name, true);
         }
         ba.sendSmartPrivateMessage(name, "I'm melting! I'm melting...");
@@ -629,7 +793,7 @@ public class attackbot extends SubspaceBot {
     }
 
     /** Handles !setgoals which will change the game to first to goals win if possible **/
-    public void setGoals(String name, String cmd) {
+    public void cmd_setGoals(String name, String cmd) {
         if (cmd.length() < 10 || !cmd.contains(" ")) return;
         int winGoal = 0;
         try {
@@ -664,7 +828,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles !settime which will change the game to a timed game if possible **/
-    public void setTime(String name, String cmd) {
+    public void cmd_setTime(String name, String cmd) {
         if (cmd.length() < 9 || !cmd.contains(" ")) return;
         int mins = 0;
         try {
@@ -675,17 +839,17 @@ public class attackbot extends SubspaceBot {
         }
         if (mins < 2 || mins > MAX_TIME) {
             ba.sendPrivateMessage(name, "Timed game can only be between 2 and " + MAX_TIME + " minutes.");
-        } else if (timed && mins == timer) {
-            ba.sendPrivateMessage(name, "Time already set to " + timer + " minutes.");
+        } else if (timed && mins == gameTime) {
+            ba.sendPrivateMessage(name, "Time already set to " + gameTime + " minutes.");
         } else if (state == PLAYING) {
             ba.sendPrivateMessage(name, "Game type cannot be changed to timed if a game is being played."); 
         } else if (timed) {
-            timer = mins;
-            ba.sendArenaMessage("Game type changed to " + timer + " minute timed");
+            gameTime = mins;
+            ba.sendArenaMessage("Game type changed to " + gameTime + " minute timed");
         } else {
             timed = true;
-            timer = mins;
-            ba.sendArenaMessage("Game type changed to " + timer + " minute timed");
+            gameTime = mins;
+            ba.sendArenaMessage("Game type changed to " + gameTime + " minute timed");
         }
     }
 
@@ -697,30 +861,35 @@ public class attackbot extends SubspaceBot {
      */
     public void stopGame(String name, boolean kill) {
         if (state > 0) {
-            mc.killGame();
             if (kill) {
+                scoreboard.hideAllObjects();
+                ba.setObjects();
+                state = WAITING;
                 ba.sendArenaMessage("This game has been killed by " + name);
+                ba.setTimer(0);
                 lagouts.clear();
                 ba.specAll();
+                team[0].reset();
+                team[1].reset();
             } else if (state == PLAYING) {
                 if (team[0].score > team[1].score)
-                    mc.gameOver(team[0].freq);
+                    gameOver(team[0].freq);
                 else if (team[1].score > team[0].score)
-                    mc.gameOver(team[1].freq);
+                    gameOver(team[1].freq);
                 else
-                    mc.gameOver(-1);
+                    gameOver(-1);
             }
-        } else if (state == IDLE)
+        } else if (state == WAITING || state == OFF)
             ba.sendPrivateMessage(name, "There is no game currently running.");
     }
 
     /** Handles the !status command which displays the score if a game is running **/
-    public void getStatus(String name) {
+    public void cmd_status(String name) {
         if (state == PLAYING) {
             ba.sendPrivateMessage(name, "[---  SCORE  ---]");
             ba.sendPrivateMessage(name, "[--Freq 0: " + team[0].score + " --]");
             ba.sendPrivateMessage(name, "[--Freq 1: " + team[1].score + " --]");
-        } else if (state == IDLE) {
+        } else if (state == WAITING) {
             if (autoMode)
                 ba.sendPrivateMessage(name, "A new game will begin after two players volunteer to captain using !cap");
             else 
@@ -759,9 +928,9 @@ public class attackbot extends SubspaceBot {
      * @param name
      * @return Player object or null if player is not in the game
      */
-    private Player getPlayer(String name) {
+    private Attacker getPlayer(String name) {
         if (!isNotBot(name)) return null;
-        Player p = team[0].getPlayerStats(name);
+        Attacker p = team[0].getPlayerStats(name);
         if (p == null)
             p = team[1].getPlayerStats(name);
         return p;
@@ -769,7 +938,7 @@ public class attackbot extends SubspaceBot {
     
     /** Determines if the given player is playing in the game or not **/
     private boolean isPlaying(String name) {
-        if (state != IDLE && team[0].isPlayersTeam(name) || team[1].isPlayersTeam(name))
+        if (state != WAITING && team[0].isPlayersTeam(name) || team[1].isPlayersTeam(name))
             return true;
         else
             return false;
@@ -782,7 +951,7 @@ public class attackbot extends SubspaceBot {
     
     /** Helper determines if player is a bot (oplist doesn't work for bots on other cores) **/
     private boolean isNotBot(String name) {
-        if (oplist.isBotExact(name) || (oplist.isSysop(name) && !oplist.isOwner(name) && !name.equalsIgnoreCase("Witness") && !name.equalsIgnoreCase("Pure_Luck")))
+        if (oplist.isBotExact(name) || (oplist.isSysop(name) && !oplist.isOwner(name) && !name.equalsIgnoreCase("wiibimbo") && !name.equalsIgnoreCase("Dral") && !name.equalsIgnoreCase("flared") && !name.equalsIgnoreCase("Witness") && !name.equalsIgnoreCase("Pure_Luck")))
             return false;
         else return true;
     }
@@ -794,8 +963,18 @@ public class attackbot extends SubspaceBot {
         return str.substring(0, length);
     }
     
+    private void warpTeams() {
+        ba.shipResetAll();
+        team[0].teamWarp();
+        team[1].teamWarp();
+    }
+    
     /** Handles !stats which spams private messages with the current game stats just like at the end of the game **/
-    public void printStats(String name) {
+    public void cmd_stats(String name) {
+        if (pastStats != null) {
+            ba.privateMessageSpam(name, pastStats);
+            return;
+        }
         String msg = "Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score;
         ba.sendPrivateMessage(name, msg);
         String[] msgs = {
@@ -806,11 +985,11 @@ public class attackbot extends SubspaceBot {
                 "+------------------------'      |      |      |      |      |    |        |        |          |    |",
         };
         ba.privateMessageSpam(name, msgs);
-        for (Player p : team[0].stats.values()) {
+        for (Attacker p : team[0].stats.values()) {
             msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
             ba.sendPrivateMessage(name, msg);
         }
-        for (Player p : team[0].oldStats) {
+        for (Attacker p : team[0].oldStats) {
             msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
             ba.sendPrivateMessage(name, msg);
         }
@@ -822,61 +1001,53 @@ public class attackbot extends SubspaceBot {
                 "+------------------------'      |      |      |      |      |    |        |        |          |    |",
         };
         ba.privateMessageSpam(name, msgs);
-        for (Player p : team[1].stats.values()) {
+        for (Attacker p : team[1].stats.values()) {
             msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
             ba.sendPrivateMessage(name, msg);
         }
-        for (Player p : team[1].oldStats) {
+        for (Attacker p : team[1].oldStats) {
             msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
             ba.sendPrivateMessage(name, msg);
         }
         ba.sendPrivateMessage(name, "`-------------------------------+------+------+------+------+----+--------+--------+----------+----'");
     }
     
-    /** Helper method prints all the game statistics usually after game ends **/
+    /** Helper method prints all the game statistics to an array for temporary post game access **/
     private void printStats() {
-        String msg = "Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score;
-        ba.sendArenaMessage(msg);
-        String[] msgs = {
-                ",-------------------------------+------+------+------+------+----+--------+--------+----------+----.",
-                "|                             S |    K |    D |   TK |  TeK | LO |     TO | Steals |  Poss(s) |  G |",
-                "|                          ,----+------+------+------+------+----+--------+--------+----------+----+",
-                "| Freq " + team[0].freq + "                  /     |" + padNumber(team[0].getKills(), 5) + " |" + padNumber(team[0].getDeaths(), 5) + " |" + padNumber(team[0].getTeamKills(), 5) + " |" + padNumber(team[0].getTerrKills(), 5) + " |" + padNumber(team[0].getLagouts(), 3) + " |" + padNumber(team[0].getTurnovers(), 7) + " |"+ padNumber(team[0].getSteals(), 7) + " |" + padNumber(team[0].getPossession(), 9) + " |" + padNumber(team[0].score, 3) + " |",
-                "+------------------------'      |      |      |      |      |    |        |        |          |    |",
-        };
-        ba.arenaMessageSpam(msgs);
-        for (Player p : team[0].stats.values()) {
-            msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendArenaMessage(msg);
-        }
-        for (Player p : team[0].oldStats) {
-            msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendArenaMessage(msg);
-        }
-        
-        msgs = new String[] {
-                "+-------------------------------+------+------+------+------+----+--------+--------+----------+----+",
-                "|                          ,----+------+------+------+------+----+--------+--------+----------+----+",
-                "| Freq " + team[1].freq + "                  /     |" + padNumber(team[1].getKills(), 5) + " |" + padNumber(team[1].getDeaths(), 5) + " |" + padNumber(team[1].getTeamKills(), 5) + " |" + padNumber(team[1].getTerrKills(), 5) + " |" + padNumber(team[1].getLagouts(), 3) + " |" + padNumber(team[1].getTurnovers(), 7) + " |"+ padNumber(team[1].getSteals(), 7) + " |" + padNumber(team[1].getPossession(), 9) + " |" + padNumber(team[1].score, 3) + " |",
-                "+------------------------'      |      |      |      |      |    |        |        |          |    |",
-        };
-        ba.arenaMessageSpam(msgs);
-        for (Player p : team[1].stats.values()) {
-            msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendArenaMessage(msg);
-        }
-        for (Player p : team[1].oldStats) {
-            msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendArenaMessage(msg);
-        }
-        ba.sendArenaMessage("`-------------------------------+------+------+------+------+----+--------+--------+----------+----'");
+        ArrayList<String> statArray = new ArrayList<String>();
+        statArray.add("Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score);
+
+        statArray.add(",-------------------------------+------+------+------+------+----+--------+--------+----------+----.");
+        statArray.add("|                             S |    K |    D |   TK |  TeK | LO |     TO | Steals |  Poss(s) |  G |");
+        statArray.add("|                          ,----+------+------+------+------+----+--------+--------+----------+----+");
+        statArray.add("| Freq " + team[0].freq + "                  /     |" + padNumber(team[0].getKills(), 5) + " |" + padNumber(team[0].getDeaths(), 5) + " |" + padNumber(team[0].getTeamKills(), 5) + " |" + padNumber(team[0].getTerrKills(), 5) + " |" + padNumber(team[0].getLagouts(), 3) + " |" + padNumber(team[0].getTurnovers(), 7) + " |"+ padNumber(team[0].getSteals(), 7) + " |" + padNumber(team[0].getPossession(), 9) + " |" + padNumber(team[0].score, 3) + " |");
+        statArray.add("+------------------------'      |      |      |      |      |    |        |        |          |    |");
+
+        for (Attacker p : team[0].stats.values())
+            statArray.add("|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |");
+
+        for (Attacker p : team[0].oldStats)
+            statArray.add("|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |");
+
+        statArray.add("+-------------------------------+------+------+------+------+----+--------+--------+----------+----+");
+        statArray.add("|                          ,----+------+------+------+------+----+--------+--------+----------+----+");
+        statArray.add("| Freq " + team[1].freq + "                  /     |" + padNumber(team[1].getKills(), 5) + " |" + padNumber(team[1].getDeaths(), 5) + " |" + padNumber(team[1].getTeamKills(), 5) + " |" + padNumber(team[1].getTerrKills(), 5) + " |" + padNumber(team[1].getLagouts(), 3) + " |" + padNumber(team[1].getTurnovers(), 7) + " |"+ padNumber(team[1].getSteals(), 7) + " |" + padNumber(team[1].getPossession(), 9) + " |" + padNumber(team[1].score, 3) + " |");
+        statArray.add("+------------------------'      |      |      |      |      |    |        |        |          |    |");
+
+        for (Attacker p : team[1].stats.values())
+            statArray.add("|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |");
+
+        for (Attacker p : team[1].oldStats)
+            statArray.add("|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |");
+        statArray.add("`-------------------------------+------+------+------+------+----+--------+--------+----------+----'");
+        pastStats = statArray.toArray(new String[10]);
     }
     
     /** Helper method prints all the game statistics usually after game ends **/
     private void printTotals() {
         String msg = "Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score;
         ba.sendArenaMessage(msg);
-        HashMap<String, Player> stats = team[0].getStatMap();
+        HashMap<String, Attacker> stats = team[0].getStatMap();
         String[] msgs = {
                 "+---------------------------------+------+------+------+----+--------+--------+----------+----+",
                 "|                               K |    D |   TK |  TeK | LO |     TO | Steals |  Poss(s) |  G |",
@@ -885,7 +1056,7 @@ public class attackbot extends SubspaceBot {
                 "+------------------------'        |      |      |      |    |        |        |          |    |",
         };
         ba.arenaMessageSpam(msgs);
-        for (Player p : stats.values()) {
+        for (Attacker p : stats.values()) {
             if (p.ship == -1)
                 msg = "|  " + padString("-" + p.name, 25) + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
             else
@@ -900,7 +1071,7 @@ public class attackbot extends SubspaceBot {
                 "+------------------------'        |      |      |      |    |        |        |          |    |",
         };
         ba.arenaMessageSpam(msgs);
-        for (Player p : stats.values()) {
+        for (Attacker p : stats.values()) {
             if (p.ship == -1)
                 msg = "|  " + padString("-" + p.name, 25) + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
             else
@@ -923,17 +1094,6 @@ public class attackbot extends SubspaceBot {
         for (int i = 0; i + x.length() < length; i++)
             str += " ";
         return str + x;
-    }
-    
-    /**
-     * Helper method used to get the opposing team freq
-     * @param f freq
-     * @return freq of the opposing team
-     */
-    private int getOpFreq(int f) {
-        if (team[0].freq == f)
-            return team[1].freq;
-        else return team[0].freq;
     }
 
     /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
@@ -959,109 +1119,151 @@ public class attackbot extends SubspaceBot {
         drop.run();
         ba.specWithoutLock(ba.getBotName());
         ball.clear();
+        ba.setPlayerPositionUpdating(300);
     }
-
-    /** Handles post-goal operations **/
-    private void handleGoal() {
-        ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
-        ba.shipResetAll();
-        ba.resetFlagGame();
-        if (ba.getArenaName().equalsIgnoreCase("attack")) {
-            ba.warpFreqToLocation(0, attack[0], attack[1]);
-            ba.warpFreqToLocation(1, attack[2], attack[3]);
-        } else {
-            ba.warpFreqToLocation(0, attack2[0], attack2[1]);
-            ba.warpFreqToLocation(1, attack2[2], attack2[3]);
+    
+    /**
+     * Helper method prints winning freq and game stats in arena messages
+     * @param freq Winning freq
+     */
+    private void gameOver(int freq) {
+        ba.showObject(4);
+        printTotals();
+        printStats();
+        if (freq > -1)
+            ba.sendArenaMessage("GAME OVER: Freq " + freq + " wins!", 5);
+        else
+            ba.sendArenaMessage("GAME OVER: Tie!", 5);
+        ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score + "  Detailed stats (!stats) available until picking starts");
+        state = WAITING;
+        lagouts.clear();
+        if (autoMode) {
+            ba.specAll();
+            ba.sendArenaMessage("A new game will begin when two players PM me !cap -" + ba.getBotName());
         }
-        dropBall();
+        team[0].reset();
+        team[1].reset();
+        
+        TimerTask sb = new TimerTask() {
+            public void run() {
+                //Scoreboard
+                scoreboard.hideAllObjects();
+                ba.setObjects();
+            }
+        };
+        ba.scheduleTask(sb, 3000);
     }
 
     /** MasterControl is responsible for the start and end of the game as well as time keeping if game is timed or goal checking if not **/
-    private class MasterControl {
+    private class MasterControl extends TimerTask {
 
-        TimerTask time;
         boolean suddenDeath;
+        int timer; // countdown in seconds
         
         public MasterControl() {
             suddenDeath = false;
+            timer = 0;
+        }
+        
+        public void run() {
+            switch (state) {
+                case OFF : break;
+                case WAITING : checkCaps(); break;
+                case PICKING : nextPick(); break;
+                case STARTING : preGame(); break;
+                case PLAYING : tick(); break;
+            }
+        }
+        
+        private void tick() {
+            // Called every single second of the game
+            updateScoreboard();
+            if (timed) {
+                timer--;
+                if (timer < 1)
+                    checkGameScore();
+                else if (timer < 5)
+                    ba.setTimer(0);
+            } else
+                checkGameScore();
+        }
+        
+        private void preGame() {
+            timer--;
+            if (timer == 5)
+                ba.showObject(2);
+            if (timer < 1)
+                runGame();
         }
         
         /** Begins the player picking process if both team's have a captain **/
-        public void checkCaps() {
-            if (team[0].cap == null || team[1].cap == null)
-                return;
-            state = STARTING;
-            team[0].reset();
-            team[1].reset();
-            pick = 0;
-            team[0].pick = true;
-            team[1].pick = false;
-            ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);        
+        private void checkCaps() {
+            if (team[0].cap != null && team[1].cap != null) {
+                state = PICKING;
+                pick = 0;
+                team[0].pick = true;
+                team[1].pick = false;
+                ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
+            }
         }
         
         /** Determines which team should have the next pick turn and executes **/
         private void nextPick() {
-            if (pick == 0) {
-                if (team[1].size() <= team[0].size()) {
-                    if (!team[1].isFull()) {
-                        pick = 1;
-                        team[1].pick = true;
-                        team[0].pick = false;
-                        ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);  
-                    }
-                } else if (!team[0].isFull())
+            if (!team[0].pick && !team[1].pick && (!team[0].isFull() || !team[1].isFull())) {
+                if (team[1].size() < team[0].size()) {
+                    pick = 1;
+                    team[1].pick = true;
+                    team[0].pick = false;
+                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);  
+                } else if (team[0].size() < team[1].size()){
+                    pick = 0;
+                    team[0].pick = true;
+                    team[1].pick = false;
+                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);  
+                } else if (pick == 0) {
+                    pick = 1;
+                    team[1].pick = true;
+                    team[0].pick = false;
+                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);  
+                } else {
+                    pick = 0;
+                    team[0].pick = true;
+                    team[1].pick = false;
                     ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
-            } else {
-                if (team[0].size() <= team[1].size()) {
-                    if (!team[0].isFull()) {
-                        pick = 0;
-                        team[0].pick = true;
-                        team[1].pick = false;
-                        ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2); 
-                    }
-                } else if (!team[1].isFull())
-                    ba.sendArenaMessage(team[pick].cap + " pick a player!", Tools.Sound.BEEP2);
+                }
             }
+            if (team[0].ready && team[1].ready)
+                startGame();
         }
 
         /** Begins the game starter sequence **/
         public void startGame() {
-            state = PLAYING;
+            pastStats = null;
+            pick = -1;
+            team[0].pick = false;
+            team[1].pick = false;
+            state = STARTING;
+            timer = 10;
+            ba.showObject(1);
             ba.sendArenaMessage("Both teams are ready, game will start in 10 seconds!", 1);
-            TimerTask t = new TimerTask() {
-                public void run() {
-                    runGame();
-                }
-            };
-            ba.scheduleTask(t, 10000);
         }
 
         /** Starts the game after reseting ships and scores **/
         public void runGame() {
+            scoreboard = ba.getObjectSet();
+            ba.showObject(3);
             team[0].score = 0;
             team[1].score = 0;
-            ba.shipResetAll();
-            if (ba.getArenaName().equalsIgnoreCase("attack")) {
-                ba.warpFreqToLocation(0, attack[0], attack[1]);
-                ba.warpFreqToLocation(1, attack[2], attack[3]);
-            } else {
-                ba.warpFreqToLocation(0, attack2[0], attack2[1]);
-                ba.warpFreqToLocation(1, attack2[2], attack2[3]);
-            }
-            
+            warpTeams();
             if (timed) {
-                time = new TimerTask() {
-                    public void run() {
-                        suddenDeath = true;
-                        checkGameScore();
-                    }
-                };
-                ba.setTimer(timer);
-                ba.scheduleTask(time, timer*Tools.TimeInMillis.MINUTE - 1500);
-                ba.sendArenaMessage("RULES: Most goals after " + timer + " minutes wins or sudden death if tied.");
+                timer = gameTime * 60;
+                suddenDeath = false;
+                ba.setTimer(gameTime);
+                ba.sendArenaMessage("RULES: Most goals after " + gameTime + " minutes wins or sudden death if scores tied.");
             } else 
-                ba.sendArenaMessage("RULES: First to " + goals + " goals.");
+                ba.sendArenaMessage("RULES: First to " + goals + " goals wins!");
 
+            state = PLAYING;
             ba.sendArenaMessage("GO GO GO!!!", 104);
             ba.scoreResetAll();
             ba.resetFlagGame();
@@ -1069,91 +1271,129 @@ public class attackbot extends SubspaceBot {
         } 
         
         public void checkGameScore() {
-            if (state != PLAYING) return;
-            if (!timed && !suddenDeath) {
+            if (!timed) {
                 if (team[0].score == goals)
                     gameOver(team[0].freq);
                 else if (team[1].score == goals)
                     gameOver(team[1].freq);
-                else
-                    handleGoal();
-            } else if (timed && suddenDeath){
+            } else if (timed && timer < 1 && !suddenDeath) {
                 int wins = -1;
                 if (team[0].score > team[1].score)
                     wins = team[0].freq;
                 else if (team[1].score > team[0].score)
                     wins = team[1].freq;
                 if (wins < 0) {
-                    TimerTask end = new TimerTask() {
-                        public void run() {
-                            ba.setTimer(0);
-                            timed = false;
-                            ba.sendArenaMessage("NOTICE: End of regulation period -- Score TIED -- BEGIN SUDDEN DEATH", Tools.Sound.SCREAM);
-                        }
-                    };
-                    ba.scheduleTask(end, 1500);
+                    ba.setTimer(0);
+                    suddenDeath = true;
+                    ba.sendArenaMessage("NOTICE: End of regulation period -- Score TIED -- BEGIN SUDDEN DEATH", Tools.Sound.SCREAM);
                 } else {
                     ba.setTimer(0);
                     suddenDeath = false;
-                    final int f = wins;
-                    TimerTask end = new TimerTask() {
-                        public void run() {
-                            gameOver(f);
-                        }
-                    };
-                    ba.scheduleTask(end, 1500);
+                    gameOver(wins);
                 }
-            } else if (timed && !suddenDeath) {
-                handleGoal();
-            } else if (!timed && suddenDeath) {
-                if (team[0].score > team[1].score)
+            } else if (suddenDeath) {
+                if (team[0].score > team[1].score) {
+                    suddenDeath = false;
                     gameOver(team[0].freq);
-                else if (team[1].score > team[0].score)
+                } else if (team[1].score > team[0].score) {
+                    suddenDeath = false;
                     gameOver(team[1].freq);
-                else
-                    handleGoal(); //uhh no?
+                }
             }
         }
-        
         
         /**
-         * Helper method prints winning freq and game stats in arena messages
-         * @param freq Winning freq
+         * Updates the scoreboard
          */
-        private void gameOver(int freq) {
-            printTotals();
-            if (freq > -1)
-                ba.sendArenaMessage("GAME OVER: Freq " + freq + " wins!", 5);
-            else
-                ba.sendArenaMessage("GAME OVER: Tie!", 5);
-            ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score + "  Detailed stats (!stats) available until picking starts");
-            state = IDLE;
-            lagouts.clear();
-            team[0].cap = null;
-            team[1].cap = null;
-            if (autoMode) {
-                pick = 0;
-                ba.sendArenaMessage("A new game will begin when two players PM me !cap -" + ba.getBotName());
-                ba.specAll();
+        private void updateScoreboard() {
+            scoreboard.hideAllObjects();
+
+            String lastPos = ball.peekLastCarrierName();
+            //Flag status
+            if (lastPos == null || !isNotBot(lastPos)) {
+                scoreboard.showObject(740);
+                scoreboard.showObject(742);
+                scoreboard.hideObject(741);
+                scoreboard.hideObject(743);
+            } else if(team[0].isPlayersTeam(lastPos)) {
+                scoreboard.showObject(740);
+                scoreboard.showObject(743);
+                scoreboard.hideObject(741);
+                scoreboard.hideObject(742);
+            } else if(team[1].isPlayersTeam(lastPos)) {
+                scoreboard.showObject(741);
+                scoreboard.showObject(742);
+                scoreboard.hideObject(743);
+                scoreboard.hideObject(740);
             }
+            
+            String scoreTeam1 = "" + team[0].score;
+            String scoreTeam2 = "" + team[1].score;
+
+            for (int i = scoreTeam1.length() - 1; i > -1; i--)
+                scoreboard.showObject(Integer.parseInt("" + scoreTeam1.charAt(i)) + 100 + (scoreTeam1.length() - 1 - i) * 10);
+            for (int i = scoreTeam2.length() - 1; i > -1; i--)
+                scoreboard.showObject(Integer.parseInt("" + scoreTeam2.charAt(i)) + 200 + (scoreTeam2.length() - 1 - i) * 10);
+            /* Time Left if timed */
+            if (timed && timer >= 0) {
+                int seconds = timer % 60;
+                int minutes = (timer - seconds) / 60;
+                scoreboard.showObject(730 + ((minutes - minutes % 10) / 10));
+                scoreboard.showObject(720 + (minutes % 10));
+                scoreboard.showObject(710 + ((seconds - seconds % 10) / 10));
+                scoreboard.showObject(700 + (seconds % 10));
+            }
+            
+            /*
+             * Show Team Names
+             */
+            String n1 = "freq" + team[0].freq;
+            String n2 = "freq" + team[1].freq;
+            
+            String s1 = "", s2 = "";
+
+            for (int i = 0; i < n1.length(); i++)
+                if ((n1.charAt(i) >= '0') && (n1.charAt(i) <= 'z') && (s1.length() < 5))
+                    s1 = s1 + n1.charAt(i);
+
+            for (int i = 0; i < n2.length(); i++)
+                if ((n2.charAt(i) >= '0') && (n2.charAt(i) <= 'z') && (s2.length() < 5))
+                    s2 = s2 + n2.charAt(i);
+
+            for (int i = 0; i < s1.length(); i++) {
+                int t = new Integer(Integer.toString(
+                        ((s1.getBytes()[i]) - 97) + 30) + Integer.toString(i + 0)).intValue();
+                if (t < -89) {
+                    t = new Integer(Integer.toString(((s1.getBytes()[i])) + 30) + Integer.toString(i + 0)).intValue();
+                    t -= 220;
+                }
+                scoreboard.showObject(t);
+            }
+            
+            for (int i = 0; i < s2.length(); i++) {
+                int t = new Integer(Integer.toString(
+                        ((s2.getBytes()[i]) - 97) + 30) + Integer.toString(i + 5)).intValue();
+                if (t < -89) {
+                    t = new Integer(Integer.toString(((s2.getBytes()[i])) + 30) + Integer.toString(i + 5)).intValue();
+                    t -= 220;
+                }
+                scoreboard.showObject(t);
+            }
+            
+            //Display everything
+            ba.setObjects();
         }
-        
-        public void killGame() {
-            if (state == PLAYING && timed && !suddenDeath)
-                ba.cancelTask(time);
-        }
-        
     }
     
     /** Player object holding all the stats of a player for one ship **/
-    private class Player {
+    private class Attacker {
         String name;
         int kills, deaths, goals;
         int ship, terrKills, teamKills;
         int steals, turnovers, lagouts;
         long possession;
         
-        public Player(String name, int ship) {
+        public Attacker(String name, int ship) {
             this.name = name;
             this.ship = ship;
             kills = 0;
@@ -1211,14 +1451,26 @@ public class attackbot extends SubspaceBot {
         }
     }
     
+    private class Terr {
+        String name;
+        int x, y;
+        
+        public Terr(String name) {
+            x = -1;
+            y = -1;
+            this.name = name;
+        }
+    }
+    
     /** Team object used to hold all relevant information for one team on a freq **/
     private class Team {
         // ship counts
         int[] ships;
         // player list of ships
         HashMap<String, Integer> players;
-        HashMap<String, Player> stats;
-        LinkedList<Player> oldStats;
+        HashMap<String, Attacker> stats;
+        LinkedList<Attacker> oldStats;
+        Terr[] terrs;
         int freq, score;
         String cap;
         boolean ready, pick;
@@ -1228,11 +1480,23 @@ public class attackbot extends SubspaceBot {
             freq = f;
             ships = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
             players = new HashMap<String, Integer>();
-            stats = new HashMap<String, Player>();
-            oldStats = new LinkedList<Player>();
+            stats = new HashMap<String, Attacker>();
+            oldStats = new LinkedList<Attacker>();
+            terrs = new Terr[] { null, null };
             score = 0;
             ready = false;
             pick = false;
+        }
+        
+        public void updateTerr(String name, int x, int y) {
+            if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(name)) {
+                terrs[0].x = x;
+                terrs[0].y = y;
+            } else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(name)) {
+                terrs[1].x = x;
+                terrs[1].y = y;
+            } else
+                debug("Error: " + name + " not found in terrs");
         }
         
         /**
@@ -1246,7 +1510,7 @@ public class attackbot extends SubspaceBot {
             String p = ba.getFuzzyPlayerName(name);
             if (p == null)
                 return "Could not find " + name;
-            if (!isNotBot(name))
+            if (!isNotBot(p))
                 return "Unable to add bot " + name;
             if (notplaying.contains(p.toLowerCase()))
                 return "" + p + " is currently not playing";
@@ -1256,15 +1520,23 @@ public class attackbot extends SubspaceBot {
                 return "Only " + SHIP_LIMITS[ship-1] + " " + Tools.shipName(ship) + "(s) are allowed per team";
             if (players.size() >= rules.getInt("MaxPlayers"))
                 return "Team is full";
+            if (ship == 5) {
+                if (terrs[0] != null)
+                    terrs[1] = new Terr(p);
+                else
+                    terrs[0] = new Terr(p);
+            }
             ba.setShip(p, ship);
             ba.setFreq(p, freq);
             ba.scoreReset(p);
             ships[ship-1]++;
             players.put(p.toLowerCase(), ship);
-            stats.put(p.toLowerCase(), new Player(p, ship));
+            stats.put(p.toLowerCase(), new Attacker(p, ship));
             result = "Player " + p + " added to game";
             ba.sendPrivateMessage(p, "You have been put in the game");
             ba.sendArenaMessage(p + " in for Freq " + freq + " with ship " + ship);
+            if (pick)
+                pick = false;
             return result;
         }
         
@@ -1278,7 +1550,16 @@ public class attackbot extends SubspaceBot {
             String p = findPlayer(name);
             if (p != null) {
                 ba.specWithoutLock(p);
-                ships[players.remove(p)-1]--;
+                int ship = players.remove(p);
+                if (ship == 5) {
+                    if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(p))
+                        terrs[0] = null;
+                    else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(p))
+                        terrs[1] = null;
+                    else
+                        debug("Could not find terr " + p + " to remove.");
+                }
+                ships[ship-1]--;
                 if (state == PLAYING)
                     oldStats.add(stats.remove(p));
                 else
@@ -1292,7 +1573,16 @@ public class attackbot extends SubspaceBot {
         
         /** Removes a player from the game after using !notplaying while in **/
         public void notPlaying(String name) {
-            ships[players.remove(name.toLowerCase())-1]--;
+            int ship = players.remove(name.toLowerCase());
+            if (ship == 5) {
+                if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(name))
+                    terrs[0] = null;
+                else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(name))
+                    terrs[1] = null;
+                else
+                    debug("Could not find terr " + name + " to remove.");
+            }
+            ships[ship-1]--;
             if (state == PLAYING)
                 oldStats.add(stats.remove(name.toLowerCase()));
             else
@@ -1322,12 +1612,20 @@ public class attackbot extends SubspaceBot {
                     return "" + subin + " is currently not playing";
                 int ship = players.remove(subout.toLowerCase());
                 oldStats.add(stats.remove(subout.toLowerCase()));
+                if (ship == 5) {
+                    if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(subout))
+                        terrs[0] = new Terr(subin);
+                    else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(subout))
+                        terrs[1] = new Terr(subin);
+                    else
+                        debug("Could not find terr " + subout + " to replace.");
+                }
                 ba.specWithoutLock(subout);
                 ba.setFreq(subout, freq);
                 ba.setShip(subin, ship);
                 ba.setFreq(subin, freq);
                 players.put(subin.toLowerCase(), ship);
-                stats.put(subin.toLowerCase(), new Player(subin, ship));
+                stats.put(subin.toLowerCase(), new Attacker(subin, ship));
                 ba.sendPrivateMessage(subin, "You have been put in the game");
                 ba.sendArenaMessage(subout + " has been substituted by " + subin + ".");
                 result = null;
@@ -1371,19 +1669,49 @@ public class attackbot extends SubspaceBot {
                     result += "switched ships.";
                     
                     if (name1 != null && name2 != null) {
+                        if (preship1 == 5) {
+                            if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(name1))
+                                terrs[0] = new Terr(name2);
+                            else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(name1))
+                                terrs[1] = new Terr(name2);
+                            else
+                                debug("Could not find terr " + name1 + " to replace.");
+                        } else if (preship2 == 5) {
+                            if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(name2))
+                                terrs[0] = new Terr(name1);
+                            else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(name2))
+                                terrs[1] = new Terr(name1);
+                            else
+                                debug("Could not find terr " + name2 + " to replace.");
+                        }
                         if (state == PLAYING) {
                             oldStats.add(stats.remove(name1.toLowerCase()));
                             oldStats.add(stats.remove(name2.toLowerCase()));
                         }
-                        stats.put(name1.toLowerCase(), new Player(name1, preship2));
-                        stats.put(name2.toLowerCase(), new Player(name2, preship1));
+                        stats.put(name1.toLowerCase(), new Attacker(name1, preship2));
+                        stats.put(name2.toLowerCase(), new Attacker(name2, preship1));
                     } else {
+                        if (preship1 == 5) {
+                            if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(p1))
+                                terrs[0] = new Terr(p2);
+                            else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(p1))
+                                terrs[1] = new Terr(p2);
+                            else
+                                debug("Could not find terr " + p1 + " to replace.");
+                        } else if (preship2 == 5) {
+                            if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(p2))
+                                terrs[0] = new Terr(p1);
+                            else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(p2))
+                                terrs[1] = new Terr(p1);
+                            else
+                                debug("Could not find terr " + p2 + " to replace.");
+                        }
                         if (state == PLAYING) {
                             oldStats.add(stats.remove(p1.toLowerCase()));
                             oldStats.add(stats.remove(p2.toLowerCase()));
                         }
-                        stats.put(p1.toLowerCase(), new Player(p1, preship2));
-                        stats.put(p2.toLowerCase(), new Player(p2, preship1));
+                        stats.put(p1.toLowerCase(), new Attacker(p1, preship2));
+                        stats.put(p2.toLowerCase(), new Attacker(p2, preship1));
                     }
                     
                     ba.sendArenaMessage(result);
@@ -1415,7 +1743,13 @@ public class attackbot extends SubspaceBot {
                 else {
                     if (state == PLAYING)
                         oldStats.add(stats.remove(p));
-                    stats.put(p, new Player(name, ship));
+                    stats.put(p, new Attacker(name, ship));
+                    if (ship == 5) {
+                        if (terrs[0] != null)
+                            terrs[1] = new Terr(name);
+                        else
+                            terrs[0] = new Terr(name);
+                    }
                     ba.setShip(name, ship);
                     ba.sendArenaMessage(name + " changed from ship " + players.get(p) + " to ship " + ship);
                     ships[players.get(p)-1]--;
@@ -1434,17 +1768,41 @@ public class attackbot extends SubspaceBot {
          */
         public void handleDeath(String name, String killer) {
             if (isPlayersTeam(killer)) {
-                getPlayerStats(killer).addTeamKill();
-                getPlayerStats(name).addDeath();
+                Attacker p = getPlayerStats(killer);
+                if (p != null)
+                    p.addTeamKill();
+                else
+                    debug("Null player stats for " + killer);
+                p = getPlayerStats(name);
+                if (p != null)
+                    p.addDeath();
+                else
+                    debug("Null player stats for " + name);
             } else {
                 Integer get = players.get(name.toLowerCase());
-                Player ker = getPlayer(killer);
+                Attacker ker = getPlayer(killer);
                 if (get != null && players.get(name.toLowerCase()) == 5)
                     ker.addTerrKill();
-                else if (get == null)
+                else if (get == null) {
                     debug("PlayerDeath event for " + name + " killer: " + killer + " caused a NULL get");
+                    return;
+                }
                 ker.addKill();
                 getPlayerStats(name).addDeath();
+            }
+        }
+        
+        public void teamWarp() {
+            if (ba.getArenaName().equalsIgnoreCase("attack")) {
+                if (freq == 0)
+                    ba.warpFreqToLocation(freq, attack[0], attack[1]);
+                else
+                    ba.warpFreqToLocation(freq, attack[2], attack[3]);
+            } else {
+                if (freq == 0)
+                    ba.warpFreqToLocation(freq, attack2[0], attack2[1]);
+                else
+                    ba.warpFreqToLocation(freq, attack2[2], attack2[3]);
             }
         }
         
@@ -1455,8 +1813,24 @@ public class attackbot extends SubspaceBot {
         }
         
         /** Retrieves the Player object holding the stats for the player with the specified name or null if not found **/
-        public Player getPlayerStats(String name) {
+        public Attacker getPlayerStats(String name) {
             return stats.get(name.toLowerCase());
+        }
+        
+        public void locateTerrs(String name) {
+            boolean team0 = false;
+            if (team[0].freq == freq)
+                team0 = true;
+            
+            String msg = "";
+            if (terrs[0] != null) {
+                msg = getLocation(terrs[0].x, terrs[0].y, team0);
+                ba.sendPrivateMessage(name, terrs[0].name + msg);
+            }
+            if (terrs[1] != null) {
+                msg = getLocation(terrs[1].x, terrs[1].y, team0);
+                ba.sendPrivateMessage(name, terrs[1].name + msg);
+            }
         }
         
         /**
@@ -1551,9 +1925,9 @@ public class attackbot extends SubspaceBot {
         /** Gets the total kills for this team **/
         public int getKills() {
             int k = 0;
-            for (Player p : stats.values())
+            for (Attacker p : stats.values())
                 k += p.kills;
-            for (Player p : oldStats)
+            for (Attacker p : oldStats)
                 k += p.kills;
             return k;
         }
@@ -1561,9 +1935,9 @@ public class attackbot extends SubspaceBot {
         /** Gets the total deaths for this team **/
         public int getDeaths() {
             int d = 0;
-            for (Player p : stats.values())
+            for (Attacker p : stats.values())
                 d += p.deaths;
-            for (Player p : oldStats)
+            for (Attacker p : oldStats)
                 d += p.deaths;
             return d;
         }
@@ -1571,9 +1945,9 @@ public class attackbot extends SubspaceBot {
         /** Gets the total terrkills for this team **/
         public int getTerrKills() {
             int x = 0;
-            for (Player p : stats.values())
+            for (Attacker p : stats.values())
                 x += p.terrKills;
-            for (Player p : oldStats)
+            for (Attacker p : oldStats)
                 x += p.terrKills;
             return x;
         }
@@ -1581,9 +1955,9 @@ public class attackbot extends SubspaceBot {
         /** Gets the total teamkills for this team **/
         public int getTeamKills() {
             int x = 0;
-            for (Player p : stats.values())
+            for (Attacker p : stats.values())
                 x += p.teamKills;
-            for (Player p : oldStats)
+            for (Attacker p : oldStats)
                 x += p.teamKills;
             return x;
         }
@@ -1591,9 +1965,9 @@ public class attackbot extends SubspaceBot {
         /** Gets the total possession time in seconds for this team **/
         public int getPossession() {
             long x = 0;
-            for (Player p : stats.values())
+            for (Attacker p : stats.values())
                 x += p.possession;
-            for (Player p : oldStats)
+            for (Attacker p : oldStats)
                 x += p.possession;
             return (int) x/1000;
         }
@@ -1601,9 +1975,9 @@ public class attackbot extends SubspaceBot {
         /** Gets the total lagouts for this team **/
         public int getLagouts() {
             int x = 0;
-            for (Player p : stats.values())
+            for (Attacker p : stats.values())
                 x += p.lagouts;
-            for (Player p : oldStats)
+            for (Attacker p : oldStats)
                 x += p.lagouts;
             return x;
         }
@@ -1611,9 +1985,9 @@ public class attackbot extends SubspaceBot {
         /** Gets the total steals for this team **/
         public int getSteals() {
             int x = 0;
-            for (Player p : stats.values())
+            for (Attacker p : stats.values())
                 x += p.steals;
-            for (Player p : oldStats)
+            for (Attacker p : oldStats)
                 x += p.steals;
             return x;
         }
@@ -1621,18 +1995,18 @@ public class attackbot extends SubspaceBot {
         /** Gets the total turnovers for this team **/
         public int getTurnovers() {
             int x = 0;
-            for (Player p : stats.values())
+            for (Attacker p : stats.values())
                 x += p.turnovers;
-            for (Player p : oldStats)
+            for (Attacker p : oldStats)
                 x += p.turnovers;
             return x;
         }
         
-        public HashMap<String, Player> getStatMap() {
-            HashMap<String, Player> result = new HashMap<String, Player>();
-            for (Player p : stats.values()) {
+        public HashMap<String, Attacker> getStatMap() {
+            HashMap<String, Attacker> result = new HashMap<String, Attacker>();
+            for (Attacker p : stats.values()) {
                 if (!result.containsKey(p.name.toLowerCase())) {
-                    Player tot = new Player(p.name, p.ship);
+                    Attacker tot = new Attacker(p.name, p.ship);
                     tot.deaths = p.deaths;
                     tot.kills = p.kills;
                     tot.lagouts = p.lagouts;
@@ -1644,7 +2018,7 @@ public class attackbot extends SubspaceBot {
                     tot.possession = p.possession;
                     result.put(p.name.toLowerCase(), tot);
                 } else {
-                    Player tot = result.get(p.name.toLowerCase());
+                    Attacker tot = result.get(p.name.toLowerCase());
                     tot.deaths += p.deaths;
                     tot.kills += p.kills;
                     tot.lagouts += p.lagouts;
@@ -1657,9 +2031,9 @@ public class attackbot extends SubspaceBot {
                     result.put(tot.name.toLowerCase(), tot);
                 }
             }
-            for (Player p : oldStats) {
+            for (Attacker p : oldStats) {
                 if (!result.containsKey(p.name.toLowerCase())) {
-                    Player tot = new Player(p.name, -1);
+                    Attacker tot = new Attacker(p.name, -1);
                     tot.deaths = p.deaths;
                     tot.kills = p.kills;
                     tot.lagouts = p.lagouts;
@@ -1671,7 +2045,7 @@ public class attackbot extends SubspaceBot {
                     tot.possession = p.possession;
                     result.put(p.name.toLowerCase(), tot);
                 } else {
-                    Player tot = result.get(p.name.toLowerCase());
+                    Attacker tot = result.get(p.name.toLowerCase());
                     tot.deaths += p.deaths;
                     tot.kills += p.kills;
                     tot.lagouts += p.lagouts;
@@ -1690,11 +2064,13 @@ public class attackbot extends SubspaceBot {
         /** Resets all team variables to defaults **/
         public void reset() {
             score = 0;
+            cap = null;
             players.clear();
             stats.clear();
             oldStats.clear();
             ships = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
             ready = false;
+            ba.setFreqtoFreq(freq, SPEC_FREQ);
         }
     }
 
@@ -1745,8 +2121,8 @@ public class attackbot extends SubspaceBot {
             if (carrier != null && newCarrier != null) {
                 if (state == PLAYING && !carrier.equalsIgnoreCase(newCarrier)) {
                     // Player passes to another player
-                    Player last = getPlayer(carrier);
-                    Player curr = getPlayer(newCarrier);
+                    Attacker last = getPlayer(carrier);
+                    Attacker curr = getPlayer(newCarrier);
                     Team passer = getTeam(carrier);
                     if (passer != null && !passer.isPlayersTeam(newCarrier) && last != null && curr != null) {
                         // steal + turnover
@@ -1767,7 +2143,7 @@ public class attackbot extends SubspaceBot {
             } else if (carrier != null && newCarrier == null) {
                 // loss of possession
                 if (state == PLAYING) {
-                    Player last = getPlayer(carrier);
+                    Attacker last = getPlayer(carrier);
                     if (last != null) {
                         long pos = now - carryTime;
                         last.addPoss(pos);                    
@@ -1780,8 +2156,8 @@ public class attackbot extends SubspaceBot {
                 Team ct = getTeam(newCarrier);
                 if (state == PLAYING && ct != null && absCarrier != null && isNotBot(absCarrier)) {
                     if (!absCarrier.equalsIgnoreCase(newCarrier)) {
-                        Player last = getPlayer(absCarrier);
-                        Player curr = getPlayer(newCarrier);
+                        Attacker last = getPlayer(absCarrier);
+                        Attacker curr = getPlayer(newCarrier);
                         if (!ct.isPlayersTeam(absCarrier) && last != null && curr != null) {
                             // steal + turnover
                             last.addTurnover();
@@ -1807,6 +2183,18 @@ public class attackbot extends SubspaceBot {
             String id = null;
             if (!carriers.empty())
                 id = carriers.pop();
+            return id;
+        }
+
+        /**
+         * Peeks at last ball carrier without removing them from stack
+         * @return short player id or null if empty
+         */
+        public String peekLastCarrierName() {
+            String id = null;
+            if (!carriers.empty()) {
+                id = carriers.peek();
+            }
             return id;
         }
 
@@ -1843,7 +2231,7 @@ public class attackbot extends SubspaceBot {
         }
     }  
     
-    private void debugger(String name) {
+    private void cmd_debug(String name) {
         if (!DEBUG) {
             debugger = name;
             DEBUG = true;
