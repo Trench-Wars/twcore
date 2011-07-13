@@ -1437,6 +1437,7 @@ public class attackbot extends SubspaceBot {
                 getPlayerStats(killer).addTeamKill();
                 getPlayerStats(name).addDeath();
             } else {
+                debug("PlayerDeath event for " + name + " killer: " + killer);
                 Player ker = getPlayer(killer);
                 if (players.get(name.toLowerCase()) == 5)
                     ker.addTerrKill();
@@ -1749,7 +1750,6 @@ public class attackbot extends SubspaceBot {
                     Player curr = getPlayer(newCarrier);
                     Team passer = getTeam(carrier);
                     if (passer != null && !passer.isPlayersTeam(newCarrier) && last != null && curr != null) {
-                        debug("Case 1: " + carrier + " passed to enemy " + newCarrier);
                         // steal + turnover
                         last.addTurnover();
                         curr.addSteal();
@@ -1767,7 +1767,6 @@ public class attackbot extends SubspaceBot {
                 }
             } else if (carrier != null && newCarrier == null) {
                 // loss of possession
-                debug("Case 2: " + carrier + " lost possession");
                 if (state == PLAYING) {
                     Player last = getPlayer(carrier);
                     if (last != null) {
@@ -1785,7 +1784,6 @@ public class attackbot extends SubspaceBot {
                         Player last = getPlayer(absCarrier);
                         Player curr = getPlayer(newCarrier);
                         if (!ct.isPlayersTeam(absCarrier) && last != null && curr != null) {
-                            debug("Case 3: abs" + absCarrier + " passed to enemy " + newCarrier);
                             // steal + turnover
                             last.addTurnover();
                             curr.addSteal();
@@ -1797,7 +1795,6 @@ public class attackbot extends SubspaceBot {
                 if (state == PLAYING && isNotBot(newCarrier))
                     carriers.push(newCarrier);
             } else {
-                debug("Case 4: All nulls");
                 carryTime = now;
             }
             carrier = newCarrier;
