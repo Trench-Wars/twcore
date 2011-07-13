@@ -135,7 +135,7 @@ public class attackbot extends SubspaceBot {
         ball = new Ball();
         ba.toggleLocked();
         if (autoMode)
-            ba.sendArenaMessage("A new game will begin when two players PM me with !cap", Tools.Sound.CROWD_GEE);
+            ba.sendArenaMessage("A new game will begin when two players PM me with !cap -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
         ba.specAll();
         ba.setAlltoFreq(SPEC_FREQ);
         ba.setPlayerPositionUpdating(300);
@@ -164,7 +164,10 @@ public class attackbot extends SubspaceBot {
             msg += "are picking teams.";
             ba.sendPrivateMessage(name, msg);
         } else if (state == PLAYING) {
-            ba.sendPrivateMessage(name, "A game is currently being played. Score: " + team[0].score + " - " + team[1].score);
+            if (timed) 
+                ba.sendPrivateMessage(name, "A timed game to " + timer + " minutes is currently being played. Score: " + team[0].score + " - " + team[1].score);
+            else
+                ba.sendPrivateMessage(name, "A game to " + goals + " goals is currently being played. Score: " + team[0].score + " - " + team[1].score);
         }
         
         if (lagouts.contains(name.toLowerCase()))
@@ -642,21 +645,20 @@ public class attackbot extends SubspaceBot {
         if (!timed) {
             if (goals != winGoal) {
                 if (state == PLAYING && (winGoal <= team[0].score || winGoal <= team[1].score))
-                    ba.sendPrivateMessage(name, "Setting goals to " + winGoal + " conflicts with the current game's score.");
+                    ba.sendPrivateMessage(name, "Setting goals to " + winGoal + " conflicts with the current game score.");
                 else {
                     goals = winGoal;
-                    ba.sendPrivateMessage(name, "Game changed to FIRST to " + goals + " GOALS");
-                    ba.sendArenaMessage("Game set to first to " + goals + " GOALS");                    
+                    ba.sendArenaMessage("Game type set to first to " + goals + " goals");                    
                 }
             } else
                 ba.sendPrivateMessage(name, "Goals already set to " + goals + ".");
         } else {
             if (state == PLAYING)
-                ba.sendPrivateMessage(name, "Game rules cannot be changed to goals in the middle of a timed game.");
+                ba.sendPrivateMessage(name, "Game type cannot be changed to goals while a timed game is being played.");
             else {
                 timed = false;
                 goals = winGoal;
-                ba.sendArenaMessage("Game set to first to " + goals + " GOALS"); 
+                ba.sendArenaMessage("Game type changed to first to " + goals + " goals"); 
             }
         }
     }
@@ -672,18 +674,18 @@ public class attackbot extends SubspaceBot {
             return;
         }
         if (mins < 2 || mins > MAX_TIME) {
-            ba.sendPrivateMessage(name, "Time must be between 2 and " + MAX_TIME + " minutes.");
+            ba.sendPrivateMessage(name, "Timed game can only be between 2 and " + MAX_TIME + " minutes.");
         } else if (timed && mins == timer) {
-            ba.sendPrivateMessage(name, "Time was already set to " + timer + " minutes.");
+            ba.sendPrivateMessage(name, "Time already set to " + timer + " minutes.");
         } else if (state == PLAYING) {
-            ba.sendPrivateMessage(name, "Game cannot be changed to timed while being played."); 
+            ba.sendPrivateMessage(name, "Game type cannot be changed to timed if a game is being played."); 
         } else if (timed) {
             timer = mins;
-            ba.sendArenaMessage("Game set to " + timer + " minute TIMED");
+            ba.sendArenaMessage("Game type changed to " + timer + " minute TIMED.");
         } else {
             timed = true;
             timer = mins;
-            ba.sendArenaMessage("Game set to " + timer + " minute TIMED");
+            ba.sendArenaMessage("Game type changed to " + timer + " minute TIMED");
         }
     }
 
@@ -1131,7 +1133,7 @@ public class attackbot extends SubspaceBot {
             team[1].cap = null;
             if (autoMode) {
                 pick = 0;
-                ba.sendArenaMessage("A new game will begin when two players PM me !cap");
+                ba.sendArenaMessage("A new game will begin when two players PM me !cap -" + ba.getBotName());
                 ba.specAll();
             }
         }
@@ -1217,7 +1219,6 @@ public class attackbot extends SubspaceBot {
         HashMap<String, Integer> players;
         HashMap<String, Player> stats;
         LinkedList<Player> oldStats;
-        LinkedList<String> onFreq;
         int freq, score;
         String cap;
         boolean ready, pick;
@@ -1229,7 +1230,6 @@ public class attackbot extends SubspaceBot {
             players = new HashMap<String, Integer>();
             stats = new HashMap<String, Player>();
             oldStats = new LinkedList<Player>();
-            onFreq = new LinkedList<String>();
             score = 0;
             ready = false;
             pick = false;
@@ -1544,8 +1544,6 @@ public class attackbot extends SubspaceBot {
 
             for (String n : players.keySet())
                 ba.setFreq(n, freq);
-            for (String n : onFreq)
-                ba.setFreq(n, freq);
         }
         
         /** Gets the total kills for this team **/
@@ -1693,7 +1691,6 @@ public class attackbot extends SubspaceBot {
             players.clear();
             stats.clear();
             oldStats.clear();
-            onFreq.clear();
             ships = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
             ready = false;
         }
