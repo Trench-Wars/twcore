@@ -383,6 +383,7 @@ public class attackbot extends SubspaceBot {
     public void cmd_help(String name) {
         String[] help = {
                 "+-- AttackBot Commands ---------------------------------------------------------------------.",
+                "| !about                   - Rules, tips and general information regarding Attack           |",
                 "| !terr                    - Reports location of your team terriers (!t)                    |",
                 "| !cap                     - Claims captain of a team if a team is missing a cap            |",
                 "| !status                  - Displays the current game status                               |",
