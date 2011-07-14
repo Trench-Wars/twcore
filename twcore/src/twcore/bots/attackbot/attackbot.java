@@ -107,11 +107,11 @@ public class attackbot extends SubspaceBot {
         state = WAITING;
         attack = new int[] { 478, 511, 544, 511 };
         attack2 = new int[] { 475, 512, 549, 512 };
-        team = new Team[] { new Team(0), new Team(1) };
         goals = rules.getInt("Goals");
         SHIP_LIMITS = rules.getIntArray("Ships", ",");
         if (SHIP_LIMITS.length != 8)
             SHIP_LIMITS = new int[] { 1, 1, rules.getInt("MaxPlayers"), 0, 2, 0, rules.getInt("MaxPlayers"), 2 };
+        team = new Team[] { new Team(0), new Team(1) };
     }
 
     /** Handles the PlayerDeath event **/
@@ -383,6 +383,7 @@ public class attackbot extends SubspaceBot {
     public void cmd_help(String name) {
         String[] help = {
                 "+-- AttackBot Commands ---------------------------------------------------------------------.",
+                "| !terr                    - Reports location of your team terriers (!t)                    |",
                 "| !cap                     - Claims captain of a team if a team is missing a cap            |",
                 "| !status                  - Displays the current game status                               |",
                 "| !stats                   - Spams the current game stats (same as at the end of the game)  |",
@@ -450,7 +451,9 @@ public class attackbot extends SubspaceBot {
         }
     }
     
-    private String getLocation(int x, int y, boolean team0) {
+    private String getLocation(short x, short y, boolean team0) {
+        if (x == -1 || y == -1)
+            return " location unknown";
         final int SPAWN = 0;
         final int LEFT = 1;
         final int RIGHT = 2;
@@ -466,11 +469,11 @@ public class attackbot extends SubspaceBot {
         int ver = -1;  // center, top, bottom
 
         debug("" + x + " and " + y);
-        if (y > 7904 && y < 87680)
+        if (y > 8000 && y < 8384)
             ver = MIDDLE;
-        else if (y < 7904)
+        else if (y < 8000)
             ver = TOP;
-        else if (y > 87680)
+        else if (y > 8384)
             ver = BOTTOM;
         
         if (x < 7440) {
@@ -488,14 +491,14 @@ public class attackbot extends SubspaceBot {
                 if (ver == MIDDLE)
                     pos = "GOAL ROOM";
                 else if (ver == TOP)
-                    pos = "TOP-RIGHT corner of base";
+                    pos = "NORTH FRONT corner of base";
                 else if (ver == BOTTOM)
-                    pos = "LOWER-RIGHT corner of base";
+                    pos = "SOUTH FRONT corner of base";
             } else if (hor == BACK) {
                 if (ver == TOP)
-                    pos = "UPPER BACK end of base";
+                    pos = "NORTH BACK end of base";
                 else if (ver == BOTTOM) 
-                    pos = "LOWER BACK end of base";
+                    pos = "SOUTH BACK end of base";
                 else
                     pos = "CENTRAL BACK end of base";
             }
@@ -514,15 +517,15 @@ public class attackbot extends SubspaceBot {
                 if (ver == MIDDLE)
                     pos = "GOAL ROOM";
                 else if (ver == TOP)
-                    pos = "TOP-LEFT corner of base";
+                    pos = "NORTH FRONT corner of base";
                 else if (ver == BOTTOM) {
-                    pos = "LOWER-LEFT corner of base";
+                    pos = "SOUTH FRONT corner of base";
                 }
             } else if (hor == BACK) {
                 if (ver == TOP)
-                    pos = "UPPER BACK end of base";
+                    pos = "NORTH BACK end of base";
                 else if (ver == BOTTOM) 
-                    pos = "LOWER BACK end of base";
+                    pos = "SOUTH BACK end of base";
                 else
                     pos = "CENTRAL BACK end of base";
             }
@@ -1117,6 +1120,7 @@ public class attackbot extends SubspaceBot {
             }
         };
         drop.run();
+        s.setShip(8);
         ba.specWithoutLock(ba.getBotName());
         ball.clear();
         ba.setPlayerPositionUpdating(300);
@@ -1453,12 +1457,36 @@ public class attackbot extends SubspaceBot {
     
     private class Terr {
         String name;
-        int x, y;
+        short x, y;
+        long timestamp;
         
         public Terr(String name) {
             x = -1;
             y = -1;
             this.name = name;
+            timestamp = System.currentTimeMillis();
+        }
+        
+        public void update(short x, short y) {
+            this.x = x;
+            this.y = y;
+            timestamp = System.currentTimeMillis();
+        }
+        
+        public String getName() {
+            return name;
+        }
+        
+        public short getX() {
+            return x;
+        }
+        
+        public short getY() {
+            return y;
+        }
+        
+        public long getTimePassed() {
+            return (System.currentTimeMillis() - timestamp) / 1000;
         }
     }
     
@@ -1482,20 +1510,20 @@ public class attackbot extends SubspaceBot {
             players = new HashMap<String, Integer>();
             stats = new HashMap<String, Attacker>();
             oldStats = new LinkedList<Attacker>();
-            terrs = new Terr[] { null, null };
+            terrs = new Terr[SHIP_LIMITS[4]];
+            for (int i = 0; i < terrs.length; i++)
+                terrs[i] = null;
             score = 0;
             ready = false;
             pick = false;
         }
         
-        public void updateTerr(String name, int x, int y) {
-            if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(name)) {
-                terrs[0].x = x;
-                terrs[0].y = y;
-            } else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(name)) {
-                terrs[1].x = x;
-                terrs[1].y = y;
-            } else
+        public void updateTerr(String name, short x, short y) {
+            if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(name))
+                terrs[0].update(x, y);
+            else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(name))
+                terrs[1].update(x, y);
+            else
                 debug("Error: " + name + " not found in terrs");
         }
         
@@ -1749,6 +1777,13 @@ public class attackbot extends SubspaceBot {
                             terrs[1] = new Terr(name);
                         else
                             terrs[0] = new Terr(name);
+                    } else if (players.get(p) != null && players.get(p) == 5) {
+                        if (terrs[0] != null && terrs[0].name.equalsIgnoreCase(p))
+                            terrs[0] = null;
+                        else if (terrs[1] != null && terrs[1].name.equalsIgnoreCase(p))
+                            terrs[1] = null;
+                        else
+                            debug("Could not find terr " + p + " to remove.");
                     }
                     ba.setShip(name, ship);
                     ba.sendArenaMessage(name + " changed from ship " + players.get(p) + " to ship " + ship);
@@ -1823,13 +1858,11 @@ public class attackbot extends SubspaceBot {
                 team0 = true;
             
             String msg = "";
-            if (terrs[0] != null) {
-                msg = getLocation(terrs[0].x, terrs[0].y, team0);
-                ba.sendPrivateMessage(name, terrs[0].name + msg);
-            }
-            if (terrs[1] != null) {
-                msg = getLocation(terrs[1].x, terrs[1].y, team0);
-                ba.sendPrivateMessage(name, terrs[1].name + msg);
+            for (int i = 0; i < terrs.length; i++) {
+                if (terrs[i] != null) {
+                    msg = getLocation(terrs[i].getX(), terrs[i].getY(), team0);
+                    ba.sendPrivateMessage(name, terrs[i].getName() + msg + " [" + terrs[i].getTimePassed() + "s ago]");
+                }
             }
         }
         
@@ -2070,6 +2103,8 @@ public class attackbot extends SubspaceBot {
             oldStats.clear();
             ships = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
             ready = false;
+            for (int i = 0; i < terrs.length; i++)
+                terrs[i] = null;
             ba.setFreqtoFreq(freq, SPEC_FREQ);
         }
     }
