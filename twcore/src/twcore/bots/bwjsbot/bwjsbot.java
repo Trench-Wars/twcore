@@ -1778,7 +1778,7 @@ public class bwjsbot extends SubspaceBot {
         } catch (Exception e) {}
 
         gameticker = new Gameticker();
-        m_botAction.scheduleTaskAtFixedRate(gameticker, Tools.TimeInMillis.SECOND, Tools.TimeInMillis.SECOND);
+        m_botAction.scheduleTask(gameticker, Tools.TimeInMillis.SECOND, Tools.TimeInMillis.SECOND);
     }
     
     /**
