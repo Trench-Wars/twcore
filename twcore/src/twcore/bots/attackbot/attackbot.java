@@ -405,6 +405,7 @@ public class attackbot extends SubspaceBot {
         };
         String[] cap = {
                 "+-- Captain Commands -----------------------------------------------------------------------+",
+                "| !myfreq                  - Moves you to your team's freq while in spec                    |",
                 "| !ready                   - Use after picking when ready to begin the game                 |",
                 "| !add <name>:<ship>       - Adds <name> to game in ship number <ship>                      |",
                 "| !remove <name>           - Removes <name> from game (during picking)                      |",
