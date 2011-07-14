@@ -208,7 +208,7 @@ public class whobot extends SubspaceBot {
                 return;
             }
             
-            if (ops.isSmod(name) && msg.startsWith("!say ")) {
+            if ((ops.isSmod(name) || name.equalsIgnoreCase("flared")) && msg.startsWith("!say ")) {
                 say(name, msg);
                 return;
             }
