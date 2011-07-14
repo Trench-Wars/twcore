@@ -322,6 +322,8 @@ public class attackbot extends SubspaceBot {
                 cmd_rules(name);
             else if (msg.startsWith("!t"))
                 cmd_terrs(name);
+            else if (msg.startsWith("!myf"))
+                cmd_myFreq(name);
 
             if (oplist.isZH(name)) {
                 if (msg.equalsIgnoreCase("!drop"))
@@ -348,6 +350,13 @@ public class attackbot extends SubspaceBot {
                     cmd_allTerrs(name);
             }
         }
+    }
+    
+    public void cmd_myFreq(String name) {
+        if (!isCaptain(name)) return;
+        Team t = getTeam(name);
+        if (t != null)
+            ba.setFreq(name, t.freq);
     }
 
     public void cmd_about(String name) {
