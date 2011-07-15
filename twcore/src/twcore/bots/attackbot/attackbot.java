@@ -41,8 +41,7 @@ public class attackbot extends SubspaceBot {
     public BotSettings rules;
     private Objset scoreboard; 
     private Ball ball;
-    private int[] attack; // attack arena coords
-    private int[] attack2; // attack2 arena coords
+    private int[] safes;
     private int goals, pick, gameTime;
     private boolean autoMode; // if true then game is run with caps who volunteer via !cap
     private boolean timed;
@@ -112,9 +111,8 @@ public class attackbot extends SubspaceBot {
     public void handleEvent(LoggedOn event) {
         ba.joinArena(ba.getBotSettings().getString("InitialArena"));
         state = WAITING;
-        attack = new int[] { 478, 511, 544, 511 };
-        attack2 = new int[] { 475, 512, 549, 512 };
         goals = rules.getInt("Goals");
+        safes = rules.getIntArray("Safes", ",");
         SHIP_LIMITS = rules.getIntArray("Ships", ",");
         if (SHIP_LIMITS.length != 8)
             SHIP_LIMITS = new int[] { 1, 1, rules.getInt("MaxPlayers"), 0, 2, 0, rules.getInt("MaxPlayers"), 2 };
@@ -1857,19 +1855,12 @@ public class attackbot extends SubspaceBot {
                 getPlayerStats(name).addDeath();
             }
         }
-        
+
         public void teamWarp() {
-            if (ba.getArenaName().equalsIgnoreCase("attack")) {
-                if (freq == 0)
-                    ba.warpFreqToLocation(freq, attack[0], attack[1]);
-                else
-                    ba.warpFreqToLocation(freq, attack[2], attack[3]);
-            } else {
-                if (freq == 0)
-                    ba.warpFreqToLocation(freq, attack2[0], attack2[1]);
-                else
-                    ba.warpFreqToLocation(freq, attack2[2], attack2[3]);
-            }
+            if (freq == 0)
+                ba.warpFreqToLocation(freq, safes[0], safes[1]);
+            else
+                ba.warpFreqToLocation(freq, safes[2], safes[3]);
         }
         
         /** Used by the current captain to remove themselves from captain **/
