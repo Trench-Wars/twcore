@@ -56,6 +56,13 @@ public class attackbot extends SubspaceBot {
     
     private MasterControl mc;
     
+    // Objons
+    public static final int TEN_SECONDS = 1;
+    public static final int FIVE_SECONDS = 2;
+    public static final int GOGOGO = 3;
+    public static final int GAMEOVER = 4;
+    public static final int SUDDENDEATH = 833;
+    
     // Bot states
     public int state;
     public static final int OFF = -1;
@@ -211,7 +218,8 @@ public class attackbot extends SubspaceBot {
                         ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
                         ba.resetFlagGame();
                         warpTeams();
-                        dropBall();            
+                        dropBall();
+                        mc.announceTimeLeft();
                     }
                 }
             };
@@ -351,13 +359,6 @@ public class attackbot extends SubspaceBot {
             }
         }
     }
-    
-    public void cmd_myFreq(String name) {
-        if (!isCaptain(name)) return;
-        Team t = getTeam(name);
-        if (t != null)
-            ba.setFreq(name, t.freq);
-    }
 
     public void cmd_about(String name) {
         String[] about = { 
@@ -460,6 +461,13 @@ public class attackbot extends SubspaceBot {
             ba.setFreq(name, NP_FREQ);
             ba.sendPrivateMessage(name, "You have been added to not playing. Captains will not be able to add you. If you wish to return, do !notplaying again.");
         }
+    }
+    
+    public void cmd_myFreq(String name) {
+        if (!isCaptain(name)) return;
+        Team t = getTeam(name);
+        if (t != null)
+            ba.setFreq(name, t.freq);
     }
     
     private String getLocation(short x, short y, boolean team0) {
@@ -1206,7 +1214,7 @@ public class attackbot extends SubspaceBot {
         private void preGame() {
             timer--;
             if (timer == 5)
-                ba.showObject(2);
+                ba.showObject(FIVE_SECONDS);
             if (timer < 1)
                 runGame();
         }
@@ -1259,14 +1267,14 @@ public class attackbot extends SubspaceBot {
             team[1].pick = false;
             state = STARTING;
             timer = 10;
-            ba.showObject(1);
+            ba.showObject(TEN_SECONDS);
             ba.sendArenaMessage("Both teams are ready, game will start in 10 seconds!", 1);
         }
 
         /** Starts the game after reseting ships and scores **/
         public void runGame() {
             scoreboard = ba.getObjectSet();
-            ba.showObject(3);
+            ba.showObject(GOGOGO);
             team[0].score = 0;
             team[1].score = 0;
             warpTeams();
@@ -1300,6 +1308,7 @@ public class attackbot extends SubspaceBot {
                 if (wins < 0) {
                     ba.setTimer(0);
                     suddenDeath = true;
+                    ba.showObject(SUDDENDEATH);
                     ba.sendArenaMessage("NOTICE: End of regulation period -- Score TIED -- BEGIN SUDDEN DEATH", Tools.Sound.SCREAM);
                 } else {
                     ba.setTimer(0);
@@ -1397,6 +1406,17 @@ public class attackbot extends SubspaceBot {
             
             //Display everything
             ba.setObjects();
+        }
+        
+        public void announceTimeLeft() {
+            if (timed && timer > 0) {
+                int sec = timer % 60;
+                int min = (timer - sec) / 60;
+                if (min > 0)
+                    ba.sendArenaMessage("Time Left: " + min + " minutes " + sec + " seconds", 1);
+                else
+                    ba.sendArenaMessage("Time Left: " + min + " minutes " + sec + " seconds", 1);
+            }
         }
     }
     
