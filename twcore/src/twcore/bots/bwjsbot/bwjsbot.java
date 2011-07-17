@@ -340,8 +340,9 @@ public class bwjsbot extends SubspaceBot {
     public void handleEvent(WeaponFired event) {
         if (state.getCurrentState() == BWJSState.GAME_IN_PROGRESS) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
+            if (name == null) return;
             BWJSTeam t = getTeam(name);
-            if (name == null || t == null) return;
+            if (t == null) return;
             
             t.weaponFired(name, event.getWeaponType());
         }
@@ -3219,7 +3220,7 @@ public class bwjsbot extends SubspaceBot {
          * 
          * @return string containing a double value or a dash if not applicable
          */
-        private String getRPD() {
+        public String getRPD() {
             double reps = getRepels();
             double deaths = p_ship[Tools.Ship.SHARK][DEATHS];
             if (reps > 0 && deaths > 0)
@@ -3228,7 +3229,7 @@ public class bwjsbot extends SubspaceBot {
                 return Tools.rightString("0.0", 3);
             else if (reps > 0 && deaths == 0)
                 return Tools.rightString("" + ((int) reps), 3);
-            else return "  -  ";
+            else return " - ";
         }
         
         /**
@@ -3236,8 +3237,11 @@ public class bwjsbot extends SubspaceBot {
          * 
          * @return sum of repels
          */
-        private int getRepels() {
-            return p_ship[Tools.Ship.SHARK][REPELS_USED];
+        public int getRepels() {
+            if (p_ship[Tools.Ship.SHARK][USED] == 1)
+                return p_ship[Tools.Ship.SHARK][REPELS_USED];
+            else
+                return 0;
         }
         
         /**
