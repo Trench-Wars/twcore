@@ -63,16 +63,16 @@ public class robohelp extends SubspaceBot {
     String              lastHelpRequestName = null;
     String              lastNewPlayerName = "";
 
-    final String        mySQLHost = "website";
-    Vector<EventData>   eventList = new Vector<EventData>();
+    final String mySQLHost = "website";
+    Vector<EventData> eventList = new Vector<EventData>();
     TreeMap<String, EventData> events = new TreeMap<String, EventData>();
-    Vector<EventData>   callList = new Vector<EventData>();
+    Vector<EventData> callList = new Vector<EventData>();
     Vector<NewPlayer> newbs = new Vector<NewPlayer>();
-    HashMap<String,String> banned = new HashMap<String,String>();
+    HashMap<String, String> banned = new HashMap<String, String>();
     LinkedList<String> alert = new LinkedList<String>(); // new player alert pms
-    Vector<String> newbNames = new Vector<String>(); // holds last 20 new players
+    Vector<String> newbNames = new Vector<String>(); // holds last 20 new
+                                                     // players
     TreeMap<String, NewPlayer> newbHistory = new TreeMap<String, NewPlayer>();
-    
 
     /** Wing's way */
     TreeMap<Integer, HelpRequest> helpList = new TreeMap<Integer, HelpRequest>();
@@ -81,10 +81,11 @@ public class robohelp extends SubspaceBot {
     long lastAlert;
     int callsUntilAd = 7;
     int currentID = 1;
-    String				findPopulation = "";
-	int					setPopID = -1;
+    String findPopulation = "";
+    int setPopID = -1;
+    boolean timeFormat = false;
 
-	String	 			lastStafferClaimedCall;
+    String lastStafferClaimedCall;
 
     public robohelp( BotAction botAction ){
         super( botAction );
@@ -137,6 +138,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!hosted", acceptedMessages, this, "handleDisplayHosted", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!false", acceptedMessages, this, "handleFalseNewb", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!alert", acceptedMessages, this, "toggleAlert", OperatorList.ZH_LEVEL );
+        m_commandInterpreter.registerCommand( "!time", acceptedMessages, this, "changeTimeFormatP", OperatorList.ZH_LEVEL );
         
         // Smod
         m_commandInterpreter.registerCommand( "!say", acceptedMessages, this, "handleSay", OperatorList.SMOD_LEVEL );
@@ -167,6 +169,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!dictionary", acceptedMessages, this, "handleDictionary", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!thesaurus", acceptedMessages, this, "handleThesaurus", OperatorList.ZH_LEVEL );
         m_commandInterpreter.registerCommand( "!javadocs", acceptedMessages, this, "handleJavadocs", OperatorList.ZH_LEVEL );
+        m_commandInterpreter.registerCommand( "!time", acceptedMessages, this, "changeTimeFormatC", OperatorList.ZH_LEVEL );
         
 		if (!m_strictOnIts)
             m_commandInterpreter.registerDefaultCommand( acceptedMessages, this, "handleChat" );
@@ -1593,8 +1596,39 @@ public class robohelp extends SubspaceBot {
         return str;
     }
     
+    private String getTimeString(long time) {
+        if (timeFormat) {
+            DateFormat f = new SimpleDateFormat("HH:mm");
+            return f.format(time);
+        } else {
+            time /= 1000;
+            int hour = ((int) (time / 60 / 60) % 60);
+            time -= (hour * 60 * 60);
+            int min = ((int) time / 60) % 60;
+            time -= (min * 60);
+            String t = "";
+            if (hour > 0)
+                t += "" + hour + ":";
+            return t + min + "." + time + "";
+        }
+    }
+    
+    public void changeTimeFormatC(String name, String msg) {
+        timeFormat = !timeFormat;
+        if (timeFormat)
+            m_botAction.sendChatMessage("Call list time format changed to birthdate. (HH:mm)");
+        else
+            m_botAction.sendChatMessage("Call list time format changed to time passed. (H:m.s)");
+    }
+
+    public void changeTimeFormatP(String name, String msg) {
+        if (timeFormat)
+            m_botAction.sendSmartPrivateMessage(name, "Call list time format changed to birthdate. (HH:mm)");
+        else
+            m_botAction.sendSmartPrivateMessage(name, "Call list time format changed to time passed. (H:m.s)");
+    }
+    
     public void handleCalls(String name, String message) {
-        DateFormat t = new SimpleDateFormat("HH:mm");
         int count;
         try {
             count = Integer.valueOf(message);
@@ -1605,20 +1639,21 @@ public class robohelp extends SubspaceBot {
         if (helpList.size() < count)
             count = helpList.size();
         
-        if (count > 40)
-            count = 40;
+        if (count > 60)
+            count = 60;
         
         if (count > 0) {
-            m_botAction.sendSmartPrivateMessage(name, "Last " + count + " calls:");
+            if (timeFormat)
+                m_botAction.sendSmartPrivateMessage(name, "Last " + count + " calls:");
+            else
+                m_botAction.sendSmartPrivateMessage(name, "(Age) Last " + count + " calls:");
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = t.format(call.getTime()) + " #" + call.getID();
+                String msg = getTimeString(call.getTime()) + " #" + call.getID() + " -";
                 if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
                     int ct = call.getClaimType();
                     String taker = call.getTaker();
-                    if (taker.equals("24"))
-                        taker = "( . v . )";
                     if (ct == HelpRequest.TAKEN)
                         msg += " (" + taker + ") -";
                     else if (ct == HelpRequest.MINE || call.getTaker().equals("RoboHelp"))
