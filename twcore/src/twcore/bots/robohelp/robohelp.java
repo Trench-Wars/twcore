@@ -1646,11 +1646,11 @@ public class robohelp extends SubspaceBot {
             if (timeFormat)
                 m_botAction.sendSmartPrivateMessage(name, "Last " + count + " calls:");
             else
-                m_botAction.sendSmartPrivateMessage(name, "(Age) Last " + count + " calls:");
+                m_botAction.sendSmartPrivateMessage(name, "(Time passed) Last " + count + " calls:");
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = getTimeString(call.getTime()) + " #" + call.getID() + " -";
+                String msg = getTimeString(System.currentTimeMillis() - call.getTime()) + " #" + call.getID() + " -";
                 if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
                     int ct = call.getClaimType();
                     String taker = call.getTaker();
