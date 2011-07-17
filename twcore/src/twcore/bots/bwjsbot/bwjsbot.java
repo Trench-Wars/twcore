@@ -3239,7 +3239,7 @@ public class bwjsbot extends SubspaceBot {
          */
         public int getRepels() {
             if (p_ship[Tools.Ship.SHARK][USED] == 1)
-                return p_ship[Tools.Ship.SHARK][REPELS_USED];
+                return (p_ship[Tools.Ship.SHARK][REPELS_USED]/2);
             else
                 return 0;
         }
