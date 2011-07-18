@@ -99,7 +99,7 @@ public class attackbot extends SubspaceBot {
         events.request(EventRequester.PLAYER_POSITION);
         notplaying  = new LinkedList<String>();
         lagouts = new LinkedList<String>();
-        autoMode = true;
+        autoMode = false;
         pastStats = null;
         timed = true;
         gameTime = 10;
@@ -147,9 +147,12 @@ public class attackbot extends SubspaceBot {
             name = ba.getPlayerName(event.getPlayerID());
         if (name == null) return;
         
-        if (state == WAITING)
-            ba.sendPrivateMessage(name, "A new game will begin after two players PM me with !cap");
-        else if (state == PICKING) {
+        if (state == WAITING) {
+            if (autoMode)
+                ba.sendPrivateMessage(name, "A new game will begin after two players PM me with !cap");
+            else
+                ba.sendPrivateMessage(name, "Request a new game with '?help start attack please'");
+        } else if (state == PICKING) {
             String msg = "A game is about to start. ";
             if (team[0].cap != null)
                 msg += team[0].cap + " and ";
