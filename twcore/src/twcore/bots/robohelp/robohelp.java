@@ -1647,20 +1647,20 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = getTimeString(System.currentTimeMillis() - call.getTime()) + " #" + call.getID() + " -";
+                String msg = getTimeString(System.currentTimeMillis() - call.getTime()) + " #" + call.getID() + " ";
                 if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
                     int ct = call.getClaimType();
                     String taker = call.getTaker();
                     if (ct == HelpRequest.TAKEN)
-                        msg += " (" + taker + ") -";
+                        msg += "- (" + taker + ") -";
                     else if (ct == HelpRequest.MINE || call.getTaker().equals("RoboHelp"))
-                        msg += " [" + taker + "] -";
+                        msg += "- [" + taker + "] -";
                     else if (ct == HelpRequest.FORGOT)
-                        msg += " " + taker + " -";
+                        msg += "- " + taker + " -";
                     else if (ct == HelpRequest.CLEAN)
-                        msg += " " + taker + " -";
+                        msg += "- " + taker + " -";
                 } else if (call.getClaimType() == HelpRequest.FREE)
-                    msg += " * -";
+                    msg += "* -";
                 
                 if (call.getType() == 0 || call.getType() == 1)
                     msg += " help: (";
