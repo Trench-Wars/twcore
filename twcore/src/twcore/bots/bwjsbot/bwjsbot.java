@@ -4978,7 +4978,7 @@ public class bwjsbot extends SubspaceBot {
                         Tools.rightString(Integer.toString(getScore()), 9) + " | " +
                         Tools.rightString(Integer.toString(getFlagsClaimed()), 4) + " | " +
                         Tools.rightString(Integer.toString(getTerrKills()), 4) + " | " +
-                        Tools.rightString(Integer.toString(getRepels()), 3) + " |" +
+                        Tools.rightString(Integer.toString(getRepels()), 3) + " | " +
                         Tools.rightString(Integer.toString(getRating()), 9) + " | " +
                         Tools.rightString(Integer.toString(getLagouts()), 2) + " | ");
                 out.add("+------------------------'        |      |      |           |      |      |     |           |    |");
