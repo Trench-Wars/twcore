@@ -1606,10 +1606,7 @@ public class robohelp extends SubspaceBot {
             time -= (hour * 60 * 60);
             int min = ((int) time / 60) % 60;
             time -= (min * 60);
-            String t = "";
-            if (hour > 0)
-                t += "" + hour + ":";
-            return t + min + "." + time + "";
+            return "" + hour + ":" + min + "." + time + " ago";
         }
     }
     
@@ -1646,7 +1643,7 @@ public class robohelp extends SubspaceBot {
             if (timeFormat)
                 m_botAction.sendSmartPrivateMessage(name, "Last " + count + " calls:");
             else
-                m_botAction.sendSmartPrivateMessage(name, "(Time passed) Last " + count + " calls:");
+                m_botAction.sendSmartPrivateMessage(name, "Last " + count + " calls:");
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
