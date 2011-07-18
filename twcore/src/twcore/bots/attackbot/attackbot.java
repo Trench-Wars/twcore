@@ -85,8 +85,8 @@ public class attackbot extends SubspaceBot {
         super(botAction);
         ba = m_botAction;
         oplist = ba.getOperatorList();
-        events = ba.getEventRequester();
         rules = ba.getBotSettings();
+        events = ba.getEventRequester();
         events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
         events.request(EventRequester.LOGGED_ON);
         events.request(EventRequester.MESSAGE);
@@ -119,7 +119,7 @@ public class attackbot extends SubspaceBot {
         team = new Team[] { new Team(0), new Team(1) };
     }
 
-    /** Handles the PlayerDeath event **/
+    /** Handles the ArenaJoined event **/
     public void handleEvent(ArenaJoined event) {
         scoreboard = ba.getObjectSet();
         ba.setPlayerPositionUpdating(300);
@@ -133,6 +133,8 @@ public class attackbot extends SubspaceBot {
         ba.toggleLocked();
         if (autoMode)
             ba.sendArenaMessage("A new game will begin when two players PM me with !cap -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
+        else
+            ba.sendArenaMessage("Request a new game with '?help start attack please'", Tools.Sound.CROWD_GEE);
         ba.specAll();
         ba.setAlltoFreq(SPEC_FREQ);
         ba.setTimer(0);
@@ -286,7 +288,7 @@ public class attackbot extends SubspaceBot {
         int type = event.getMessageType();
         
         if (type == Message.ARENA_MESSAGE) {
-            if (autoMode && msg.contains("Arena UNLOCKED"))
+            if (msg.contains("Arena UNLOCKED"))
                 ba.toggleLocked();
         }
         
@@ -354,6 +356,8 @@ public class attackbot extends SubspaceBot {
                     cmd_setGoals(name, msg);
                 else if (msg.startsWith("!al"))
                     cmd_allTerrs(name);
+                else if (msg.equalsIgnoreCase("!autocap"))
+                    cmd_autocap(name);
             }
         }
     }
@@ -417,6 +421,7 @@ public class attackbot extends SubspaceBot {
         
         String[] staff = {
                 "+-- Staff Commands -------------------------------------------------------------------------+",
+                "| !autocap                 - Allows/dissallows player set captains                          |",
                 "| !setcap <team>:<name>    - Sets <name> as captain of <team> (0 or 1)                      |",
                 "| !settime <mins>          - Changes game to a timed game to <mins> minutes                 |",
                 "| !setgoals <goals>        - Changes game rules to first to <goals> goals wins              |",
@@ -606,7 +611,7 @@ public class attackbot extends SubspaceBot {
      * @param name
      */
     public void cmd_cap(String name) {
-        if (isCaptain(name)) {
+        if (isCaptain(name) || !autoMode) {
             cmd_caps(name);
             return;
         }
@@ -914,7 +919,7 @@ public class attackbot extends SubspaceBot {
                 ba.sendPrivateMessage(name, "A new game will begin after two players volunteer to captain using !cap");
             else 
                 ba.sendPrivateMessage(name, "There is no game currently running.");
-        } else if (autoMode) {
+        } else if (state == PICKING) {
             String msg = "We are currently picking teams. Captains: ";
             if (team[0].cap != null)
                 msg += team[0].cap;
@@ -926,8 +931,19 @@ public class attackbot extends SubspaceBot {
             else
                 msg += "[needs captain]";
             ba.sendPrivateMessage(name, msg);
+        } else if (state == STARTING) {
+            ba.sendPrivateMessage(name, "We are about to start a new game.");
         }
     }   
+    
+    /** Handles the !autocap command which toggles staff set captains and player set captains **/
+    public void cmd_autocap(String name) {
+        autoMode = !autoMode;
+        if (autoMode)
+            ba.sendPrivateMessage(name, "Captains can now be set by players using !cap.");
+        else
+            ba.sendPrivateMessage(name, "Captains can now only be set by staff.");
+    }
     
     /**
      * Gets the Team object of a player
