@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -1606,7 +1607,16 @@ public class robohelp extends SubspaceBot {
             time -= (hour * 60 * 60);
             int min = ((int) time / 60) % 60;
             time -= (min * 60);
-            return "" + hour + ":" + min + "." + time + " ago";
+            String t = "" + hour + ":";
+            if (min < 10)
+                t += "0" + min + ".";
+            else
+                t += min + ".";
+            if (time < 10)
+                t += "0" + time;
+            else 
+                t += time;
+            return t + "";
         }
     }
     
