@@ -2589,8 +2589,8 @@ public class bwjsbot extends SubspaceBot {
     private void displayScores() {
         ArrayList<String> spam = new ArrayList<String>();
         if (cfg.getGameType() == BWJSConfig.BASE) {
-            spam.add(",---------------------------------+------+------+-----------+------+------+-----------+----+-----.");
-            spam.add("|                               K |    D |   TK |    Points |   FT |  TeK |    Rating | LO | RPD |");
+            spam.add(",---------------------------------+------+------+-----------+------+------+-----+-----------+----.");
+            spam.add("|                               K |    D |   TK |    Points |   FT |  TeK | RPD |    Rating | LO |");
         } else  if (cfg.getGameType() == BWJSConfig.JAVDUEL){
             spam.add(",---------------------------------+------+------+-----------+----.");
             spam.add("|                               K |    D |   TK |    Rating | LO |");
@@ -2602,7 +2602,7 @@ public class bwjsbot extends SubspaceBot {
         spam.addAll(team[0].getScores());
         
         if (cfg.getGameType() == BWJSConfig.BASE) {
-            spam.add("+---------------------------------+------+------+-----------+------+------+-----------+----+-----+");
+            spam.add("+---------------------------------+------+------+-----------+------+------+-----+-----------+----+");
         } else if (cfg.getGameType() == BWJSConfig.JAVDUEL) {
             spam.add("+---------------------------------+------+------+-----------+----+");
         } else {
@@ -2612,7 +2612,7 @@ public class bwjsbot extends SubspaceBot {
         spam.addAll(team[1].getScores());
         
         if (cfg.getGameType() == BWJSConfig.BASE) {
-            spam.add("`---------------------------------+------+------+-----------+------+------+-----------+----+-----'");
+            spam.add("`---------------------------------+------+------+-----------+------+------+-----+-----------+----'");
         } else if (cfg.getGameType() == BWJSConfig.JAVDUEL) {
             spam.add("`---------------------------------+------+------+-----------+----'");
         } else {
@@ -3229,7 +3229,7 @@ public class bwjsbot extends SubspaceBot {
                 return Tools.rightString("0.0", 3);
             else if (reps > 0 && deaths == 0)
                 return Tools.rightString("" + ((int) reps), 3);
-            else return " - ";
+            else return "   ";
         }
         
         /**
@@ -3652,8 +3652,8 @@ public class bwjsbot extends SubspaceBot {
                     break;
                 case Tools.Ship.SHARK : 
                     int tmpShark;
-                    if (getDeaths() != 0)
-                        tmpShark = p_ship[Tools.Ship.SHARK][REPELS_USED] / getDeaths();
+                    if (p_ship[Tools.Ship.SHARK][DEATHS] != 0)
+                        tmpShark = (p_ship[Tools.Ship.SHARK][REPELS_USED]/2) / p_ship[Tools.Ship.SHARK][DEATHS];
                     else
                         tmpShark = 0;
                         
@@ -4969,7 +4969,7 @@ public class bwjsbot extends SubspaceBot {
             ArrayList<String> out = new ArrayList<String>();
             
             if (cfg.getGameType() == BWJSConfig.BASE) {
-                out.add("|                          ,------+------+------+-----------+------+------+-----------+----+-----+");
+                out.add("|                          ,------+------+------+-----------+------+------+-----+-----------+----+");
                 
                 out.add("| " + Tools.formatString(teamName, 23) + " /  " +
                         Tools.rightString(Integer.toString(getKills()), 4) + " | " +
@@ -4978,10 +4978,10 @@ public class bwjsbot extends SubspaceBot {
                         Tools.rightString(Integer.toString(getScore()), 9) + " | " +
                         Tools.rightString(Integer.toString(getFlagsClaimed()), 4) + " | " +
                         Tools.rightString(Integer.toString(getTerrKills()), 4) + " | " +
+                        Tools.rightString(Integer.toString(getRepels()), 3) + " |" +
                         Tools.rightString(Integer.toString(getRating()), 9) + " | " +
-                        Tools.rightString(Integer.toString(getLagouts()), 2) + " | " +
-                        Tools.rightString(Integer.toString(getRepels()), 3) + " |");
-                out.add("+------------------------'        |      |      |           |      |      |           |    |     |");
+                        Tools.rightString(Integer.toString(getLagouts()), 2) + " | ");
+                out.add("+------------------------'        |      |      |           |      |      |     |           |    |");
                 
                 for (BWJSPlayer p : players.values()) {
                     //Sum of all played ships
@@ -4992,9 +4992,9 @@ public class bwjsbot extends SubspaceBot {
                             + Tools.rightString(Integer.toString(p.getTotalScore()), 9) + " | "
                             + Tools.rightString(Integer.toString(p.getFlagsClaimed()), 4) + " | "
                             + Tools.rightString(Integer.toString(p.getTerrKills()), 4) + " | "
+                            + p.getRPD() + " | "
                             + Tools.rightString(Integer.toString(p.getTotalRating()), 9) + " | "
-                            + Tools.rightString(Integer.toString(p.getLagouts()), 2) + " | "
-                            + p.getRPD() + " |");
+                            + Tools.rightString(Integer.toString(p.getLagouts()), 2) + " | ");
                     //Per ship
 //                    for (int i = 0; i < 9; i++) {
 //                        if (p.p_ship[i][BWJSPlayer.USED] == 1) {
