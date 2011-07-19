@@ -249,6 +249,7 @@ public class lasertag extends MultiModule {
             m_botAction.toggleLocked();
 
         m_botAction.setDoors(0xff);
+        m_botAction.changeAllShips(1);
         m_botAction.shipResetAll();
         m_botAction.warpAllRandomly();
         m_botAction.sendArenaMessage("The game will start in 30 seconds, enter to play.");
@@ -261,6 +262,7 @@ public class lasertag extends MultiModule {
         
         m_totalScores[0] = 0;
         m_totalScores[1] = 0;
+        m_botAction.changeAllShips(1);
         m_botAction.shipResetAll();
         m_botAction.scoreResetAll();
         m_botAction.resetFlagGame();
