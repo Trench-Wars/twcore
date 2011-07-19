@@ -174,7 +174,7 @@ public class lasertag extends MultiModule {
         Integer score = m_playerScores.get(killer);
         if(score == null) 
             score = 0;
-        m_playerScores.put(killer, score + m_goalPoints);
+        m_playerScores.put(killer, score + m_totalFlags[freq] * m_killPoints);
     }
 
     public void handleEvent( FlagClaimed event ) {
