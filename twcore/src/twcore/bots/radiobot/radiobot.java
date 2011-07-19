@@ -30,6 +30,7 @@ public final class radiobot extends SubspaceBot {
     private String m_url = "";
     private Poll m_currentPoll = null;
     private boolean m_announcing = false;
+    private boolean m_announcingArena = false;
     private boolean m_someoneHosting = false;
     private boolean m_pub = false;
     private long m_timeStarted;
@@ -204,6 +205,11 @@ public final class radiobot extends SubspaceBot {
                         m_botAction.scheduleTaskAtFixedRate(
                             new AnnounceTask(), 10000, 150000);
                         m_announcing = true;
+                    }
+                    if(!m_announcingArena) {
+                        m_botAction.scheduleTaskAtFixedRate(
+                            new AnnounceArenaTask(), 10000, 300000);
+                        m_announcingArena = true;
                     }
                     m_someoneHosting = true;
                     m_botAction.sendPrivateMessage(id, "You are now the current host. Do not abuse the green messages, or write anything inappropriate. Thanks!");
@@ -625,6 +631,7 @@ public final class radiobot extends SubspaceBot {
         private void unhost(String name) {
             m_botAction.cancelTasks();
             m_announcing = false;
+            m_announcingArena = false;
             m_botAction.sendArenaMessage(m_currentHost + " has signed off the radio, thank you for listening!",5);
             m_botAction.sendChatMessage(m_currentHost +" has finished hosting radio.");
             m_someoneHosting = false;
@@ -889,6 +896,17 @@ public final class radiobot extends SubspaceBot {
             	+ " Questions:" + m_questions.size());
         }
     }
+    
+    private class AnnounceArenaTask extends TimerTask {
+        public void run() {
+            if(m_pub == true){
+                m_botAction.sendArenaMessage("Radio: Host - "+m_currentHost+" - Use !help to RadioBot for commands! - "+(m_url.equals("") ? "" : "  Radio - "+m_url));
+            } else {
+            m_botAction.sendArenaMessage("Current Host: " + m_currentHost
+                + (m_url.equals("") ? "" : "  (To listen, open " + m_url + " in your media player)"));
+            
+            }
+            }}
 
 
     private class RadioQueue {
