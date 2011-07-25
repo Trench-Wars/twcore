@@ -883,14 +883,11 @@ public final class radiobot extends SubspaceBot {
 
     private class AnnounceTask extends TimerTask {
         public void run() {
-            if(m_pub == true){
-                m_botAction.sendArenaMessage("Radio: Host - "+m_currentHost+" - Use !help to RadioBot for commands! - "+(m_url.equals("") ? "" : "  Radio - "+m_url));
-            } else {
             m_botAction.sendArenaMessage("Current Host: " + m_currentHost
             	+ (m_url.equals("") ? "" : "  (To listen, open " + m_url + " in your media player)"));
             for(int i = 0; i < m_announceLength; i++) {
                 m_botAction.sendArenaMessage(m_announcement[i]);
-            }}
+            }
             m_botAction.sendSmartPrivateMessage(m_currentHost,
             	"Shoutouts:" + m_shoutouts.size()
             	+ " Requests:" + m_requests.size()
