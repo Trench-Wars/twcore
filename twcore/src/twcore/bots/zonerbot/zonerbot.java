@@ -155,7 +155,7 @@ public class zonerbot extends SubspaceBot {
                 while (rs.next()) {
                     String en = rs.getString("fcEventName");
                     if (!events.containsKey(en.toLowerCase()))
-                        events.put(en.toLowerCase(), 0);
+                        events.put(en.toLowerCase(), 1);
                     else
                         events.put(en.toLowerCase(), events.get(en.toLowerCase())+1);
                 }
