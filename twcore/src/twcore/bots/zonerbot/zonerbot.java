@@ -1,10 +1,9 @@
 package twcore.bots.zonerbot;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Random;
 import java.util.TimerTask;
-import java.util.Iterator;
-import java.util.StringTokenizer;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -18,1507 +17,518 @@ import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
 
 /**
- * <p>
- * Title:
- * </p>
- * Zonerbot
- * <p>
- * Description:
- * </p>
- * This bot handles zoning for lower staff.
+ * New ZonerBot
  * 
- * To Do: - Add requesting - Create a arena / event list - Add event - Add Arena
- * - Add detailed scorekeeping - Add IPC interface - Add Banning
- * <p>
- * Copyright: Copyright (c) 2004
- * </p>
- * <p>
- * Company:
- * </p>
- * For SSCU Trench Wars
- * 
- * @author Cpt.Guano!
- * @version 1.0
+ * @author WingZero
+ *
  */
 public class zonerbot extends SubspaceBot {
 
+    public BotAction ba;
+    public OperatorList oplist;
+    
     public static final String ZONE_CHANNEL = "Zone Channel";
-    public static final String HOSTNAME = "localhost";
-    public static final String GO_STRING = "?go ";
-    public static final long CLEAR_REQUESTS_DELAY = 10 * 60 * 1000;
-    public static final int LINE_LENGTH = 120;
-    public static final int REQUEST_LIFE_TIME = 120;
-    public static final int NATURAL_LINE_LENGTH = 200;
-    private VectorMap<String, Advert> advertQueue;
-    private VectorMap<Integer, PeriodicZone> PeriodicMsgs;
-    private TimedHashSet<String> recentAdvertList;
-    private VectorMap<String, RequestRecord> requestList;
-    private HashMap<String, String> zhops;
-    private HashMap<String, String> hops;
+    public static final int ADVERT_DELAY = 2;
+    public static final int READVERT_MAX = 2;
+    public static final int EXPIRE_TIME = 2;
+    public static final int EXTENSION = 2;
+    
+    private boolean DEBUG;
+    private String debugger;
+    
     private AdvertTimer advertTimer;
-    private IdleTimer idleTimer;
-    private int advertTime;
-    private int finalAdvertTime;
-    private int idleTime;
-    private int recentAdvertTime;
-    private int maxQueueLength;
-    private boolean isEnabled;
-
-    /**
-     * This method initializes the zonerbot.
-     * 
-     * @param botAction
-     *            is the BotAction instance of the bot.
-     */
+    private ExpireTimer expireTimer;
+    
+    private Vectoid<String, Advert> queue;
+    private ArrayList<Periodic> periodic;
+    private LinkedList<Advert> usedAdverts;
+    private LinkedList<String> trainers;
+    
+    private String currentUser;
+    
     public zonerbot(BotAction botAction) {
         super(botAction);
-        requestEvents();
-        requestList = new VectorMap<String, RequestRecord>();
-        recentAdvertList = new TimedHashSet<String>();
-        advertQueue = new VectorMap<String, Advert>();
-        PeriodicMsgs = new VectorMap<Integer, PeriodicZone>();
-        zhops = new HashMap<String, String>();
-        hops = new HashMap<String, String>();
-        advertTime = 10;
-        finalAdvertTime = 5;
-        idleTime = 5;
-        recentAdvertTime = 5;
-        maxQueueLength = 5;
-        isEnabled = true;
+        ba = m_botAction;
+        oplist = ba.getOperatorList();
+        queue = new Vectoid<String, Advert>();
+        periodic = new ArrayList<Periodic>();
+        trainers = new LinkedList<String>();
+        usedAdverts = new LinkedList<Advert>();
+        currentUser = null;
+        ba.getEventRequester().request(EventRequester.LOGGED_ON);
+        ba.getEventRequester().request(EventRequester.MESSAGE);
+        loadTrainers();
+        DEBUG = false;
+        debugger = "";
     }
 
-    public void handleEvent(Message event) {
-        OperatorList opList = m_botAction.getOperatorList();
-        String sender = getSender(event);
-        String message = event.getMessage();
-        String alertCommandType = event.getAlertCommandType();
-        int messageType = event.getMessageType();
-
-        try {
-            if (sender != null) {
-                if (opList.isOwner(sender)) {
-                    handleOwnerCommands(sender, message, messageType);
-                }
-                if (opList.isSmod(sender)) {
-                    handleSmodCommands(sender, message, messageType);
-                }
-                if (hops.containsKey(sender.toLowerCase())) {
-                    handleHopsCommands(sender, message, messageType);
-                }
-                if (opList.isSmod(sender) || zhops.containsKey(sender.toLowerCase())) {
-                    handleOpCommands(sender, message, messageType);
-                }
-                if (opList.isER(sender) || advertQueue.containsKey(sender.toLowerCase())) {
-                    handleERCommands(sender, message, messageType, alertCommandType);
-                }
-                if (opList.isZH(sender)) {
-                    handleZHCommands(sender, message, messageType);
-                }
-            }
-            if (messageType == Message.ARENA_MESSAGE) {
-                handleArenaMessage(message);
-            }
-        } catch (Exception e) {
-            m_botAction.sendSmartPrivateMessage(sender, e.getMessage());
-        }
+    /** Handles the LoggedOn event **/
+    public void handleEvent(LoggedOn event) {
+        ba.joinArena(ba.getBotSettings().getString("InitialArena"));
+        ba.sendUnfilteredPublicMessage("?chat=robodev");
     }
-
-    private void handleZHCommands(String sender, String message, int messageType) {
-
-        String command = message.toLowerCase();
-
-        if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
-            if (command.startsWith("!request ")) {
-                doRequestCmd(sender, message.substring(9).trim());
-            }
-            if (command.equals("!requested")) {
-                doRequestedCmd(sender);
-            }
-            if (command.startsWith("!delrequest ")) {
-                doDelRequestCmd(sender, message.substring(12).trim());
-            }
-            if (command.equals("!help")) {
-                doZHHelpCmd(sender);
-            }
-        }
-    }
-
-    private void doZHHelpCmd(String sender) {
-        {
-            String message[] = {"=========================================== ZH Commands ============================================", "!Request <Requester>:<Request>     -- Adds the hosting request, <Request> made by <Requester> to the", "                                      request list.", "!Requested                         -- Displays all events requested in the past hour.", "!DelRequest <Requester>            -- Removes the request of <Requester> from the request list.", "!Help                              -- Displays this help message."};
-
-            m_botAction.smartPrivateMessageSpam(sender, message);
-        }
-
-    }
-
-    private void doDelRequestCmd(String sender, String argString) {
-        String requester = argString.toLowerCase();
-
-        if (!requestList.containsKey(requester)) {
-            throw new IllegalArgumentException("No request was made by " + argString + ".");
-        }
-        requestList.remove(requester);
-        m_botAction.sendSmartPrivateMessage(sender, "Request made by " + argString + " was removed.");
-
-    }
-
-    private void doRequestedCmd(String sender) {
-        RequestRecord requestRecord;
-
-        if (requestList.isEmpty()) {
-            m_botAction.sendSmartPrivateMessage(sender, "No events have been requested.");
-        }
-
-        for (int index = 0; index < requestList.size(); index++) {
-            requestRecord = (RequestRecord) requestList.get(index);
-            m_botAction.sendSmartPrivateMessage(sender, requestRecord.toString());
-        }
-
-    }
-
-    private void doRequestCmd(String sender, String argString) {
-        StringTokenizer argTokens = new StringTokenizer(argString, ":");
-        RequestRecord requestRecord;
-        String requester;
-        String request;
-
-        if (argTokens.countTokens() != 2) {
-            throw new IllegalArgumentException("Please use the following format: !Request <Requester>:<Event>");
-        }
-        requester = argTokens.nextToken();
-        request = argTokens.nextToken();
-
-        requestRecord = new RequestRecord(requester, request);
-
-        if (requestList.containsKey(requester.toLowerCase())) {
-            m_botAction.sendSmartPrivateMessage(sender, "Previous request replaced.");
-        } else {
-            m_botAction.sendSmartPrivateMessage(sender, "Request added.");
-        }
-        requestList.put(requester.toLowerCase(), requestRecord);
-
-    }
-
-    // This is to catch any IPC events though none of them need to be catched to
-    // do something with the results
+    
+    /** Handles the IPC event even though it is useless **/
     public void handleEvent(InterProcessEvent event) {
     }
-
-    /**
-     * This private method handles all of the ER commands.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param message
-     *            is the message that was sent.
-     * @param messageType
-     *            is the type of message that was sent.
-     * @param alertCommandType
-     *            is the message's alert command type (i.e. ?advert).
-     */
-    private void handleERCommands(String sender, String message,
-            int messageType, String alertCommandType) {
-        String command = message.toLowerCase();
-
-        if (isEnabled) {
-            if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
-                if (command.equals("!adv") || command.equals("!advert")) {
-                    doAdvertCmd(sender);
-                }
-                if (command.startsWith("!adv ")) {
-                    doOldAdvertCmd(sender, message.substring(5).trim());
-                }
-                if (command.startsWith("!advert ")) {
-                    doOldAdvertCmd(sender, message.substring(8).trim());
-                }
-                if (command.startsWith("!readvert ")) {
-                    doFinalAdvertCmd(sender, message.substring(10).trim(), command.substring(10).trim(), messageType);
-                }
-                if (command.startsWith("!setadvert ")) {
-                    doSetAdvertCmd(sender, message.substring(11).trim());
-                }
-                if (command.startsWith("!setsound ")) {
-                    doSetSoundCmd(sender, message.substring(10).trim());
-                }
-                if (command.equals("!viewadvert")) {
-                    doViewAdvertCmd(sender);
-                }
-                if (command.equals("!random")) {
-                    throw new RuntimeException("Function not implemented yet.");
-                }
-                if (command.startsWith("!random ")) {
-                    throw new RuntimeException("Function not implemented yet.");
-                }
-                if (command.equals("!clearadvert")) {
-                    doClearAdvertCmd(sender);
-                }
-                if (command.equals("!claim")) {
-                    doClaimCmd(sender, false);
-                }
-                if (command.equals("!free")) {
-                    doFreeCmd(sender);
-                }
-                if (command.equals("!status")) {
-                    doStatusCmd(sender);
-                }
-                if (command.equals("!help")) {
-                    doERHelpCmd(sender);
-                }
+    
+    /** Handles the Message event **/
+    public void handleEvent(Message event) {
+        String name = event.getMessager();
+        if (name == null || name.length() < 1)
+            name = ba.getPlayerName(event.getPlayerID());
+        String msg = event.getMessage();
+        int type = event.getMessageType();
+        
+        if (type == Message.ALERT_MESSAGE && event.getAlertCommandType().equals("advert") && oplist.isER(name)) {
+            if (msg.toLowerCase().contains("free"))
+                cmd_free(name);
+            else
+                cmd_claim(name);
+        }
+        
+        if (type == Message.ARENA_MESSAGE && currentUser != null && msg.startsWith("Not online, last seen")) {
+            debug("currentUser " + currentUser + " is not online");
+            removeMissing();
+        }
+        
+        if (type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.PRIVATE_MESSAGE) {
+            if (oplist.isZH(name)) {
+                if (msg.equals("!status"))
+                    cmd_status(name);
+                else if (msg.equals("!claim"))
+                    cmd_claim(name);
+                else if (msg.equals("!free"))
+                    cmd_free(name);
+                else if (msg.startsWith("!set "))
+                    cmd_setAdvert(name, msg);
+                else if (msg.startsWith("!sound "))
+                    cmd_setSound(name, msg);
+                else if (msg.startsWith("!view"))
+                    cmd_view(name, msg);
+                else if (msg.equals("!advert"))
+                    cmd_advert(name);
+                else if (msg.equals("!readvert"))
+                    cmd_readvert(name);
+                else if (msg.equals("!renew"))
+                    cmd_renew(name);
+                else if (msg.equals("!help"))
+                    cmd_help(name);
             }
-            if (messageType == Message.ALERT_MESSAGE && alertCommandType.equals("advert")) {
-                if (command.indexOf("free") != -1) {
-                    doFreeCmd(sender);
-                } else {
-                    doClaimCmd(sender, false);
-                }
+            if (oplist.isHighmod(name) || trainers.contains(name.toLowerCase())) {
+                if (msg.startsWith("!grant "))
+                    cmd_grant(name, msg);
+                else if (msg.startsWith("!approve"))
+                    cmd_approve(name, msg);
+                else if (msg.equals("!debug"))
+                    cmd_debug(name);
+                else if (msg.equals("!die"))
+                    cmd_die(name);
+            }
+            if (oplist.isSmod(name)) {
+                if (msg.startsWith("!add "))
+                    cmd_add(name, msg);
+                else if (msg.startsWith("!remove "))
+                    cmd_remove(name, msg);
+                else if (msg.equals("!list"))
+                    cmd_list(name);
             }
         }
     }
-
-    private void doFinalAdvertCmd(String sender, String arena, String argString, int soundCode) {
-        StringTokenizer argTokens = new StringTokenizer(argString, ":");
-
-        if (argTokens.countTokens() == 2) {
-            event(sender, argString, soundCode);
-        } else {
-            String hi = sender.toLowerCase();
-            Random rand = new Random();
-            String event = arena.toUpperCase();
-            Advert hey = advertQueue.get(hi);
-            String Zoners[] = {
-                "Last call for " + event + "." + " Type ?go " + event + " to play. -" + sender, "The event " + event + " is starting. Type ?go " + event + " to play. -" + sender
+    
+    /** Handles the !help command **/
+    public void cmd_help(String name) {
+        String[] msg = {
+                "+-- zonerbot Commands ------------------------------------------------------------------------.",
+                "| !status                - Reports your current advert status                                 |",
+                "| !claim                 - Claims an advert by adding you to the advert queue                 |",
+                "| !free                  - Releases your advert and removes you from the queue                |",
+                "| !grant <name>          - Grants an advert to a ZH allowing them to do a zoner once approved |",
+                "| !approve               - Allows the earliest ZH you granted an advert to zone               |",
+                "| !approve <name>        - Allows <name> to zone the advert that was granted                  |",
+                "| !set <message>         - Sets <message> as the advert message and must include ?go arena    |",
+                "| !sound <#>             - Sets <#> as the sound to be used in the advert                     |",
+                "| !view                  - Views your current advert message and sound                        |",
+                "| !view <name>           - Views the current advert message and sound of <name>               |",
+                "| !advert                - Sends the zone message as set by the advert                        |",
+                "| !readvert              - Sends a last call default advert for the arena in your !advert     |",
+        };
+        ba.smartPrivateMessageSpam(name, msg);
+        
+        if (oplist.isSmod(name)) {
+            msg = new String[] {
+                    "+-- zonerbot Smod Commands -------------------------------------------------------------------+",
+                    "| !list                  - List of the current staff trainers                                 |",
+                    "| !add <name>            - Adds <name> to the trainer list (allows zh advert granting)        |",
+                    "| !remove <name>         - Removes <name> from the trainer list                               |",
             };
-
-            if (hey != advertQueue.firstValue()) {
-                throw new RuntimeException("Someone else holds the key to your advert :(.");
-            }
-            if (event.contains(" ")) {
-                throw new RuntimeException("Please do NOT add spaces or words after your arena/event name.");
-            }
-            if (hey == null) {
-                throw new RuntimeException("Nice try! Please claim an advert first.");
-            }
-            if (!hey.readvert()) {
-                throw new RuntimeException("You must have already zoned your first advert to readvert.");
-            }
-            int die = rand.nextInt(Zoners.length);
-            m_botAction.sendZoneMessage(Zoners[die], 1);
-            m_botAction.sendSmartPrivateMessage(hi, "Well, That's all I can do for you now. Please get SMod+ authority to !advert again.");
-            setAdvertTimer(finalAdvertTime * 60 * 1000);
-            recentAdvertList.add(sender, recentAdvertTime * 60 * 1000);
-            removeFromQueue(0);
+            ba.smartPrivateMessageSpam(name, msg);
         }
+        ba.sendSmartPrivateMessage(name, "`---------------------------------------------------------------------------------------------'");
     }
+    
+    /** Handles the !add trainer command **/
+    public void cmd_add(String name, String cmd) {
+        if (cmd.length() < 5) return;
+        String staff = cmd.substring(5).trim().toLowerCase();
+        if (!trainers.contains(name)) {
+            BotSettings settings = ba.getBotSettings();
+            String ops = settings.getString("Trainers");
 
-    private void event(String sender, String argString, int soundCode) {
-        StringTokenizer argTokens = new StringTokenizer(argString, ":");
-        String arena = argTokens.nextToken();
-        String kind = argTokens.nextToken();
-        String hi = sender.toLowerCase();
-        Random rand = new Random();
-        String event = arena.toUpperCase();
-        String of = kind.toUpperCase();
-        Advert hey = advertQueue.get(hi);
-        String Zoners[] = {
-            "Last call for " + of + " in " + event + ". Type ?go " + event + " to play. -" + sender, "The event " + of + " is about to start in ?go " + event + " -" + sender
-        };
-
-        if (hey != advertQueue.firstValue()) {
-            throw new RuntimeException("Someone else holds the key to your advert :(.");
-        }
-        if (hey == null) {
-            throw new RuntimeException("Nice try! Please claim an advert first.");
-        }
-        if (hey.getStage() == Advert.INITIAL) {
-            throw new RuntimeException("You must have already zoned your first advert to readvert.");
-        }
-        if (hey.getStage() == Advert.DONE) {
-            throw new RuntimeException("You have used all available zoners.");
-        }
-        int die = rand.nextInt(Zoners.length);
-        m_botAction.sendZoneMessage(Zoners[die], 1);
-        m_botAction.sendSmartPrivateMessage(hi, "Well, That's all I can do for you now. Please get SMod+ authority to !advert again.");
-        setAdvertTimer(finalAdvertTime * 60 * 1000);
-        recentAdvertList.add(sender, recentAdvertTime * 60 * 1000);
-        removeFromQueue(0);
-
-        // TODO Auto-generated method stub
-
-    }
-
-    /**
-     * This method performs the !advert command.
-     * 
-     * @param sender
-     *            is the person sending the command.
-     */
-    private void doAdvertCmd(String sender) {
-        String lowerSender = sender.toLowerCase();
-        Advert advert = advertQueue.get(lowerSender);
-
-        if (advert == null) {
-            throw new RuntimeException("You must claim an advert first.");
-        }
-        if (advert != advertQueue.firstValue()) {
-            throw new RuntimeException("It is not your turn to advert.");
-        }
-        if (!advert.canZone()) {
-            throw new RuntimeException("Your advert has not been approved yet.  Please get a moderator to approve your advert.");
-        }
-        if (advert.getAdvert().length() == 0) {
-            throw new RuntimeException("You must enter a message to advert.");
-        }
-        if (!advertTimer.isExpired()) {
-            throw new RuntimeException("The advert is not available: " + advertTimer.toString() + " remaining.");
-        }
-        if (StringTools.indexOfIgnoreCase(advert.getAdvert(), GO_STRING) == -1) {
-            throw new RuntimeException("You did not specify what arena to ?go to.");
-        }
-        zoneAdvert(advert);
-    }
-
-    /**
-     * This method zones the advert, sets the advert timer, cancels the idle
-     * timer, and informs RoboHelp that the zoner has been sent.
-     * 
-     * @param advert
-     *            is the advert to send.
-     */
-    private void zoneAdvert(Advert advert) {
-        String adverter = advert.getAdverter().toLowerCase();
-        String advertText = advert.toString();
-
-        if (advertText.length() <= NATURAL_LINE_LENGTH) {
-            m_botAction.sendZoneMessage(advertText, advert.getSound());
-        } else {
-            zoneMessageSpam(StringTools.wrapString(advertText, LINE_LENGTH), advert.getSound());
-        }
-        setAdvertTimer(advertTime * 60 * 1000);
-        recentAdvertList.add(adverter, recentAdvertTime * 60 * 1000);
-        // removeFromQueue(0);
-        advert.next();
-        // Send an IPC message to Robohelp to record the advert
-        IPCMessage msg = new IPCMessage(adverter + "@ad@" + advert.getArenaName(advertText) + "@ad@" + advertText);
-        m_botAction.ipcTransmit(ZONE_CHANNEL, msg);
-    }
-
-    /**
-     * This method sends out a String array as zone messages.
-     * 
-     * @param message
-     *            is the message to send.
-     * @param sound
-     *            is the sound to associate with the message.
-     */
-    private void zoneMessageSpam(String message[], int sound) {
-        m_botAction.sendZoneMessage(message[0], sound);
-        for (int index = 1; index < message.length; index++) {
-            m_botAction.sendZoneMessage(message[index]);
-        }
-    }
-
-    /**
-     * This method performs the old advert command with the format: !Advert
-     * &lt;advert text&gt;.
-     * 
-     * @param sender
-     *            is the person issuing the command.
-     * @param argString
-     *            is the message to advert.
-     */
-    private void doOldAdvertCmd(String sender, String argString) {
-        String lowerSender = sender.toLowerCase();
-        Advert advert = advertQueue.get(lowerSender);
-
-        if (advert == null) {
-            throw new RuntimeException("You must claim an advert first.");
-        }
-        if (advert != advertQueue.firstValue()) {
-            throw new RuntimeException("It is not your turn to advert.");
-        }
-        if (argString.length() == 0) {
-            throw new RuntimeException("You must enter a message to advert.");
-        }
-        if (!advertTimer.isExpired()) {
-            throw new RuntimeException("The advert is not available: " + advertTimer.toString() + " remaining.");
-        }
-
-        advert.setAdvert(argString);
-        if (!advert.canZone()) {
-            throw new RuntimeException("Your advert needs to be approved.  Please get a moderator to approve your advert.");
-        }
-
-        zoneAdvert(advert);
-        m_botAction.sendSmartPrivateMessage(sender, "You are eligible to !readvert incase you need another *zone. If not, Please !free (10 mins)");
-        TimerTask wait10mins = new TimerTask() {
-
-            public void run() {
-                removeFromQueue(0);
-            }
-        };
-        try {
-            m_botAction.scheduleTask(wait10mins, 10 * Tools.TimeInMillis.MINUTE);
-
-        } catch (Exception e) {
-        }
-    }
-
-    /**
-     * This method does the setAdvert command. The sender must have claimed an
-     * ad already.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            are the arguments of the command.
-     */
-    private void doSetAdvertCmd(String sender, String argString) {
-        Advert advert = advertQueue.get(sender.toLowerCase());
-
-        if (advert == null) {
-            throw new RuntimeException("You must claim an advert first.");
-        }
-        if (argString.length() == 0) {
-            throw new IllegalArgumentException("You must enter a message to add to your advert.");
-        }
-        if (!advert.isApproved()) {
-            m_botAction.sendSmartPrivateMessage(sender, "Message part added.  Type !ViewAdvert to view your current advert.");
-        } else {
-            advert.unapproveAdvert();
-            m_botAction.sendSmartPrivateMessage(sender, "Message part added.  Type !ViewAdvert to view your current advert.  Your advert must be approved again.");
-        }
-        advert.setAdvert(argString);
-    }
-
-    /**
-     * This method sets the sound of the advert.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the new sound.
-     */
-    private void doSetSoundCmd(String sender, String argString) {
-        try {
-            Advert advert = advertQueue.get(sender.toLowerCase());
-            int sound = Integer.parseInt(argString);
-
-            if (advert == null) {
-                throw new RuntimeException("You must claim an advert first.");
-            }
-            if (!advert.isApproved()) {
-                m_botAction.sendSmartPrivateMessage(sender, "Advert sound changed.");
+            if (ops.length() < 1) {
+                settings.put("Trainers", staff);
             } else {
-                advert.unapproveAdvert();
-                m_botAction.sendSmartPrivateMessage(sender, "Advert sound changed.  Your advert must be approved again.");
+                settings.put("Trainers", ops + "," + staff);
             }
-            advert.setSound(sound);
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Invalid sound value.  Must be between 1 and 255.");
-        }
+            ba.sendSmartPrivateMessage(name, "Trainer added: " + staff);
+            settings.save();
+            loadTrainers();
+        } else
+            ba.sendSmartPrivateMessage(name, "" + staff + " is already a trainer.");
     }
-
-    /**
-     * This method displays a person's current advert.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            are the arguments of the command.
-     */
-    private void doViewAdvertCmd(String sender, String argString) {
-        OperatorList opList = m_botAction.getOperatorList();
-        Advert advert = advertQueue.get(argString.toLowerCase());
-        String advertText;
-
-        if (!opList.isZH(argString)) {
-            throw new RuntimeException("You are not authorized to view that advert.");
-        }
-        if (advert == null) {
-            throw new RuntimeException(argString + " has not yet claimed the advert.");
-        }
-        if (advert.getAdvert().length() == 0) {
-            throw new RuntimeException(argString + " has not yet entered an advert.");
-        }
-        advertText = advert.toString();
-        if (advertText.length() <= NATURAL_LINE_LENGTH) {
-            m_botAction.sendSmartPrivateMessage(sender, advertText);
-        } else {
-            m_botAction.smartPrivateMessageSpam(sender, StringTools.wrapString(advertText, LINE_LENGTH));
-            m_botAction.sendSmartPrivateMessage(sender, "Sound: " + advert.getSound());
-        }
+    
+    /** Handles the !remove trainer command **/
+    public void cmd_remove(String name, String cmd) {
+        if (cmd.length() < 8) return;
+        String staff = cmd.substring(8).trim().toLowerCase();
+        if (trainers.contains(staff)) {
+            BotSettings settings = ba.getBotSettings();
+            String ops = "";
+            for (String n : trainers)
+                if (!n.equalsIgnoreCase(staff))
+                    ops += n + ",";
+            if (ops.length() > 1)
+                ops = ops.substring(0, ops.length() - 2);
+            settings.put("Trainers", ops);
+            settings.save();
+            loadTrainers();  
+        } else
+            ba.sendSmartPrivateMessage(name, "" + staff + " is not a trainer.");
     }
-
-    /**
-     * This method displays the advert of the sender.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
-    private void doViewAdvertCmd(String sender) {
-        Advert advert = advertQueue.get(sender.toLowerCase());
-        String advertText;
-
-        if (advert == null) {
-            throw new RuntimeException("You must claim an advert first.");
-        }
-        if (advert.getAdvert().length() == 0) {
-            throw new RuntimeException("You have not yet entered an advert.");
-        }
-        advertText = advert.toString();
-        if (advertText.length() <= NATURAL_LINE_LENGTH) {
-            m_botAction.sendSmartPrivateMessage(sender, advertText);
-        } else {
-            m_botAction.smartPrivateMessageSpam(sender, StringTools.wrapString(advertText, LINE_LENGTH));
-            m_botAction.sendSmartPrivateMessage(sender, "Sound: " + advert.getSound());
-        }
+    
+    /** Handles the !list trainers command **/
+    public void cmd_list(String name) {
+        ba.sendSmartPrivateMessage(name, "Trainers: " + ba.getBotSettings().getString("Trainers"));
     }
-
-    /**
-     * This method does the clearAdvert command. It clears the sender's current
-     * advert.
-     * 
-     * @param sender
-     *            is the person that sent the command.
-     */
-    private void doClearAdvertCmd(String sender) {
-        Advert advert = advertQueue.get(sender.toLowerCase());
-
-        if (advert == null) {
-            throw new RuntimeException("You must claim an advert first.");
-        }
-        advert.clearAdvert();
-        m_botAction.sendSmartPrivateMessage(sender, "Your advert has been cleared.");
+    
+    /** Handles the !status command **/
+    public void cmd_status(String name) {
+        int i = queue.indexOfKey(name);
+        if (i > 0 && advertTimer != null)
+            ba.sendSmartPrivateMessage(name, "The current advert belongs to: " + queue.firstValue().getName() + " Next advert: " + advertTimer.getTime());
+        if (i > -1)
+            sendQueuePosition(i);
+        else
+            ba.sendSmartPrivateMessage(name, "You have not claimed an advert.");
     }
-
-    /**
-     * This method performs the claim command. It claims an advert for the
-     * person.
-     * 
-     * @param sender
-     *            is the person who issued the command.
-     * @param isGrant
-     *            is true if the claim was granted.
-     */
-    private void doClaimCmd(String sender, boolean isGrant) {
-        Advert advert;
-        String lowerSender = sender.toLowerCase();
-
-        if (advertQueue.containsKey(lowerSender) && !isGrant) {
-            throw new RuntimeException("You have already claimed an advert.");
-        }
-        if (advertQueue.containsKey(lowerSender) && isGrant) {
-            throw new RuntimeException(sender + " has already claimed an advert.");
-        }
-        if (advertQueue.size() > maxQueueLength) {
-            throw new RuntimeException("Advert queue full.  Max queue size: " + maxQueueLength + ".");
-        }
-        if (recentAdvertList.contains(lowerSender) && !isGrant) {
-            throw new RuntimeException("Not enough time has passed since your last advert.  You must wait " + recentAdvertList.getTimeRemainingString(lowerSender) + ".");
-        }
-        if (recentAdvertList.contains(lowerSender) && isGrant) {
-            throw new RuntimeException("Not enough time has passed since " + sender + "'s last advert.  You must wait " + recentAdvertList.getTimeRemainingString(lowerSender) + ".");
-        }
-
-        advert = new Advert(sender, isGrant);
-        advertQueue.put(lowerSender, advert);
-
-        notifyQueuePosition(sender);
-    }
-
-    /**
-     * This method notifies a player of their position in the advert queue. If
-     * it is currently their turn to advert, and the timer is expired, the time
-     * until the advert expires is displayed. If the timer has not expired, then
-     * the time till the next advert is displayed. If the player is in the
-     * advert queue then the position is returned.
-     * 
-     * @param playerName
-     *            is the name of the player to notify.
-     */
-    private void notifyQueuePosition(String playerName) {
-        int queuePosition = advertQueue.indexOfKey(playerName.toLowerCase());
-
-        if (queuePosition == -1) {
-            throw new RuntimeException("You have not yet claimed an advert.");
-        }
-
-        if (queuePosition != 0) {
-            m_botAction.sendSmartPrivateMessage(playerName, "You are " + StringTools.getCountString(queuePosition) + " in the advert queue.");
-        } else {
-            if (advertTimer == null || advertTimer.isExpired()) {
-                setIdleTimer(idleTime * 60 * 1000);
-                m_botAction.sendSmartPrivateMessage(playerName, "You may use your advert now.  You have " + idleTimer.toString() + " to use it.");
-            } else {
-                m_botAction.sendSmartPrivateMessage(playerName, "You have the next advert.  You may zone in " + advertTimer.toString() + ".");
-            }
-        }
-    }
-
-    /**
-     * This method performs the free command. It removes a player from the
-     * advert queue.
-     * 
-     * @param playerName
-     *            is the name of the player to remove.
-     */
-    private void doFreeCmd(String playerName) {
-        String lowerName = playerName.toLowerCase();
-        int removeIndex = advertQueue.indexOfKey(lowerName);
-
-        if (removeIndex == -1) {
-            throw new RuntimeException("You must claim an advert first.");
-        }
-        removeFromQueue(removeIndex);
-        m_botAction.sendSmartPrivateMessage(playerName, "Your advert has been freed.");
-    }
-
-    /**
-     * This method frees an advert at removeIndex and notifies all affected
-     * people of their new position in the queue.
-     * 
-     * @param removeIndex
-     *            is the index to remove.
-     */
-    private void removeFromQueue(int removeIndex) {
-        if (removeIndex < 0 || removeIndex > advertQueue.size()) {
-            throw new IllegalArgumentException("Invalid remove index.");
-        }
-
-        advertQueue.remove(removeIndex);
-        if (removeIndex == 0) {
-            removeCurrentAdverter();
-        }
-        for (int notifyIndex = removeIndex; notifyIndex < advertQueue.size(); notifyIndex++) {
-            notifyQueuePosition(advertQueue.getKey(notifyIndex));
-        }
-    }
-
-    /**
-     * This method removes the current adverter from the queue. It resets the
-     * idleTimer and notifies all of the affected people.
-     */
-    private void removeCurrentAdverter() {
-        if (advertQueue.size() > 0 && advertTimer.isExpired()) {
-            setIdleTimer(idleTime * 60 * 1000);
-        } else {
-            m_botAction.cancelTask(idleTimer);
-        }
-    }
-
-    /**
-     * This method performs the status command. It displays who owns the current
-     * advert and shows hte people in the advert queue.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
-    private void doStatusCmd(String sender) {
-        if (advertQueue.size() > 0) {
-            m_botAction.sendSmartPrivateMessage(sender, "Current advert belongs to: " + advertQueue.firstKey() + ".");
-        }
-        if (advertQueue.size() > 1) {
-            m_botAction.sendSmartPrivateMessage(sender, "People in queue:");
-            for (int index = 1; index < advertQueue.size(); index++) {
-                m_botAction.sendSmartPrivateMessage(sender, index + ". " + advertQueue.getKey(index));
-            }
-        }
-        notifyQueuePosition(sender);
-    }
-
-    /**
-     * This method processes an ER !help command. It sends the help message to
-     * the sender.
-     * 
-     * @param sender
-     *            is the player that sent the message.
-     */
-    private void doERHelpCmd(String sender) {
-        String message[] = {"=========================================== ER Commands ============================================", "!Advert                            -- Zones your advert.", "!SetAdvert <Advert Part>           -- Appends <Advert Part> on the end of the current advert.", "!SetSound <Sound>                  -- Sets the sound of the advert.", "!ViewAdvert                        -- Views your current advert.", "!ClearAdvert                       -- Clears your current advert.", "!Random <Arena Name>               -- Sets your advert to a random one from the database for", "                                      <Arena Name>.  If no arena name is specified then a generic", "                                      advert is produced.", "!Claim                             -- Claim the advert for use.", "!Free                              -- Frees up your claim on an advert.", "!Status                            -- Displays the person that has currently claimed the advert, the", "                                      time left till the next advert and the advert queue.", "!ReAdvert <Arena Name>             -- Will *zone a PRESET advert with the <Arena Name>."};
-        m_botAction.smartPrivateMessageSpam(sender, message);
-    }
-
-    /**
-     * This method handles mod commands.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param message
-     *            is the message to handle.
-     * @param messageType
-     *            is the message type.
-     */
-    private void handleOpCommands(String sender, String message, int messageType) {
-        String command = message.toLowerCase();
-        if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
-            if (command.startsWith("!grant ")) {
-                doGrantCmd(sender, message.substring(7).trim());
-            }
-            if (command.startsWith("!viewadvert ")) {
-                doViewAdvertCmd(sender, message.substring(12).trim());
-            }
-            if (command.startsWith("!approve ")) {
-                doApproveCmd(sender, message.substring(9).trim());
-            }
-            if (command.equals("!help")) {
-                doOpHelpCmd(sender);
-            }
-        }
-    }
-
-    /**
-     * This method grants an advert to a staff member by allowing them to claim
-     * an advert.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the argString.
-     */
-    private void doGrantCmd(String sender, String argString) {
-
-        OperatorList opList = m_botAction.getOperatorList();
-
-        if (!opList.isZH(argString) || opList.isER(argString)) {
-            throw new IllegalArgumentException("The player that you are granting the advert to must be a ZH.");
-        }
-        doClaimCmd(argString, true);
-        m_botAction.sendSmartPrivateMessage(sender, argString + " granted an advert.");
-    }
-
-    /**
-     * This method approves an advert that was granted to a zh.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is a string containing the arguments of the command.
-     */
-    private void doApproveCmd(String sender, String argString) {
-        Advert advert = advertQueue.get(argString.toLowerCase());
-
-        if (advert == null) {
-            throw new RuntimeException(argString + " has not claimed an advert yet.");
-        }
-        advert.approveAdvert(sender);
-        m_botAction.sendSmartPrivateMessage(sender, "Advert approved.");
-        m_botAction.sendSmartPrivateMessage(argString, "Advert approved by " + sender + ".  Type !Advert to zone your advert.");
-    }
-
-    /**
-     * This method processes a Mod !help command. It sends the help message to
-     * the sender.
-     * 
-     * @param sender
-     *            is the player that sent the message.
-     */
-    private void doOpHelpCmd(String sender) {
-        String message[] = {"========================================== ZH-Op Commands ============================================", "!Grant <Player>                    -- Grants an advert to <Player>.", "!ViewAdvert <Player>               -- Views the advert of <Player>.", "!Approve <Player>                  -- Approves the advert of <Player>."};
-        m_botAction.smartPrivateMessageSpam(sender, message);
-    }
-
-    /**
-     * This method handles smod commands.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param message
-     *            is the message to handle.
-     * @param messageType
-     *            is the message type.
-     */
-    private void handleSmodCommands(String sender, String message,
-            int messageType) {
-        String command = message.toLowerCase();
-        if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
-            if (command.startsWith("!periodic ")) {
-                doPeriodicZoner(sender, message.substring(10).trim());
-            }
-            if (command.startsWith("!listperiodic")) {
-                doListPeriodicZoner(sender);
-            }
-            if (command.startsWith("!removeperiodic ")) {
-                doRemovePeriodicZoner(sender, message.substring(16).trim());
-            }
-            if (command.startsWith("!setadvertdelay ")) {
-                doSetAdvertDelayCmd(sender, message.substring(16).trim());
-            }
-            if (command.startsWith("!setidletime ")) {
-                doSetIdleTimeCmd(sender, message.substring(13).trim());
-            }
-            if (command.startsWith("!setreadverttime ")) {
-                doSetReAdvertTimeCmd(sender, message.substring(17).trim());
-            }
-            if (command.startsWith("!setqueuelength ")) {
-                doSetQueueLengthCmd(sender, message.substring(16).trim());
-            }
-            if (command.equals("!enable")) {
-                doEnableCmd(sender);
-            }
-            if (command.equals("!disable")) {
-                doDisableCmd(sender);
-            }
-            if (command.startsWith("!add ")) {
-                addZHOp(sender, message.substring(5).trim());
-            }
-            if (command.startsWith("!remove ")) {
-                removeZHOp(sender, message.substring(8).trim());
-            }
-            if (command.startsWith("!listops")) {
-                listZHOp(sender);
-            }
-            if (command.startsWith("!reload")) {
-                load_zhops();
-            }
-            if (command.equals("!die")) {
-                doDieCmd();
-            }
-            if (command.equals("!help")) {
-                doSmodHelpCmd(sender);
-            }
-        }
-    }
-
-    private void doHopsHelpCmd(String sender) {
-        {
-            String message[] = {"=========================================== Head Trainer Commands ============================================", "!add <name>                        -- Adds staffer to ZH Op", "!remove <name>                     -- Removes staffer from ZH Op", "!listops                           -- Lists ZH Ops", "!Help                              -- Displays this help message."};
-
-            m_botAction.smartPrivateMessageSpam(sender, message);
-        }
-
-    }
-
-    private void handleHopsCommands(String sender, String message,
-            int messageType) {
-        String command = message.toLowerCase();
-        if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
-            if (command.startsWith("!add ")) {
-                addZHOp(sender, message.substring(5).trim());
-            }
-            if (command.startsWith("!remove ")) {
-                removeZHOp(sender, message.substring(8).trim());
-            }
-            if (command.startsWith("!listops")) {
-                listZHOp(sender);
-            }
-            if (command.startsWith("!reload")) {
-                load_zhops();
-            }
-            if (command.equals("!help")) {
-                doHopsHelpCmd(sender);
-            }
-        }
-    }
-
-    private void listZHOp(String sender) {
-        String zhop = "ZonerBot ZH Operators: ";
-        Iterator<String> list1 = zhops.values().iterator();
-
-        while (list1.hasNext()) {
-            if (list1.hasNext()) {
-                zhop += (String) list1.next() + ", ";
-            } else {
-                zhop += (String) list1.next();
-            }
-        }
-
-        zhop = zhop.substring(0, zhop.length() - 2);
-        m_botAction.sendSmartPrivateMessage(sender, zhop);
-
-    }
-
-    private void removeZHOp(String name, String message) {
-        load_zhops();
-        BotSettings m_botSettings = m_botAction.getBotSettings();
-        String ops = m_botSettings.getString("ZHOperators");
-
-        int spot = ops.indexOf(message);
-        if (spot == 0 && ops.length() == message.length()) {
-            ops = "";
-            m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " successful");
-        } else if (spot == 0 && ops.length() > message.length()) {
-            ops = ops.substring(message.length() + 1);
-            m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " successful");
-        } else if (spot > 0 && spot + message.length() < ops.length()) {
-            ops = ops.substring(0, spot) + ops.substring(spot + message.length() + 1);
-            m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " successful");
-        } else if (spot > 0 && spot == ops.length() - message.length()) {
-            ops = ops.substring(0, spot - 1);
-            m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " successful");
-        } else {
-            m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " failed, operator doesn't exist");
+    
+    /** Handles the !claim command or ?advert **/
+    public void cmd_claim(String name) {
+        if (oplist.isZHExact(name)) {
+            ba.sendSmartPrivateMessage(name, "You are not allowed to claim an advert. Have a trainer or high mod !grant you one instead.");
             return;
         }
-        m_botSettings.put("ZHOperators", ops);
-        m_botSettings.save();
-        load_zhops();
-
-    }
-
-    private void addZHOp(String name, String substring) {
-        BotSettings m_botSettings = m_botAction.getBotSettings();
-        String ops = m_botSettings.getString("ZHOperators");
-
-        if (ops.length() < 1) {
-            m_botSettings.put("ZHOperators", substring);
+        if (!queue.containsKey(name)) {
+            debug("Queueing new Advert");
+            queue.put(name, new Advert(name));
+            if (queue.indexOfKey(name) == 0)
+                prepareNext();
+            else
+                sendQueuePosition(name);
         } else {
-            m_botSettings.put("ZHOperators", ops + "," + substring);
-        }
-        m_botAction.sendSmartPrivateMessage(name, "Add Op: " + substring + " successful");
-        m_botSettings.save();
-        load_zhops();
-    }
-
-    private void handleOwnerCommands(String sender, String message,
-            int messageType) {
-        String command = message.toLowerCase();
-        if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
-            if (command.startsWith("!staffadv ")) {
-                m_botAction.sendZoneMessage(message.substring(10).trim(), 2);
-            }
+            ba.sendSmartPrivateMessage(name, "You have already claimed an advert and cannot claim another until it is used.");
+            sendQueuePosition(name);
         }
     }
-
-    /**
-     * This method allows the sender to setup a periodic message to be zoned
-     * with a delay for an interval. Syntax <delay>:<interval>:<message>
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
-    private void doPeriodicZoner(String sender, String argString) {
-        int delay, life;
-        String message;
-        try {
-            String[] parts = argString.split(";");
-            delay = Integer.parseInt(parts[0]);
-            life = Integer.parseInt(parts[1]);
-            message = parts[2];
-
-            int pos = PeriodicMsgs.size() + 1;
-            for (int i = 0; i < PeriodicMsgs.size(); i++) {
-                if (!PeriodicMsgs.containsKey(new Integer(i + 1))) {
-                    pos = i + 1;
-                }
-            }
-
-            PeriodicZone periodicTask = new PeriodicZone(delay, life, pos, sender, message);
-            PeriodicMsgs.put(new Integer(pos), periodicTask);
-            m_botAction.scheduleTask(periodicTask, 1000, delay * 60000);
-
-            m_botAction.sendSmartPrivateMessage(sender, "A periodic zoner has been set with" + " a delay of " + delay + " minute(s) for a life of " + life + " hour(s) with the message: \"" + message + "\"");
-        } catch (NumberFormatException nfe) {
-            m_botAction.sendSmartPrivateMessage(sender, "Interval and delay must be numerical.");
-        } catch (IllegalArgumentException iae) {
-            m_botAction.sendSmartPrivateMessage(sender, iae.getMessage());
-        } catch (Exception e) {
-            m_botAction.sendSmartPrivateMessage(sender, "Incorrect syntax.");
-        }
-    }
-
-    /**
-     * Lists all the periodic zone messages if any to the sender.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
-    private void doListPeriodicZoner(String sender) {
-        if (PeriodicMsgs.isEmpty()) {
-            m_botAction.sendSmartPrivateMessage(sender, "There are currently no periodic zoners.");
+    
+    /** Handles the !grant command **/
+    public void cmd_grant(String name, String cmd) {
+        if (cmd.length() < 7 || !cmd.contains(" ")) {
+            ba.sendSmartPrivateMessage(name, "Failed to evaluate command due to syntax error.");
             return;
         }
-        Iterator<Integer> idx = PeriodicMsgs.keySet().iterator();
-        Iterator<PeriodicZone> zoner = PeriodicMsgs.values().iterator();
-
-        while (idx.hasNext()) {
-            m_botAction.sendSmartPrivateMessage(sender, idx.next() + ") " + zoner.next().toString());
+        String zh = cmd.substring(cmd.indexOf(" ") + 1);
+        if (!oplist.isZHExact(zh)) {
+            ba.sendSmartPrivateMessage(name, "Adverts can only be granted to ZHs. Use !claim instead.");
+            return;
+        }
+        if (!queue.containsKey(zh)) {
+            queue.put(zh, new Advert(zh, name));
+            ba.sendSmartPrivateMessage(name, "Advert granted to " + zh + ".");
+            ba.sendSmartPrivateMessage(zh, "You have been granted an advert by " + name + ". Advert must be approved before it can be used.");
+            if (queue.indexOfKey(zh) == 0)
+                prepareNext();
+            else
+                sendQueuePosition(zh);
         }
     }
-
-    /**
-     * This method removes a periodic using it's index. Syntax <index>
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
-    private void doRemovePeriodicZoner(String sender, String argString) {
-        Integer idx;
-        try {
-            idx = new Integer(Integer.parseInt(argString));
-            if (!PeriodicMsgs.containsKey(idx)) {
-                throw new IllegalArgumentException("No such index.");
-            }
-            PeriodicMsgs.get(idx).cancel();
-            m_botAction.sendSmartPrivateMessage(sender, "Periodic zoner: \"" + PeriodicMsgs.remove(idx).getMsg() + "\" has been removed");
-        } catch (NumberFormatException nfe) {
-            m_botAction.sendSmartPrivateMessage(sender, "Index must be numerical.");
-        } catch (IllegalArgumentException iae) {
-            m_botAction.sendSmartPrivateMessage(sender, iae.getMessage());
-        } catch (Exception e) {
-            m_botAction.sendSmartPrivateMessage(sender, "Incorrect syntax.");
-        }
-    }
-
-    /**
-     * This method allows the sender to change the time between adverts. The
-     * change is saved in the configuration file.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
-    private void doSetAdvertDelayCmd(String sender, String argString) {
-        try {
-            // BotSettings botSettings = m_botAction.getBotSettings();
-
-            int newAdvertTime = Integer.parseInt(argString);
-            if (newAdvertTime < 0) {
-                throw new IllegalArgumentException("Advert delay must be greater than 0.");
-            }
-            // botSettings.put("adverttime", newAdvertTime);
-            m_botAction.sendSmartPrivateMessage(sender, "Advert delay changed.");
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Please use the following format: !SetAdvertDelay <Time>");
-        }
-    }
-
-    /**
-     * This method allows the sender to change the time before an unused advert
-     * expires. The change is saved in the configuration file.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
-    private void doSetIdleTimeCmd(String sender, String argString) {
-        try {
-            // BotSettings botSettings = m_botAction.getBotSettings();
-
-            int newIdleTime = Integer.parseInt(argString);
-            if (newIdleTime < 1) {
-                throw new IllegalArgumentException("Idle time must be greater than 1.");
-            }
-            // botSettings.put("idletime", newIdleTime);
-            m_botAction.sendSmartPrivateMessage(sender, "Idle time changed.");
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Please use the following format: !SetIdleTime <Time>");
-        }
-    }
-
-    /**
-     * This method allows the sender to change the time before an unused advert
-     * expires. The change is saved in the configuration file.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
-    private void doSetReAdvertTimeCmd(String sender, String argString) {
-        try {
-            // BotSettings botSettings = m_botAction.getBotSettings();
-
-            int newReAdvertTime = Integer.parseInt(argString);
-            if (newReAdvertTime < 1) {
-                throw new IllegalArgumentException("Re-advert time must be greater than 1.");
-            }
-            // botSettings.put("readverttime", newReAdvertTime);
-            m_botAction.sendSmartPrivateMessage(sender, "Re-advert time changed.");
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Please use the following format: !SetReAdvertTime <Time>");
-        }
-    }
-
-    /**
-     * This method allows the sender to change the time before an unused advert
-     * expires. The change is saved in the configuration file.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
-    private void doSetQueueLengthCmd(String sender, String argString) {
-        try {
-            // BotSettings botSettings = m_botAction.getBotSettings();
-
-            int newQueueLength = Integer.parseInt(argString);
-            if (newQueueLength < 0) {
-                throw new IllegalArgumentException("Queue length must be greater than 0.");
-            }
-            // botSettings.put("queuelength", newQueueLength);
-            m_botAction.sendSmartPrivateMessage(sender, "Queue length changed.");
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Please use the following format: !SetQueueLength <Length>");
-        }
-    }
-
-    /**
-     * This method enables advertizing.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
-    private void doEnableCmd(String sender) {
-        if (isEnabled) {
-            throw new RuntimeException("Advertizing is already enabled.");
-        }
-        isEnabled = true;
-        m_botAction.sendSmartPrivateMessage(sender, "Advertizing enabled.");
-    }
-
-    /**
-     * This method disables advertizing.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
-    private void doDisableCmd(String sender) {
-        if (!isEnabled) {
-            throw new RuntimeException("Advertizing is already disabled.");
-        }
-        isEnabled = false;
-        m_botAction.sendSmartPrivateMessage(sender, "Advertizing disabled.");
-    }
-
-    /**
-     * This method logs the bot off.
-     */
-    private void doDieCmd() {
-        m_botAction.sendChatMessage(m_botAction.getBotName() + " logging off.");
-        m_botAction.scheduleTask(new DieTask(), 1000);
-    }
-
-    private void doSmodHelpCmd(String sender) {
-        String message[] = {"========================================== SMOD Commands ===========================================", "!Periodic <delay>;<life>;<message>    -- Adds a periodic zone message. To add a sound use %%# ", "                                         at the end. delay is in minutes, life is in hours", "!ListPeriodic                         -- Lists all periodic zone messages and their index.", "!RemovePeriodic <index>               -- Removes the periodic message at the index.", "!SetAdvertDelay <Time>                -- Sets the time between adverts.", "!SetIdleTime <Time>                   -- Sets the number of minutes for an advert to expire.", "!SetReAdvertTime <Time>               -- Sets the number of minutes required before a player that has", "                                         just zoned claims another advert.", "!SetQueueLength <Length>              -- Sets the number of people allowed in the advert queue.", "!Enable                               -- Enables Advert bot.", "!Disable                              -- Disables Advert bot.", "!Die                                  -- Logs the bot off.", "!Add <Staffer>                        -- Adds a ZH Operator (Trainer)", "!Remove <Staffer>                     -- Removes a ZH Operator (Trainer)", "!ListOps                              -- List ZH Operators"};
-
-        m_botAction.smartPrivateMessageSpam(sender, message);
-    }
-
-    /**
-     * This method handles an arena message.
-     * 
-     * @param message
-     *            is the arena message to process.
-     */
-    private void handleArenaMessage(String message) {
-        if (message.startsWith("Not online, last seen")) {
-            removeFromQueue(0);
-        }
-    }
-
-    /**
-     * This method handles the logged on event.
-     * 
-     * @param event
-     *            is the event to handle.
-     */
-    public void handleEvent(LoggedOn event) {
-        BotSettings botSettings = m_botAction.getBotSettings();
-        String initialArena = botSettings.getString("initialarena");
-        // ?obscene is sent automatically from GamePacketInterpreter, and
-        // should not be sent from inside any bot.
-        // m_botAction.sendUnfilteredPublicMessage("?obscene");
-        /*
-         * advertTime = botSettings.getInt("adverttime"); idleTime =
-         * botSettings.getInt("idletime"); recentAdvertTime =
-         * botSettings.getInt("readverttime"); maxQueueLength =
-         * botSettings.getInt("queuelength");
-         */
-
-        m_botAction.ipcSubscribe(ZONE_CHANNEL);
-        m_botAction.scheduleTask(new ClearRequestsTask(), CLEAR_REQUESTS_DELAY);
-        m_botAction.changeArena(initialArena);
-        setAdvertTimer(1000);
-        load_zhops();
-    }
-
-    private void load_zhops() {
-        // Load the operators and add them
-        try {
-            BotSettings m_botSettings = m_botAction.getBotSettings();
-            zhops.clear();
-            hops.clear();
-            //
-            String ops[] = m_botSettings.getString("ZHOperators").split(",");
-            for (int i = 0; i < ops.length; i++) {
-                zhops.put(ops[i].toLowerCase(), ops[i]);
-            }
-
-            String hopsd[] = m_botSettings.getString("Head Ops").split(",");
-            for (int j = 0; j < hopsd.length; j++) {
-                hops.put(hopsd[j].toLowerCase(), hopsd[j]);
-            }
-
-        } catch (Exception e) {
-            Tools.printStackTrace("Method Failed: ", e);
-        }
-
-    }
-
-    /**
-     * This private method requests the events that the bot will use.
-     */
-    private void requestEvents() {
-        EventRequester eventRequester = m_botAction.getEventRequester();
-
-        eventRequester.request(EventRequester.MESSAGE);
-    }
-
-    /**
-     * This method sets the advert timer to a certain length.
-     * 
-     * @param milliseconds
-     *            is the length of the advert timer.
-     */
-    private void setAdvertTimer(long milliseconds) {
-        advertTimer = new AdvertTimer(milliseconds);
-        m_botAction.scheduleTask(advertTimer, milliseconds);
-    }
-
-    private void setIdleTimer(long milliseconds) {
-        if (idleTimer != null) {
-            m_botAction.cancelTask(idleTimer);
-        }
-        idleTimer = new IdleTimer(milliseconds);
-        m_botAction.scheduleTask(idleTimer, milliseconds);
-    }
-
-    private void clearOldRequests() {
-        RequestRecord requestRecord;
-        int index = 0;
-
-        for (;;) {
-            requestRecord = (RequestRecord) requestList.get(index);
-            if (requestRecord == null || System.currentTimeMillis() - requestRecord.getTimeRequested() > REQUEST_LIFE_TIME) {
-                break;
-            }
-            requestList.remove(requestRecord.getRequester());
-            index++;
-        }
-    }
-
-    /**
-     * This private method gets the name of the sender of a message regardless
-     * of the message type. If there was no sender then null is returned.
-     * 
-     * @param message
-     *            is the message that was sent.
-     * @return the sender of the message is returned. If there was no sender
-     *         then null is returned.
-     */
-    private String getSender(Message message) {
-        int messageType = message.getMessageType();
-        int senderID;
-
-        if (messageType == Message.CHAT_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE || messageType == Message.ALERT_MESSAGE) {
-            return message.getMessager();
-        }
-        senderID = message.getPlayerID();
-        return m_botAction.getPlayerName(senderID);
-    }
-
-    private class PeriodicZone extends TimerTask {
-
-        private int m_delay, m_life, m_index;
-        private double m_time = 0;
-        private String m_sender, m_message;
-
-        public PeriodicZone(int delay, int life, int index, String sender,
-                String message) {
-            m_delay = delay;
-            m_life = life;
-            m_message = message;
-            m_sender = sender;
-            m_index = index;
-        }
-
-        public String getMsg() {
-            return m_message;
-        }
-
-        public String toString() {
-            return "Set by: " + m_sender + ", repeats every " + m_delay + " minute(s), for " + m_life + " hour(s). \"" + m_message + "\"";
-        }
-
-        public void run() {
-            m_time += m_delay;
-            int soundpos;
-            if (m_time / 60 > m_life) {
-                PeriodicMsgs.remove(new Integer(m_index));
-                this.cancel();
-            }
-            try {
-                if ((soundpos = m_message.indexOf('%')) != -1) {
-                    m_botAction.sendZoneMessage(m_message.substring(0, soundpos), Integer.parseInt(m_message.substring(soundpos + 1)));
+    
+    /** Handles the !free command or ?advert free **/
+    public void cmd_free(String name) {
+        if (queue.containsKey(name)) {
+            Advert advert = queue.get(name);
+            if (advert.getStatus() < Advert.ZONED) {
+                int index = queue.indexOfKey(name);
+                if (index == 0) {
+                    queue.remove(0);
+                    if (expireTimer != null && !expireTimer.hasExpired()) {
+                        expireTimer.endNow();
+                    }
+                    prepareNext();
                 } else {
-                    m_botAction.sendZoneMessage(m_message);
+                    queue.remove(index);
+                    if (index < queue.size()) {
+                        for (; index < queue.size(); index++)
+                            sendQueuePosition(index);
+                    }
                 }
-            } catch (Exception e) {
-                m_botAction.sendSmartPrivateMessage(m_sender, "There is an" + " error in your sound code, it should be at the end." + " Ex: \"!periodic 20;5;hello world! %%1\" . " + "Your periodic has been removed.");
-                PeriodicMsgs.remove(new Integer(m_index));
-                this.cancel();
+            } else
+                ba.sendSmartPrivateMessage(name, "An advert must not have been used in order to free it.");
+        } else
+            ba.sendSmartPrivateMessage(name, "You have not claimed an advert.");
+    }
+    
+    /** Handles the !set command **/
+    public void cmd_setAdvert(String name, String cmd) {
+        if (cmd.length() < 6 || !cmd.contains(" ")) return;
+        String msg = cmd.substring(cmd.indexOf(" ") + 1);
+        if (queue.containsKey(name))
+            ba.sendSmartPrivateMessage(name, queue.get(name).setAdvert(msg));
+        else
+            ba.sendSmartPrivateMessage(name, "You must have claimed or been granted an advert before you can set its message.");
+    }
+    
+    /** Handles the !sound command **/
+    public void cmd_setSound(String name, String cmd) {
+        if (cmd.length() < 7 || !cmd.contains(" ")) return;
+        int sound = Advert.DEFAULT_SOUND;
+        try {
+            sound = Integer.parseInt(cmd.substring(cmd.indexOf(" ") + 1));
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "The sound must be a number.");
+            return;
+        }
+        if (queue.containsKey(name))
+            ba.sendSmartPrivateMessage(name, queue.get(name).setSound(sound));
+        else
+            ba.sendSmartPrivateMessage(name, "You must have claimed or been granted an advert before you can set its sound.");
+    }
+    
+    /** Handles the !view command as well as the !view <name> command **/
+    public void cmd_view(String name, String cmd) {
+        if (cmd.contains(" ") && cmd.length() > 6) {
+            String adverter = cmd.substring(cmd.indexOf(" ") + 1);
+            if (queue.containsKey(adverter)) {
+                Advert advert = queue.get(adverter);
+                ba.sendSmartPrivateMessage(name, advert.getMessage());
+                ba.sendSmartPrivateMessage(name, "Sound: " + advert.getSound());
+            } else
+                ba.sendSmartPrivateMessage(name, adverter + " does not have an advert."); 
+        } else if (queue.containsKey(name)) {
+            Advert advert = queue.get(name);
+            ba.sendSmartPrivateMessage(name, advert.getMessage());
+            ba.sendSmartPrivateMessage(name, "Sound: " + advert.getSound());
+        } else
+            ba.sendSmartPrivateMessage(name, "Advert was not found."); 
+    }
+    
+    /** Handles the !approve command with or without the zh name **/
+    public void cmd_approve(String name, String cmd) {
+        if (cmd.length() > 8 && cmd.contains(" ")) {
+            String zh = cmd.substring(cmd.indexOf(" ") + 1);
+            if (queue.containsKey(zh)) 
+                ba.sendSmartPrivateMessage(name, queue.get(zh).approve());
+            else
+                ba.sendSmartPrivateMessage(name, "No advert found for " + zh + ".");
+        } else if (cmd.length() == 8) {
+            for (Advert advert : queue.values()) {
+                if (advert.isGranter(name)) {
+                    ba.sendSmartPrivateMessage(name, advert.approve());
+                    break;
+                }
+            }
+            ba.sendSmartPrivateMessage(name, "You have not granted any adverts.");
+        } else 
+            ba.sendSmartPrivateMessage(name, "Failure to evaluate command syntax.");
+    }
+    
+    /** Handles the !advert command which executes the current advert if possible **/
+    public void cmd_advert(String name) {
+        if (queue.containsKey(name)) {
+            if (queue.indexOfKey(name) > 0)
+                sendQueuePosition(name);
+            else if (advertTimer != null && !advertTimer.hasExpired()) 
+                sendQueuePosition(name);
+            else {
+                Advert advert = queue.firstValue();
+
+                if (advert.getStatus() < Advert.READY) {
+                    if (!advert.isGranted())
+                        ba.sendSmartPrivateMessage(name, "You have to set an advert message before you can use it.");
+                    else
+                        ba.sendSmartPrivateMessage(name, "Your advert must be set and approved before it can be used.");
+                } else if (advert.getStatus() > Advert.READY)
+                    ba.sendSmartPrivateMessage(name, "The advert has already been zoned.");
+                else {
+                    advert.setStatus(Advert.ZONED);
+                    // need to check the length n shit
+                    ba.sendZoneMessage(advert.getMessage() + "-" + advert.getName(), advert.getSound());
+                    
+                    advertTimer = new AdvertTimer(ADVERT_DELAY);
+                    ba.scheduleTask(advertTimer, ADVERT_DELAY * Tools.TimeInMillis.MINUTE);
+                    if (expireTimer != null)
+                        expireTimer.endNow();
+                    
+                    // Send an IPC message to Robohelp to record the advert
+                    IPCMessage msg = new IPCMessage(name.toLowerCase() + "@ad@" + advert.getArena() + "@ad@" + advert.getMessage());
+                    ba.ipcTransmit(ZONE_CHANNEL, msg);
+                    
+                    queue.remove(0);
+                    usedAdverts.add(0, advert);
+                    ba.sendSmartPrivateMessage(name, "A readvert will be available for " + advert.readvertTime() + ".");
+                    prepareNext();
+                }
+            }
+        } else
+            ba.sendSmartPrivateMessage(name, "You have to claim an advert first before you can use it.");
+    }
+    
+    /** Handles the !readvert command which sends a default zone message for a given arena **/
+    public void cmd_readvert(String name) {
+        if (queue.containsKey(name)) {
+            ba.sendSmartPrivateMessage(name, "The initial advert must be used before readvert can be used.");
+        } else if (usedAdverts.isEmpty()) {
+            ba.sendSmartPrivateMessage(name, "An advert must be claimed and used before a readvert can be used.");
+        } else if (!usedAdverts.getFirst().getName().equalsIgnoreCase(name)) {
+            ba.sendSmartPrivateMessage(name, "No advert used by you is currently eligible for a readvert.");
+        } else {
+            Advert advert = usedAdverts.getFirst();
+            if (advert.getStatus() == Advert.ZONED && advert.canReadvert()) {
+                advert.setStatus(Advert.DONE);
+                String event = advert.getArena().toUpperCase();
+                String zoners[] = { 
+                        "Last call for " + event + "." + " Type ?go " + event + " to play. -" + name,
+                        "The event " + event + " is starting. Type ?go " + event + " to play. -" + name };
+                ba.sendZoneMessage(zoners[new Random().nextInt(zoners.length)], 1);
+            } else {
+                ba.sendSmartPrivateMessage(name, "Your last advert does not have a readvert available. It was used or expired.");
             }
         }
     }
-
-    private class IdleTimer extends DetailedTimerTask {
-
-        public IdleTimer(long idleTime) {
-            super(idleTime);
-        }
-
-        public void run() {
-            String idleAdverter = advertQueue.firstKey();
-
-            m_botAction.sendSmartPrivateMessage(idleAdverter, "You have failed to use your advert and it has expired.");
-            removeFromQueue(0);
+    
+    /** Handles the !renew command which if the advert hasn't been zoned or expired, prolongs the expire time **/
+    public void cmd_renew(String name) {
+        if (!queue.containsKey(name))
+            ba.sendSmartPrivateMessage(name, "There is no advert available for renewal.");
+        else if (queue.indexOfKey(name) != 0)
+            sendQueuePosition(name);
+        else if (advertTimer != null && !advertTimer.hasExpired())
+            sendQueuePosition(0);
+        else if (expireTimer != null && !expireTimer.hasExpired())
+            ba.sendSmartPrivateMessage(name, "Advert renewed. Remaining time: " + expireTimer.renewTime());
+        else 
+            ba.sendSmartPrivateMessage(name, "Advert has already expired.");
+    }
+    
+    /** Removes the unused advert **/
+    private void expireAdvert() {
+        debug("Expiring current Advert");
+        currentUser = null;
+        Advert advert = queue.remove(0);
+        if (advert != null && advert.getStatus() < Advert.ZONED) {
+            ba.sendSmartPrivateMessage(advert.getName(), "Your advert has expired and has been removed from the queue.");
+            prepareNext();
         }
     }
+    
+    /** Helper removes the current advert from the queue due to a missing adverter **/
+    private void removeMissing() {
+        debug("Removing Advert of offline person");
+        if (queue.indexOfKey(currentUser) != 0) return;
+        if (expireTimer != null)
+            expireTimer.endNow();
+        if (!queue.isEmpty())
+            queue.remove(0);
+        currentUser = null;
+        prepareNext();
+    }
+    
+    /** Helper sends appropriate queue position information to name **/ 
+    private void sendQueuePosition(String name) {
+        int i = queue.indexOfKey(name);
+        if (i == 0) {
+            if (expireTimer != null && !expireTimer.hasExpired())
+                ba.sendSmartPrivateMessage(name, "It is your turn to use your advert. You have " + expireTimer.getTime() + " to use it.");
+            else if (advertTimer != null && !advertTimer.hasExpired())
+                ba.sendSmartPrivateMessage(name, "You are next in the advert queue. Time remaining: " + advertTimer.getTime());
+        } else if (i > 0) {
+            ba.sendSmartPrivateMessage(name, "There are " + i + " people currently ahead of you in the advert queue.");
+        } else if (!usedAdverts.isEmpty() && usedAdverts.getFirst().getName().equalsIgnoreCase(name)) {
+            Advert advert = usedAdverts.getFirst();
+            if (advert.canReadvert())
+                ba.sendSmartPrivateMessage(name, "Your readvert will be available for " + advert.readvertTime() + ".");
+            else 
+                ba.sendSmartPrivateMessage(name, "No advert available.");
+        } else
+            ba.sendSmartPrivateMessage(name, "You have not claimed an advert.");
+    }
+    
+    /** Helper sends appropriate queue position information to name front advert index **/ 
+    private void sendQueuePosition(int index) {
+        String name = queue.getKey(index);
+        if (index == 0) {
+            if (expireTimer != null && !expireTimer.hasExpired())
+                ba.sendSmartPrivateMessage(name, "It is your turn to use your advert. It will expire in " + expireTimer.getTime() + ".");
+            else if (advertTimer != null && !advertTimer.hasExpired())
+                ba.sendSmartPrivateMessage(name, "You are next in the advert queue. Time remaining: " + advertTimer.getTime());
+        } else if (index > 0)
+            ba.sendSmartPrivateMessage(name, "There are " + index + " people currently ahead of you in the advert queue.");
+    }
 
-    /**
-     * <p>Title:</p>
-     * AdvertTimer
-     * <p>Description:</p>
-     * This class keeps track of how long is left till the next advert.
-     * <p>Copyright: Copyright (c) 2004</p>
-     * <p> Company:</p>
-     * For SSCU Trench Wars
-     * 
-     * @author Cpt.Guano!
-     * @version 1.0
-     */
-    private class AdvertTimer extends DetailedTimerTask {
-
-        public AdvertTimer(long advertTime) {
-            super(advertTime);
-        }
-
-        /**
-         * This method is executed when the advert timer expires.
-         */
-        public void run() {
-            String currentAdverter = advertQueue.firstKey();
-
-            if (currentAdverter != null) {
-                setIdleTimer(idleTime * 60 * 1000);
-                notifyQueuePosition(currentAdverter);
-                m_botAction.sendUnfilteredPublicMessage("?find " + currentAdverter);
+    /** Called when the first advert in the queue can be used. Starts the idle timer and informs queue positions. **/
+    private void prepareNext() {
+        debug("Prepare next called");
+        if (!queue.isEmpty()) {
+            if (advertTimer == null || (advertTimer != null && advertTimer.hasExpired())) {
+                Advert advert = queue.get(0);
+                expireTimer = new ExpireTimer(advert.getName(), EXPIRE_TIME);
+                ba.scheduleTask(expireTimer, EXPIRE_TIME * Tools.TimeInMillis.MINUTE);
+                currentUser = advert.getName();
+                ba.sendUnfilteredPublicMessage("?find " + currentUser);
             }
+            for (String n : queue.keySet())
+                sendQueuePosition(n);
         }
     }
-
+    
+    /** Loads the trainers listed in the cfg file **/
+    private void loadTrainers() {
+        String[] list = ba.getBotSettings().getString("Trainers").split(",");
+        for (String n : list)
+            trainers.add(n.toLowerCase());
+    }
+    
     /**
-     * <p>
-     * Title: RequestRecord
-     * </p>
-     * <p>
-     * Description: This class keeps track of host requests.
-     * </p>
-     * <p>
-     * Copyright: Copyright (c) 2004
-     * </p>
-     * <p>
-     * Company: For SSCU Trench Wars
-     * </p>
-     * 
-     * @author Cpt.Guano!
-     * @version 1.0
-     */
-    private class RequestRecord {
-
-        private String requester;
-        private String request;
-        private long timeRequested;
-
-        /**
-         * This method creates a new request record.
-         * 
-         * @param requester
-         *            is the person that requested the event.
-         * @param request
-         *            is the request made by the person.
-         */
-        public RequestRecord(String requester, String request) {
-            this.requester = requester;
-            this.request = request;
-            timeRequested = System.currentTimeMillis();
-        }
-
-        public String getRequester() {
-            return requester;
-        }
-
-        /**
-         * This method gets the time that the request was made.
-         * 
-         * @return the time that the request was made is returned.
-         */
-        public long getTimeRequested() {
-            return timeRequested;
-        }
-
-        /**
-         * This method returns a String representation of the request record.
-         * 
-         * @return a string containing all of the request information is
-         *         returned.
-         */
-        public String toString() {
-            return "\"" + request + "\" Requested by: " + requester + " " + getElapsedTime() + " ago.";
-        }
-
-        /**
-         * This method gets a string in the form: "HH hours and MM mins"
-         * representing the time that has elapsed since the record has been
-         * requested.
-         * 
-         * @return a string of the form "HH hours and MM mins" representing the
-         *         time that has elapsed is returned.
-         */
-        private String getElapsedTime() {
-            long elapsedTime = (System.currentTimeMillis() - timeRequested) / (60 * 1000);
-            int mins = (int) (elapsedTime % 60);
-            int hours = (int) (elapsedTime / 60);
-
-            return StringTools.pluralize(hours, "hour") + " and " + StringTools.pluralize(mins, "min");
-        }
-    }
-
-    private class ClearRequestsTask extends TimerTask {
-
-        public void run() {
-            clearOldRequests();
-        }
-    }
-
-    /**
-     * <p>
-     * Title: Advert
-     * </p>
-     * <p>
-     * Description: This class is an advert. It keeps track of the sound, advert
-     * and the person that placed the advert.
-     * </p>
-     * <p>
-     * Copyright: Copyright (c) 2004
-     * </p>
-     * <p>
-     * Company: For SSCU Trench Wars
-     * </p>
-     * 
-     * @author Cpt.Guano!
-     * @version 1.0
+     * This is a representation of an advert claim containing all relevant information
+     * related to the advert including methods and functions.
+     *
+     * @author WingZero
      */
     private class Advert {
-
+        
+        String name;
+        String granter;
+        String advert;
+        int sound;
+        int status;
+        boolean granted;
+        long zoned;
+        static final int APPROVE = 0;
+        static final int READY = 1;
+        static final int ZONED = 2;
+        static final int DONE = 3;
+        
+        // sounds
         public static final int MAX_ADVERT_LENGTH = 400;
         public static final int DEFAULT_SOUND = 2;
         public static final int MIN_SOUND = 1;
@@ -1528,242 +538,331 @@ public class zonerbot extends SubspaceBot {
         public static final int PM_SOUND = 26;
         public static final int MUSIC1_SOUND = 100;
         public static final int MUSIC2_SOUND = 102;
-        public static final int PRE_APPROVED_STATUS = 0;
-        public static final int NOT_APPROVED_STATUS = 1;
-        public static final int APPROVED_STATUS = 2;
-        public static final int INITIAL = 0; // initial zoner will be sent
-        public static final int FINAL = 1;   // readvert zoner is available to send
-        public static final int DONE = 2;         // all zoners have been used
-        private String adverter;
-        private String advertText;
-        private int sound;
-        private int advertStatus;
-        private int stage;
-        private boolean readvert;
-
-        /**
-         * This method initializes a blank advert to a person with a default
-         * sound.
-         * 
-         * @param adverter
-         *            is the person that owns the advert.
-         * @param isGrant
-         *            is true if the advert is granted.
-         */
-        public Advert(String adverter, boolean isGrant) {
-            this.adverter = adverter;
-            advertText = new String();
+        
+        public Advert(String name) {
+            this.name = name;
+            granter = null;
+            advert = null;
             sound = DEFAULT_SOUND;
-            stage = INITIAL;
-            readvert = false;
-
-            if (isGrant) {
-                advertStatus = NOT_APPROVED_STATUS;
-            } else {
-                advertStatus = PRE_APPROVED_STATUS;
-            }
-
+            status = APPROVE;
+            granted = false;
+            zoned = -1;
+        }
+        
+        public Advert(String name, String granter) {
+            this.name = name;
+            this.granter = granter;
+            advert = null;
+            sound = DEFAULT_SOUND;
+            status = APPROVE;
+            granted = true;
+            zoned = -1;
+        }
+        
+        public String getName() {
+            return name;
         }
 
-        /**
-         * This method gets the person that owns the advert.
-         * 
-         * @return the person that owns the advert is returned.
-         */
-        public String getAdverter() {
-            return adverter;
+        public boolean isGranter(String g) {
+            return (granted && g.equalsIgnoreCase(granter));
         }
-
-        /**
-         * This method gets the advert text.
-         * 
-         * @return the advert text is returned.
-         */
-        public String getAdvert() {
-            return advertText;
+        
+        public boolean isGranted() {
+            return granted;
         }
-
-        /**
-         * This method gets the sound of the advert.
-         * 
-         * @return the sound of the advert is returned.
-         */
+        
+        public void setStatus(int nextStatus) {
+            status = nextStatus;
+            if (status == ZONED && zoned == -1)
+                zoned = System.currentTimeMillis();
+            debug("New status: " + status);
+        }
+        
+        public String setAdvert(String str) {
+            if (str == null || str.length() < 1) 
+                return "No advert specified.";
+            if (str.length() > MAX_ADVERT_LENGTH)
+                return "Advert must be less than " + MAX_ADVERT_LENGTH + " characters long.";
+            if (!str.contains("?go "))
+                return "Advert is required to have ?go ArenaName at the end or towards the end.";
+            if (str.toLowerCase().contains("-" + name.toLowerCase()))
+                return "Do not include a tag (-Name) at the end because it will be added automatically.";
+            if (status == READY) {
+                if (!granted) {
+                    advert = str + " ";
+                    return "Advert message changed and can be seen with !view.";
+                } else {
+                    advert = str + " ";
+                    status = APPROVE;
+                    ba.sendSmartPrivateMessage(granter, "" + name + " set an advert message and waits for approval.");
+                    return "Advert message changed and must be approved again before it can be used.";
+                }
+            } else if (status == APPROVE) {
+                if (!granted) {
+                    advert = str + " ";
+                    status = READY;
+                    return "Advert message set and can now be seen with !view.";
+                } else {
+                    advert = str + " ";
+                    status = APPROVE;
+                    ba.sendSmartPrivateMessage(granter, "" + name + " changed the advert message and needs approval.");
+                    return "Advert message set and can now be seen with !view. The advert must now be approved before it can be used.";
+                }                
+            } else
+                return "Advert has already been used.";
+        }
+        
+        public String setSound(int s) {
+            if (s < MIN_SOUND || s > MAX_SOUND)
+                return "Invalid, sound number must be between " + MIN_SOUND + " and " + MAX_SOUND + ".";
+            if (status > READY)
+                return "Advert has already been used.";
+            if (soundCheck(s)) {
+                sound = s;
+                if ((granted && status == APPROVE) || (!granted && status < ZONED))
+                    return "Advert sound set to " + s + ".";
+                else {
+                    unapprove();
+                    return "Advert sound set to " + s + " and must be approved again before it can be used.";
+                }
+            } else 
+                return "Sound number " + s + " is not allowed.";
+        }
+        
+        public String approve() {
+            if (granted && status == APPROVE) {
+                status = READY;
+                ba.sendSmartPrivateMessage(name, "Advert approved. Use !advert to zone your advert.");
+                return "Advert approved for " + name + ".";
+            } else
+                return "Advert has already been approved.";
+        }
+        
+        public void unapprove() {
+            if (granted && status == READY)
+                status = APPROVE;    
+        }
+        
+        public int getStatus() {
+            return status;
+        }
+        
+        // we will probably need to handle messages over length 120
+        public String getMessage() {
+            if (advert != null)
+                return advert;
+            else
+                return "No advert message has been set.";
+        }
+        
         public int getSound() {
             return sound;
         }
-
-        /**
-         * This method checks to see if an advert can be zoned or not.
-         * 
-         * @return true is returned if the advert can be zoned.
-         */
-        public boolean canZone() {
-            return advertStatus == PRE_APPROVED_STATUS || isApproved();
+        
+        public String getArena() {
+            if (advert != null && advert.contains("?go ")) {
+                String arena = advert.substring(advert.lastIndexOf("?go ") + 4);
+                if (arena.contains(" "))
+                    return arena.substring(0, arena.indexOf(" "));
+                else
+                    return arena;
+            } else
+                return "No arena found or advert not set.";
         }
-
-        /**
-         * This method checks to see if the advert is approved.
-         * 
-         * @return true is returned if the advert is the approved.
-         */
-        public boolean isApproved() {
-            return advertStatus == APPROVED_STATUS;
+        
+        public boolean canReadvert() {
+            return ((System.currentTimeMillis() - zoned) < (READVERT_MAX * Tools.TimeInMillis.MINUTE));
         }
-
-        /**
-         * This method returns what stage the advert is on
-         * 
-         * @return initial, readvert, or done 
-         */
-        public int getStage() {
-            return stage;
+        
+        public String readvertTime() {
+            long time = (READVERT_MAX * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - zoned);
+            if (time > 0)
+                return "" + (time / Tools.TimeInMillis.SECOND) + " seconds";
+            else return "expired";
         }
-
-        /**
-         * This method returns whether or not a readvert can be used
-         * 
-         * @return true if initial zoner was sent
-         */
-        public boolean readvert() {
-            return readvert;
-        }
-
-        /**
-         * This method sets the current advert stage
-         * 
-         * @param s
-         *          intial, final, or done (no more)
-         */
-        public void next() {
-            stage++;
-            readvert = true;
-        }
-
-        /**
-         * This method appends an advertPart onto the end of the current advert.
-         * 
-         * @param advertPart
-         *            is the part to add.
-         */
-        public void setAdvert(String advertPart) {
-            StringBuffer result = new StringBuffer(advertText);
-            if (advertStatus == APPROVED_STATUS) {
-                throw new IllegalArgumentException("Advert has already been approved.  You may no longer change it.");
-            }
-            if (advertText.length() + advertPart.length() + 1 > MAX_ADVERT_LENGTH) {
-                throw new IllegalArgumentException("The advert is too long.  Must be less than " + MAX_ADVERT_LENGTH + " characters long.");
-            }
-            if (advertPart.length() == 0) {
-                throw new IllegalArgumentException("You must enter a message to add.");
-            }
-            if (advertText.length() > 0) {
-                result.append(' ');
-            }
-            result.append(advertPart);
-            advertText = result.toString();
-        }
-
-        /**
-         * This method approves an advert. If the advert has already been
-         * approved, or if the advert does not need to be approved then an
-         * exception is thrown.
-         * 
-         * @param approver
-         *            is the person that is approving the advert.
-         */
-        public void approveAdvert(String approver) {
-            if (advertStatus == PRE_APPROVED_STATUS) {
-                throw new IllegalArgumentException("Advert does not need to be approved.");
-            }
-            if (advertStatus == APPROVED_STATUS) {
-                throw new IllegalArgumentException("Advert has already been approved.");
-            }
-            advertStatus = APPROVED_STATUS;
-        }
-
-        /**
-         * This method unapproves the advert. If the advert is already
-         * unapproved, or if the advert is preapproved, then an exception is
-         * thrown.
-         */
-        public void unapproveAdvert() {
-            if (advertStatus == PRE_APPROVED_STATUS) {
-                throw new IllegalArgumentException("Advert does not need to be approved.");
-            }
-            if (advertStatus == NOT_APPROVED_STATUS) {
-                throw new IllegalArgumentException("Advert has not yet been approved.");
-            }
-            advertStatus = NOT_APPROVED_STATUS;
-        }
-
-        /**
-         * This method clears the advert that the user has entered so far.
-         */
-        public void clearAdvert() {
-            if (advertStatus == APPROVED_STATUS) {
-                throw new IllegalArgumentException("Advert has already been approved.  You may no longer change it.");
-            }
-            advertText = new String();
-        }
-
-        /**
-         * This method sets the sound of the advert.
-         * 
-         * @param sound
-         *            is the new sound of the advert.
-         */
-        public void setSound(int sound) {
-            if (advertStatus == APPROVED_STATUS) {
-                throw new IllegalArgumentException("Advert has already been approved.  You may no longer change it.");
-            }
-            if (sound < MIN_SOUND || sound > MAX_SOUND) {
-                throw new IllegalArgumentException("Invalid sound.  Must be between " + MIN_SOUND + " and " + MAX_SOUND + ".");
-            }
-            if (isBannedSound(sound)) {
-                throw new IllegalArgumentException("You are not permitted to use that sound.");
-            }
-            this.sound = sound;
-        }
-
-        /**
-         * This method appends the adverter's name onto the end of the advert
-         * resulting in the full advert string.
-         * 
-         * @return The full advert string is returned.
-         */
-        public String toString() {
-            return advertText + " -" + adverter;
-        }
-
-        /**
-         * This method gets the arena name from the advert text. If no arena
-         * name is present then null is returned. Modded by milosh - 2.4.08
-         * 
-         * @param advertText
-         *            is the advert to parse.
-         * @return the name of the arena is returned.
-         */
-        private String getArenaName(String advertText) {
-            String lowerAdvert = advertText.toLowerCase();
-            int beginIndex = lowerAdvert.lastIndexOf(GO_STRING) + GO_STRING.length();
-            String advertTail = lowerAdvert.substring(beginIndex).trim();
-            int endIndex = advertTail.indexOf(' ');
-
-            if (beginIndex == -1 || endIndex == -1) {
-                return null;
-            }
-            return advertTail.substring(0, endIndex);
-        }
-
-        private boolean isBannedSound(int sound) {
-            return sound == REGAN_SOUND || sound == SEX_SOUND || sound == PM_SOUND || sound == MUSIC1_SOUND || sound == MUSIC2_SOUND;
+        
+        private boolean soundCheck(int s) {
+            return (s != REGAN_SOUND && s != SEX_SOUND && s != PM_SOUND && s != MUSIC1_SOUND && s != MUSIC2_SOUND);
         }
     }
+    
+    /**
+     * The AdvertTimer is used to put time between each set of event zoners. If it is running
+     * then that means no one should be able to advert. Only time things move is when this expires.     *
+     * @author WingZero
+     */
+    private class AdvertTimer extends TimerTask {
 
-    private class DieTask extends TimerTask {
-
+        int delay;
+        long timestamp;    
+        boolean active;
+        
+        public AdvertTimer(int delayBetweenAdverts) {
+            debug("New AdvertTimer created with delay: " + delay);
+            delay = delayBetweenAdverts;
+            timestamp = System.currentTimeMillis();
+            active = true;
+        }
+        
+        @Override
         public void run() {
-            m_botAction.die();
+            debug("AdvertTimer running run method");
+            active = false;
+            prepareNext();
+        }
+        
+        public String getTime() {
+            long left = ((delay * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - timestamp));
+            if (left > 0) {
+                int sec = (int) ((left / 1000) % 60);
+                int min = (int) (((left / 1000) - sec) / 60);
+                return "" + min + " minutes " + sec + " seconds";
+            } else
+                return null;
+        }
+        
+        public boolean hasExpired() {
+            return !active;
         }
     }
+    
+    /** 
+     * This class is used to remove an advert after having not been used. 
+     * Even after the advert has been used it will continue running to 
+     * provide an expiration for the readvert.
+     */
+    private class ExpireTimer extends TimerTask {
+
+        int delay;
+        long timestamp;    
+        boolean active;
+        
+        public ExpireTimer(String waiter, int expireDelay) {
+            debug("New ExpireTimer created with delay: " + expireDelay);
+            delay = expireDelay;
+            timestamp = System.currentTimeMillis();
+            active = true;
+        }
+        
+        public String getTime() {
+            return longString(((delay * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - timestamp)));
+        }
+        
+        private String longString(long t) {
+            if (t > 0) {
+                int sec = (int) ((t / 1000) % 60);
+                int min = (int) (((t / 1000) - sec) / 60);
+                return "" + min + " minutes " + sec + " seconds";
+            } else
+                return null;
+        }
+        
+        @Override
+        public void run() {
+            debug("ExpireTimer run method running");
+            active = false;
+            expireAdvert();
+        }
+        
+        public void endNow() {
+            if (active)
+                ba.cancelTask(this);
+            active = false;
+        }
+        
+        public String renewTime() {
+            endNow();
+            return longString(((delay * Tools.TimeInMillis.MINUTE - (System.currentTimeMillis() - timestamp)) + (EXTENSION * Tools.TimeInMillis.MINUTE)));
+        }
+        
+        public boolean hasExpired() {
+            return !active;
+        }
+    }
+    
+    private class Periodic extends TimerTask {
+
+        String name, advert;
+        int index;
+        int delay;
+        long lifeTime;
+        long started;
+        boolean active;
+        
+        public Periodic(int index, String name) {
+            this.index = index;
+            this.name = name;
+            advert = null;
+            delay = -1;
+            lifeTime = -1;
+            started = -1;
+            active = false;
+        }
+        
+        public void run() {
+            long now = System.currentTimeMillis();
+            if (started + lifeTime < now) {
+                // end it
+                periodic.remove(index);
+                this.cancel();
+            } else if (active) {
+                try {
+                    if (advert.contains("%"))
+                        ba.sendZoneMessage(advert.substring(0, advert.indexOf("%")), Integer.parseInt(advert.substring(advert.indexOf("%") + 1)));
+                    else
+                        ba.sendZoneMessage(advert);
+                } catch (Exception e) {
+                    ba.sendSmartPrivateMessage(name, "There is an" + " error in your sound code, it should be at the end."
+                            + " Ex: \"!periodic 20;5;hello world! %%1\" . " + "Your periodic has been removed.");
+                    periodic.remove(index - 1);
+                    this.cancel();
+                }
+            }
+        }
+        
+        public void setIndex(int i) {
+            index = i;
+        }
+        
+    }
+    
+    public void cmd_die(String name) {
+        try {
+            if (expireTimer != null)
+                expireTimer.endNow();
+            if (advertTimer != null && !advertTimer.hasExpired())
+                ba.cancelTask(advertTimer);
+        } catch (Exception e) {};
+        ba.sendChatMessage("Logging off. Requested by: " + name);
+        ba.scheduleTask(new Die(), 2000);
+    }
+    
+    private class Die extends TimerTask {
+        @Override
+        public void run() {
+            ba.die();
+        }
+    }
+    
+    private void cmd_debug(String name) {
+        if (!DEBUG) {
+            debugger = name;
+            DEBUG = true;
+            ba.sendSmartPrivateMessage(name, "Debugging ENABLED. You are now set as the debugger.");
+        } else if (debugger.equalsIgnoreCase(name)){
+            debugger = "";
+            DEBUG = false;
+            ba.sendSmartPrivateMessage(name, "Debugging DISABLED and debugger reset.");
+        } else {
+            ba.sendChatMessage(name + " has overriden " + debugger + " as the target of debug messages.");
+            ba.sendSmartPrivateMessage(name, "Debugging still ENABLED and you have replaced " + debugger + " as the debugger.");
+            debugger = name;
+        }
+    }
+    
+    public void debug(String msg) {
+        if (DEBUG)
+            ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
+    }
+    
 }
