@@ -205,6 +205,7 @@ public class zonerbot extends SubspaceBot {
             if (ops.length() > 1)
                 ops = ops.substring(0, ops.length() - 2);
             settings.put("Trainers", ops);
+            ba.sendSmartPrivateMessage(name, "Trainer removed: " + staff);
             settings.save();
             loadTrainers();  
         } else
@@ -508,6 +509,7 @@ public class zonerbot extends SubspaceBot {
     
     /** Loads the trainers listed in the cfg file **/
     private void loadTrainers() {
+        trainers.clear();
         String[] list = ba.getBotSettings().getString("Trainers").split(",");
         for (String n : list)
             trainers.add(n.toLowerCase());
