@@ -139,7 +139,7 @@ public class zonerbot extends SubspaceBot {
     /** Handles the !help command **/
     public void cmd_help(String name) {
         String[] msg = {
-                "+-- zonerbot Commands ------------------------------------------------------------------------.",
+                "+-- ZonerBot Commands ------------------------------------------------------------------------.",
                 "| !status                - Reports your current advert status                                 |",
                 "| !claim                 - Claims an advert by adding you to the advert queue                 |",
                 "| !free                  - Releases your advert and removes you from the queue                |",
@@ -157,7 +157,7 @@ public class zonerbot extends SubspaceBot {
         
         if (oplist.isSmod(name)) {
             msg = new String[] {
-                    "+-- zonerbot Smod Commands -------------------------------------------------------------------+",
+                    "+-- ZonerBot Smod Commands -------------------------------------------------------------------+",
                     "| !list                  - List of the current staff trainers                                 |",
                     "| !add <name>            - Adds <name> to the trainer list (allows zh advert granting)        |",
                     "| !remove <name>         - Removes <name> from the trainer list                               |",
