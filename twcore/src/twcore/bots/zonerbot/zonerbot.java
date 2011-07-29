@@ -32,6 +32,7 @@ public class zonerbot extends SubspaceBot {
     public static final int READVERT_MAX = 2;
     public static final int EXPIRE_TIME = 5;
     public static final int EXTENSION = 2;
+    public static final int MAX_RENEWAL = 3;
     
     private boolean DEBUG;
     private String debugger;
@@ -106,8 +107,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_setSound(name, msg);
                 else if (msg.startsWith("!view"))
                     cmd_view(name, msg);
-                else if (msg.equals("!advert"))
-                    cmd_advert(name);
+                else if (msg.startsWith("!advert"))
+                    cmd_advert(name, msg);
                 else if (msg.equals("!readvert"))
                     cmd_readvert(name);
                 else if (msg.equals("!renew"))
@@ -146,6 +147,7 @@ public class zonerbot extends SubspaceBot {
                 "| !set <message>         - Sets <message> as the advert message and must include ?go arena    |",
                 "| !sound <#>             - Sets <#> as the sound to be used in the advert                     |",
                 "| !view                  - Views your current advert message and sound                        |",
+                "| !advert <message>      - Auto-adverts using <message> unless <message> is found illegal     |",
                 "| !advert                - Sends the zone message as set by the advert                        |",
                 "| !readvert              - Sends a last call default advert for the arena in your !advert     |",
                 "| !renew                 - Prolongs the expiration of the advert for an extra 2 minutes       |",
@@ -361,7 +363,7 @@ public class zonerbot extends SubspaceBot {
     }
     
     /** Handles the !advert command which executes the current advert if possible **/
-    public void cmd_advert(String name) {
+    public void cmd_advert(String name, String cmd) {
         if (queue.containsKey(name)) {
             if (queue.indexOfKey(name) > 0)
                 sendQueuePosition(name);
@@ -371,13 +373,29 @@ public class zonerbot extends SubspaceBot {
                 Advert advert = queue.firstValue();
 
                 if (advert.getStatus() < Advert.READY) {
-                    if (!advert.isGranted())
-                        ba.sendSmartPrivateMessage(name, "You have to set an advert message before you can use it.");
-                    else
+                    if (!advert.isGranted()) {
+                        if (cmd.length() < 8)
+                            ba.sendSmartPrivateMessage(name, "You have to set an advert message before you can use it.");
+                        else {
+                            String msg = cmd.substring(8);
+                            advert.setAdvert(msg);
+                            if (advert.getStatus() == Advert.READY)
+                                cmd_advert(name, "!advert");
+                            else
+                                ba.sendSmartPrivateMessage(name, advert.setAdvert(msg));
+                        }
+                    } else
                         ba.sendSmartPrivateMessage(name, "Your advert must be set and approved before it can be used.");
                 } else if (advert.getStatus() > Advert.READY)
                     ba.sendSmartPrivateMessage(name, "The advert has already been zoned.");
-                else {
+                else if (cmd.length() > 8) {
+                    String msg = cmd.substring(8);
+                    String res = advert.setAdvert(msg);
+                    if (advert.getStatus() == Advert.READY && res.startsWith("Advert message changed"))
+                        cmd_advert(name, "!advert");
+                    else
+                        ba.sendSmartPrivateMessage(name, advert.setAdvert(msg));
+                } else {
                     advert.setStatus(Advert.ZONED);
                     // need to check the length n shit
                     ba.sendZoneMessage(advert.getMessage() + "-" + advert.getName(), advert.getSound());
@@ -432,9 +450,12 @@ public class zonerbot extends SubspaceBot {
             sendQueuePosition(name);
         else if (advertTimer != null && !advertTimer.hasExpired())
             sendQueuePosition(0);
-        else if (expireTimer != null && !expireTimer.hasExpired())
-            ba.sendSmartPrivateMessage(name, "Advert renewed. Remaining time: " + expireTimer.renewTime());
-        else 
+        else if (expireTimer != null && !expireTimer.hasExpired()) {
+            if (expireTimer.canRenew())
+                ba.sendSmartPrivateMessage(name, "Advert renewed. Remaining time: " + expireTimer.renewTime());
+            else
+                ba.sendSmartPrivateMessage(name, "No advert renewals available. Remaining time: " + expireTimer.getTime());
+        } else 
             ba.sendSmartPrivateMessage(name, "Advert has already expired.");
     }
     
@@ -742,13 +763,14 @@ public class zonerbot extends SubspaceBot {
      */
     private class ExpireTimer extends TimerTask {
 
-        int delay;
+        int delay, renewal;
         long timestamp;    
         boolean active;
         
         public ExpireTimer(String waiter, int expireDelay) {
             debug("New ExpireTimer created with delay: " + expireDelay);
             delay = expireDelay;
+            renewal = 0;
             timestamp = System.currentTimeMillis();
             active = true;
         }
@@ -778,10 +800,20 @@ public class zonerbot extends SubspaceBot {
                 ba.cancelTask(this);
             active = false;
         }
-        
+
         public String renewTime() {
-            endNow();
-            return longString(((delay * Tools.TimeInMillis.MINUTE - (System.currentTimeMillis() - timestamp)) + (EXTENSION * Tools.TimeInMillis.MINUTE)));
+            if (renewal < MAX_RENEWAL) {
+                endNow();
+                active = true;
+                long time = ((delay * Tools.TimeInMillis.MINUTE - (System.currentTimeMillis() - timestamp)) + (EXTENSION * Tools.TimeInMillis.MINUTE));
+                ba.scheduleTask(this, time);
+                renewal++;
+                return longString(time);
+            } else return "";
+        }
+        
+        public boolean canRenew() {
+            return renewal < MAX_RENEWAL;
         }
         
         public boolean hasExpired() {
