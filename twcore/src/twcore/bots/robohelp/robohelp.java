@@ -321,7 +321,7 @@ public class robohelp extends SubspaceBot {
     }
 
     /**
-     * Intended for receiving reliable zone messages from ZonerBot, rather than
+     * Intended for receiving reliable zone messages from zonerbot, rather than
      * picking them apart from handleZone.
      * @param event IPC event to handle
      */
@@ -1609,14 +1609,14 @@ public class robohelp extends SubspaceBot {
             time -= (min * 60);
             String t = "" + hour + ":";
             if (min < 10)
-                t += "0" + min + ".";
+                t += "0" + min + ":";
             else
                 t += min + ".";
             if (time < 10)
                 t += "0" + time;
             else 
                 t += time;
-            return t + "";
+            return t + " ago ";
         }
     }
     
@@ -1625,14 +1625,14 @@ public class robohelp extends SubspaceBot {
         if (timeFormat)
             m_botAction.sendChatMessage("Call list time format changed to birthdate. (HH:mm)");
         else
-            m_botAction.sendChatMessage("Call list time format changed to time passed. (H:m.s)");
+            m_botAction.sendChatMessage("Call list time format changed to time passed. (H:m:s)");
     }
 
     public void changeTimeFormatP(String name, String msg) {
         if (timeFormat)
             m_botAction.sendSmartPrivateMessage(name, "Call list time format changed to birthdate. (HH:mm)");
         else
-            m_botAction.sendSmartPrivateMessage(name, "Call list time format changed to time passed. (H:m.s)");
+            m_botAction.sendSmartPrivateMessage(name, "Call list time format changed to time passed. (H:m:s)");
     }
     
     public void handleCalls(String name, String message) {
@@ -1670,7 +1670,7 @@ public class robohelp extends SubspaceBot {
                     else if (ct == HelpRequest.CLEAN)
                         msg += "- " + taker + " -";
                 } else if (call.getClaimType() == HelpRequest.FREE)
-                    msg += "* -";
+                    msg += "*";
                 
                 if (call.getType() == 0 || call.getType() == 1)
                     msg += " help: (";
