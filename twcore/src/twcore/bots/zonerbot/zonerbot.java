@@ -164,11 +164,11 @@ public class zonerbot extends SubspaceBot {
                 Tools.printStackTrace("ZonerBot !hosted SQL error.", e);
             }
             if (events.size() > 0) {
-                ba.sendSmartPrivateMessage(name, "Events hosted the last " + hours + " hours: ");
+                ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: ");
                 for (String str : events.keySet())
-                    ba.sendSmartPrivateMessage(name, "" + str + " - " + events.get(str));
+                    ba.sendSmartPrivateMessage(name, "" + str + " " + events.get(str));
             } else 
-                ba.sendSmartPrivateMessage(name, "Events hosted the last " + hours + " hours: none");
+                ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: none");
         }
     }
     
