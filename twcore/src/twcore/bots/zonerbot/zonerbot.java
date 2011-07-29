@@ -28,9 +28,9 @@ public class zonerbot extends SubspaceBot {
     public OperatorList oplist;
     
     public static final String ZONE_CHANNEL = "Zone Channel";
-    public static final int ADVERT_DELAY = 2;
+    public static final int ADVERT_DELAY = 10;
     public static final int READVERT_MAX = 2;
-    public static final int EXPIRE_TIME = 2;
+    public static final int EXPIRE_TIME = 5;
     public static final int EXTENSION = 2;
     
     private boolean DEBUG;
@@ -148,6 +148,7 @@ public class zonerbot extends SubspaceBot {
                 "| !view                  - Views your current advert message and sound                        |",
                 "| !advert                - Sends the zone message as set by the advert                        |",
                 "| !readvert              - Sends a last call default advert for the arena in your !advert     |",
+                "| !renew                 - Prolongs the expiration of the advert for an extra 2 minutes       |",
         };
         ba.smartPrivateMessageSpam(name, msg);
         if (trainers.contains(name.toLowerCase()) || oplist.isSmod(name)) {
