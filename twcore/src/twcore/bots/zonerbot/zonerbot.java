@@ -262,7 +262,7 @@ public class zonerbot extends SubspaceBot {
         int hours = 24;
         try {
             hours = Integer.valueOf(cmd.substring(8).trim());
-            if (hours < 1 && hours > 48)
+            if (hours < 1 || hours > 48)
                 hours = 24;
         } catch (NumberFormatException e) { hours = 24; }
         ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT fcEventName FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours + " HOUR) LIMIT " + (hours * 6));
