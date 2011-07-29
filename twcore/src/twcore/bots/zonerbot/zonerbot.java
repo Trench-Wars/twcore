@@ -143,18 +143,23 @@ public class zonerbot extends SubspaceBot {
                 "| !status                - Reports your current advert status                                 |",
                 "| !claim                 - Claims an advert by adding you to the advert queue                 |",
                 "| !free                  - Releases your advert and removes you from the queue                |",
-                "| !grant <name>          - Grants an advert to a ZH allowing them to do a zoner once approved |",
-                "| !approve               - Allows the earliest ZH you granted an advert to zone               |",
-                "| !approve <name>        - Allows <name> to zone the advert that was granted                  |",
                 "| !set <message>         - Sets <message> as the advert message and must include ?go arena    |",
                 "| !sound <#>             - Sets <#> as the sound to be used in the advert                     |",
                 "| !view                  - Views your current advert message and sound                        |",
-                "| !view <name>           - Views the current advert message and sound of <name>               |",
                 "| !advert                - Sends the zone message as set by the advert                        |",
                 "| !readvert              - Sends a last call default advert for the arena in your !advert     |",
         };
         ba.smartPrivateMessageSpam(name, msg);
-        
+        if (trainers.contains(name.toLowerCase()) || oplist.isSmod(name)) {
+            msg = new String[] {
+                    "+-- ZonerBot Trainer Commands ----------------------------------------------------------------+",
+                    "| !grant <name>          - Grants an advert to a ZH allowing them to do a zoner once approved |",
+                    "| !view <name>           - Views the current advert message and sound of <name>               |",
+                    "| !approve               - Allows the earliest ZH you granted an advert to zone               |",
+                    "| !approve <name>        - Allows <name> to zone the advert that was granted                  |",
+            };
+            ba.smartPrivateMessageSpam(name, msg);            
+        }
         if (oplist.isSmod(name)) {
             msg = new String[] {
                     "+-- ZonerBot Smod Commands -------------------------------------------------------------------+",
