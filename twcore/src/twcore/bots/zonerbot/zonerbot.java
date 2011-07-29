@@ -2,9 +2,12 @@ package twcore.bots.zonerbot;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Random;
 import java.util.TimerTask;
 
@@ -132,6 +135,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_debug(name);
                 else if (msg.equals("!die"))
                     cmd_die(name);
+                else if (msg.startsWith("!grants"))
+                    cmd_grants(name, msg);
             }
             if (oplist.isSmod(name)) {
                 if (msg.startsWith("!add "))
@@ -169,6 +174,25 @@ public class zonerbot extends SubspaceBot {
                     ba.sendSmartPrivateMessage(name, "" + str + " " + events.get(str));
             } else 
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: none");
+        } else if (args.length == 1) {
+            String name = args[0];
+            int grants = 0;
+            String month = "";
+            int year = 2011;
+            ResultSet rs = event.getResultSet();
+            try {
+                if (rs.next()) {
+                    grants = rs.getInt("c");
+                    month = rs.getString("m");
+                    year = rs.getInt("y");
+                    ba.sendSmartPrivateMessage(name, "Total grants for " + month + ", " + year + ": " + grants);
+                } else
+                    ba.sendSmartPrivateMessage(name, "Month was not found in the database.");
+                ba.SQLClose(rs);
+            } catch (SQLException e) {
+                ba.sendSmartPrivateMessage(name, "SQL Error!");
+                Tools.printStackTrace("ZonerBot !hosted SQL error.", e);
+            }
         }
     }
     
@@ -196,6 +220,8 @@ public class zonerbot extends SubspaceBot {
                     "| !view <name>           - Views the current advert message and sound of <name>               |",
                     "| !approve               - Allows the earliest ZH you granted an advert to zone               |",
                     "| !approve <name>        - Allows <name> to zone the advert that was granted                  |",
+                    "| !grants                - Displays total number of granted adverts for this month            |",
+                    "| !grants yyyy-MM        - Displays total number of granted adverts for month MM of year yyyy |",
             };
             ba.smartPrivateMessageSpam(name, msg);            
         }
@@ -266,6 +292,29 @@ public class zonerbot extends SubspaceBot {
                 hours = 24;
         } catch (NumberFormatException e) { hours = 24; }
         ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT fcEventName FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours + " HOUR) LIMIT " + (hours * 6));
+    }
+    
+    public void cmd_grants(String name, String cmd) {
+        String query = "";
+        if (cmd.length() == 15 && cmd.indexOf("-") == 12) {
+            int year = Calendar.getInstance().get(Calendar.YEAR);
+            int month = Calendar.getInstance().get(Calendar.MONTH);
+            try {
+                year = Integer.valueOf(cmd.substring(8, 12));
+                month = Integer.valueOf(cmd.substring(13));
+                if (year < 2002 || year > 9999)
+                    year = Calendar.getInstance().get(Calendar.YEAR);
+                if (month < 1 || month > 12)
+                    month = Calendar.getInstance().get(Calendar.MONTH);
+                if (month / 10 == 0)
+                    cmd = "!grants " + year + "-0" + month;
+                else
+                    cmd = "!grants " + year + "-" + month;
+            } catch (NumberFormatException e) {}
+            query = "SELECT COUNT(*) as c, MONTHNAME(fdTime) as m, YEAR(fdTime) as y FROM tblAdvert WHERE YEAR(fdTime) = " + year + " AND MONTH(fdTime) = " + month + " AND fcUserName LIKE '%<ZH>'";
+        } else
+            query = "SELECT COUNT(*) as c, MONTHNAME(fdTime) as m, YEAR(fdTime) as y FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcUserName LIKE '%<ZH>'";
+        ba.SQLBackgroundQuery(db, "" + name, query);
     }
     
     /** Handles the !status command **/
