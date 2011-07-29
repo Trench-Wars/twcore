@@ -1,6 +1,9 @@
 package twcore.bots.zonerbot;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.TimerTask;
@@ -13,6 +16,7 @@ import twcore.core.SubspaceBot;
 import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.events.SQLResultEvent;
 import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
 
@@ -28,6 +32,7 @@ public class zonerbot extends SubspaceBot {
     public OperatorList oplist;
     
     public static final String ZONE_CHANNEL = "Zone Channel";
+    public static final String db = "website";
     public static final int ADVERT_DELAY = 10;
     public static final int READVERT_MAX = 2;
     public static final int EXPIRE_TIME = 5;
@@ -115,6 +120,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_renew(name);
                 else if (msg.equals("!help"))
                     cmd_help(name);
+                else if (msg.startsWith("!hosted "))
+                    cmd_hosted(name, msg);
             }
             if (oplist.isHighmod(name) || trainers.contains(name.toLowerCase())) {
                 if (msg.startsWith("!grant "))
@@ -137,10 +144,39 @@ public class zonerbot extends SubspaceBot {
         }
     }
     
+    public void handleEvent(SQLResultEvent event) {
+        String[] args = event.getIdentifier().split(":");
+        if (args.length == 2) {
+            String name = args[0];
+            String hours = args[1];
+            HashMap<String, Integer> events = new HashMap<String, Integer>();
+            ResultSet rs = event.getResultSet();
+            try {
+                while (rs.next()) {
+                    String en = rs.getString("fcEventName");
+                    if (!events.containsKey(en.toLowerCase()))
+                        events.put(en.toLowerCase(), 0);
+                    else
+                        events.put(en.toLowerCase(), events.get(en.toLowerCase())+1);
+                }
+                ba.SQLClose(rs);
+            } catch (SQLException e) {
+                Tools.printStackTrace("ZonerBot !hosted SQL error.", e);
+            }
+            if (events.size() > 0) {
+                ba.sendSmartPrivateMessage(name, "Events hosted the last " + hours + " hours: ");
+                for (String str : events.keySet())
+                    ba.sendSmartPrivateMessage(name, "" + str + " - " + events.get(str));
+            } else 
+                ba.sendSmartPrivateMessage(name, "Events hosted the last " + hours + " hours: none");
+        }
+    }
+    
     /** Handles the !help command **/
     public void cmd_help(String name) {
         String[] msg = {
                 "+-- ZonerBot Commands ------------------------------------------------------------------------.",
+                "| !hosted <hours>        - Lists the events and number of times hosted in the last <hours>    |",
                 "| !status                - Reports your current advert status                                 |",
                 "| !claim                 - Claims an advert by adding you to the advert queue                 |",
                 "| !free                  - Releases your advert and removes you from the queue                |",
@@ -218,6 +254,18 @@ public class zonerbot extends SubspaceBot {
     /** Handles the !list trainers command **/
     public void cmd_list(String name) {
         ba.sendSmartPrivateMessage(name, "Trainers: " + ba.getBotSettings().getString("Trainers"));
+    }
+    
+    /** Handles the !hosted command **/
+    public void cmd_hosted(String name, String cmd) {
+        if (cmd.length() < 9) return;
+        int hours = 24;
+        try {
+            hours = Integer.valueOf(cmd.substring(8).trim());
+            if (hours < 1 && hours > 48)
+                hours = 24;
+        } catch (NumberFormatException e) { hours = 24; }
+        ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT fcEventName FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours + " HOUR) LIMIT " + (hours * 6));
     }
     
     /** Handles the !status command **/
