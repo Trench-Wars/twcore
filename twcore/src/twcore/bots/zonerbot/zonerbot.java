@@ -288,6 +288,7 @@ public class zonerbot extends SubspaceBot {
                             sendQueuePosition(index);
                     }
                 }
+                ba.sendSmartPrivateMessage(name, "Advert freed.");
             } else
                 ba.sendSmartPrivateMessage(name, "An advert must not have been used in order to free it.");
         } else
