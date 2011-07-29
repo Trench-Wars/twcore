@@ -203,7 +203,7 @@ public class zonerbot extends SubspaceBot {
                 if (!n.equalsIgnoreCase(staff))
                     ops += n + ",";
             if (ops.length() > 1)
-                ops = ops.substring(0, ops.length() - 2);
+                ops = ops.substring(0, ops.length() - 1);
             settings.put("Trainers", ops);
             ba.sendSmartPrivateMessage(name, "Trainer removed: " + staff);
             settings.save();
