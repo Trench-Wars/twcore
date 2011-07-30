@@ -1611,7 +1611,7 @@ public class robohelp extends SubspaceBot {
             if (min < 10)
                 t += "0" + min + ":";
             else
-                t += min + ".";
+                t += min + ":";
             if (time < 10)
                 t += "0" + time;
             else 
