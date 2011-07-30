@@ -182,7 +182,7 @@ public class zonerbot extends SubspaceBot {
             if (events.size() > 0) {
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: ");
                 for (String str : events.keySet())
-                    ba.sendSmartPrivateMessage(name, " " + padString(str, 20) + " " + events.get(str));
+                    ba.sendSmartPrivateMessage(name, " " + padString(str, 15) + " " + events.get(str));
             } else 
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: none");
         } else if (args.length == 1) {
