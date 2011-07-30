@@ -2,12 +2,12 @@ package twcore.bots.zonerbot;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Locale;
 import java.util.Random;
 import java.util.TimerTask;
 
@@ -42,6 +42,10 @@ public class zonerbot extends SubspaceBot {
     public static final int EXTENSION = 2;
     public static final int MAX_RENEWAL = 3;
     
+    public static final int MAX_LENGTH = 400;
+    public static final int NATURAL_LINE = 200;
+    public static final int LINE_LENGTH = 120;
+    
     private boolean DEBUG;
     private String debugger;
     
@@ -69,6 +73,7 @@ public class zonerbot extends SubspaceBot {
         loadTrainers();
         DEBUG = false;
         debugger = "";
+        loadPeriodics();
     }
 
     /** Handles the LoggedOn event **/
@@ -143,8 +148,14 @@ public class zonerbot extends SubspaceBot {
                     cmd_add(name, msg);
                 else if (msg.startsWith("!remove "))
                     cmd_remove(name, msg);
-                else if (msg.equals("!list"))
+                else if (msg.equals("!ops"))
                     cmd_list(name);
+                else if (msg.startsWith("!per "))
+                    cmd_periodic(name, msg);
+                else if (msg.startsWith("!remper "))
+                    cmd_removePeriodic(name, msg);
+                else if (msg.equals("!list"))
+                    cmd_listPeriodics(name);
             }
         }
     }
@@ -199,42 +210,44 @@ public class zonerbot extends SubspaceBot {
     /** Handles the !help command **/
     public void cmd_help(String name) {
         String[] msg = {
-                "+-- ZonerBot Commands ------------------------------------------------------------------------.",
-                "| !hosted <hours>        - Lists the events and number of times hosted in the last <hours>    |",
-                "| !status                - Reports your current advert status                                 |",
-                "| !claim                 - Claims an advert by adding you to the advert queue                 |",
-                "| !free                  - Releases your advert and removes you from the queue                |",
-                "| !set <message>         - Sets <message> as the advert message and must include ?go arena    |",
-                "| !sound <#>             - Sets <#> as the sound to be used in the advert                     |",
-                "| !view                  - Views your current advert message and sound                        |",
-                "| !advert <message>      - Auto-adverts using <message> unless <message> is found illegal     |",
-                "| !advert                - Sends the zone message as set by the advert                        |",
-                "| !readvert              - Sends a last call default advert for the arena in your !advert     |",
-                "| !renew                 - Prolongs the expiration of the advert for an extra 2 minutes       |",
+                "+-- ZonerBot Commands --------------------------------------------------------------------------.",
+                "| !hosted <hours>          - Lists the events and number of times hosted in the last <hours>    |",
+                "| !status                  - Reports your current advert status                                 |",
+                "| !claim                   - Claims an advert by adding you to the advert queue                 |",
+                "| !free                    - Releases your advert and removes you from the queue                |",
+                "| !set <message>           - Sets <message> as the advert message and must include ?go arena    |",
+                "| !sound <#>               - Sets <#> as the sound to be used in the advert                     |",
+                "| !view                    - Views your current advert message and sound                        |",
+                "| !advert <message>        - Auto-adverts using <message> unless <message> is found illegal     |",
+                "| !advert                  - Sends the zone message as set by the advert                        |",
+                "| !readvert                - Sends a last call default advert for the arena in your !advert     |",
+                "| !renew                   - Prolongs the expiration of the advert for an extra 2 minutes       |",
         };
         ba.smartPrivateMessageSpam(name, msg);
         if (trainers.contains(name.toLowerCase()) || oplist.isSmod(name)) {
             msg = new String[] {
-                    "+-- ZonerBot Trainer Commands ----------------------------------------------------------------+",
-                    "| !grant <name>          - Grants an advert to a ZH allowing them to do a zoner once approved |",
-                    "| !view <name>           - Views the current advert message and sound of <name>               |",
-                    "| !approve               - Allows the earliest ZH you granted an advert to zone               |",
-                    "| !approve <name>        - Allows <name> to zone the advert that was granted                  |",
-                    "| !grants                - Displays total number of granted adverts for this month            |",
-                    "| !grants yyyy-MM        - Displays total number of granted adverts for month MM of year yyyy |",
+                    "+-- ZonerBot Trainer Commands ------------------------------------------------------------------+",
+                    "| !grant <name>            - Grants an advert to a ZH allowing them to do a zoner once approved |",
+                    "| !view <name>             - Views the current advert message and sound of <name>               |",
+                    "| !approve                 - Allows the earliest ZH you granted an advert to zone               |",
+                    "| !approve <name>          - Allows <name> to zone the advert that was granted                  |",
+                    "| !grants                  - Displays total number of granted adverts for this month            |",
+                    "| !grants yyyy-MM          - Displays total number of granted adverts for month MM of year yyyy |",
             };
             ba.smartPrivateMessageSpam(name, msg);            
         }
         if (oplist.isSmod(name)) {
             msg = new String[] {
-                    "+-- ZonerBot Smod Commands -------------------------------------------------------------------+",
-                    "| !list                  - List of the current staff trainers                                 |",
-                    "| !add <name>            - Adds <name> to the trainer list (allows zh advert granting)        |",
-                    "| !remove <name>         - Removes <name> from the trainer list                               |",
+                    "+-- ZonerBot Smod Commands ---------------------------------------------------------------------+",
+                    "| !per <del>;<dur>;<msg>   - Sets a periodic zoner to repeat every <del> min for <dur> hr %%%#  |",
+                    "| !remper <index>          - Removes the periodic zoner at <index>                              |",
+                    "| !ops                     - List of the current staff trainers                                 |",
+                    "| !add <name>              - Adds <name> to the trainer list (allows zh advert granting)        |",
+                    "| !remove <name>           - Removes <name> from the trainer list                               |",
             };
             ba.smartPrivateMessageSpam(name, msg);
         }
-        ba.sendSmartPrivateMessage(name, "`---------------------------------------------------------------------------------------------'");
+        ba.sendSmartPrivateMessage(name, "`-----------------------------------------------------------------------------------------------'");
     }
     
     /** Handles the !add trainer command **/
@@ -295,7 +308,7 @@ public class zonerbot extends SubspaceBot {
     }
     
     public void cmd_grants(String name, String cmd) {
-        String query = "";
+        String query = "SELECT COUNT(*) as c, MONTHNAME(fdTime) as m, YEAR(fdTime) as y";
         if (cmd.length() == 15 && cmd.indexOf("-") == 12) {
             int year = Calendar.getInstance().get(Calendar.YEAR);
             int month = Calendar.getInstance().get(Calendar.MONTH);
@@ -311,9 +324,14 @@ public class zonerbot extends SubspaceBot {
                 else
                     cmd = "!grants " + year + "-" + month;
             } catch (NumberFormatException e) {}
-            query = "SELECT COUNT(*) as c, MONTHNAME(fdTime) as m, YEAR(fdTime) as y FROM tblAdvert WHERE YEAR(fdTime) = " + year + " AND MONTH(fdTime) = " + month + " AND fcUserName LIKE '%<ZH>'";
+            query += " FROM tblAdvert WHERE YEAR(fdTime) = " + year + " AND MONTH(fdTime) = " + month + " AND fcUserName LIKE '%<ZH>'";
+        } else if (cmd.length() > 7) { 
+            String zh = cmd.substring(8).toLowerCase();
+            if (!zh.contains("<zh>"))
+                zh = zh.trim() + " <ZH>";
+            query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcUserName = '" + zh + "'";
         } else
-            query = "SELECT COUNT(*) as c, MONTHNAME(fdTime) as m, YEAR(fdTime) as y FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcUserName LIKE '%<ZH>'";
+            query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcUserName LIKE '%<ZH>'";
         ba.SQLBackgroundQuery(db, "" + name, query);
     }
     
@@ -494,8 +512,11 @@ public class zonerbot extends SubspaceBot {
                         ba.sendSmartPrivateMessage(name, advert.setAdvert(msg));
                 } else {
                     advert.setStatus(Advert.ZONED);
-                    // need to check the length n shit
-                    ba.sendZoneMessage(advert.getMessage() + "-" + advert.getName(), advert.getSound());
+                    String adv = advert.getMessage() + "-" + advert.getName();
+                    if (adv.length() > NATURAL_LINE)
+                        zoneMessageSpam(splitString(adv, LINE_LENGTH), advert.getSound());
+                    else
+                        ba.sendZoneMessage(adv, advert.getSound());
                     
                     advertTimer = new AdvertTimer(ADVERT_DELAY);
                     ba.scheduleTask(advertTimer, ADVERT_DELAY * Tools.TimeInMillis.MINUTE);
@@ -554,6 +575,61 @@ public class zonerbot extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "No advert renewals available. Remaining time: " + expireTimer.getTime());
         } else 
             ba.sendSmartPrivateMessage(name, "Advert has already expired.");
+    }
+    
+    public void cmd_periodic(String name, String cmd) {
+        // !per <delay>;<interval>;<message>
+        if (cmd.length() < 9 || !cmd.contains(";")) return;
+        cmd = cmd.substring(5);
+        String[] args = cmd.split(";");
+        int delay = 20;
+        int duration = 24;
+        try {
+            delay = Integer.valueOf(args[0]);
+            duration = Integer.valueOf(args[1]);
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Incorrect syntax, please use !per <delay>;<duration>;<message>");
+            return;
+        }
+        String msg = args[2];
+        if (msg.length() > MAX_LENGTH) {
+            ba.sendSmartPrivateMessage(name, "Advert message must be less than " + MAX_LENGTH + " characters.");
+            return;
+        } else if (delay < 1) {
+            ba.sendSmartPrivateMessage(name, "Delay must be greater than or equal to 5 minutes.");
+            return;
+        } else if (duration < 1) {
+            ba.sendSmartPrivateMessage(name, "Duration must be greater than or equal to 1 hour.");
+            return;
+        }
+        new Periodic(name, msg, delay, duration);
+    }
+    
+    public void cmd_listPeriodics(String name) {
+        if (periodic.isEmpty()) {
+            ba.sendSmartPrivateMessage(name, "There are no periodic zoners currently set.");
+            return;
+        }
+        for (Periodic p : periodic)
+            ba.sendSmartPrivateMessage(name, "" + p.index + ") " + p.toString());
+    }
+    
+    public void cmd_removePeriodic(String name, String cmd) {
+        // !remper #
+        if (cmd.length() < 9) return;
+        int index = -1;
+        try {
+            index = Integer.valueOf(cmd.substring(8));
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !remper <#>");
+            return;
+        }
+        if (index > -1 && index < periodic.size()) {
+            periodic.remove(index).end();
+            updateIndices();
+            ba.sendSmartPrivateMessage(name, "Periodic zoner #" + index + " has been removed.");
+        } else 
+            ba.sendSmartPrivateMessage(name, "No periodic zoner listed at index: " + index);
     }
     
     /** Removes the unused advert **/
@@ -633,6 +709,64 @@ public class zonerbot extends SubspaceBot {
         String[] list = ba.getBotSettings().getString("Trainers").split(",");
         for (String n : list)
             trainers.add(n.toLowerCase());
+    }
+    
+    private void loadPeriodics() {
+        try {
+            SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Calendar cal = Calendar.getInstance();
+            long createDelay = 0;
+            
+            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblPeriodic");
+            while (rs.next()) {
+                long created = 0;
+                try {
+                    cal.setTime(f.parse(rs.getString("fdCreated")));
+                    created = cal.getTimeInMillis();
+                } catch (ParseException e) {
+                    continue;
+                }
+                final int delay = rs.getInt("fnDelay");
+                final int duration = rs.getInt("fnDuration");
+                final int sound = rs.getInt("fnSound");
+                final int id = rs.getInt("fnMessageID");
+                final String name = rs.getString("fcUserName");
+                final String msg = rs.getString("fcMessage");
+                final long c = created;
+                createDelay += 5000;
+                TimerTask t = new TimerTask() {
+                    public void run() {
+                        new Periodic(id, name, msg, sound, delay, duration, c);
+                    }
+                };
+                ba.scheduleTask(t, createDelay);
+            }
+        } catch (SQLException e) {
+            Tools.printStackTrace("SQL periodic zoner loader.", e);
+        }
+    }
+    
+    /** Updates the index numbers for each periodic zoner **/
+    private void updateIndices() {
+        for (int i = 0; i < periodic.size(); i++)
+            periodic.get(i).setIndex(i);
+    }
+    
+    /** Splits a string into a String array where each is of a certain length **/
+    private String[] splitString(String msg, int length) {
+        int pieces = msg.length() / length;
+        if ((msg.length() % length) > 0)
+            pieces++;
+        String[] result = new String[pieces];
+        for (int i = 0; i < pieces; i++) {
+            if (i == 0)
+                result[i] = msg.substring(0, length);
+            else if (i < (pieces - 1))
+                result[i] = msg.substring(i * length, i * length + length);
+            else
+                result[i] = msg.substring(i * length);
+        }
+        return result;
     }
     
     /**
@@ -807,9 +941,23 @@ public class zonerbot extends SubspaceBot {
                 return "" + (time / Tools.TimeInMillis.SECOND) + " seconds";
             else return "expired";
         }
-        
-        private boolean soundCheck(int s) {
-            return (s != REGAN_SOUND && s != SEX_SOUND && s != PM_SOUND && s != MUSIC1_SOUND && s != MUSIC2_SOUND);
+    }
+    
+    /** Returns true if the sound is legal **/
+    private boolean soundCheck(int s) {
+        return (s != Advert.REGAN_SOUND && s != Advert.SEX_SOUND && s != Advert.PM_SOUND && s != Advert.MUSIC1_SOUND && s != Advert.MUSIC2_SOUND);
+    }
+    
+    /** Zones an array of messages but only using a sound on the first message unless there is none **/
+    private void zoneMessageSpam(String[] msg, int sound) {
+        for (int i = 0; i < msg.length; i++) {
+            if (i == 0) {
+                if (sound > -1)
+                    ba.sendZoneMessage(msg[0], sound);
+                else
+                    ba.sendZoneMessage(msg[0]);
+            } else
+                ba.sendZoneMessage(msg[i]);
         }
     }
     
@@ -921,47 +1069,126 @@ public class zonerbot extends SubspaceBot {
     private class Periodic extends TimerTask {
 
         String name, advert;
-        int index;
+        int index, id, sound;
         int delay;
-        long lifeTime;
-        long started;
-        boolean active;
+        int duration;
+        long created;
         
-        public Periodic(int index, String name) {
-            this.index = index;
+        public Periodic(String name, String msg, int delay, int duration) {
             this.name = name;
-            advert = null;
-            delay = -1;
-            lifeTime = -1;
-            started = -1;
-            active = false;
+            this.delay = delay;
+            this.duration = duration;
+            sound = -1;
+            String res = setAdvert(msg);
+            if (res != null) {
+                ba.sendSmartPrivateMessage(name, res);
+                return;
+            }
+            created = System.currentTimeMillis();
+            create();
+            if (id == -1)
+                ba.sendSmartPrivateMessage(name, "There was an error in adding the advert to the database. As a result, it will not be reactivated if the bot should respawn.");
+            index = periodic.size();
+            periodic.add(index, this);
+            ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
+        }
+        
+        public Periodic(int id, String name, String msg, int sound, int delay, int duration, long created) {
+            this.id = id;
+            this.name = name;
+            this.delay = delay;
+            this.duration = duration;
+            this.sound = sound;
+            String res = setAdvert(msg);
+            if (res != null) {
+                ba.sendSmartPrivateMessage(name, res);
+                return;
+            }
+            this.created = created;
+            index = periodic.size();
+            periodic.add(index, this);
+            ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
+        }
+
+        public String setAdvert(String msg) {
+            int si = msg.indexOf("%");
+            if (si < 0) {
+                advert = msg;
+                return null;
+            } else if (msg.length() - si > 3)
+                return "The %<sound> must be at the very end of the message.";
+            else {
+                try {
+                    sound = Integer.valueOf(msg.substring(si + 1));
+                } catch (NumberFormatException e) {
+                    advert = msg.substring(0, si);
+                    return "Error extracting percent sound so using the default %2.";
+                }
+                
+                if (soundCheck(sound)) {
+                    advert = msg.substring(0, si);
+                    return null;
+                } else
+                    return "That sound is not allowed.";
+            }
+        }
+        
+        public int create() {
+            if (delay > 0 && duration > 0 && advert.length() > 0) {
+                try {
+                    ba.SQLQueryAndClose(db, "INSERT INTO tblPeriodic (fcUserName, fcMessage, fnSound, fnDelay, fnDuration) VALUES('" + name + "', '" + advert + "', " + sound + ", " + delay + ", " + duration + ")");
+                    ResultSet rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID() as id");
+                    if (rs.next())
+                        id = rs.getInt("id");
+                } catch (SQLException e) {
+                    Tools.printStackTrace("Periodic message SQL creation error.", e);
+                    id = -1;
+                    return id;
+                }
+                ba.sendSmartPrivateMessage(name, "A periodic zoner has been set to repeat every " + delay + " mins and expire after " + duration + " hrs.");
+                ba.sendSmartPrivateMessage(name, "Advert message: " + advert + " %" + sound);
+            }
+            return id;
         }
         
         public void run() {
             long now = System.currentTimeMillis();
-            if (started + lifeTime < now) {
-                // end it
-                periodic.remove(index);
-                this.cancel();
-            } else if (active) {
+            if ((created + (duration * Tools.TimeInMillis.HOUR)) < now)
+                end();
+            else {
                 try {
-                    if (advert.contains("%"))
-                        ba.sendZoneMessage(advert.substring(0, advert.indexOf("%")), Integer.parseInt(advert.substring(advert.indexOf("%") + 1)));
+                    if (advert.length() > NATURAL_LINE)
+                        zoneMessageSpam(splitString(advert, LINE_LENGTH), sound);
+                    else if (sound > -1)
+                        ba.sendZoneMessage(advert, sound);
                     else
                         ba.sendZoneMessage(advert);
                 } catch (Exception e) {
-                    ba.sendSmartPrivateMessage(name, "There is an" + " error in your sound code, it should be at the end."
-                            + " Ex: \"!periodic 20;5;hello world! %%1\" . " + "Your periodic has been removed.");
-                    periodic.remove(index - 1);
-                    this.cancel();
+                    ba.cancelTask(this);
+                    periodic.remove(this);
+                    updateIndices();
                 }
             }
+        }
+        
+        public void end() {
+            ba.cancelTask(this);
+            periodic.remove(this);
+            updateIndices();
+            if (id != -1)
+                ba.SQLBackgroundQuery(db, null, "DELETE FROM tblPeriodic WHERE fnMessageID = " + id);
         }
         
         public void setIndex(int i) {
             index = i;
         }
         
+        public String toString() {
+            if (sound > -1)
+                return "Set by: " + name + ", repeats every " + delay + " minute(s), for " + duration + " hour(s). \"" + advert + "%" + sound + "\"";
+            else
+                return "Set by: " + name + ", repeats every " + delay + " minute(s), for " + duration + " hour(s). \"" + advert + "\"";
+        }
     }
     
     public void cmd_die(String name) {
