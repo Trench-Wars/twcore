@@ -182,7 +182,7 @@ public class zonerbot extends SubspaceBot {
             if (events.size() > 0) {
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: ");
                 for (String str : events.keySet())
-                    ba.sendSmartPrivateMessage(name, "" + str + " " + events.get(str));
+                    ba.sendSmartPrivateMessage(name, " " + padString(str, 20) + " " + events.get(str));
             } else 
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: none");
         } else if (args.length == 1) {
@@ -751,6 +751,14 @@ public class zonerbot extends SubspaceBot {
     private void updateIndices() {
         for (int i = 0; i < periodic.size(); i++)
             periodic.get(i).setIndex(i);
+    }
+    
+    /** Returns a String with concatenated spaces to meet a certain length **/
+    private String padString(String str, int length) {
+        for (int i = str.length(); i < length; i++)
+            str += " ";
+        str = str.substring(0, length);
+        return str;
     }
     
     /** Splits a string into a String array where each is of a certain length **/
