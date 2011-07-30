@@ -595,7 +595,7 @@ public class zonerbot extends SubspaceBot {
         if (msg.length() > MAX_LENGTH) {
             ba.sendSmartPrivateMessage(name, "Advert message must be less than " + MAX_LENGTH + " characters.");
             return;
-        } else if (delay < 1) {
+        } else if (delay < 5) {
             ba.sendSmartPrivateMessage(name, "Delay must be greater than or equal to 5 minutes.");
             return;
         } else if (duration < 1) {
