@@ -241,6 +241,7 @@ public class zonerbot extends SubspaceBot {
                     "+-- ZonerBot Smod Commands ---------------------------------------------------------------------+",
                     "| !per <del>;<dur>;<msg>   - Sets a periodic zoner to repeat every <del> min for <dur> hr %%%#  |",
                     "| !remper <index>          - Removes the periodic zoner at <index>                              |",
+                    "| !list                    - List of the currently active periodic zoners                       |",
                     "| !ops                     - List of the current staff trainers                                 |",
                     "| !add <name>              - Adds <name> to the trainer list (allows zh advert granting)        |",
                     "| !remove <name>           - Removes <name> from the trainer list                               |",
