@@ -825,6 +825,7 @@ public class zonerbot extends SubspaceBot {
                 };
                 ba.scheduleTask(t, createDelay);
             }
+            ba.SQLClose(rs);
         } catch (SQLException e) {
             Tools.printStackTrace("SQL periodic zoner loader failed.", e);
         }
@@ -1238,6 +1239,7 @@ public class zonerbot extends SubspaceBot {
                     ResultSet rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID() as id");
                     if (rs.next())
                         id = rs.getInt("id");
+                    ba.SQLClose(rs);
                 } catch (SQLException e) {
                     Tools.printStackTrace("Periodic message SQL creation error.", e);
                     id = -1;
