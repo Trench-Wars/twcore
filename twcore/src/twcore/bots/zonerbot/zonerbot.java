@@ -43,6 +43,8 @@ public class zonerbot extends SubspaceBot {
     public static final int NATURAL_LINE = 200;
     public static final int LINE_LENGTH = 120;
     
+    private boolean ZONE_ON_LOAD;
+    
     private boolean DEBUG;
     private String debugger;
     
@@ -70,6 +72,7 @@ public class zonerbot extends SubspaceBot {
         loadTrainers();
         DEBUG = false;
         debugger = "";
+        ZONE_ON_LOAD = false;
         loadPeriodics();
     }
 
@@ -153,6 +156,7 @@ public class zonerbot extends SubspaceBot {
         }
     }
     
+    /** Handles ResultSet events created by the !hosted and !grants commands **/
     public void handleEvent(SQLResultEvent event) {
         String[] args = event.getIdentifier().split(":");
         if (args.length == 2) {
@@ -191,7 +195,10 @@ public class zonerbot extends SubspaceBot {
                     grants = rs.getInt("c");
                     month = rs.getString("m");
                     year = rs.getInt("y");
-                    ba.sendSmartPrivateMessage(name, "Total grants given by " + granter + " in " + month + ", " + year + ": " + grants);
+                    if (grants > 0)
+                        ba.sendSmartPrivateMessage(name, "Total grants given by " + granter + " in " + month + ", " + year + ": " + grants);
+                    else 
+                        ba.sendSmartPrivateMessage(name, "No records found matching the given parameters.");
                 } else
                     ba.sendSmartPrivateMessage(name, "No records found matching the given parameters.");
                 ba.SQLClose(rs);
@@ -292,6 +299,12 @@ public class zonerbot extends SubspaceBot {
         ba.sendSmartPrivateMessage(name, "Trainers: " + ba.getBotSettings().getString("Trainers"));
     }
     
+    public void cmd_autoZone(String name) {
+        ZONE_ON_LOAD = !ZONE_ON_LOAD;
+        if (ZONE_ON_LOAD)
+            ba.sendSmartPrivateMessage(name, "");
+    }
+    
     /** Handles the !hosted command **/
     public void cmd_hosted(String name, String cmd) {
         if (cmd.length() < 9) return;
@@ -306,8 +319,8 @@ public class zonerbot extends SubspaceBot {
     
     /** Handles the !grants <name> and !grants <name>:yyyy-MM commands **/
     public void cmd_grants(String name, String cmd) {
-        cmd = cmd.substring(8);
         if (cmd.length() < 10) return;
+        cmd = cmd.substring(8);
         String query = "SELECT COUNT(*) as c, fcGranter as g, MONTHNAME(fdTime) as m, YEAR(fdTime) as y";
         int year = Calendar.getInstance().get(Calendar.YEAR);
         int month = Calendar.getInstance().get(Calendar.MONTH);
