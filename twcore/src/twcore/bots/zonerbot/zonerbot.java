@@ -593,6 +593,7 @@ public class zonerbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Advert has already expired.");
     }
     
+    /** Handles the !per <delay>;<duration>;<message> command where delay minutes, and duration hours **/
     public void cmd_periodic(String name, String cmd) {
         // !per <delay>;<interval>;<message>
         if (cmd.length() < 9 || !cmd.contains(";")) return;
@@ -621,6 +622,7 @@ public class zonerbot extends SubspaceBot {
         new Periodic(name, msg, delay, duration);
     }
     
+    /** Handles the !list command which lists the active periodic zoners **/
     public void cmd_listPeriodics(String name) {
         if (periodic.isEmpty()) {
             ba.sendSmartPrivateMessage(name, "There are no periodic zoners currently set.");
@@ -630,6 +632,7 @@ public class zonerbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "" + p.index + ") " + p.toString());
     }
     
+    /** Handles the !remper <index> command which removes periodic zoner at index <index> as shown in !list **/
     public void cmd_removePeriodic(String name, String cmd) {
         // !remper #
         if (cmd.length() < 9) return;
