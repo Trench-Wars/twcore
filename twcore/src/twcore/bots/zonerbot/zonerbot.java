@@ -1202,7 +1202,10 @@ public class zonerbot extends SubspaceBot {
             this.created = created;
             index = periodic.size();
             periodic.add(index, this);
-            ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
+            if (ZONE_ON_LOAD)
+                ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
+            else
+                ba.scheduleTask(this, delay * Tools.TimeInMillis.MINUTE, delay * Tools.TimeInMillis.MINUTE);
         }
 
         public String setAdvert(String msg) {
