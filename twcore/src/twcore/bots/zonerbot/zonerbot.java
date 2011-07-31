@@ -16,12 +16,10 @@ import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
-import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.util.Tools;
-import twcore.core.util.ipc.IPCMessage;
 
 /**
  * New ZonerBot
@@ -34,7 +32,6 @@ public class zonerbot extends SubspaceBot {
     public BotAction ba;
     public OperatorList oplist;
     
-    public static final String ZONE_CHANNEL = "Zone Channel";
     public static final String db = "website";
     public static final int ADVERT_DELAY = 10;
     public static final int READVERT_MAX = 2;
@@ -82,10 +79,6 @@ public class zonerbot extends SubspaceBot {
         ba.sendUnfilteredPublicMessage("?chat=robodev");
     }
     
-    /** Handles the IPC event even though it is useless **/
-    public void handleEvent(InterProcessEvent event) {
-    }
-    
     /** Handles the Message event **/
     public void handleEvent(Message event) {
         String name = event.getMessager();
@@ -122,7 +115,7 @@ public class zonerbot extends SubspaceBot {
                     cmd_view(name, msg);
                 else if (msg.startsWith("!advert"))
                     cmd_advert(name, msg);
-                else if (msg.equals("!readvert"))
+                else if (msg.startsWith("!readvert"))
                     cmd_readvert(name);
                 else if (msg.equals("!renew"))
                     cmd_renew(name);
@@ -140,7 +133,7 @@ public class zonerbot extends SubspaceBot {
                     cmd_debug(name);
                 else if (msg.equals("!die"))
                     cmd_die(name);
-                else if (msg.startsWith("!grants"))
+                else if (msg.startsWith("!grants "))
                     cmd_grants(name, msg);
             }
             if (oplist.isSmod(name)) {
@@ -187,18 +180,20 @@ public class zonerbot extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: none");
         } else if (args.length == 1) {
             String name = args[0];
+            String granter = "";
             int grants = 0;
             String month = "";
             int year = 2011;
             ResultSet rs = event.getResultSet();
             try {
                 if (rs.next()) {
+                    granter = rs.getString("g");
                     grants = rs.getInt("c");
                     month = rs.getString("m");
                     year = rs.getInt("y");
-                    ba.sendSmartPrivateMessage(name, "Total grants for " + month + ", " + year + ": " + grants);
+                    ba.sendSmartPrivateMessage(name, "Total grants given by " + granter + " in " + month + ", " + year + ": " + grants);
                 } else
-                    ba.sendSmartPrivateMessage(name, "Month was not found in the database.");
+                    ba.sendSmartPrivateMessage(name, "No records found matching the parameters given.");
                 ba.SQLClose(rs);
             } catch (SQLException e) {
                 ba.sendSmartPrivateMessage(name, "SQL Error!");
@@ -211,7 +206,8 @@ public class zonerbot extends SubspaceBot {
     public void cmd_help(String name) {
         String[] msg = {
                 "+-- ZonerBot Commands --------------------------------------------------------------------------.",
-                "| !hosted <hours>          - Lists the events and number of times hosted in the last <hours>    |",
+                "| !hosted                  - Lists the hosted event counts for last 24 hours                    |",
+                "| !hosted <hours>          - Lists the hosted event counts for last <hours> hours               |",
                 "| !status                  - Reports your current advert status                                 |",
                 "| !claim                   - Claims an advert by adding you to the advert queue                 |",
                 "| !free                    - Releases your advert and removes you from the queue                |",
@@ -219,7 +215,7 @@ public class zonerbot extends SubspaceBot {
                 "| !sound <#>               - Sets <#> as the sound to be used in the advert                     |",
                 "| !view                    - Views your current advert message and sound                        |",
                 "| !advert <message>        - Auto-adverts using <message> unless <message> is found illegal     |",
-                "| !advert                  - Sends the zone message as set by the advert                        |",
+                "| !advert                  - Sends the zone message as set using the !set <message> command     |",
                 "| !readvert                - Sends a last call default advert for the arena in your !advert     |",
                 "| !renew                   - Prolongs the expiration of the advert for an extra 2 minutes       |",
         };
@@ -231,8 +227,8 @@ public class zonerbot extends SubspaceBot {
                     "| !view <name>             - Views the current advert message and sound of <name>               |",
                     "| !approve                 - Allows the earliest ZH you granted an advert to zone               |",
                     "| !approve <name>          - Allows <name> to zone the advert that was granted                  |",
-                    "| !grants                  - Displays total number of granted adverts for this month            |",
-                    "| !grants yyyy-MM          - Displays total number of granted adverts for month MM of year yyyy |",
+                    "| !grants <name>           - Displays the total adverts granted by <name> this month            |",
+                    "| !grants <name>:yyyy-MM   - Displays total grants by <name> in month MM of year yyyy           |",
             };
             ba.smartPrivateMessageSpam(name, msg);            
         }
@@ -309,31 +305,34 @@ public class zonerbot extends SubspaceBot {
     }
     
     public void cmd_grants(String name, String cmd) {
-        String query = "SELECT COUNT(*) as c, MONTHNAME(fdTime) as m, YEAR(fdTime) as y";
-        if (cmd.length() == 15 && cmd.indexOf("-") == 12) {
-            int year = Calendar.getInstance().get(Calendar.YEAR);
-            int month = Calendar.getInstance().get(Calendar.MONTH);
+        // !grants Name:yyyy-MM
+        cmd = cmd.substring(8);
+        if (cmd.length() < 10) return;
+        String query = "SELECT COUNT(*) as c, fcGranter as g, MONTHNAME(fdTime) as m, YEAR(fdTime) as y";
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        int month = Calendar.getInstance().get(Calendar.MONTH);
+        if (!cmd.contains(":")) {
+            // show grants given by granter using the current month and year
+            String granter = cmd;
+            query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter = '" + granter + "'";
+        } else {
+            // show grants given by granter in year yyyy and month MM
+            String granter = cmd.substring(0, cmd.indexOf(":"));
             try {
-                year = Integer.valueOf(cmd.substring(8, 12));
-                month = Integer.valueOf(cmd.substring(13));
+                if (cmd.lastIndexOf("-") == -1) throw new NumberFormatException();
+                year = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1, cmd.lastIndexOf("-")));
+                month = Integer.valueOf(cmd.substring(cmd.lastIndexOf("-") + 1));
                 if (year < 2002 || year > 9999)
                     year = Calendar.getInstance().get(Calendar.YEAR);
                 if (month < 1 || month > 12)
                     month = Calendar.getInstance().get(Calendar.MONTH);
-                if (month / 10 == 0)
-                    cmd = "!grants " + year + "-0" + month;
-                else
-                    cmd = "!grants " + year + "-" + month;
-            } catch (NumberFormatException e) {}
-            query += " FROM tblAdvert WHERE YEAR(fdTime) = " + year + " AND MONTH(fdTime) = " + month + " AND fcUserName LIKE '%<ZH>'";
-        } else if (cmd.length() > 7) { 
-            String zh = cmd.substring(8).toLowerCase();
-            if (!zh.contains("<zh>"))
-                zh = zh.trim() + " <ZH>";
-            query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcUserName = '" + zh + "'";
-        } else
-            query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcUserName LIKE '%<ZH>'";
-        ba.SQLBackgroundQuery(db, "" + name, query);
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name, "Syntax error, please use !grants <name> or !grants <name>:yyyy-MM");
+                return;
+            }
+            query += " FROM tblAdvert WHERE YEAR(fdTime) = " + year + " AND MONTH(fdTime) = " + month + " AND fcGranter = '" + Tools.addSlashesToString(granter) + "'";
+        }
+        ba.SQLBackgroundQuery(db, name, query);
     }
     
     /** Handles the !status command **/
@@ -523,11 +522,7 @@ public class zonerbot extends SubspaceBot {
                     ba.scheduleTask(advertTimer, ADVERT_DELAY * Tools.TimeInMillis.MINUTE);
                     if (expireTimer != null)
                         expireTimer.endNow();
-                    
-                    // Send an IPC message to Robohelp to record the advert
-                    IPCMessage msg = new IPCMessage(name.toLowerCase() + "@ad@" + advert.getArena() + "@ad@" + advert.getMessage());
-                    ba.ipcTransmit(ZONE_CHANNEL, msg);
-                    
+                    storeAdvert(advert);
                     queue.remove(0);
                     usedAdverts.add(0, advert);
                     ba.sendSmartPrivateMessage(name, "A readvert will be available for " + advert.readvertTime() + ".");
@@ -701,6 +696,25 @@ public class zonerbot extends SubspaceBot {
             }
             for (String n : queue.keySet())
                 sendQueuePosition(n);
+        }
+    }
+
+    /** Posts advert information to database **/
+    private void storeAdvert(Advert advert) {
+        java.util.Date day = Calendar.getInstance().getTime();
+        String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(day);
+        String arena = advert.getArena();
+        if (!arena.equalsIgnoreCase("") && !arena.equalsIgnoreCase("elim") && !arena.equalsIgnoreCase("baseelim") && !arena.equalsIgnoreCase("tourny")) {
+            String query = "";
+            if (!advert.isGranted())
+                query = "INSERT INTO `tblAdvert` (`fcUserName`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ('" + Tools.addSlashesToString(advert.getName()) + "', '" + arena + "', '" + Tools.addSlashesToString(advert.getMessage()) + "', '" + time + "')";
+            else
+                query = "INSERT INTO `tblAdvert` (`fcUserName`, `fcGranter`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ('" + Tools.addSlashesToString(advert.getName()) + "', '" + Tools.addSlashesToString(advert.granter) + "', '" + arena + "', '" + Tools.addSlashesToString(advert.getMessage()) + "', '" + time + "')";
+            try {
+                ba.SQLBackgroundQuery(db, null, query);
+            } catch (Exception e) {
+                Tools.printLog("Could not insert advert record.");
+            }
         }
     }
     

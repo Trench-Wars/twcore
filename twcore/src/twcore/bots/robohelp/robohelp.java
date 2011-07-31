@@ -4,9 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
 import java.text.DateFormat;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -321,8 +319,7 @@ public class robohelp extends SubspaceBot {
     }
 
     /**
-     * Intended for receiving reliable zone messages from zonerbot, rather than
-     * picking them apart from handleZone.
+     * Now used for new players only.
      * @param event IPC event to handle
      */
     public void handleEvent( InterProcessEvent event ) {
@@ -332,14 +329,6 @@ public class robohelp extends SubspaceBot {
       try {
           if (message.startsWith("alert")) {
               handleNewPlayer(message.substring(6));
-          } else {
-              String parts[] = message.toLowerCase().split( "@ad@" );
-              String host = parts[0];
-              String arena = parts[1];
-              String advert = parts[2];
-
-              storeAdvert( host, arena, advert );
-              m_botAction.sendSmartPrivateMessage(host, "Advert for '"+arena+"' registered."); 
           }
       } catch (Exception e ) {
     	  Tools.printStackTrace(e);
@@ -357,38 +346,6 @@ public class robohelp extends SubspaceBot {
 		setPopID = adID;
 		m_botAction.requestArenaList();
 	}
-
-    public void handleDisplayHosted( String name, String message ) {
-        int span = 1;
-        try {
-            span = Integer.parseInt( message );
-            span = Math.max( Math.min( span, 24 ), 1 );
-        } catch (Exception e) {}
-
-        events.clear();
-        long time = new java.util.Date().getTime();
-
-        for( int i = eventList.size() - 1; i >= 0; i-- ) {
-            EventData dat = eventList.elementAt( i );
-            if( dat.getTime() + span*3600000 > time ) {
-                if( events.containsKey( dat.getArena() ) ) {
-                    EventData d = events.get( dat.getArena() );
-                    d.inc();
-                } else  events.put( dat.getArena(), new EventData( dat.getArena() ) );
-            }
-        }
-
-        m_botAction.sendSmartPrivateMessage( name, "Events hosted within the last " + span + " hour(s): " );
-        int numHosted = 0;
-        Iterator<String> i = events.keySet().iterator();
-        while (i.hasNext()) {
-            String curEvent = i.next();
-            EventData d = events.get( curEvent );
-            m_botAction.sendSmartPrivateMessage( name, trimFill( curEvent ) + d.getDups() );
-            numHosted += d.getDups();
-        }
-        m_botAction.sendSmartPrivateMessage( name, "----- Total: " + numHosted + "-----");
-    }
 
     public String trimFill( String line ) {
         if(line.length() < 25) {
@@ -590,29 +547,6 @@ public class robohelp extends SubspaceBot {
         }
         
         return help;
-    }
-
-    /**
-     * Stores data of an advert into the database.
-     * @param host Host of the event
-     * @param arena Arena where it was hosted
-     * @param advert Text of the advert
-     */
-    public void storeAdvert( String host, String arena, String advert ) {
-        //Gets time;
-        Calendar thisTime = Calendar.getInstance();
-        java.util.Date day = thisTime.getTime();
-        String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format( day );
-        //Adds to buffer of sorts.
-        if( !arena.equals( "" ) && !arena.equals( "elim" ) && !arena.equals( "baseelim" ) && !arena.equals( "tourny" ) ) {
-            if( eventList.size() > 511 ) eventList.remove( 0 );
-            eventList.addElement( new EventData( arena, new java.util.Date().getTime() ) );
-            String query = "INSERT INTO `tblAdvert` (`fcUserName`, `fcEventName`, `fcAdvert`, `fdTime`) VALUES ";
-            query += "('"+Tools.addSlashesToString(host)+"', '"+arena+"', '"+Tools.addSlashesToString(advert)+"', '"+time+"')";
-            try {
-                m_botAction.SQLQueryAndClose( mySQLHost, query );
-            } catch (Exception e ) { Tools.printLog( "Could not insert advert record." ); }
-        }
     }
     
     public void recordHelp(HelpRequest help) {
@@ -2137,60 +2071,58 @@ public class robohelp extends SubspaceBot {
     public void mainHelpScreen( String playerName, String message ){
         final String[] helpText = {
             "Chat commands:",
-            " !repeat <optional name>                   - Repeats the response to the specified name.  If no",
-            "                                             name is specified, the last response is repeated.",
-            " !tell <name>:<keyword>                    - Private messages the specified name with the",
-            "                                             response to the keyword given.",
-            " !warn <optional name>                     - Warns the specified player.  If no name is given,",
-            "                                             warns the last person.",
-            " !ban <optional name>                      - Bans the specified player.  If no name is given,",
-            "                                             bans the last person. (ER+)",
-            " !status                                   - Gives back status from systems.",
+            " !repeat <optional name>              - Repeats the response to the specified name.  If no",
+            "                                        name is specified, the last response is repeated.",
+            " !tell <name>:<keyword>               - Private messages the specified name with the",
+            "                                        response to the keyword given.",
+            " !warn <optional name>                - Warns the specified player.  If no name is given,",
+            "                                        warns the last person.",
+            " !ban <optional name>                 - Bans the specified player.  If no name is given,",
+            "                                        bans the last person. (ER+)",
+            " !status                              - Gives back status from systems.",
 //            " !google search - Returns first page found by Googling the search term.",
-            " !dictionary word                          - Returns a link for a definition of the word.",
-            " !thesaurus word                           - Returns a link for a thesaurus entry for the word.",
-            " !javadocs term                            - Returns a link for a javadocs lookup of the term.",
-            " !google word                              - Returns a link for a google search of the word.",
-            " !wiki word                                - Returns a link for a wikipedia search of the word.",
-            " !calls                                    - Displays the last 5 help and cheater calls",
-            " !calls <num>                              - Displays the last <num> help and cheater calls",
+            " !dictionary word                     - Returns a link for a definition of the word.",
+            " !thesaurus word                      - Returns a link for a thesaurus entry for the word.",
+            " !javadocs term                       - Returns a link for a javadocs lookup of the term.",
+            " !google word                         - Returns a link for a google search of the word.",
+            " !wiki word                           - Returns a link for a wikipedia search of the word.",
+            " !calls                               - Displays the last 5 help and cheater calls",
+            " !calls <num>                         - Displays the last <num> help and cheater calls",
             " ",
             "PM commands:",
-            " !calls                                    - Displays the last 5 help and cheater calls",
-            " !calls <num>                              - Displays the last <num> help and cheater calls",
-            " !stats                                    - Returns call answer stats for this month",
-            " !stats <month>-<year>                     - Returns call answer stats for the month specified",
-            "                                             ex. !stats 01-2011",
-            " !lookup <keyword>                         - Tells you the response when the specified key word",
-            "                                             is given",
-            " !last <optional name>                     - Tells you what the response to the specified",
-            "                                             player was. If no name is specified, the last",
-            "                                             response is given.",
-            " !hosted <hours>                           - Displays the hosted events in the last specified",
-            "                                             <hours>, <hours> can be ommitted.",
-            " !mystats                                  - Returns the top 5 call count and your call stats",
-            " !mystats mod/er/zh [#]                    - Returns the top # of moderators / ERs / ZHs.",
-            "                                             If # is not specified, shows top 5.",
-            " !mystats <name>                           - Returns the call count of <name>",
-            " !mystats <month>-<year> [above arguments] - Returns the top/call count from specified",
-            "                                             month-year. F.ex: !mystats 08-2007 mod 50"
+            " !calls                               - Displays the last 5 help and cheater calls",
+            " !calls <num>                         - Displays the last <num> help and cheater calls",
+            " !stats                               - Returns call answer stats for this month",
+            " !stats <month>-<year>                - Returns call answer stats for the month specified",
+            "                                        ex. !stats 01-2011",
+            " !lookup <keyword>                    - Tells you the response when the specified key word",
+            "                                        is given",
+            " !last <optional name>                - Tells you what the response to the specified",
+            "                                        player was. If no name is specified, the last",
+            "                                        response is given.",
+            " !mystats                             - Returns the top 5 call count and your call stats",
+            " !mystats mod/er/zh [#]               - Returns the top # of moderators / ERs / ZHs.",
+            "                                        If # is not specified, shows top 5.",
+            " !mystats <name>                      - Returns the call count of <name>",
+            " !mystats <month>-<year> [above args] - Returns the top/call count from specified",
+            "                                        month-year. F.ex: !mystats 08-2007 mod 50"
         };
         if( m_botAction.getOperatorList().isZH( playerName ) )
             m_botAction.remotePrivateMessageSpam( playerName, helpText );
         
         String[] SMod = {
-                "!banned                               - Who's banned from using tell?!?!",
-                "!addban                               - Add a tell ban",
-                "!unban                                - Remove a tell ban",
-                "!say                                  - SMod fun!"     
+                " !banned                              - Who's banned from using tell?!?!",
+                " !addban                              - Add a tell ban",
+                " !unban                               - Remove a tell ban",
+                " !say                                 - SMod fun!"     
         };
         if( m_botAction.getOperatorList().isSmod( playerName ))
             m_botAction.remotePrivateMessageSpam( playerName, SMod );
     
                 
         String[] SysopHelpText = {
-            " !reload                                   - Reloads the HelpResponses database from file",
-            " !die                                      - Disconnects this bot"
+            " !reload                              - Reloads the HelpResponses database from file",
+            " !die                                 - Disconnects this bot"
         };
         if( m_botAction.getOperatorList().isSysop( playerName ))
         	m_botAction.remotePrivateMessageSpam( playerName, SysopHelpText );
@@ -2199,32 +2131,32 @@ public class robohelp extends SubspaceBot {
     public void claimHelpScreen( String playerName, String message ){
         final String[] helpText = {
             "Chat claim commands:",
-            "  !calls                         - Displays the last 5 help and cheater calls",
-            "  !calls <num>                   - Displays the last <num> help and cheater calls",
-            "  on it                          - (on)Same as before, claims the earliest non-expired call",
-            "  on it <id>, on it #<id>,       - (on)Claims Call <id> if it hasn't expired",
-            "  got it                         - (got)Same as before, claims the earliest non-expired call",
-            "  got it <id>, got it #<id>,     - (got)Claims Call #<id> if it hasn't expired",
+            "  !calls                                   - Displays the last 5 help and cheater calls",
+            "  !calls <num>                             - Displays the last <num> help and cheater calls",
+            "  on it                                    - (on)Same as before, claims the earliest non-expired call",
+            "  on it <id>, on it #<id>,                 - (on)Claims Call <id> if it hasn't expired",
+            "  got it                                   - (got)Same as before, claims the earliest non-expired call",
+            "  got it <id>, got it #<id>,               - (got)Claims Call #<id> if it hasn't expired",
             "Claim modifier commands:",
-            "  mine                           - Claims the most recent call but does not affect staff stats",
-            "  mine #<id>, mine <id>          - Claims Call #<id> but does not affect staff stats",
-            "  clean                          - Clears the most recent false positive racism alert",
-            "  clean #<id>, clean <id>        - Clears Call #<id> due to a false positive racism alert",
-            "  forget                         - Prevents the most recent call from being counted as unanswered",
-            "  forget #<id>, forget <id>      - Prevents Call #<id> from being counted as unanswered",
+            "  mine                                     - Claims the most recent call but does not affect staff stats",
+            "  mine #<id>, mine <id>                    - Claims Call #<id> but does not affect staff stats",
+            "  clean                                    - Clears the most recent false positive racism alert",
+            "  clean #<id>, clean <id>                  - Clears Call #<id> due to a false positive racism alert",
+            "  forget                                   - Prevents the most recent call from being counted as unanswered",
+            "  forget #<id>, forget <id>                - Prevents Call #<id> from being counted as unanswered",
             "Multiple call claim modification (mine/clean/forget)",
             "  - To claim multiple calls at once, just add the call numbers separated by commas",
             "     ie mine 6,49,3,#4,1",
             "  - To claim multiple consecutive calls at once, specify a range using a dash (-)",
             "     ie forget 5-#32",
             "New Player commands:",
-            "  on that                        - Claims the most recent new player call",
-            "  ihave                          - Claims the most recent new player call but does not affect stats",
-            "  ihave <Player>                 - Claims the <Player> but does not affect stats (doesn't have to be in !newbs)",
-            "  !false                         - Falsifies the last new player alert so that it won't affect stats",
-            "  !false <Player>                - Falsifies all new player alerts for <Player> (doesn't have to be in !newbs)",
-            "  !newbs                         - Lists recent new player alerts and claimer information",
-            "  !newbs <num>                   - Lists the last <nuM> new player alerts and claimer information"            
+            "  on that                                  - Claims the most recent new player call",
+            "  ihave                                    - Claims the most recent new player call but does not affect stats",
+            "  ihave <Player>                           - Claims the <Player> but does not affect stats (doesn't have to be in !newbs)",
+            "  !false                                   - Falsifies the last new player alert so that it won't affect stats",
+            "  !false <Player>                          - Falsifies all new player alerts for <Player> (doesn't have to be in !newbs)",
+            "  !newbs                                   - Lists recent new player alerts and claimer information",
+            "  !newbs <num>                             - Lists the last <nuM> new player alerts and claimer information"            
         };
         m_botAction.smartPrivateMessageSpam(playerName, helpText);
     }
