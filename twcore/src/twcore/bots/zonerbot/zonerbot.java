@@ -193,7 +193,7 @@ public class zonerbot extends SubspaceBot {
                     year = rs.getInt("y");
                     ba.sendSmartPrivateMessage(name, "Total grants given by " + granter + " in " + month + ", " + year + ": " + grants);
                 } else
-                    ba.sendSmartPrivateMessage(name, "No records found matching the parameters given.");
+                    ba.sendSmartPrivateMessage(name, "No records found matching the given parameters.");
                 ba.SQLClose(rs);
             } catch (SQLException e) {
                 ba.sendSmartPrivateMessage(name, "SQL Error!");
@@ -304,8 +304,8 @@ public class zonerbot extends SubspaceBot {
         ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT fcEventName FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours + " HOUR) LIMIT " + (hours * 6));
     }
     
+    /** Handles the !grants <name> and !grants <name>:yyyy-MM commands **/
     public void cmd_grants(String name, String cmd) {
-        // !grants Name:yyyy-MM
         cmd = cmd.substring(8);
         if (cmd.length() < 10) return;
         String query = "SELECT COUNT(*) as c, fcGranter as g, MONTHNAME(fdTime) as m, YEAR(fdTime) as y";
@@ -699,7 +699,7 @@ public class zonerbot extends SubspaceBot {
         }
     }
 
-    /** Posts advert information to database **/
+    /** Posts advert information to SQL database **/
     private void storeAdvert(Advert advert) {
         java.util.Date day = Calendar.getInstance().getTime();
         String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(day);
@@ -726,6 +726,7 @@ public class zonerbot extends SubspaceBot {
             trainers.add(n.toLowerCase());
     }
     
+    /** Loads active periodic zoners from the database **/
     private void loadPeriodics() {
         try {
             SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
