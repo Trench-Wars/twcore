@@ -290,7 +290,7 @@ public class zonerbot extends SubspaceBot {
                         "Error extracting specified sound number. If using a % symbol else where and don't want sound, add %%-1 to the end.");
             }
         }
-        if (!soundCheck(sound)) {
+        if (soundCheck(sound)) {
             zone = zone.substring(0, index);
             if (sound > -1)
                 ba.sendZoneMessage(zone);
