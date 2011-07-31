@@ -817,16 +817,13 @@ public class zonerbot extends SubspaceBot {
                 final String name = rs.getString("fcUserName");
                 final String msg = rs.getString("fcMessage");
                 final long c = created;
-                createDelay += 5000;
+                createDelay += 2000;
                 TimerTask t = new TimerTask() {
                     public void run() {
                         new Periodic(id, name, msg, sound, delay, duration, c);
                     }
                 };
-                if (ZONE_ON_LOAD)
-                    ba.scheduleTask(t, createDelay);
-                else
-                    ba.scheduleTask(t, delay * Tools.TimeInMillis.MINUTE);
+                ba.scheduleTask(t, createDelay);
             }
         } catch (SQLException e) {
             Tools.printStackTrace("SQL periodic zoner loader failed.", e);
@@ -1185,7 +1182,10 @@ public class zonerbot extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "There was an error in adding the advert to the database. As a result, it will not be reactivated if the bot should respawn.");
             index = periodic.size();
             periodic.add(index, this);
-            ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
+            if (ZONE_ON_LOAD)
+                ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
+            else
+                ba.scheduleTask(this, delay * Tools.TimeInMillis.MINUTE, delay * Tools.TimeInMillis.MINUTE);
         }
         
         public Periodic(int id, String name, String msg, int sound, int delay, int duration, long created) {
