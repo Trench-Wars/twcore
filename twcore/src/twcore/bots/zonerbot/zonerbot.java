@@ -124,7 +124,7 @@ public class zonerbot extends SubspaceBot {
                     cmd_renew(name);
                 else if (msg.equals("!help"))
                     cmd_help(name);
-                else if (msg.startsWith("!hosted "))
+                else if (msg.startsWith("!hosted"))
                     cmd_hosted(name, msg);
             }
             if (oplist.isHighmod(name) || trainers.contains(name.toLowerCase())) {
