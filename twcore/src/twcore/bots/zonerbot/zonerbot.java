@@ -145,7 +145,7 @@ public class zonerbot extends SubspaceBot {
                 else if (msg.startsWith("!remove "))
                     cmd_remove(name, msg);
                 else if (msg.equals("!ops"))
-                    cmd_list(name);
+                    cmd_ops(name);
                 else if (msg.startsWith("!per "))
                     cmd_periodic(name, msg);
                 else if (msg.startsWith("!remper "))
@@ -297,8 +297,8 @@ public class zonerbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "" + staff + " is not a trainer.");
     }
     
-    /** Handles the !list trainers command **/
-    public void cmd_list(String name) {
+    /** Handles the !ops trainer list command **/
+    public void cmd_ops(String name) {
         ba.sendSmartPrivateMessage(name, "Trainers: " + ba.getBotSettings().getString("Trainers"));
     }
     
@@ -629,7 +629,7 @@ public class zonerbot extends SubspaceBot {
             return;
         }
         for (Periodic p : periodic)
-            ba.sendSmartPrivateMessage(name, "" + p.index + ") " + p.toString());
+            ba.smartPrivateMessageSpam(name, splitString("" + p.index + ") " + p.toString(), LINE_LENGTH));
     }
     
     /** Handles the !remper <index> command which removes periodic zoner at index <index> as shown in !list **/
