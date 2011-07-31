@@ -797,7 +797,6 @@ public class zonerbot extends SubspaceBot {
         try {
             SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Calendar cal = Calendar.getInstance();
-            long createDelay = 0;
             for (Periodic p : periodic)
                 ba.cancelTask(p);
             periodic.clear();
@@ -808,6 +807,7 @@ public class zonerbot extends SubspaceBot {
                     cal.setTime(f.parse(rs.getString("fdCreated")));
                     created = cal.getTimeInMillis();
                 } catch (ParseException e) {
+                    debug("Parse exception.");
                     continue;
                 }
                 final int delay = rs.getInt("fnDelay");
@@ -817,13 +817,7 @@ public class zonerbot extends SubspaceBot {
                 final String name = rs.getString("fcUserName");
                 final String msg = rs.getString("fcMessage");
                 final long c = created;
-                createDelay += 2000;
-                TimerTask t = new TimerTask() {
-                    public void run() {
-                        new Periodic(id, name, msg, sound, delay, duration, c);
-                    }
-                };
-                ba.scheduleTask(t, createDelay);
+                new Periodic(id, name, msg, sound, delay, duration, c);
             }
             ba.SQLClose(rs);
         } catch (SQLException e) {
@@ -1183,10 +1177,7 @@ public class zonerbot extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "There was an error in adding the advert to the database. As a result, it will not be reactivated if the bot should respawn.");
             index = periodic.size();
             periodic.add(index, this);
-            if (ZONE_ON_LOAD)
-                ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
-            else
-                ba.scheduleTask(this, delay * Tools.TimeInMillis.MINUTE, delay * Tools.TimeInMillis.MINUTE);
+            ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
         }
         
         public Periodic(int id, String name, String msg, int sound, int delay, int duration, long created) {
@@ -1197,7 +1188,7 @@ public class zonerbot extends SubspaceBot {
             this.sound = sound;
             String res = setAdvert(msg);
             if (res != null) {
-                ba.sendSmartPrivateMessage(name, res);
+                debug(res);
                 return;
             }
             this.created = created;
