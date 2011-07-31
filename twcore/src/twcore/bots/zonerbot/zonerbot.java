@@ -152,6 +152,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_removePeriodic(name, msg);
                 else if (msg.equals("!list"))
                     cmd_listPeriodics(name);
+                else if (msg.equals("!autozone"))
+                    cmd_autoZone(name);
             }
         }
     }
@@ -299,10 +301,13 @@ public class zonerbot extends SubspaceBot {
         ba.sendSmartPrivateMessage(name, "Trainers: " + ba.getBotSettings().getString("Trainers"));
     }
     
+    /** Changes periodic zoners auto-zone after being loaded **/
     public void cmd_autoZone(String name) {
         ZONE_ON_LOAD = !ZONE_ON_LOAD;
         if (ZONE_ON_LOAD)
-            ba.sendSmartPrivateMessage(name, "");
+            ba.sendSmartPrivateMessage(name, "Periodic zone on load: ENABLED");
+        else
+            ba.sendSmartPrivateMessage(name, "Periodic zone on load: DISABLED");
     }
     
     /** Handles the !hosted command **/
@@ -768,7 +773,10 @@ public class zonerbot extends SubspaceBot {
                         new Periodic(id, name, msg, sound, delay, duration, c);
                     }
                 };
-                ba.scheduleTask(t, createDelay);
+                if (ZONE_ON_LOAD)
+                    ba.scheduleTask(t, createDelay);
+                else
+                    ba.scheduleTask(t, delay * Tools.TimeInMillis.MINUTE);
             }
         } catch (SQLException e) {
             Tools.printStackTrace("SQL periodic zoner loader.", e);
