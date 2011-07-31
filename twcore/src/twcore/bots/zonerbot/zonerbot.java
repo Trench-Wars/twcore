@@ -284,7 +284,7 @@ public class zonerbot extends SubspaceBot {
                 return;
             }
             try {
-                sound = Integer.valueOf(zone.substring(index + 1, zone.indexOf(" ", index)));
+                sound = Integer.valueOf(zone.substring(index + 1));
             } catch (NumberFormatException e) {
                 ba.sendSmartPrivateMessage(name,
                         "Error extracting specified sound number. If using a % symbol else where and don't want sound, add %%-1 to the end.");
@@ -1201,11 +1201,11 @@ public class zonerbot extends SubspaceBot {
         }
 
         public String setAdvert(String msg) {
-            int si = msg.indexOf("%");
+            int si = msg.lastIndexOf("%");
             if (si < 0) {
                 advert = msg;
                 return null;
-            } else if (msg.length() - si > 3)
+            } else if (msg.length() - si > 4)
                 return "The %<sound> must be at the very end of the message.";
             else {
                 try {
