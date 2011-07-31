@@ -155,6 +155,11 @@ public class zonerbot extends SubspaceBot {
                 else if (msg.equals("!autozone"))
                     cmd_autoZone(name);
             }
+            if (oplist.isOwner(name)) {
+                if (msg.startsWith("!zone "))
+                    cmd_zone(name, msg);
+            }
+                
         }
     }
     
@@ -251,10 +256,46 @@ public class zonerbot extends SubspaceBot {
                     "| !add <name>              - Adds <name> to the trainer list (allows zh advert granting)        |",
                     "| !remove <name>           - Removes <name> from the trainer list                               |",
                     "| !autozone                - Toggle periodic zoners to instant-zone when loaded from database   |",
+                    "| !reload                  - Reloads all the periodic messages from the database                |",
             };
             ba.smartPrivateMessageSpam(name, msg);
         }
         ba.sendSmartPrivateMessage(name, "`-----------------------------------------------------------------------------------------------'");
+    }
+    
+    /** Handles the !reload command which cancels and clears the loaded periodics and then reloads the periodics from the db **/
+    public void cmd_reload(String name) {
+        loadPeriodics();
+        ba.sendSmartPrivateMessage(name, "Periodic zone messages have been reloaded from database.");
+    }
+
+    /** Handles the owner command !zone <message> which simply zones a message **/
+    public void cmd_zone(String name, String cmd) {
+        if (cmd.length() < 7) return;
+        String zone = cmd.substring(6);
+        int sound = -1;
+        int index = -1;
+        if (zone.contains("%")) {
+            index = zone.lastIndexOf("%");
+            if (zone.length() - index > 4) {
+                ba.sendSmartPrivateMessage(name, "The %sound must be at the very end of the message.");
+                return;
+            }
+            try {
+                sound = Integer.valueOf(zone.substring(index + 1, zone.indexOf(" ", index)));
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name,
+                        "Error extracting specified sound number. If using a % symbol else where and don't want sound, add %%-1 to the end.");
+            }
+        }
+        if (!soundCheck(sound)) {
+            zone = zone.substring(0, index);
+            if (sound > -1)
+                ba.sendZoneMessage(zone);
+            else
+                ba.sendZoneMessage(zone, sound);
+        } else
+            ba.sendSmartPrivateMessage(name, "Sound " + sound + " is prohibited from use.");
     }
     
     /** Handles the !add trainer command **/
@@ -755,7 +796,9 @@ public class zonerbot extends SubspaceBot {
             SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Calendar cal = Calendar.getInstance();
             long createDelay = 0;
-            
+            for (Periodic p : periodic)
+                ba.cancelTask(p);
+            periodic.clear();
             ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblPeriodic");
             while (rs.next()) {
                 long created = 0;
@@ -784,7 +827,7 @@ public class zonerbot extends SubspaceBot {
                     ba.scheduleTask(t, delay * Tools.TimeInMillis.MINUTE);
             }
         } catch (SQLException e) {
-            Tools.printStackTrace("SQL periodic zoner loader.", e);
+            Tools.printStackTrace("SQL periodic zoner loader failed.", e);
         }
     }
     
