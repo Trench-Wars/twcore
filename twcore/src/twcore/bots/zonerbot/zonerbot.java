@@ -250,6 +250,7 @@ public class zonerbot extends SubspaceBot {
                     "| !ops                     - List of the current staff trainers                                 |",
                     "| !add <name>              - Adds <name> to the trainer list (allows zh advert granting)        |",
                     "| !remove <name>           - Removes <name> from the trainer list                               |",
+                    "| !autozone                - Toggle periodic zoners to instant-zone when loaded from database   |",
             };
             ba.smartPrivateMessageSpam(name, msg);
         }
@@ -312,12 +313,13 @@ public class zonerbot extends SubspaceBot {
     
     /** Handles the !hosted command **/
     public void cmd_hosted(String name, String cmd) {
-        if (cmd.length() < 9) return;
         int hours = 24;
         try {
-            hours = Integer.valueOf(cmd.substring(8).trim());
-            if (hours < 1 || hours > 48)
-                hours = 24;
+            if (cmd.length() > 7) {
+                hours = Integer.valueOf(cmd.substring(8).trim());
+                if (hours < 1 || hours > 48)
+                    hours = 24;
+            }
         } catch (NumberFormatException e) { hours = 24; }
         ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT fcEventName FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours + " HOUR) LIMIT " + (hours * 6));
     }
@@ -1236,6 +1238,7 @@ public class zonerbot extends SubspaceBot {
         }
     }
     
+    /** Handles the !die command **/
     public void cmd_die(String name) {
         try {
             if (expireTimer != null)
@@ -1247,6 +1250,7 @@ public class zonerbot extends SubspaceBot {
         ba.scheduleTask(new Die(), 2000);
     }
     
+    /** Die TimerTask allows for bot to close shop before killing **/
     private class Die extends TimerTask {
         @Override
         public void run() {
@@ -1254,7 +1258,8 @@ public class zonerbot extends SubspaceBot {
         }
     }
     
-    private void cmd_debug(String name) {
+    /** Handles the !debug command which toggles debug mode and the debugger name **/
+    public void cmd_debug(String name) {
         if (!DEBUG) {
             debugger = name;
             DEBUG = true;
@@ -1270,6 +1275,7 @@ public class zonerbot extends SubspaceBot {
         }
     }
     
+    /** Facilitates debug messaging to fire when enabled to the debugger **/
     public void debug(String msg) {
         if (DEBUG)
             ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
