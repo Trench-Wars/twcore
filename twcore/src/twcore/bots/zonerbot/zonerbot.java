@@ -154,6 +154,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_listPeriodics(name);
                 else if (msg.equals("!autozone"))
                     cmd_autoZone(name);
+                else if (msg.equals("!reload"))
+                    cmd_reload(name);
             }
             if (oplist.isOwner(name)) {
                 if (msg.startsWith("!zone "))
