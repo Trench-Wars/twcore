@@ -384,6 +384,7 @@ public class zonerbot extends SubspaceBot {
         int year = Calendar.getInstance().get(Calendar.YEAR);
         int month = Calendar.getInstance().get(Calendar.MONTH);
         if (cmd.equals("!grants")) {
+            debug("1 " + name + ": " + cmd);
             // get total grants for this month
             query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter IS NOT NULL";
             ba.SQLBackgroundQuery(db, "*" + name, query);
@@ -391,6 +392,7 @@ public class zonerbot extends SubspaceBot {
         } else if (!cmd.contains(":")) {
             cmd = cmd.substring(8);
             if (cmd.length() == 7 && cmd.charAt(4) == '-') {
+                debug("2 " + name + ": " + cmd);
                 // !grants yyyy-MM total grants for that month
                 try {
                     year = Integer.valueOf(cmd.substring(0, 4));
@@ -406,11 +408,13 @@ public class zonerbot extends SubspaceBot {
                 }
                 return;
             } else {
+                debug("3 " + name + ": " + cmd);
                 // show grants given by granter using the current month and year
                 String granter = cmd;
-                query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter = '" + granter + "'";
+                query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter = '" + Tools.addSlashesToString(granter) + "'";
             }
         } else {
+            debug("4 " + name + ": " + cmd);
             cmd = cmd.substring(8);
             // show grants given by granter in year yyyy and month MM
             String granter = cmd.substring(0, cmd.indexOf(":"));
