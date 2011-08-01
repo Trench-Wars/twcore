@@ -380,17 +380,16 @@ public class zonerbot extends SubspaceBot {
     
     /** Handles the !grants <name> and !grants <name>:yyyy-MM commands **/
     public void cmd_grants(String name, String cmd) {
-        if (cmd.length() > 7)
-            cmd = cmd.substring(8);
         String query = "SELECT COUNT(*) as c, fcGranter as g, MONTHNAME(fdTime) as m, YEAR(fdTime) as y";
         int year = Calendar.getInstance().get(Calendar.YEAR);
         int month = Calendar.getInstance().get(Calendar.MONTH);
-        if (cmd.length() == 7) {
+        if (cmd.equals("!grants")) {
             // get total grants for this month
             query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter IS NOT NULL";
             ba.SQLBackgroundQuery(db, "*" + name, query);
             return;
         } else if (!cmd.contains(":")) {
+            cmd = cmd.substring(8);
             if (cmd.length() == 7 && cmd.charAt(4) == '-') {
                 // !grants yyyy-MM total grants for that month
                 try {
@@ -412,6 +411,7 @@ public class zonerbot extends SubspaceBot {
                 query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter = '" + granter + "'";
             }
         } else {
+            cmd = cmd.substring(8);
             // show grants given by granter in year yyyy and month MM
             String granter = cmd.substring(0, cmd.indexOf(":"));
             try {
