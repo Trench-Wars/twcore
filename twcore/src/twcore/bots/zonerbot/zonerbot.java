@@ -136,7 +136,7 @@ public class zonerbot extends SubspaceBot {
                     cmd_debug(name);
                 else if (msg.equals("!die"))
                     cmd_die(name);
-                else if (msg.startsWith("!grants "))
+                else if (msg.startsWith("!grants"))
                     cmd_grants(name, msg);
             }
             if (oplist.isSmod(name)) {
@@ -181,10 +181,10 @@ public class zonerbot extends SubspaceBot {
                     else
                         events.put(en.toLowerCase(), events.get(en.toLowerCase())+1);
                 }
-                ba.SQLClose(rs);
             } catch (SQLException e) {
                 Tools.printStackTrace("ZonerBot !hosted SQL error.", e);
             }
+            ba.SQLClose(rs);
             if (events.size() > 0) {
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: ");
                 for (String str : events.keySet())
@@ -193,6 +193,11 @@ public class zonerbot extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: none");
         } else if (args.length == 1) {
             String name = args[0];
+            boolean total = false;
+            if (name.startsWith("*")) {
+                total = true;
+                name = name.substring(1);
+            }
             String granter = "";
             int grants = 0;
             String month = "";
@@ -200,21 +205,25 @@ public class zonerbot extends SubspaceBot {
             ResultSet rs = event.getResultSet();
             try {
                 if (rs.next()) {
-                    granter = rs.getString("g");
+                    if (!total)
+                        granter = rs.getString("g");
                     grants = rs.getInt("c");
                     month = rs.getString("m");
                     year = rs.getInt("y");
-                    if (grants > 0)
-                        ba.sendSmartPrivateMessage(name, "Total grants given by " + granter + " in " + month + ", " + year + ": " + grants);
-                    else 
+                    if (grants > 0) {
+                        if (!total)
+                            ba.sendSmartPrivateMessage(name, "Total grants given by " + granter + " in " + month + ", " + year + ": " + grants);
+                        else
+                            ba.sendSmartPrivateMessage(name, "Total grants given in " + month + ", " + year + ": " + grants);
+                    } else 
                         ba.sendSmartPrivateMessage(name, "No records found matching the given parameters.");
                 } else
                     ba.sendSmartPrivateMessage(name, "No records found matching the given parameters.");
-                ba.SQLClose(rs);
             } catch (SQLException e) {
                 ba.sendSmartPrivateMessage(name, "SQL Error!");
                 Tools.printStackTrace("ZonerBot !hosted SQL error.", e);
             }
+            ba.SQLClose(rs);
         }
     }
     
@@ -243,6 +252,8 @@ public class zonerbot extends SubspaceBot {
                     "| !view <name>             - Views the current advert message and sound of <name>               |",
                     "| !approve                 - Allows the earliest ZH you granted an advert to zone               |",
                     "| !approve <name>          - Allows <name> to zone the advert that was granted                  |",
+                    "| !grants                  - Displays the total number of grants given for this month           |",
+                    "| !grants yyyy-MM          - Displays the total number of grants given for yyyy-MM              |",
                     "| !grants <name>           - Displays the total adverts granted by <name> this month            |",
                     "| !grants <name>:yyyy-MM   - Displays total grants by <name> in month MM of year yyyy           |",
             };
@@ -369,15 +380,37 @@ public class zonerbot extends SubspaceBot {
     
     /** Handles the !grants <name> and !grants <name>:yyyy-MM commands **/
     public void cmd_grants(String name, String cmd) {
-        if (cmd.length() < 10) return;
-        cmd = cmd.substring(8);
+        if (cmd.length() > 7)
+            cmd = cmd.substring(8);
         String query = "SELECT COUNT(*) as c, fcGranter as g, MONTHNAME(fdTime) as m, YEAR(fdTime) as y";
         int year = Calendar.getInstance().get(Calendar.YEAR);
         int month = Calendar.getInstance().get(Calendar.MONTH);
-        if (!cmd.contains(":")) {
-            // show grants given by granter using the current month and year
-            String granter = cmd;
-            query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter = '" + granter + "'";
+        if (cmd.length() == 7) {
+            // get total grants for this month
+            query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter IS NOT NULL";
+            ba.SQLBackgroundQuery(db, "*" + name, query);
+            return;
+        } else if (!cmd.contains(":")) {
+            if (cmd.length() == 7 && cmd.charAt(4) == '-') {
+                // !grants yyyy-MM total grants for that month
+                try {
+                    year = Integer.valueOf(cmd.substring(0, 4));
+                    month = Integer.valueOf(cmd.substring(4));
+                    if (year < 2002 || year > 9999)
+                        year = Calendar.getInstance().get(Calendar.YEAR);
+                    if (month < 1 || month > 12)
+                        month = Calendar.getInstance().get(Calendar.MONTH);
+                    query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter IS NOT NULL";
+                    ba.SQLBackgroundQuery(db, "*" + name, query);
+                } catch (NumberFormatException e) {
+                    ba.sendSmartPrivateMessage(name, "Syntax error, please use !grants yyyy-MM");
+                }
+                return;
+            } else {
+                // show grants given by granter using the current month and year
+                String granter = cmd;
+                query += " FROM tblAdvert WHERE YEAR(fdTime) = YEAR(NOW()) AND MONTH(fdTime) = MONTH(NOW()) AND fcGranter = '" + granter + "'";
+            }
         } else {
             // show grants given by granter in year yyyy and month MM
             String granter = cmd.substring(0, cmd.indexOf(":"));
@@ -389,6 +422,7 @@ public class zonerbot extends SubspaceBot {
                     year = Calendar.getInstance().get(Calendar.YEAR);
                 if (month < 1 || month > 12)
                     month = Calendar.getInstance().get(Calendar.MONTH);
+                query += " FROM tblAdvert WHERE YEAR(fdTime) = " + year + " AND MONTH(fdTime) = " + month + " AND fcGranter = '" + Tools.addSlashesToString(granter) + "'";
             } catch (NumberFormatException e) {
                 ba.sendSmartPrivateMessage(name, "Syntax error, please use !grants <name> or !grants <name>:yyyy-MM");
                 return;
