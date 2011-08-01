@@ -732,6 +732,18 @@ public class zonerbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "No periodic zoner listed at index: " + index);
     }
     
+    /** Handles the !die command **/
+    public void cmd_die(String name) {
+        try {
+            if (expireTimer != null)
+                expireTimer.endNow();
+            if (advertTimer != null && !advertTimer.hasExpired())
+                ba.cancelTask(advertTimer);
+        } catch (Exception e) {};
+        ba.sendChatMessage("Logging off. Requested by: " + name);
+        ba.scheduleTask(new Die(), 2000);
+    }
+    
     /** Removes the unused advert **/
     private void expireAdvert() {
         debug("Expiring current Advert");
@@ -894,10 +906,27 @@ public class zonerbot extends SubspaceBot {
         return result;
     }
     
+    /** Returns true if the sound is legal **/
+    private boolean soundCheck(int s) {
+        return (s != Advert.REGAN_SOUND && s != Advert.SEX_SOUND && s != Advert.PM_SOUND && s != Advert.MUSIC1_SOUND && s != Advert.MUSIC2_SOUND);
+    }
+    
+    /** Zones an array of messages but only using a sound on the first message unless there is none **/
+    private void zoneMessageSpam(String[] msg, int sound) {
+        for (int i = 0; i < msg.length; i++) {
+            if (i == 0) {
+                if (sound > -1)
+                    ba.sendZoneMessage(msg[0], sound);
+                else
+                    ba.sendZoneMessage(msg[0]);
+            } else
+                ba.sendZoneMessage(msg[i]);
+        }
+    }
+    
     /**
      * This is a representation of an advert claim containing all relevant information
      * related to the advert including methods and functions.
-     *
      * @author WingZero
      */
     private class Advert {
@@ -925,6 +954,10 @@ public class zonerbot extends SubspaceBot {
         public static final int MUSIC1_SOUND = 100;
         public static final int MUSIC2_SOUND = 102;
         
+        /**
+         * New advert constructor
+         * @param name Name of staff claimer
+         */
         public Advert(String name) {
             this.name = name;
             granter = null;
@@ -935,6 +968,11 @@ public class zonerbot extends SubspaceBot {
             zoned = -1;
         }
         
+        /**
+         * New granted advert constructor
+         * @param name Name of ZH granted the advert
+         * @param granter Name of staffer who granted
+         */
         public Advert(String name, String granter) {
             this.name = name;
             this.granter = granter;
@@ -945,18 +983,22 @@ public class zonerbot extends SubspaceBot {
             zoned = -1;
         }
         
+        /** Returns claimer name **/
         public String getName() {
             return name;
         }
 
+        /** Checks if the given name is the one who granted this advert **/
         public boolean isGranter(String g) {
             return (granted && g.equalsIgnoreCase(granter));
         }
         
+        /** Returns if this was granted or not **/
         public boolean isGranted() {
             return granted;
         }
         
+        /** Changes advert status variable **/
         public void setStatus(int nextStatus) {
             status = nextStatus;
             if (status == ZONED && zoned == -1)
@@ -964,6 +1006,7 @@ public class zonerbot extends SubspaceBot {
             debug("New status: " + status);
         }
         
+        /** Advert message setter checks for any non-compliance and prepares for advert execution **/
         public String setAdvert(String str) {
             if (str == null || str.length() < 1) 
                 return "No advert specified.";
@@ -998,6 +1041,7 @@ public class zonerbot extends SubspaceBot {
                 return "Advert has already been used.";
         }
         
+        /** Sets the sound number to be used if legal **/
         public String setSound(int s) {
             if (s < MIN_SOUND || s > MAX_SOUND)
                 return "Invalid, sound number must be between " + MIN_SOUND + " and " + MAX_SOUND + ".";
@@ -1015,6 +1059,7 @@ public class zonerbot extends SubspaceBot {
                 return "Sound number " + s + " is not allowed.";
         }
         
+        /** Sets advert to approved status **/
         public String approve() {
             if (granted && status == APPROVE) {
                 status = READY;
@@ -1024,16 +1069,19 @@ public class zonerbot extends SubspaceBot {
                 return "Advert has already been approved.";
         }
         
+        /** Reverts aproval status **/
         public void unapprove() {
             if (granted && status == READY)
                 status = APPROVE;    
         }
         
+        /** Returns advert status **/
         public int getStatus() {
             return status;
         }
         
         // we will probably need to handle messages over length 120
+        /** Returns set message text **/
         public String getMessage() {
             if (advert != null)
                 return advert;
@@ -1041,10 +1089,12 @@ public class zonerbot extends SubspaceBot {
                 return "No advert message has been set.";
         }
         
+        /** Returns sound number **/
         public int getSound() {
             return sound;
         }
         
+        /** Returns arena as specified by ?go <arena> in message text **/
         public String getArena() {
             if (advert != null && advert.contains("?go ")) {
                 String arena = advert.substring(advert.lastIndexOf("?go ") + 4);
@@ -1056,10 +1106,12 @@ public class zonerbot extends SubspaceBot {
                 return "No arena found or advert not set.";
         }
         
+        /** Checks if readvert has expired **/
         public boolean canReadvert() {
             return ((System.currentTimeMillis() - zoned) < (READVERT_MAX * Tools.TimeInMillis.MINUTE));
         }
         
+        /** Returns remaining time until readvert expiration **/
         public String readvertTime() {
             long time = (READVERT_MAX * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - zoned);
             if (time > 0)
@@ -1068,27 +1120,9 @@ public class zonerbot extends SubspaceBot {
         }
     }
     
-    /** Returns true if the sound is legal **/
-    private boolean soundCheck(int s) {
-        return (s != Advert.REGAN_SOUND && s != Advert.SEX_SOUND && s != Advert.PM_SOUND && s != Advert.MUSIC1_SOUND && s != Advert.MUSIC2_SOUND);
-    }
-    
-    /** Zones an array of messages but only using a sound on the first message unless there is none **/
-    private void zoneMessageSpam(String[] msg, int sound) {
-        for (int i = 0; i < msg.length; i++) {
-            if (i == 0) {
-                if (sound > -1)
-                    ba.sendZoneMessage(msg[0], sound);
-                else
-                    ba.sendZoneMessage(msg[0]);
-            } else
-                ba.sendZoneMessage(msg[i]);
-        }
-    }
-    
     /**
      * The AdvertTimer is used to put time between each set of event zoners. If it is running
-     * then that means no one should be able to advert. Only time things move is when this expires.     *
+     * then that means no one should be able to advert. Only time things move is when this expires.
      * @author WingZero
      */
     private class AdvertTimer extends TimerTask {
@@ -1110,7 +1144,8 @@ public class zonerbot extends SubspaceBot {
             active = false;
             prepareNext();
         }
-        
+
+        /** Returns the remaining time until expiration **/
         public String getTime() {
             long left = ((delay * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - timestamp));
             if (left > 0) {
@@ -1130,6 +1165,7 @@ public class zonerbot extends SubspaceBot {
      * This class is used to remove an advert after having not been used. 
      * Even after the advert has been used it will continue running to 
      * provide an expiration for the readvert.
+     * @author WingZero
      */
     private class ExpireTimer extends TimerTask {
 
@@ -1145,10 +1181,12 @@ public class zonerbot extends SubspaceBot {
             active = true;
         }
         
+        /** Returns the remaining time until expiration **/
         public String getTime() {
             return longString(((delay * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - timestamp)));
         }
         
+        /** Converts a long of milliseconds into a String with minutes and seconds **/
         private String longString(long t) {
             if (t > 0) {
                 int sec = (int) ((t / 1000) % 60);
@@ -1165,12 +1203,14 @@ public class zonerbot extends SubspaceBot {
             expireAdvert();
         }
         
+        /** Executes expiration **/
         public void endNow() {
             if (active)
                 ba.cancelTask(this);
             active = false;
         }
 
+        /** Extends time until expiration by canceling itself and rescheduling appropriately **/
         public String renewTime() {
             if (renewal < MAX_RENEWAL) {
                 endNow();
@@ -1182,6 +1222,7 @@ public class zonerbot extends SubspaceBot {
             } else return "";
         }
         
+        /** Checks if time extension is available **/
         public boolean canRenew() {
             return renewal < MAX_RENEWAL;
         }
@@ -1191,6 +1232,12 @@ public class zonerbot extends SubspaceBot {
         }
     }
     
+    /**
+     * This class holds information for a periodic zoner 
+     * which is a zone message that is set to repeat every interval
+     * and expires once it reaches a set duration.
+     * @author WingZero
+     */
     private class Periodic extends TimerTask {
 
         String name, advert;
@@ -1199,6 +1246,13 @@ public class zonerbot extends SubspaceBot {
         int duration;
         long created;
         
+        /**
+         * Pre-made and reloaded periodic zone message class constructor
+         * @param name Staff member creating zoner
+         * @param msg Contents of the zone message
+         * @param delay Time between each zoner in minutes
+         * @param duration Lifetime from time of creation in hours
+         */
         public Periodic(String name, String msg, int delay, int duration) {
             this.name = name;
             this.delay = delay;
@@ -1217,7 +1271,17 @@ public class zonerbot extends SubspaceBot {
             periodic.add(index, this);
             ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
         }
-        
+
+        /**
+         * New periodic zone message constructor
+         * @param name Staff member creating zoner
+         * @param msg Contents of the zone message
+         * @param delay Time between each zoner in minutes
+         * @param duration Lifetime from time of creation in hours
+         * @param id SQL row ID
+         * @param sound Sound number extracted originally
+         * @param created Time of original creation in milliseconds from epoch
+         */
         public Periodic(int id, String name, String msg, int sound, int delay, int duration, long created) {
             this.id = id;
             this.name = name;
@@ -1238,6 +1302,7 @@ public class zonerbot extends SubspaceBot {
                 ba.scheduleTask(this, delay * Tools.TimeInMillis.MINUTE, delay * Tools.TimeInMillis.MINUTE);
         }
 
+        /** Sets zone message text after extracting the sound if specified and checks legality. Returns null if successful. **/
         public String setAdvert(String msg) {
             int si = msg.lastIndexOf("%");
             if (si < 0) {
@@ -1261,6 +1326,7 @@ public class zonerbot extends SubspaceBot {
             }
         }
         
+        /** Creates a database entry for a new periodic zone message and sets/returns the SQL ID **/
         public int create() {
             if (delay > 0 && duration > 0 && advert.length() > 0) {
                 try {
@@ -1280,6 +1346,7 @@ public class zonerbot extends SubspaceBot {
             return id;
         }
         
+        /** Checks if expired then terminates the periodic zoner if so otherwise sends zoner **/
         public void run() {
             long now = System.currentTimeMillis();
             if ((created + (duration * Tools.TimeInMillis.HOUR)) < now)
@@ -1300,6 +1367,7 @@ public class zonerbot extends SubspaceBot {
             }
         }
         
+        /** Terminates the periodic zoner by canceling the TimerTask, removing it from the list, updating list indeces and updating db **/
         public void end() {
             ba.cancelTask(this);
             periodic.remove(this);
@@ -1308,28 +1376,18 @@ public class zonerbot extends SubspaceBot {
                 ba.SQLBackgroundQuery(db, null, "DELETE FROM tblPeriodic WHERE fnMessageID = " + id);
         }
         
+        /** Sets position index in list **/
         public void setIndex(int i) {
             index = i;
         }
         
+        /** Returns a status message for this periodic zone message **/
         public String toString() {
             if (sound > -1)
                 return "Set by: " + name + ", repeats every " + delay + " minute(s), for " + duration + " hour(s). \"" + advert + "%" + sound + "\"";
             else
                 return "Set by: " + name + ", repeats every " + delay + " minute(s), for " + duration + " hour(s). \"" + advert + "\"";
         }
-    }
-    
-    /** Handles the !die command **/
-    public void cmd_die(String name) {
-        try {
-            if (expireTimer != null)
-                expireTimer.endNow();
-            if (advertTimer != null && !advertTimer.hasExpired())
-                ba.cancelTask(advertTimer);
-        } catch (Exception e) {};
-        ba.sendChatMessage("Logging off. Requested by: " + name);
-        ba.scheduleTask(new Die(), 2000);
     }
     
     /** Die TimerTask allows for bot to close shop before killing **/
