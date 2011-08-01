@@ -394,7 +394,7 @@ public class zonerbot extends SubspaceBot {
                 // !grants yyyy-MM total grants for that month
                 try {
                     year = Integer.valueOf(cmd.substring(0, 4));
-                    month = Integer.valueOf(cmd.substring(4));
+                    month = Integer.valueOf(cmd.substring(5));
                     if (year < 2002 || year > 9999)
                         year = Calendar.getInstance().get(Calendar.YEAR);
                     if (month < 1 || month > 12)
