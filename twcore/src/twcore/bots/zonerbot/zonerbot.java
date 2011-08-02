@@ -119,7 +119,7 @@ public class zonerbot extends SubspaceBot {
                 else if (msg.startsWith("!advert"))
                     cmd_advert(name, msg);
                 else if (msg.startsWith("!readvert"))
-                    cmd_readvert(name);
+                    cmd_readvert(name, msg);
                 else if (msg.equals("!renew"))
                     cmd_renew(name);
                 else if (msg.equals("!help"))
@@ -242,6 +242,7 @@ public class zonerbot extends SubspaceBot {
                 "| !advert <message>        - Auto-adverts using <message> unless <message> is found illegal     |",
                 "| !advert                  - Sends the zone message as set using the !set <message> command     |",
                 "| !readvert                - Sends a last call default advert for the arena in your !advert     |",
+                "| !readvert <sub-event>    - Sends a readvert about <sub-event> for the arena in your !advert   |",
                 "| !renew                   - Prolongs the expiration of the advert for an extra 2 minutes       |",
         };
         ba.smartPrivateMessageSpam(name, msg);
@@ -635,7 +636,16 @@ public class zonerbot extends SubspaceBot {
     }
     
     /** Handles the !readvert command which sends a default zone message for a given arena **/
-    public void cmd_readvert(String name) {
+    public void cmd_readvert(String name, String cmd) {
+        if (cmd.equals("!readvert"))
+            cmd = null;
+        else if (cmd.length() > (10 + 20)) {
+            ba.sendSmartPrivateMessage(name, "Maximum character length for custom sub-event name is 20.");
+            return;
+        } else if (cmd.length() > 10 && cmd.contains(" "))
+            cmd = cmd.substring(10);
+        else
+            cmd = null;
         if (queue.containsKey(name)) {
             ba.sendSmartPrivateMessage(name, "The initial advert must be used before readvert can be used.");
         } else if (usedAdverts.isEmpty()) {
@@ -646,10 +656,15 @@ public class zonerbot extends SubspaceBot {
             Advert advert = usedAdverts.getFirst();
             if (advert.getStatus() == Advert.ZONED && advert.canReadvert()) {
                 advert.setStatus(Advert.DONE);
-                String event = advert.getArena().toUpperCase();
+                String arena = advert.getArena().toUpperCase();
+                String event;
+                if (cmd != null)
+                    event = cmd;
+                else
+                    event = arena;
                 String zoners[] = { 
-                        "Last call for " + event + "." + " Type ?go " + event + " to play. -" + name,
-                        "The event " + event + " is starting. Type ?go " + event + " to play. -" + name };
+                        "Last call for " + event + "." + " Type ?go " + arena + " to play. -" + name,
+                        "The event " + event + " is starting. Type ?go " + arena + " to play. -" + name };
                 ba.sendZoneMessage(zoners[new Random().nextInt(zoners.length)], 1);
             } else {
                 ba.sendSmartPrivateMessage(name, "Your last advert does not have a readvert available. It was used or expired.");
