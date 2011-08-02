@@ -668,8 +668,10 @@ public class zonerbot extends SubspaceBot {
         else if (expireTimer != null && !expireTimer.hasExpired()) {
             if (expireTimer.canRenew())
                 ba.sendSmartPrivateMessage(name, "Advert renewed. Remaining time: " + expireTimer.renewTime());
+            else if (queue.size() > 1)
+                ba.sendSmartPrivateMessage(name, "Renewals are only allowed if no one is waiting behind you.");
             else
-                ba.sendSmartPrivateMessage(name, "No advert renewals available. Remaining time: " + expireTimer.getTime());
+                ba.sendSmartPrivateMessage(name, "No renewals available. Remaining time: " + expireTimer.getTime());
         } else 
             ba.sendSmartPrivateMessage(name, "Advert has already expired.");
     }
@@ -1181,6 +1183,15 @@ public class zonerbot extends SubspaceBot {
             active = true;
         }
         
+        /** Reconstructs the ExpireTimer in order to reschedule it **/
+        public ExpireTimer(int expireDelay, int renewals, long time, boolean act) {
+            debug("Renew ExpireTimer created with delay: " + expireDelay);
+            delay = expireDelay;
+            renewal = renewals;
+            timestamp = time;
+            active = act;
+        }
+        
         /** Returns the remaining time until expiration **/
         public String getTime() {
             return longString(((delay * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - timestamp)));
@@ -1213,18 +1224,20 @@ public class zonerbot extends SubspaceBot {
         /** Extends time until expiration by canceling itself and rescheduling appropriately **/
         public String renewTime() {
             if (renewal < MAX_RENEWAL) {
-                this.cancel();
+                endNow();
                 active = true;
-                long time = ((delay * Tools.TimeInMillis.MINUTE - (System.currentTimeMillis() - timestamp)) + (EXTENSION * Tools.TimeInMillis.MINUTE));
-                ba.scheduleTask(this, time);
                 renewal++;
+                long time = (((delay * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - timestamp)) + (EXTENSION * Tools.TimeInMillis.MINUTE));
+                delay += EXTENSION;
+                expireTimer = new ExpireTimer(delay, renewal, timestamp, active);
+                ba.scheduleTask(expireTimer, time);
                 return longString(time);
             } else return "";
         }
         
         /** Checks if time extension is available **/
         public boolean canRenew() {
-            return renewal < MAX_RENEWAL;
+            return (renewal < MAX_RENEWAL) && (queue.size() < 2);
         }
         
         public boolean hasExpired() {
