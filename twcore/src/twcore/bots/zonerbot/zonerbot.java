@@ -427,7 +427,6 @@ public class zonerbot extends SubspaceBot {
                     year = Calendar.getInstance().get(Calendar.YEAR);
                 if (month < 1 || month > 12)
                     month = Calendar.getInstance().get(Calendar.MONTH);
-                query += " FROM tblAdvert WHERE YEAR(fdTime) = " + year + " AND MONTH(fdTime) = " + month + " AND fcGranter = '" + Tools.addSlashesToString(granter) + "'";
             } catch (NumberFormatException e) {
                 ba.sendSmartPrivateMessage(name, "Syntax error, please use !grants <name> or !grants <name>:yyyy-MM");
                 return;
