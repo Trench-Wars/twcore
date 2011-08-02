@@ -1213,7 +1213,7 @@ public class zonerbot extends SubspaceBot {
         /** Extends time until expiration by canceling itself and rescheduling appropriately **/
         public String renewTime() {
             if (renewal < MAX_RENEWAL) {
-                endNow();
+                this.cancel();
                 active = true;
                 long time = ((delay * Tools.TimeInMillis.MINUTE - (System.currentTimeMillis() - timestamp)) + (EXTENSION * Tools.TimeInMillis.MINUTE));
                 ba.scheduleTask(this, time);
