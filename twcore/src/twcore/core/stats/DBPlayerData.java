@@ -265,7 +265,7 @@ public class DBPlayerData {
         if (m_fnUserID != 0) {
             if( m_rank == -1 ) {    // If -1, rank has not been fetched; fetch it and save it
                 try {
-                    ResultSet qryHasPlayerRank = m_connection.SQLQuery(m_connName, "SELECT fnRankID FROM tblUserRank WHERE fnUserID = "+m_fnUserID+" AND fnRankID >= 3 ORDER BY fnRankID DESC");
+                    ResultSet qryHasPlayerRank = m_connection.SQLQuery(m_connName, "SELECT fnRankID FROM tblUserRank WHERE fnUserID = "+m_fnUserID+" AND fnRankID IN (3,4,7,8,9,10,11) ORDER BY fnRankID DESC");
                     m_lastQuery = System.currentTimeMillis();
                     if( qryHasPlayerRank != null && qryHasPlayerRank.next() ) {
                         m_rank = qryHasPlayerRank.getInt("fnRankID");
