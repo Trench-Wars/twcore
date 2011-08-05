@@ -30,9 +30,9 @@ public class Session extends Thread {
     private String          m_name;
     private int             m_state;
     private int				m_botNumber;
-    public static ThreadGroup     m_group;
+    public ThreadGroup     m_group;
     private Timer           m_timer;
-    public static DatagramSocket  m_socket;
+    public DatagramSocket  m_socket;
     private PrintWriter		m_chatLog;
     private FileWriter 		m_chatLogWriter;
     private CoreData        m_coreData;
