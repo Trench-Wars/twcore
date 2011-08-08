@@ -1536,21 +1536,24 @@ public class robohelp extends SubspaceBot {
             DateFormat f = new SimpleDateFormat("HH:mm");
             return f.format(time);
         } else {
+            time = System.currentTimeMillis() - time;
             time /= 1000;
             int hour = ((int) (time / 60 / 60) % 60);
             time -= (hour * 60 * 60);
             int min = ((int) time / 60) % 60;
             time -= (min * 60);
-            String t = "" + hour + ":";
+            String t = "";
+            if (hour > 0)
+                t += hour + "h";
             if (min < 10)
-                t += "0" + min + ":";
+                t += "0" + min + "m";
             else
-                t += min + ":";
+                t += min + "m";
             if (time < 10)
-                t += "0" + time;
+                t += "0" + time + "s";
             else 
-                t += time;
-            return t + " ago ";
+                t += time + "s";
+            return t;
         }
     }
     
@@ -1591,7 +1594,7 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = getTimeString(System.currentTimeMillis() - call.getTime()) + " #" + call.getID() + " ";
+                String msg = getTimeString(call.getTime()) + " #" + call.getID() + " ";
                 if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
                     int ct = call.getClaimType();
                     String taker = call.getTaker();
