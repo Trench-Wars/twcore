@@ -43,9 +43,8 @@ public class robohelp extends SubspaceBot {
     public static final int CALL_INTERVAL = 10;
     public static final String CALL_AD = "  (!claimhelp)";
     public static final int LINE_SIZE = 100;
-    public static final int CALL_EXPIRATION_TIME = 90000;  // Time after which a call can't
-                                                           // can't be claimed (onit/gotit)
-    													   // (90 secs - 1,5 min)
+    public static final int CALL_EXPIRATION_TIME = 3 * Tools.TimeInMillis.MINUTE;  // Time after which a call can't
+                                                                                   // can't be claimed (onit/gotit)
     public static final String ZONE_CHANNEL = "Zone Channel";
 
     boolean             m_banPending = false;
@@ -1545,14 +1544,8 @@ public class robohelp extends SubspaceBot {
             String t = "";
             if (hour > 0)
                 t += hour + "h";
-            if (min < 10)
-                t += "0" + min + "m";
-            else
-                t += min + "m";
-            if (time < 10)
-                t += "0" + time + "s";
-            else 
-                t += time + "s";
+            t += min + "m";
+            t += time + "s";
             return t;
         }
     }
@@ -1562,14 +1555,14 @@ public class robohelp extends SubspaceBot {
         if (timeFormat)
             m_botAction.sendChatMessage("Call list time format changed to birthdate. (HH:mm)");
         else
-            m_botAction.sendChatMessage("Call list time format changed to time passed. (H:m:s)");
+            m_botAction.sendChatMessage("Call list time format changed to time passed. (#h#m#s)");
     }
 
     public void changeTimeFormatP(String name, String msg) {
         if (timeFormat)
             m_botAction.sendSmartPrivateMessage(name, "Call list time format changed to birthdate. (HH:mm)");
         else
-            m_botAction.sendSmartPrivateMessage(name, "Call list time format changed to time passed. (H:m:s)");
+            m_botAction.sendSmartPrivateMessage(name, "Call list time format changed to time passed. (#h#m#s)");
     }
     
     public void handleCalls(String name, String message) {
@@ -1594,7 +1587,7 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = getTimeString(call.getTime()) + " #" + call.getID() + " ";
+                String msg = "#" + call.getID() + " " + getTimeString(call.getTime()) + " ";
                 if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
                     int ct = call.getClaimType();
                     String taker = call.getTaker();
