@@ -515,7 +515,7 @@ public final class radiobot extends SubspaceBot {
             String arena = message.substring(4);
             if(Tools.isAllDigits(arena)) {
                 m_pub = true;
-                m_botAction.changeArena("0");
+                m_botAction.changeArena("1");/*What happened to pub 0 anyway? - DRAL */
             } else {
                 m_botAction.changeArena(arena);
             }
