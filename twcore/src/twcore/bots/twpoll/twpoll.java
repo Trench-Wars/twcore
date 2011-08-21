@@ -353,7 +353,7 @@ public class twpoll extends SubspaceBot {
 				"SELECT fnPollID, fcQuestion, fbMultiSelect, fdBegin, fdEnd, fdCreated, fnUserPosterID, fcUserName, fnPollOptionID, fcOption, fnOrder " +
 				"FROM tblPoll p " +
 				"JOIN tblPollOptions po USING (fnPollID) " +
-				"JOIN tblUser u USING (fnUserPosterID) " +
+				"JOIN tblUser u ON p.fnUserPosterID = u.fnUserID " +
 				"WHERE NOW() BETWEEN fdBegin AND fdEnd " +
 				"ORDER BY fnOrder"
 			);
