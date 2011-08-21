@@ -392,28 +392,30 @@ public class twpoll extends SubspaceBot {
     	for(int pollId: polls.keySet()) {
     		pollList += "," + pollId;
     	}
-    	pollList = pollList.substring(1);
 
-    	try {
-			ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
-				"SELECT fnPollID, fnUserID " +
-				"FROM tblPollVote " +
-				"WHERE fnPollID IN (" + pollList + ")"
-			);
+    	if (!pollList.isEmpty())
+    	{
+	    	pollList = pollList.substring(1);
+	    	try {
+				ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
+					"SELECT fnPollID, fnUserID " +
+					"FROM tblPollVote " +
+					"WHERE fnPollID IN (" + pollList + ")"
+				);
 
-			while(rs.next()) {
-				HashSet<Integer> users = votes.get(rs.getInt("fnPollID"));
-				if (users == null) {
-					users = new HashSet<Integer>();
+				while(rs.next()) {
+					HashSet<Integer> users = votes.get(rs.getInt("fnPollID"));
+					if (users == null) {
+						users = new HashSet<Integer>();
+					}
+					users.add(rs.getInt("fnUserID"));
+					votes.put(rs.getInt("fnPollID"), users);
 				}
-				users.add(rs.getInt("fnUserID"));
-				votes.put(rs.getInt("fnPollID"), users);
+
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
+	    	}
     }
 
     public void handleEvent(ArenaJoined event) {
