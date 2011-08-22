@@ -203,7 +203,7 @@ public class twpoll extends SubspaceBot {
     			for(PollOption option: poll.options) {
     				spam.add(" " + (++i) + ". " + option.option);
     			}
-    			spam.add("");
+    			spam.add(" ");
     			spam.add("HELP: To vote, pm me your choice.");
         	}
 
@@ -230,7 +230,7 @@ public class twpoll extends SubspaceBot {
         			for(PollOption option: poll.options) {
         				spam.add(" " + (++i) + ". " + option.option);
         			}
-        			spam.add("");
+        			spam.add(" ");
         			spam.add("HELP: To vote, pm me your choice.");
         			break;
         		}
@@ -254,8 +254,9 @@ public class twpoll extends SubspaceBot {
 
     		ArrayList<String> spam = new ArrayList();
 
-    		spam.add("Polls");
-    		spam.add("----------------------");
+    		spam.add("[Polls]");
+    		spam.add("Earn up to $1000 by voting.");
+    		spam.add(" ");
 
         	int userId = getUserID(playerName);
         	boolean pollExist = false;
@@ -265,9 +266,9 @@ public class twpoll extends SubspaceBot {
         			spam.add(poll.question + " (#" + poll.id + ")");
         			int i=0;
         			for(PollOption option: poll.options) {
-        				spam.add(" " + (++i) + ". " + option.option);
+        				spam.add((++i) + ". " + option.option);
         			}
-        			spam.add("");
+        			spam.add(" ");
         			pollExist = true;
         		}
         	}
@@ -275,13 +276,15 @@ public class twpoll extends SubspaceBot {
         		spam.add("To SELECT a poll, pm !poll <number>.");
         		spam.add("To VOTE, select a poll and pm your choice.");
         	} else {
-        		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at this time.");
+        		spam.add("There is no poll at this time.");
         	}
 
         	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
     	}
 
     }
+
+
 
     private boolean undo(String playerName) {
 
@@ -337,7 +340,7 @@ public class twpoll extends SubspaceBot {
 			openPolls.remove(userId);
 			lastPolls.put(userId, pollId);
 			m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted.");
-			giveMoney(playerName, 300);
+			giveMoney(playerName, (int)(Math.random()*1000));
 			m_botAction.sendSmartPrivateMessage(playerName, "Type !next to answer another poll.");
 			return true;
 		} catch (SQLException e) {
