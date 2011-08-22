@@ -162,7 +162,7 @@ public class twpoll extends SubspaceBot {
 
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("InitialArena"));
-        //m_botAction.requestArenaList();
+        m_botAction.requestArenaList();
         loadPolls();
         loadVotes();
     }
@@ -205,7 +205,7 @@ public class twpoll extends SubspaceBot {
     private void showPoll(String playerName, int pollId) {
 
        	if (polls.isEmpty()) {
-    		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at this time.");
+    		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at the moment.");
     	}
     	else {
 
@@ -236,7 +236,7 @@ public class twpoll extends SubspaceBot {
     private void showNextPoll(String playerName) {
 
        	if (polls.isEmpty()) {
-    		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at this time.");
+    		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at the moment.");
     	}
     	else {
 
@@ -260,7 +260,7 @@ public class twpoll extends SubspaceBot {
         	}
 
         	if (spam.isEmpty()) {
-        		spam.add("There is no poll for you at this time.");
+        		spam.add("There is no poll for you at the moment.");
         	}
 
         	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
@@ -271,7 +271,7 @@ public class twpoll extends SubspaceBot {
     private void showPolls(String playerName) {
 
     	if (polls.isEmpty()) {
-    		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at this time.");
+    		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at the moment.");
     	}
     	else {
 
@@ -301,7 +301,7 @@ public class twpoll extends SubspaceBot {
         		spam.add("To SELECT a poll, pm !poll <number>.");
         		spam.add("To VOTE, select a poll and pm your choice.");
         	} else {
-        		spam.add("There is no poll for you at this time.");
+        		spam.add("There is no poll for you at the moment.");
         	}
 
         	intro.addAll(spam);
@@ -471,6 +471,8 @@ public class twpoll extends SubspaceBot {
 		        	while(it.hasNext()) {
 		        		Player p = it.next();
 		        		if (m_botAction.getOperatorList().isBotExact(p.getPlayerName()))
+		        			continue;
+		        		if (p.getPlayerName().startsWith("TW-"))
 		        			continue;
 		            	int userId = getUserID(p.getPlayerName());
 		            	boolean next = false;
