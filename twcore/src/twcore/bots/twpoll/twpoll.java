@@ -76,36 +76,42 @@ public class twpoll extends SubspaceBot {
 
         String message = event.getMessage();
 
-        if (message.startsWith("!poll ")) {
-        	try {
-        		int pollId = Integer.parseInt(message.substring(6).trim());
-        		showPoll(name, pollId);
-        	} catch(NumberFormatException e) { }
-        }
-        else if (message.startsWith("!polls") || message.startsWith("!help")) {
-        	showPolls(name);
-        }
-        else if (message.startsWith("!next")) {
-        	showNextPoll(name);
-        }
-        else if (message.startsWith("!undo")) {
-        	undo(name);
-        }
-        else if (message.startsWith("!reload") && m_botAction.getOperatorList().isER(name)) {
-        	loadPolls();
-        	loadVotes();
-        	m_botAction.sendSmartPrivateMessage(name, "Reloaded.");
-        }
-        else {
-        	try {
-        		Integer choice = Integer.parseInt(message.trim());
-        		Integer userId = getUserID(name);
-        		if (userId != null) {
-        			if (openPolls.get(userId) != null) {
-        				vote(openPolls.get(userId), name, choice);
-        			}
-        		}
-        	} catch(NumberFormatException e) { }
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
+
+	        if (message.startsWith("!poll ")) {
+	        	try {
+	        		int pollId = Integer.parseInt(message.substring(6).trim());
+	        		showPoll(name, pollId);
+	        	} catch(NumberFormatException e) { }
+	        }
+	        else if (message.startsWith("!polls") || message.startsWith("!help")) {
+	        	showPolls(name);
+	        }
+	        else if (message.startsWith("!next")) {
+	        	showNextPoll(name);
+	        }
+	        else if (message.startsWith("!undo")) {
+	        	undo(name);
+	        }
+	        else if (message.startsWith("!reload") && m_botAction.getOperatorList().isER(name)) {
+	        	loadPolls();
+	        	loadVotes();
+	        	m_botAction.sendSmartPrivateMessage(name, "Reloaded.");
+	        }
+	        else {
+	        	try {
+	        		Integer choice = Integer.parseInt(message.trim());
+	        		Integer userId = getUserID(name);
+	        		if (userId != null) {
+	        			if (openPolls.get(userId) != null) {
+	        				vote(openPolls.get(userId), name, choice);
+	        				return;
+	        			}
+	        		}
+	        	} catch(NumberFormatException e) {
+	        		showPolls(name);
+	        	}
+	        }
 
         }
 
@@ -263,7 +269,7 @@ public class twpoll extends SubspaceBot {
         	for(int pollId: polls.keySet()) {
         		Poll poll = polls.get(pollId);
         		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
-        			spam.add(poll.question + " (#" + poll.id + ")");
+        			spam.add("(Q) " + poll.question + " (#" + poll.id + ")");
         			int i=0;
         			for(PollOption option: poll.options) {
         				spam.add((++i) + ". " + option.option);
