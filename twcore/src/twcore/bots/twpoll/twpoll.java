@@ -106,6 +106,8 @@ public class twpoll extends SubspaceBot {
 	        			if (openPolls.get(userId) != null) {
 	        				vote(openPolls.get(userId), name, choice);
 	        				return;
+	        			} else {
+	        				showPolls(name);
 	        			}
 	        		}
 	        	} catch(NumberFormatException e) {
@@ -258,34 +260,38 @@ public class twpoll extends SubspaceBot {
     	}
     	else {
 
+    		ArrayList<String> intro = new ArrayList();
     		ArrayList<String> spam = new ArrayList();
 
-    		spam.add("[Polls]");
-    		spam.add("Earn up to $1000 by voting.");
-    		spam.add(" ");
+    		intro.add("[Polls]");
 
         	int userId = getUserID(playerName);
         	boolean pollExist = false;
         	for(int pollId: polls.keySet()) {
         		Poll poll = polls.get(pollId);
         		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
-        			spam.add("(Q) " + poll.question + " (#" + poll.id + ")");
+        			spam.add("(Q." + poll.id + ") " + poll.question);
         			int i=0;
         			for(PollOption option: poll.options) {
-        				spam.add((++i) + ". " + option.option);
+        				String pad = Tools.rightString("", ("(Q." + poll.id + ") ").length(), ' ');
+        				spam.add(pad + (++i) + ". " + option.option);
         			}
         			spam.add(" ");
         			pollExist = true;
         		}
         	}
         	if (pollExist) {
+        		intro.add("Earn up to $1000 by voting.");
+        		intro.add(" ");
         		spam.add("To SELECT a poll, pm !poll <number>.");
         		spam.add("To VOTE, select a poll and pm your choice.");
         	} else {
         		spam.add("There is no poll at this time.");
         	}
 
-        	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
+        	intro.addAll(spam);
+
+        	m_botAction.smartPrivateMessageSpam(playerName, intro.toArray(new String[intro.size()]));
     	}
 
     }
