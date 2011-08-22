@@ -397,7 +397,7 @@ public class twpoll extends SubspaceBot {
 				"JOIN tblPollOptions po USING (fnPollID) " +
 				"JOIN tblUser u ON p.fnUserPosterID = u.fnUserID " +
 				"WHERE NOW() BETWEEN fdBegin AND fdEnd " +
-				"ORDER BY fnOrder"
+				"ORDER BY fnPollID,fnOrder"
 			);
 
 			Poll currentPoll = null;
