@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TimerTask;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -17,6 +18,7 @@ import twcore.core.events.ArenaJoined;
 import twcore.core.events.ArenaList;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
@@ -30,6 +32,8 @@ import twcore.core.util.Tools;
  */
 public class twpoll extends SubspaceBot {
 
+	private static final int SPAM_INTERVAL_MINUTE = 60;
+
 	private static final String DB_NAME = "website";
 
 	private HashMap<Integer,Poll> polls;
@@ -39,6 +43,8 @@ public class twpoll extends SubspaceBot {
 	private HashMap<Integer,Integer> lastPolls;
 
     private BotSettings m_botSettings;
+
+    private SpamTask spamTask;
 
     public twpoll(BotAction botAction) {
         super(botAction);
@@ -147,6 +153,12 @@ public class twpoll extends SubspaceBot {
     	}
     }
 
+    public void handleEvent(ArenaJoined event) {
+    	spamTask = new SpamTask();
+    	m_botAction.scheduleTaskAtFixedRate(spamTask, SPAM_INTERVAL_MINUTE * Tools.TimeInMillis.MINUTE, SPAM_INTERVAL_MINUTE * Tools.TimeInMillis.MINUTE );
+    	spamTask.run();
+    }
+
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("InitialArena"));
         //m_botAction.requestArenaList();
@@ -206,7 +218,7 @@ public class twpoll extends SubspaceBot {
         		spam.add("You have already voted.");
         	} else {
     			openPolls.put(userId, poll.id);
-    			spam.add("Question: " + poll.question + " (#" + poll.id + ")");
+    			spam.add("(Q." + poll.id + ") " + poll.question);
     			int i=0;
     			for(PollOption option: poll.options) {
     				spam.add(" " + (++i) + ". " + option.option);
@@ -233,7 +245,7 @@ public class twpoll extends SubspaceBot {
         		Poll poll = polls.get(pollId);
         		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
         			openPolls.put(userId, poll.id);
-        			spam.add("Question: " + poll.question + " (#" + poll.id + ")");
+        			spam.add("(Q." + poll.id + ") " + poll.question);
         			int i=0;
         			for(PollOption option: poll.options) {
         				spam.add(" " + (++i) + ". " + option.option);
@@ -445,8 +457,24 @@ public class twpoll extends SubspaceBot {
 	    }
     }
 
-    public void handleEvent(ArenaJoined event) {
+    private class SpamTask extends TimerTask {
 
+        public void run() {
+        	for(Player p: m_botAction.getPlayingPlayers()) {
+            	int userId = getUserID(p.getPlayerName());
+            	boolean next = false;
+            	for(int pollId: polls.keySet()) {
+            		if (next)
+            			continue;
+            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
+            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), "[Polls] There is at least 1 poll you have not voted yet.");
+            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), " ");
+            			showPoll(p.getPlayerName(), pollId);
+            			next = true;
+            		}
+            	}
+        	}
+        }
     }
 
     private class Poll {
