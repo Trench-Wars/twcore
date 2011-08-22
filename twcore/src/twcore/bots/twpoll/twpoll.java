@@ -335,7 +335,7 @@ public class twpoll extends SubspaceBot {
 
     	try {
     		Poll poll = polls.get(pollId);
-    		pollOption = poll.options.get(optionId);
+    		pollOption = poll.options.get(optionId-1);
     	} catch(Exception e) { return false; }
 
     	try {
