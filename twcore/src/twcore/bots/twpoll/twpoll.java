@@ -414,10 +414,10 @@ public class twpoll extends SubspaceBot {
 					currentPoll.created = rs.getDate("fdCreated");
 					currentPoll.options = new ArrayList<PollOption>();
 					currentPoll.options.add(new PollOption(rs.getInt("fnPollOptionID"),rs.getString("fcOption")));
+					polls.put(currentPoll.id, currentPoll);
 				} else {
 					currentPoll.options.add(new PollOption(rs.getInt("fnPollOptionID"),rs.getString("fcOption")));
 				}
-				polls.put(currentPoll.id, currentPoll);
 			}
 
 		} catch (SQLException e) {
