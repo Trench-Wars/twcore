@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.TimerTask;
 
 import twcore.core.BotAction;
@@ -19,6 +20,7 @@ import twcore.core.events.ArenaJoined;
 import twcore.core.events.ArenaList;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -42,6 +44,8 @@ public class twpoll extends SubspaceBot {
 	private HashMap<String,Integer> userIds;
 	private HashMap<Integer,Integer> openPolls;
 	private HashMap<Integer,Integer> lastPolls;
+
+	private List<Player> players;
 
     private BotSettings m_botSettings;
 
@@ -69,8 +73,16 @@ public class twpoll extends SubspaceBot {
         req.request(EventRequester.ARENA_LIST);
         req.request(EventRequester.ARENA_JOINED);
         req.request(EventRequester.LOGGED_ON);
+        req.request(EventRequester.PLAYER_ENTERED);
     }
 
+    public void handleEvent(PlayerEntered event) {
+    	players = new ArrayList<Player>();
+		Iterator<Player> it = m_botAction.getPlayerIterator();
+    	while(it.hasNext()) {
+    		players.add(it.next());
+    	}
+    }
 
     public void handleEvent(Message event) {
 
@@ -466,30 +478,29 @@ public class twpoll extends SubspaceBot {
 
     private class SpamTask extends TimerTask {
     	public void run() {
-
         	Runnable r = new Runnable() {
 				public void run() {
-					Iterator<Player> it = m_botAction.getPlayerIterator();
-		        	while(it.hasNext()) {
-		        		Player p = it.next();
-		        		if (m_botAction.getOperatorList().isBotExact(p.getPlayerName()))
-		        			continue;
-		        		if (p.getPlayerName().startsWith("TW-"))
-		        			continue;
-		            	int userId = getUserID(p.getPlayerName());
-		            	boolean next = false;
-		            	for(int pollId: polls.keySet()) {
-		            		if (next)
-		            			continue;
-		            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
-		            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), "[Polls] There is at least 1 poll you have not voted yet.");
-		            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), " ");
-		            			showPoll(p.getPlayerName(), pollId);
-		            			try { Thread.sleep(3000); } catch (InterruptedException e) { }
-		            			next = true;
-		            		}
-		            	}
-		        	}
+					synchronized (this) {
+						for(Player p: players) {
+			        		if (m_botAction.getOperatorList().isBotExact(p.getPlayerName()))
+			        			continue;
+			        		if (p.getPlayerName().startsWith("TW-"))
+			        			continue;
+			            	int userId = getUserID(p.getPlayerName());
+			            	boolean next = false;
+			            	for(int pollId: polls.keySet()) {
+			            		if (next)
+			            			continue;
+			            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
+			            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), "[Polls] There is at least 1 poll you have not voted yet.");
+			            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), " ");
+			            			showPoll(p.getPlayerName(), pollId);
+			            			try { Thread.sleep(3000); } catch (InterruptedException e) { }
+			            			next = true;
+			            		}
+			            	}
+			        	}
+					}
 				}
 			};
 			Thread t = new Thread(r);
