@@ -94,6 +94,7 @@ public class twpoll extends SubspaceBot {
         else if (message.startsWith("!reload") && m_botAction.getOperatorList().isER(name)) {
         	loadPolls();
         	loadVotes();
+        	m_botAction.sendSmartPrivateMessage(name, "Reloaded.");
         }
         else {
         	try {
@@ -235,6 +236,10 @@ public class twpoll extends SubspaceBot {
         		}
         	}
 
+        	if (spam.isEmpty()) {
+        		spam.add("There is no poll at this time.");
+        	}
+
         	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
     	}
 
@@ -253,6 +258,9 @@ public class twpoll extends SubspaceBot {
     		spam.add("----------------------");
 
         	int userId = getUserID(playerName);
+        	System.out.println("userID: " + userId);
+        	System.out.println("1: " + polls.size());
+        	System.out.println("1: " + votes.size());
         	for(int pollId: polls.keySet()) {
         		Poll poll = polls.get(pollId);
         		if (votes.containsKey(pollId) && votes.get(pollId).contains(userId)) {
