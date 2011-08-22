@@ -223,7 +223,7 @@ public class twpoll extends SubspaceBot {
         	int userId = getUserID(playerName);
         	for(int pollId: polls.keySet()) {
         		Poll poll = polls.get(pollId);
-        		if (votes.containsKey(pollId) && votes.get(pollId).contains(userId)) {
+        		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
         			openPolls.put(userId, poll.id);
         			spam.add("Question: " + poll.question + " (#" + poll.id + ")");
         			int i=0;
@@ -258,6 +258,7 @@ public class twpoll extends SubspaceBot {
     		spam.add("----------------------");
 
         	int userId = getUserID(playerName);
+        	boolean pollExist = false;
         	for(int pollId: polls.keySet()) {
         		Poll poll = polls.get(pollId);
         		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
@@ -267,10 +268,15 @@ public class twpoll extends SubspaceBot {
         				spam.add(" " + (++i) + ". " + option.option);
         			}
         			spam.add("");
+        			pollExist = true;
         		}
         	}
-        	spam.add("To SELECT a poll, pm !poll <number>.");
-        	spam.add("To VOTE, select a poll and pm your choice.");
+        	if (pollExist) {
+        		spam.add("To SELECT a poll, pm !poll <number>.");
+        		spam.add("To VOTE, select a poll and pm your choice.");
+        	} else {
+        		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at this time.");
+        	}
 
         	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
     	}
@@ -408,11 +414,6 @@ public class twpoll extends SubspaceBot {
 					"FROM tblPollVote " +
 					"WHERE fnPollID IN (" + pollList + ")"
 				);
-
-				System.out.println("" +
-					"SELECT fnPollID, fnUserID " +
-					"FROM tblPollVote " +
-					"WHERE fnPollID IN (" + pollList + ")");
 
 				while(rs.next()) {
 					HashSet<Integer> users = votes.get(rs.getInt("fnPollID"));
