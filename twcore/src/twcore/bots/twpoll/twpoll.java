@@ -415,11 +415,9 @@ public class twpoll extends SubspaceBot {
 					currentPoll.options = new ArrayList<PollOption>();
 					currentPoll.options.add(new PollOption(rs.getInt("fnPollOptionID"),rs.getString("fcOption")));
 					polls.put(currentPoll.id, currentPoll);
-					System.out.println("-" + currentPoll.options.size());
 				} else {
 					currentPoll.options.add(new PollOption(rs.getInt("fnPollOptionID"),rs.getString("fcOption")));
 					polls.put(currentPoll.id, currentPoll);
-					System.out.println("+" + currentPoll.options.size());
 				}
 			}
 
@@ -492,7 +490,7 @@ public class twpoll extends SubspaceBot {
 				}
 			};
 			Thread t = new Thread(r);
-			r.run();
+			t.start();
         }
     }
 
