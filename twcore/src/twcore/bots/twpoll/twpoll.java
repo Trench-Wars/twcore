@@ -33,7 +33,7 @@ import twcore.core.util.Tools;
  */
 public class twpoll extends SubspaceBot {
 
-	private static final int SPAM_INTERVAL_MINUTE = 60;
+	private static final int SPAM_INTERVAL_MINUTE = 30;
 
 	private static final String DB_NAME = "website";
 
@@ -483,11 +483,10 @@ public class twpoll extends SubspaceBot {
 		            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), "[Polls] There is at least 1 poll you have not voted yet.");
 		            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), " ");
 		            			showPoll(p.getPlayerName(), pollId);
+		            			try { Thread.sleep(3000); } catch (InterruptedException e) { }
 		            			next = true;
 		            		}
 		            	}
-
-		            	try { Thread.sleep(5000); } catch (InterruptedException e) { }
 		        	}
 				}
 			};
