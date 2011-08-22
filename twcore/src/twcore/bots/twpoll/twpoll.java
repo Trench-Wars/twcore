@@ -412,6 +412,11 @@ public class twpoll extends SubspaceBot {
 					"WHERE fnPollID IN (" + pollList + ")"
 				);
 
+				System.out.println("" +
+					"SELECT fnPollID, fnUserID " +
+					"FROM tblPollVote " +
+					"WHERE fnPollID IN (" + pollList + ")");
+
 				while(rs.next()) {
 					HashSet<Integer> users = votes.get(rs.getInt("fnPollID"));
 					if (users == null) {
@@ -424,7 +429,7 @@ public class twpoll extends SubspaceBot {
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-	    	}
+	    }
     }
 
     public void handleEvent(ArenaJoined event) {
