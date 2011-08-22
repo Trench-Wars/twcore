@@ -258,12 +258,9 @@ public class twpoll extends SubspaceBot {
     		spam.add("----------------------");
 
         	int userId = getUserID(playerName);
-        	System.out.println("userID: " + userId);
-        	System.out.println("1: " + polls.size());
-        	System.out.println("1: " + votes.size());
         	for(int pollId: polls.keySet()) {
         		Poll poll = polls.get(pollId);
-        		if (votes.containsKey(pollId) && votes.get(pollId).contains(userId)) {
+        		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
         			spam.add(poll.question + " (#" + poll.id + ")");
         			int i=0;
         			for(PollOption option: poll.options) {
