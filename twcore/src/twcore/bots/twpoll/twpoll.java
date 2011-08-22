@@ -245,7 +245,7 @@ public class twpoll extends SubspaceBot {
         	}
 
         	if (spam.isEmpty()) {
-        		spam.add("There is no poll at this time.");
+        		spam.add("There is no poll for you at this time.");
         	}
 
         	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
@@ -286,7 +286,7 @@ public class twpoll extends SubspaceBot {
         		spam.add("To SELECT a poll, pm !poll <number>.");
         		spam.add("To VOTE, select a poll and pm your choice.");
         	} else {
-        		spam.add("There is no poll at this time.");
+        		spam.add("There is no poll for you at this time.");
         	}
 
         	intro.addAll(spam);
