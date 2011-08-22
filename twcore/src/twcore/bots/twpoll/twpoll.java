@@ -417,6 +417,7 @@ public class twpoll extends SubspaceBot {
 					polls.put(currentPoll.id, currentPoll);
 				} else {
 					currentPoll.options.add(new PollOption(rs.getInt("fnPollOptionID"),rs.getString("fcOption")));
+					polls.put(currentPoll.id, currentPoll);
 				}
 			}
 
@@ -463,26 +464,33 @@ public class twpoll extends SubspaceBot {
     private class SpamTask extends TimerTask {
 
         public void run() {
-        	Iterator<Player> it = m_botAction.getPlayerIterator();
-        	while(it.hasNext()) {
-        		Player p = it.next();
-        		if (m_botAction.getOperatorList().isBotExact(p.getPlayerName()))
-        			continue;
-            	int userId = getUserID(p.getPlayerName());
-            	boolean next = false;
-            	for(int pollId: polls.keySet()) {
-            		if (next)
-            			continue;
-            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
-            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), "[Polls] There is at least 1 poll you have not voted yet.");
-            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), " ");
-            			showPoll(p.getPlayerName(), pollId);
-            			next = true;
-            		}
-            	}
 
-            	try { Thread.sleep(5000); } catch (InterruptedException e) { }
-        	}
+        	Runnable r = new Runnable() {
+				public void run() {
+					Iterator<Player> it = m_botAction.getPlayerIterator();
+		        	while(it.hasNext()) {
+		        		Player p = it.next();
+		        		if (m_botAction.getOperatorList().isBotExact(p.getPlayerName()))
+		        			continue;
+		            	int userId = getUserID(p.getPlayerName());
+		            	boolean next = false;
+		            	for(int pollId: polls.keySet()) {
+		            		if (next)
+		            			continue;
+		            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
+		            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), "[Polls] There is at least 1 poll you have not voted yet.");
+		            			m_botAction.sendSmartPrivateMessage(p.getPlayerName(), " ");
+		            			showPoll(p.getPlayerName(), pollId);
+		            			next = true;
+		            		}
+		            	}
+
+		            	try { Thread.sleep(5000); } catch (InterruptedException e) { }
+		        	}
+				}
+			};
+			Thread t = new Thread(r);
+			r.run();
         }
     }
 
