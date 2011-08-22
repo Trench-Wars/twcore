@@ -164,8 +164,8 @@ public class twpoll extends SubspaceBot {
 			);
 
 			if (rs.next()) {
-				rs.close();
 				userIds.put(playerName, rs.getInt("fnUserID"));
+				rs.close();
 				return rs.getInt("fnUserID");
 			} else {
 				rs.close();
