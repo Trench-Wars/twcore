@@ -139,7 +139,7 @@ public class twpoll extends SubspaceBot {
     }
 
     public void handleEvent(LoggedOn event) {
-        m_botAction.joinArena(m_botSettings.getString("arena"));
+        m_botAction.joinArena(m_botSettings.getString("InitialArena"));
         //m_botAction.requestArenaList();
         loadPolls();
         loadVotes();
