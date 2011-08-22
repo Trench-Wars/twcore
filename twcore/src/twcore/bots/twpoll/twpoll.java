@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.TimerTask;
 
 import twcore.core.BotAction;
@@ -221,7 +222,8 @@ public class twpoll extends SubspaceBot {
     			spam.add("(Q." + poll.id + ") " + poll.question);
     			int i=0;
     			for(PollOption option: poll.options) {
-    				spam.add(" " + (++i) + ". " + option.option);
+    				String pad = Tools.rightString("", ("(Q." + poll.id + ") ").length(), ' ');
+    				spam.add(pad + (++i) + ". " + option.option);
     			}
     			spam.add(" ");
     			spam.add("HELP: To vote, pm me your choice.");
@@ -248,7 +250,8 @@ public class twpoll extends SubspaceBot {
         			spam.add("(Q." + poll.id + ") " + poll.question);
         			int i=0;
         			for(PollOption option: poll.options) {
-        				spam.add(" " + (++i) + ". " + option.option);
+        				String pad = Tools.rightString("", ("(Q." + poll.id + ") ").length(), ' ');
+        				spam.add(pad + (++i) + ". " + option.option);
         			}
         			spam.add(" ");
         			spam.add("HELP: To vote, pm me your choice.");
@@ -460,7 +463,9 @@ public class twpoll extends SubspaceBot {
     private class SpamTask extends TimerTask {
 
         public void run() {
-        	for(Player p: m_botAction.getPlayingPlayers()) {
+        	Iterator<Player> it = m_botAction.getPlayerIterator();
+        	while(it.hasNext()) {
+        		Player p = it.next();
             	int userId = getUserID(p.getPlayerName());
             	boolean next = false;
             	for(int pollId: polls.keySet()) {
