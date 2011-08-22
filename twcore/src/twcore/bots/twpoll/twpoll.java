@@ -296,7 +296,7 @@ public class twpoll extends SubspaceBot {
         		}
         	}
         	if (pollExist) {
-        		intro.add("Earn up to $1000 by voting.");
+        		//intro.add("Earn up to $1000 by voting.");
         		intro.add(" ");
         		spam.add("To SELECT a poll, pm !poll <number>.");
         		spam.add("To VOTE, select a poll and pm your choice.");
