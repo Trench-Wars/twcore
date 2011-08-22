@@ -215,7 +215,7 @@ public class twpoll extends SubspaceBot {
         	Poll poll = polls.get(pollId);
         	if (poll == null) {
         		spam.add("Poll not found.");
-        	} else if (votes.get(pollId).contains(userId)) {
+        	} else if (votes.containsKey(pollId) && votes.get(pollId).contains(userId)) {
         		spam.add("You have already voted.");
         	} else {
     			openPolls.put(userId, poll.id);
