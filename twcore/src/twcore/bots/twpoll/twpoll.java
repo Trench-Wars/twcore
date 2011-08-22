@@ -162,7 +162,7 @@ public class twpoll extends SubspaceBot {
 
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("InitialArena"));
-        //m_botAction.requestArenaList();
+        m_botAction.requestArenaList();
         loadPolls();
         loadVotes();
     }
@@ -366,7 +366,7 @@ public class twpoll extends SubspaceBot {
 			votes.put(pollId, users);
 			openPolls.remove(userId);
 			lastPolls.put(userId, pollId);
-			m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted.");
+			m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted (!undo to undo).");
 			giveMoney(playerName, (int)(Math.random()*1000));
 			m_botAction.sendSmartPrivateMessage(playerName, "Type !next to answer another poll.");
 			return true;
