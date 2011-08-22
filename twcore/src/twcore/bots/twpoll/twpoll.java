@@ -466,6 +466,8 @@ public class twpoll extends SubspaceBot {
         	Iterator<Player> it = m_botAction.getPlayerIterator();
         	while(it.hasNext()) {
         		Player p = it.next();
+        		if (m_botAction.getOperatorList().isBotExact(p.getPlayerName()))
+        			continue;
             	int userId = getUserID(p.getPlayerName());
             	boolean next = false;
             	for(int pollId: polls.keySet()) {
@@ -478,6 +480,8 @@ public class twpoll extends SubspaceBot {
             			next = true;
             		}
             	}
+
+            	try { Thread.sleep(5000); } catch (InterruptedException e) { }
         	}
         }
     }
