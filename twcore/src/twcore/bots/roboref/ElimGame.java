@@ -132,11 +132,10 @@ public class ElimGame {
                 for (String name : winners) {
                     ElimPlayer ep = getPlayer(name);
                     if (ep != null) {
-                        if (!ship.inBase() && ep.getPosition() == BasePos.SPAWNING)
-                            spawns.put(low(name), new SpawnTimer(ep, false));
-                        else if (ship == ShipType.WEASEL) {
+                        if (ship == ShipType.WEASEL)
                             sendWarp(name);
-                        }
+                        else if (ship.inBase() && ep.getPosition() == BasePos.SPAWNING)
+                            spawns.put(low(name), new SpawnTimer(ep, false));
                     }
                 }
                 countStats();
