@@ -103,11 +103,14 @@ public class twpoll extends SubspaceBot {
 	        		showPoll(name, pollId);
 	        	} catch(NumberFormatException e) { }
 	        }
-	        else if (message.startsWith("!polls") || message.startsWith("!help")) {
+	        else if (message.startsWith("!polls")) {
 	        	showPolls(name);
 	        }
 	        else if (message.startsWith("!next")) {
 	        	showNextPoll(name);
+	        }
+	        else if (message.startsWith("!help")) {
+	        	showHelp(name);
 	        }
 	        else if (message.startsWith("!undo")) {
 	        	undo(name);
@@ -126,7 +129,7 @@ public class twpoll extends SubspaceBot {
 	        				vote(openPolls.get(userId), name, choice);
 	        				return;
 	        			} else {
-	        				showPolls(name);
+	        				showHelp(name);
 	        			}
 	        		}
 	        	} catch(NumberFormatException e) {
@@ -177,7 +180,7 @@ public class twpoll extends SubspaceBot {
 
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("InitialArena"));
-        //m_botAction.requestArenaList();
+        m_botAction.requestArenaList();
         loadPolls();
         loadVotes();
     }
@@ -215,6 +218,30 @@ public class twpoll extends SubspaceBot {
 			return 0;
 		}
 
+    }
+
+    private int getPollCount(String playerName) {
+    	int count = 0;
+    	int userId = getUserID(playerName);
+    	for(int pollId: polls.keySet()) {
+    		Poll poll = polls.get(pollId);
+    		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
+    			count++;
+    		}
+    	}
+    	return count;
+    }
+
+    private void showHelp(String playerName) {
+    	int polls = getPollCount(playerName);
+    	String[] spam = {
+    			"[Polls]",
+    			"- !polls      Show current polls.",
+    			"- !next       Get the next poll.",
+    			"              (avalaible: " + polls + ")",
+    			"- !undo       Undo your last vote.",
+    	};
+    	m_botAction.privateMessageSpam(playerName, spam);
     }
 
     private void showPoll(String playerName, int pollId) {
