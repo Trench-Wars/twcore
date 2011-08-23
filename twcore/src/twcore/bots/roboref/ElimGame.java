@@ -200,6 +200,7 @@ public class ElimGame {
         if (p == null) return;
         int y = event.getYLocation();
         ElimPlayer ep = getPlayer(p.getPlayerName());
+        ba.sendPrivateMessage("WingZero", "Position event -> " + p.getPlayerName() + " y=" + y);
         if (ep != null) {
             if (y < BASE_ENTRANCE) {
                 if (!started)
