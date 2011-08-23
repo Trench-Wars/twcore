@@ -41,7 +41,7 @@ public class ElimGame {
     static final int OUT_OF_BOUNDS = 30;                // seconds
     static final int BOUNDARY_TIME = 30;                // max seconds outside base until dq
     static final int BOUND_START = 5;                   // seconds after game starts until player is warned for oob
-    static final int SPAWN_TIME = 4;                    // seconds after death until respawn
+    static final int SPAWN_TIME = 5;                    // seconds after death until respawn
     public static final String db = "website";
     
     CompareAll comp;
@@ -264,7 +264,6 @@ public class ElimGame {
         if (ep != null) {
             BasePos pos = ep.getPosition();
             if (y > BASE_ENTRANCE) {
-                bot.debug("Position event -> " + p.getPlayerName() + " moved BELOW " + BASE_ENTRANCE + " to " + y);
                 if (!started) {
                     if (pos != BasePos.SPAWNING)
                         ep.setPosition(BasePos.SPAWNING);
@@ -273,7 +272,6 @@ public class ElimGame {
                 } else if (pos == BasePos.WARNED_IN)
                     removeOutsider(ep);
             } else {
-                bot.debug("Position event -> " + p.getPlayerName() + " moved ABOVE " + BASE_ENTRANCE + " to " + y);
                 if (pos == BasePos.SPAWN)
                     ep.setPosition(BasePos.IN);
                 else if (pos == BasePos.SPAWNING)
