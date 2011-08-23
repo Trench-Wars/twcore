@@ -121,10 +121,13 @@ public class ElimGame {
                 spawns.clear();
                 ba.scoreResetAll();
                 ba.shipResetAll();
-                if (shrap)
+                if (shrap) {
                     ba.prizeAll(Tools.Prize.SHRAPNEL);
-                else
+                    ba.prizeAll(Tools.Prize.SHRAPNEL);
+                } else {
                     ba.prizeAll(-Tools.Prize.SHRAPNEL);
+                    ba.prizeAll(-Tools.Prize.SHRAPNEL);
+                }
                 ba.prizeAll(Tools.Prize.MULTIFIRE);
                 for (String name : winners) {
                     ElimPlayer ep = getPlayer(name);

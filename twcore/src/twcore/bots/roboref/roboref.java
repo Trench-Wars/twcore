@@ -312,7 +312,20 @@ public class roboref extends SubspaceBot {
                     cmd_stop(name);
                 else if (msg.equals("!on"))
                     cmd_start(name);
+                else if (msg.startsWith("!door "))
+                    cmd_door(name, msg);
             }
+        }
+    }
+    
+    public void cmd_door(String name, String cmd) {
+        cmd = cmd.substring(cmd.indexOf(" ") + 1);
+        try {
+            int d = Integer.valueOf(cmd);
+            ba.setDoors(d);
+            ba.sendArenaMessage("Doors set to: " + d);
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Number format error!");
         }
     }
     
