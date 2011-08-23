@@ -35,7 +35,7 @@ public class ElimGame {
     BotSettings rules;
     roboref bot;
 
-    private static final int BASE_ENTRANCE = 217 * 16;
+    private static final int BASE_ENTRANCE = 222 * 16;
     static final int MAX_LAG_TIME = 60;                 // seconds
     static final int MIN_LAG_TIME = 3;                  // seconds
     static final int OUT_OF_BOUNDS = 30;                // seconds
@@ -209,7 +209,9 @@ public class ElimGame {
                     ba.cancelTask(outsiders.remove(low(name)));
                 if (spawns.containsKey(low(name)))
                     ba.cancelTask(spawns.remove(low(name)));
-                getPlayer(name).setPosition(BasePos.SPAWNING);
+                ElimPlayer ep = getPlayer(name);
+                if (ep != null)
+                    ep.setPosition(BasePos.SPAWNING);
             }
         }
     }
