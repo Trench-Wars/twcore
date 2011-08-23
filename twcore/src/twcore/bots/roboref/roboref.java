@@ -677,7 +677,7 @@ public class roboref extends SubspaceBot {
     /** Waiting state stalls until there are enough players to continue */
     private void doWaiting() {
         sendZoner();
-        if (state == State.WAITING && ba.getNumPlayers() > 1) {
+        if (state == State.WAITING && ba.getNumPlaying() > 1) {
             state = State.VOTING;
             voteType = VoteType.NA;
             handleState();
@@ -687,7 +687,7 @@ public class roboref extends SubspaceBot {
     /** Voting state runs in between vote periods to call for next vote after counting prior */
     private void doVoting() {
         if (state != State.VOTING) return;
-        if (ba.getNumPlayers() < 2) {
+        if (ba.getNumPlaying() < 2) {
             votes.clear();
             voteType = VoteType.NA;
             state = State.WAITING;
@@ -740,7 +740,7 @@ public class roboref extends SubspaceBot {
         ba.sendArenaMessage("Enter to play. Arena will be locked in 15 seconds!", 9);
         timer = new TimerTask() {
             public void run() {
-                if (ba.getNumPlayers() < 2) {
+                if (ba.getNumPlaying() < 2) {
                     votes.clear();
                     voteType = VoteType.NA;
                     state = State.WAITING;
@@ -783,7 +783,7 @@ public class roboref extends SubspaceBot {
             public void run() {
                 updateRanks();
                 debug("Rank update executed for ship " + shipType.getNum());
-                if (ba.getNumPlayers() < 2)
+                if (ba.getNumPlaying() < 2)
                     ba.sendArenaMessage("A new game will begin when 2 or more players enter a ship. -" + ba.getBotName());
                 else
                     handleState();
