@@ -360,6 +360,8 @@ public class roboref extends SubspaceBot {
                     cmd_start(name);
                 else if (msg.startsWith("!door "))
                     cmd_door(name, msg);
+                else if (msg.equals("!p"))
+                    ba.sendPrivateMessage(name, "Playing=" + ba.getNumPlaying() + " Players=" + ba.getNumPlayers());
             }
         }
     }
