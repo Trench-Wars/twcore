@@ -289,13 +289,13 @@ public class roboref extends SubspaceBot {
                     ba.sendPrivateMessage(args[1], "Error processing record request for: " + args[2]);
             } else if (id.startsWith("rank:")) {
                 String[] args = id.split(":");
-                if (args.length == 2 && rs.next()) {
+                if (rs.next()) {
                     String target = rs.getString("n");
                     int r = rs.getInt("r");
                     int s = rs.getInt("s");
                     ba.sendPrivateMessage(args[1], target + " rank in " + ShipType.type(s).toString() + ": " + r);
                 } else
-                    ba.sendPrivateMessage(args[1], "Error processing rank request.");
+                    ba.sendPrivateMessage(args[1], args[2] + " is not yet ranked in " + ShipType.type(Integer.valueOf(args[3])).toString());
             }
         } catch (SQLException e) {
             Tools.printStackTrace(e);
@@ -388,13 +388,15 @@ public class roboref extends SubspaceBot {
     
     public void cmd_help(String name) {
         String[] msg = new String[] {
-                " !lagout   - Return to game after lagging out",
-                " !rec      - Displays your record or the record of a specified name. For a specific ship, add a colon then ship number to a name or only a number with no name.",
-                " !who      - Displays the remaining players and their records",
-                " !stats    - Dumps all current statistic information for a player, if available",
-                " !get      - Dumps all statistics for all games played by a player",
-                " !mvp      - Display current game best/worst player record information",
-                " !deaths   - Display current game best/worst player death information",
+                " !lagout           - Return to game after lagging out",
+                " !rank <#>         - Displays your current rank in ship <#>",
+                " !rank <name>:<#>  - Displays the rank of <name> in ship <#>",
+                " !rec              - Displays your record or the record of a specified name. For a specific ship, add a colon then ship number to a name or only a number with no name.",
+                " !who              - Displays the remaining players and their records",
+                " !stats            - Dumps all current statistic information for a player, if available",
+                " !get              - Dumps all statistics for all games played by a player",
+                " !mvp              - Display current game best/worst player record information",
+                " !deaths           - Display current game best/worst player death information",
         };
         ba.privateMessageSpam(name, msg);
     }
@@ -461,7 +463,7 @@ public class roboref extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !rank <#>");
                 return;
             }
-        } else if (cmd.indexOf(":") < cmd.length()){
+        } else if (cmd.indexOf(":") < cmd.length() - 1){
             target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
             ship = Integer.valueOf(cmd.indexOf(":") + 1);
             if (ship < 1 || ship > 8)
@@ -471,7 +473,7 @@ public class roboref extends SubspaceBot {
             return;
         }
         String query = "SELECT fcName as n, fnRank as r, fnShip as s FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1";
-        ba.SQLBackgroundQuery(db, "rank:" + name, query);
+        ba.SQLBackgroundQuery(db, "rank:" + name + ":" + target + ":" + ship, query);
     }
     
     public void cmd_rec(String name, String cmd) {
