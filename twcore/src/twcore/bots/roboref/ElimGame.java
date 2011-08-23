@@ -109,59 +109,6 @@ public class ElimGame {
         }
     }
     
-    /** Start elim 10 second countdown */
-    public void startGame() {
-        ba.sendArenaMessage("Get ready. Game will start in 10 seconds!", 1);
-        TimerTask timer = new TimerTask() {
-            public void run() {
-                bot.state = State.PLAYING;
-                started = true;
-                ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
-                outsiders.clear();
-                spawns.clear();
-                ba.scoreResetAll();
-                ba.shipResetAll();
-                if (shrap) {
-                    ba.prizeAll(Tools.Prize.SHRAPNEL);
-                    ba.prizeAll(Tools.Prize.SHRAPNEL);
-                } else {
-                    ba.prizeAll(-Tools.Prize.SHRAPNEL);
-                    ba.prizeAll(-Tools.Prize.SHRAPNEL);
-                }
-                ba.prizeAll(Tools.Prize.MULTIFIRE);
-                for (String name : winners) {
-                    ElimPlayer ep = getPlayer(name);
-                    if (ep != null) {
-                        if (ship == ShipType.WEASEL)
-                            sendWarp(name);
-                        else if (ship.inBase() && ep.getPosition() == BasePos.SPAWNING)
-                            spawns.put(low(name), new SpawnTimer(ep, false));
-                    }
-                }
-                countStats();
-            }
-        };
-        ba.scheduleTask(timer, 10 * Tools.TimeInMillis.SECOND);
-        setShipFreqs();
-    }
-    
-    /** Set all players to correct ship and distribute onto incrementing freqs */
-    public void setShipFreqs() {
-        if (ship == ShipType.WEASEL)
-            ba.setDoors(127);
-        else if (winners.size() > 15)
-            ba.setDoors(228);
-        else
-            ba.setDoors(127);
-        
-        for (String name : winners) {
-            getPlayer(name).setFreq(freq);
-            ba.setShip(name, ship.getNum());
-            ba.setFreq(name, freq);
-            freq += 2;
-        }
-    }
-    
     /** Digest and diffuse player death event and related info */
     public void handleEvent(PlayerDeath event) {
         String killer = ba.getPlayerName(event.getKillerID());
@@ -281,7 +228,7 @@ public class ElimGame {
         }
     }
     
-    private void handleSpawn(ElimPlayer ep, boolean instant) {
+    public void handleSpawn(ElimPlayer ep, boolean instant) {
         final String name = ep.name;
         ep.setPosition(BasePos.SPAWNING);
         
@@ -338,6 +285,42 @@ public class ElimGame {
             checkWinner();
     }
     
+    /** Start elim 10 second countdown */
+    public void startGame() {
+        ba.sendArenaMessage("Get ready. Game will start in 10 seconds!", 1);
+        TimerTask timer = new TimerTask() {
+            public void run() {
+                bot.state = State.PLAYING;
+                started = true;
+                ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
+                outsiders.clear();
+                spawns.clear();
+                ba.scoreResetAll();
+                ba.shipResetAll();
+                if (shrap) {
+                    ba.prizeAll(Tools.Prize.SHRAPNEL);
+                    ba.prizeAll(Tools.Prize.SHRAPNEL);
+                } else {
+                    ba.prizeAll(-Tools.Prize.SHRAPNEL);
+                    ba.prizeAll(-Tools.Prize.SHRAPNEL);
+                }
+                ba.prizeAll(Tools.Prize.MULTIFIRE);
+                for (String name : winners) {
+                    ElimPlayer ep = getPlayer(name);
+                    if (ep != null) {
+                        if (ship == ShipType.WEASEL)
+                            sendWarp(name);
+                        else if (ship.inBase() && ep.getPosition() == BasePos.SPAWNING)
+                            spawns.put(low(name), new SpawnTimer(ep, false));
+                    }
+                }
+                countStats();
+            }
+        };
+        ba.scheduleTask(timer, 10 * Tools.TimeInMillis.SECOND);
+        setShipFreqs();
+    }
+    
     /** Handles the !lagout player return command */
     public void do_lagout(String name) {
         if (laggers.containsKey(low(name))) {
@@ -356,6 +339,7 @@ public class ElimGame {
             ba.sendPrivateMessage(name, "You are not lagged out.");
     }
     
+    /** Handles the grunt work for the !deaths command */
     public void do_deaths(String name) {
         List<ElimPlayer> list = getPlayed();
         if (list.size() > 0) {
@@ -426,53 +410,6 @@ public class ElimGame {
         ba.sendPrivateMessage(name, msg);
     }
     
-    private String padString(String str, int length) {
-        for (int i = str.length(); i < length; i++) 
-            str += " ";
-        return str.substring(0, length);
-    }
-
-    /** Count number of players and sum player ratings */
-    private void countStats() {
-        for (String name : winners) {
-            ElimPlayer ep = getPlayer(name);
-            played.put(low(name), ep);
-            playerCount++;
-            ratingCount += ep.getRating();
-        }
-    }
-    
-    /** Remove player from the game player list into the loser list and flush stats */
-    public void removePlayer(ElimPlayer loser) {
-        loser.setStatus(Status.OUT);
-        ba.specWithoutLock(loser.name);
-        winners.remove(low(loser.name));
-        losers.add(low(loser.name));
-        loser.saveLoss();
-        checkWinner();
-        bot.updatePlayer(loser);
-    }
-    
-    /** Check if game has been won */
-    private void checkWinner() {
-        if (winners.size() == 1) {
-            winner = getPlayer(winners.first());
-            setMVP();
-            storeGame();
-            bot.setWinner(winner);      
-        }
-    }
-    
-    public void setMVP() {
-        List<ElimPlayer> list = getPlayed();
-        Collections.sort(list, Collections.reverseOrder(comp));
-        mvp = list.get(0).name;
-    }
-    
-    private List<ElimPlayer> getPlayed() {
-        return Arrays.asList(played.values().toArray(new ElimPlayer[played.size()]));
-    }
-    
     /** Record losses for anyone still lagged out */
     public void storeLosses() {
         for (String lagger : laggers.keySet()) {
@@ -487,7 +424,7 @@ public class ElimGame {
     }
     
     /** Stores the finished game information to the database */
-    private void storeGame() {
+    public void storeGame() {
         for (OutOfBounds oob : outsiders.values())
             ba.cancelTask(oob);
         for (SpawnTimer spawn : spawns.values())
@@ -496,8 +433,18 @@ public class ElimGame {
         spawns.clear();
         int aveRating = ratingCount / playerCount;
         String query = "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) " +
-        		"VALUES(" + ship.getNum() + ", '" + Tools.addSlashesToString(winner.name) + "', " + deaths + ", " + winner.getScores()[0] + ", " + winner.getScores()[1] + ", " + playerCount + ", " + aveRating + ")";
+                "VALUES(" + ship.getNum() + ", '" + Tools.addSlashesToString(winner.name) + "', " + deaths + ", " + winner.getScores()[0] + ", " + winner.getScores()[1] + ", " + playerCount + ", " + aveRating + ")";
         ba.SQLBackgroundQuery(db, null, query);
+    }
+    
+    /** Returns a List of ElimPlayers built from an ElimPlayer array (used for sorting) */
+    public List<ElimPlayer> getPlayed() {
+        return Arrays.asList(played.values().toArray(new ElimPlayer[played.size()]));
+    }
+    
+    /** Returns the number of players currently in-game */
+    public int getPlaying() {
+        return winners.size();
     }
     
     /** Get ElimPlayer for the given player name */
@@ -514,28 +461,81 @@ public class ElimGame {
         else return false;
     }
     
-    /** Returns a string describing the current elimination game */
-    public String toString() {
-        String ret = ship.toString() + " elim to " + deaths;
-        if (ship.hasShrap()) {
-            if (shrap)
-                return ret + " with shrap";
-            else
-                return ret + " without shrap";
-        } else
-            return ret;
+    /** Remove player from the game player list into the loser list and flush stats */
+    public void removePlayer(ElimPlayer loser) {
+        loser.setStatus(Status.OUT);
+        ba.specWithoutLock(loser.name);
+        winners.remove(low(loser.name));
+        losers.add(low(loser.name));
+        loser.saveLoss();
+        checkWinner();
+        bot.updatePlayer(loser);
     }
     
+    /** Removes a player due to out of bounds violation */
     private void removeOutsider(ElimPlayer player) {
         ba.sendArenaMessage(player.name + " is out. " + player.getScore() + " (Too long outside base)");
         removePlayer(player);
     }
     
+    /** Helper method adds spaces to a String to meet a certain length */
+    private String padString(String str, int length) {
+        for (int i = str.length(); i < length; i++) 
+            str += " ";
+        return str.substring(0, length);
+    }
+
+    /** Count number of players and sum player ratings */
+    private void countStats() {
+        for (String name : winners) {
+            ElimPlayer ep = getPlayer(name);
+            played.put(low(name), ep);
+            playerCount++;
+            ratingCount += ep.getRating();
+        }
+    }
+    
+    /** Set all players to correct ship and distribute onto incrementing freqs */
+    private void setShipFreqs() {
+        if (ship == ShipType.WEASEL)
+            ba.setDoors(127);
+        else if (winners.size() > 15)
+            ba.setDoors(228);
+        else
+            ba.setDoors(127);
+        
+        for (String name : winners) {
+            getPlayer(name).setFreq(freq);
+            ba.setShip(name, ship.getNum());
+            ba.setFreq(name, freq);
+            freq += 2;
+        }
+    }
+    
+    /** Check if game has been won */
+    private void checkWinner() {
+        if (winners.size() == 1) {
+            winner = getPlayer(winners.first());
+            setMVP();
+            storeGame();
+            bot.setWinner(winner);      
+        }
+    }
+    
+    /** Determines MVP using a 3-tier Comparator */
+    private void setMVP() {
+        List<ElimPlayer> list = getPlayed();
+        Collections.sort(list, Collections.reverseOrder(comp));
+        mvp = list.get(0).name;
+    }
+    
+    /** Warps a Weasel into the flag room */
     private void sendWarp(String name) {
         int[] coords = rules.getIntArray("XArena" + bot.random.nextInt(4), ",");
         ba.warpTo(name, coords[0], coords[1], coords[2]);
     }
     
+    /** Sends the appropriate prizes to player */
     private void sendPrizes(String name) {
         if (shrap) {
             ba.specificPrize(name, Tools.Prize.SHRAPNEL);
@@ -606,11 +606,18 @@ public class ElimGame {
         }
     }
     
+    /** TimerTask used to officiate outside of base violations for in-base elim games */
     private class OutOfBounds extends TimerTask {
 
         ElimPlayer player;
         boolean lastWarning;
         
+        
+        /**
+         * Constructs and schedules an Out Of Bounds timer for one player
+         * @param ep ElimPlayer
+         * @param lastWarning Boolean used to indicate if the player has just spawned or was in base before hand
+         */
         public OutOfBounds(ElimPlayer ep, boolean lastWarning) {
             ba.scheduleTask(this, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
             player = ep;
@@ -624,6 +631,7 @@ public class ElimGame {
                 removeOutsider(player);
         }
         
+        /** Handles the clean up when a player reaches base before the Timer executes */
         public void returned() {
             ba.cancelTask(this);
             outsiders.remove(low(player.name));
@@ -635,10 +643,16 @@ public class ElimGame {
         }
     }
     
+    /** TimerTask used to prevent players from remaining in the spawn area after dying */
     private class SpawnTimer extends TimerTask {
         
         ElimPlayer player;
         
+        /**
+         * Constructs and schedules a SpawnTimer for one player
+         * @param ep ElimPlayer
+         * @param spawning Boolean determines if time should be added to compensate for post-death respawn delay
+         */
         public SpawnTimer(ElimPlayer ep, boolean spawning) {
             player = ep;
             if (spawning) {
@@ -654,7 +668,8 @@ public class ElimGame {
                 outsiders.put(low(player.name), new OutOfBounds(player, false));
             spawns.remove(low(player.name));
         }
-        
+
+        /** Handles the clean up when a player reaches base before the Timer executes */
         public void returned() {
             ba.cancelTask(this);
             spawns.remove(low(player.name));
@@ -663,6 +678,7 @@ public class ElimGame {
         }
     }
     
+    /** Comparator used to determine the MVP of a game. Player with highest kills -> least deaths -> best aim -> random */
     public class CompareAll implements Comparator<ElimPlayer> {
         @Override
         public int compare(ElimPlayer p1, ElimPlayer p2) {
@@ -684,6 +700,7 @@ public class ElimGame {
         }
     }
     
+    /** Comparator used to compare ElimPlayer objects according to death stats */
     public class CompareDeaths implements Comparator<ElimPlayer> {
         @Override
         public int compare(ElimPlayer p1, ElimPlayer p2) {
@@ -696,10 +713,23 @@ public class ElimGame {
         }
     }
     
+    /** Comparator used to compare names alphabetically (unused probably) */
     public class CompareNames implements Comparator<ElimPlayer> {
         @Override
         public int compare(ElimPlayer p1, ElimPlayer p2) {
             return p1.name.compareToIgnoreCase(p2.name);
         }
+    }
+    
+    /** Returns a string describing the current elimination game */
+    public String toString() {
+        String ret = ship.toString() + " elim to " + deaths;
+        if (ship.hasShrap()) {
+            if (shrap)
+                return ret + " with shrap";
+            else
+                return ret + " without shrap";
+        } else
+            return ret;
     }
 }

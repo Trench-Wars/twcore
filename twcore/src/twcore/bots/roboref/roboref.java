@@ -165,20 +165,6 @@ public class roboref extends SubspaceBot {
         ba.joinArena(arena);
     }
     
-    /** Requests the needed events */
-    private void requestEvents() {
-        EventRequester er = ba.getEventRequester();
-        er.request(EventRequester.ARENA_JOINED);
-        er.request(EventRequester.LOGGED_ON);
-        er.request(EventRequester.FREQUENCY_SHIP_CHANGE);
-        er.request(EventRequester.MESSAGE);
-        er.request(EventRequester.PLAYER_DEATH);
-        er.request(EventRequester.PLAYER_ENTERED);
-        er.request(EventRequester.PLAYER_LEFT);
-        er.request(EventRequester.PLAYER_POSITION);
-        er.request(EventRequester.WEAPON_FIRED);
-    }
-    
     /** Handles ArenaJoined event which initializes bot startup */
     public void handleEvent(ArenaJoined event) {
         voteTime = rules.getInt("Time");
@@ -360,14 +346,12 @@ public class roboref extends SubspaceBot {
                     cmd_start(name);
                 else if (msg.startsWith("!door "))
                     cmd_door(name, msg);
-                else if (msg.equals("!p"))
-                    ba.sendPrivateMessage(name, "Playing=" + ba.getNumPlaying() + " Players=" + ba.getNumPlayers());
             }
         }
     }
     
     /** Handles potential votes read from public chat during a voting period */
-    private void handleVote(String name, String cmd) {
+    public void handleVote(String name, String cmd) {
         name = name.toLowerCase();
         int vote = Integer.valueOf(cmd);
         if (voteType == VoteType.SHIP) {
@@ -388,6 +372,7 @@ public class roboref extends SubspaceBot {
         }
     }
     
+    /** Handles the !help command */
     public void cmd_help(String name) {
         String[] msg = new String[] {
                 " !lagout           - Return to game after lagging out",
@@ -431,6 +416,7 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, "Error!");
     }
     
+    /** Handles the !who command which displays the remaining players and their records */
     public void cmd_who(String name) {
         if (game != null && state == State.PLAYING)
             game.do_who(name);
@@ -438,6 +424,7 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, "There is no game being played at the moment.");
     }
     
+    /** Handles the !mvp command which lists the top 3 best and worst players */
     public void cmd_mvp(String name) {
         if (game != null && state == State.PLAYING)
             game.do_mvp(name);
@@ -445,6 +432,7 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, "There is no game being played at the moment.");
     }
     
+    /** Handles the !deaths command which lists the players with most deaths and least deaths */
     public void cmd_deaths(String name) {
         if (game != null && state == State.PLAYING)
             game.do_deaths(name);
@@ -452,6 +440,7 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, "There is no game being played at the moment.");
     }
     
+    /** Handles the !rank command which returns a players rank according to ship */
     public void cmd_rank(String name, String cmd) {
         if (cmd.length() < 7) return;
         int ship = 1;
@@ -478,6 +467,7 @@ public class roboref extends SubspaceBot {
         ba.SQLBackgroundQuery(db, "rank:" + name + ":" + target + ":" + ship, query);
     }
     
+    /** Handles the !rec command which displays a player's current overall record */
     public void cmd_rec(String name, String cmd) {
         String target = name;
         String ship = "-1";
@@ -572,6 +562,7 @@ public class roboref extends SubspaceBot {
         new Die(name);
     }
     
+    /** Handles the !stop command which turns the bot off and prevents games from running */
     public void cmd_stop(String name) {
         state = State.OFF;
         ba.cancelTasks();
@@ -582,6 +573,7 @@ public class roboref extends SubspaceBot {
             ba.sendArenaMessage("Bot has been disabled.", Tools.Sound.NOT_DEALING_WITH_ATT);
     }
     
+    /** Handles the !start command which restarts the bot after being stopped */
     public void cmd_start(String name) {
         state = State.IDLE;
         handleState();
@@ -591,28 +583,6 @@ public class roboref extends SubspaceBot {
     public void setWinner(ElimPlayer winner) {
         this.winner = winner;
         handleState();
-    }
-    
-    private void sendZoner() {
-        if (lastZoner == -1 || (System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) return;
-        if (winStreak == 1)
-            ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena + " to play -" + ba.getBotName());
-        else if(winStreak > 1)
-            switch (winStreak) {
-                case 2: ba.sendZoneMessage("Next elim is starting. " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") has won 2 back to back! Type ?go " + arena + " to play -" + ba.getBotName());
-                    break;
-                case 3: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on fire with a triple win! Type ?go " + arena + " to end the killStreak! -" + ba.getBotName(), Tools.Sound.CROWD_OOO);
-                    break;
-                case 4: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 kills in a row! Type ?go " + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
-                    break;
-                case 5: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is dominating with a 5 game killStreak! Type ?go " + arena + " to end this madness! -" + ba.getBotName(), Tools.Sound.SCREAM);
-                    break;
-                default: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is bringing the zone to shame with " + winStreak + " consecutive kills! Type ?go " + arena + " to redeem yourselves! -" + ba.getBotName(), Tools.Sound.INCONCEIVABLE);
-                    break;
-            }
-        else
-            m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
-        lastZoner = System.currentTimeMillis();
     }
     
     /**
@@ -647,6 +617,29 @@ public class roboref extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace("Elim player stats update error!", e);
         }
+    }
+    
+    /** Sends periodic zone messages advertising elim and announcing streaks */
+    private void sendZoner() {
+        if (lastZoner == -1 || (System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) return;
+        if (winStreak == 1)
+            ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena + " to play -" + ba.getBotName());
+        else if(winStreak > 1)
+            switch (winStreak) {
+                case 2: ba.sendZoneMessage("Next elim is starting. " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") has won 2 back to back! Type ?go " + arena + " to play -" + ba.getBotName());
+                    break;
+                case 3: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on fire with a triple win! Type ?go " + arena + " to end the killStreak! -" + ba.getBotName(), Tools.Sound.CROWD_OOO);
+                    break;
+                case 4: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 kills in a row! Type ?go " + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
+                    break;
+                case 5: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is dominating with a 5 game killStreak! Type ?go " + arena + " to end this madness! -" + ba.getBotName(), Tools.Sound.SCREAM);
+                    break;
+                default: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is bringing the zone to shame with " + winStreak + " consecutive kills! Type ?go " + arena + " to redeem yourselves! -" + ba.getBotName(), Tools.Sound.INCONCEIVABLE);
+                    break;
+            }
+        else
+            m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
+        lastZoner = System.currentTimeMillis();
     }
     
     /** Handles game state by calling the appropriate state methods */
@@ -692,7 +685,7 @@ public class roboref extends SubspaceBot {
         if (ba.getNumPlaying() < 2) {
             votes.clear();
             voteType = VoteType.NA;
-            state = State.WAITING;
+            state = State.IDLE;
             handleState();
             return;
         }
@@ -742,10 +735,10 @@ public class roboref extends SubspaceBot {
         ba.sendArenaMessage("Enter to play. Arena will be locked in 15 seconds!", 9);
         timer = new TimerTask() {
             public void run() {
-                if (ba.getNumPlaying() < 2) {
+                if (game.getPlaying() < 2) {
                     votes.clear();
                     voteType = VoteType.NA;
-                    state = State.WAITING;
+                    state = State.IDLE;
                     handleState();
                 } else {
                     arenaLock = true;
@@ -876,6 +869,20 @@ public class roboref extends SubspaceBot {
         handleState();
     }
     
+    /** Requests the needed events */
+    private void requestEvents() {
+        EventRequester er = ba.getEventRequester();
+        er.request(EventRequester.ARENA_JOINED);
+        er.request(EventRequester.LOGGED_ON);
+        er.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+        er.request(EventRequester.MESSAGE);
+        er.request(EventRequester.PLAYER_DEATH);
+        er.request(EventRequester.PLAYER_ENTERED);
+        er.request(EventRequester.PLAYER_LEFT);
+        er.request(EventRequester.PLAYER_POSITION);
+        er.request(EventRequester.WEAPON_FIRED);
+    }
+    
     /** Debug message handler */
     public void debug(String msg) {
         if (DEBUG)
@@ -887,6 +894,7 @@ public class roboref extends SubspaceBot {
         new Die("disconnect handler");
     }
     
+    /** TimerTask used to guarantee the MVP has had enough time to be determined */
     public class MVP extends TimerTask {
         public MVP() {
             ba.scheduleTask(this, 4000);
