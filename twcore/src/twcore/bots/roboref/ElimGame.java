@@ -290,11 +290,7 @@ public class ElimGame {
         ba.sendArenaMessage("Get ready. Game will start in 10 seconds!", 1);
         TimerTask timer = new TimerTask() {
             public void run() {
-                if (winners.size() < 2) {
-                    bot.state = State.IDLE;
-                    bot.handleState();
-                    return;
-                }
+                if (winners.size() < 2) return;
                 bot.state = State.PLAYING;
                 started = true;
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
@@ -550,6 +546,15 @@ public class ElimGame {
             ba.specificPrize(name, -Tools.Prize.SHRAPNEL);
         }
         ba.specificPrize(name, Tools.Prize.MULTIFIRE);
+    }
+    
+    public void stop() {
+        for (Lagout t : laggers.values())
+            ba.cancelTask(t);
+        for (SpawnTimer t : spawns.values())
+            ba.cancelTask(t);
+        for (OutOfBounds t : outsiders.values())
+            ba.cancelTask(t);
     }
     
     /** Lazy toLowerCase() String helper */

@@ -215,8 +215,15 @@ public class roboref extends SubspaceBot {
     /** Handles ship and freq change events if a game is being played */
     public void handleEvent(FrequencyShipChange event) {
         if (state == State.OFF) return; 
-        if (state == State.PLAYING || state == State.STARTING)
+        if (state == State.PLAYING || state == State.STARTING) {
+            if (game != null && game.getPlaying() < 3) {
+                game.stop();
+                votes.clear();
+                state = State.WAITING;
+                ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
+            } else
             game.handleEvent(event);
+        }
         if (state == State.WAITING)
             handleState();
     }
@@ -643,7 +650,7 @@ public class roboref extends SubspaceBot {
     }
     
     /** Handles game state by calling the appropriate state methods */
-    void handleState() {
+    public void handleState() {
         switch (state) {
             case IDLE: doIdle(); break;
             case WAITING: doWaiting(); break;
@@ -682,13 +689,6 @@ public class roboref extends SubspaceBot {
     /** Voting state runs in between vote periods to call for next vote after counting prior */
     private void doVoting() {
         if (state != State.VOTING) return;
-        if (ba.getNumPlaying() < 2) {
-            votes.clear();
-            voteType = VoteType.NA;
-            state = State.IDLE;
-            handleState();
-            return;
-        }
         if (voteType == VoteType.NA) {
             voteType = VoteType.SHIP;
             ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 4-Leviathen, 5-Terrier, 6-Weasel, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
@@ -913,9 +913,9 @@ public class roboref extends SubspaceBot {
         
         public Die(String name) {
             this.name = name;
-            ba.scheduleTask(this, 1000);
             ba.closePreparedStatement(db, connectionID, updateStats);
             ba.closePreparedStatement(db, connectionID, updateRank);
+            ba.scheduleTask(this, 1000);
         }
         
         @Override
