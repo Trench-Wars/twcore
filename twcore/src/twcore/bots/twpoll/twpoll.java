@@ -177,7 +177,7 @@ public class twpoll extends SubspaceBot {
 
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("InitialArena"));
-        m_botAction.requestArenaList();
+        //m_botAction.requestArenaList();
         loadPolls();
         loadVotes();
     }
@@ -311,7 +311,7 @@ public class twpoll extends SubspaceBot {
         		}
         	}
         	if (pollExist) {
-        		//intro.add("Earn up to $1000 by voting.");
+        		intro.add("Earn up to $1000 by voting.");
         		intro.add(" ");
         		spam.add("To SELECT a poll, pm !poll <number>.");
         		spam.add("To VOTE, select a poll and pm your choice.");
@@ -382,7 +382,7 @@ public class twpoll extends SubspaceBot {
 			openPolls.remove(userId);
 			lastPolls.put(userId, pollId);
 			m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted (!undo to undo).");
-			giveMoney(playerName, (int)(Math.random()*1000));
+			giveMoney(playerName, ((int)(Math.random()*1000)));
 			m_botAction.sendSmartPrivateMessage(playerName, "Type !next to answer another poll.");
 			return true;
 		} catch (SQLException e) {
@@ -484,7 +484,7 @@ public class twpoll extends SubspaceBot {
 						for(Player p: players) {
 			        		if (m_botAction.getOperatorList().isBotExact(p.getPlayerName()))
 			        			continue;
-			        		if (p.getPlayerName().startsWith("TW-"))
+			        		if (p.getPlayerName().startsWith("TW-") || p.getPlayerName().startsWith("TWCore"))
 			        			continue;
 			            	int userId = getUserID(p.getPlayerName());
 			            	boolean next = false;
