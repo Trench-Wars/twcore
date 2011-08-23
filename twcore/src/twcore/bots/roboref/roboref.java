@@ -337,16 +337,14 @@ public class roboref extends SubspaceBot {
         
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
             if (oplist.isSmod(name)) {
-                if (msg.startsWith("!die"))
+                if (msg.equals("!die"))
                     cmd_die(name);
                 else if (msg.equals("!debug"))
                     cmd_debug(name);
-                else if (msg.equals("!off"))
+                else if (msg.equals("!off") || msg.equals("!stop"))
                     cmd_stop(name);
-                else if (msg.equals("!on"))
+                else if (msg.equals("!on") || msg.equals("!start"))
                     cmd_start(name);
-                else if (msg.startsWith("!door "))
-                    cmd_door(name, msg);
             }
         }
     }
@@ -387,17 +385,6 @@ public class roboref extends SubspaceBot {
                 " !deaths           - Display current game best/worst player death information",
         };
         ba.privateMessageSpam(name, msg);
-    }
-    
-    public void cmd_door(String name, String cmd) {
-        cmd = cmd.substring(cmd.indexOf(" ") + 1);
-        try {
-            int d = Integer.valueOf(cmd);
-            ba.setDoors(d);
-            ba.sendArenaMessage("Doors set to: " + d);
-        } catch (NumberFormatException e) {
-            ba.sendSmartPrivateMessage(name, "Number format error!");
-        }
     }
     
     /** Handles the !stats command which displays stats from the current game if possible */
@@ -618,29 +605,6 @@ public class roboref extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace("Elim player stats update error!", e);
         }
-    }
-    
-    /** Sends periodic zone messages advertising elim and announcing streaks */
-    private void sendZoner() {
-        if (lastZoner == -1 || (System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) return;
-        if (winStreak == 1)
-            ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena + " to play -" + ba.getBotName());
-        else if(winStreak > 1)
-            switch (winStreak) {
-                case 2: ba.sendZoneMessage("Next elim is starting. " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") has won 2 back to back! Type ?go " + arena + " to play -" + ba.getBotName());
-                    break;
-                case 3: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on fire with a triple win! Type ?go " + arena + " to end the killStreak! -" + ba.getBotName(), Tools.Sound.CROWD_OOO);
-                    break;
-                case 4: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 kills in a row! Type ?go " + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
-                    break;
-                case 5: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is dominating with a 5 game killStreak! Type ?go " + arena + " to end this madness! -" + ba.getBotName(), Tools.Sound.SCREAM);
-                    break;
-                default: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is bringing the zone to shame with " + winStreak + " consecutive kills! Type ?go " + arena + " to redeem yourselves! -" + ba.getBotName(), Tools.Sound.INCONCEIVABLE);
-                    break;
-            }
-        else
-            m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
-        lastZoner = System.currentTimeMillis();
     }
     
     /** Handles game state by calling the appropriate state methods */
@@ -873,6 +837,29 @@ public class roboref extends SubspaceBot {
         handleState();
     }
     
+    /** Sends periodic zone messages advertising elim and announcing streaks */
+    private void sendZoner() {
+        if (lastZoner == -1 || (System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) return;
+        if (winStreak == 1)
+            ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena + " to play -" + ba.getBotName());
+        else if(winStreak > 1)
+            switch (winStreak) {
+                case 2: ba.sendZoneMessage("Next elim is starting. " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") has won 2 back to back! Type ?go " + arena + " to play -" + ba.getBotName());
+                    break;
+                case 3: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on fire with a triple win! Type ?go " + arena + " to end the killStreak! -" + ba.getBotName(), Tools.Sound.CROWD_OOO);
+                    break;
+                case 4: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 kills in a row! Type ?go " + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
+                    break;
+                case 5: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is dominating with a 5 game killStreak! Type ?go " + arena + " to end this madness! -" + ba.getBotName(), Tools.Sound.SCREAM);
+                    break;
+                default: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is bringing the zone to shame with " + winStreak + " consecutive kills! Type ?go " + arena + " to redeem yourselves! -" + ba.getBotName(), Tools.Sound.INCONCEIVABLE);
+                    break;
+            }
+        else
+            m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
+        lastZoner = System.currentTimeMillis();
+    }
+    
     /** Requests the needed events */
     private void requestEvents() {
         EventRequester er = ba.getEventRequester();
@@ -918,13 +905,13 @@ public class roboref extends SubspaceBot {
             this.name = name;
             ba.closePreparedStatement(db, connectionID, updateStats);
             ba.closePreparedStatement(db, connectionID, updateRank);
-            ba.scheduleTask(this, 1000);
+            ba.scheduleTask(this, 3000);
         }
         
         @Override
         public void run() {
             ba.cancelTasks();
-            ba.die("Discconnect requested by: " + name);
+            ba.die("Disconnect requested by: " + name);
         }
     }
 }
