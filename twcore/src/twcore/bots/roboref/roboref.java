@@ -364,7 +364,7 @@ public class roboref extends SubspaceBot {
             String query = "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " and fcName = '" + Tools.addSlashesToString(p) + "'";
             ba.SQLBackgroundQuery(db, "stats:" + name + ":" + p + ":" + ship, query);
         } else
-            ba.sendPrivateMessage(name, "Invalid command!");        
+            ba.sendPrivateMessage(name, "Invalid command!");      
     }
     
     /** Handles the !lagout command which returns a lagged out player to the game */
@@ -565,7 +565,7 @@ public class roboref extends SubspaceBot {
     /** Starting state creates new ElimGame and initiates player stat trackers */
     private void doStarting() {
         game = new ElimGame(this, shipType, deaths, shrap);
-        ba.sendArenaMessage("Enter to play. Game will be locked in 15 seconds!", 9);
+        ba.sendArenaMessage("Enter to play. Arena will be locked in 15 seconds!", 9);
         timer = new TimerTask() {
             public void run() {
                 arenaLock = true;

@@ -461,7 +461,10 @@ public class ElimGame {
     private void storeGame() {
         for (OutOfBounds oob : outsiders.values())
             ba.cancelTask(oob);
+        for (SpawnTimer spawn : spawns.values())
+            ba.cancelTask(spawn);
         outsiders.clear();
+        spawns.clear();
         int aveRating = ratingCount / playerCount;
         String query = "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) " +
         		"VALUES(" + ship.getNum() + ", '" + Tools.addSlashesToString(winner.name) + "', " + deaths + ", " + winner.getScores()[0] + ", " + winner.getScores()[1] + ", " + playerCount + ", " + aveRating + ")";
@@ -545,7 +548,6 @@ public class ElimGame {
                 laggers.remove(low(name));
                 removePlayer(ep);
                 ep.saveLoss();
-                bot.updatePlayer(ep);
             }
         }
         
