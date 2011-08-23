@@ -643,7 +643,7 @@ public class roboref extends SubspaceBot {
     }
     
     /** Handles game state by calling the appropriate state methods */
-    private void handleState() {
+    void handleState() {
         switch (state) {
             case IDLE: doIdle(); break;
             case WAITING: doWaiting(); break;
@@ -735,6 +735,7 @@ public class roboref extends SubspaceBot {
         ba.sendArenaMessage("Enter to play. Arena will be locked in 15 seconds!", 9);
         timer = new TimerTask() {
             public void run() {
+                debug("Players: " + game.getPlaying());
                 if (game.getPlaying() < 2) {
                     votes.clear();
                     voteType = VoteType.NA;
