@@ -54,6 +54,7 @@ public class ElimGame {
     int playerCount;
     int ratingCount;
     boolean shrap, started;
+    TimerTask starter;
     
     HashMap<String, ElimPlayer> players;    // holds any ElimPlayer regardless of activity
     HashMap<String, ElimPlayer> played;     // contains only players who actually played in the current game
@@ -288,7 +289,7 @@ public class ElimGame {
     /** Start elim 10 second countdown */
     public void startGame() {
         ba.sendArenaMessage("Get ready. Game will start in 10 seconds!", 1);
-        TimerTask timer = new TimerTask() {
+        starter = new TimerTask() {
             public void run() {
                 if (winners.size() < 2) return;
                 bot.state = State.PLAYING;
@@ -316,9 +317,10 @@ public class ElimGame {
                     }
                 }
                 countStats();
+                starter = null;
             }
         };
-        ba.scheduleTask(timer, 10 * Tools.TimeInMillis.SECOND);
+        ba.scheduleTask(starter, 10 * Tools.TimeInMillis.SECOND);
         setShipFreqs();
     }
     
@@ -549,6 +551,10 @@ public class ElimGame {
     }
     
     public void stop() {
+        if (starter != null) {
+            ba.cancelTask(starter);
+            starter = null;
+        }
         for (Lagout t : laggers.values())
             ba.cancelTask(t);
         for (SpawnTimer t : spawns.values())

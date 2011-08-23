@@ -218,11 +218,13 @@ public class roboref extends SubspaceBot {
         if (state == State.PLAYING || state == State.STARTING) {
             if (game != null && game.getPlaying() < 3) {
                 game.stop();
+                game = null;
+                voteType = VoteType.NA;
                 votes.clear();
                 state = State.WAITING;
                 ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
             } else
-            game.handleEvent(event);
+                game.handleEvent(event);
         }
         if (state == State.WAITING)
             handleState();
