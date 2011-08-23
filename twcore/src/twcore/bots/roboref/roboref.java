@@ -687,7 +687,13 @@ public class roboref extends SubspaceBot {
     /** Voting state runs in between vote periods to call for next vote after counting prior */
     private void doVoting() {
         if (state != State.VOTING) return;
-        
+        if (ba.getNumPlayers() < 2) {
+            votes.clear();
+            voteType = VoteType.NA;
+            state = State.WAITING;
+            handleState();
+            return;
+        }
         if (voteType == VoteType.NA) {
             voteType = VoteType.SHIP;
             ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 4-Leviathen, 5-Terrier, 6-Weasel, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
@@ -734,9 +740,16 @@ public class roboref extends SubspaceBot {
         ba.sendArenaMessage("Enter to play. Arena will be locked in 15 seconds!", 9);
         timer = new TimerTask() {
             public void run() {
-                arenaLock = true;
-                ba.toggleLocked();
-                game.startGame();
+                if (ba.getNumPlayers() < 2) {
+                    votes.clear();
+                    voteType = VoteType.NA;
+                    state = State.WAITING;
+                    handleState();
+                } else {
+                    arenaLock = true;
+                    ba.toggleLocked();
+                    game.startGame();
+                }
             }
         };
         ba.scheduleTask(timer, 15000);
