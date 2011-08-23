@@ -316,7 +316,7 @@ public class ElimGame {
             sendPrizes(name);
     }
     
-    /** Handle lagged out player */
+    /** Handles a lagged out player */
     public void handleLagout(String name) {
         ElimPlayer ep = getPlayer(name);
         if (ep != null && ep.status == Status.IN) {
@@ -339,8 +339,8 @@ public class ElimGame {
             checkWinner();
     }
     
-    /** Handle !lagout player game return command */
-    public void handleLagin(String name) {
+    /** Handles the !lagout player return command */
+    public void do_lagout(String name) {
         if (laggers.containsKey(low(name))) {
             String msg = laggers.get(low(name)).lagin();
             ElimPlayer ep = getPlayer(name);
@@ -357,20 +357,35 @@ public class ElimGame {
             ba.sendPrivateMessage(name, "You are not lagged out.");
     }
     
-    public void cmd_deaths(String name) {
+    public void do_deaths(String name) {
         List<ElimPlayer> list = getPlayed();
         if (list.size() > 0) {
+            ElimPlayer[] best = new ElimPlayer[3];
+            ElimPlayer[] worst = new ElimPlayer[3];
             Collections.sort(list, Collections.reverseOrder(compDeath));
-            String msg = "----- Most Deaths ----- Max: " + deaths + " -----";
-            ba.sendPrivateMessage(name, msg);
-            msg = " " + list.get(0).getDeaths() + " " + list.get(0).name;
+            for (int i = 0; i < 3 && i < list.size(); i++)
+                best[i] = list.get(i);
+            Collections.sort(list, compDeath);
+            for (int i = 0; i < 3 && i < list.size(); i++)
+                worst[i] = list.get(i);
+            ArrayList<String> msg = new ArrayList<String>();
+            msg.add(",---- Most Deaths -----------------.---- Least Deaths ----- Max: " + deaths + " ----."); //34
+            msg.add("|" + padString(" 1) " + best[0].name + " (" + best[0].getKills() + "-" + best[0].getDeaths() + ")", 34) + 
+                    "|" + padString(" 1) " + worst[0].name + " (" + worst[0].getKills() + "-" + worst[0].getDeaths() + ")", 34) + "|");
             if (list.size() > 1) {
-                
+                msg.add("|" + padString(" 1) " + best[1].name + " (" + best[1].getKills() + "-" + best[1].getDeaths() + ")", 34) + 
+                        "|" + padString(" 1) " + worst[1].name + " (" + worst[1].getKills() + "-" + worst[1].getDeaths() + ")", 34) + "|");
             }
+            if (list.size() > 2) {
+                msg.add("|" + padString(" 1) " + best[2].name + " (" + best[2].getKills() + "-" + best[2].getDeaths() + ")", 34) + 
+                        "|" + padString(" 1) " + worst[2].name + " (" + worst[2].getKills() + "-" + worst[2].getDeaths() + ")", 34) + "|");
+            }
+            msg.add("`----------------------------------|----------------------------------+");
         }
     }
     
-    public void cmd_mvp(String name) {
+    /** Handles the grunt work called for by the !mvp command */
+    public void do_mvp(String name) {
         List<ElimPlayer> list = getPlayed();
         ElimPlayer[] best = new ElimPlayer[3];
         ElimPlayer[] worst = new ElimPlayer[3];
@@ -382,7 +397,7 @@ public class ElimGame {
             for (int i = 0; i < 3 && i < list.size(); i++)
                 worst[i] = list.get(i);
             ArrayList<String> msg = new ArrayList<String>();
-            msg.add(" ,-- Best Records -------------------.-- Worst Records ------------------+");
+            msg.add(" ,-- Best Records -------------------.-- Worst Records ------------------.");
             msg.add(" |" + padString(" 1) " + best[0].name + " (" + best[0].getKills() + "-" + best[0].getDeaths() + ")", 35) +
                     "|" + padString(" 1) " + worst[0].name + " (" + worst[0].getKills() + "-" + worst[0].getDeaths() + ")", 35) + "|");
             if (list.size() > 1)
@@ -391,10 +406,25 @@ public class ElimGame {
             if (list.size() > 2)
                 msg.add(" |" + padString(" 3) " + best[2].name + " (" + best[2].getKills() + "-" + best[2].getDeaths() + ")", 35) +
                         "|" + padString(" 3) " + worst[2].name + " (" + worst[2].getKills() + "-" + worst[2].getDeaths() + ")", 35) + "|");
-            msg.add(" `-----------------------------------|-----------------------------------'");
+            msg.add(" `-----------------------------------|-----------------------------------+");
             ba.privateMessageSpam(name, msg.toArray(new String[msg.size()]));
         } else
             ba.sendPrivateMessage(name, "No MVP stats available.");
+    }
+    
+    /** Handles the grunt work called for by the !who command */
+    public void do_who(String name) {
+        String msg = "" + winners.size() + " players remaining:";
+        ba.sendPrivateMessage(name, msg);
+        msg = "";
+        for (String p : winners) {
+            ElimPlayer ep = getPlayer(p);
+            if (p != null)
+                msg += ep.name + "(" + ep.getKills() + "-" + ep.getDeaths() + "), ";
+        }
+        if (msg.length() > 0 && msg.contains(","))
+            msg = msg.substring(0, msg.lastIndexOf(","));
+        ba.sendPrivateMessage(name, msg);
     }
     
     private String padString(String str, int length) {
@@ -548,6 +578,7 @@ public class ElimGame {
                 laggers.remove(low(name));
                 removePlayer(ep);
                 ep.saveLoss();
+                ba.sendPrivateMessage(name, "You have exceeded the maximum lagout time and are therefore eliminated.");
             }
         }
         

@@ -91,6 +91,13 @@ public class roboref extends SubspaceBot {
             else
                 return true;
         }
+        
+        public String getType() {
+            if (inBase())
+                return "BASEELIM";
+            else
+                return "ELIM";
+        }
     }
     
     State state;
@@ -109,13 +116,16 @@ public class roboref extends SubspaceBot {
     private String connectionID;
     static final String db = "website";
     static final int INITIAL_RATING = 300;
+    static final int MIN_ZONER = 15;       //The minimum amount of minutes that another zoner can be sent
     
     TimerTask timer;
-    String lastWinner;
+    String arena;
+    ElimPlayer lastWinner;
     ElimPlayer winner;
     int deaths;
     int winStreak;
     int voteTime;
+    long lastZoner;
     String[] updateFields;
     boolean shrap;
     boolean arenaLock;
@@ -134,6 +144,11 @@ public class roboref extends SubspaceBot {
         requestEvents();
         oplist = ba.getOperatorList();
         rules = ba.getBotSettings();
+        arena = rules.getString("Arena1");
+        if (rules.getInt("Zoners") == 1)
+            lastZoner = 0;
+        else
+            lastZoner = -1;
         DEBUG = true;
         debugger = "WingZero";
         gameLog = new Vector<ElimGame>();
@@ -147,7 +162,7 @@ public class roboref extends SubspaceBot {
             debug("Update was null.");
             new Die(debugger);
         }
-        ba.joinArena(rules.getString("Arena1"));
+        ba.joinArena(arena);
     }
     
     /** Requests the needed events */
@@ -219,6 +234,17 @@ public class roboref extends SubspaceBot {
         if (state == State.WAITING)
             handleState();
     }
+
+    public void handleEvent(PlayerPosition event) {
+        if (game != null && (state == State.PLAYING || state == State.STARTING))
+            game.handleEvent(event);            
+    }
+
+    /** Death event handler sends if a game is being played */
+    public void handleEvent(PlayerDeath event) {
+        if (state != State.PLAYING || game == null) return;
+        game.handleEvent(event);
+    }
     
     /** Handles received background queries for stats */
     public void handleEvent(SQLResultEvent event) {
@@ -249,22 +275,32 @@ public class roboref extends SubspaceBot {
                     } else
                         ba.sendPrivateMessage(args[1], "No " + Tools.shipName(Integer.valueOf(args[3])) + " stats found for " + args[2]);
                 }
+            } else if (id.startsWith("rec:")) {
+                String[] args = id.split(":");
+                if (rs.next()) {
+                    int k = rs.getInt("k");
+                    int d = rs.getInt("d");
+                    String target = rs.getString("n");
+                    if (args.length == 3)
+                        ba.sendPrivateMessage(args[1], "" + target + "[" + args[3] + "]: (" + k + "-" + d + ")");
+                    else if (args.length == 2)
+                        ba.sendPrivateMessage(args[1], "" + target + "[all]: (" + k + "-" + d + ")");
+                } else
+                    ba.sendPrivateMessage(args[1], "Error processing record request for: " + args[2]);
+            } else if (id.startsWith("rank:")) {
+                String[] args = id.split(":");
+                if (args.length == 2 && rs.next()) {
+                    String target = rs.getString("n");
+                    int r = rs.getInt("r");
+                    int s = rs.getInt("s");
+                    ba.sendPrivateMessage(args[1], target + " rank in " + ShipType.type(s).toString() + ": " + r);
+                } else
+                    ba.sendPrivateMessage(args[1], "Error processing rank request.");
             }
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
         ba.SQLClose(rs);
-    }
-
-    public void handleEvent(PlayerPosition event) {
-        if (game != null && (state == State.PLAYING || state == State.STARTING))
-            game.handleEvent(event);            
-    }
-
-    /** Death event handler sends if a game is being played */
-    public void handleEvent(PlayerDeath event) {
-        if (state != State.PLAYING || game == null) return;
-        game.handleEvent(event);
     }
 
     /** Message event handler checks arena lock and diffuses commands */
@@ -287,19 +323,29 @@ public class roboref extends SubspaceBot {
                 handleVote(name, msg);
         }
         
+        msg = msg.toLowerCase();
+        
         if (type == Message.PRIVATE_MESSAGE) {
             if (state == State.OFF)
                 ba.sendPrivateMessage(name, "Bot disabled.");
+            else if (msg.equals("!help"))
+                cmd_help(name);
             else if (msg.equals("!lagout"))
                 cmd_lagout(name);
+            else if (msg.startsWith("!rank "))
+                cmd_rank(name, msg);
+            else if (msg.startsWith("!rec"))
+                cmd_rec(name, msg);
+            else if (msg.equals("!who"))
+                cmd_who(name);
             else if (msg.startsWith("!stats"))
                 cmd_stats(name, msg);
             else if (msg.startsWith("!get"))
                 cmd_get(name, msg);
-            if (game != null) {
-                if (msg.startsWith("!mvp"))
-                    game.cmd_mvp(name);
-            }
+            else if (msg.startsWith("!mvp"))
+                cmd_mvp(name);
+            else if (msg.equals("!deaths"))
+                cmd_deaths(name);
         }
         
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
@@ -316,6 +362,41 @@ public class roboref extends SubspaceBot {
                     cmd_door(name, msg);
             }
         }
+    }
+    
+    /** Handles potential votes read from public chat during a voting period */
+    private void handleVote(String name, String cmd) {
+        name = name.toLowerCase();
+        int vote = Integer.valueOf(cmd);
+        if (voteType == VoteType.SHIP) {
+            if (vote > 0 && vote < 9) {
+                votes.put(name, vote);
+                ba.sendPrivateMessage(name, "Vote counted for: " + vote);
+            }
+        } else if (voteType == VoteType.DEATHS) {
+            if (vote > 0 && vote <= rules.getInt("MaxDeaths")) {
+                votes.put(name, vote);
+                ba.sendPrivateMessage(name, "Vote counted for: " + vote);
+            }
+        } else if (voteType == VoteType.SHRAP) {
+            if (vote > -1 && vote < 2) {
+                votes.put(name, vote);
+                ba.sendPrivateMessage(name, "Vote counted for: " + vote);
+            }
+        }
+    }
+    
+    public void cmd_help(String name) {
+        String[] msg = new String[] {
+                " !lagout   - Return to game after lagging out",
+                " !rec      - Displays your record or the record of a specified name. For a specific ship, add a colon then ship number to a name or only a number with no name.",
+                " !who      - Displays the remaining players and their records",
+                " !stats    - Dumps all current statistic information for a player, if available",
+                " !get      - Dumps all statistics for all games played by a player",
+                " !mvp      - Display current game best/worst player record information",
+                " !deaths   - Display current game best/worst player death information",
+        };
+        ba.privateMessageSpam(name, msg);
     }
     
     public void cmd_door(String name, String cmd) {
@@ -346,6 +427,88 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, "Error!");
     }
     
+    public void cmd_who(String name) {
+        if (game != null && state == State.PLAYING)
+            game.do_who(name);
+        else 
+            ba.sendPrivateMessage(name, "There is no game being played at the moment.");
+    }
+    
+    public void cmd_mvp(String name) {
+        if (game != null && state == State.PLAYING)
+            game.do_mvp(name);
+        else 
+            ba.sendPrivateMessage(name, "There is no game being played at the moment.");
+    }
+    
+    public void cmd_deaths(String name) {
+        if (game != null && state == State.PLAYING)
+            game.do_deaths(name);
+        else 
+            ba.sendPrivateMessage(name, "There is no game being played at the moment.");
+    }
+    
+    public void cmd_rank(String name, String cmd) {
+        if (cmd.length() < 7) return;
+        int ship = 1;
+        String target = name;
+        if (!cmd.contains(":")) {
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+                if (ship < 1 || ship > 8)
+                    ship = 1;
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !rank <#>");
+                return;
+            }
+        } else if (cmd.indexOf(":") < cmd.length()){
+            target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
+            ship = Integer.valueOf(cmd.indexOf(":") + 1);
+            if (ship < 1 || ship > 8)
+                ship = 1;
+        } else {
+            ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !rank <name>:<#> or !rank <#>");
+            return;
+        }
+        String query = "SELECT fcName as n, fnRank as r, fnShip as s FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1";
+        ba.SQLBackgroundQuery(db, "rank:" + name, query);
+    }
+    
+    public void cmd_rec(String name, String cmd) {
+        String target = name;
+        String ship = "-1";
+        if (cmd.contains(":")) {
+            
+        }
+        if (cmd.contains(" ") && cmd.length() > 5) {
+            target = cmd.substring(cmd.indexOf(" ") + 1);
+            if (Tools.isAllDigits(target)) {
+                ship = target;
+                target = name;
+            } else {
+                if (cmd.contains(":") && cmd.length() >= cmd.indexOf(":")) {
+                    ship = cmd.substring(cmd.indexOf(":") + 1);
+                    if (!Tools.isAllDigits(ship)) {
+                        ba.sendPrivateMessage(name, "Error processing ship record request.");
+                        return;
+                    }
+                    if (ship.contains("-")) {
+                        ba.sendPrivateMessage(name, "Error, ship specification cannot be negative.");
+                        return;
+                    }
+                    target = target.substring(0, target.indexOf(":"));
+                }
+                String temp = ba.getFuzzyPlayerName(target);
+                if (temp != null)
+                    target = temp;
+            }
+        }
+        if (!ship.equals("-1"))
+            ba.SQLBackgroundQuery(db, "rec:" + name + ":" + ship, "SELECT fnKills as k, fnDeaths as d FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1");
+        else
+            ba.SQLBackgroundQuery(db, "rec:" + name, "SELECT SUM(fnKills) as k, SUM(fnDeaths) as d FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
+    }
+    
     /** Handles the !get command which displays stats from the database for a particular ship */
     public void cmd_get(String name, String cmd) {
         if (cmd.contains(" ") && cmd.length() > 5) {
@@ -373,7 +536,7 @@ public class roboref extends SubspaceBot {
             ElimPlayer ep = game.getPlayer(name);
             if (ep != null) {
                 if (ep.status == Status.LAGGED)
-                    game.handleLagin(name);
+                    game.do_lagout(name);
                 else
                     ba.sendPrivateMessage(name, "You are not in the game.");
             } else
@@ -420,32 +583,32 @@ public class roboref extends SubspaceBot {
         handleState();
     }
     
-    /** Handles potential votes read from public chat during a voting period */
-    public void handleVote(String name, String cmd) {
-        name = name.toLowerCase();
-        int vote = Integer.valueOf(cmd);
-        if (voteType == VoteType.SHIP) {
-            if (vote > 0 && vote < 9) {
-                votes.put(name, vote);
-                ba.sendPrivateMessage(name, "Vote counted for: " + vote);
-            }
-        } else if (voteType == VoteType.DEATHS) {
-            if (vote > 0 && vote <= rules.getInt("MaxDeaths")) {
-                votes.put(name, vote);
-                ba.sendPrivateMessage(name, "Vote counted for: " + vote);
-            }
-        } else if (voteType == VoteType.SHRAP) {
-            if (vote > -1 && vote < 2) {
-                votes.put(name, vote);
-                ba.sendPrivateMessage(name, "Vote counted for: " + vote);
-            }
-        }
-    }
-    
     /** Sets the winner of the last elim event prompting end game routines */
     public void setWinner(ElimPlayer winner) {
         this.winner = winner;
         handleState();
+    }
+    
+    private void sendZoner() {
+        if (lastZoner == -1 || (System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) return;
+        if (winStreak == 1)
+            ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena + " to play -" + ba.getBotName());
+        else if(winStreak > 1)
+            switch (winStreak) {
+                case 2: ba.sendZoneMessage("Next elim is starting. " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") has won 2 back to back! Type ?go " + arena + " to play -" + ba.getBotName());
+                    break;
+                case 3: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on fire with a triple win! Type ?go " + arena + " to end the killStreak! -" + ba.getBotName(), Tools.Sound.CROWD_OOO);
+                    break;
+                case 4: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 kills in a row! Type ?go " + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
+                    break;
+                case 5: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is dominating with a 5 game killStreak! Type ?go " + arena + " to end this madness! -" + ba.getBotName(), Tools.Sound.SCREAM);
+                    break;
+                default: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is bringing the zone to shame with " + winStreak + " consecutive kills! Type ?go " + arena + " to redeem yourselves! -" + ba.getBotName(), Tools.Sound.INCONCEIVABLE);
+                    break;
+            }
+        else
+            m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
+        lastZoner = System.currentTimeMillis();
     }
     
     /**
@@ -511,6 +674,7 @@ public class roboref extends SubspaceBot {
     
     /** Waiting state stalls until there are enough players to continue */
     private void doWaiting() {
+        sendZoner();
         if (state == State.WAITING && ba.getNumPlayers() > 1) {
             state = State.VOTING;
             voteType = VoteType.NA;
@@ -583,11 +747,11 @@ public class roboref extends SubspaceBot {
             ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);    
             winner.saveWin();
             game.storeLosses();
-            if (lastWinner != null && lastWinner.equalsIgnoreCase(winner.name))
+            if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
             else
                 winStreak = 0;
-            lastWinner = winner.name;
+            lastWinner = winner;
             updatePlayer(winner);
             winner = null;        
         }
