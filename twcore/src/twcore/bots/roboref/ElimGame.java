@@ -224,20 +224,21 @@ public class ElimGame {
         if (ep != null) {
             BasePos pos = ep.getPosition();
             if (y > BASE_ENTRANCE) {
-                if (!started)
-                    ep.setPosition(BasePos.SPAWNING);
-                else if (pos == BasePos.IN) {
-                    outsiders.put(low(ep.name), new OutOfBounds(ep));
+                if (!started) {
+                    if (pos != BasePos.SPAWNING)
+                        ep.setPosition(BasePos.SPAWNING);
+                } else if (pos == BasePos.IN) {
+                    outsiders.put(low(ep.name), new OutOfBounds(ep, true));
                 } else if (pos == BasePos.WARNED_IN)
                     removeOutsider(ep);
             } else {
                 if (pos == BasePos.SPAWN)
                     ep.setPosition(BasePos.IN);
-                if (pos == BasePos.SPAWNING)
+                else if (pos == BasePos.SPAWNING)
                     ep.setPosition(BasePos.IN);
-                if (spawns.containsKey(low(ep.name)))
+                else if (spawns.containsKey(low(ep.name)))
                     spawns.remove(low(ep.name)).returned();
-                if (outsiders.containsKey(low(ep.name)))
+                else if (outsiders.containsKey(low(ep.name)))
                     outsiders.get(low(ep.name)).returned();
             }
         }
@@ -513,11 +514,13 @@ public class ElimGame {
     private class OutOfBounds extends TimerTask {
 
         ElimPlayer player;
+        boolean lastWarning;
         
-        public OutOfBounds(ElimPlayer ep) {
+        public OutOfBounds(ElimPlayer ep, boolean lastWarning) {
             ba.scheduleTask(this, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
             player = ep;
             player.sendOutsideWarning(BOUNDARY_TIME);
+            this.lastWarning = lastWarning;
         }
         
         @Override
@@ -529,7 +532,11 @@ public class ElimGame {
         public void returned() {
             ba.cancelTask(this);
             outsiders.remove(low(player.name));
-            ba.sendPrivateMessage(player.name, "If you leave the base again before your next death, you will be disqualified.");
+            if (lastWarning) {
+                player.setPosition(BasePos.WARNED_IN);
+                ba.sendPrivateMessage(player.name, "If you leave the base again before your next death, you will be disqualified.");
+            } else
+                player.setPosition(BasePos.IN);
         }
     }
     
@@ -549,13 +556,15 @@ public class ElimGame {
         @Override
         public void run() {
             if (player.getPosition() == BasePos.SPAWNING)
-                outsiders.put(low(player.name), new OutOfBounds(player));
+                outsiders.put(low(player.name), new OutOfBounds(player, false));
             spawns.remove(low(player.name));
         }
         
         public void returned() {
             ba.cancelTask(this);
             spawns.remove(low(player.name));
+            if (player.getPosition() != BasePos.IN)
+                player.setPosition(BasePos.IN);
         }
     }
     
