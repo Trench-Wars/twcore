@@ -103,6 +103,7 @@ public class zonerbot extends SubspaceBot {
         }
         
         if (type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.PRIVATE_MESSAGE) {
+            msg = msg.toLowerCase();
             if (oplist.isZH(name)) {
                 if (msg.equals("!status"))
                     cmd_status(name);
@@ -116,7 +117,7 @@ public class zonerbot extends SubspaceBot {
                     cmd_setSound(name, msg);
                 else if (msg.startsWith("!view"))
                     cmd_view(name, msg);
-                else if (msg.startsWith("!advert"))
+                else if (msg.startsWith("!advert") || msg.startsWith("!adv"))
                     cmd_advert(name, msg);
                 else if (msg.startsWith("!readvert"))
                     cmd_readvert(name, msg);
@@ -230,51 +231,51 @@ public class zonerbot extends SubspaceBot {
     /** Handles the !help command **/
     public void cmd_help(String name) {
         String[] msg = {
-                "+-- ZonerBot Commands --------------------------------------------------------------------------.",
-                "| !hosted                  - Lists the hosted event counts for last 24 hours                    |",
-                "| !hosted <hours>          - Lists the hosted event counts for last <hours> hours               |",
-                "| !status                  - Reports your current advert status                                 |",
-                "| !claim                   - Claims an advert by adding you to the advert queue                 |",
-                "| !free                    - Releases your advert and removes you from the queue                |",
-                "| !set <message>           - Sets <message> as the advert message and must include ?go arena    |",
-                "| !sound <#>               - Sets <#> as the sound to be used in the advert                     |",
-                "| !view                    - Views your current advert message and sound                        |",
-                "| !advert <message>        - Auto-adverts using <message> unless <message> is found illegal     |",
-                "| !advert                  - Sends the zone message as set using the !set <message> command     |",
-                "| !readvert                - Sends a last call default advert for the arena in your !advert     |",
-                "| !readvert <sub-event>    - Sends a readvert about <sub-event> for the arena in your !advert   |",
-                "| !renew                   - Prolongs the expiration of the advert for an extra 2 minutes       |",
+                ",-- ZonerBot Commands --------------------------------------------------------------------------.",
+                "| !hosted                - Lists the hosted event counts for last 24 hours                      |",
+                "| !hosted <hours>        - Lists the hosted event counts for last <hours> hours                 |",
+                "| !status                - Reports your current advert status                                   |",
+                "| !claim                 - Claims an advert by adding you to the advert queue                   |",
+                "| !free                  - Releases your advert and removes you from the queue                  |",
+                "| !set <message>         - Sets <message> as the advert message and must include ?go arena      |",
+                "| !sound <#>             - Sets <#> as the sound to be used in the advert                       |",
+                "| !view                  - Views your current advert message and sound                          |",
+                "| !advert <message>      - (!adv)Auto-adverts using <message> unless <message> is found illegal |",
+                "| !advert                - (!adv)Sends the zone message as set using the !set <message> command |",
+                "| !readvert              - Sends a last call default advert for the arena in your !advert       |",
+                "| !readvert <sub-event>  - Sends a readvert about <sub-event> for the arena in your !advert     |",
+                "| !renew                 - Prolongs the expiration of the advert for an extra 2 minutes         |",
         };
         ba.smartPrivateMessageSpam(name, msg);
         if (trainers.contains(name.toLowerCase()) || oplist.isSmod(name)) {
             msg = new String[] {
                     "+-- ZonerBot Trainer Commands ------------------------------------------------------------------+",
-                    "| !grant <name>            - Grants an advert to a ZH allowing them to do a zoner once approved |",
-                    "| !view <name>             - Views the current advert message and sound of <name>               |",
-                    "| !approve                 - Allows the earliest ZH you granted an advert to zone               |",
-                    "| !approve <name>          - Allows <name> to zone the advert that was granted                  |",
-                    "| !grants                  - Displays the total number of grants given for this month           |",
-                    "| !grants yyyy-MM          - Displays the total number of grants given for yyyy-MM              |",
-                    "| !grants <name>           - Displays the total adverts granted by <name> this month            |",
-                    "| !grants <name>:yyyy-MM   - Displays total grants by <name> in month MM of year yyyy           |",
+                    "| !grant <name>          - Grants an advert to a ZH allowing them to do a zoner once approved   |",
+                    "| !view <name>           - Views the current advert message and sound of <name>                 |",
+                    "| !approve               - Allows the earliest ZH you granted an advert to zone                 |",
+                    "| !approve <name>        - Allows <name> to zone the advert that was granted                    |",
+                    "| !grants                - Displays the total number of grants given for this month             |",
+                    "| !grants yyyy-MM        - Displays the total number of grants given for yyyy-MM                |",
+                    "| !grants <name>         - Displays the total adverts granted by <name> this month              |",
+                    "| !grants <name>:yyyy-MM - Displays total grants by <name> in month MM of year yyyy             |",
             };
             ba.smartPrivateMessageSpam(name, msg);            
         }
         if (oplist.isSmod(name)) {
             msg = new String[] {
                     "+-- ZonerBot Smod Commands ---------------------------------------------------------------------+",
-                    "| !per <del>;<dur>;<msg>   - Sets a periodic zoner to repeat every <del> min for <dur> hr %%%#  |",
-                    "| !remper <index>          - Removes the periodic zoner at <index>                              |",
-                    "| !list                    - List of the currently active periodic zoners                       |",
-                    "| !ops                     - List of the current staff trainers                                 |",
-                    "| !add <name>              - Adds <name> to the trainer list (allows zh advert granting)        |",
-                    "| !remove <name>           - Removes <name> from the trainer list                               |",
-                    "| !autozone                - Toggle periodic zoners to instant-zone when loaded from database   |",
-                    "| !reload                  - Reloads all the periodic messages from the database                |",
+                    "| !per <del>;<dur>;<msg> - Sets a periodic zoner to repeat every <del> min for <dur> hr %%%#    |",
+                    "| !remper <index>        - Removes the periodic zoner at <index>                                |",
+                    "| !list                  - List of the currently active periodic zoners                         |",
+                    "| !ops                   - List of the current staff trainers                                   |",
+                    "| !add <name>            - Adds <name> to the trainer list (allows zh advert granting)          |",
+                    "| !remove <name>         - Removes <name> from the trainer list                                 |",
+                    "| !autozone              - Toggle periodic zoners to instant-zone when loaded from database     |",
+                    "| !reload                - Reloads all the periodic messages from the database                  |",
             };
             ba.smartPrivateMessageSpam(name, msg);
         }
-        ba.sendSmartPrivateMessage(name, "`-----------------------------------------------------------------------------------------------'");
+        ba.sendSmartPrivateMessage(name, "`-----------------------------------------------------------------------------------------------+");
     }
     
     /** Handles the !reload command which cancels and clears the loaded periodics and then reloads the periodics from the db **/
@@ -591,10 +592,10 @@ public class zonerbot extends SubspaceBot {
 
                 if (advert.getStatus() < Advert.READY) {
                     if (!advert.isGranted()) {
-                        if (cmd.length() < 8)
+                        if (!cmd.contains(" ") || cmd.indexOf(" ") < cmd.length())
                             ba.sendSmartPrivateMessage(name, "You have to set an advert message before you can use it.");
                         else {
-                            String msg = cmd.substring(8);
+                            String msg = cmd.substring(cmd.indexOf(" ") + 1);
                             advert.setAdvert(msg);
                             if (advert.getStatus() == Advert.READY)
                                 cmd_advert(name, "!advert");
@@ -605,8 +606,8 @@ public class zonerbot extends SubspaceBot {
                         ba.sendSmartPrivateMessage(name, "Your advert must be set and approved before it can be used.");
                 } else if (advert.getStatus() > Advert.READY)
                     ba.sendSmartPrivateMessage(name, "The advert has already been zoned.");
-                else if (cmd.length() > 8) {
-                    String msg = cmd.substring(8);
+                else if (cmd.contains(" ") && cmd.indexOf(" ") >= cmd.length()) {
+                    String msg = cmd.substring(cmd.indexOf(" ") + 1);
                     String res = advert.setAdvert(msg);
                     if (advert.getStatus() == Advert.READY && res.startsWith("Advert message changed"))
                         cmd_advert(name, "!advert");
@@ -646,13 +647,13 @@ public class zonerbot extends SubspaceBot {
             cmd = cmd.substring(10);
         else
             cmd = null;
-        if (queue.containsKey(name)) {
+        if (queue.containsKey(name))
             ba.sendSmartPrivateMessage(name, "The initial advert must be used before readvert can be used.");
-        } else if (usedAdverts.isEmpty()) {
+        else if (usedAdverts.isEmpty())
             ba.sendSmartPrivateMessage(name, "An advert must be claimed and used before a readvert can be used.");
-        } else if (!usedAdverts.getFirst().getName().equalsIgnoreCase(name)) {
+        else if (!usedAdverts.getFirst().getName().equalsIgnoreCase(name))
             ba.sendSmartPrivateMessage(name, "No advert used by you is currently eligible for a readvert.");
-        } else {
+        else {
             Advert advert = usedAdverts.getFirst();
             if (advert.getStatus() == Advert.ZONED && advert.canReadvert()) {
                 advert.setStatus(Advert.DONE);
