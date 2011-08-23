@@ -131,8 +131,15 @@ public class ElimGame {
                 ba.prizeAll(Tools.Prize.MULTIFIRE);
                 for (String name : winners) {
                     ElimPlayer ep = getPlayer(name);
-                    if (ep != null && ep.getPosition() == BasePos.SPAWNING)
-                        spawns.put(low(name), new SpawnTimer(ep, false));
+                    if (ep != null) {
+                        if (!ship.inBase() && ep.getPosition() == BasePos.SPAWNING)
+                            spawns.put(low(name), new SpawnTimer(ep, false));
+                        else if (ship == ShipType.WEASEL) {
+                            int[] coords = rules.getIntArray("XArena" + bot.random.nextInt(4), ",");
+                            ba.warpTo(name, coords[0], coords[1], coords[2]);
+                        }
+                            
+                    }
                 }
                 countStats();
             }
@@ -177,12 +184,41 @@ public class ElimGame {
                 ba.specWithoutLock(killee);
                 ba.sendArenaMessage(killee + " is out. " + loss.getScore());
                 removePlayer(loss);
-            } else if (ship.inBase()) {
-                loss.setPosition(BasePos.SPAWNING);
-                spawns.put(low(killee), new SpawnTimer(loss, true));
-            }
+            } else
+                handleSpawn(loss);
         }
         
+    }
+    
+    private void handleSpawn(ElimPlayer ep) {
+        final String name = ep.name;
+        ep.setPosition(BasePos.SPAWNING);
+        if (ship.inBase()) {
+            if (ship != ShipType.WEASEL)
+                spawns.put(low(ep.name), new SpawnTimer(ep, true));
+            else {
+                final int[] coords = rules.getIntArray("XArena" + bot.random.nextInt(4), ",");
+                TimerTask warp = new TimerTask() {
+                    public void run() {
+                        ba.warpTo(name, coords[0], coords[1], coords[2]);
+                    }
+                };
+                ba.scheduleTask(warp, SPAWN_TIME * Tools.TimeInMillis.SECOND + 100);
+            }
+        }
+        TimerTask prize = new TimerTask() {
+            public void run() {
+                if (shrap) {
+                    ba.specificPrize(name, Tools.Prize.SHRAPNEL);
+                    ba.specificPrize(name, Tools.Prize.SHRAPNEL);
+                } else {
+                    ba.specificPrize(name, -Tools.Prize.SHRAPNEL);
+                    ba.specificPrize(name, -Tools.Prize.SHRAPNEL);
+                }
+                ba.specificPrize(name, Tools.Prize.MULTIFIRE);
+            }
+        };
+        ba.scheduleTask(prize, SPAWN_TIME * Tools.TimeInMillis.SECOND + 200);
     }
     
     /** Catch potential lagouts and/or update player game status */
@@ -261,7 +297,9 @@ public class ElimGame {
                     ba.cancelTask(outsiders.remove(low(name)));
                 if (spawns.containsKey(low(name)))
                     spawns.remove(low(name)).returned();
-                getPlayer(name).setPosition(BasePos.SPAWNING);
+                ElimPlayer ep = getPlayer(name);
+                if (ep != null)
+                    ep.setPosition(BasePos.SPAWNING);
             }
         } else {
             winners.remove(low(name));
@@ -303,13 +341,10 @@ public class ElimGame {
             if (msg != null)
                 ba.sendPrivateMessage(name, msg);
             else if (ep != null) {
-                if (ship.inBase()) {
-                    ep.setPosition(BasePos.SPAWNING);
-                    if (started)
-                        spawns.put(low(name), new SpawnTimer(ep, false));
-                }
                 ba.setShip(name, ship.getNum());
                 ba.setFreq(name, ep.getFreq());
+                if (ship.inBase())
+                    handleSpawn(ep);
                 ba.sendPrivateMessage(name, "You have " + ep.getLagouts() + " lagouts remaining.");
             }
         } else

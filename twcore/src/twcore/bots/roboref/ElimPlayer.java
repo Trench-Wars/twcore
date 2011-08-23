@@ -74,7 +74,8 @@ public class ElimPlayer {
         if (stats.getStat(StatType.KILL_STREAK) > 1) {
             lastStreak = stats.getStat(StatType.KILL_STREAK);
             killer.handleKillJoy();
-            vars[1] = true;
+            if (lastStreak >= 5)
+                vars[1] = true;
         }
         stats.handleDeath();
         if (stats.getStat(StatType.DEATHS) >= specAt) {
