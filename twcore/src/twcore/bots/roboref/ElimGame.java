@@ -220,10 +220,10 @@ public class ElimGame {
         if (p == null) return;
         int y = event.getYLocation();
         ElimPlayer ep = getPlayer(p.getPlayerName());
-        bot.debug("Position event -> " + p.getPlayerName() + " y=" + y);
         if (ep != null) {
             BasePos pos = ep.getPosition();
             if (y > BASE_ENTRANCE) {
+                bot.debug("Position event -> " + p.getPlayerName() + " moved BELOW " + BASE_ENTRANCE + " to " + y);
                 if (!started) {
                     if (pos != BasePos.SPAWNING)
                         ep.setPosition(BasePos.SPAWNING);
@@ -232,6 +232,7 @@ public class ElimGame {
                 } else if (pos == BasePos.WARNED_IN)
                     removeOutsider(ep);
             } else {
+                bot.debug("Position event -> " + p.getPlayerName() + " moved ABOVE " + BASE_ENTRANCE + " to " + y);
                 if (pos == BasePos.SPAWN)
                     ep.setPosition(BasePos.IN);
                 else if (pos == BasePos.SPAWNING)
