@@ -35,7 +35,7 @@ public class ElimGame {
     BotSettings rules;
     roboref bot;
 
-    private static final int BASE_ENTRANCE = 217 * 8;
+    private static final int BASE_ENTRANCE = 217 * 16;
     static final int MAX_LAG_TIME = 60;                 // seconds
     static final int MIN_LAG_TIME = 3;                  // seconds
     static final int OUT_OF_BOUNDS = 30;                // seconds
