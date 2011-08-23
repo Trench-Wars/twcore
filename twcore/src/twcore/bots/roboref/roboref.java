@@ -216,7 +216,7 @@ public class roboref extends SubspaceBot {
     public void handleEvent(FrequencyShipChange event) {
         if (state == State.OFF) return; 
         if (state == State.VOTING || state == State.PLAYING || state == State.STARTING) {
-            if (!checkDead() && state != State.VOTING);
+            if (!checkDead() && state != State.VOTING && game != null);
                 game.handleEvent(event);
         } else if (state == State.WAITING)
             handleState();
