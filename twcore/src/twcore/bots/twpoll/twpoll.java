@@ -341,6 +341,7 @@ public class twpoll extends SubspaceBot {
         		spam.add("To SELECT a poll, pm !poll <number>.");
         		spam.add("To VOTE, select a poll and pm your choice.");
         	} else {
+        		intro.clear();
         		spam.add("There is no poll for you at the moment.");
         	}
 
