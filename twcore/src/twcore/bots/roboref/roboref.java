@@ -215,18 +215,10 @@ public class roboref extends SubspaceBot {
     /** Handles ship and freq change events if a game is being played */
     public void handleEvent(FrequencyShipChange event) {
         if (state == State.OFF) return; 
-        if (state == State.PLAYING || state == State.STARTING) {
-            if (game != null && game.getPlaying() < 3) {
-                game.stop();
-                game = null;
-                voteType = VoteType.NA;
-                votes.clear();
-                state = State.WAITING;
-                ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
-            } else
+        if (state == State.VOTING || state == State.PLAYING || state == State.STARTING) {
+            if (!checkDead() && state != State.VOTING);
                 game.handleEvent(event);
-        }
-        if (state == State.WAITING)
+        } else if (state == State.WAITING)
             handleState();
     }
 
@@ -738,12 +730,7 @@ public class roboref extends SubspaceBot {
         timer = new TimerTask() {
             public void run() {
                 debug("Players: " + game.getPlaying());
-                if (game.getPlaying() < 2) {
-                    votes.clear();
-                    voteType = VoteType.NA;
-                    state = State.IDLE;
-                    handleState();
-                } else {
+                if (!checkDead()) {
                     arenaLock = true;
                     ba.toggleLocked();
                     game.startGame();
@@ -751,6 +738,20 @@ public class roboref extends SubspaceBot {
             }
         };
         ba.scheduleTask(timer, 15000);
+    }
+    
+    private boolean checkDead() {
+        if (ba.getNumPlaying() > 1) return false;
+        if (game != null) {
+            game.stop();
+            game = null;
+        }
+        state = State.WAITING;
+        voteType = VoteType.NA;
+        votes.clear();
+        ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
+        handleState();
+        return true;
     }
     
     /** Playing state runs after winner is set and ends game accordingly */
