@@ -461,6 +461,7 @@ public class twpoll extends SubspaceBot {
 					polls.put(currentPoll.id, currentPoll);
 				}
 			}
+			rs.close();
 
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -495,6 +496,8 @@ public class twpoll extends SubspaceBot {
 					users.add(rs.getInt("fnUserID"));
 					votes.put(rs.getInt("fnPollID"), users);
 				}
+
+				rs.close();
 
 			} catch (SQLException e) {
 				e.printStackTrace();
