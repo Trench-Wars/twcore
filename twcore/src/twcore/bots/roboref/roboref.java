@@ -215,13 +215,15 @@ public class roboref extends SubspaceBot {
     /** Handles ship and freq change events if a game is being played */
     public void handleEvent(FrequencyShipChange event) {
         if (state == State.OFF) return; 
-        if (state == State.VOTING || state == State.PLAYING || state == State.STARTING) {
-            if (!checkDead() && state != State.VOTING && game != null);
+        if (state == State.PLAYING || state == State.STARTING) {
+            if (game != null);
                 game.handleEvent(event);
-        } else if (state == State.WAITING)
+        }
+        if (state == State.WAITING)
             handleState();
     }
 
+    /** Handles PlayerPosition events */
     public void handleEvent(PlayerPosition event) {
         if (game != null && (state == State.PLAYING || state == State.STARTING))
             game.handleEvent(event);            
@@ -694,7 +696,10 @@ public class roboref extends SubspaceBot {
         timer = new TimerTask() {
             public void run() {
                 debug("Players: " + game.getPlaying());
-                if (!checkDead()) {
+                if (ba.getNumPlaying() < 2) {
+                    game.stop();
+                    abort();
+                } else {
                     arenaLock = true;
                     ba.toggleLocked();
                     game.startGame();
@@ -702,20 +707,6 @@ public class roboref extends SubspaceBot {
             }
         };
         ba.scheduleTask(timer, 15000);
-    }
-    
-    private boolean checkDead() {
-        if (ba.getNumPlaying() > 1) return false;
-        if (game != null) {
-            game.stop();
-            game = null;
-        }
-        state = State.WAITING;
-        voteType = VoteType.NA;
-        votes.clear();
-        ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
-        handleState();
-        return true;
     }
     
     /** Playing state runs after winner is set and ends game accordingly */
@@ -834,6 +825,14 @@ public class roboref extends SubspaceBot {
                 shrap = false;
             votes.clear();
         }
+        handleState();
+    }
+    
+    public void abort() {
+        state = State.WAITING;
+        voteType = VoteType.NA;
+        votes.clear();
+        ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
         handleState();
     }
     

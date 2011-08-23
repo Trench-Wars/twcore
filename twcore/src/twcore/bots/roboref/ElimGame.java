@@ -291,7 +291,10 @@ public class ElimGame {
         ba.sendArenaMessage("Get ready. Game will start in 10 seconds!", 1);
         starter = new TimerTask() {
             public void run() {
-                if (winners.size() < 2) return;
+                if (winners.size() < 2) {
+                    bot.abort();
+                    return;
+                }
                 bot.state = State.PLAYING;
                 started = true;
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
