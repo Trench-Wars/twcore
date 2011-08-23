@@ -16,7 +16,8 @@ public class ElimPlayer {
 
     BotAction ba;
     
-    enum Status { SPEC, IN, LAGGED, OUT }
+    enum Status { SPEC, IN, LAGGED, OUT };
+    enum BasePos { NA, SPAWN, IN, WARNED_OUT, WARNED_IN };
 
     public String[] streaks = {
             "On Fire!",
@@ -43,6 +44,7 @@ public class ElimPlayer {
     public static final int MULTI_KILL_TIME = 5; // seconds 
     public static final String db = "website";
     public Status status;
+    private BasePos pos;
     public String name;
     
     private ElimStats stats;
@@ -59,6 +61,7 @@ public class ElimPlayer {
         lastKill = 0;
         specAt = -1;
         freq = 9998;
+        pos = BasePos.NA;
     }
     
     /**
@@ -174,6 +177,19 @@ public class ElimPlayer {
     public void lagin() {
         status = Status.IN;
         lagouts--;
+    }
+    
+    public BasePos getPosition() {
+        return pos;
+    }
+    
+    public void setPosition(BasePos pos) {
+        this.pos = pos;
+    }
+    
+    public void sendOutsideWarning(int time) {
+        pos = BasePos.WARNED_OUT;
+        ba.sendPrivateMessage(name, "WARNING: You have " + time + " seconds to return to base or you will be disqualified.");
     }
     
     /** Get kills and deaths String */

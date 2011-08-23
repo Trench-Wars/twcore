@@ -84,6 +84,13 @@ public class roboref extends SubspaceBot {
         public int getFreq() {
             return freq;
         }
+        
+        public boolean inBase() {
+            if (freq == 0)
+                return false;
+            else
+                return true;
+        }
     }
     
     State state;
@@ -250,7 +257,8 @@ public class roboref extends SubspaceBot {
     }
 
     public void handleEvent(PlayerPosition event) {
-        
+        if (game != null && state == State.PLAYING)
+            game.handleEvent(event);            
     }
 
     /** Death event handler sends if a game is being played */

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
+import twcore.bots.roboref.ElimPlayer.BasePos;
 import twcore.bots.roboref.ElimPlayer.Status;
 import twcore.bots.roboref.roboref.ShipType;
 import twcore.bots.roboref.roboref.State;
@@ -19,6 +20,7 @@ import twcore.core.BotSettings;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -33,9 +35,11 @@ public class ElimGame {
     BotSettings rules;
     roboref bot;
 
+    private static final int BASE_ENTRANCE = 217;
     static final int MAX_LAG_TIME = 60;  // seconds
     static final int MIN_LAG_TIME = 3;  // seconds
     static final int OUT_OF_BOUNDS = 30; // seconds
+    static final int BOUNDARY_TIME = 30;  // max seconds outside base until dq
     public static final String db = "website";
     
     CompareAll comp;
@@ -51,6 +55,7 @@ public class ElimGame {
     
     HashMap<String, ElimPlayer> players;    // holds any ElimPlayer regardless of activity
     HashMap<String, ElimPlayer> played;     // contains only players who actually played in the current game
+    HashMap<String, OutOfBounds> outsiders; // player names mapped to out of bounds timers for base games
     TreeSet<String> winners;
     HashSet<String> losers;
     HashMap<String, Lagout> laggers;
@@ -86,6 +91,7 @@ public class ElimGame {
         winners = new TreeSet<String>();
         losers = new HashSet<String>();
         laggers = new HashMap<String, Lagout>();
+        outsiders = new HashMap<String, OutOfBounds>();
         Iterator<Player> i = ba.getPlayingPlayerIterator();
         while (i.hasNext()) {
             Player p = i.next();
@@ -107,6 +113,7 @@ public class ElimGame {
                 bot.state = State.PLAYING;
                 started = true;
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
+                outsiders.clear();
                 ba.scoreResetAll();
                 ba.shipResetAll();
                 if (shrap)
@@ -143,6 +150,9 @@ public class ElimGame {
         ElimPlayer win = getPlayer(killer);
         ElimPlayer loss = getPlayer(killee);
         if (win != null && loss != null) {
+            if (outsiders.containsKey(low(killee)))
+                ba.cancelTask(outsiders.remove(low(killee)));
+            loss.setPosition(BasePos.SPAWN);
             String streak = win.handleKill(loss);
             if (streak != null)
                 ba.sendArenaMessage(streak);
@@ -176,8 +186,54 @@ public class ElimGame {
                 winners.add(name.toLowerCase());
             } else
                 winners.remove(name.toLowerCase());
-        } else if (event.getShipType() == 0)
+        } else if (event.getShipType() == 0) {
             handleLagout(name);
+            if (outsiders.containsKey(low(name)))
+                ba.cancelTask(outsiders.remove(low(name)));
+            getPlayer(name).setPosition(BasePos.SPAWN);
+        }
+    }
+    
+    public void handleEvent(PlayerPosition event) {
+        if (!ship.inBase()) return;
+        Player p = ba.getPlayer(event.getPlayerID());
+        if (p == null) return;
+        int y = event.getYLocation();
+        ElimPlayer ep = getPlayer(p.getPlayerName());
+        if (ep != null) {
+            if (y < BASE_ENTRANCE) {
+                if (!started)
+                    ep.setPosition(BasePos.SPAWN);
+                else if (ep.getPosition() == BasePos.IN) {
+                    OutOfBounds oob = new OutOfBounds(ep);
+                    outsiders.put(low(ep.name), oob);
+                    ba.scheduleTask(oob, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
+                } else if (ep.getPosition() == BasePos.WARNED_IN)
+                    removeOutsider(ep);
+            } else {
+                if (ep.getPosition() == BasePos.SPAWN)
+                    ep.setPosition(BasePos.IN);
+                else if (outsiders.containsKey(low(ep.name)))
+                    outsiders.get(low(ep.name)).returned();
+            }
+        }
+    }
+    
+    /** Handle left event for potential lagouts */
+    public void handleEvent(PlayerLeft event) {
+        String name = ba.getPlayerName(event.getPlayerID());
+        if (name == null || !winners.contains(low(name))) return;
+        if (started) {
+            handleLagout(name);
+            if (outsiders.containsKey(low(name)))
+                ba.cancelTask(outsiders.remove(low(name)));
+            getPlayer(name).setPosition(BasePos.SPAWN);
+        } else {
+            winners.remove(low(name));
+            ElimPlayer ep = getPlayer(name);
+            ep.setStatus(Status.SPEC);
+            ep.setPosition(BasePos.SPAWN);
+        }
     }
     
     /** Handle lagged out player */
@@ -211,18 +267,6 @@ public class ElimGame {
             }
         } else
             ba.sendPrivateMessage(name, "You are not lagged out.");
-    }
-    
-    /** Handle left event for potential lagouts */
-    public void handleEvent(PlayerLeft event) {
-        String name = ba.getPlayerName(event.getPlayerID());
-        if (name == null || !winners.contains(low(name))) return;
-        if (started)
-            handleLagout(name);
-        else {
-            winners.remove(low(name));
-            getPlayer(name).setStatus(Status.SPEC);
-        }
     }
     
     public void cmd_deaths(String name) {
@@ -327,6 +371,9 @@ public class ElimGame {
     
     /** Stores the finished game information to the database */
     private void storeGame() {
+        for (OutOfBounds oob : outsiders.values())
+            ba.cancelTask(oob);
+        outsiders.clear();
         int aveRating = ratingCount / playerCount;
         String query = "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) " +
         		"VALUES(" + ship.getNum() + ", '" + Tools.addSlashesToString(winner.name) + "', " + deaths + ", " + winner.getScores()[0] + ", " + winner.getScores()[1] + ", " + playerCount + ", " + aveRating + ")";
@@ -357,6 +404,16 @@ public class ElimGame {
                 return ret + " without shrap";
         } else
             return ret;
+    }
+    
+    private void removeOutsider(ElimPlayer player) {
+        ba.sendArenaMessage(player.name + " is out. " + player.getScore() + " (Too long outside base)");
+        removePlayer(player);
+    }
+    
+    /** Lazy toLowerCase() String helper */
+    private String low(String str) {
+        return str.toLowerCase();
     }
     
     /** TimerTask used for tracking a player after lagging out and potential return */
@@ -413,9 +470,26 @@ public class ElimGame {
         }
     }
     
-    /** Lazy toLowerCase() String helper */
-    private String low(String str) {
-        return str.toLowerCase();
+    private class OutOfBounds extends TimerTask {
+
+        ElimPlayer player;
+        
+        public OutOfBounds(ElimPlayer ep) {
+            player = ep;
+            player.sendOutsideWarning(BOUNDARY_TIME);
+        }
+        
+        @Override
+        public void run() {
+            if (player.getPosition() == BasePos.WARNED_OUT)
+                removeOutsider(player);
+        }
+        
+        public void returned() {
+            ba.cancelTask(this);
+            outsiders.remove(low(player.name));
+            ba.sendPrivateMessage(player.name, "If you leave the base again before your next death, you will be disqualified.");
+        }
     }
     
     public class CompareAll implements Comparator<ElimPlayer> {
