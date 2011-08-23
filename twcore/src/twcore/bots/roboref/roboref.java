@@ -47,9 +47,9 @@ public class roboref extends SubspaceBot {
         WARBIRD(1, 0, false), 
         JAVELIN(2, 1, true), 
         SPIDER(3, 0, false), 
-        LEVIATHEN(4, 1, true), 
-        TERRIER(5, 0, false), 
-        WEASEL(6, 0, false),
+        LEVIATHEN(4, 0, true), 
+        TERRIER(5, 1, false), 
+        WEASEL(6, 1, false),
         LANCASTER(7, 0, false), 
         SHARK(8, 1, true);
         
@@ -546,13 +546,13 @@ public class roboref extends SubspaceBot {
                 countVotes();
             }
         };
-        ba.scheduleTask(task, 3 * Tools.TimeInMillis.SECOND);
+        ba.scheduleTask(task, 5 * Tools.TimeInMillis.SECOND);
     }
     
     /** Starting state creates new ElimGame and initiates player stat trackers */
     private void doStarting() {
         game = new ElimGame(this, shipType, deaths, shrap);
-        ba.sendArenaMessage("Enter to play. Game will be locked in 30 seconds!", 9);
+        ba.sendArenaMessage("Enter to play. Game will be locked in 15 seconds!", 9);
         timer = new TimerTask() {
             public void run() {
                 arenaLock = true;
@@ -560,7 +560,7 @@ public class roboref extends SubspaceBot {
                 game.startGame();
             }
         };
-        ba.scheduleTask(timer, 10000);
+        ba.scheduleTask(timer, 15000);
     }
     
     /** Playing state runs after winner is set and ends game accordingly */
