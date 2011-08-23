@@ -223,7 +223,7 @@ public class ElimGame {
         bot.debug("Position event -> " + p.getPlayerName() + " y=" + y);
         if (ep != null) {
             BasePos pos = ep.getPosition();
-            if (y < BASE_ENTRANCE) {
+            if (y > BASE_ENTRANCE) {
                 if (!started)
                     ep.setPosition(BasePos.SPAWNING);
                 else if (pos == BasePos.IN) {
