@@ -257,7 +257,7 @@ public class roboref extends SubspaceBot {
     }
 
     public void handleEvent(PlayerPosition event) {
-        if (game != null && state == State.PLAYING)
+        if (game != null && (state == State.PLAYING || state == State.STARTING))
             game.handleEvent(event);            
     }
 
@@ -498,7 +498,7 @@ public class roboref extends SubspaceBot {
     
     /** Waiting state stalls until there are enough players to continue */
     private void doWaiting() {
-        if (ba.getNumPlayers() > 1) {
+        if (state == State.WAITING && ba.getNumPlayers() > 1) {
             state = State.VOTING;
             voteType = VoteType.NA;
             handleState();
@@ -507,6 +507,8 @@ public class roboref extends SubspaceBot {
     
     /** Voting state runs in between vote periods to call for next vote after counting prior */
     private void doVoting() {
+        if (state != State.VOTING) return;
+        
         if (voteType == VoteType.NA) {
             voteType = VoteType.SHIP;
             ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 4-Leviathen, 5-Terrier, 6-Weasel, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
@@ -591,7 +593,8 @@ public class roboref extends SubspaceBot {
                 debug("Rank update executed for ship " + shipType.getNum());
                 if (ba.getNumPlayers() < 2)
                     ba.sendArenaMessage("A new game will begin when 2 or more players enter a ship. -" + ba.getBotName());
-                handleState();
+                else
+                    handleState();
             }
         };
         ba.scheduleTask(enter, 3000);
