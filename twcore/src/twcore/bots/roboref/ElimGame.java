@@ -138,7 +138,6 @@ public class ElimGame {
                             int[] coords = rules.getIntArray("XArena" + bot.random.nextInt(4), ",");
                             ba.warpTo(name, coords[0], coords[1], coords[2]);
                         }
-                            
                     }
                 }
                 countStats();
@@ -150,6 +149,13 @@ public class ElimGame {
     
     /** Set all players to correct ship and distribute onto incrementing freqs */
     public void setShipFreqs() {
+        if (ship == ShipType.WEASEL)
+            ba.setDoors(127);
+        else if (winners.size() > 15)
+            ba.setDoors(228);
+        else
+            ba.setDoors(127);
+        
         for (String name : winners) {
             getPlayer(name).setFreq(freq);
             ba.setShip(name, ship.getNum());
