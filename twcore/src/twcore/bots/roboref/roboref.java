@@ -680,7 +680,7 @@ public class roboref extends SubspaceBot {
     }
     
     /** Debug message handler */
-    private void debug(String msg) {
+    public void debug(String msg) {
         if (DEBUG)
             ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
     }

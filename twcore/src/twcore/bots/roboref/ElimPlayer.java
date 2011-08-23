@@ -17,7 +17,7 @@ public class ElimPlayer {
     BotAction ba;
     
     enum Status { SPEC, IN, LAGGED, OUT };
-    enum BasePos { NA, SPAWN, IN, WARNED_OUT, WARNED_IN };
+    enum BasePos { NA, SPAWNING, SPAWN, IN, WARNED_OUT, WARNED_IN };
 
     public String[] streaks = {
             "On Fire!",
@@ -185,10 +185,11 @@ public class ElimPlayer {
     
     public void setPosition(BasePos pos) {
         this.pos = pos;
+        ba.sendPrivateMessage(name, "Position set to: " + pos.toString());
     }
     
     public void sendOutsideWarning(int time) {
-        pos = BasePos.WARNED_OUT;
+        setPosition(BasePos.WARNED_OUT);
         ba.sendPrivateMessage(name, "WARNING: You have " + time + " seconds to return to base or you will be disqualified.");
     }
     

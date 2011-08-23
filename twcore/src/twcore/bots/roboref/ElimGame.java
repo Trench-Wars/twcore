@@ -35,11 +35,13 @@ public class ElimGame {
     BotSettings rules;
     roboref bot;
 
-    private static final int BASE_ENTRANCE = 217;
-    static final int MAX_LAG_TIME = 60;  // seconds
-    static final int MIN_LAG_TIME = 3;  // seconds
-    static final int OUT_OF_BOUNDS = 30; // seconds
-    static final int BOUNDARY_TIME = 30;  // max seconds outside base until dq
+    private static final int BASE_ENTRANCE = 217 * 8;
+    static final int MAX_LAG_TIME = 60;                 // seconds
+    static final int MIN_LAG_TIME = 3;                  // seconds
+    static final int OUT_OF_BOUNDS = 30;                // seconds
+    static final int BOUNDARY_TIME = 30;                // max seconds outside base until dq
+    static final int BOUND_START = 5;                   // seconds after game starts until player is warned for oob
+    static final int SPAWN_TIME = 4;                    // seconds after death until respawn
     public static final String db = "website";
     
     CompareAll comp;
@@ -56,6 +58,7 @@ public class ElimGame {
     HashMap<String, ElimPlayer> players;    // holds any ElimPlayer regardless of activity
     HashMap<String, ElimPlayer> played;     // contains only players who actually played in the current game
     HashMap<String, OutOfBounds> outsiders; // player names mapped to out of bounds timers for base games
+    HashMap<String, SpawnTimer> spawns;     // used for players who havent entered base ater start
     TreeSet<String> winners;
     HashSet<String> losers;
     HashMap<String, Lagout> laggers;
@@ -92,6 +95,7 @@ public class ElimGame {
         losers = new HashSet<String>();
         laggers = new HashMap<String, Lagout>();
         outsiders = new HashMap<String, OutOfBounds>();
+        spawns = new HashMap<String, SpawnTimer>();
         Iterator<Player> i = ba.getPlayingPlayerIterator();
         while (i.hasNext()) {
             Player p = i.next();
@@ -114,6 +118,7 @@ public class ElimGame {
                 started = true;
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
                 outsiders.clear();
+                spawns.clear();
                 ba.scoreResetAll();
                 ba.shipResetAll();
                 if (shrap)
@@ -121,6 +126,11 @@ public class ElimGame {
                 else
                     ba.prizeAll(-Tools.Prize.SHRAPNEL);
                 ba.prizeAll(Tools.Prize.MULTIFIRE);
+                for (String name : winners) {
+                    ElimPlayer ep = getPlayer(name);
+                    if (ep != null && ep.getPosition() == BasePos.SPAWNING)
+                        spawns.put(low(name), new SpawnTimer(ep, false));
+                }
                 countStats();
             }
         };
@@ -152,7 +162,6 @@ public class ElimGame {
         if (win != null && loss != null) {
             if (outsiders.containsKey(low(killee)))
                 ba.cancelTask(outsiders.remove(low(killee)));
-            loss.setPosition(BasePos.SPAWN);
             String streak = win.handleKill(loss);
             if (streak != null)
                 ba.sendArenaMessage(streak);
@@ -160,9 +169,14 @@ public class ElimGame {
             if (res[1])
                 ba.sendArenaMessage("Kill Joy! " + killer + " terminates the (" + loss.getLastKillStreak() + ":0) kill streak of " + killee + "!", Tools.Sound.INCONCEIVABLE);
             if (res[0]) {
+                if (spawns.containsKey(low(killee)))
+                    ba.cancelTask(spawns.remove(low(killee)));
                 ba.specWithoutLock(killee);
                 ba.sendArenaMessage(killee + " is out. " + loss.getScore());
                 removePlayer(loss);
+            } else if (ship.inBase()) {
+                loss.setPosition(BasePos.SPAWNING);
+                spawns.put(low(killee), new SpawnTimer(loss, true));
             }
         }
         
@@ -183,14 +197,20 @@ public class ElimGame {
                     ep.loadStats(ship.getNum(), deaths);
                 }
                 ep.setStatus(Status.IN);
+                if (ship.inBase())
+                    ep.setPosition(BasePos.SPAWNING);
                 winners.add(name.toLowerCase());
             } else
                 winners.remove(name.toLowerCase());
         } else if (event.getShipType() == 0) {
             handleLagout(name);
-            if (outsiders.containsKey(low(name)))
-                ba.cancelTask(outsiders.remove(low(name)));
-            getPlayer(name).setPosition(BasePos.SPAWN);
+            if (ship.inBase()) {
+                if (outsiders.containsKey(low(name)))
+                    ba.cancelTask(outsiders.remove(low(name)));
+                if (spawns.containsKey(low(name)))
+                    ba.cancelTask(spawns.remove(low(name)));
+                getPlayer(name).setPosition(BasePos.SPAWNING);
+            }
         }
     }
     
@@ -200,21 +220,24 @@ public class ElimGame {
         if (p == null) return;
         int y = event.getYLocation();
         ElimPlayer ep = getPlayer(p.getPlayerName());
-        ba.sendPrivateMessage("WingZero", "Position event -> " + p.getPlayerName() + " y=" + y);
+        bot.debug("Position event -> " + p.getPlayerName() + " y=" + y);
         if (ep != null) {
+            BasePos pos = ep.getPosition();
             if (y < BASE_ENTRANCE) {
                 if (!started)
-                    ep.setPosition(BasePos.SPAWN);
-                else if (ep.getPosition() == BasePos.IN) {
-                    OutOfBounds oob = new OutOfBounds(ep);
-                    outsiders.put(low(ep.name), oob);
-                    ba.scheduleTask(oob, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
-                } else if (ep.getPosition() == BasePos.WARNED_IN)
+                    ep.setPosition(BasePos.SPAWNING);
+                else if (pos == BasePos.IN) {
+                    outsiders.put(low(ep.name), new OutOfBounds(ep));
+                } else if (pos == BasePos.WARNED_IN)
                     removeOutsider(ep);
             } else {
-                if (ep.getPosition() == BasePos.SPAWN)
+                if (pos == BasePos.SPAWN)
                     ep.setPosition(BasePos.IN);
-                else if (outsiders.containsKey(low(ep.name)))
+                if (pos == BasePos.SPAWNING)
+                    ep.setPosition(BasePos.IN);
+                if (spawns.containsKey(low(ep.name)))
+                    spawns.remove(low(ep.name)).returned();
+                if (outsiders.containsKey(low(ep.name)))
                     outsiders.get(low(ep.name)).returned();
             }
         }
@@ -226,14 +249,19 @@ public class ElimGame {
         if (name == null || !winners.contains(low(name))) return;
         if (started) {
             handleLagout(name);
-            if (outsiders.containsKey(low(name)))
-                ba.cancelTask(outsiders.remove(low(name)));
-            getPlayer(name).setPosition(BasePos.SPAWN);
+            if (ship.inBase()) {
+                if (outsiders.containsKey(low(name)))
+                    ba.cancelTask(outsiders.remove(low(name)));
+                if (spawns.containsKey(low(name)))
+                    spawns.remove(low(name)).returned();
+                getPlayer(name).setPosition(BasePos.SPAWNING);
+            }
         } else {
             winners.remove(low(name));
             ElimPlayer ep = getPlayer(name);
             ep.setStatus(Status.SPEC);
-            ep.setPosition(BasePos.SPAWN);
+            if (ship.inBase()) 
+                ep.setPosition(BasePos.SPAWNING);
         }
     }
     
@@ -248,6 +276,12 @@ public class ElimGame {
                 ba.sendArenaMessage(name + " is out. " + ep.getScore() + " (Too many lagouts)");
                 removePlayer(ep);
             }
+            if (ship.inBase()) {
+                if (outsiders.containsKey(low(name)))
+                    ba.cancelTask(outsiders.remove(low(name)));
+                if (spawns.containsKey(low(name)))
+                    ba.cancelTask(spawns.remove(low(name)));
+            }
         }
         winners.remove(name.toLowerCase());
         if (started)
@@ -261,7 +295,12 @@ public class ElimGame {
             ElimPlayer ep = getPlayer(name);
             if (msg != null)
                 ba.sendPrivateMessage(name, msg);
-            else if (ep != null){
+            else if (ep != null) {
+                if (ship.inBase()) {
+                    ep.setPosition(BasePos.SPAWNING);
+                    if (started)
+                        spawns.put(low(name), new SpawnTimer(ep, false));
+                }
                 ba.setShip(name, ship.getNum());
                 ba.setFreq(name, ep.getFreq());
                 ba.sendPrivateMessage(name, "You have " + ep.getLagouts() + " lagouts remaining.");
@@ -476,6 +515,7 @@ public class ElimGame {
         ElimPlayer player;
         
         public OutOfBounds(ElimPlayer ep) {
+            ba.scheduleTask(this, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
             player = ep;
             player.sendOutsideWarning(BOUNDARY_TIME);
         }
@@ -490,6 +530,32 @@ public class ElimGame {
             ba.cancelTask(this);
             outsiders.remove(low(player.name));
             ba.sendPrivateMessage(player.name, "If you leave the base again before your next death, you will be disqualified.");
+        }
+    }
+    
+    private class SpawnTimer extends TimerTask {
+        
+        ElimPlayer player;
+        
+        public SpawnTimer(ElimPlayer ep, boolean spawning) {
+            player = ep;
+            if (spawning) {
+                player.setPosition(BasePos.SPAWNING);
+                ba.scheduleTask(this, (BOUND_START + SPAWN_TIME) * Tools.TimeInMillis.SECOND);
+            } else
+                ba.scheduleTask(this, BOUND_START * Tools.TimeInMillis.SECOND);
+        }
+        
+        @Override
+        public void run() {
+            if (player.getPosition() == BasePos.SPAWNING)
+                outsiders.put(low(player.name), new OutOfBounds(player));
+            spawns.remove(low(player.name));
+        }
+        
+        public void returned() {
+            ba.cancelTask(this);
+            spawns.remove(low(player.name));
         }
     }
     
