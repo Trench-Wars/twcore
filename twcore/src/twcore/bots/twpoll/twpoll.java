@@ -112,9 +112,9 @@ public class twpoll extends SubspaceBot {
 	        else if (message.startsWith("!help")) {
 	        	showHelp(name);
 	        }
-	        else if (message.startsWith("!undo")) {
-	        	undo(name);
-	        }
+	        //else if (message.startsWith("!undo")) {
+	        //	undo(name);
+	        //}
 	        else if (message.startsWith("!reload") && m_botAction.getOperatorList().isER(name)) {
 	        	loadPolls();
 	        	loadVotes();
@@ -239,7 +239,7 @@ public class twpoll extends SubspaceBot {
     			"- !polls      Show current polls.",
     			"- !next       Get the next poll.",
     			"              (avalaible: " + polls + ")",
-    			"- !undo       Undo your last vote.",
+    			//"- !undo       Undo your last vote.",
     	};
     	m_botAction.privateMessageSpam(playerName, spam);
     }
@@ -408,7 +408,8 @@ public class twpoll extends SubspaceBot {
 			votes.put(pollId, users);
 			openPolls.remove(userId);
 			lastPolls.put(userId, pollId);
-			m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted (!undo to undo).");
+			//m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted (!undo to undo).");
+			m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted.");
 			giveMoney(playerName, ((int)(Math.random()*1000)));
 			m_botAction.sendSmartPrivateMessage(playerName, "Type !next to answer another poll.");
 			return true;
