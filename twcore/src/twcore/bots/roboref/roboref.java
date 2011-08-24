@@ -189,12 +189,7 @@ public class roboref extends SubspaceBot {
         String name = event.getPlayerName();
         if (name == null || name.length() < 1)
             name = ba.getPlayerName(event.getPlayerID());
-        if (state == State.WAITING)
-            ba.sendPrivateMessage(name, "A new game will begin when there are at least two (2) people playing.");
-        else if (state == State.VOTING)
-            ba.sendPrivateMessage(name, "We are voting for the next game.");
-        else if (state == State.STARTING || state == State.PLAYING || state == State.ENDING)
-            ba.sendPrivateMessage(name, game.toString());
+        cmd_status(name);
     }
 
     /** Handles PlayerLeft events */
@@ -334,6 +329,8 @@ public class roboref extends SubspaceBot {
                 cmd_mvp(name);
             else if (msg.equals("!deaths"))
                 cmd_deaths(name);
+            else if (msg.equals("!status"))
+                cmd_status(name);
         }
         
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
@@ -380,6 +377,7 @@ public class roboref extends SubspaceBot {
     /** Handles the !help command */
     public void cmd_help(String name) {
         String[] msg = new String[] {
+                " !status           - Displays current game status",
                 " !lagout           - Return to game after lagging out",
                 " !rank <#>         - Displays your current rank in ship <#>",
                 " !rank <name>:<#>  - Displays the rank of <name> in ship <#>",
@@ -391,6 +389,15 @@ public class roboref extends SubspaceBot {
                 " !deaths           - Display current game best/worst player death information",
         };
         ba.privateMessageSpam(name, msg);
+    }
+    
+    public void cmd_status(String name) {
+        if (state == State.WAITING)
+            ba.sendPrivateMessage(name, "A new game will begin when there are at least two (2) people playing.");
+        else if (state == State.VOTING)
+            ba.sendPrivateMessage(name, "We are voting on the next game.");
+        else if (state == State.STARTING || state == State.PLAYING || state == State.ENDING)
+            ba.sendPrivateMessage(name, game.toString());
     }
     
     /** Handles the !stats command which displays stats from the current game if possible */
@@ -715,6 +722,10 @@ public class roboref extends SubspaceBot {
                     game.stop();
                     abort();
                 } else {
+                    String erules = "RULES: One player per freq and NO TEAMING! Die " + deaths + " times and you're out. ";
+                    if (shipType == ShipType.WEASEL)
+                        erules += "Warping is illegal and will be penalized with by a death.";
+                    ba.sendArenaMessage(erules);
                     arenaLock = true;
                     ba.toggleLocked();
                     game.startGame();

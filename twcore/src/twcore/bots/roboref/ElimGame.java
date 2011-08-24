@@ -755,13 +755,14 @@ public class ElimGame {
     
     /** Returns a string describing the current elimination game */
     public String toString() {
-        String ret = ship.toString() + " elim to " + deaths;
+        String ret = "We are playing " + ship.toString() + " elim to " + deaths + " deaths";
         if (ship.hasShrap()) {
             if (shrap)
-                return ret + " with shrap";
+                ret += " with shrap";
             else
-                return ret + " without shrap";
-        } else
-            return ret;
+                ret += " without shrap";
+        }
+        ret += ". " + winners.size() + " players remaining";
+        return ret;
     }
 }
