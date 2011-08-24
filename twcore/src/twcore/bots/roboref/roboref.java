@@ -353,7 +353,12 @@ public class roboref extends SubspaceBot {
     /** Handles potential votes read from public chat during a voting period */
     public void handleVote(String name, String cmd) {
         name = name.toLowerCase();
-        int vote = Integer.valueOf(cmd);
+        int vote = -1;
+        try {
+            vote = Integer.valueOf(cmd);
+        } catch (NumberFormatException e) {
+            return;
+        }
         if (voteType == VoteType.SHIP) {
             if (vote > 0 && vote < 9) {
                 votes.put(name, vote);
