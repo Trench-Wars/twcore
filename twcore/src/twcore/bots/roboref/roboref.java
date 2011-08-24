@@ -744,8 +744,6 @@ public class roboref extends SubspaceBot {
                 debug("Rank update executed for ship " + shipType.getNum());
                 if (ba.getNumPlaying() < 2)
                     ba.sendArenaMessage("A new game will begin when 2 or more players enter a ship. -" + ba.getBotName());
-                else
-                    handleState();
             }
         };
         ba.scheduleTask(enter, 3000);
