@@ -2,7 +2,9 @@ package twcore.bots.roboref;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.EnumMap;
+
 
 import twcore.core.util.Tools;
 
@@ -22,6 +24,8 @@ public class ElimStats {
     
     protected int ship;
     
+    DecimalFormat decimal;
+    
     /**
      * Constructs a new set of statistics for a given ship.
      * Maintains the current game stats as well as stats loaded from the database.
@@ -36,6 +40,7 @@ public class ElimStats {
             total.put(stat, new ElimStat(stat));
         }        
         loaded = false;
+        decimal = new DecimalFormat("##.000");
     }
     
     /** Returns the current ship number these stats represent */
@@ -193,7 +198,7 @@ public class ElimStats {
                 "Rating(" + getStat(StatType.RATING) + ") TotalKills(" + getTotal(StatType.KILLS) + ") TotalDeaths(" + getTotal(StatType.DEATHS) + ")",
                 "TopKillStreak(" + getStat(StatType.BEST_KILL_STREAK) + ") TopDeathStreak(" + getStat(StatType.WORST_DEATH_STREAK) + ") KillStreak(" + getStat(StatType.KILL_STREAK) + ") DeathStreak(" + getStat(StatType.DEATH_STREAK) + ")",
                 "TopMultiKill(" + getStat(StatType.BEST_MULTI_KILL) + ") MultiKills(" + getStat(StatType.MULTI_KILLS) + ") KOs(" + getStat(StatType.KNOCK_OUTS) + ") KillJoys(" + getStat(StatType.KILL_JOYS) + ")",
-                "Shots(" + getStat(StatType.SHOTS) + ") WinStreak(" + getStat(StatType.WIN_STREAK) + ") TopWinStreak(" + getStat(StatType.BEST_WIN_STREAK) + ") AVE(" + getStat(StatType.AVE) + ") AIM(" + crunchAim(false) + ") AIM(" + crunchAim(true) + ")"
+                "Shots(" + getStat(StatType.SHOTS) + ") WinStreak(" + getStat(StatType.WIN_STREAK) + ") TopWinStreak(" + getStat(StatType.BEST_WIN_STREAK) + ") AVE(" + getStat(StatType.AVE) + ") AIM(" + decimal.format(crunchAim(false)) + ") AIM(" + crunchAim(true) + ")"
         };
         return msg;
     }
@@ -209,7 +214,7 @@ public class ElimStats {
                 "Kills(" + getTotal(StatType.KILLS) + ") Deaths(" + getTotal(StatType.DEATHS) + ") Rating(" + getDB(StatType.RATING) + ") Shots(" + getTotal(StatType.SHOTS) + ")",
                 "TopKillStreak(" + getDB(StatType.BEST_KILL_STREAK) + ") TopDeathStreak(" + getDB(StatType.WORST_DEATH_STREAK) + ") KillStreak(" + getDB(StatType.KILL_STREAK) + ") DeathStreak(" + getDB(StatType.DEATH_STREAK) + ")",
                 "TopMultiKill(" + getDB(StatType.BEST_MULTI_KILL) + ") MultiKills(" + getDB(StatType.MULTI_KILLS) + ") KOs(" + getDB(StatType.KNOCK_OUTS) + ") KillJoys(" + getDB(StatType.KILL_JOYS) + ")",
-                "WinStreak(" + getDB(StatType.WIN_STREAK) + ") TopWinStreak(" + getDB(StatType.BEST_WIN_STREAK) + ") AVE(" + getAveDB(StatType.AVE) + ") AIM(" + getAimDB(StatType.AIM) + ")"
+                "WinStreak(" + getDB(StatType.WIN_STREAK) + ") TopWinStreak(" + getDB(StatType.BEST_WIN_STREAK) + ") AVE(" + getAveDB(StatType.AVE) + ") AIM(" + decimal.format(getAimDB(StatType.AIM)) + ")"
         };
         return msg;
     }
