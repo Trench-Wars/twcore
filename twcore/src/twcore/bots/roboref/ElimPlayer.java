@@ -79,9 +79,11 @@ public class ElimPlayer {
         }
         stats.handleDeath();
         if (stats.getStat(StatType.DEATHS) >= specAt) {
+            status = Status.OUT;
             killer.handleKO();
             vars[0] = true;
-        }
+        } else
+            pos = BasePos.SPAWNING;
         return vars;
     }
     

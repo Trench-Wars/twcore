@@ -40,7 +40,7 @@ public class ElimGame {
     static final int MIN_LAG_TIME = 3;                  // seconds
     static final int OUT_OF_BOUNDS = 30;                // seconds
     static final int BOUNDARY_TIME = 30;                // max seconds outside base until dq
-    static final int BOUND_START = 5;                   // seconds after game starts until player is warned for oob
+    static final int BOUND_START = 15;                  // seconds after game starts until player is warned for oob
     static final int SPAWN_TIME = 5;                    // seconds after death until respawn
     public static final String db = "website";
     
@@ -381,7 +381,9 @@ public class ElimGame {
                         "|" + padString(" 1) " + worst[2].name + " (" + worst[2].getKills() + "-" + worst[2].getDeaths() + ")", 34) + "|");
             }
             msg.add("`----------------------------------|----------------------------------+");
-        }
+            ba.privateMessageSpam(name, msg.toArray(new String[msg.size()]));
+        } else
+            ba.sendPrivateMessage(name, "No death stats available.");
     }
     
     /** Handles the grunt work called for by the !mvp command */
