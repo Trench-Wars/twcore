@@ -432,7 +432,7 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, "You have to specify the ship whose scores you want to reset.");
             return;
         }
-        if (cmd.indexOf(" ") + 1 <= cmd.length()) return;
+        if (cmd.indexOf(" ") + 1 >= cmd.length()) return;
         int ship = -1;
         try {
             ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
