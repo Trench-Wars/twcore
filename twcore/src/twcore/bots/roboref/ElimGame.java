@@ -373,12 +373,12 @@ public class ElimGame {
             msg.add("|" + padString(" 1) " + best[0].name + " (" + best[0].getKills() + "-" + best[0].getDeaths() + ")", 34) + 
                     "|" + padString(" 1) " + worst[0].name + " (" + worst[0].getKills() + "-" + worst[0].getDeaths() + ")", 34) + "|");
             if (list.size() > 1) {
-                msg.add("|" + padString(" 1) " + best[1].name + " (" + best[1].getKills() + "-" + best[1].getDeaths() + ")", 34) + 
-                        "|" + padString(" 1) " + worst[1].name + " (" + worst[1].getKills() + "-" + worst[1].getDeaths() + ")", 34) + "|");
+                msg.add("|" + padString(" 2) " + best[1].name + " (" + best[1].getKills() + "-" + best[1].getDeaths() + ")", 34) + 
+                        "|" + padString(" 2) " + worst[1].name + " (" + worst[1].getKills() + "-" + worst[1].getDeaths() + ")", 34) + "|");
             }
             if (list.size() > 2) {
-                msg.add("|" + padString(" 1) " + best[2].name + " (" + best[2].getKills() + "-" + best[2].getDeaths() + ")", 34) + 
-                        "|" + padString(" 1) " + worst[2].name + " (" + worst[2].getKills() + "-" + worst[2].getDeaths() + ")", 34) + "|");
+                msg.add("|" + padString(" 3) " + best[2].name + " (" + best[2].getKills() + "-" + best[2].getDeaths() + ")", 34) + 
+                        "|" + padString(" 3) " + worst[2].name + " (" + worst[2].getKills() + "-" + worst[2].getDeaths() + ")", 34) + "|");
             }
             msg.add("`----------------------------------|----------------------------------+");
             ba.privateMessageSpam(name, msg.toArray(new String[msg.size()]));
