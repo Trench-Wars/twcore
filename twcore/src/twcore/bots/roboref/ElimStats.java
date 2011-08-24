@@ -24,7 +24,7 @@ public class ElimStats {
     
     protected int ship;
     
-    DecimalFormat decimal;
+    DecimalFormat decimal = new DecimalFormat("##.00");
     
     /**
      * Constructs a new set of statistics for a given ship.
@@ -40,7 +40,6 @@ public class ElimStats {
             total.put(stat, new ElimStat(stat));
         }        
         loaded = false;
-        decimal = new DecimalFormat("##.000");
     }
     
     /** Returns the current ship number these stats represent */
