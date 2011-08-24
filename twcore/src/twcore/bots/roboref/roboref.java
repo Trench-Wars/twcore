@@ -249,6 +249,7 @@ public class roboref extends SubspaceBot {
                 tempPlayer = game.getPlayer(name);
                 if (tempPlayer == null) return;
                 if (rs.next() && rs.getInt("fnShip") == shipType.getNum()) {
+                    tempPlayer.loadStats(shipType.getNum(), deaths);
                     tempPlayer.loadStats(rs);
                 } else {
                     ba.SQLQueryAndClose(db, "INSERT INTO tblElim__Player (fcName, fnShip) VALUES('" + Tools.addSlashesToString(name) + "', " + shipType.getNum() + ")");

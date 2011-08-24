@@ -238,7 +238,7 @@ public class ElimPlayer {
         stats.loaded();
     }
     
-    /** Send stat load request to database for the given ship */
+    /** Prepare the statistic handler with the specified ship */
     public void loadStats(int ship, int spec) {
         if (stats != null && stats.isLoaded()) return;
         status = Status.IN;
