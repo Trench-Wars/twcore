@@ -107,6 +107,8 @@ public class roboref extends SubspaceBot {
     
     Random random;
     
+    ElimPlayer tempPlayer;                 // Recyclable player object
+    ElimStats tempStats;                   // Recyclable stats object
     ElimGame game;
     Vector<ElimGame> gameLog;
     HashMap<String, Integer> votes;
@@ -117,7 +119,7 @@ public class roboref extends SubspaceBot {
     private String connectionID;
     static final String db = "website";
     static final int INITIAL_RATING = 300;
-    static final int MIN_ZONER = 15;       //The minimum amount of minutes that another zoner can be sent
+    static final int MIN_ZONER = 15;       // The minimum amount of minutes in between zoners
     
     TimerTask timer;
     String arena;
@@ -156,6 +158,8 @@ public class roboref extends SubspaceBot {
         votes = new HashMap<String, Integer>();
         state = State.IDLE;
         voteType = VoteType.NA;
+        tempPlayer = null;
+        tempStats = null;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ? WHERE fnShip = ? AND fcName = ?");
         updateRank = ba.createPreparedStatement(db, connectionID, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = ? AND fnRating > " + INITIAL_RATING + " ORDER BY fnRating DESC");
@@ -241,10 +245,10 @@ public class roboref extends SubspaceBot {
                 return;
             } else if (game != null && id.startsWith("load:")) {
                 String name = id.substring(id.indexOf(":") + 1).toLowerCase();
-                ElimPlayer ep = game.getPlayer(name);
-                if (ep == null) return;
+                tempPlayer = game.getPlayer(name);
+                if (tempPlayer == null) return;
                 if (rs.next() && rs.getInt("fnShip") == shipType.getNum()) {
-                    ep.loadStats(rs);
+                    tempPlayer.loadStats(rs);
                 } else {
                     ba.SQLQueryAndClose(db, "INSERT INTO tblElim__Player (fcName, fnShip) VALUES('" + Tools.addSlashesToString(name) + "', " + shipType.getNum() + ")");
                     ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + shipType.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
@@ -252,12 +256,24 @@ public class roboref extends SubspaceBot {
             } else if (id.startsWith("stats:")) {
                 String[] args = id.split(":");
                 if (args.length == 4) {
-                    ElimStats stats = new ElimStats(Integer.valueOf(args[3]));
+                    tempStats = new ElimStats(Integer.valueOf(args[3]));
                     if (rs.next()) {
-                        stats.loadStats(rs);
-                        ba.privateMessageSpam(args[1], stats.getStats(args[2]));
+                        tempStats.loadStats(rs);
+                        ba.privateMessageSpam(args[1], tempStats.getStats(args[2]));
                     } else
                         ba.sendPrivateMessage(args[1], "No " + Tools.shipName(Integer.valueOf(args[3])) + " stats found for " + args[2]);
+                    tempStats = null;
+                }
+            } else if (id.startsWith("allstats:")) {
+                String[] args = id.split(":");
+                if (args.length == 3) {
+                    tempStats = new ElimStats(1);
+                    if (rs.next()) {
+                        tempStats.loadAllShips(rs);
+                        ba.privateMessageSpam(args[1], tempStats.getAll(args[2]));
+                    } else
+                        ba.sendPrivateMessage(args[1], "No " + Tools.shipName(Integer.valueOf(args[3])) + " stats found for " + args[2]);
+                    tempStats = null;
                 }
             } else if (id.startsWith("rec:")) {
                 String[] args = id.split(":");
@@ -281,6 +297,7 @@ public class roboref extends SubspaceBot {
                 } else
                     ba.sendPrivateMessage(args[1], args[2] + " is not yet ranked in " + ShipType.type(Integer.valueOf(args[3])).toString());
             }
+            tempPlayer = null;
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
@@ -324,8 +341,6 @@ public class roboref extends SubspaceBot {
                 cmd_who(name);
             else if (msg.startsWith("!stats"))
                 cmd_stats(name, msg);
-            else if (msg.startsWith("!get"))
-                cmd_get(name, msg);
             else if (msg.startsWith("!mvp"))
                 cmd_mvp(name);
             else if (msg.equals("!deaths"))
@@ -393,8 +408,10 @@ public class roboref extends SubspaceBot {
                 " !rec <#>          - Displays your own record in ship <#> or -1 for all ships",
                 " !rec <name>:<#>   - Displays the record of <name> in ship <#> or -1 for all ships",
                 " !who              - Displays the remaining players and their records",
-                " !stats            - Dumps all current statistic information for a player, if available",
-                " !get              - Dumps all statistics for all games played by a player",
+                " !stats <#>        - Displays all of your ship <#> statistics if available (-1 for all ships)",
+                " !stats <name>:<#> - Displays all statistic information for <name> in ship <#> if availabl (-1 for all ships)e",
+                " !streak           - Displays your current streak information",
+                " !streak <name>    - Displays streak information for <name>",
                 " !mvp              - Display current game best/worst player record information",
                 " !deaths           - Display current game best/worst player death information",
         };
@@ -410,21 +427,41 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, game.toString());
     }
     
-    /** Handles the !stats command which displays stats from the current game if possible */
+    /** Handles the !stats command which displays stats for a given ship if possible */
     public void cmd_stats(String name, String cmd) {
-        if (game == null) {
-            ba.sendPrivateMessage(name, "There must be a game running.");
+        int ship = -1;
+        String target = name;
+        if (!cmd.contains(":")) {
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+                if (ship != -1 && (ship < 1 || ship > 8)) {
+                    ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !stats <#> or !stats <name>:<#>");
+                return;
+            }
+        } else if (cmd.indexOf(":") < cmd.length()) {
+            target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error parsing ship number!");
+                return;
+            }
+            if (ship != -1 && (ship < 1 || ship > 8)) {
+                ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                return;
+            }
+        } else {
+            ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !stats <name>:<#> or !stats <#>");
             return;
         }
-        ElimPlayer ep;
-        if (cmd.contains(" ") && cmd.length() > 7) {
-            ep = game.getPlayer(cmd.substring(cmd.indexOf(" ") + 1));
-        } else
-            ep = game.getPlayer(name);
-        if (ep != null)
-            ba.privateMessageSpam(name, ep.getStatStrings());
+        if (ship != -1)
+            ba.SQLBackgroundQuery(db, "allstats:" + name + ":" + target, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1");
         else
-            ba.sendPrivateMessage(name, "Error!");
+            ba.SQLBackgroundQuery(db, "stats:" + name + ":" + target + ":" + ship, "SELECT * FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
     }
     
     /** Handles the !who command which displays the remaining players and their records */
@@ -449,6 +486,13 @@ public class roboref extends SubspaceBot {
             game.do_deaths(name);
         else 
             ba.sendPrivateMessage(name, "There is no game being played at the moment.");
+    }
+    
+    public void cmd_streak(String name, String cmd) {
+        if (game != null && state == State.PLAYING)
+            game.do_streak(name, cmd);
+        else 
+            ba.sendPrivateMessage(name, "There is no game being played at the moment.");        
     }
     
     /** Handles the !rank command which returns a players rank according to ship */
@@ -524,27 +568,6 @@ public class roboref extends SubspaceBot {
             ba.SQLBackgroundQuery(db, "rec:" + name + ":" + ship, "SELECT fnKills as k, fnDeaths as d, fcName as n FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1");
         else
             ba.SQLBackgroundQuery(db, "rec:" + name, "SELECT SUM(fnKills) as k, SUM(fnDeaths) as d, fcName as n FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
-    }
-    
-    /** Handles the !get command which displays stats from the database for a particular ship */
-    public void cmd_get(String name, String cmd) {
-        if (cmd.contains(" ") && cmd.length() > 5) {
-            String p = name;
-            int ship = 1;
-            try {
-                if (cmd.contains(":")) {
-                    p = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
-                    ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1).trim());
-                } else
-                    ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1).trim());
-            } catch (NumberFormatException e) {
-                ba.sendPrivateMessage(name, "Invalid ship number.");
-                return;
-            }
-            String query = "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " and fcName = '" + Tools.addSlashesToString(p) + "'";
-            ba.SQLBackgroundQuery(db, "stats:" + name + ":" + p + ":" + ship, query);
-        } else
-            ba.sendPrivateMessage(name, "Invalid command!");      
     }
     
     /** Handles the !lagout command which returns a lagged out player to the game */
@@ -864,6 +887,7 @@ public class roboref extends SubspaceBot {
         handleState();
     }
     
+    /** Prevents the game from starting usually due to lack of players */
     public void abort() {
         game = null;
         state = State.WAITING;
@@ -877,7 +901,9 @@ public class roboref extends SubspaceBot {
     
     /** Sends periodic zone messages advertising elim and announcing streaks */
     private void sendZoner() {
-        if (lastZoner == -1 || (System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) return;
+        if (lastZoner == -1) return;
+        else if ((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) return;
+        
         if (winStreak == 1)
             ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena + " to play -" + ba.getBotName());
         else if(winStreak > 1)

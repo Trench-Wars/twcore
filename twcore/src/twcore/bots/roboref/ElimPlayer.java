@@ -70,6 +70,7 @@ public class ElimPlayer {
      * @return boolean array where 0=elimination and 1=KillJoy
      */
     public boolean[] handleDeath(ElimPlayer killer) {
+        pos = BasePos.SPAWNING;
         boolean[] vars = new boolean[] { false, false };
         if (stats.getStat(StatType.KILL_STREAK) > 1) {
             lastStreak = stats.getStat(StatType.KILL_STREAK);
@@ -82,8 +83,7 @@ public class ElimPlayer {
             status = Status.OUT;
             killer.handleKO();
             vars[0] = true;
-        } else
-            pos = BasePos.SPAWNING;
+        }
         return vars;
     }
     
@@ -212,7 +212,11 @@ public class ElimPlayer {
     
     /** Return stat spam */
     public String[] getStatStrings() {
-        return stats.getStats(name, status.toString());
+        return stats.getStats(name);
+    }
+    
+    public String[] getStreakStats() {
+        return stats.getStreak(name);
     }
     
     /** Returns this player's stat tracker */

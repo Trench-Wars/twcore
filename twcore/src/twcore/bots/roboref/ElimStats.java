@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.util.EnumMap;
 
 
+import twcore.bots.roboref.roboref.ShipType;
 import twcore.core.util.Tools;
 
 /**
@@ -203,17 +204,62 @@ public class ElimStats {
     }
     
     /**
-     * Get the list of stats for this set as were loaded from the database.
+     * Get stat list for the current ship from the database records.
      * @param name Supposed name of this stat owner
      * @return Array of Strings containing all available stat info
      */
     public String[] getStats(String name) {
-        String[] msg = {
-                "" + Tools.shipName(ship) + " stats for " + name + ": ",
+        /*
+        JAVELIN stats for WingZero: Rank #0 Rating: 1234
+         K:123 D:43123 Ave:321 Aim:12.22% BestKillStreak:12 WorstDeathStreak:4
+         KOs:32 KillJoys:55 MultiKills:21 BestMultiKill:4 
+         Games:55112 Wins:1234 BestWinStreak:5 CurrentStreak:0
+        
+        old:
                 "Kills(" + getTotal(StatType.KILLS) + ") Deaths(" + getTotal(StatType.DEATHS) + ") Rating(" + getDB(StatType.RATING) + ") Shots(" + getTotal(StatType.SHOTS) + ")",
                 "TopKillStreak(" + getDB(StatType.BEST_KILL_STREAK) + ") TopDeathStreak(" + getDB(StatType.WORST_DEATH_STREAK) + ") KillStreak(" + getDB(StatType.KILL_STREAK) + ") DeathStreak(" + getDB(StatType.DEATH_STREAK) + ")",
                 "TopMultiKill(" + getDB(StatType.BEST_MULTI_KILL) + ") MultiKills(" + getDB(StatType.MULTI_KILLS) + ") KOs(" + getDB(StatType.KNOCK_OUTS) + ") KillJoys(" + getDB(StatType.KILL_JOYS) + ")",
                 "WinStreak(" + getDB(StatType.WIN_STREAK) + ") TopWinStreak(" + getDB(StatType.BEST_WIN_STREAK) + ") AVE(" + getAveDB(StatType.AVE) + ") AIM(" + decimal.format(getAimDB(StatType.AIM)) + ")"
+        */
+        String rank = "not ranked ";
+        if (getDB(StatType.RANK) > 0)
+            rank = "#" + getDB(StatType.RANK); 
+        String[] msg = {
+                "" + ShipType.type(ship).toString() + " stats for " + name + ": Rank " + rank + " Rating: " + getDB(StatType.RATING),
+                " K:" + getTotal(StatType.KILLS) + " D:" + getTotal(StatType.DEATHS) + " Ave:" + getAveDB(StatType.AVE) + " Aim:" + decimal.format(getAimDB(StatType.AIM)) + "% BestKillStreak:" + getDB(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getDB(StatType.WORST_DEATH_STREAK),
+                " KOs:" + getDB(StatType.KNOCK_OUTS) + " KillJoys:" + getDB(StatType.KILL_JOYS) + " MultiKills:" + getDB(StatType.MULTI_KILLS) + " BestMultiKill:" + getDB(StatType.BEST_MULTI_KILL),
+                " Games:" + getDB(StatType.GAMES) + " Wins:" + getDB(StatType.WINS) + " BestWinStreak:" + getDB(StatType.BEST_WIN_STREAK) + " CurrentStreak:" + getDB(StatType.WIN_STREAK),
+        };
+        return msg;
+    }
+    
+    /**
+     * Get stat list for the all ships from the database records.
+     * @param name Supposed name of this stat owner
+     * @return Array of Strings containing all available stat info
+     */
+    public String[] getAll(String name) {
+        String rank = "not ranked ";
+        if (getDB(StatType.RANK) > 0)
+            rank = "#" + getDB(StatType.RANK); 
+        String[] msg = {
+                "Total ship stats for " + name + ": BestRank " + rank + " BestRating: " + getDB(StatType.RATING),
+                " K:" + getTotal(StatType.KILLS) + " D:" + getTotal(StatType.DEATHS) + " BestAve:" + getAveDB(StatType.AVE) + " Aim:" + decimal.format(crunchAim(true)) + "% BestKillStreak:" + getDB(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getDB(StatType.WORST_DEATH_STREAK),
+                " KOs:" + getDB(StatType.KNOCK_OUTS) + " KillJoys:" + getDB(StatType.KILL_JOYS) + " MultiKills:" + getDB(StatType.MULTI_KILLS) + " BestMultiKill:" + getDB(StatType.BEST_MULTI_KILL),
+                " Games:" + getDB(StatType.GAMES) + " Wins:" + getDB(StatType.WINS) + " BestWinStreak:" + getDB(StatType.BEST_WIN_STREAK),
+        };
+        return msg;
+    }
+    
+    /**
+     * Get streak stat list for the current ship.
+     * @param name Supposed name of this stat owner
+     * @return Array of Strings containing all available streak info
+     */
+    public String[] getStreak(String name) {
+        String[] msg = {
+                ShipType.type(ship).toString() + " Streak stats for " + name + ":",
+                " KillStreak:" + getStat(StatType.KILL_STREAK) + " DeathStreak:" + getStat(StatType.DEATH_STREAK) + " BestKillStreak:" + getDB(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getDB(StatType.WORST_DEATH_STREAK)  ,
         };
         return msg;
     }
@@ -286,5 +332,58 @@ public class ElimStats {
         loadStat(StatType.BEST_WIN_STREAK, rs.getInt("fnTopWinStreak"));
         loadStat(StatType.BEST_MULTI_KILL, rs.getInt("fnTopMultiKill"));
         loaded();
+    }
+    
+    public void loadAllShips(ResultSet rs) throws SQLException {
+        loadStat(StatType.KILLS, rs.getInt("fnKills"));
+        loadStat(StatType.DEATHS, rs.getInt("fnDeaths"));
+        loadStat(StatType.RATING, rs.getInt("fnRating"));
+        loadStat(StatType.RANK, rs.getInt("fnRank"));
+        loadStat(StatType.WINS, rs.getInt("fnWins"));
+        loadStat(StatType.GAMES, rs.getInt("fnGames"));
+        loadStat(StatType.AVE, rs.getFloat("fnAve"));
+        loadStat(StatType.SHOTS, rs.getInt("fnShots"));
+        loadStat(StatType.AIM, rs.getDouble("fnAim"));
+        loadStat(StatType.KILL_JOYS, rs.getInt("fnKillJoys"));
+        loadStat(StatType.KNOCK_OUTS, rs.getInt("fnKnockOuts"));
+        loadStat(StatType.MULTI_KILLS, rs.getInt("fnMultiKills"));
+        loadStat(StatType.WIN_STREAK, rs.getInt("fnWinStreak"));
+        loadStat(StatType.KILL_STREAK, rs.getInt("fnKillStreak"));
+        loadStat(StatType.DEATH_STREAK, rs.getInt("fnDeathStreak"));
+        loadStat(StatType.BEST_KILL_STREAK, rs.getInt("fnTopKillStreak"));
+        loadStat(StatType.WORST_DEATH_STREAK, rs.getInt("fnTopDeathStreak"));
+        loadStat(StatType.BEST_WIN_STREAK, rs.getInt("fnTopWinStreak"));
+        loadStat(StatType.BEST_MULTI_KILL, rs.getInt("fnTopMultiKill"));
+        while (rs.next()) {
+            total.get(StatType.KILLS).add(rs.getInt("fnKills"));
+            total.get(StatType.DEATHS).add(rs.getInt("fnDeaths"));
+            total.get(StatType.WINS).add(rs.getInt(StatType.WINS.db()));
+            total.get(StatType.GAMES).add(rs.getInt(StatType.GAMES.db()));
+            total.get(StatType.KILL_JOYS).add(rs.getInt(StatType.KILL_JOYS.db()));
+            total.get(StatType.KNOCK_OUTS).add(rs.getInt(StatType.KNOCK_OUTS.db()));
+            total.get(StatType.MULTI_KILLS).add(rs.getInt(StatType.MULTI_KILLS.db()));
+            int value = rs.getInt("fnRating");
+            if (getDB(StatType.RATING) < value)
+                loadStat(StatType.RATING, value);
+            value = rs.getInt("fnRank");
+            if (getDB(StatType.RANK) < value)
+                loadStat(StatType.RANK, value);
+            value = rs.getInt("fnAve");
+            if (getDB(StatType.AVE) < value)
+                loadStat(StatType.AVE, value);
+            value = rs.getInt("fnTopKillStreak");
+            if (value > getDB(StatType.BEST_KILL_STREAK))
+                loadStat(StatType.BEST_KILL_STREAK, value);
+            value = rs.getInt("fnTopDeathStreak");
+            if (value > getDB(StatType.WORST_DEATH_STREAK))
+                loadStat(StatType.WORST_DEATH_STREAK, value);
+            value = rs.getInt("fnTopWinStreak");
+            if (value > getDB(StatType.BEST_WIN_STREAK))
+                loadStat(StatType.BEST_WIN_STREAK, value);
+            value = rs.getInt("fnTopMultiKill");
+            if (value > getDB(StatType.BEST_MULTI_KILL))
+                loadStat(StatType.BEST_MULTI_KILL, value);
+        }
+        loaded = true;
     }
 }

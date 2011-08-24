@@ -182,7 +182,7 @@ public class ElimGame {
         if (p == null) return;
         int y = event.getYLocation();
         ElimPlayer ep = getPlayer(p.getPlayerName());
-        if (ep != null) {
+        if (ep != null && ep.status != Status.OUT) {
             BasePos pos = ep.getPosition();
             if (y > BASE_ENTRANCE) {
                 if (!started) {
@@ -427,6 +427,17 @@ public class ElimGame {
         if (msg.length() > 0 && msg.contains(","))
             msg = msg.substring(0, msg.lastIndexOf(","));
         ba.sendPrivateMessage(name, msg);
+    }
+    
+    public void do_streak(String name, String cmd) {
+        String p = name;
+        if (cmd.contains(" ") && cmd.length() > 9)
+            p = cmd.substring(cmd.indexOf(" ") + 1);
+        ElimPlayer ep = getPlayer(p);
+        if (ep != null)
+            ba.privateMessageSpam(name, ep.getStreakStats());
+        else
+            ba.sendPrivateMessage(name, "Error, player not found.");
     }
     
     /** Record losses for anyone still lagged out */
