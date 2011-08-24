@@ -485,7 +485,7 @@ public class roboref extends SubspaceBot {
     /** Handles the !rec command which displays a player's current overall record */
     public void cmd_rec(String name, String cmd) {
         if (cmd.length() < 5) return;
-        int ship = 0;
+        int ship = -1;
         String target = name;
         if (!cmd.contains(":")) {
             try {
