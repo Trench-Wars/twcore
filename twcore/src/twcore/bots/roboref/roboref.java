@@ -450,9 +450,15 @@ public class roboref extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !rank <#>");
                 return;
             }
-        } else if (cmd.indexOf(":") < cmd.length()){
+        } else if (cmd.indexOf(":") < cmd.length()) {
+            debug(":=" + cmd.indexOf(":") + " length=" + cmd.length());
             target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
-            ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error parsing ship number!");
+                return;
+            }
             if (ship < 1 || ship > 8) {
                 ba.sendPrivateMessage(name, "Invalid ship: " + ship);
                 return;
