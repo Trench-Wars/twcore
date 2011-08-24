@@ -103,63 +103,62 @@ public class zonerbot extends SubspaceBot {
         }
         
         if (type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.PRIVATE_MESSAGE) {
-            msg = msg.toLowerCase();
             if (oplist.isZH(name)) {
-                if (msg.equals("!status"))
+                if (msg.toLowerCase().equals("!status"))
                     cmd_status(name);
-                else if (msg.equals("!claim"))
+                else if (msg.toLowerCase().equals("!claim"))
                     cmd_claim(name);
-                else if (msg.equals("!free"))
+                else if (msg.toLowerCase().equals("!free"))
                     cmd_free(name);
-                else if (msg.startsWith("!set "))
+                else if (msg.toLowerCase().startsWith("!set "))
                     cmd_setAdvert(name, msg);
-                else if (msg.startsWith("!sound "))
+                else if (msg.toLowerCase().startsWith("!sound "))
                     cmd_setSound(name, msg);
-                else if (msg.startsWith("!view"))
+                else if (msg.toLowerCase().startsWith("!view"))
                     cmd_view(name, msg);
-                else if (msg.startsWith("!advert") || msg.startsWith("!adv"))
+                else if (msg.toLowerCase().startsWith("!advert") || msg.toLowerCase().startsWith("!adv"))
                     cmd_advert(name, msg);
-                else if (msg.startsWith("!readvert"))
+                else if (msg.toLowerCase().startsWith("!readvert"))
                     cmd_readvert(name, msg);
-                else if (msg.equals("!renew"))
+                else if (msg.toLowerCase().equals("!renew"))
                     cmd_renew(name);
-                else if (msg.equals("!help"))
+                else if (msg.toLowerCase().equals("!help"))
                     cmd_help(name);
-                else if (msg.startsWith("!hosted"))
+                else if (msg.toLowerCase().startsWith("!hosted"))
                     cmd_hosted(name, msg);
             }
             if (oplist.isHighmod(name) || trainers.contains(name.toLowerCase())) {
-                if (msg.startsWith("!grant "))
+                if (msg.toLowerCase().startsWith("!grant "))
                     cmd_grant(name, msg);
-                else if (msg.startsWith("!approve"))
+                else if (msg.toLowerCase().startsWith("!approve"))
                     cmd_approve(name, msg);
-                else if (msg.equals("!debug"))
+                else if (msg.toLowerCase().equals("!debug"))
                     cmd_debug(name);
-                else if (msg.equals("!die"))
+                else if (msg.toLowerCase().equals("!die"))
                     cmd_die(name);
-                else if (msg.startsWith("!grants"))
+                else if (msg.toLowerCase().startsWith("!grants"))
                     cmd_grants(name, msg);
             }
             if (oplist.isSmod(name)) {
-                if (msg.startsWith("!add "))
+                if (msg.toLowerCase().startsWith("!add "))
                     cmd_add(name, msg);
-                else if (msg.startsWith("!remove "))
+                else if (msg.toLowerCase().startsWith("!remove "))
                     cmd_remove(name, msg);
-                else if (msg.equals("!ops"))
+                else if (msg.toLowerCase().equals("!ops"))
                     cmd_ops(name);
-                else if (msg.startsWith("!per "))
+                else if (msg.toLowerCase().startsWith("!per "))
                     cmd_periodic(name, msg);
-                else if (msg.startsWith("!remper "))
+                else if (msg.toLowerCase().startsWith("!remper "))
                     cmd_removePeriodic(name, msg);
-                else if (msg.equals("!list"))
+                else if (msg.toLowerCase().equals("!list"))
                     cmd_listPeriodics(name);
-                else if (msg.equals("!autozone"))
+                else if (msg.toLowerCase().equals("!autozone"))
                     cmd_autoZone(name);
-                else if (msg.equals("!reload"))
+                else if (msg.toLowerCase().equals("!reload"))
                     cmd_reload(name);
             }
             if (oplist.isOwner(name)) {
-                if (msg.startsWith("!zone "))
+                if (msg.toLowerCase().startsWith("!zone "))
                     cmd_zone(name, msg);
             }
                 
