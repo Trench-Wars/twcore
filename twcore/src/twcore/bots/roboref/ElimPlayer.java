@@ -238,6 +238,11 @@ public class ElimPlayer {
         stats.loaded();
     }
     
+    public void scorereset(int ship) {
+        if (stats.getShip() == ship)
+            stats = null;
+    }
+    
     /** Prepare the statistic handler with the specified ship */
     public void loadStats(int ship, int spec) {
         if (stats != null && stats.isLoaded()) return;
