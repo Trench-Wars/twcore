@@ -189,7 +189,18 @@ public class ElimGame {
                     if (pos != BasePos.SPAWNING)
                         ep.setPosition(BasePos.SPAWNING);
                 } else if (pos == BasePos.IN) {
-                    outsiders.put(low(ep.name), new OutOfBounds(ep, true));
+                    if (ship != ShipType.WEASEL)
+                        outsiders.put(low(ep.name), new OutOfBounds(ep, true));
+                    else {
+                        if (ep.handleWarp()) {
+                            ba.specWithoutLock(ep.name);
+                            ba.sendArenaMessage(ep.name + " is out. " + ep.getScore() + " (warp abuse)");
+                            removePlayer(ep);
+                        } else {
+                            ba.sendPrivateMessage(ep.name, "Warping is illegal! You gained a death as a result.");
+                            sendWarp(ep.name);
+                        }
+                    }
                 } else if (pos == BasePos.WARNED_IN)
                     removeOutsider(ep);
             } else {

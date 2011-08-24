@@ -128,6 +128,17 @@ public class ElimPlayer {
         stats.incrementStat(StatType.SHOTS);
     }
     
+    public boolean handleWarp() {
+        if (stats.getStat(StatType.KILL_STREAK) > 1)
+            lastStreak = stats.getStat(StatType.KILL_STREAK);
+        stats.handleDeath();
+        if (stats.getStat(StatType.DEATHS) >= specAt)
+            return true;
+        else
+            return false;
+        
+    }
+    
     /** Returns this players current rating */
     public int getRating() {
         return stats.getStat(StatType.RATING);
