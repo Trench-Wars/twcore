@@ -29,6 +29,7 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.events.WeaponFired;
+import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
@@ -349,6 +350,11 @@ public class roboref extends SubspaceBot {
     
     /** Handles potential votes read from public chat during a voting period */
     public void handleVote(String name, String cmd) {
+        Player p = ba.getPlayer(name);
+        if (p != null && p.getShipType() == 0) {
+            ba.sendPrivateMessage(name, "You must be in a ship in order to vote.");
+            return;
+        }
         name = name.toLowerCase();
         int vote = -1;
         try {
