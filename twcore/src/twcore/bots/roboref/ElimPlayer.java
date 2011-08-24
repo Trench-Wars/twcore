@@ -186,7 +186,6 @@ public class ElimPlayer {
     
     public void setPosition(BasePos pos) {
         this.pos = pos;
-        ba.sendPrivateMessage(name, "Position set to: " + pos.toString());
     }
     
     public void sendOutsideWarning(int time) {

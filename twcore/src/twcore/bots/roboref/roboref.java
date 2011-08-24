@@ -238,7 +238,6 @@ public class roboref extends SubspaceBot {
     /** Handles received background queries for stats */
     public void handleEvent(SQLResultEvent event) {
         String id = event.getIdentifier();
-        debug("SQL event id: " + id);
         ResultSet rs = event.getResultSet();
         try {
             if (state == State.OFF) { 
@@ -603,7 +602,6 @@ public class roboref extends SubspaceBot {
                 state = State.ENDING;
                 handleState();
             }
-            debug("Updated " + name.name);
         } catch (SQLException e) {
             Tools.printStackTrace("Elim player stats update error!", e);
         }
@@ -611,6 +609,7 @@ public class roboref extends SubspaceBot {
     
     /** Handles game state by calling the appropriate state methods */
     public void handleState() {
+        debug("handleState");
         switch (state) {
             case IDLE: doIdle(); break;
             case WAITING: doWaiting(); break;
@@ -641,6 +640,7 @@ public class roboref extends SubspaceBot {
         sendZoner();
         if (ba.getNumPlaying() > 1) {
             state = State.VOTING;
+            votes.clear();
             voteType = VoteType.NA;
             handleState();
         }
@@ -686,7 +686,7 @@ public class roboref extends SubspaceBot {
                 countVotes();
             }
         };
-        ba.scheduleTask(task, 5 * Tools.TimeInMillis.SECOND);
+        ba.scheduleTask(task, 10 * Tools.TimeInMillis.SECOND);
     }
     
     /** Starting state creates new ElimGame and initiates player stat trackers */
