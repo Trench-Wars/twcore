@@ -249,7 +249,7 @@ public class ElimPlayer {
     
     /** Alert player's kill of multiple enemies at once */
     private void multiKill() {
-        switch(consecutiveKills) {
+        switch (consecutiveKills) {
             case 1: ba.sendArenaMessage(name + " - Double kill!", Tools.Sound.CROWD_OHH); break;
             case 2: ba.sendArenaMessage(name + " - Triple kill!", Tools.Sound.CROWD_GEE); break;
             case 3: ba.sendArenaMessage(name + " - Quadruple kill!", Tools.Sound.INCONCEIVABLE); break;

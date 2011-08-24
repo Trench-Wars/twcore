@@ -37,10 +37,10 @@ public class ElimGame {
 
     private static final int BASE_ENTRANCE = 222 * 16;
     static final int MAX_LAG_TIME = 60;                 // seconds
-    static final int MIN_LAG_TIME = 3;                  // seconds
+    static final int MIN_LAG_TIME = 10;                  // seconds
     static final int OUT_OF_BOUNDS = 30;                // seconds
-    static final int BOUNDARY_TIME = 30;                // max seconds outside base until dq
-    static final int BOUND_START = 15;                  // seconds after game starts until player is warned for oob
+    static final int BOUNDARY_TIME = 20;                // max seconds outside base until dq
+    static final int BOUND_START = 10;                  // seconds after game starts until player is warned for oob
     static final int SPAWN_TIME = 5;                    // seconds after death until respawn
     public static final String db = "website";
     
@@ -556,10 +556,9 @@ public class ElimGame {
     
     /** Sends the appropriate prizes to player */
     private void sendPrizes(String name) {
-        if (shrap) {
+        if (shrap)
             ba.specificPrize(name, Tools.Prize.SHRAPNEL);
-            ba.specificPrize(name, Tools.Prize.SHRAPNEL);
-        } else {
+        else {
             ba.specificPrize(name, -Tools.Prize.SHRAPNEL);
             ba.specificPrize(name, -Tools.Prize.SHRAPNEL);
         }
