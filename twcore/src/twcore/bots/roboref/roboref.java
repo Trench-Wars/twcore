@@ -265,7 +265,7 @@ public class roboref extends SubspaceBot {
                     int d = rs.getInt("d");
                     String target = rs.getString("n");
                     if (args.length == 3)
-                        ba.sendPrivateMessage(args[1], "" + target + "[" + args[3] + "]: (" + k + "-" + d + ")");
+                        ba.sendPrivateMessage(args[1], "" + target + "[" + args[2] + "]: (" + k + "-" + d + ")");
                     else if (args.length == 2)
                         ba.sendPrivateMessage(args[1], "" + target + "[all]: (" + k + "-" + d + ")");
                 } else
@@ -317,7 +317,7 @@ public class roboref extends SubspaceBot {
                 cmd_lagout(name);
             else if (msg.startsWith("!rank "))
                 cmd_rank(name, msg);
-            else if (msg.startsWith("!rec"))
+            else if (msg.startsWith("!rec "))
                 cmd_rec(name, msg);
             else if (msg.equals("!who"))
                 cmd_who(name);
@@ -515,9 +515,9 @@ public class roboref extends SubspaceBot {
             return;
         }
         if (ship != -1)
-            ba.SQLBackgroundQuery(db, "rec:" + name + ":" + ship, "SELECT fnKills as k, fnDeaths as d FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1");
+            ba.SQLBackgroundQuery(db, "rec:" + name + ":" + ship, "SELECT fnKills as k, fnDeaths as d, fcName as n FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1");
         else
-            ba.SQLBackgroundQuery(db, "rec:" + name, "SELECT SUM(fnKills) as k, SUM(fnDeaths) as d FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
+            ba.SQLBackgroundQuery(db, "rec:" + name, "SELECT SUM(fnKills) as k, SUM(fnDeaths) as d, fcName as n FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
     }
     
     /** Handles the !get command which displays stats from the database for a particular ship */
