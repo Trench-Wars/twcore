@@ -809,6 +809,7 @@ public class roboref extends SubspaceBot {
     /** Executes the updateRank statement which adjusts the ranks of every elim player */
     private void updateRanks() {
         try {
+            long now = System.currentTimeMillis();
             ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = ? AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
             if (rs.next())
                 debug("Rank update for " + shipType.toString() + " was successful");
@@ -817,6 +818,7 @@ public class roboref extends SubspaceBot {
             ba.SQLClose(rs);
             //updateRank.setInt(1, shipType.getNum());
             //updateRank.execute();
+            debug("Update completed in " + ((System.currentTimeMillis() - now) / Tools.TimeInMillis.SECOND) + " seconds.");
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
