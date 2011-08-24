@@ -359,17 +359,20 @@ public class roboref extends SubspaceBot {
         if (voteType == VoteType.SHIP) {
             if (vote > 0 && vote < 9) {
                 votes.put(name, vote);
-                ba.sendPrivateMessage(name, "Vote counted for: " + vote);
+                ba.sendPrivateMessage(name, "Vote counted for: " + ShipType.type(vote).toString());
             }
         } else if (voteType == VoteType.DEATHS) {
             if (vote > 0 && vote <= rules.getInt("MaxDeaths")) {
                 votes.put(name, vote);
-                ba.sendPrivateMessage(name, "Vote counted for: " + vote);
+                ba.sendPrivateMessage(name, "Vote counted for: " + vote + " deaths");
             }
         } else if (voteType == VoteType.SHRAP) {
             if (vote > -1 && vote < 2) {
                 votes.put(name, vote);
-                ba.sendPrivateMessage(name, "Vote counted for: " + vote);
+                String shrap = "ON";
+                if (vote == 0)
+                    shrap = "OFF";
+                ba.sendPrivateMessage(name, "Vote counted for: " + shrap);
             }
         }
     }
@@ -480,35 +483,37 @@ public class roboref extends SubspaceBot {
     
     /** Handles the !rec command which displays a player's current overall record */
     public void cmd_rec(String name, String cmd) {
+        if (cmd.length() < 5) return;
+        int ship = 0;
         String target = name;
-        String ship = "-1";
-        if (cmd.contains(":")) {
-            
-        }
-        if (cmd.contains(" ") && cmd.length() > 5) {
-            target = cmd.substring(cmd.indexOf(" ") + 1);
-            if (Tools.isAllDigits(target)) {
-                ship = target;
-                target = name;
-            } else {
-                if (cmd.contains(":") && cmd.length() >= cmd.indexOf(":")) {
-                    ship = cmd.substring(cmd.indexOf(":") + 1);
-                    if (!Tools.isAllDigits(ship)) {
-                        ba.sendPrivateMessage(name, "Error processing ship record request.");
-                        return;
-                    }
-                    if (ship.contains("-")) {
-                        ba.sendPrivateMessage(name, "Error, ship specification cannot be negative.");
-                        return;
-                    }
-                    target = target.substring(0, target.indexOf(":"));
+        if (!cmd.contains(":")) {
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+                if (ship != -1 && (ship < 1 || ship > 8)) {
+                    ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                    return;
                 }
-                String temp = ba.getFuzzyPlayerName(target);
-                if (temp != null)
-                    target = temp;
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !rec <#> or !rec <name>:<#>");
+                return;
             }
+        } else if (cmd.indexOf(":") < cmd.length()) {
+            target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error parsing ship number!");
+                return;
+            }
+            if (ship != -1 && (ship < 1 || ship > 8)) {
+                ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                return;
+            }
+        } else {
+            ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !rec <name>:<#> or !rec <#>");
+            return;
         }
-        if (!ship.equals("-1"))
+        if (ship != -1)
             ba.SQLBackgroundQuery(db, "rec:" + name + ":" + ship, "SELECT fnKills as k, fnDeaths as d FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1");
         else
             ba.SQLBackgroundQuery(db, "rec:" + name, "SELECT SUM(fnKills) as k, SUM(fnDeaths) as d FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
