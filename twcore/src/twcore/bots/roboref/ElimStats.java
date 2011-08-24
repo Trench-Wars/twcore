@@ -25,7 +25,7 @@ public class ElimStats {
     
     protected int ship;
     
-    DecimalFormat decimal = new DecimalFormat("##.00");
+    DecimalFormat decimal = new DecimalFormat("#0.00");
     
     /**
      * Constructs a new set of statistics for a given ship.
