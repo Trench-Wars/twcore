@@ -152,8 +152,8 @@ public class roboref extends SubspaceBot {
             lastZoner = 0;
         else
             lastZoner = -1;
-        DEBUG = true;
-        debugger = "WingZero";
+        DEBUG = false;
+        debugger = "";
         gameLog = new Vector<ElimGame>();
         votes = new HashMap<String, Integer>();
         state = State.IDLE;
@@ -347,6 +347,8 @@ public class roboref extends SubspaceBot {
                 cmd_deaths(name);
             else if (msg.equals("!status"))
                 cmd_status(name);
+            else if (msg.startsWith("!streak"))
+                cmd_streak(name, msg);
         }
         
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
