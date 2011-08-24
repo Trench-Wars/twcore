@@ -42,7 +42,7 @@ public class roboref extends SubspaceBot {
     OperatorList oplist;
     BotSettings rules;
     
-    public enum State { OFF, IDLE, WAITING, VOTING, STARTING, PLAYING, ENDING }
+    public enum State { OFF, IDLE, WAITING, VOTING, STARTING, PLAYING, ENDING, UPDATING }
     public enum VoteType { NA, SHIP, DEATHS, SHRAP, GAME }
     public enum ShipType {
         WARBIRD(1, 0, false), 
@@ -133,7 +133,8 @@ public class roboref extends SubspaceBot {
     boolean shrap;
     boolean arenaLock;
 
-    private PreparedStatement updateStats, updateRank;
+    private PreparedStatement updateStats;
+    //private PreparedStatement updateRank;
     
     public roboref(BotAction botAction) {
         super(botAction);
@@ -162,8 +163,8 @@ public class roboref extends SubspaceBot {
         tempStats = null;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ? WHERE fnShip = ? AND fcName = ?");
-        updateRank = ba.createPreparedStatement(db, connectionID, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = ? AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
-        if (updateStats == null || updateRank == null) {
+        //updateRank = ba.createPreparedStatement(db, connectionID, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = ? AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
+        if (updateStats == null) {
             debug("Update was null.");
             this.handleDisconnect();
         }
@@ -791,17 +792,15 @@ public class roboref extends SubspaceBot {
     
     /** Ending state stores old game reference, updates rankings and prepares for next event */
     private void doEnding() {
-        state = State.WAITING;
+        state = State.UPDATING;
         gameLog.add(0, game);
         game = null;
         arenaLock = false;
         ba.toggleLocked();
         TimerTask enter = new TimerTask() {
             public void run() {
-                updateRanks();
                 debug("Rank update executed for ship " + shipType.getNum());
-                if (ba.getNumPlaying() < 2)
-                    ba.sendArenaMessage("A new game will begin when 2 or more players enter a ship. -" + ba.getBotName());
+                updateRanks();
             }
         };
         ba.scheduleTask(enter, 3000);
@@ -810,11 +809,20 @@ public class roboref extends SubspaceBot {
     /** Executes the updateRank statement which adjusts the ranks of every elim player */
     private void updateRanks() {
         try {
-            updateRank.setInt(1, shipType.getNum());
-            updateRank.execute();
+            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = ? AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
+            if (rs.next())
+                debug("Rank update for " + shipType.toString() + " was successful");
+            else
+                debug("Rank update for " + shipType.toString() + " returned an empty result set");
+            ba.SQLClose(rs);
+            //updateRank.setInt(1, shipType.getNum());
+            //updateRank.execute();
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
+        state = State.WAITING;
+        if (ba.getNumPlaying() < 2)
+            ba.sendArenaMessage("A new game will begin when 2 or more players enter a ship. -" + ba.getBotName());
     }
     
     /** Counts votes after voting ends and acts accordingly */
@@ -949,8 +957,8 @@ public class roboref extends SubspaceBot {
     @Override
     public void handleDisconnect() {
         ba.cancelTasks();
-        ba.closePreparedStatement(db, connectionID, updateStats);
-        ba.closePreparedStatement(db, connectionID, updateRank);
+        ba.closePreparedStatement(db, connectionID, this.updateStats);
+        //ba.closePreparedStatement(db, connectionID, this.updateRank);
         ba.scheduleTask(new Die(), 2000);
     }
     
