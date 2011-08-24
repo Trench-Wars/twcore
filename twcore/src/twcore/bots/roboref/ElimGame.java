@@ -416,13 +416,18 @@ public class ElimGame {
     
     /** Handles the grunt work called for by the !who command */
     public void do_who(String name) {
-        String msg = "" + winners.size() + " players remaining:";
+        String msg = "" + winners.size() + " players remaining (* means lagged):";
         ba.sendPrivateMessage(name, msg);
         msg = "";
         for (String p : winners) {
             ElimPlayer ep = getPlayer(p);
             if (p != null)
                 msg += ep.name + "(" + ep.getKills() + "-" + ep.getDeaths() + "), ";
+        }
+        for (String p : laggers.keySet()) {
+            ElimPlayer ep = getPlayer(p);
+            if (p != null)
+                msg += "*" + ep.name + "(" + ep.getKills() + "-" + ep.getDeaths() + "), ";            
         }
         if (msg.length() > 0 && msg.contains(","))
             msg = msg.substring(0, msg.lastIndexOf(","));
