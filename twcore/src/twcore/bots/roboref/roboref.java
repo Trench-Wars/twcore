@@ -669,7 +669,6 @@ public class roboref extends SubspaceBot {
     
     /** Handles game state by calling the appropriate state methods */
     public void handleState() {
-        debug("handleState");
         switch (state) {
             case IDLE: doIdle(); break;
             case WAITING: doWaiting(); break;
@@ -810,7 +809,7 @@ public class roboref extends SubspaceBot {
     private void updateRanks() {
         try {
             long now = System.currentTimeMillis();
-            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = ? AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
+            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = " + shipType.getNum() + " AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
             if (rs.next())
                 debug("Rank update for " + shipType.toString() + " was successful");
             else
