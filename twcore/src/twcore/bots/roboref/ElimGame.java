@@ -369,7 +369,7 @@ public class ElimGame {
             for (int i = 0; i < 3 && i < list.size(); i++)
                 worst[i] = list.get(i);
             ArrayList<String> msg = new ArrayList<String>();
-            msg.add(",---- Most Deaths -----------------.---- Least Deaths ----- Max: " + deaths + " ----."); //34
+            msg.add(",---- Most Deaths ---- Max: " + deaths + " -----.---- Least Deaths ----------------."); //34
             msg.add("|" + padString(" 1) " + best[0].name + " (" + best[0].getKills() + "-" + best[0].getDeaths() + ")", 34) + 
                     "|" + padString(" 1) " + worst[0].name + " (" + worst[0].getKills() + "-" + worst[0].getDeaths() + ")", 34) + "|");
             if (list.size() > 1) {

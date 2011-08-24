@@ -442,17 +442,21 @@ public class roboref extends SubspaceBot {
         if (!cmd.contains(":")) {
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
-                if (ship < 1 || ship > 8)
-                    ship = 1;
+                if (ship < 1 || ship > 8) {
+                    ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                    return;
+                }
             } catch (NumberFormatException e) {
                 ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !rank <#>");
                 return;
             }
-        } else if (cmd.indexOf(":") < cmd.length() - 1){
+        } else if (cmd.indexOf(":") < cmd.length()){
             target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
             ship = Integer.valueOf(cmd.indexOf(":") + 1);
-            if (ship < 1 || ship > 8)
-                ship = 1;
+            if (ship < 1 || ship > 8) {
+                ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                return;
+            }
         } else {
             ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !rank <name>:<#> or !rank <#>");
             return;
