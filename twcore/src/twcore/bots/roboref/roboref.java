@@ -460,7 +460,7 @@ public class roboref extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
-        if (ship == shipType.getNum() && ep != null && state == State.STARTING)
+        if (shipType != null && ship == shipType.getNum() && ep != null && state == State.STARTING)
             ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
         ba.sendPrivateMessage(name, "Your " + ShipType.type(ship) + " scores have been reset.");
     }
