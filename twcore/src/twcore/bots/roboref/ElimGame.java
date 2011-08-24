@@ -431,15 +431,16 @@ public class ElimGame {
     
     /** Record losses for anyone still lagged out */
     public void storeLosses() {
-        for (String lagger : laggers.keySet()) {
-            ba.cancelTask(laggers.remove(low(lagger)));
-            ElimPlayer ep = getPlayer(lagger);
+        for (Lagout lagger : laggers.values()) {
+            ba.cancelTask(lagger);
+            ElimPlayer ep = getPlayer(lagger.name);
             if (ep != null) {
                 ep.setStatus(Status.SPEC);
                 ep.saveLoss();
                 bot.updatePlayer(ep);
             }
         }
+        laggers.clear();
     }
     
     /** Stores the finished game information to the database */
