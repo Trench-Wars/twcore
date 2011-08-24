@@ -106,7 +106,6 @@ public class ElimPlayer {
         stats.crunchAve(dead.getRating());
         int killStreak = stats.getStat(StatType.KILL_STREAK);
         if(killStreak >= STREAK_INIT && (killStreak - STREAK_INIT) % STREAK_REPEAT == 0) {
-            ba.sendSmartPrivateMessage("WingZero", "KillStreak condition TRUE " + killStreak);
             int i = (killStreak - STREAK_INIT) / STREAK_REPEAT;
             if (i >= streaks.length)
                 i = streaks.length - 1;
