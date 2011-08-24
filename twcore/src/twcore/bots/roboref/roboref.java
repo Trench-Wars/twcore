@@ -272,7 +272,7 @@ public class roboref extends SubspaceBot {
                         tempStats.loadAllShips(rs);
                         ba.privateMessageSpam(args[1], tempStats.getAll(args[2]));
                     } else
-                        ba.sendPrivateMessage(args[1], "No " + Tools.shipName(Integer.valueOf(args[3])) + " stats found for " + args[2]);
+                        ba.sendPrivateMessage(args[1], "No stats found for " + args[2]);
                     tempStats = null;
                 }
             } else if (id.startsWith("rec:")) {
