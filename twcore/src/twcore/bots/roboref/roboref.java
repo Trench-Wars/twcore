@@ -452,7 +452,7 @@ public class roboref extends SubspaceBot {
             }
         } else if (cmd.indexOf(":") < cmd.length()){
             target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
-            ship = Integer.valueOf(cmd.indexOf(":") + 1);
+            ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
             if (ship < 1 || ship > 8) {
                 ba.sendPrivateMessage(name, "Invalid ship: " + ship);
                 return;
