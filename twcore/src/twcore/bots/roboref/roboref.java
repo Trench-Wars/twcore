@@ -160,7 +160,7 @@ public class roboref extends SubspaceBot {
         updateRank = ba.createPreparedStatement(db, connectionID, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = ? AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
         if (updateStats == null || updateRank == null) {
             debug("Update was null.");
-            new Die(debugger);
+            this.handleDisconnect();
         }
         ba.joinArena(arena);
     }
@@ -549,7 +549,7 @@ public class roboref extends SubspaceBot {
     /** Kills the bot */
     public void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Disconnecting...");
-        new Die(name);
+        this.handleDisconnect();
     }
     
     /** Handles the !stop command which turns the bot off and prevents games from running */
@@ -639,7 +639,7 @@ public class roboref extends SubspaceBot {
     /** Waiting state stalls until there are enough players to continue */
     private void doWaiting() {
         sendZoner();
-        if (state == State.WAITING && ba.getNumPlaying() > 1) {
+        if (ba.getNumPlaying() > 1) {
             state = State.VOTING;
             voteType = VoteType.NA;
             handleState();
@@ -829,9 +829,12 @@ public class roboref extends SubspaceBot {
     }
     
     public void abort() {
+        game = null;
         state = State.WAITING;
         voteType = VoteType.NA;
         votes.clear();
+        arenaLock = false;
+        ba.toggleLocked();
         ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
         handleState();
     }
@@ -881,7 +884,10 @@ public class roboref extends SubspaceBot {
     
     @Override
     public void handleDisconnect() {
-        new Die("disconnect handler");
+        ba.cancelTasks();
+        ba.closePreparedStatement(db, connectionID, updateStats);
+        ba.closePreparedStatement(db, connectionID, updateRank);
+        ba.scheduleTask(new Die(), 2000);
     }
     
     /** TimerTask used to guarantee the MVP has had enough time to be determined */
@@ -895,22 +901,13 @@ public class roboref extends SubspaceBot {
         }
     }
     
-    /** Cleanly kills bot tasks and closes statements */
+    /** Cleanly kills bot */
     private class Die extends TimerTask {
-
-        String name;
-        
-        public Die(String name) {
-            this.name = name;
-            ba.closePreparedStatement(db, connectionID, updateStats);
-            ba.closePreparedStatement(db, connectionID, updateRank);
-            ba.scheduleTask(this, 3000);
-        }
         
         @Override
         public void run() {
-            ba.cancelTasks();
-            ba.die("Disconnect requested by: " + name);
+            ba.die();
         }
+        
     }
 }
