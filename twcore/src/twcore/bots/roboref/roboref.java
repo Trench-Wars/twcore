@@ -819,8 +819,8 @@ public class roboref extends SubspaceBot {
                 }
             };
             ba.scheduleTask(t, 3000);
-            updatePlayer(winner);  
             game.storeLosses();
+            updatePlayer(winner);  
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
             else
