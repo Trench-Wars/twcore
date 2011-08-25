@@ -365,7 +365,6 @@ public class ElimGame {
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
                 outsiders.clear();
                 spawns.clear();
-                ba.scoreResetAll();
                 ba.shipResetAll();
                 if (shrap) {
                     ba.prizeAll(Tools.Prize.SHRAPNEL);
@@ -378,6 +377,7 @@ public class ElimGame {
                 for (String name : winners) {
                     ElimPlayer ep = getPlayer(name);
                     if (ep != null) {
+                        ba.scoreReset(name);
                         if (ship == ShipType.WEASEL)
                             sendWarp(name);
                         else if (ship.inBase() && ep.getPosition() == BasePos.SPAWNING)
