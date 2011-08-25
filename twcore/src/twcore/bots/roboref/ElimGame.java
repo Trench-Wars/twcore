@@ -268,7 +268,7 @@ public class ElimGame {
     /** Handles a lagged out player */
     public void handleLagout(String name) {
         ElimPlayer ep = getPlayer(name);
-        if (ep != null) {
+        if (ep != null && ep.getStatus() != Status.OUT && ep.getStatus() != Status.SPEC) {
             if (ep.getLagouts() > 0) {
                 ep.setStatus(Status.LAGGED);
                 laggers.put(low(name), new Lagout(name));
