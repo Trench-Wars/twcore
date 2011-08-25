@@ -60,6 +60,8 @@ public class ElimGame {
     boolean shrap, statCheck, started;
     TimerTask starter;
     
+    HiderFinder hiderFinder;
+    
     HashMap<String, ElimPlayer> players;    // holds any ElimPlayer regardless of activity
     HashMap<String, ElimPlayer> played;     // contains only players who actually played in the current game
     HashMap<String, OutOfBounds> outsiders; // player names mapped to out of bounds timers for base games
@@ -96,6 +98,7 @@ public class ElimGame {
         started = false;
         winner = null;
         mvp = null;
+        hiderFinder = null;
         players = new HashMap<String, ElimPlayer>();
         played = new HashMap<String, ElimPlayer>();
         winners = new TreeSet<String>();
@@ -313,6 +316,11 @@ public class ElimGame {
             checkStats();
     }
     
+    public void handleHider(String msg) {
+        if (hiderFinder != null && msg.length() - msg.indexOf(":") == 5)
+            hiderFinder.revealHider(msg);
+    }
+    
     public void checkStats() {
         statCheck = true;
         HashSet<String> errors = new HashSet<String>();
@@ -373,6 +381,7 @@ public class ElimGame {
                             spawns.put(low(name), new SpawnTimer(ep, false));
                     }
                 }
+                hiderFinder = new HiderFinder();
                 countStats();
                 starter = null;
             }
@@ -488,6 +497,16 @@ public class ElimGame {
             ba.sendPrivateMessage(name, "Error, player not found.");
     }
     
+    public void do_hiderFinder(String name) {
+        if (hiderFinder != null) {
+            hiderFinder.stop();
+            ba.sendSmartPrivateMessage(name, "HiderFinder DISABLED");
+        } else {
+            hiderFinder = new HiderFinder();
+            ba.sendSmartPrivateMessage(name, "HiderFinder ENABLED");
+        }
+    }
+    
     /** Record losses for anyone still lagged out */
     public void storeLosses() {
         for (Lagout lagger : laggers.values()) {
@@ -600,6 +619,8 @@ public class ElimGame {
     /** Check if game has been won */
     private void checkWinner() {
         if (winners.size() == 1) {
+            if (hiderFinder != null)
+                hiderFinder.stop();
             winner = getPlayer(winners.first());
             winner.saveWin();
             setMVP();
@@ -786,9 +807,53 @@ public class ElimGame {
         
         @Override
         public void run() {
-            
+            if (winners.size() > 2) {
+                for (String p : winners) {
+                    ElimPlayer ep = getPlayer(p);
+                    if (ep != null) {
+                        if (isHiding(ep)) 
+                            getCoord(ep.name);
+                    }
+                }
+            } else if (winners.size() == 2) {
+                ElimPlayer p1 = getPlayer(winners.first());
+                ElimPlayer p2 = getPlayer(winners.last());
+                if (p1 != null && p2 != null) {
+                    if (p1.name.equals(p2.name))
+                        return;
+                    if (isHiding(p1) && isHiding(p2)) {
+                        ba.sendUnfilteredPublicMessage("?cheater " + p1.name + " and " + p2.name + " possibly stalling elim by refusing to fight.");
+                    } else {
+                        if (isHiding(p1))
+                            getCoord(p1.name);
+                        if (isHiding(p2))
+                            getCoord(p2.name);
+                    }
+                }
+            }
         }
         
+        public void stop() {
+            ba.cancelTask(this);
+            hiderFinder = null;
+        }
+        
+        private boolean isHiding(ElimPlayer ep) {
+            return ep.getLastShot() > HIDER_TIME  && ep.getLastDeath() > HIDER_TIME;
+        }
+        
+        private void getCoord(String name) {
+            ba.sendUnfilteredPrivateMessage(name, "*where");
+        }
+        
+        public void revealHider(String msg) {
+            String name = msg.substring(0, msg.indexOf(":"));
+            String coord = msg.substring(msg.indexOf(":") + 1);
+            for (String p : winners) {
+                if (!p.equalsIgnoreCase(name))
+                    ba.sendPrivateMessage(p, name + " is potentially hidding at " + coord + " - Get em!");
+            }
+        }
     }
     
     /** Comparator used to determine the MVP of a game. Player with highest kills -> least deaths -> best aim -> random */

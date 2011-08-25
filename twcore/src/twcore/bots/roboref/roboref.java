@@ -313,6 +313,8 @@ public class roboref extends SubspaceBot {
                 ba.toggleLocked();
             else if (msg.equals("Arena LOCKED") && !arenaLock)
                 ba.toggleLocked();
+            else if (game != null)
+                game.handleHider(msg);
         }
         
         if (type == Message.PUBLIC_MESSAGE) {
@@ -359,9 +361,18 @@ public class roboref extends SubspaceBot {
                     cmd_stop(name);
                 else if (msg.equals("!on") || msg.equals("!start"))
                     cmd_start(name);
+                else if (msg.startsWith("!hide"))
+                    cmd_hiderFinder(name);
             }
         }
         spy.handleEvent(event);
+    }
+    
+    public void cmd_hiderFinder(String name) {
+        if (game != null && state == State.PLAYING)
+            game.do_hiderFinder(name);
+        else
+            ba.sendSmartPrivateMessage(name, "HiderFinder is only toggleable while there is a game being played.");
     }
     
     /** Handles potential votes read from public chat during a voting period */
