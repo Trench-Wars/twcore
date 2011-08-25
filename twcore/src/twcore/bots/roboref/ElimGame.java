@@ -42,7 +42,6 @@ public class ElimGame {
     static final int HIDER_CHECK = 30;                   // seconds between hider checks
     static final int MAX_LAG_TIME = 60;                 // seconds
     static final int MIN_LAG_TIME = 10;                 // seconds
-    static final int OUT_OF_BOUNDS = 30;                // seconds
     static final int BOUNDARY_TIME = 20;                // max seconds outside base until dq
     static final int BOUND_START = 10;                  // seconds after game starts until player is warned for oob
     static final int SPAWN_TIME = 5;                    // seconds after death until respawn
@@ -195,8 +194,8 @@ public class ElimGame {
                     if (ep.getPosition() != BasePos.SPAWNING)
                         ep.setPosition(BasePos.SPAWNING);
                 } else if (ep.getPosition() == BasePos.IN) {
-                    if (ship != ShipType.WEASEL)
-                        outsiders.put(low(ep.name), new OutOfBounds(ep, true));
+                    if (ship != ShipType.WEASEL && !spawns.containsKey(low(ep.name)))
+                        outsiders.put(low(ep.name), new OutOfBounds(ep));
                     else {
                         if (ep.handleWarp()) {
                             ba.sendArenaMessage(ep.name + " is out. " + ep.getScore() + " (warp abuse)");
@@ -209,10 +208,7 @@ public class ElimGame {
                 } else if (ep.getPosition() == BasePos.WARNED_IN)
                     removeOutsider(ep);
             } else {
-                if (ep.getPosition() == BasePos.SPAWN)
-                    ep.setPosition(BasePos.IN);
-                else if (ep.getPosition() == BasePos.SPAWNING)
-                    ep.setPosition(BasePos.IN);
+                ep.setPosition(BasePos.IN);
                 if (spawns.containsKey(low(ep.name)))
                     spawns.remove(low(ep.name)).returned();
                 if (outsiders.containsKey(low(ep.name)))
@@ -335,6 +331,7 @@ public class ElimGame {
         }
         if (errors.isEmpty()) {
             bot.debug("All player stats loaded and ready!");
+            statCheck = false;
             startGame();
         } else {
             bot.debug("Error, " + errors.size() + " players missing stat records.");
@@ -386,7 +383,7 @@ public class ElimGame {
                             spawns.put(low(name), new SpawnTimer(ep, false));
                     }
                 }
-                hiderFinder = new HiderFinder();
+                hiderFinder = null;
                 countStats();
                 starter = null;
             }
@@ -756,20 +753,17 @@ public class ElimGame {
     private class OutOfBounds extends TimerTask {
 
         ElimPlayer player;
-        boolean lastWarning;
-        
         
         /**
          * Constructs and schedules an Out Of Bounds timer for one player
          * @param ep ElimPlayer
          * @param lastWarning Boolean used to indicate if the player has just spawned or was in base before hand
          */
-        public OutOfBounds(ElimPlayer ep, boolean lastWarning) {
-            //bot.debug("OutOfBounds timer created for: " + ep.name);
+        public OutOfBounds(ElimPlayer ep) {
+            bot.debug("OutOfBounds timer created for: " + ep.name);
             ba.scheduleTask(this, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
             player = ep;
             player.sendOutsideWarning(BOUNDARY_TIME);
-            this.lastWarning = lastWarning;
         }
         
         @Override
@@ -783,27 +777,26 @@ public class ElimGame {
             //bot.debug("OutOfBounds timer return canceled for: " + player.name);
             ba.cancelTask(this);
             outsiders.remove(low(player.name));
-            if (lastWarning)
-                player.setPosition(BasePos.WARNED_IN);
-            else
-                player.setPosition(BasePos.IN);
+            player.setPosition(BasePos.WARNED_IN);
         }
     }
     
-    /** TimerTask used to prevent players from remaining in the spawn area after dying */
+    /** For base elims timer is created on death to prevent spawning with a split schedule in order to reduce warnings */
     private class SpawnTimer extends TimerTask {
         
         ElimPlayer player;
+        boolean warned;
         
         /**
          * Constructs and schedules a SpawnTimer for one player
          * @param ep ElimPlayer
-         * @param spawning Boolean determines if time should be added to compensate for post-death respawn delay
+         * @param justDied Boolean determines if time should be added to compensate for post-death respawn delay
          */
-        public SpawnTimer(ElimPlayer ep, boolean spawning) {
+        public SpawnTimer(ElimPlayer ep, boolean justDied) {
             player = ep;
-            //bot.debug("Spawn timer created for: " + ep.name);
-            if (spawning) {
+            warned = false;
+            bot.debug("Spawn timer created for: " + ep.name);
+            if (justDied) {
                 player.setPosition(BasePos.SPAWNING);
                 ba.scheduleTask(this, (BOUND_START + SPAWN_TIME) * Tools.TimeInMillis.SECOND);
             } else
@@ -812,9 +805,19 @@ public class ElimGame {
         
         @Override
         public void run() {
-            if (player.getPosition() == BasePos.SPAWNING)
-                outsiders.put(low(player.name), new OutOfBounds(player, false));
-            spawns.remove(low(player.name));
+            if (player.getPosition() != BasePos.SPAWNING) {
+                spawns.remove(low(player.name));
+                return;
+            }
+            if (!warned) {
+                bot.debug("Spawn warning sent to: " + player.name);
+                ba.sendPrivateMessage(player.name, "Go to BASE, or you will be disqualified!");
+                warned = true;
+                ba.scheduleTask(this, BOUND_START * Tools.TimeInMillis.SECOND);
+            } else {
+                spawns.remove(low(player.name));
+                removeOutsider(player);
+            }
         }
 
         /** Handles the clean up when a player reaches base before the Timer executes */
