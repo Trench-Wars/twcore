@@ -505,8 +505,8 @@ public class ElimGame {
         winners.remove(low(loser.name));
         losers.add(low(loser.name));
         loser.saveLoss();
-        checkWinner();
         bot.updatePlayer(loser);
+        checkWinner();
     }
     
     /** Removes a player due to out of bounds violation */
@@ -626,7 +626,6 @@ public class ElimGame {
             if (ep != null) {
                 laggers.remove(low(name));
                 removePlayer(ep);
-                ep.saveLoss();
                 ba.sendPrivateMessage(name, "You have exceeded the maximum lagout time and are therefore eliminated.");
             }
         }

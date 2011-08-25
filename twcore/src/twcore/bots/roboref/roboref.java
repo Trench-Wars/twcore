@@ -666,6 +666,8 @@ public class roboref extends SubspaceBot {
     /** Sets the winner of the last elim event prompting end game routines */
     public void setWinner(ElimPlayer winner) {
         this.winner = winner;
+        updatePlayer(winner);  
+        game.storeLosses();
         handleState();
     }
     
@@ -692,8 +694,8 @@ public class roboref extends SubspaceBot {
                         updateStats.setFloat(i + 1, stats.getAveDB(stat));
                 }
             }
-            updateStats.executeUpdate();
-            debug("Updated player: " + name.name);
+            updateStats.execute();
+            debug("Updated player: " + name.name + " Count: " + updateStats.getUpdateCount());
             if (game.gotUpdate(name.name)) {
                 state = State.ENDING;
                 handleState();
@@ -813,8 +815,6 @@ public class roboref extends SubspaceBot {
         if (winner != null && game != null && game.mvp != null) {
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
             ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);  
-            updatePlayer(winner);  
-            game.storeLosses();
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
             else
