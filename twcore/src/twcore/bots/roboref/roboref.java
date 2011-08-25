@@ -814,7 +814,6 @@ public class roboref extends SubspaceBot {
             updatePlayer(winner);  
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
             ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);  
-            game.storeLosses();
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
             else
