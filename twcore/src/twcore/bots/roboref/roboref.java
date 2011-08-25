@@ -933,6 +933,9 @@ public class roboref extends SubspaceBot {
             public void run() {
                 debug("Rank update executed for ship " + shipType.getNum());
                 updateRanks();
+                state = State.WAITING;
+                if (ba.getNumPlaying() < 2)
+                    ba.sendArenaMessage("A new game will begin when 2 or more players enter a ship. -" + ba.getBotName());
             }
         };
         ba.scheduleTask(enter, 3000);
@@ -954,9 +957,6 @@ public class roboref extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
-        state = State.WAITING;
-        if (ba.getNumPlaying() < 2)
-            ba.sendArenaMessage("A new game will begin when 2 or more players enter a ship. -" + ba.getBotName());
     }
     
     /** Counts votes after voting ends and acts accordingly */
