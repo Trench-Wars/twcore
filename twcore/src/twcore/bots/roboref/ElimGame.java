@@ -318,7 +318,7 @@ public class ElimGame {
     
     /** Receives the result of the *where command used for hider coordinates */
     public void handleHider(String msg) {
-        if (hiderFinder != null && msg.length() - msg.indexOf(":") <= 5)
+        if (hiderFinder != null && msg.contains(":") && msg.length() - msg.indexOf(":") <= 5)
             hiderFinder.revealHider(msg);
     }
     
@@ -384,7 +384,7 @@ public class ElimGame {
                             spawns.put(low(name), new SpawnTimer(ep, false));
                     }
                 }
-                hiderFinder = null;
+                hiderFinder = new HiderFinder();
                 countStats();
                 starter = null;
             }
@@ -841,9 +841,11 @@ public class ElimGame {
     private class HiderFinder extends TimerTask {
 
         boolean reported;
+        HashSet<String> where;
         
         /** Constructs and schedules the HiderFinder task */
         public HiderFinder() {
+            where = new HashSet<String>();
             reported = false;
             ba.scheduleTask(this, Tools.TimeInMillis.MINUTE, HIDER_CHECK * Tools.TimeInMillis.SECOND);
         }
@@ -892,12 +894,15 @@ public class ElimGame {
         
         /** Request coordinates of a player in order to alert other players */
         private void getCoord(String name) {
+            where.add(low(name));
             ba.sendUnfilteredPrivateMessage(name, "*where");
         }
         
         /** Sends the player's coordinates to all other players */
         public void revealHider(String msg) {
             String name = msg.substring(0, msg.indexOf(":"));
+            if (!where.remove(low(name)))
+                return;
             String coord = msg.substring(msg.indexOf(":") + 1);
             for (String p : winners) {
                 if (!p.equalsIgnoreCase(name))

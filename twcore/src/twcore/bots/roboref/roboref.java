@@ -377,6 +377,8 @@ public class roboref extends SubspaceBot {
                     cmd_greet(name, msg);
                 else if (msg.equals("!zone"))
                     cmd_zone(name);
+                else if (msg.startsWith("!game "))
+                    cmd_game(name, msg);
             }
         }
         spy.handleEvent(event);
@@ -690,6 +692,36 @@ public class roboref extends SubspaceBot {
         else {
             alerts.add(name.toLowerCase());
             ba.sendSmartPrivateMessage(name, "New game alert messages ENABLED.");
+        }
+    }
+    
+    public void cmd_game(String name, String cmd) {
+        // !game 2;10;0
+        if (!cmd.contains(";") || cmd.length() < 10) return;
+        String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(";");
+        if (args.length != 3) return;
+        try {
+            int ship = Integer.valueOf(args[0]);
+            int deaths = Integer.valueOf(args[1]);
+            int shrap = Integer.valueOf(args[2]);
+            if (ship < 1 || ship > 8)
+                ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+            else if (deaths < 1 || deaths > 15)
+                ba.sendPrivateMessage(name, "Invalid deaths: " + deaths);
+            else {
+                shipType = ShipType.type(ship);
+                this.deaths = deaths;
+                if (shrap == 1)
+                    this.shrap = true;
+                else
+                    this.shrap = false;
+                ba.sendArenaMessage("Game of " + shipType.toString() + " elim to " + deaths + " forcefully created by " + name + "!");
+                state = State.STARTING;
+                handleState();                
+            }
+        } catch (NumberFormatException e) {
+            ba.sendPrivateMessage(name, "Invalid syntax, please use !game ship#;deaths#;shrap#");
+            return;
         }
     }
     

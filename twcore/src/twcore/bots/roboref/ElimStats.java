@@ -167,24 +167,6 @@ public class ElimStats {
         return loaded;
     }
     
-    /** Updates the local database stats with the recent game stats to prepare for saving */
-    public void unload() {
-        crunchAim(true);
-        crunchRating();
-        for (StatType stat : stats.keySet()) {
-            if (!stat.dependent() && stat.isInt())
-                total.get(stat).add(stats.get(stat).getInt());
-            else {
-                if (stat.isInt())
-                    total.get(stat).setValue(stats.get(stat).getInt());
-                else if (stat.isDouble())
-                    total.get(stat).setValue(stats.get(stat).getDouble());
-                else if (stat.isFloat())
-                    total.get(stat).setValue(stats.get(stat).getFloat());
-            }
-        }
-    }
-    
     /**
      * Get the list of stats for this set as were loaded from the database.
      * @param name This stat owner name
@@ -308,6 +290,34 @@ public class ElimStats {
         incrementStat(StatType.MULTI_KILLS);
         if (kills > getStat(StatType.BEST_MULTI_KILL))
             setStat(StatType.BEST_MULTI_KILL, kills);
+    }
+    
+    /** Updates the local database stats with the recent game stats to prepare for saving */
+    public void unload() {
+        crunchAim(true);
+        crunchRating();
+        total.get(StatType.KILLS).add(getStat(StatType.KILLS));
+        total.get(StatType.DEATHS).add(getStat(StatType.DEATHS));
+        total.get(StatType.WINS).add(getStat(StatType.WINS));
+        total.get(StatType.GAMES).add(getStat(StatType.GAMES));
+        total.get(StatType.SHOTS).add(getStat(StatType.SHOTS));
+        total.get(StatType.KILL_JOYS).add(getStat(StatType.KILL_JOYS));
+        total.get(StatType.KNOCK_OUTS).add(getStat(StatType.KNOCK_OUTS));
+        total.get(StatType.MULTI_KILLS).add(getStat(StatType.MULTI_KILLS));
+        loadStat(StatType.RATING, getStat(StatType.RATING));
+        loadStat(StatType.AVE, getStat(StatType.AVE));
+        loadStat(StatType.AIM, getStat(StatType.AIM));
+        loadStat(StatType.WIN_STREAK, getStat(StatType.WIN_STREAK));
+        loadStat(StatType.KILL_STREAK, getStat(StatType.KILL_STREAK));
+        loadStat(StatType.DEATH_STREAK, getStat(StatType.DEATH_STREAK));
+        if (getStat(StatType.BEST_KILL_STREAK) > getDB(StatType.BEST_KILL_STREAK))
+            loadStat(StatType.BEST_KILL_STREAK, getStat(StatType.BEST_KILL_STREAK)); 
+        if (getStat(StatType.WORST_DEATH_STREAK) > getDB(StatType.WORST_DEATH_STREAK))
+            loadStat(StatType.WORST_DEATH_STREAK, getStat(StatType.WORST_DEATH_STREAK)); 
+        if (getStat(StatType.BEST_WIN_STREAK) > getDB(StatType.BEST_WIN_STREAK))
+            loadStat(StatType.BEST_WIN_STREAK, getStat(StatType.BEST_WIN_STREAK)); 
+        if (getStat(StatType.BEST_KILL_STREAK) > getDB(StatType.BEST_KILL_STREAK))
+            loadStat(StatType.BEST_MULTI_KILL, getStat(StatType.BEST_MULTI_KILL));
     }
     
     /** Loads stats from the database into the total stat array */
