@@ -209,9 +209,9 @@ public class ElimGame {
                     ep.setPosition(BasePos.IN);
                 else if (ep.getPosition() == BasePos.SPAWNING)
                     ep.setPosition(BasePos.IN);
-                else if (spawns.containsKey(low(ep.name)))
+                if (spawns.containsKey(low(ep.name)))
                     spawns.remove(low(ep.name)).returned();
-                else if (outsiders.containsKey(low(ep.name)))
+                if (outsiders.containsKey(low(ep.name)))
                     outsiders.get(low(ep.name)).returned();
             }
         }
