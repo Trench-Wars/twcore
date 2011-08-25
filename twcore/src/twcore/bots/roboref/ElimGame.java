@@ -803,6 +803,13 @@ public class ElimGame {
                 ba.scheduleTask(this, BOUND_START * Tools.TimeInMillis.SECOND);
         }
         
+        public SpawnTimer(ElimPlayer ep) {
+            player = ep;
+            warned = true;
+            bot.debug("Spawn timer2 created for: " + ep.name);
+            ba.scheduleTask(this, BOUND_START * Tools.TimeInMillis.SECOND);
+        }
+        
         @Override
         public void run() {
             if (player.getPosition() != BasePos.SPAWNING) {
@@ -812,8 +819,7 @@ public class ElimGame {
             if (!warned) {
                 bot.debug("Spawn warning sent to: " + player.name);
                 ba.sendPrivateMessage(player.name, "Go to BASE, or you will be disqualified!");
-                warned = true;
-                ba.scheduleTask(this, BOUND_START * Tools.TimeInMillis.SECOND);
+                spawns.put(low(player.name), new SpawnTimer(player));
             } else {
                 spawns.remove(low(player.name));
                 removeOutsider(player);
