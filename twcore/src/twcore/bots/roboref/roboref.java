@@ -367,7 +367,9 @@ public class roboref extends SubspaceBot {
                 else if (msg.startsWith("!hide"))
                     cmd_hiderFinder(name);
                 else if (msg.startsWith("!greet "))
-                    ;
+                    cmd_greet(name, msg);
+                else if (msg.equals("!zone"))
+                    cmd_zone(name);
             }
         }
         spy.handleEvent(event);
@@ -443,6 +445,7 @@ public class roboref extends SubspaceBot {
         if (oplist.isSmod(name)) {
             msg = new String[] {
                     ":-- Smod Commands -----------------------------------------------------------------------+",
+                    "|!zone             - Forces the bot to send a default zone message                       |",
                     "|!hider            - Disables the hiding player checker/reporter (only during games)     |",
                     "|!debug            - Toggles the debugger which sends debug messages to you when enabled |",
                     "|!greet <msg>      - Changes the greeting message for the arena                          |",
@@ -717,6 +720,11 @@ public class roboref extends SubspaceBot {
     public void cmd_start(String name) {
         state = State.IDLE;
         handleState();
+    }
+    
+    public void cmd_zone(String name) {
+        lastZoner = System.currentTimeMillis();
+        sendZoner();
     }
     
     /** Sets the winner of the last elim event prompting end game routines */
