@@ -761,7 +761,7 @@ public class ElimGame {
          * @param lastWarning Boolean used to indicate if the player has just spawned or was in base before hand
          */
         public OutOfBounds(ElimPlayer ep) {
-            bot.debug("OutOfBounds timer created for: " + ep.name);
+            //bot.debug("OutOfBounds timer created for: " + ep.name);
             ba.scheduleTask(this, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
             player = ep;
             player.sendOutsideWarning(BOUNDARY_TIME);
@@ -796,7 +796,7 @@ public class ElimGame {
         public SpawnTimer(ElimPlayer ep, boolean justDied) {
             player = ep;
             warned = false;
-            bot.debug("Spawn timer created for: " + ep.name);
+            //bot.debug("Spawn timer created for: " + ep.name);
             if (justDied) {
                 player.setPosition(BasePos.SPAWNING);
                 ba.scheduleTask(this, (BOUND_START + SPAWN_TIME) * Tools.TimeInMillis.SECOND);
@@ -807,7 +807,7 @@ public class ElimGame {
         public SpawnTimer(ElimPlayer ep) {
             player = ep;
             warned = true;
-            bot.debug("Spawn timer2 created for: " + ep.name);
+            //bot.debug("Spawn timer2 created for: " + ep.name);
             ba.scheduleTask(this, BOUND_START * Tools.TimeInMillis.SECOND);
         }
         
@@ -818,7 +818,7 @@ public class ElimGame {
                 return;
             }
             if (!warned) {
-                bot.debug("Spawn warning sent to: " + player.name);
+                //bot.debug("Spawn warning sent to: " + player.name);
                 ba.sendPrivateMessage(player.name, "Go to BASE, or you will be disqualified!");
                 spawns.put(low(player.name), new SpawnTimer(player));
             } else {
