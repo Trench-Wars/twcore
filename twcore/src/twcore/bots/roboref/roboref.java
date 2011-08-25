@@ -509,7 +509,7 @@ public class roboref extends SubspaceBot {
         if (game != null) {
             ep = game.getPlayer(name);
             if (ep != null) {
-                if (shipType.getNum() == ship && state == State.PLAYING && ep.status != Status.OUT && ep.status != Status.SPEC) {
+                if (shipType.getNum() == ship && state == State.PLAYING && ep.getStatus() != Status.LAGGED && ep.getStatus() != Status.OUT && ep.getStatus() != Status.SPEC) {
                     ba.sendPrivateMessage(name, "You can not do a scorereset while playing a game with the ship you want to reset.");
                     return;
                 } else 
@@ -675,7 +675,7 @@ public class roboref extends SubspaceBot {
         if (game != null) {
             ElimPlayer ep = game.getPlayer(name);
             if (ep != null) {
-                if (ep.status == Status.LAGGED)
+                if (ep.getStatus() == Status.LAGGED)
                     game.do_lagout(name);
                 else
                     ba.sendPrivateMessage(name, "You are not in the game.");

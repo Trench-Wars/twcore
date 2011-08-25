@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
-import twcore.bots.roboref.ElimPlayer.BasePos;
 import twcore.bots.roboref.ElimPlayer.Status;
 import twcore.bots.roboref.roboref.ShipType;
 import twcore.bots.roboref.roboref.State;
@@ -163,7 +162,7 @@ public class ElimGame {
                 }
                 ep.setStatus(Status.IN);
                 if (ship.inBase())
-                    ep.setPosition(BasePos.SPAWNING);
+                    ep.setStatus(Status.SPAWN);
                 winners.add(name.toLowerCase());
             } else
                 winners.remove(name.toLowerCase());
@@ -176,7 +175,7 @@ public class ElimGame {
                     ba.cancelTask(spawns.remove(low(name)));
                 ElimPlayer ep = getPlayer(name);
                 if (ep != null)
-                    ep.setPosition(BasePos.SPAWNING);
+                    ep.setStatus(Status.SPAWN);
             }
         }
     }
@@ -188,32 +187,35 @@ public class ElimGame {
         if (p == null) return;
         int y = event.getYLocation();
         ElimPlayer ep = getPlayer(p.getPlayerName());
-        if (ep != null && ep.status == Status.IN) {
+        if (ep != null) {
+        	// outside-started: just spawned, flew out-first, flew out-second, still outside
+        	// inside-started: entered post-spawn, returned, still in
             if (y > BASE_ENTRANCE) {
-                if (!started) {
-                    if (ep.getPosition() != BasePos.SPAWNING)
-                        ep.setPosition(BasePos.SPAWNING);
-                } else if (ep.getPosition() == BasePos.IN) {
-                    if (ship != ShipType.WEASEL && !spawns.containsKey(low(ep.name)))
-                        outsiders.put(low(ep.name), new OutOfBounds(ep));
-                    else {
-                        if (ep.handleWarp()) {
-                            ba.sendArenaMessage(ep.name + " is out. " + ep.getScore() + " (warp abuse)");
-                            removePlayer(ep);
-                        } else {
-                            ba.sendPrivateMessage(ep.name, "Warping is illegal! You gained a death as a result.");
-                            sendWarp(ep.name);
-                        }
-                    }
-                } else if (ep.getPosition() == BasePos.WARNED_IN)
-                    removeOutsider(ep);
+            	if (started) {
+            		if (ship != ShipType.WEASEL) {
+            			if (ep.getStatus() == Status.IN)
+            				outsiders.put(low(ep.name), new OutOfBounds(ep));
+            			else if (ep.getStatus() == Status.WARNED_IN)
+            				removeOutsider(ep);
+            		} else {
+            			if (ep.handleWarp()) {
+            				ba.sendArenaMessage(ep.name + " is out. " + ep.getScore() + " (warp abuse)");
+            				removePlayer(ep);
+            			} else {
+            				ba.sendPrivateMessage(ep.name, "Warping is illegal! You gained a death as a result.");
+            				sendWarp(ep.name);
+            			}
+            		}
+            	} else
+            		ep.setStatus(Status.SPAWN);
             } else {
-            	if (ep.getPosition() != BasePos.WARNED_OUT)
-            		ep.setPosition(BasePos.IN);
-                if (spawns.containsKey(low(ep.name)))
-                    spawns.remove(low(ep.name)).returned();
-                if (outsiders.containsKey(low(ep.name)))
-                    outsiders.get(low(ep.name)).returned();
+            	if (started) {
+                    if (spawns.containsKey(low(ep.name)))
+                        spawns.remove(low(ep.name)).returned();
+                    if (outsiders.containsKey(low(ep.name)))
+                        outsiders.get(low(ep.name)).returned();
+            	} else
+            		ep.setStatus(Status.IN);
             }
         }
     }
@@ -222,38 +224,24 @@ public class ElimGame {
     public void handleEvent(PlayerLeft event) {
         String name = ba.getPlayerName(event.getPlayerID());
         if (name == null || !winners.contains(low(name))) return;
-        if (started) {
+        if (started)
             handleLagout(name);
-            if (ship.inBase()) {
-                if (outsiders.containsKey(low(name)))
-                    ba.cancelTask(outsiders.remove(low(name)));
-                if (spawns.containsKey(low(name)))
-                    spawns.remove(low(name)).returned();
-                ElimPlayer ep = getPlayer(name);
-                if (ep != null)
-                    ep.setPosition(BasePos.SPAWNING);
-            }
-        } else {
+        else {
             winners.remove(low(name));
             ElimPlayer ep = getPlayer(name);
-            ep.setStatus(Status.SPEC);
-            if (ship.inBase()) 
-                ep.setPosition(BasePos.SPAWNING);
+            if (ep != null)
+            	ep.setStatus(Status.SPEC);
         }
     }
     
     /** Handles spawning related tasks like warping and prizing */
     public void handleSpawn(ElimPlayer ep, boolean instant) {
         final String name = ep.name;
-        ep.setPosition(BasePos.SPAWNING);
-        
+        ep.setStatus(Status.SPAWN);
         if (ship.inBase()) {
-            if (ship != ShipType.WEASEL) {
-                if (!instant)
-                    spawns.put(low(ep.name), new SpawnTimer(ep, true));
-                else
-                    spawns.put(low(ep.name), new SpawnTimer(ep, false));
-            } else {
+            if (ship != ShipType.WEASEL)
+                spawns.put(low(ep.name), new SpawnTimer(ep, !instant));
+            else {
                 if (!instant) {
                     TimerTask warp = new TimerTask() {
                         public void run() {
@@ -280,10 +268,10 @@ public class ElimGame {
     /** Handles a lagged out player */
     public void handleLagout(String name) {
         ElimPlayer ep = getPlayer(name);
-        if (ep != null && ep.status == Status.IN) {
+        if (ep != null) {
             if (ep.getLagouts() > 0) {
                 ep.setStatus(Status.LAGGED);
-                laggers.put(name.toLowerCase(), new Lagout(name));
+                laggers.put(low(name), new Lagout(name));
             } else {
                 ba.sendArenaMessage(name + " is out. " + ep.getScore() + " (Too many lagouts)");
                 removePlayer(ep);
@@ -295,7 +283,7 @@ public class ElimGame {
                     ba.cancelTask(spawns.remove(low(name)));
             }
         }
-        winners.remove(name.toLowerCase());
+        winners.remove(low(name));
         if (started)
             checkWinner();
     }
@@ -378,10 +366,11 @@ public class ElimGame {
                     ElimPlayer ep = getPlayer(name);
                     if (ep != null) {
                         ba.scoreReset(name);
-                        if (ship == ShipType.WEASEL)
-                            sendWarp(name);
-                        else if (ship.inBase() && ep.getPosition() == BasePos.SPAWNING)
-                            spawns.put(low(name), new SpawnTimer(ep, false));
+                        if (ship != ShipType.WEASEL) {
+                        	if (ep.getStatus() == Status.SPAWN)
+                        		spawns.put(low(name), new SpawnTimer(ep, false));
+                        } else
+                        	sendWarp(name);
                     }
                 }
                 hiderFinder = new HiderFinder();
@@ -538,7 +527,7 @@ public class ElimGame {
             ba.cancelTask(lagger);
             ElimPlayer ep = getPlayer(lagger.name);
             if (ep != null) {
-                ep.setStatus(Status.SPEC);
+                ep.setStatus(Status.OUT);
                 ep.saveLoss();
                 bot.updatePlayer(ep);
             }
@@ -762,23 +751,24 @@ public class ElimGame {
          */
         public OutOfBounds(ElimPlayer ep) {
             //bot.debug("OutOfBounds timer created for: " + ep.name);
-            ba.scheduleTask(this, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
             player = ep;
-            player.sendOutsideWarning(BOUNDARY_TIME);
+            player.setStatus(Status.WARNED_OUT);
+            ba.sendPrivateMessage(player.name, "WARNING: You have " + BOUNDARY_TIME + " seconds to return to base or you will be disqualified.");
+            ba.scheduleTask(this, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
         }
         
         @Override
         public void run() {
-            if (player.getPosition() == BasePos.WARNED_OUT)
+            if (player.getStatus() == Status.WARNED_OUT)
                 removeOutsider(player);
+            outsiders.remove(low(player.name));
         }
         
         /** Handles the clean up when a player reaches base before the Timer executes */
         public void returned() {
             //bot.debug("OutOfBounds timer return canceled for: " + player.name);
-            ba.cancelTask(this);
-            outsiders.remove(low(player.name));
-            player.setPosition(BasePos.WARNED_IN);
+            player.setStatus(Status.WARNED_IN);
+            ba.cancelTask(outsiders.remove(low(player.name)));
         }
     }
     
@@ -798,7 +788,7 @@ public class ElimGame {
             warned = false;
             //bot.debug("Spawn timer created for: " + ep.name);
             if (justDied) {
-                player.setPosition(BasePos.SPAWNING);
+                player.setStatus(Status.SPAWN);
                 ba.scheduleTask(this, (BOUND_START + SPAWN_TIME) * Tools.TimeInMillis.SECOND);
             } else
                 ba.scheduleTask(this, BOUND_START * Tools.TimeInMillis.SECOND);
@@ -813,10 +803,6 @@ public class ElimGame {
         
         @Override
         public void run() {
-            if (player.getPosition() != BasePos.SPAWNING) {
-                spawns.remove(low(player.name));
-                return;
-            }
             if (!warned) {
                 //bot.debug("Spawn warning sent to: " + player.name);
                 ba.sendPrivateMessage(player.name, "Go to BASE, or you will be disqualified!");
@@ -830,10 +816,8 @@ public class ElimGame {
         /** Handles the clean up when a player reaches base before the Timer executes */
         public void returned() {
             //bot.debug("Spawn timer return canceled for: " + player.name);
-            ba.cancelTask(this);
-            spawns.remove(low(player.name));
-            if (player.getPosition() != BasePos.IN)
-                player.setPosition(BasePos.IN);
+            player.setStatus(Status.IN);
+            ba.cancelTask(spawns.remove(low(player.name)));
         }
     }
     

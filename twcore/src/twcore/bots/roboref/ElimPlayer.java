@@ -16,8 +16,7 @@ public class ElimPlayer {
 
     BotAction ba;
     
-    enum Status { SPEC, IN, LAGGED, OUT };
-    enum BasePos { NA, SPAWNING, SPAWN, IN, WARNED_OUT, WARNED_IN };
+    enum Status { SPEC, DEAD, SPAWN, IN, WARNED_OUT, WARNED_IN, OUT, LAGGED };
 
     public String[] streaks = {
             "On Fire!",
@@ -44,7 +43,6 @@ public class ElimPlayer {
     public static final int MULTI_KILL_TIME = 5; // seconds 
     public static final String db = "website";
     public Status status;
-    public BasePos pos;
     public String name;
     
     private ElimStats stats;
@@ -55,7 +53,6 @@ public class ElimPlayer {
         ba = act;
         this.name = name;
         stats = null;
-        status = Status.SPEC;
         lagouts = 3;
         consecutiveKills = 0;
         lastKill = 0;
@@ -63,7 +60,7 @@ public class ElimPlayer {
         lastDeath = 0;
         specAt = -1;
         freq = 9998;
-        pos = BasePos.NA;
+        status = Status.SPEC;
     }
     
     /**
@@ -72,7 +69,7 @@ public class ElimPlayer {
      * @return boolean array where 0=elimination and 1=KillJoy
      */
     public boolean[] handleDeath(ElimPlayer killer) {
-        pos = BasePos.SPAWNING;
+        status = Status.DEAD;
         lastDeath = System.currentTimeMillis();
         boolean[] vars = new boolean[] { false, false };
         if (stats.getStat(StatType.KILL_STREAK) > 1) {
@@ -200,21 +197,12 @@ public class ElimPlayer {
     
     /** Lagout command execution */
     public void lagin() {
-        status = Status.IN;
+        status = Status.SPAWN;
         lagouts--;
     }
     
-    public BasePos getPosition() {
-        return pos;
-    }
-    
-    public void setPosition(BasePos pos) {
-        this.pos = pos;
-    }
-    
-    public void sendOutsideWarning(int time) {
-        setPosition(BasePos.WARNED_OUT);
-        ba.sendPrivateMessage(name, "WARNING: You have " + time + " seconds to return to base or you will be disqualified.");
+    public Status getStatus() {
+        return status;
     }
     
     /** Get kills and deaths String */
@@ -263,7 +251,7 @@ public class ElimPlayer {
     /** Prepare the statistic handler with the specified ship */
     public void loadStats(int ship, int spec) {
         if (isLoaded()) return;
-        status = Status.IN;
+        status = Status.SPAWN;
         specAt = spec;
         stats = new ElimStats(ship);
     }
