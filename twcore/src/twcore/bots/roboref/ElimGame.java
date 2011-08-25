@@ -151,6 +151,7 @@ public class ElimGame {
                     ep = new ElimPlayer(ba, name);
                     players.put(name.toLowerCase(), ep);
                     ep.loadStats(ship.getNum(), deaths);
+                    ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
                 }
                 ep.setStatus(Status.IN);
                 if (ship.inBase())
