@@ -667,7 +667,6 @@ public class roboref extends SubspaceBot {
     public void setWinner(ElimPlayer winner) {
         this.winner = winner;
         updatePlayer(winner);  
-        game.storeLosses();
         handleState();
     }
     
@@ -815,6 +814,7 @@ public class roboref extends SubspaceBot {
         if (winner != null && game != null && game.mvp != null) {
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
             ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);  
+            game.storeLosses();
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
             else
