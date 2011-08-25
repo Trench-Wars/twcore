@@ -770,7 +770,7 @@ public class ElimGame {
         
         /** Handles the clean up when a player reaches base before the Timer executes */
         public void returned() {
-            bot.debug("OutOfBounds timer return canceled for: " + player.name);
+            //bot.debug("OutOfBounds timer return canceled for: " + player.name);
             ba.cancelTask(this);
             outsiders.remove(low(player.name));
             if (lastWarning)
@@ -809,7 +809,7 @@ public class ElimGame {
 
         /** Handles the clean up when a player reaches base before the Timer executes */
         public void returned() {
-            bot.debug("Spawn timer return canceled for: " + player.name);
+            //bot.debug("Spawn timer return canceled for: " + player.name);
             ba.cancelTask(this);
             spawns.remove(low(player.name));
             if (player.getPosition() != BasePos.IN)

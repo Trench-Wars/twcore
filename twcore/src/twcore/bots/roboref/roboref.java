@@ -111,6 +111,7 @@ public class roboref extends SubspaceBot {
     ElimGame game;
     Vector<ElimGame> gameLog;
     HashMap<String, Integer> votes;
+    HashSet<String> alerts;
     
     boolean DEBUG;
     String debugger;
@@ -119,6 +120,7 @@ public class roboref extends SubspaceBot {
     static final String db = "website";
     static final int INITIAL_RATING = 300;
     static final int MIN_ZONER = 15;       // The minimum amount of minutes in between zoners
+    static final int ALERT_DELAY = 2;      // Minimum amount of time between alert messages
     
     TimerTask timer;
     String arena;
@@ -127,7 +129,7 @@ public class roboref extends SubspaceBot {
     int deaths;
     int winStreak;
     int voteTime;
-    long lastZoner;
+    long lastZoner, lastAlert;
     String[] updateFields;
     boolean shrap;
     boolean arenaLock;
@@ -154,11 +156,13 @@ public class roboref extends SubspaceBot {
             lastZoner = System.currentTimeMillis();
         else
             lastZoner = -1;
+        lastAlert = 0;
         spy = new Spy(ba);
         DEBUG = false;
         debugger = "";
         gameLog = new Vector<ElimGame>();
         votes = new HashMap<String, Integer>();
+        alerts = new HashSet<String>();
         state = State.IDLE;
         voteType = VoteType.NA;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
@@ -352,6 +356,9 @@ public class roboref extends SubspaceBot {
         }
         
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
+            if (msg.equals("!alert"))
+                cmd_alert(name);
+            
             if (oplist.isModerator(name)) {
                 if (msg.equals("!die"))
                     cmd_die(name);
@@ -414,6 +421,7 @@ public class roboref extends SubspaceBot {
     public void cmd_help(String name) {
         String[] msg = new String[] {
                 ",-- Robo Ref Commands -------------------------------------------------------------------.",
+                "|!alert            - Toggles new game private message alerts on or off                   |",
                 "|!lagout           - Return to game after lagging out                                    |",
                 "|!status           - Displays current game status                                        |",
                 "|!rank <#>         - Shows your current rank in ship <#>                                 |",
@@ -669,6 +677,15 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, "There is not a game being played.");
     }
     
+    public void cmd_alert(String name) {
+        if (alerts.remove(name.toLowerCase()))
+            ba.sendSmartPrivateMessage(name, "New game alert messages DISABLED.");
+        else {
+            alerts.add(name.toLowerCase());
+            ba.sendSmartPrivateMessage(name, "New game alert messages ENABLED.");
+        }
+    }
+    
     /** Handles the !debug command which enables or disables debug mode */
     public void cmd_debug(String name) {
         if (!DEBUG) {
@@ -798,6 +815,7 @@ public class roboref extends SubspaceBot {
     private void doWaiting() {
         sendZoner();
         if (ba.getNumPlaying() > 1) {
+            sendAlerts();
             state = State.VOTING;
             votes.clear();
             voteType = VoteType.NA;
@@ -1003,16 +1021,12 @@ public class roboref extends SubspaceBot {
         handleState();
     }
     
-    /** Prevents the game from starting usually due to lack of players */
-    public void abort() {
-        game = null;
-        state = State.WAITING;
-        voteType = VoteType.NA;
-        votes.clear();
-        arenaLock = false;
-        ba.toggleLocked();
-        ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
-        handleState();
+    private void sendAlerts() {
+        long now = System.currentTimeMillis();
+        if ((now - lastAlert) < ALERT_DELAY * Tools.TimeInMillis.MINUTE) return; 
+        for (String p : alerts)
+            ba.sendSmartPrivateMessage(p, "The next game of elim is about to begin in ?go " + arena + " (reply with !alert to disable this message)");
+        lastAlert = now;
     }
     
     /** Sends periodic zone messages advertising elim and announcing streaks */
@@ -1038,6 +1052,18 @@ public class roboref extends SubspaceBot {
         else
             m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
         lastZoner = System.currentTimeMillis();
+    }
+    
+    /** Prevents the game from starting usually due to lack of players */
+    public void abort() {
+        game = null;
+        state = State.WAITING;
+        voteType = VoteType.NA;
+        votes.clear();
+        arenaLock = false;
+        ba.toggleLocked();
+        ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
+        handleState();
     }
     
     /** Requests the needed events */
