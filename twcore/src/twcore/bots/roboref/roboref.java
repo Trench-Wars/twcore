@@ -666,7 +666,6 @@ public class roboref extends SubspaceBot {
     /** Sets the winner of the last elim event prompting end game routines */
     public void setWinner(ElimPlayer winner) {
         this.winner = winner;
-        updatePlayer(winner);  
         handleState();
     }
     
@@ -812,6 +811,7 @@ public class roboref extends SubspaceBot {
     /** Playing state runs after winner is set and ends game accordingly */
     private void doPlaying() {
         if (winner != null && game != null && game.mvp != null) {
+            updatePlayer(winner);  
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
             ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);  
             game.storeLosses();
