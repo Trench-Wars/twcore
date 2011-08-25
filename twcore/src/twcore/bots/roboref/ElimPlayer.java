@@ -253,6 +253,7 @@ public class ElimPlayer {
     
     /** Feed stats from the database query into the local database stat reference */
     public void loadStats(ResultSet rs) throws SQLException {
+        ba.sendSmartPrivateMessage("WingZero", "Loading stats for: " + name);
         stats.loadStats(rs);
     }
     
