@@ -147,6 +147,7 @@ public class ElimGame {
     /** Catch potential lagouts and/or update player game status */
     public void handleEvent(FrequencyShipChange event) {
         String name = ba.getPlayerName(event.getPlayerID());
+        if (name == null) return;
         if (!started) {
             if (event.getShipType() > 0) {
                 laggers.remove(name.toLowerCase());
@@ -458,7 +459,7 @@ public class ElimGame {
             }
         }
         laggers.clear();
-    }
+    } 
     
     /** Stores the finished game information to the database */
     public void storeGame() {
