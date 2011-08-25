@@ -549,6 +549,7 @@ public class ElimGame {
             winner.saveWin();
             setMVP();
             storeGame();
+            storeLosses();
             bot.setWinner(winner);      
         }
     }
