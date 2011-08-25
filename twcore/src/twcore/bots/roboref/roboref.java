@@ -30,6 +30,7 @@ import twcore.core.events.PlayerPosition;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
+import twcore.core.util.Spy;
 import twcore.core.util.Tools;
 
 /**
@@ -131,6 +132,8 @@ public class roboref extends SubspaceBot {
     boolean shrap;
     boolean arenaLock;
 
+    private Spy spy;
+    
     private PreparedStatement updateStats;
     //private PreparedStatement updateRank;
     
@@ -151,6 +154,7 @@ public class roboref extends SubspaceBot {
             lastZoner = System.currentTimeMillis();
         else
             lastZoner = -1;
+        spy = new Spy(ba);
         DEBUG = false;
         debugger = "";
         gameLog = new Vector<ElimGame>();
@@ -242,11 +246,8 @@ public class roboref extends SubspaceBot {
                 return;
             } else if (game != null && id.startsWith("load:")) {
                 String name = id.substring(id.indexOf(":") + 1).toLowerCase();
-                ElimPlayer ep = game.getPlayer(name);
-                if (ep == null) return;
                 if (rs.next() && rs.getInt("fnShip") == shipType.getNum()) {
-                    ep.loadStats(shipType.getNum(), deaths);
-                    ep.loadStats(rs);
+                    game.handleStats(name, rs);
                 } else {
                     ba.SQLQueryAndClose(db, "INSERT INTO tblElim__Player (fcName, fnShip) VALUES('" + Tools.addSlashesToString(name) + "', " + shipType.getNum() + ")");
                     ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + shipType.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
@@ -360,6 +361,7 @@ public class roboref extends SubspaceBot {
                     cmd_start(name);
             }
         }
+        spy.handleEvent(event);
     }
     
     /** Handles potential votes read from public chat during a voting period */
@@ -801,7 +803,7 @@ public class roboref extends SubspaceBot {
                     ba.sendArenaMessage(erules);
                     arenaLock = true;
                     ba.toggleLocked();
-                    game.startGame();
+                    game.checkStats();
                 }
             }
         };

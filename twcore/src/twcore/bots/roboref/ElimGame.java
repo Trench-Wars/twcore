@@ -1,5 +1,7 @@
 package twcore.bots.roboref;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,8 +38,10 @@ public class ElimGame {
     roboref bot;
 
     private static final int BASE_ENTRANCE = 222 * 16;
+    static final int HIDER_TIME = 60;                   // minimum seconds between shots before announcing location
+    static final int HIDER_CHECK = 30;                   // seconds between hider checks
     static final int MAX_LAG_TIME = 60;                 // seconds
-    static final int MIN_LAG_TIME = 10;                  // seconds
+    static final int MIN_LAG_TIME = 10;                 // seconds
     static final int OUT_OF_BOUNDS = 30;                // seconds
     static final int BOUNDARY_TIME = 20;                // max seconds outside base until dq
     static final int BOUND_START = 10;                  // seconds after game starts until player is warned for oob
@@ -53,7 +57,7 @@ public class ElimGame {
     int deaths;
     int playerCount;
     int ratingCount;
-    boolean shrap, started;
+    boolean shrap, statCheck, started;
     TimerTask starter;
     
     HashMap<String, ElimPlayer> players;    // holds any ElimPlayer regardless of activity
@@ -62,6 +66,7 @@ public class ElimGame {
     HashMap<String, SpawnTimer> spawns;     // used for players who havent entered base ater start
     TreeSet<String> winners;
     HashSet<String> losers;
+    HashSet<String> loaded;                 // list used to make sure all players have stat tracking ready
     HashMap<String, Lagout> laggers;
     ElimPlayer winner;
     String mvp;
@@ -87,6 +92,7 @@ public class ElimGame {
         this.shrap = shrap;
         ratingCount = 0;
         playerCount = 0;
+        statCheck = false;
         started = false;
         winner = null;
         mvp = null;
@@ -94,6 +100,7 @@ public class ElimGame {
         played = new HashMap<String, ElimPlayer>();
         winners = new TreeSet<String>();
         losers = new HashSet<String>();
+        loaded = new HashSet<String>();
         laggers = new HashMap<String, Lagout>();
         outsiders = new HashMap<String, OutOfBounds>();
         spawns = new HashMap<String, SpawnTimer>();
@@ -106,7 +113,7 @@ public class ElimGame {
             ep.loadStats(ship.getNum(), deaths);
             players.put(low, ep);
             winners.add(low);
-            ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+            requestStats(name);
         }
     }
     
@@ -150,8 +157,7 @@ public class ElimGame {
                 } else {
                     ep = new ElimPlayer(ba, name);
                     players.put(name.toLowerCase(), ep);
-                    ep.loadStats(ship.getNum(), deaths);
-                    ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+                    requestStats(name);
                 }
                 ep.setStatus(Status.IN);
                 if (ship.inBase())
@@ -290,6 +296,48 @@ public class ElimGame {
         winners.remove(name.toLowerCase());
         if (started)
             checkWinner();
+    }
+    
+    public void handleStats(String name, ResultSet rs) {
+        ElimPlayer ep = getPlayer(name);
+        if (ep == null) return;
+        ep.loadStats(ship.getNum(), deaths);
+        try {
+            ep.loadStats(rs);
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+        if (ep.isLoaded())
+            loaded.add(low(name));
+        if (statCheck)
+            checkStats();
+    }
+    
+    public void checkStats() {
+        statCheck = true;
+        HashSet<String> errors = new HashSet<String>();
+        for (String name : winners) {
+            if (!loaded.contains(name))
+                errors.add(name);
+        }
+        if (errors.isEmpty()) {
+            bot.debug("All player stats loaded and ready!");
+            startGame();
+        } else {
+            bot.debug("Error, " + errors.size() + " players missing stat records.");
+            for (String name : errors)
+                requestStats(name);
+        }
+        ba.sendArenaMessage("All player stats loaded successfully.");
+    }
+    
+    private void requestStats(String name) {
+        ElimPlayer ep = getPlayer(name);
+        if (ep != null) {
+            if (ep.getStats() == null)
+                ep.loadStats(ship.getNum(), deaths);
+        }
+        ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
     }
     
     /** Start elim 10 second countdown */
@@ -495,6 +543,12 @@ public class ElimGame {
     /** Remove player from the game player list into the loser list and flush stats */
     public void removePlayer(ElimPlayer loser) {
         loser.setStatus(Status.OUT);
+        if (ship.inBase()) {
+            if (spawns.containsKey(low(loser.name)))
+                ba.cancelTask(spawns.remove(low(loser.name)));
+            if (outsiders.containsKey(low(loser.name)))
+                ba.cancelTask(outsiders.remove(low(loser.name)));
+        }
         ba.specWithoutLock(loser.name);
         winners.remove(low(loser.name));
         losers.add(low(loser.name));
@@ -722,6 +776,19 @@ public class ElimGame {
             if (player.getPosition() != BasePos.IN)
                 player.setPosition(BasePos.IN);
         }
+    }
+    
+    private class HiderFinder extends TimerTask {
+
+        public HiderFinder() {
+            ba.scheduleTask(this, Tools.TimeInMillis.MINUTE, HIDER_CHECK * Tools.TimeInMillis.SECOND);
+        }
+        
+        @Override
+        public void run() {
+            
+        }
+        
     }
     
     /** Comparator used to determine the MVP of a game. Player with highest kills -> least deaths -> best aim -> random */

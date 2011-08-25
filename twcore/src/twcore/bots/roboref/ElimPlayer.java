@@ -44,12 +44,12 @@ public class ElimPlayer {
     public static final int MULTI_KILL_TIME = 5; // seconds 
     public static final String db = "website";
     public Status status;
-    private BasePos pos;
+    public BasePos pos;
     public String name;
     
     private ElimStats stats;
     private int consecutiveKills, lagouts, freq, specAt, lastStreak;
-    private long lastKill;
+    private long lastKill, lastDeath, lastShot;
     
     public ElimPlayer(BotAction act, String name) {
         ba = act;
@@ -59,6 +59,8 @@ public class ElimPlayer {
         lagouts = 3;
         consecutiveKills = 0;
         lastKill = 0;
+        lastShot = 0;
+        lastDeath = 0;
         specAt = -1;
         freq = 9998;
         pos = BasePos.NA;
@@ -71,6 +73,7 @@ public class ElimPlayer {
      */
     public boolean[] handleDeath(ElimPlayer killer) {
         pos = BasePos.SPAWNING;
+        lastDeath = System.currentTimeMillis();
         boolean[] vars = new boolean[] { false, false };
         if (stats.getStat(StatType.KILL_STREAK) > 1) {
             lastStreak = stats.getStat(StatType.KILL_STREAK);
@@ -126,6 +129,7 @@ public class ElimPlayer {
     
     /** Increment shot fired statistic */
     public void handleShot() {
+        lastShot = System.currentTimeMillis();
         stats.incrementStat(StatType.SHOTS);
     }
     
@@ -160,6 +164,14 @@ public class ElimPlayer {
     
     public double getAim() {
         return stats.getAim(StatType.AIM);
+    }
+    
+    public int getLastShot() {
+        return ((int)(System.currentTimeMillis() - lastShot) / Tools.TimeInMillis.SECOND);
+    }
+    
+    public int getLastDeath() {
+        return ((int)(System.currentTimeMillis() - lastDeath) / Tools.TimeInMillis.SECOND);
     }
 
     /** Returns the remaining lagouts left */
@@ -219,6 +231,11 @@ public class ElimPlayer {
         return stats.getStreak(name);
     }
     
+    public boolean isLoaded() {
+        if (stats == null) return false;
+        return stats.isLoaded();
+    }
+    
     /** Returns this player's stat tracker */
     public ElimStats getStats() {
         return stats;
@@ -245,7 +262,7 @@ public class ElimPlayer {
     
     /** Prepare the statistic handler with the specified ship */
     public void loadStats(int ship, int spec) {
-        if (stats != null && stats.isLoaded()) return;
+        if (isLoaded()) return;
         status = Status.IN;
         specAt = spec;
         stats = new ElimStats(ship);
