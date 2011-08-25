@@ -442,6 +442,7 @@ public class roboref extends SubspaceBot {
         ba.privateMessageSpam(name, msg);
         if (oplist.isModerator(name)) {
             msg = new String[] {
+                    "|                                                                                        |",
                     ":-- Staff Commands ----------------------------------------------------------------------+",
                     "|!die              - Forces the bot to shutdown and log off                              |",
                     "|!stop             - Kills current game and prevents any future games (!off)             |",
@@ -452,6 +453,7 @@ public class roboref extends SubspaceBot {
         }
         if (oplist.isSmod(name)) {
             msg = new String[] {
+                    "|                                                                                        |",
                     ":-- Smod Commands -----------------------------------------------------------------------+",
                     "|!zone             - Forces the bot to send a default zone message                       |",
                     "|!hider            - Disables the hiding player checker/reporter (only during games)     |",
