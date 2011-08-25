@@ -39,7 +39,7 @@ public class ElimGame {
 
     private static final int BASE_ENTRANCE = 222 * 16;
     static final int HIDER_TIME = 60;                   // minimum seconds between shots before announcing location
-    static final int HIDER_CHECK = 30;                   // seconds between hider checks
+    static final int HIDER_CHECK = 40;                   // seconds between hider checks
     static final int MAX_LAG_TIME = 60;                 // seconds
     static final int MIN_LAG_TIME = 10;                 // seconds
     static final int BOUNDARY_TIME = 20;                // max seconds outside base until dq
