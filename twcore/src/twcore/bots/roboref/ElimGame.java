@@ -683,10 +683,9 @@ public class ElimGame {
         public void returned() {
             ba.cancelTask(this);
             outsiders.remove(low(player.name));
-            if (lastWarning) {
+            if (lastWarning)
                 player.setPosition(BasePos.WARNED_IN);
-                ba.sendPrivateMessage(player.name, "If you leave the base again before your next death, you will be disqualified.");
-            } else
+            else
                 player.setPosition(BasePos.IN);
         }
     }
