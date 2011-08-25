@@ -336,7 +336,6 @@ public class ElimGame {
             for (String name : errors)
                 requestStats(name);
         }
-        ba.sendArenaMessage("All player stats loaded successfully.");
     }
     
     private void requestStats(String name) {
@@ -468,7 +467,7 @@ public class ElimGame {
     
     /** Handles the grunt work called for by the !who command */
     public void do_who(String name) {
-        String msg = "" + winners.size() + " players remaining (* means lagged):";
+        String msg = "" + winners.size() + " players remaining (* prefix == lagged out):";
         ba.sendPrivateMessage(name, msg);
         msg = "";
         for (String p : winners) {
@@ -756,7 +755,7 @@ public class ElimGame {
          * @param lastWarning Boolean used to indicate if the player has just spawned or was in base before hand
          */
         public OutOfBounds(ElimPlayer ep, boolean lastWarning) {
-            bot.debug("OutOfBounds timer created for: " + ep.name);
+            //bot.debug("OutOfBounds timer created for: " + ep.name);
             ba.scheduleTask(this, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
             player = ep;
             player.sendOutsideWarning(BOUNDARY_TIME);
@@ -793,7 +792,7 @@ public class ElimGame {
          */
         public SpawnTimer(ElimPlayer ep, boolean spawning) {
             player = ep;
-            bot.debug("Spawn timer created for: " + ep.name);
+            //bot.debug("Spawn timer created for: " + ep.name);
             if (spawning) {
                 player.setPosition(BasePos.SPAWNING);
                 ba.scheduleTask(this, (BOUND_START + SPAWN_TIME) * Tools.TimeInMillis.SECOND);
