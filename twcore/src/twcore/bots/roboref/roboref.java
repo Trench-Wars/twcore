@@ -812,7 +812,13 @@ public class roboref extends SubspaceBot {
     private void doPlaying() {
         if (winner != null && game != null && game.mvp != null) {
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
-            ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);  
+            final String mvp = game.mvp;
+            TimerTask t = new TimerTask() {
+                public void run() {
+                    ba.sendArenaMessage("MVP: " + mvp, Tools.Sound.INCONCEIVABLE);  
+                }
+            };
+            ba.scheduleTask(t, 3000);
             updatePlayer(winner);  
             game.storeLosses();
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
