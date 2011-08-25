@@ -317,7 +317,7 @@ public class ElimGame {
     }
     
     public void handleHider(String msg) {
-        if (hiderFinder != null && msg.length() - msg.indexOf(":") == 5)
+        if (hiderFinder != null && msg.length() - msg.indexOf(":") <= 5)
             hiderFinder.revealHider(msg);
     }
     
@@ -801,7 +801,10 @@ public class ElimGame {
     
     private class HiderFinder extends TimerTask {
 
+        boolean reported;
+        
         public HiderFinder() {
+            reported = false;
             ba.scheduleTask(this, Tools.TimeInMillis.MINUTE, HIDER_CHECK * Tools.TimeInMillis.SECOND);
         }
         
@@ -822,7 +825,10 @@ public class ElimGame {
                     if (p1.name.equals(p2.name))
                         return;
                     if (isHiding(p1) && isHiding(p2)) {
-                        ba.sendUnfilteredPublicMessage("?cheater " + p1.name + " and " + p2.name + " possibly stalling elim by refusing to fight.");
+                        if (!reported) {
+                            reported = true;
+                            ba.sendUnfilteredPublicMessage("?cheater " + p1.name + " and " + p2.name + " possibly stalling elim by refusing to fight.");
+                        }
                     } else {
                         if (isHiding(p1))
                             getCoord(p1.name);
@@ -851,7 +857,7 @@ public class ElimGame {
             String coord = msg.substring(msg.indexOf(":") + 1);
             for (String p : winners) {
                 if (!p.equalsIgnoreCase(name))
-                    ba.sendPrivateMessage(p, name + " is potentially hidding at " + coord + " - Get em!");
+                    ba.sendPrivateMessage(p, name + " is potentially hidding at:" + coord + " - Get em!");
             }
         }
     }
