@@ -352,27 +352,25 @@ public class roboref extends SubspaceBot {
         }
         
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
-            if (oplist.isSmod(name)) {
+            if (oplist.isModerator(name)) {
                 if (msg.equals("!die"))
                     cmd_die(name);
-                else if (msg.equals("!debug"))
-                    cmd_debug(name);
                 else if (msg.equals("!off") || msg.equals("!stop"))
                     cmd_stop(name);
                 else if (msg.equals("!on") || msg.equals("!start"))
                     cmd_start(name);
+                
+            }
+            if (oplist.isSmod(name)) {
+                if (msg.equals("!debug"))
+                    cmd_debug(name);
                 else if (msg.startsWith("!hide"))
                     cmd_hiderFinder(name);
+                else if (msg.startsWith("!greet "))
+                    ;
             }
         }
         spy.handleEvent(event);
-    }
-    
-    public void cmd_hiderFinder(String name) {
-        if (game != null && state == State.PLAYING)
-            game.do_hiderFinder(name);
-        else
-            ba.sendSmartPrivateMessage(name, "HiderFinder is only toggleable while there is a game being played.");
     }
     
     /** Handles potential votes read from public chat during a voting period */
@@ -413,22 +411,54 @@ public class roboref extends SubspaceBot {
     /** Handles the !help command */
     public void cmd_help(String name) {
         String[] msg = new String[] {
-                " !lagout           - Return to game after lagging out",
-                " !status           - Displays current game status",
-                " !rank <#>         - Displays your current rank in ship <#>",
-                " !rank <name>:<#>  - Displays the rank of <name> in ship <#>",
-                " !rec <#>          - Displays your own record in ship <#> or -1 for all ships",
-                " !rec <name>:<#>   - Displays the record of <name> in ship <#> or -1 for all ships",
-                " !who              - Displays the remaining players and their records",
-                " !stats <#>        - Displays all of your ship <#> statistics if available (-1 for all ships)",
-                " !stats <name>:<#> - Displays all statistic information for <name> in ship <#> if availabl (-1 for all ships)e",
-                " !streak           - Displays your current streak information",
-                " !streak <name>    - Displays streak information for <name>",
-                " !mvp              - Displays current game best/worst player record information",
-                " !deaths           - Displays current game most/least player death information",
-                " !scorereset <#>   - Resets all scores and statistics for the ship <#> specified (!sr)",
+                ",-- Robo Ref Commands --------------------------------------------------------------------.",
+                "| !lagout           - Return to game after lagging out                                    |",
+                "| !status           - Displays current game status                                        |",
+                "| !rank <#>         - Shows your current rank in ship <#>                                 |",
+                "| !rank <name>:<#>  - Shows the rank of <name> in ship <#>                                |",
+                "| !rec <#>          - Gets your own record in ship <#>                                    |",
+                "| !rec <name>:<#>   - Gets the record of <name> in ship <#>                               |",
+                "|                      NOTE: Use -1 as <#> for all ships                                  |",
+                "| !who              - Lists the remaining players and their records                       |",
+                "| !stats <#>        - Spams all of your ship <#> statistics if available                  |",
+                "| !stats <name>:<#> - Spams all statistic information for <name> in ship <#> if available |",
+                "|                      NOTE: Use -1 as <#> for all ships                                  |",
+                "| !streak           - Displays your current streak information                            |",
+                "| !streak <name>    - Displays streak information for <name>                              |",
+                "| !mvp              - Lists current game best/worst player record information             |",
+                "| !deaths           - Lists current game most/least player death information              |",
+                "| !scorereset <#>   - Resets all scores and statistics for the ship <#> specified (!sr)   |",
         };
         ba.privateMessageSpam(name, msg);
+        if (oplist.isModerator(name)) {
+            msg = new String[] {
+                    ",-- Staff Commands -----------------------------------------------------------------------+",
+                    "| !die              - Forces the bot to shutdown and log off                              |",
+                    "| !stop             - Kills current game and prevents any future games (!off)             |",
+                    "| !start            - Begins game and enables games to continue running (!on)             |",
+                    "| !remove <name>    - Removes <name> from the current game                                |",
+            };
+            ba.privateMessageSpam(name, msg);
+        }
+        if (oplist.isSmod(name)) {
+            msg = new String[] {
+                    ",-- Smod Commands ------------------------------------------------------------------------+",
+                    "| !hider            - Disables the hiding player checker/reporter (only during games)     |",
+                    "| !debug            - Toggles the debugger which sends debug messages to you when enabled |",
+                    "| !greet <msg>      - Changes the greeting message for the arena                          |",
+            };
+            ba.privateMessageSpam(name, msg);
+        }
+        ba.sendPrivateMessage(name, "`-----------------------------------------------------------------------------------------'");
+    }
+    
+    public void cmd_remove(String name, String cmd) {
+        if (state != State.PLAYING)
+            ba.sendPrivateMessage(name, "There is no game currently being played.");
+        else if (game != null) {
+            if (cmd.length() < 9) return;
+            game.do_remove(name, cmd.substring(cmd.indexOf(" ") + 1));
+        }
     }
     
     public void cmd_status(String name) {
@@ -651,6 +681,19 @@ public class roboref extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Debugging still ENABLED and you have replaced " + debugger + " as the debugger.");
             debugger = name;
         }
+    }
+    
+    public void cmd_greet(String name, String cmd) {
+        if (cmd.length() < 8) return;
+        ba.sendUnfilteredPublicMessage("?set misc:greetmessage:" + cmd.substring(cmd.indexOf(" ") + 1));
+        ba.sendSmartPrivateMessage(name, "Greeting set to: " + cmd.substring(cmd.indexOf(" ") + 1));
+    }
+    
+    public void cmd_hiderFinder(String name) {
+        if (game != null && state == State.PLAYING)
+            game.do_hiderFinder(name);
+        else
+            ba.sendSmartPrivateMessage(name, "HiderFinder is only toggleable while there is a game being played.");
     }
     
     /** Kills the bot */

@@ -507,6 +507,25 @@ public class ElimGame {
         }
     }
     
+    public void do_remove(String name, String player) {
+        String temp = ba.getFuzzyPlayerName(player);
+        if (temp != null && temp.equalsIgnoreCase(player)) {
+            if (spawns.containsKey(low(player)))
+                ba.cancelTask(spawns.remove(low(player)));
+            if (outsiders.containsKey(low(player)))
+                ba.cancelTask(outsiders.remove(low(player)));
+            winners.remove(low(player));
+            losers.remove(low(player));
+            played.remove(low(player));
+            players.remove(low(player));
+            ba.specWithoutLock(player);
+            ba.sendPrivateMessage(player, "You have been forcibly removed from the game.");
+            ba.sendPrivateMessage(name, player + " has been removed from the game.");
+            checkWinner();
+        } else
+            ba.sendPrivateMessage(name, "Player '" + player + "' not found in the arena.");
+    }
+    
     /** Record losses for anyone still lagged out */
     public void storeLosses() {
         for (Lagout lagger : laggers.values()) {
