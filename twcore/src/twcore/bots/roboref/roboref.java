@@ -148,7 +148,7 @@ public class roboref extends SubspaceBot {
         rules = ba.getBotSettings();
         arena = rules.getString("Arena1");
         if (rules.getInt("Zoners") == 1)
-            lastZoner = 0;
+            lastZoner = System.currentTimeMillis();
         else
             lastZoner = -1;
         DEBUG = false;
@@ -679,7 +679,7 @@ public class roboref extends SubspaceBot {
             for (int i = 0; i < updateFields.length; i++) {
                 String col = updateFields[i];
                 if (col.equals("fcName"))
-                    updateStats.setString(i + 1, name.name);
+                    updateStats.setString(i + 1, Tools.addSlashesToString(name.name));
                 else if (col.equals("fnShip"))
                     updateStats.setInt(i + 1, stats.getShip());
                 else {
@@ -693,6 +693,7 @@ public class roboref extends SubspaceBot {
                 }
             }
             updateStats.executeUpdate();
+            debug("Updated player: " + name.name);
             if (game.gotUpdate(name.name)) {
                 state = State.ENDING;
                 handleState();
@@ -811,16 +812,14 @@ public class roboref extends SubspaceBot {
     private void doPlaying() {
         if (winner != null && game != null && game.mvp != null) {
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
-            ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);    
-            winner.saveWin();
+            ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);  
+            updatePlayer(winner);  
             game.storeLosses();
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
             else
                 winStreak = 0;
             lastWinner = winner;
-            updatePlayer(winner);
-            winner = null;        
         }
     }
     
@@ -829,6 +828,7 @@ public class roboref extends SubspaceBot {
         state = State.UPDATING;
         gameLog.add(0, game);
         game = null;
+        winner = null;
         arenaLock = false;
         ba.toggleLocked();
         TimerTask enter = new TimerTask() {

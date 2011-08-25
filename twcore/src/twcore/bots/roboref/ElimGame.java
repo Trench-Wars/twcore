@@ -115,6 +115,10 @@ public class ElimGame {
         String killer = ba.getPlayerName(event.getKillerID());
         String killee = ba.getPlayerName(event.getKilleeID());
         if (killer == null || killee == null) return;
+        if (spawns.containsKey(low(killee)))
+            ba.cancelTask(spawns.remove(low(killee)));
+        if (outsiders.containsKey(low(killee)))
+            ba.cancelTask(outsiders.remove(low(killee)));
         if (!winners.contains(killer.toLowerCase()))
             ba.specWithoutLock(killer);
         else if (!winners.contains(killee.toLowerCase()))
@@ -122,8 +126,6 @@ public class ElimGame {
         ElimPlayer win = getPlayer(killer);
         ElimPlayer loss = getPlayer(killee);
         if (win != null && loss != null) {
-            if (outsiders.containsKey(low(killee)))
-                ba.cancelTask(outsiders.remove(low(killee)));
             String streak = win.handleKill(loss);
             if (streak != null)
                 ba.sendArenaMessage(streak);
@@ -182,13 +184,12 @@ public class ElimGame {
         if (p == null) return;
         int y = event.getYLocation();
         ElimPlayer ep = getPlayer(p.getPlayerName());
-        if (ep != null && ep.status != Status.OUT) {
-            BasePos pos = ep.getPosition();
+        if (ep != null && ep.status == Status.IN) {
             if (y > BASE_ENTRANCE) {
                 if (!started) {
-                    if (pos != BasePos.SPAWNING)
+                    if (ep.getPosition() != BasePos.SPAWNING)
                         ep.setPosition(BasePos.SPAWNING);
-                } else if (pos == BasePos.IN) {
+                } else if (ep.getPosition() == BasePos.IN) {
                     if (ship != ShipType.WEASEL)
                         outsiders.put(low(ep.name), new OutOfBounds(ep, true));
                     else {
@@ -201,12 +202,12 @@ public class ElimGame {
                             sendWarp(ep.name);
                         }
                     }
-                } else if (pos == BasePos.WARNED_IN)
+                } else if (ep.getPosition() == BasePos.WARNED_IN)
                     removeOutsider(ep);
             } else {
-                if (pos == BasePos.SPAWN)
+                if (ep.getPosition() == BasePos.SPAWN)
                     ep.setPosition(BasePos.IN);
-                else if (pos == BasePos.SPAWNING)
+                else if (ep.getPosition() == BasePos.SPAWNING)
                     ep.setPosition(BasePos.IN);
                 else if (spawns.containsKey(low(ep.name)))
                     spawns.remove(low(ep.name)).returned();
@@ -552,6 +553,7 @@ public class ElimGame {
     private void checkWinner() {
         if (winners.size() == 1) {
             winner = getPlayer(winners.first());
+            winner.saveWin();
             setMVP();
             storeGame();
             bot.setWinner(winner);      
