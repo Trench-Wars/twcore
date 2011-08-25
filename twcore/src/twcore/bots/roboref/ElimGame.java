@@ -182,6 +182,7 @@ public class ElimGame {
         }
     }
     
+    /** Passed a PlayerPosition event used to check out of bounds */
     public void handleEvent(PlayerPosition event) {
         if (!ship.inBase()) return;
         Player p = ba.getPlayer(event.getPlayerID());
@@ -244,6 +245,7 @@ public class ElimGame {
         }
     }
     
+    /** Handles spawning related tasks like warping and prizing */
     public void handleSpawn(ElimPlayer ep, boolean instant) {
         final String name = ep.name;
         ep.setPosition(BasePos.SPAWNING);
@@ -301,6 +303,7 @@ public class ElimGame {
             checkWinner();
     }
     
+    /** Passes a ResultSet to a player for stat loading */
     public void handleStats(String name, ResultSet rs) {
         ElimPlayer ep = getPlayer(name);
         if (ep == null) return;
@@ -316,11 +319,13 @@ public class ElimGame {
             checkStats();
     }
     
+    /** Receives the result of the *where command used for hider coordinates */
     public void handleHider(String msg) {
         if (hiderFinder != null && msg.length() - msg.indexOf(":") <= 5)
             hiderFinder.revealHider(msg);
     }
     
+    /** Ensures that each player playing in the current game has had stats successfully loaded */
     public void checkStats() {
         statCheck = true;
         HashSet<String> errors = new HashSet<String>();
@@ -338,6 +343,7 @@ public class ElimGame {
         }
     }
     
+    /** Prepares the player object for receiving stats and sends sql query */
     private void requestStats(String name) {
         ElimPlayer ep = getPlayer(name);
         if (ep != null) {
@@ -485,6 +491,7 @@ public class ElimGame {
         ba.sendPrivateMessage(name, msg);
     }
     
+    /** Handles grunt work for the !streak command which shows current streak stats */
     public void do_streak(String name, String cmd) {
         String p = name;
         if (cmd.contains(" ") && cmd.length() > 9)
@@ -496,6 +503,7 @@ public class ElimGame {
             ba.sendPrivateMessage(name, "Error, player not found.");
     }
     
+    /** Does the grunt work of the !hider command which toggles the HiderFinder task */
     public void do_hiderFinder(String name) {
         if (hiderFinder != null) {
             hiderFinder.stop();
@@ -506,6 +514,7 @@ public class ElimGame {
         }
     }
     
+    /** Handles the grunt work for the !remove player command */
     public void do_remove(String name, String player) {
         String temp = ba.getFuzzyPlayerName(player);
         if (temp != null && temp.equalsIgnoreCase(player)) {
@@ -671,6 +680,7 @@ public class ElimGame {
         ba.specificPrize(name, Tools.Prize.MULTIFIRE);
     }
     
+    /** Cancels all tasks and game related variables */
     public void stop() {
         if (starter != null) {
             ba.cancelTask(starter);
@@ -817,10 +827,12 @@ public class ElimGame {
         }
     }
     
+    /** Repeating TimerTask that checks for any potential hiding players using last shot and death */ 
     private class HiderFinder extends TimerTask {
 
         boolean reported;
         
+        /** Constructs and schedules the HiderFinder task */
         public HiderFinder() {
             reported = false;
             ba.scheduleTask(this, Tools.TimeInMillis.MINUTE, HIDER_CHECK * Tools.TimeInMillis.SECOND);
@@ -857,19 +869,23 @@ public class ElimGame {
             }
         }
         
+        /** Cancels and nullifies the hider finder */
         public void stop() {
             ba.cancelTask(this);
             hiderFinder = null;
         }
         
+        /** Checks last shot and death times and returns true if hiding */
         private boolean isHiding(ElimPlayer ep) {
             return ep.getLastShot() > HIDER_TIME  && ep.getLastDeath() > HIDER_TIME;
         }
         
+        /** Request coordinates of a player in order to alert other players */
         private void getCoord(String name) {
             ba.sendUnfilteredPrivateMessage(name, "*where");
         }
         
+        /** Sends the player's coordinates to all other players */
         public void revealHider(String msg) {
             String name = msg.substring(0, msg.indexOf(":"));
             String coord = msg.substring(msg.indexOf(":") + 1);

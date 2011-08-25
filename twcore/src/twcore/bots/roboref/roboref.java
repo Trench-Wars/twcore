@@ -463,6 +463,7 @@ public class roboref extends SubspaceBot {
         ba.sendPrivateMessage(name, "`----------------------------------------------------------------------------------------'");
     }
     
+    /** Handles the !remove player command which will spec the player and erase stats */
     public void cmd_remove(String name, String cmd) {
         if (state != State.PLAYING)
             ba.sendPrivateMessage(name, "There is no game currently being played.");
@@ -472,6 +473,7 @@ public class roboref extends SubspaceBot {
         }
     }
     
+    /** Handles the !status command which displays current bot or game state */
     public void cmd_status(String name) {
         if (state == State.WAITING)
             ba.sendPrivateMessage(name, "A new game will begin when there are at least two (2) people playing.");
@@ -481,6 +483,7 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, game.toString());
     }
     
+    /** Handles the !scorereset (sr) command which resets the stats for the specified ship */
     public void cmd_scorereset(String name, String cmd) {
         if (!cmd.contains(" ")) {
             ba.sendPrivateMessage(name, "You have to specify the ship whose scores you want to reset.");
@@ -580,6 +583,7 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, "There is no game being played at the moment.");
     }
     
+    /** Handles the !streak command which will show current streak stats if a game is being played */
     public void cmd_streak(String name, String cmd) {
         if (game != null && state == State.PLAYING)
             game.do_streak(name, cmd);
@@ -677,6 +681,7 @@ public class roboref extends SubspaceBot {
             ba.sendPrivateMessage(name, "There is not a game being played.");
     }
     
+    /** Handles the !alert command which enables or disables new game alert pms */
     public void cmd_alert(String name) {
         if (alerts.remove(name.toLowerCase()))
             ba.sendSmartPrivateMessage(name, "New game alert messages DISABLED.");
@@ -703,12 +708,14 @@ public class roboref extends SubspaceBot {
         }
     }
     
+    /** Handles the !greet command which is used to change the arena greeting message */
     public void cmd_greet(String name, String cmd) {
         if (cmd.length() < 8) return;
         ba.sendUnfilteredPublicMessage("?set misc:greetmessage:" + cmd.substring(cmd.indexOf(" ") + 1));
         ba.sendSmartPrivateMessage(name, "Greeting set to: " + cmd.substring(cmd.indexOf(" ") + 1));
     }
     
+    /** Handles the !hider command which will start or stop the hiding player task in the current game */
     public void cmd_hiderFinder(String name) {
         if (game != null && state == State.PLAYING)
             game.do_hiderFinder(name);
@@ -739,6 +746,7 @@ public class roboref extends SubspaceBot {
         handleState();
     }
     
+    /** Forces a zone message to be sent regardless of how long ago the last zoner was */
     public void cmd_zone(String name) {
         lastZoner = System.currentTimeMillis();
         sendZoner();
@@ -1021,6 +1029,7 @@ public class roboref extends SubspaceBot {
         handleState();
     }
     
+    /** Checks to make sure it didn't already send a recent alert and then sends pms */
     private void sendAlerts() {
         long now = System.currentTimeMillis();
         if ((now - lastAlert) < ALERT_DELAY * Tools.TimeInMillis.MINUTE) return; 
@@ -1054,18 +1063,6 @@ public class roboref extends SubspaceBot {
         lastZoner = System.currentTimeMillis();
     }
     
-    /** Prevents the game from starting usually due to lack of players */
-    public void abort() {
-        game = null;
-        state = State.WAITING;
-        voteType = VoteType.NA;
-        votes.clear();
-        arenaLock = false;
-        ba.toggleLocked();
-        ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
-        handleState();
-    }
-    
     /** Requests the needed events */
     private void requestEvents() {
         EventRequester er = ba.getEventRequester();
@@ -1078,6 +1075,18 @@ public class roboref extends SubspaceBot {
         er.request(EventRequester.PLAYER_LEFT);
         er.request(EventRequester.PLAYER_POSITION);
         er.request(EventRequester.WEAPON_FIRED);
+    }
+    
+    /** Prevents the game from starting usually due to lack of players */
+    public void abort() {
+        game = null;
+        state = State.WAITING;
+        voteType = VoteType.NA;
+        votes.clear();
+        arenaLock = false;
+        ba.toggleLocked();
+        ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
+        handleState();
     }
     
     /** Debug message handler */
