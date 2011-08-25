@@ -119,10 +119,6 @@ public class ElimGame {
             ba.cancelTask(spawns.remove(low(killee)));
         if (outsiders.containsKey(low(killee)))
             ba.cancelTask(outsiders.remove(low(killee)));
-        if (!winners.contains(killer.toLowerCase()))
-            ba.specWithoutLock(killer);
-        else if (!winners.contains(killee.toLowerCase()))
-            ba.specWithoutLock(killee);
         ElimPlayer win = getPlayer(killer);
         ElimPlayer loss = getPlayer(killee);
         if (win != null && loss != null) {
@@ -133,9 +129,6 @@ public class ElimGame {
             if (res[1])
                 ba.sendArenaMessage("Kill Joy! " + killer + " terminates the (" + loss.getLastKillStreak() + ":0) kill streak of " + killee + "!", Tools.Sound.INCONCEIVABLE);
             if (res[0]) {
-                if (spawns.containsKey(low(killee)))
-                    ba.cancelTask(spawns.remove(low(killee)));
-                ba.specWithoutLock(killee);
                 ba.sendArenaMessage(killee + " is out. " + loss.getScore());
                 removePlayer(loss);
             } else
