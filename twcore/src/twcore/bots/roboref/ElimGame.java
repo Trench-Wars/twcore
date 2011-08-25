@@ -212,8 +212,10 @@ public class ElimGame {
             	if (started) {
                     if (spawns.containsKey(low(ep.name)))
                         spawns.remove(low(ep.name)).returned();
-                    if (outsiders.containsKey(low(ep.name)))
+                    else if (outsiders.containsKey(low(ep.name)))
                         outsiders.get(low(ep.name)).returned();
+                    else 
+                    	ep.setStatus(Status.IN);
             	} else
             		ep.setStatus(Status.IN);
             }
@@ -768,7 +770,8 @@ public class ElimGame {
         public void returned() {
             //bot.debug("OutOfBounds timer return canceled for: " + player.name);
             player.setStatus(Status.WARNED_IN);
-            ba.cancelTask(outsiders.remove(low(player.name)));
+            outsiders.remove(low(player.name));
+            ba.cancelTask(this);
         }
     }
     
@@ -817,7 +820,8 @@ public class ElimGame {
         public void returned() {
             //bot.debug("Spawn timer return canceled for: " + player.name);
             player.setStatus(Status.IN);
-            ba.cancelTask(spawns.remove(low(player.name)));
+            spawns.remove(low(player.name));
+            ba.cancelTask(this);
         }
     }
     
