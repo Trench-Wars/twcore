@@ -820,6 +820,7 @@ public class roboref extends SubspaceBot {
             else
                 winStreak = 0;
             lastWinner = winner;
+            winner = null;
         }
     }
     
@@ -828,7 +829,6 @@ public class roboref extends SubspaceBot {
         state = State.UPDATING;
         gameLog.add(0, game);
         game = null;
-        winner = null;
         arenaLock = false;
         ba.toggleLocked();
         TimerTask enter = new TimerTask() {
