@@ -208,7 +208,8 @@ public class ElimGame {
                 } else if (ep.getPosition() == BasePos.WARNED_IN)
                     removeOutsider(ep);
             } else {
-                ep.setPosition(BasePos.IN);
+            	if (ep.getPosition() != BasePos.WARNED_IN)
+            		ep.setPosition(BasePos.IN);
                 if (spawns.containsKey(low(ep.name)))
                     spawns.remove(low(ep.name)).returned();
                 if (outsiders.containsKey(low(ep.name)))
