@@ -811,9 +811,10 @@ public class roboref extends SubspaceBot {
     /** Playing state runs after winner is set and ends game accordingly */
     private void doPlaying() {
         if (winner != null && game != null && game.mvp != null) {
-            updatePlayer(winner);  
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
             ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);  
+            updatePlayer(winner);  
+            game.storeLosses();
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
             else
@@ -828,12 +829,12 @@ public class roboref extends SubspaceBot {
         state = State.UPDATING;
         gameLog.add(0, game);
         arenaLock = false;
+        game = null;
         ba.toggleLocked();
         TimerTask enter = new TimerTask() {
             public void run() {
                 debug("Rank update executed for ship " + shipType.getNum());
                 updateRanks();
-                game = null;
             }
         };
         ba.scheduleTask(enter, 3000);

@@ -549,7 +549,6 @@ public class ElimGame {
             winner.saveWin();
             setMVP();
             storeGame();
-            storeLosses();
             bot.setWinner(winner);      
         }
     }
@@ -662,6 +661,7 @@ public class ElimGame {
          * @param lastWarning Boolean used to indicate if the player has just spawned or was in base before hand
          */
         public OutOfBounds(ElimPlayer ep, boolean lastWarning) {
+            bot.debug("OutOfBounds timer created for: " + ep.name);
             ba.scheduleTask(this, BOUNDARY_TIME * Tools.TimeInMillis.SECOND);
             player = ep;
             player.sendOutsideWarning(BOUNDARY_TIME);
@@ -676,6 +676,7 @@ public class ElimGame {
         
         /** Handles the clean up when a player reaches base before the Timer executes */
         public void returned() {
+            bot.debug("OutOfBounds timer return canceled for: " + player.name);
             ba.cancelTask(this);
             outsiders.remove(low(player.name));
             if (lastWarning)
@@ -697,6 +698,7 @@ public class ElimGame {
          */
         public SpawnTimer(ElimPlayer ep, boolean spawning) {
             player = ep;
+            bot.debug("Spawn timer created for: " + ep.name);
             if (spawning) {
                 player.setPosition(BasePos.SPAWNING);
                 ba.scheduleTask(this, (BOUND_START + SPAWN_TIME) * Tools.TimeInMillis.SECOND);
@@ -713,6 +715,7 @@ public class ElimGame {
 
         /** Handles the clean up when a player reaches base before the Timer executes */
         public void returned() {
+            bot.debug("Spawn timer return canceled for: " + player.name);
             ba.cancelTask(this);
             spawns.remove(low(player.name));
             if (player.getPosition() != BasePos.IN)
