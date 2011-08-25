@@ -188,7 +188,6 @@ public class ElimGame {
                         outsiders.put(low(ep.name), new OutOfBounds(ep, true));
                     else {
                         if (ep.handleWarp()) {
-                            ba.specWithoutLock(ep.name);
                             ba.sendArenaMessage(ep.name + " is out. " + ep.getScore() + " (warp abuse)");
                             removePlayer(ep);
                         } else {
