@@ -827,13 +827,13 @@ public class roboref extends SubspaceBot {
     private void doEnding() {
         state = State.UPDATING;
         gameLog.add(0, game);
-        game = null;
         arenaLock = false;
         ba.toggleLocked();
         TimerTask enter = new TimerTask() {
             public void run() {
                 debug("Rank update executed for ship " + shipType.getNum());
                 updateRanks();
+                game = null;
             }
         };
         ba.scheduleTask(enter, 3000);
