@@ -2,9 +2,12 @@ package twcore.bots.roboref;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.TimerTask;
 
 import twcore.bots.roboref.StatType;
+import twcore.bots.roboref.roboref.ShipType;
 import twcore.core.BotAction;
+import twcore.core.events.PlayerPosition;
 import twcore.core.util.Tools;
 
 /**
@@ -16,7 +19,7 @@ public class ElimPlayer {
 
     BotAction ba;
     
-    enum Status { SPEC, DEAD, SPAWN, IN, WARNED_OUT, WARNED_IN, OUT, LAGGED };
+    enum Status { SPEC, SPAWN, IN, WARNED_OUT, WARNED_IN, OUT, LAGGED };
 
     public String[] streaks = {
             "On Fire!",
@@ -37,15 +40,21 @@ public class ElimPlayer {
             "Trench Wars Most Wanted!",
             "Unforeseeable paradoxes have ripped a hole in the fabric of the universe!"
     };
-    
+
+    public static final int BOUNDARY = 222 * 16;
+    public static final int BOUNDS_TIME = 20;
+    public static final int SPAWN_TIME = 5;      // seconds until respawn after death
+    public static final int SPAWN_BOUND = 10;    // seconds after spawn warning is sent
     public static final int STREAK_INIT = 5;
     public static final int STREAK_REPEAT = 2;
     public static final int MULTI_KILL_TIME = 5; // seconds 
     public static final String db = "website";
     public Status status;
     public String name;
-    
+    private Spawn spawn;
+    private Bounds bounds;
     private ElimStats stats;
+    private ElimGame game;
     private int consecutiveKills, lagouts, freq, specAt, lastStreak;
     private long lastKill, lastDeath, lastShot;
     
@@ -53,6 +62,8 @@ public class ElimPlayer {
         ba = act;
         this.name = name;
         stats = null;
+        spawn = null;
+        bounds = null;
         lagouts = 3;
         consecutiveKills = 0;
         lastKill = 0;
@@ -68,23 +79,28 @@ public class ElimPlayer {
      * @param killer The player object that made the kill
      * @return boolean array where 0=elimination and 1=KillJoy
      */
-    public boolean[] handleDeath(ElimPlayer killer) {
-        status = Status.DEAD;
+    public void handleDeath(ElimPlayer killer) {
+        cancelTasks();
+        status = Status.SPAWN;
         lastDeath = System.currentTimeMillis();
-        boolean[] vars = new boolean[] { false, false };
         if (stats.getStat(StatType.KILL_STREAK) > 1) {
             lastStreak = stats.getStat(StatType.KILL_STREAK);
             killer.handleKillJoy();
             if (lastStreak >= 5)
-                vars[1] = true;
+                ba.sendArenaMessage("Kill Joy! " + killer + " terminates the (" + getLastKillStreak() + ":0) kill streak of " + name + "!", Tools.Sound.INCONCEIVABLE);
         }
         stats.handleDeath();
         if (stats.getStat(StatType.DEATHS) >= specAt) {
             status = Status.OUT;
+            ba.specWithoutLock(name);
+            ba.sendArenaMessage(name + " is out. " + getScore());
+            game.removePlayer(this);
             killer.handleKO();
-            vars[0] = true;
+        } else {
+            game.handleSpawn(this, false);
+            spawn = new Spawn(false);
+            ba.scheduleTask(spawn, ((SPAWN_TIME + SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
         }
-        return vars;
     }
     
     /**
@@ -92,7 +108,7 @@ public class ElimPlayer {
      * @param dead The player object for the kill victim
      * @return Returns a String if streak alert triggered or null otherwise
      */
-    public String handleKill(ElimPlayer dead) {
+    public void handleKill(ElimPlayer dead) {
         stats.handleKill();
         if(System.currentTimeMillis() - lastKill < (MULTI_KILL_TIME * Tools.TimeInMillis.SECOND)){
             consecutiveKills++;
@@ -105,13 +121,68 @@ public class ElimPlayer {
         lastKill = System.currentTimeMillis();
         stats.crunchAve(dead.getRating());
         int killStreak = stats.getStat(StatType.KILL_STREAK);
-        if(killStreak >= STREAK_INIT && (killStreak - STREAK_INIT) % STREAK_REPEAT == 0) {
+        if (killStreak >= STREAK_INIT && (killStreak - STREAK_INIT) % STREAK_REPEAT == 0) {
             int i = (killStreak - STREAK_INIT) / STREAK_REPEAT;
             if (i >= streaks.length)
                 i = streaks.length - 1;
-            return name + " - " + streaks[i] + "(" + killStreak + ":0)";
-        } else
-            return null;
+            ba.sendArenaMessage(name + " - " + streaks[i] + "(" + killStreak + ":0)");
+        } 
+    }
+    
+    public void handlePosition(PlayerPosition event) {
+        if (status == Status.OUT || status == Status.LAGGED || status == Status.SPEC) return; 
+        int y = event.getYLocation();
+        if (game.ship != ShipType.WEASEL) { 
+            if (y < BOUNDARY) {
+                // inside base
+                if (game.started) { 
+                    if (status == Status.SPAWN) {
+                        status = Status.IN;
+                        if (spawn != null)
+                            spawn.returned();
+                    } else if (status == Status.WARNED_OUT) {
+                        status = Status.WARNED_IN;
+                        if (bounds != null)
+                            bounds.returned();
+                    }
+                } else
+                    status = Status.IN;
+            } else {
+                // outside base
+                if (game.started) { 
+                    if (status == Status.IN) {
+                        if (bounds != null)
+                            ba.cancelTask(bounds);
+                        bounds = new Bounds();
+                        status = Status.WARNED_OUT;
+                        ba.scheduleTask(bounds, BOUNDS_TIME * Tools.TimeInMillis.SECOND);
+                    } else if (status == Status.WARNED_IN) {
+                        status = Status.OUT;
+                        ba.specWithoutLock(name);
+                        ba.sendArenaMessage(name + " is out. " + getScore() + " (Out of bounds abuse)");
+                        remove();
+                    }
+                } else
+                    status = Status.SPAWN;
+            }
+        } else {
+            if (status == Status.IN) {
+
+            }
+        }
+    }
+    
+    public boolean handleLagout() {
+        if (getLagouts() > 0) {
+            status = Status.LAGGED;
+            cancelTasks();
+            return false;
+        } else {
+            status = Status.OUT;
+            ba.sendArenaMessage(name + " is out. " + getScore() + " (Too many lagouts)");
+            saveLoss();
+            return true;
+        }
     }
     
     /** Reports a kill that broke the streak of another player or a "KillJoy" */
@@ -130,15 +201,26 @@ public class ElimPlayer {
         stats.incrementStat(StatType.SHOTS);
     }
     
-    public boolean handleWarp() {
+    public void handleWarp() {
         if (stats.getStat(StatType.KILL_STREAK) > 1)
             lastStreak = stats.getStat(StatType.KILL_STREAK);
         stats.handleDeath();
-        if (stats.getStat(StatType.DEATHS) >= specAt)
-            return true;
-        else
-            return false;
-        
+        if (stats.getStat(StatType.DEATHS) >= specAt) {
+            status = Status.OUT;
+            ba.specWithoutLock(name);
+            ba.sendArenaMessage(name + " is out. " + getScore() + " (warp abuse)");
+            remove();
+        } else {
+            ba.sendPrivateMessage(name, "Warping is illegal! You gained a death as a result.");
+            game.sendWarp(name);
+        }
+    }
+    
+    public void handleStart() {
+        if (status == Status.SPAWN) { 
+            spawn = new Spawn(false);
+            ba.scheduleTask(spawn, SPAWN_TIME * Tools.TimeInMillis.SECOND);
+        }
     }
     
     /** Returns this players current rating */
@@ -243,6 +325,17 @@ public class ElimPlayer {
         stats.loaded();
     }
     
+    public void cancelTasks() {
+        if (spawn != null) {
+            ba.cancelTask(spawn);
+            spawn = null;
+        }
+        if (bounds != null) {
+            ba.cancelTask(bounds);
+            bounds = null;
+        }
+    }
+    
     public void scorereset(int ship) {
         if (stats.getShip() == ship)
             stats = null;
@@ -262,6 +355,70 @@ public class ElimPlayer {
         stats.loadStats(rs);
     }
     
+    private void remove() {
+        saveLoss();
+        game.removePlayer(this);
+    }
+    
+    private class Spawn extends TimerTask {
+        
+        boolean active;
+        boolean warned;
+        
+        public Spawn(boolean warning) {
+            active = true;
+            warned = warning;
+        }
+        
+        @Override
+        public void run() {
+            if (!active || status != Status.SPAWN) return;
+            if (!warned) {
+                active = false;
+                ba.sendPrivateMessage(name, "GET IN THE BASE! Unless you want to experience my WRATH.");
+                warned = true;
+                spawn = new Spawn(true);
+                ba.scheduleTask(spawn, SPAWN_BOUND * Tools.TimeInMillis.SECOND);
+            } else {
+                active = false;
+                status = Status.OUT;
+                ba.specWithoutLock(name);
+                ba.sendArenaMessage(name + " is out. " + getScore() + " (Too long outside base)");
+                remove();
+            }
+        }
+        
+        public void returned() {
+            spawn = null;
+            ba.cancelTask(this);
+        }
+    }
+    
+    public class Bounds extends TimerTask {
+        
+        public Bounds() {
+            ba.sendPrivateMessage(name, "WARNING: You have " + BOUNDS_TIME + " seconds to return to base or you will be disqualified.");
+        }
+        
+        @Override
+        public void run() {
+            if (status == Status.WARNED_OUT) {
+                status = Status.OUT;
+                ba.specWithoutLock(name);
+                ba.sendArenaMessage(name + " is out. " + getScore() + " (Too long outside base)");
+                remove();
+            }
+            
+        }
+        
+        public void returned() {
+            bounds = null;
+            ba.cancelTask(this);
+        }
+    }
+    
+    
+    
     /** Alert player's kill of multiple enemies at once */
     private void multiKill() {
         switch (consecutiveKills) {
@@ -272,4 +429,5 @@ public class ElimPlayer {
             case 5: ba.sendArenaMessage(name + " - Sextuple kill!", Tools.Sound.CRYING); break;
             case 6: ba.sendArenaMessage(name + " - Septuple kill!", Tools.Sound.GAME_SUCKS); break;      
         }
-    }}
+    }
+}
