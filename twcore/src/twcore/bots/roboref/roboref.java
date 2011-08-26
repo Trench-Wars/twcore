@@ -49,7 +49,7 @@ public class roboref extends SubspaceBot {
         WARBIRD(1, 0, false), 
         JAVELIN(2, 1, true), 
         SPIDER(3, 0, false), 
-        LEVIATHEN(4, 0, true), 
+        LEVIATHAN(4, 0, true), 
         TERRIER(5, 1, false), 
         WEASEL(6, 1, false),
         LANCASTER(7, 0, false), 
