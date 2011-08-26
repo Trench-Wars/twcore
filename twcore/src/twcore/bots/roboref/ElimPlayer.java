@@ -131,7 +131,7 @@ public class ElimPlayer {
     }
     
     public void handlePosition(PlayerPosition event) {
-        if (status == Status.OUT || status == Status.LAGGED || status == Status.SPEC) return; 
+        if (getLastDeath() < SPAWN_TIME || status == Status.OUT || status == Status.LAGGED || status == Status.SPEC) return; 
         int y = event.getYLocation();
         if (game.ship != ShipType.WEASEL) { 
             if (y < BOUNDARY) {
