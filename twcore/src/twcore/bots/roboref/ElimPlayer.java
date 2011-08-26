@@ -99,8 +99,10 @@ public class ElimPlayer {
             killer.handleKO();
         } else {
             game.handleSpawn(this, false);
-            spawn = new Spawn(false);
-            ba.scheduleTask(spawn, (((2 * SPAWN_TIME) + SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
+            if (game.ship.inBase()) {
+                spawn = new Spawn(false);
+                ba.scheduleTask(spawn, (((2 * SPAWN_TIME) + SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
+            }
         }
     }
     
