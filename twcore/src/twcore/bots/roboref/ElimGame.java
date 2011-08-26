@@ -283,10 +283,9 @@ public class ElimGame {
                 started = true;
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
                 ba.shipResetAll();
-                if (shrap) {
+                if (shrap)
                     ba.prizeAll(Tools.Prize.SHRAPNEL);
-                    ba.prizeAll(Tools.Prize.SHRAPNEL);
-                } else {
+                else {
                     ba.prizeAll(-Tools.Prize.SHRAPNEL);
                     ba.prizeAll(-Tools.Prize.SHRAPNEL);
                 }

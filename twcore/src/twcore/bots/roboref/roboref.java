@@ -697,6 +697,9 @@ public class roboref extends SubspaceBot {
     
     public void cmd_game(String name, String cmd) {
         // !game 2;10;0
+        state = State.OFF;
+        ba.cancelTasks();
+        game = null;
         if (!cmd.contains(";") || cmd.length() < 10) return;
         String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(";");
         if (args.length != 3) return;
