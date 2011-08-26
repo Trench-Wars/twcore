@@ -58,7 +58,7 @@ public class ElimPlayer {
     private int consecutiveKills, lagouts, freq, specAt, lastStreak;
     private long lastKill, lastDeath, lastShot;
     
-    public ElimPlayer(BotAction act, String name) {
+    public ElimPlayer(BotAction act, ElimGame elimGame, String name) {
         ba = act;
         this.name = name;
         stats = null;
@@ -72,6 +72,7 @@ public class ElimPlayer {
         specAt = -1;
         freq = 9998;
         status = Status.SPEC;
+        game = elimGame;
     }
     
     /**

@@ -105,7 +105,7 @@ public class ElimGame {
             Player p = i.next();
             String name = p.getPlayerName();
             String low = name.toLowerCase();
-            ElimPlayer ep = new ElimPlayer(ba, name);
+            ElimPlayer ep = new ElimPlayer(ba, this, name);
             ep.loadStats(ship.getNum(), deaths);
             players.put(low, ep);
             winners.add(low);
@@ -139,7 +139,7 @@ public class ElimGame {
                 if (ep != null) {
                     ep.loadStats(ship.getNum(), deaths);
                 } else {
-                    ep = new ElimPlayer(ba, name);
+                    ep = new ElimPlayer(ba, this, name);
                     players.put(name.toLowerCase(), ep);
                     requestStats(name);
                 }
