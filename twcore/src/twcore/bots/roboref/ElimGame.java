@@ -555,6 +555,7 @@ public class ElimGame {
     
     /** Warps a Weasel into the flag room */
     public void sendWarp(String name) {
+        if (ship != ShipType.WEASEL) return;
         int[] coords = rules.getIntArray("XArena" + bot.random.nextInt(4), ",");
         ba.warpTo(name, coords[0], coords[1], coords[2]);
     }
