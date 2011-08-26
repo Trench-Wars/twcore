@@ -241,7 +241,7 @@ public class ElimStats {
     public String[] getStreak(String name) {
         String[] msg = {
                 ShipType.type(ship).toString() + " Streak stats for " + name + ":",
-                " KillStreak:" + getStat(StatType.KILL_STREAK) + " DeathStreak:" + getStat(StatType.DEATH_STREAK) + " BestKillStreak:" + getDB(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getDB(StatType.WORST_DEATH_STREAK)  ,
+                " KillStreak:" + getStat(StatType.KILL_STREAK) + " DeathStreak:" + getStat(StatType.DEATH_STREAK) + " BestKillStreak:" + getStat(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getStat(StatType.WORST_DEATH_STREAK)  ,
         };
         return msg;
     }
