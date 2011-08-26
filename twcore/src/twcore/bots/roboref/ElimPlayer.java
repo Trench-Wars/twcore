@@ -88,7 +88,7 @@ public class ElimPlayer {
             lastStreak = stats.getStat(StatType.KILL_STREAK);
             killer.handleKillJoy();
             if (lastStreak >= 5)
-                ba.sendArenaMessage("Kill Joy! " + killer + " terminates the (" + getLastKillStreak() + ":0) kill streak of " + name + "!", Tools.Sound.INCONCEIVABLE);
+                ba.sendArenaMessage("Kill Joy! " + killer.name + " terminates the (" + getLastKillStreak() + ":0) kill streak of " + name + "!", Tools.Sound.INCONCEIVABLE);
         }
         stats.handleDeath();
         if (stats.getStat(StatType.DEATHS) >= specAt) {
@@ -100,7 +100,7 @@ public class ElimPlayer {
         } else {
             game.handleSpawn(this, false);
             spawn = new Spawn(false);
-            ba.scheduleTask(spawn, ((SPAWN_TIME + SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
+            ba.scheduleTask(spawn, (((2 * SPAWN_TIME) + SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
         }
     }
     
