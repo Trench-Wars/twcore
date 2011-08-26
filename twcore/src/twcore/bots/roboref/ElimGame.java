@@ -300,7 +300,8 @@ public class ElimGame {
                         	sendWarp(name);
                     }
                 }
-                hiderFinder = new HiderFinder();
+                if (!ship.inBase())
+                    hiderFinder = new HiderFinder();
                 countStats();
                 starter = null;
             }
