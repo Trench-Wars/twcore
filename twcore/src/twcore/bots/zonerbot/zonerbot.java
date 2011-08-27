@@ -591,7 +591,7 @@ public class zonerbot extends SubspaceBot {
 
                 if (advert.getStatus() < Advert.READY) {
                     if (!advert.isGranted()) {
-                        if (!cmd.contains(" ") || cmd.indexOf(" ") < cmd.length())
+                        if (!cmd.contains(" ") || (cmd.indexOf(" ") + 1) >= cmd.length())
                             ba.sendSmartPrivateMessage(name, "You have to set an advert message before you can use it.");
                         else {
                             String msg = cmd.substring(cmd.indexOf(" ") + 1);
