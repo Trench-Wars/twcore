@@ -306,7 +306,7 @@ public class ElimPlayer {
         return stats.getStats(name);
     }
     
-    public String[] getStreakStats() {
+    public String getStreakStats() {
         return stats.getStreak(name);
     }
     
@@ -327,6 +327,7 @@ public class ElimPlayer {
 
     /** Record the win of an elimination game and flush dynamic game stats */
     public void saveWin() {
+        cancelTasks();
         stats.handleWin();
     }
     

@@ -414,7 +414,7 @@ public class ElimGame {
             p = cmd.substring(cmd.indexOf(" ") + 1);
         ElimPlayer ep = getPlayer(p);
         if (ep != null)
-            ba.privateMessageSpam(name, ep.getStreakStats());
+            ba.sendPrivateMessage(name, ep.getStreakStats());
         else
             ba.sendPrivateMessage(name, "Error, player not found.");
     }

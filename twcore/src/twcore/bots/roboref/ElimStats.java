@@ -231,14 +231,10 @@ public class ElimStats {
     /**
      * Get streak stat list for the current ship.
      * @param name Supposed name of this stat owner
-     * @return Array of Strings containing all available streak info
+     * @return string containing all available streak info
      */
-    public String[] getStreak(String name) {
-        String[] msg = {
-                ShipType.type(ship).toString() + " Streak stats for " + name + ":",
-                " KillStreak:" + getStat(StatType.KILL_STREAK) + " DeathStreak:" + getStat(StatType.DEATH_STREAK) + " BestKillStreak:" + getStat(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getStat(StatType.WORST_DEATH_STREAK)  ,
-        };
-        return msg;
+    public String getStreak(String name) {
+        return "Current streak stats for " + name + ": KillStreak:" + getStat(StatType.KILL_STREAK) + " DeathStreak:" + getStat(StatType.DEATH_STREAK) + " BestKillStreak:" + getStat(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getStat(StatType.WORST_DEATH_STREAK);
     }
     
     /** 
