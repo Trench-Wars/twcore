@@ -106,7 +106,7 @@ public class ElimPlayer {
             game.handleSpawn(this, false);
             if (game.ship.inBase() && ship != 6) {
                 spawn = new Spawn(false);
-                ba.scheduleTask(spawn, (((3 * SPAWN_TIME) + SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
+                ba.scheduleTask(spawn, ((SPAWN_TIME + 2 * SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
             }
         }
     }
@@ -228,7 +228,7 @@ public class ElimPlayer {
     public void handleStart() {
         if (status == Status.SPAWN) { 
             spawn = new Spawn(false);
-            ba.scheduleTask(spawn, SPAWN_TIME * Tools.TimeInMillis.SECOND);
+            ba.scheduleTask(spawn, 2 * SPAWN_BOUND * Tools.TimeInMillis.SECOND);
         }
     }
     
