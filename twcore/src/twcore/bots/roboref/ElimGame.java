@@ -560,7 +560,7 @@ public class ElimGame {
     }
     
     /** Warps a Weasel into the flag room */
-    public void sendWarp(String name) {
+    private void sendWarp(String name) {
         if (ship != ShipType.WEASEL) {
             bot.debug("SendWarp attempt while ship was not weasel!");
             return;
@@ -708,7 +708,7 @@ public class ElimGame {
             String coord = msg.substring(msg.indexOf(":") + 1);
             for (String p : winners) {
                 if (!p.equalsIgnoreCase(name))
-                    ba.sendPrivateMessage(p, name + " is potentially hiding at:" + coord + "- Get em!");
+                    ba.sendPrivateMessage(p, name + " is potentially hiding at:" + coord + " - Get em!");
             }
         }
     }

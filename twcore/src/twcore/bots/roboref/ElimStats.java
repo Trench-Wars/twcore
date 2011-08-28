@@ -290,7 +290,7 @@ public class ElimStats {
     }
     
     /** Updates the local database stats with the recent game stats to prepare for saving */
-    public void unload() {
+    private void unload() {
         crunchAim(true);
         crunchRating();
         total.get(StatType.KILLS).add(getStat(StatType.KILLS));

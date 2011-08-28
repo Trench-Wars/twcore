@@ -220,7 +220,7 @@ public class ElimPlayer {
             remove();
         } else {
             ba.sendPrivateMessage(name, "Warping is illegal! You gained a death as a result.");
-            game.sendWarp(name);
+            game.handleSpawn(this, true);
         }
     }
     
