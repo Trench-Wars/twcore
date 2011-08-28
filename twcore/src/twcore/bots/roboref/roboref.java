@@ -367,7 +367,9 @@ public class roboref extends SubspaceBot {
             }
             if (oplist.isSmod(name)) {
                 if (msg.startsWith("!debug"))
-                    cmd_debug(name, msg);
+                    cmd_debug(name);
+                else if (msg.startsWith("!ds "))
+                    cmd_debugStats(name, msg);
                 else if (msg.startsWith("!hide"))
                     cmd_hiderFinder(name);
                 else if (msg.startsWith("!greet "))
@@ -724,12 +726,12 @@ public class roboref extends SubspaceBot {
     }
     
     /** Handles the !debug command which enables or disables debug mode */
-    public void cmd_debug(String name, String cmd) {
+    public void cmd_debug(String name) {
         if (!DEBUG) {
             debugger = name;
             DEBUG = true;
             ba.sendSmartPrivateMessage(name, "Debugging ENABLED. You are now set as the debugger.");
-        } else if (!cmd.contains(" ") && debugger.equalsIgnoreCase(name)){
+        } else if (debugger.equalsIgnoreCase(name)){
             debugger = "";
             DEBUG = false;
             ba.sendSmartPrivateMessage(name, "Debugging DISABLED and debugger reset.");
@@ -738,9 +740,14 @@ public class roboref extends SubspaceBot {
             ba.sendChatMessage(name + " has overriden " + debugger + " as the target of debug messages.");
             ba.sendSmartPrivateMessage(name, "Debugging still ENABLED and you have replaced " + debugger + " as the debugger.");
             debugger = name;
+        }
+    }
+    
+    public void cmd_debugStats(String name, String cmd) {
+        if (!debugger.equalsIgnoreCase(name)) {
+            ba.sendSmartPrivateMessage(name, "You are not set as the debugger.");
             return;
         }
-
         if (cmd.contains(" ") && cmd.length() > 7) {
             String p = cmd.substring(cmd.indexOf(" ") + 1);
             if (debugStatPlayers.remove(p.toLowerCase()))
