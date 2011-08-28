@@ -477,11 +477,11 @@ public class roboref extends SubspaceBot {
     /** Handles the !status command which displays current bot or game state */
     public void cmd_status(String name) {
         if (state == State.WAITING)
-            ba.sendPrivateMessage(name, "A new game will begin when there are at least two (2) people playing.");
+            ba.sendSmartPrivateMessage(name, "A new game will begin when there are at least two (2) people playing.");
         else if (state == State.VOTING)
-            ba.sendPrivateMessage(name, "We are voting on the next game.");
+            ba.sendSmartPrivateMessage(name, "We are voting on the next game.");
         else if (state == State.STARTING || state == State.PLAYING || state == State.ENDING)
-            ba.sendPrivateMessage(name, game.toString());
+            ba.sendSmartPrivateMessage(name, game.toString());
     }
     
     /** Handles the !scorereset (sr) command which resets the stats for the specified ship */
