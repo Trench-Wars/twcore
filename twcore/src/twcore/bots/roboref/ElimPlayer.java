@@ -56,7 +56,7 @@ public class ElimPlayer {
     private Bounds bounds;
     private ElimStats stats;
     private ElimGame game;
-    private int consecutiveKills, lagouts, freq, specAt, lastStreak;
+    private int ship, consecutiveKills, lagouts, freq, specAt, lastStreak;
     private long lastKill, lastDeath, lastShot;
     
     public ElimPlayer(BotAction act, ElimGame elimGame, String name, int ship, int deaths) {
@@ -72,6 +72,7 @@ public class ElimPlayer {
         lastDeath = 0;
         specAt = deaths;
         freq = 9998;
+        this.ship = ship;
         status = Status.SPAWN;
         game = elimGame;
         stats = new ElimStats(ship);
@@ -103,7 +104,7 @@ public class ElimPlayer {
             killer.handleKO();
         } else {
             game.handleSpawn(this, false);
-            if (game.ship.inBase()) {
+            if (game.ship.inBase() && ship != 6) {
                 spawn = new Spawn(false);
                 ba.scheduleTask(spawn, (((2 * SPAWN_TIME) + SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
             }
@@ -139,7 +140,7 @@ public class ElimPlayer {
     public void handlePosition(PlayerPosition event) {
         if (getLastDeath() < SPAWN_TIME || !isPlaying()) return; 
         int y = event.getYLocation();
-        if (game.ship != ShipType.WEASEL) { 
+        if (ship != 6) { 
             if (y < BOUNDARY) {
                 // inside base
                 if (game.getState() == GameState.PLAYING) { 
@@ -175,15 +176,7 @@ public class ElimPlayer {
         } else {
             if (y < BOUNDARY) return;
             if (status == Status.IN) {
-                ba.sendPrivateMessage(name, "Warping is ILLEGAL and as a result you have gained a death!");
-                stats.handleDeath();
-                if (stats.getStat(StatType.DEATHS) >= specAt) {
-                    status = Status.OUT;
-                    ba.specWithoutLock(name);
-                    ba.sendArenaMessage(name + " is out. " + getScore() + " (warp abuse)");
-                    game.removePlayer(this);
-                } else
-                    game.sendWarp(name);
+                handleWarp();
             }
         }
     }

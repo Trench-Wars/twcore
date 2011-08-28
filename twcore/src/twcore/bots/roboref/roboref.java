@@ -783,7 +783,7 @@ public class roboref extends SubspaceBot {
     
     /** Forces a zone message to be sent regardless of how long ago the last zoner was */
     public void cmd_zone(String name) {
-        lastZoner = System.currentTimeMillis();
+        lastZoner = 0;
         sendZoner();
     }
     
@@ -800,6 +800,7 @@ public class roboref extends SubspaceBot {
     public void updatePlayer(ElimPlayer name) {
         ElimStats stats = name.getStats();
         try {
+            updateStats.clearParameters();
             for (int i = 0; i < updateFields.length; i++) {
                 String col = updateFields[i];
                 if (col.equals("fcName"))
@@ -955,7 +956,7 @@ public class roboref extends SubspaceBot {
         }
     }
     
-    /** Ending state stores old game reference, updates rankings and prepares for next event */
+    /** Ending state updates rankings and prepares for next event */
     private void doEnding() {
         state = State.UPDATING;
         arenaLock = false;

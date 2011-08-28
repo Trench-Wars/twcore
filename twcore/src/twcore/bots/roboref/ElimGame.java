@@ -298,7 +298,7 @@ public class ElimGame {
                         ba.scoreReset(name);
                         if (ship.inBase() && ship != ShipType.WEASEL)
                             ep.handleStart();
-                        else if (ship == ShipType.WEASEL);
+                        else if (ship == ShipType.WEASEL)
                         	sendWarp(name);
                     }
                 }
