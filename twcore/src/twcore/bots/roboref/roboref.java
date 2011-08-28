@@ -902,6 +902,8 @@ public class roboref extends SubspaceBot {
     private void doVoting() {
         if (state != State.VOTING) return;
         if (voteType == VoteType.NA) {
+            ba.sendChatMessage(2, "The next game of ELIMBETA is about to begin. We are voting on ship.");
+            ba.sendChatMessage(3, "The next game of ELIMBETA is about to begin. We are voting on ship.");
             voteType = VoteType.SHIP;
             ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 4-Leviathen, 5-Terrier, 6-Weasel, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
         } else if (voteType == VoteType.SHIP) {
@@ -969,6 +971,7 @@ public class roboref extends SubspaceBot {
         if (winner != null && game != null && game.mvp != null) {
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
             final String mvp = game.mvp;
+            ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " elim.");
             TimerTask t = new TimerTask() {
                 public void run() {
                     ba.sendArenaMessage("MVP: " + mvp, Tools.Sound.INCONCEIVABLE);  
