@@ -111,6 +111,7 @@ public class roboref extends SubspaceBot {
     
     boolean DEBUG;
     String debugger;
+    HashSet<String> debugStatPlayers;
     
     private String connectionID;
     static final String db = "website";
@@ -159,6 +160,7 @@ public class roboref extends SubspaceBot {
         debugger = "";
         votes = new HashMap<String, Integer>();
         alerts = new HashSet<String>();
+        debugStatPlayers = new HashSet<String>();
         state = State.IDLE;
         voteType = VoteType.NA;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
@@ -364,8 +366,8 @@ public class roboref extends SubspaceBot {
                 
             }
             if (oplist.isSmod(name)) {
-                if (msg.equals("!debug"))
-                    cmd_debug(name);
+                if (msg.startsWith("!debug"))
+                    cmd_debug(name, msg);
                 else if (msg.startsWith("!hide"))
                     cmd_hiderFinder(name);
                 else if (msg.startsWith("!greet "))
@@ -722,19 +724,31 @@ public class roboref extends SubspaceBot {
     }
     
     /** Handles the !debug command which enables or disables debug mode */
-    public void cmd_debug(String name) {
+    public void cmd_debug(String name, String cmd) {
         if (!DEBUG) {
             debugger = name;
             DEBUG = true;
             ba.sendSmartPrivateMessage(name, "Debugging ENABLED. You are now set as the debugger.");
-        } else if (debugger.equalsIgnoreCase(name)){
+        } else if (!cmd.contains(" ") && debugger.equalsIgnoreCase(name)){
             debugger = "";
             DEBUG = false;
             ba.sendSmartPrivateMessage(name, "Debugging DISABLED and debugger reset.");
+            debugStatPlayers.clear();
         } else {
             ba.sendChatMessage(name + " has overriden " + debugger + " as the target of debug messages.");
             ba.sendSmartPrivateMessage(name, "Debugging still ENABLED and you have replaced " + debugger + " as the debugger.");
             debugger = name;
+            return;
+        }
+
+        if (cmd.contains(" ") && cmd.length() > 7) {
+            String p = cmd.substring(cmd.indexOf(" ") + 1);
+            if (debugStatPlayers.remove(p.toLowerCase()))
+                ba.sendSmartPrivateMessage(name, p + " has been removed from the debug list.");
+            else {
+                debugStatPlayers.add(p.toLowerCase());
+                ba.sendSmartPrivateMessage(name, p + " has been added to the debug list.");
+            }
         }
     }
     
@@ -801,24 +815,34 @@ public class roboref extends SubspaceBot {
         ElimStats stats = name.getStats();
         try {
             updateStats.clearParameters();
+            String debugs = "";
             for (int i = 0; i < updateFields.length; i++) {
                 String col = updateFields[i];
-                if (col.equals("fcName"))
+                if (col.equals("fcName")) {
                     updateStats.setString(i + 1, Tools.addSlashesToString(name.name));
-                else if (col.equals("fnShip"))
+                    debugs += "Name(" + name.name + ") ";
+                } else if (col.equals("fnShip")) {
                     updateStats.setInt(i + 1, stats.getShip());
-                else {
+                    debugs += col + "(" + stats.getShip() + ") ";
+                } else {
                     StatType stat = StatType.sql(col);
-                    if (stat.isInt())
+                    if (stat.isInt()) {
                         updateStats.setInt(i + 1, stats.getDB(stat));
-                    else if (stat.isDouble())
+                        debugs += col + "(" + stats.getDB(stat) + ") ";
+                    } else if (stat.isDouble()) {
                         updateStats.setDouble(i + 1, stats.getAimDB(stat));
-                    else if (stat.isFloat())
+                        debugs += col + "(" + stats.getAimDB(stat) + ") ";
+                    } else if (stat.isFloat()) {
                         updateStats.setFloat(i + 1, stats.getAveDB(stat));
+                        debugs += col + "(" + stats.getAveDB(stat) + ") ";
+                    }
                 }
             }
             updateStats.execute();
-            debug("Updated player: " + name.name + " Count: " + updateStats.getUpdateCount());
+            if (debugStatPlayers.contains(name.name.toLowerCase()))
+                debug(debugs);
+            else
+                debug("Updated player: " + name.name + " Count: " + updateStats.getUpdateCount());
             if (game.gotUpdate(name.name)) {
                 state = State.ENDING;
                 handleState();
@@ -916,7 +940,6 @@ public class roboref extends SubspaceBot {
         ba.sendArenaMessage("Enter to play. Arena will be locked in 15 seconds!", 9);
         timer = new TimerTask() {
             public void run() {
-                debug("Players: " + game.getPlaying());
                 if (ba.getNumPlaying() < 2) {
                     game.stop();
                     abort();
@@ -964,7 +987,6 @@ public class roboref extends SubspaceBot {
         ba.toggleLocked();
         TimerTask enter = new TimerTask() {
             public void run() {
-                debug("Rank update executed for ship " + shipType.getNum());
                 updateRanks();
                 state = State.WAITING;
                 if (ba.getNumPlaying() < 2)

@@ -6,7 +6,6 @@ import java.util.TimerTask;
 
 import twcore.bots.roboref.ElimGame.GameState;
 import twcore.bots.roboref.StatType;
-import twcore.bots.roboref.roboref.ShipType;
 import twcore.core.BotAction;
 import twcore.core.events.PlayerPosition;
 import twcore.core.util.Tools;
@@ -106,7 +105,7 @@ public class ElimPlayer {
             game.handleSpawn(this, false);
             if (game.ship.inBase() && ship != 6) {
                 spawn = new Spawn(false);
-                ba.scheduleTask(spawn, (((2 * SPAWN_TIME) + SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
+                ba.scheduleTask(spawn, (((3 * SPAWN_TIME) + SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
             }
         }
     }
