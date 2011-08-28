@@ -354,9 +354,9 @@ public class ElimGame {
                         "|" + padString(" 3) " + worst[2].name + " (" + worst[2].getKills() + "-" + worst[2].getDeaths() + ")", 34) + "|");
             }
             msg.add("`----------------------------------|----------------------------------+");
-            ba.privateMessageSpam(name, msg.toArray(new String[msg.size()]));
+            ba.smartPrivateMessageSpam(name, msg.toArray(new String[msg.size()]));
         } else
-            ba.sendPrivateMessage(name, "No death stats available.");
+            ba.sendSmartPrivateMessage(name, "No death stats available.");
     }
     
     /** Handles the grunt work called for by the !mvp command */
@@ -382,9 +382,9 @@ public class ElimGame {
                 msg.add(" |" + padString(" 3) " + best[2].name + " (" + best[2].getKills() + "-" + best[2].getDeaths() + ")", 35) +
                         "|" + padString(" 3) " + worst[2].name + " (" + worst[2].getKills() + "-" + worst[2].getDeaths() + ")", 35) + "|");
             msg.add(" `-----------------------------------|-----------------------------------+");
-            ba.privateMessageSpam(name, msg.toArray(new String[msg.size()]));
+            ba.smartPrivateMessageSpam(name, msg.toArray(new String[msg.size()]));
         } else
-            ba.sendPrivateMessage(name, "No MVP stats available.");
+            ba.sendSmartPrivateMessage(name, "No MVP stats available.");
     }
     
     /** Handles the grunt work called for by the !who command */
@@ -404,7 +404,7 @@ public class ElimGame {
         }
         if (msg.length() > 0 && msg.contains(","))
             msg = msg.substring(0, msg.lastIndexOf(","));
-        ba.sendPrivateMessage(name, msg);
+        ba.sendSmartPrivateMessage(name, msg);
     }
     
     /** Handles grunt work for the !streak command which shows current streak stats */
