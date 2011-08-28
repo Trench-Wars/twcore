@@ -97,6 +97,7 @@ public class ElimPlayer {
         stats.handleDeath();
         if (stats.getStat(StatType.DEATHS) >= specAt) {
             status = Status.OUT;
+            stats.handleLoss();
             ba.specWithoutLock(name);
             ba.sendArenaMessage(name + " is out. " + getScore());
             game.removePlayer(this);
