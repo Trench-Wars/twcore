@@ -36,6 +36,8 @@ public class ElimGame {
     BotSettings rules;
     roboref bot;
 
+    enum GameState { NA, STATS, STARTING, PLAYING, ENDING };
+    
     static final int HIDER_TIME = 60;                   // minimum seconds between shots before announcing location
     static final int HIDER_CHECK = 40;                   // seconds between hider checks
     static final int MAX_LAG_TIME = 60;                 // seconds
@@ -49,12 +51,13 @@ public class ElimGame {
     CompareDeaths compDeath;
     CompareNames compName;
     
+    GameState state;
     ShipType ship;
     int freq;
     int deaths;
     int playerCount;
     int ratingCount;
-    boolean shrap, statCheck, started;
+    boolean shrap;
     TimerTask starter;
     
     HiderFinder hiderFinder;
@@ -89,8 +92,7 @@ public class ElimGame {
         this.shrap = shrap;
         ratingCount = 0;
         playerCount = 0;
-        statCheck = false;
-        started = false;
+        state = GameState.NA;
         winner = null;
         mvp = null;
         hiderFinder = null;
@@ -105,11 +107,9 @@ public class ElimGame {
             Player p = i.next();
             String name = p.getPlayerName();
             String low = name.toLowerCase();
-            ElimPlayer ep = new ElimPlayer(ba, this, name);
-            ep.loadStats(ship.getNum(), deaths);
-            players.put(low, ep);
             winners.add(low);
-            requestStats(name);
+            ElimPlayer ep = new ElimPlayer(ba, this, name, ship.getNum(), deaths);
+            players.put(low, ep);
         }
     }
     
@@ -124,34 +124,34 @@ public class ElimGame {
             win.handleKill(loss);
             loss.handleDeath(win);
         }
-        
     }
     
     /** Catch potential lagouts and/or update player game status */
     public void handleEvent(FrequencyShipChange event) {
         String name = ba.getPlayerName(event.getPlayerID());
         if (name == null) return;
-        if (!started) {
+        if (state == GameState.NA) {
             if (event.getShipType() > 0) {
                 if (laggers.containsKey(low(name)))
                     ba.cancelTask(laggers.remove(low(name)));
                 ElimPlayer ep = getPlayer(name);
-                if (ep != null) {
-                    ep.loadStats(ship.getNum(), deaths);
-                } else {
-                    ep = new ElimPlayer(ba, this, name);
+                if (ep == null) {
+                    ep = new ElimPlayer(ba, this, name, ship.getNum(), deaths);
                     players.put(name.toLowerCase(), ep);
-                    requestStats(name);
                 }
+                winners.add(name.toLowerCase());
                 if (ship.inBase())
                     ep.setStatus(Status.SPAWN);
                 else
                     ep.setStatus(Status.IN);
-                winners.add(name.toLowerCase());
             } else
                 winners.remove(name.toLowerCase());
-        } else if (event.getShipType() == 0)
-            handleLagout(name);
+        } else if (event.getShipType() == 0) {
+            if (state == GameState.STARTING)
+                winners.remove(low(name));
+            else if (state == GameState.PLAYING)
+                handleLagout(name);
+        }
     }
     
     /** Passed a PlayerPosition event used to check out of bounds */
@@ -168,7 +168,7 @@ public class ElimGame {
     public void handleEvent(PlayerLeft event) {
         String name = ba.getPlayerName(event.getPlayerID());
         if (name == null || !winners.contains(low(name))) return;
-        if (started)
+        if (state == GameState.PLAYING)
             handleLagout(name);
         else {
             winners.remove(low(name));
@@ -207,15 +207,15 @@ public class ElimGame {
     
     /** Handles a lagged out player */
     public void handleLagout(String name) {
+        winners.remove(low(name));
         ElimPlayer ep = getPlayer(name);
-        if (ep != null && ep.getStatus() != Status.OUT && ep.getStatus() != Status.SPEC) {
+        if (ep != null && ep.isPlaying()) {
             if (!ep.handleLagout())
                 laggers.put(low(name), new Lagout(name));
             else 
                 removePlayer(ep);
         }
-        winners.remove(low(name));
-        if (started)
+        if (state == GameState.PLAYING)
             checkWinner();
     }
     
@@ -223,15 +223,15 @@ public class ElimGame {
     public void handleStats(String name, ResultSet rs) {
         ElimPlayer ep = getPlayer(name);
         if (ep == null) return;
-        ep.loadStats(ship.getNum(), deaths);
         try {
+            bot.debug("Sending stats to: " + name);
             ep.loadStats(rs);
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
         if (ep.isLoaded())
             loaded.add(low(name));
-        if (statCheck)
+        if (state == GameState.STATS)
             checkStats();
     }
     
@@ -243,7 +243,8 @@ public class ElimGame {
     
     /** Ensures that each player playing in the current game has had stats successfully loaded */
     public void checkStats() {
-        statCheck = true;
+        if (state == GameState.NA)
+            state = GameState.STATS;
         HashSet<String> errors = new HashSet<String>();
         for (String name : winners) {
             if (!loaded.contains(name))
@@ -251,22 +252,23 @@ public class ElimGame {
         }
         if (errors.isEmpty()) {
             bot.debug("All player stats loaded and ready!");
-            statCheck = false;
+            state = GameState.STARTING;
             startGame();
         } else {
             bot.debug("Error, " + errors.size() + " players missing stat records.");
-            for (String name : errors)
-                requestStats(name);
+            final HashSet<String> errs = errors;
+            TimerTask task = new TimerTask() {
+                public void run() {
+                    for (String name : errs)
+                        requestStats(name);
+                }
+            };
+            ba.scheduleTask(task, 3000);            
         }
     }
     
     /** Prepares the player object for receiving stats and sends sql query */
     private void requestStats(String name) {
-        ElimPlayer ep = getPlayer(name);
-        if (ep != null) {
-            if (ep.getStats() == null)
-                ep.loadStats(ship.getNum(), deaths);
-        }
         ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
     }
     
@@ -280,7 +282,7 @@ public class ElimGame {
                     return;
                 }
                 bot.state = State.PLAYING;
-                started = true;
+                state = GameState.PLAYING;
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
                 ba.shipResetAll();
                 if (shrap)
@@ -321,8 +323,7 @@ public class ElimGame {
                 ba.setShip(name, ship.getNum());
                 ba.setFreq(name, ep.getFreq());
                 ba.sendPrivateMessage(name, "You have " + ep.getLagouts() + " lagouts remaining.");
-                if (ship == ShipType.WEASEL)
-                    sendWarp(name);
+                handleSpawn(ep, true);
             }
         } else
             ba.sendPrivateMessage(name, "You are not lagged out.");
@@ -535,7 +536,8 @@ public class ElimGame {
     
     /** Check if game has been won */
     private void checkWinner() {
-        if (winners.size() == 1) {
+        if (state == GameState.PLAYING && winners.size() == 1) {
+            state = GameState.ENDING;
             if (hiderFinder != null)
                 hiderFinder.stop();
             winner = getPlayer(winners.first());
@@ -544,6 +546,10 @@ public class ElimGame {
             storeGame();
             bot.setWinner(winner);      
         }
+    }
+    
+    public GameState getState() {
+        return state;
     }
     
     /** Determines MVP using a 3-tier Comparator */
@@ -555,7 +561,10 @@ public class ElimGame {
     
     /** Warps a Weasel into the flag room */
     public void sendWarp(String name) {
-        if (ship != ShipType.WEASEL) return;
+        if (ship != ShipType.WEASEL) {
+            bot.debug("SendWarp attempt while ship was not weasel!");
+            return;
+        }
         int[] coords = rules.getIntArray("XArena" + bot.random.nextInt(4), ",");
         ba.warpTo(name, coords[0], coords[1], coords[2]);
     }
@@ -599,6 +608,7 @@ public class ElimGame {
         
         /** Record game loss */
         public void run() {
+            played.remove(low(name));
             ElimPlayer ep = getPlayer(name);
             if (ep != null) {
                 laggers.remove(low(name));

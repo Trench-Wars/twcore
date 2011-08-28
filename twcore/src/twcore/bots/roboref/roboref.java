@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.TreeSet;
-import java.util.Vector;
 
 import twcore.bots.roboref.ElimPlayer.Status;
 import twcore.bots.roboref.StatType;
@@ -46,17 +45,16 @@ public class roboref extends SubspaceBot {
     public enum State { OFF, IDLE, WAITING, VOTING, STARTING, PLAYING, ENDING, UPDATING }
     public enum VoteType { NA, SHIP, DEATHS, SHRAP, GAME }
     public enum ShipType {
-        WARBIRD(1, 0, false), 
-        JAVELIN(2, 1, true), 
-        SPIDER(3, 0, false), 
-        LEVIATHAN(4, 0, true), 
-        TERRIER(5, 1, false), 
-        WEASEL(6, 1, false),
-        LANCASTER(7, 0, false), 
-        SHARK(8, 1, true);
+        WARBIRD(1, 0), 
+        JAVELIN(2, 1), 
+        SPIDER(3, 0), 
+        LEVIATHAN(4, 0), 
+        TERRIER(5, 1), 
+        WEASEL(6, 1),
+        LANCASTER(7, 0), 
+        SHARK(8, 1);
         
         private int ship, freq;
-        private boolean shrap;
         
         private static final Map<Integer, ShipType> lookup = new HashMap<Integer, ShipType>();
         
@@ -65,10 +63,9 @@ public class roboref extends SubspaceBot {
                 lookup.put(s.getNum(), s);
         }
         
-        private ShipType(int num, int startFreq, boolean canShrap) {
+        private ShipType(int num, int startFreq) {
             ship = num;
             freq = startFreq;
-            shrap = canShrap;
         }
         
         public static ShipType type(int n) {
@@ -80,7 +77,7 @@ public class roboref extends SubspaceBot {
         }
         
         public boolean hasShrap() {
-            return shrap;
+            return (ship == 8 || ship == 2);
         }
         
         public int getFreq() {
@@ -109,7 +106,6 @@ public class roboref extends SubspaceBot {
     Random random;
     
     ElimGame game;
-    Vector<ElimGame> gameLog;
     HashMap<String, Integer> votes;
     HashSet<String> alerts;
     
@@ -133,6 +129,7 @@ public class roboref extends SubspaceBot {
     String[] updateFields;
     boolean shrap;
     boolean arenaLock;
+    boolean hiderCheck;
 
     private Spy spy;
     
@@ -160,7 +157,6 @@ public class roboref extends SubspaceBot {
         spy = new Spy(ba);
         DEBUG = false;
         debugger = "";
-        gameLog = new Vector<ElimGame>();
         votes = new HashMap<String, Integer>();
         alerts = new HashSet<String>();
         state = State.IDLE;
@@ -187,6 +183,7 @@ public class roboref extends SubspaceBot {
         lastWinner = null;
         winner = null;
         arenaLock = false;
+        hiderCheck = true;
         ba.toggleLocked();
         ba.specAll();
         state = State.IDLE;
@@ -210,7 +207,6 @@ public class roboref extends SubspaceBot {
 
     /** Handles the WeaponFired event which reports shot stats if a game is being played */
     public void handleEvent(WeaponFired event) {
-        if (state == State.OFF) return; 
         if (state != State.PLAYING || game == null) return;
         String name = ba.getPlayerName(event.getPlayerID());
         if (name != null)
@@ -219,7 +215,6 @@ public class roboref extends SubspaceBot {
 
     /** Handles ship and freq change events if a game is being played */
     public void handleEvent(FrequencyShipChange event) {
-        if (state == State.OFF) return; 
         if (state == State.PLAYING || state == State.STARTING) {
             if (game != null);
                 game.handleEvent(event);
@@ -339,16 +334,8 @@ public class roboref extends SubspaceBot {
                 cmd_rank(name, msg);
             else if (msg.startsWith("!rec "))
                 cmd_rec(name, msg);
-            else if (msg.equals("!who"))
-                cmd_who(name);
             else if (msg.startsWith("!stats"))
                 cmd_stats(name, msg);
-            else if (msg.startsWith("!mvp"))
-                cmd_mvp(name);
-            else if (msg.equals("!deaths"))
-                cmd_deaths(name);
-            else if (msg.equals("!status"))
-                cmd_status(name);
             else if (msg.startsWith("!streak"))
                 cmd_streak(name, msg);
             else if (msg.startsWith("!scorereset") || msg.startsWith("!sr"))
@@ -358,6 +345,14 @@ public class roboref extends SubspaceBot {
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
             if (msg.equals("!alert"))
                 cmd_alert(name);
+            else if (msg.equals("!who"))
+                cmd_who(name);
+            else if (msg.startsWith("!mvp"))
+                cmd_mvp(name);
+            else if (msg.equals("!deaths"))
+                cmd_deaths(name);
+            else if (msg.equals("!status"))
+                cmd_status(name);
             
             if (oplist.isModerator(name)) {
                 if (msg.equals("!die"))
@@ -444,7 +439,6 @@ public class roboref extends SubspaceBot {
         ba.privateMessageSpam(name, msg);
         if (oplist.isModerator(name)) {
             msg = new String[] {
-                    "|                                                                                        |",
                     ":-- Staff Commands ----------------------------------------------------------------------+",
                     "|!die              - Forces the bot to shutdown and log off                              |",
                     "|!stop             - Kills current game and prevents any future games (!off)             |",
@@ -455,7 +449,6 @@ public class roboref extends SubspaceBot {
         }
         if (oplist.isSmod(name)) {
             msg = new String[] {
-                    "|                                                                                        |",
                     ":-- Smod Commands -----------------------------------------------------------------------+",
                     "|!zone             - Forces the bot to send a default zone message                       |",
                     "|!hider            - Disables the hiding player checker/reporter (only during games)     |",
@@ -509,7 +502,7 @@ public class roboref extends SubspaceBot {
         if (game != null) {
             ep = game.getPlayer(name);
             if (ep != null) {
-                if (shipType.getNum() == ship && state == State.PLAYING && ep.getStatus() != Status.LAGGED && ep.getStatus() != Status.OUT && ep.getStatus() != Status.SPEC) {
+                if (shipType.getNum() == ship && ep.isPlaying() && ep.getStatus() != Status.LAGGED) {
                     ba.sendPrivateMessage(name, "You can not do a scorereset while playing a game with the ship you want to reset.");
                     return;
                 } else 
@@ -754,10 +747,15 @@ public class roboref extends SubspaceBot {
     
     /** Handles the !hider command which will start or stop the hiding player task in the current game */
     public void cmd_hiderFinder(String name) {
+        hiderCheck = !hiderCheck;
         if (game != null && state == State.PLAYING)
             game.do_hiderFinder(name);
-        else
-            ba.sendSmartPrivateMessage(name, "HiderFinder is only toggleable while there is a game being played.");
+        else {
+            if (hiderCheck)
+                ba.sendSmartPrivateMessage(name, "The hider finder has been ENABLED for subsequent games.");
+            else
+                ba.sendSmartPrivateMessage(name, "The hider finder has been DISABLED for subsequent games.");
+        }
     }
     
     /** Kills the bot */
@@ -960,7 +958,6 @@ public class roboref extends SubspaceBot {
     /** Ending state stores old game reference, updates rankings and prepares for next event */
     private void doEnding() {
         state = State.UPDATING;
-        gameLog.add(0, game);
         arenaLock = false;
         game = null;
         ba.toggleLocked();

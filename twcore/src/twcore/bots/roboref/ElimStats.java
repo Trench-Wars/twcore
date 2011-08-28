@@ -157,11 +157,6 @@ public class ElimStats {
             setStat(stat, value);
     }
     
-    /** Sets loaded to true */
-    public void loaded() {
-        loaded = !loaded;
-    }
-    
     /** Checks to see if database stats have been loaded */
     public boolean isLoaded() {
         return loaded;
@@ -279,11 +274,13 @@ public class ElimStats {
         incrementStat(StatType.WIN_STREAK);
         if (getStat(StatType.WIN_STREAK) > getStat(StatType.BEST_WIN_STREAK))
             setStat(StatType.BEST_WIN_STREAK, getStat(StatType.WIN_STREAK));
+        unload();
     }
     
     public void handleLoss() {
         incrementStat(StatType.GAMES);
         setStat(StatType.WIN_STREAK, 0);
+        unload();
     }
     
     public void handleMultiKill(int kills) {
@@ -341,7 +338,7 @@ public class ElimStats {
         loadStat(StatType.WORST_DEATH_STREAK, rs.getInt("fnTopDeathStreak"));
         loadStat(StatType.BEST_WIN_STREAK, rs.getInt("fnTopWinStreak"));
         loadStat(StatType.BEST_MULTI_KILL, rs.getInt("fnTopMultiKill"));
-        loaded();
+        loaded = true;
     }
     
     public void loadAllShips(ResultSet rs) throws SQLException {

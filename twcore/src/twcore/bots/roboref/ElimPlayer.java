@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.TimerTask;
 
+import twcore.bots.roboref.ElimGame.GameState;
 import twcore.bots.roboref.StatType;
 import twcore.bots.roboref.roboref.ShipType;
 import twcore.core.BotAction;
@@ -58,7 +59,7 @@ public class ElimPlayer {
     private int consecutiveKills, lagouts, freq, specAt, lastStreak;
     private long lastKill, lastDeath, lastShot;
     
-    public ElimPlayer(BotAction act, ElimGame elimGame, String name) {
+    public ElimPlayer(BotAction act, ElimGame elimGame, String name, int ship, int deaths) {
         ba = act;
         this.name = name;
         stats = null;
@@ -69,10 +70,12 @@ public class ElimPlayer {
         lastKill = 0;
         lastShot = 0;
         lastDeath = 0;
-        specAt = -1;
+        specAt = deaths;
         freq = 9998;
-        status = Status.SPEC;
+        status = Status.SPAWN;
         game = elimGame;
+        stats = new ElimStats(ship);
+        ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
     }
     
     /**
@@ -86,9 +89,10 @@ public class ElimPlayer {
         lastDeath = System.currentTimeMillis();
         if (stats.getStat(StatType.KILL_STREAK) > 1) {
             lastStreak = stats.getStat(StatType.KILL_STREAK);
+            stats.setStat(StatType.KILL_STREAK, 0);
             killer.handleKillJoy();
             if (lastStreak >= 5)
-                ba.sendArenaMessage("Kill Joy! " + killer.name + " terminates the (" + getLastKillStreak() + ":0) kill streak of " + name + "!", Tools.Sound.INCONCEIVABLE);
+                ba.sendArenaMessage("Kill Joy! " + killer.name + " terminates the (" + lastStreak + ":0) kill streak of " + name + "!", Tools.Sound.INCONCEIVABLE);
         }
         stats.handleDeath();
         if (stats.getStat(StatType.DEATHS) >= specAt) {
@@ -113,7 +117,7 @@ public class ElimPlayer {
      */
     public void handleKill(ElimPlayer dead) {
         stats.handleKill();
-        if(System.currentTimeMillis() - lastKill < (MULTI_KILL_TIME * Tools.TimeInMillis.SECOND)){
+        if (System.currentTimeMillis() - lastKill < (MULTI_KILL_TIME * Tools.TimeInMillis.SECOND)){
             consecutiveKills++;
             multiKill();
         } else if (consecutiveKills > 0) {
@@ -133,12 +137,12 @@ public class ElimPlayer {
     }
     
     public void handlePosition(PlayerPosition event) {
-        if (getLastDeath() < SPAWN_TIME || status == Status.OUT || status == Status.LAGGED || status == Status.SPEC) return; 
+        if (getLastDeath() < SPAWN_TIME || !isPlaying()) return; 
         int y = event.getYLocation();
         if (game.ship != ShipType.WEASEL) { 
             if (y < BOUNDARY) {
                 // inside base
-                if (game.started) { 
+                if (game.getState() == GameState.PLAYING) { 
                     if (status == Status.SPAWN) {
                         status = Status.IN;
                         if (spawn != null)
@@ -152,7 +156,7 @@ public class ElimPlayer {
                     status = Status.IN;
             } else {
                 // outside base
-                if (game.started) { 
+                if (game.getState() == GameState.PLAYING) { 
                     if (status == Status.IN) {
                         if (bounds != null)
                             ba.cancelTask(bounds);
@@ -169,8 +173,17 @@ public class ElimPlayer {
                     status = Status.SPAWN;
             }
         } else {
+            if (y < BOUNDARY) return;
             if (status == Status.IN) {
-
+                ba.sendPrivateMessage(name, "Warping is ILLEGAL and as a result you have gained a death!");
+                stats.handleDeath();
+                if (stats.getStat(StatType.DEATHS) >= specAt) {
+                    status = Status.OUT;
+                    ba.specWithoutLock(name);
+                    ba.sendArenaMessage(name + " is out. " + getScore() + " (warp abuse)");
+                    game.removePlayer(this);
+                } else
+                    game.sendWarp(name);
             }
         }
     }
@@ -261,10 +274,6 @@ public class ElimPlayer {
         return lagouts;
     }
     
-    public int getLastKillStreak() {
-        return lastStreak;
-    }
-    
     /** Change player status as specified */
     public void setStatus(Status s) {
         status = s;
@@ -288,6 +297,10 @@ public class ElimPlayer {
     
     public Status getStatus() {
         return status;
+    }
+    
+    public boolean isPlaying() {
+        return (status == Status.IN || status == Status.SPAWN || status == Status.WARNED_IN || status == Status.WARNED_OUT);
     }
     
     /** Get kills and deaths String */
@@ -317,15 +330,11 @@ public class ElimPlayer {
     /** Record the loss of an elimination game and flush dynamic game stats */
     public void saveLoss() {
         stats.handleLoss();
-        stats.unload();
-        stats.loaded();
     }
 
     /** Record the win of an elimination game and flush dynamic game stats */
     public void saveWin() {
         stats.handleWin();
-        stats.unload();
-        stats.loaded();
     }
     
     public void cancelTasks() {
@@ -344,17 +353,8 @@ public class ElimPlayer {
             stats = null;
     }
     
-    /** Prepare the statistic handler with the specified ship */
-    public void loadStats(int ship, int spec) {
-        if (isLoaded()) return;
-        status = Status.SPAWN;
-        specAt = spec;
-        stats = new ElimStats(ship);
-    }
-    
     /** Feed stats from the database query into the local database stat reference */
     public void loadStats(ResultSet rs) throws SQLException {
-        ba.sendSmartPrivateMessage("WingZero", "Loading stats for: " + name);
         stats.loadStats(rs);
     }
     
@@ -365,29 +365,26 @@ public class ElimPlayer {
     
     private class Spawn extends TimerTask {
         
-        boolean active;
         boolean warned;
         
         public Spawn(boolean warning) {
-            active = true;
             warned = warning;
         }
         
         @Override
         public void run() {
-            if (!active || status != Status.SPAWN) return;
+            if (status != Status.SPAWN) return;
             if (!warned) {
-                active = false;
-                ba.sendPrivateMessage(name, "GET IN THE BASE! Unless you want to experience my WRATH.");
+                ba.sendPrivateMessage(name, "GET IN THE BASE! Unless you want to experience the wrath of Robo Ref.");
                 warned = true;
                 spawn = new Spawn(true);
                 ba.scheduleTask(spawn, SPAWN_BOUND * Tools.TimeInMillis.SECOND);
             } else {
-                active = false;
                 status = Status.OUT;
                 ba.specWithoutLock(name);
                 ba.sendArenaMessage(name + " is out. " + getScore() + " (Too long outside base)");
                 remove();
+                spawn = null;
             }
         }
         
@@ -411,7 +408,7 @@ public class ElimPlayer {
                 ba.sendArenaMessage(name + " is out. " + getScore() + " (Too long outside base)");
                 remove();
             }
-            
+            bounds = null;
         }
         
         public void returned() {
