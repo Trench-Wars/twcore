@@ -509,26 +509,34 @@ public class twpoll extends SubspaceBot {
 
     private class SpamTask extends TimerTask {
     	public void run() {
-			for(String p: players) {
-        		if (m_botAction.getOperatorList().isBotExact(p))
-        			continue;
-        		if (p.startsWith("TW-") || p.startsWith("TWCore"))
-        			continue;
-            	int userId = getUserID(p);
-            	boolean next = false;
-            	for(int pollId: polls.keySet()) {
-            		if (next)
-            			continue;
-            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
-            			m_botAction.sendSmartPrivateMessage(p, "[Polls] There is at least 1 poll you have not voted yet.");
-            			m_botAction.sendSmartPrivateMessage(p, " ");
-            			showPoll(p, pollId);
-            			try { Thread.sleep(3000); } catch (InterruptedException e) { }
-            			next = true;
-            		}
-            	}
-        	}
-			players.clear();
+        	Runnable r = new Runnable() {
+				public void run() {
+					synchronized (this) {
+						for(String p: players) {
+			        		if (m_botAction.getOperatorList().isBotExact(p))
+			        			continue;
+			        		if (p.startsWith("TW-") || p.startsWith("TWCore"))
+			        			continue;
+			            	int userId = getUserID(p);
+			            	boolean next = false;
+			            	for(int pollId: polls.keySet()) {
+			            		if (next)
+			            			continue;
+			            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
+			            			m_botAction.sendSmartPrivateMessage(p, "[Polls] There is at least 1 poll you have not voted yet.");
+			            			m_botAction.sendSmartPrivateMessage(p, " ");
+			            			showPoll(p, pollId);
+			            			try { Thread.sleep(3000); } catch (InterruptedException e) { }
+			            			next = true;
+			            		}
+			            	}
+			        	}
+						players.clear();
+					}
+				}
+			};
+			Thread t = new Thread(r);
+			t.start();
         }
     }
 
