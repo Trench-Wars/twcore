@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.TimerTask;
 import java.util.Vector;
 
@@ -531,8 +532,9 @@ public class twpoll extends SubspaceBot {
         	Runnable r = new Runnable() {
 				public void run() {
 					Tools.printLog("TW-Poll: running spamTask with " + players.size() + " players.");
-					ArrayList<String> done = new ArrayList<String>();
-					for(String p: players) {
+					Iterator<String> it = players.iterator();
+					while(it.hasNext()) {
+						String p = it.next();
 		        		if (m_botAction.getOperatorList().isBotExact(p))
 		        			continue;
 		        		if (p.startsWith("TW-") || p.startsWith("TWCore"))
@@ -553,12 +555,9 @@ public class twpoll extends SubspaceBot {
 		            		}
 		            	}
 		            	if (!next) {
-		            		done.add(p);
+		            		it.remove();
 		            	}
 		        	}
-					for(String p: done) {
-						players.remove(p);
-					}
 				}
 			};
 			Thread t = new Thread(r);
