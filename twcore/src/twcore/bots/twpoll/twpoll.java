@@ -191,11 +191,12 @@ public class twpoll extends SubspaceBot {
 
     private int getUserID(String playerName) {
 
-    	// cache system
+    	// Cache system
     	if (userIds.containsKey(playerName))
     		return userIds.get(playerName);
 
 		try {
+			// First, filter with UserAccount to avoid double (it happens)
 			ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
 		    	"SELECT fnUserID " +
 		    	"FROM tblUser u " +
@@ -208,9 +209,25 @@ public class twpoll extends SubspaceBot {
 				userIds.put(playerName, userId);
 				rs.close();
 				return userId;
-			} else {
-				rs.close();
-				return 0;
+			}
+			// If nothing, dont filter and get the last fnUserID found
+			else {
+				rs = m_botAction.SQLQuery(DB_NAME, "" +
+			    	"SELECT fnUserID " +
+			    	"FROM tblUser u " +
+			    	"WHERE fcUserName = '" + Tools.addSlashes(playerName) + "'"
+				);
+
+				if (rs.last()) {
+					int userId = rs.getInt("fnUserID");
+					userIds.put(playerName, userId);
+					rs.close();
+					return userId;
+				}
+				else {
+					rs.close();
+					return 0;
+				}
 			}
 
 		} catch (SQLException e) {
@@ -516,6 +533,8 @@ public class twpoll extends SubspaceBot {
         		if (p.startsWith("TW-") || p.startsWith("TWCore"))
         			continue;
             	int userId = getUserID(p);
+            	if (userId == 0)
+            		continue;
             	boolean next = false;
             	for(int pollId: polls.keySet()) {
             		if (next)
