@@ -111,6 +111,12 @@ public class twpoll extends SubspaceBot {
 	        //else if (message.startsWith("!undo")) {
 	        //	undo(name);
 	        //}
+	        else if (message.startsWith("!spam")) {
+	        	spamTask.run();
+	        }
+	        else if (message.startsWith("!queue") && m_botAction.getOperatorList().isER(name)) {
+	        	m_botAction.sendSmartPrivateMessage(name, "Queue: " + players.size());
+	        }
 	        else if (message.startsWith("!reload") && m_botAction.getOperatorList().isER(name)) {
 	        	loadPolls();
 	        	loadVotes();
@@ -171,7 +177,6 @@ public class twpoll extends SubspaceBot {
     	}
     	spamTask = new SpamTask();
     	m_botAction.scheduleTaskAtFixedRate(spamTask, SPAM_INTERVAL_MINUTE * Tools.TimeInMillis.MINUTE, SPAM_INTERVAL_MINUTE * Tools.TimeInMillis.MINUTE );
-    	spamTask.run();
     }
 
     public void handleEvent(LoggedOn event) {
@@ -525,6 +530,7 @@ public class twpoll extends SubspaceBot {
     	public void run() {
         	Runnable r = new Runnable() {
 				public void run() {
+					Tools.printLog("TW-Poll: running spamTask with " + players.size() + " players.");
 					ArrayList<String> done = new ArrayList<String>();
 					for(String p: players) {
 		        		if (m_botAction.getOperatorList().isBotExact(p))
