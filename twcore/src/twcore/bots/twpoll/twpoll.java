@@ -8,8 +8,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.TimerTask;
 import java.util.Vector;
 
@@ -22,7 +20,6 @@ import twcore.core.events.ArenaList;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
-import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
@@ -36,7 +33,7 @@ import twcore.core.util.Tools;
  */
 public class twpoll extends SubspaceBot {
 
-	private static final int SPAM_INTERVAL_MINUTE = 30;
+	private static final int SPAM_INTERVAL_MINUTE = 15;
 
 	private static final String DB_NAME = "website";
 
