@@ -531,6 +531,8 @@ public class twpoll extends SubspaceBot {
 		        		if (p.startsWith("TW-") || p.startsWith("TWCore"))
 		        			continue;
 		            	int userId = getUserID(p);
+		            	if (userId == 0)
+		            		continue;
 		            	boolean next = false;
 		            	for(int pollId: polls.keySet()) {
 		            		if (next)
