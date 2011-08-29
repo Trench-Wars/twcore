@@ -525,6 +525,7 @@ public class twpoll extends SubspaceBot {
     	public void run() {
         	Runnable r = new Runnable() {
 				public void run() {
+					ArrayList<String> done = new ArrayList<String>();
 					for(String p: players) {
 		        		if (m_botAction.getOperatorList().isBotExact(p))
 		        			continue;
@@ -545,7 +546,13 @@ public class twpoll extends SubspaceBot {
 		            			next = true;
 		            		}
 		            	}
+		            	if (!next) {
+		            		done.add(p);
+		            	}
 		        	}
+					for(String p: done) {
+						players.remove(p);
+					}
 				}
 			};
 			Thread t = new Thread(r);
