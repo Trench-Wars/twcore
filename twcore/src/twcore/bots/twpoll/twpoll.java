@@ -112,7 +112,7 @@ public class twpoll extends SubspaceBot {
 	        //else if (message.startsWith("!undo")) {
 	        //	undo(name);
 	        //}
-	        else if (message.startsWith("!spam")) {
+	        else if (message.startsWith("!spam") && m_botAction.getOperatorList().isER(name)) {
 	        	spamTask.run();
 	        }
 	        else if (message.startsWith("!queue") && m_botAction.getOperatorList().isER(name)) {
@@ -532,7 +532,7 @@ public class twpoll extends SubspaceBot {
         	Runnable r = new Runnable() {
 				public void run() {
 					Tools.printLog("TW-Poll: running spamTask with " + players.size() + " players.");
-					Iterator<String> it = players.iterator();
+					Iterator<String> it = ((Vector)players.clone()).iterator();
 					while(it.hasNext()) {
 						String p = it.next();
 		        		if (m_botAction.getOperatorList().isBotExact(p))
@@ -555,7 +555,7 @@ public class twpoll extends SubspaceBot {
 		            		}
 		            	}
 		            	if (!next) {
-		            		it.remove();
+		            		players.remove(p);
 		            	}
 		        	}
 				}
