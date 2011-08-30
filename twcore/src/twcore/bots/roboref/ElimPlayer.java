@@ -81,7 +81,6 @@ public class ElimPlayer {
     /**
      * Increments and adjusts all relevant death statistics.
      * @param killer The player object that made the kill
-     * @return boolean array where 0=elimination and 1=KillJoy
      */
     public void handleDeath(ElimPlayer killer) {
         cancelTasks();
@@ -114,7 +113,6 @@ public class ElimPlayer {
     /**
      * Increments and adjusts all relevant kill statistics.
      * @param dead The player object for the kill victim
-     * @return Returns a String if streak alert triggered or null otherwise
      */
     public void handleKill(ElimPlayer dead) {
         stats.handleKill();
@@ -267,33 +265,13 @@ public class ElimPlayer {
         return lagouts;
     }
     
-    /** Change player status as specified */
-    public void setStatus(Status s) {
-        status = s;
-    }
-    
-    /** Sets the freq for this player in the current game */
-    public void setFreq(int f) {
-        freq = f;
-    }
-    
     /** Gets the freq this player was originally put on */
     public int getFreq() {
         return freq;
     }
     
-    /** Lagout command execution */
-    public void lagin() {
-        status = Status.SPAWN;
-        lagouts--;
-    }
-    
     public Status getStatus() {
         return status;
-    }
-    
-    public boolean isPlaying() {
-        return (status == Status.IN || status == Status.SPAWN || status == Status.WARNED_IN || status == Status.WARNED_OUT);
     }
     
     /** Get kills and deaths String */
@@ -308,6 +286,26 @@ public class ElimPlayer {
     
     public String getStreakStats() {
         return stats.getStreak(name);
+    }
+    
+    /** Change player status as specified */
+    public void setStatus(Status s) {
+        status = s;
+    }
+    
+    /** Sets the freq for this player in the current game */
+    public void setFreq(int f) {
+        freq = f;
+    }
+    
+    /** Lagout command execution */
+    public void lagin() {
+        status = Status.SPAWN;
+        lagouts--;
+    }
+    
+    public boolean isPlaying() {
+        return (status == Status.IN || status == Status.SPAWN || status == Status.WARNED_IN || status == Status.WARNED_OUT);
     }
     
     public boolean isLoaded() {

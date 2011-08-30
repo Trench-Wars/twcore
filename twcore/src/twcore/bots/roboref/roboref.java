@@ -356,13 +356,15 @@ public class roboref extends SubspaceBot {
             else if (msg.equals("!status"))
                 cmd_status(name);
             
-            if (oplist.isModerator(name)) {
+            if (oplist.isZH(name)) {
                 if (msg.equals("!die"))
                     cmd_die(name);
                 else if (msg.equals("!off") || msg.equals("!stop"))
                     cmd_stop(name);
                 else if (msg.equals("!on") || msg.equals("!start"))
                     cmd_start(name);
+                else if (msg.equals("!zone"))
+                    cmd_zone(name);
                 
             }
             if (oplist.isSmod(name)) {
@@ -374,8 +376,6 @@ public class roboref extends SubspaceBot {
                     cmd_hiderFinder(name);
                 else if (msg.startsWith("!greet "))
                     cmd_greet(name, msg);
-                else if (msg.equals("!zone"))
-                    cmd_zone(name);
                 else if (msg.startsWith("!game "))
                     cmd_game(name, msg);
             }
@@ -441,20 +441,20 @@ public class roboref extends SubspaceBot {
                 "|!scorereset <#>   - Resets all scores and statistics for the ship <#> specified (!sr)   |",
         };
         ba.privateMessageSpam(name, msg);
-        if (oplist.isModerator(name)) {
+        if (oplist.isZH(name)) {
             msg = new String[] {
                     ":-- Staff Commands ----------------------------------------------------------------------+",
                     "|!die              - Forces the bot to shutdown and log off                              |",
                     "|!stop             - Kills current game and prevents any future games (!off)             |",
                     "|!start            - Begins game and enables games to continue running (!on)             |",
-                    "|!remove <name>    - Removes <name> from the current game                                |",
+                    "|!zone             - Forces the bot to send a default zone message                       |",
+                    //"|!remove <name>    - Removes <name> from the current game                                |",
             };
             ba.privateMessageSpam(name, msg);
         }
         if (oplist.isSmod(name)) {
             msg = new String[] {
                     ":-- Smod Commands -----------------------------------------------------------------------+",
-                    "|!zone             - Forces the bot to send a default zone message                       |",
                     "|!hider            - Disables the hiding player checker/reporter (only during games)     |",
                     "|!debug            - Toggles the debugger which sends debug messages to you when enabled |",
                     "|!greet <msg>      - Changes the greeting message for the arena                          |",
@@ -1010,7 +1010,8 @@ public class roboref extends SubspaceBot {
     private void updateRanks() {
         try {
             long now = System.currentTimeMillis();
-            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = " + shipType.getNum() + " AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
+            // removed: AND (fnKills + fnDeaths) > " + INITIAL_RATING + "
+            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = " + shipType.getNum() + "  ORDER BY fnRating DESC");
             if (rs.next())
                 debug("Rank update for " + shipType.toString() + " was successful");
             else

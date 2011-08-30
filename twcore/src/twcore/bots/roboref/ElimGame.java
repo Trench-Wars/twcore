@@ -511,9 +511,11 @@ public class ElimGame {
     private void countStats() {
         for (String name : winners) {
             ElimPlayer ep = getPlayer(name);
-            played.put(low(name), ep);
-            playerCount++;
-            ratingCount += ep.getRating();
+            if (ep != null) {
+                played.put(low(name), ep);
+                playerCount++;
+                ratingCount += ep.getRating();
+            }
         }
     }
     
