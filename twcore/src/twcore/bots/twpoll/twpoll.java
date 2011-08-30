@@ -34,7 +34,7 @@ import twcore.core.util.Tools;
  */
 public class twpoll extends SubspaceBot {
 
-	private static final int SPAM_INTERVAL_MINUTE = 15;
+	private static final int SPAM_INTERVAL_MINUTE = 20;
 
 	private static final String DB_NAME = "website";
 
@@ -544,7 +544,7 @@ public class twpoll extends SubspaceBot {
 						String p = it.next();
 		        		if (m_botAction.getOperatorList().isBotExact(p))
 		        			continue;
-		        		if (p.startsWith("TW-") || p.startsWith("TWCore"))
+		        		if (p.startsWith("TW-") || p.startsWith("TWCore") || p.startsWith("RoboBot"))
 		        			continue;
 		            	int userId = getUserID(p);
 		            	if (userId == 0)
@@ -565,7 +565,7 @@ public class twpoll extends SubspaceBot {
 		            		players.remove(p);
 		            	}
 		        	}
-					if (players.size() > 120) {
+					if (players.size() > 140) {
 						players.clear();
 					}
 				}
