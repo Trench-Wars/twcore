@@ -124,9 +124,9 @@ public class twpoll extends SubspaceBot {
 	        	m_botAction.sendSmartPrivateMessage(name, "Reloaded.");
 	        }
 	        else {
+	        	Integer userId = getUserID(name);
 	        	try {
 	        		Integer choice = Integer.parseInt(message.trim());
-	        		Integer userId = getUserID(name);
 	        		if (userId != null) {
 	        			if (openPolls.get(userId) != null) {
 	        				vote(openPolls.get(userId), name, choice);
@@ -136,7 +136,11 @@ public class twpoll extends SubspaceBot {
 	        			}
 	        		}
 	        	} catch(NumberFormatException e) {
-	        		showPolls(name);
+	        		if (openPolls.get(userId) != null) {
+	        			showPoll(name, openPolls.get(userId));
+	        		} else {
+	        			showPolls(name);
+	        		}
 	        	}
 	        }
 
@@ -420,23 +424,26 @@ public class twpoll extends SubspaceBot {
 				"INSERT INTO tblPollVote " +
 				"VALUES (null, "+pollId+","+pollOption.id+","+userId+",NOW())"
 			);
-			HashSet<Integer> users = votes.get(pollId);
-			if (users == null) {
-				users = new HashSet<Integer>();
-			}
-			users.add(userId);
-			votes.put(pollId, users);
-			openPolls.remove(userId);
+
+			// If no duplicate found, we can proceed, else SQLException
 			lastPolls.put(userId, pollId);
 			//m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted (!undo to undo).");
 			m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted.");
 			giveMoney(playerName, ((int)(Math.random()*1000)));
 			m_botAction.sendSmartPrivateMessage(playerName, "Type !next to answer another poll.");
-			return true;
+
 		} catch (SQLException e) {
-			e.printStackTrace();
-			return false;
+
 		}
+
+		HashSet<Integer> users = votes.get(pollId);
+		if (users == null) {
+			users = new HashSet<Integer>();
+		}
+		users.add(userId);
+		votes.put(pollId, users);
+		openPolls.remove(userId);
+		return true;
 
     }
 
