@@ -127,6 +127,7 @@ public class roboref extends SubspaceBot {
     int winStreak;
     int voteTime;
     long lastZoner, lastAlert;
+    int[] voteStats;                       // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
     String[] updateFields;
     boolean shrap;
     boolean arenaLock;
@@ -158,6 +159,7 @@ public class roboref extends SubspaceBot {
         spy = new Spy(ba);
         DEBUG = false;
         debugger = "";
+        voteStats = new int[] { 0, 0, 0, 0, 0, 0, 0 };
         votes = new HashMap<String, Integer>();
         alerts = new HashSet<String>();
         debugStatPlayers = new HashSet<String>();
@@ -355,6 +357,8 @@ public class roboref extends SubspaceBot {
                 cmd_deaths(name);
             else if (msg.equals("!status"))
                 cmd_status(name);
+            else if (msg.equals("!votes") || msg.equals("!vi"))
+                cmd_votes(name);
             
             if (oplist.isZH(name)) {
                 if (msg.equals("!die"))
@@ -422,6 +426,7 @@ public class roboref extends SubspaceBot {
     public void cmd_help(String name) {
         String[] msg = new String[] {
                 ",-- Robo Ref Commands -------------------------------------------------------------------.",
+                "|!votes            - Warbird and Javelin vote analysis                                   |",
                 "|!alert            - Toggles new game private message alerts on or off                   |",
                 "|!lagout           - Return to game after lagging out                                    |",
                 "|!status           - Displays current game status                                        |",
@@ -462,6 +467,16 @@ public class roboref extends SubspaceBot {
             ba.privateMessageSpam(name, msg);
         }
         ba.sendPrivateMessage(name, "`----------------------------------------------------------------------------------------'");
+    }
+    
+    public void cmd_votes(String name) {
+        String[] msg = {
+                "Warbird Games: " + voteStats[0] + " | Javelin Games: " + voteStats[1],
+                "Voted Jav & lost: " + voteStats[3] + " | Voted WB & lost: " + voteStats[2],
+                "Unanimous WB: " + voteStats[4] + " | Unanimous Jav: " + voteStats[5],
+                "Ties: " + voteStats[6],
+        };
+        ba.smartPrivateMessageSpam(name, msg);
     }
     
     /** Handles the !remove player command which will spec the player and erase stats */
@@ -1045,13 +1060,29 @@ public class roboref extends SubspaceBot {
                     wins.add(i + 1);
             }
             if (wins.size() > 0) {
+                voteStats[6]++;
                 if (high > 0) {
                     int num = random.nextInt(wins.size());
                     ship = wins.toArray(new Integer[wins.size()])[num];
                 } else
                     ship = random.nextInt(2) + 1;
-            } else
+            } else {
+                // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
                 ship = wins.first();
+                if (ship == 1) {
+                    voteStats[0]++;
+                    if (count[1] > 0)
+                        voteStats[3] += count[2];
+                    else
+                        voteStats[4]++;
+                } else if (ship == 2) {
+                    voteStats[1]++;
+                    if (count[0] > 0)
+                        voteStats[2] += count[0];
+                    else
+                        voteStats[5]++;
+                }
+            }
             shipType = ShipType.type(ship);
             votes.clear();
         } else if (voteType == VoteType.DEATHS) {
