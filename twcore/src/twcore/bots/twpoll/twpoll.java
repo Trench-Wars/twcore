@@ -558,6 +558,9 @@ public class twpoll extends SubspaceBot {
 		            		players.remove(p);
 		            	}
 		        	}
+					if (players.size() > 120) {
+						players.clear();
+					}
 				}
 			};
 			Thread t = new Thread(r);
