@@ -1059,13 +1059,17 @@ public class roboref extends SubspaceBot {
                 } else if (count[i] == high)
                     wins.add(i + 1);
             }
-            if (wins.size() > 0) {
+            if (wins.size() > 1) {
                 voteStats[6]++;
                 if (high > 0) {
                     int num = random.nextInt(wins.size());
                     ship = wins.toArray(new Integer[wins.size()])[num];
                 } else
                     ship = random.nextInt(2) + 1;
+                if (ship == 1)
+                	voteStats[0]++;
+                else if (ship == 2)
+                	voteStats[1]++;
             } else {
                 // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
                 ship = wins.first();
