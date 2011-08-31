@@ -24,17 +24,15 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.util.Tools;
 
 /**
- * A poll system DB-based
+ * A DB-based poll system
  *
- * Staff can add as many poll they want.
  * Players will get notified if there is an active poll.
- * The bot can also interact with the
  *
  * @author  Arobas+
  */
 public class twpoll extends SubspaceBot {
 
-	private static final int SPAM_INTERVAL_MINUTE = 20;
+	private static final int SPAM_INTERVAL_MINUTE = 30;
 
 	private static final String DB_NAME = "website";
 
@@ -43,6 +41,8 @@ public class twpoll extends SubspaceBot {
 	private HashMap<String,Integer> userIds;
 	private HashMap<Integer,Integer> openPolls;
 	private HashMap<Integer,Integer> lastPolls;
+	private HashMap<Integer,Long> lastSpam;
+	private HashSet<String> ignore;
 
 	private Vector<String> players;
 
@@ -59,7 +59,9 @@ public class twpoll extends SubspaceBot {
         userIds = new HashMap<String,Integer>();
         openPolls = new HashMap<Integer,Integer>();
         lastPolls = new HashMap<Integer,Integer>();
+        lastSpam = new HashMap<Integer,Long>();
         players = new Vector<String>();
+        ignore = new HashSet<String>();
     }
 
 
@@ -100,6 +102,15 @@ public class twpoll extends SubspaceBot {
 	        		showPoll(name, pollId);
 	        	} catch(NumberFormatException e) { }
 	        }
+	        else if (message.startsWith("!ignore")) {
+	        	if (ignore.contains(name)) {
+	        		m_botAction.sendSmartPrivateMessage(name, "You are already on my ignore list.");
+	        	} else {
+		        	ignore.add(name);
+		        	m_botAction.sendSmartPrivateMessage(name, "You have been added to my ignore list. I won't bother you until I reset.");
+		        	m_botAction.sendSmartPrivateMessage(name, "HINT: Vote for each polls and you won't get notified again.");
+	        	}
+	        }
 	        else if (message.startsWith("!polls")) {
 	        	showPolls(name);
 	        }
@@ -115,13 +126,25 @@ public class twpoll extends SubspaceBot {
 	        else if (message.startsWith("!spam") && m_botAction.getOperatorList().isER(name)) {
 	        	spamTask.run();
 	        }
+	        else if (message.startsWith("!ignored") && m_botAction.getOperatorList().isER(name)) {
+	        	String names = "";
+	        	for(String n: ignore) {
+	        		names += ", " + n;
+	        	}
+	        	if (ignore.size() > 0) {
+	        		m_botAction.sendSmartPrivateMessage(name, "Total: " + ignore.size());
+	        		m_botAction.sendSmartPrivateMessage(name, names.substring(2));
+	        	} else {
+	        		m_botAction.sendSmartPrivateMessage(name, "Ignore list empty.");
+		        }
+	        }
 	        else if (message.startsWith("!queue") && m_botAction.getOperatorList().isER(name)) {
 	        	m_botAction.sendSmartPrivateMessage(name, "Queue: " + players.size());
 	        }
 	        else if (message.startsWith("!reload") && m_botAction.getOperatorList().isER(name)) {
 	        	loadPolls();
 	        	loadVotes();
-	        	m_botAction.sendSmartPrivateMessage(name, "Reloaded.");
+	        	m_botAction.sendSmartPrivateMessage(name, "Polls and votes reloaded.");
 	        }
 	        else {
 	        	Integer userId = getUserID(name);
@@ -260,8 +283,8 @@ public class twpoll extends SubspaceBot {
     	String[] spam = {
     			"[Polls]",
     			"- !polls      Show current polls.",
-    			"- !next       Get the next poll.",
-    			"              (avalaible: " + polls + ")",
+    			"- !next       Get the next poll. (avalaible: " + polls + ")",
+    			"- !ignore     Put you on my ignore list, I won't bother you again."
     			//"- !undo       Undo your last vote.",
     	};
     	m_botAction.privateMessageSpam(playerName, spam);
@@ -291,7 +314,7 @@ public class twpoll extends SubspaceBot {
     				spam.add(pad + (++i) + ". " + option.option);
     			}
     			spam.add(" ");
-    			spam.add("HELP: To vote, pm me your choice.");
+    			spam.add("HELP: To vote, pm me your choice (type the number only).");
         	}
 
         	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
@@ -544,6 +567,8 @@ public class twpoll extends SubspaceBot {
 						String p = it.next();
 		        		if (m_botAction.getOperatorList().isBotExact(p))
 		        			continue;
+		        		if (ignore.contains(p))
+		        			continue;
 		        		if (p.startsWith("TW-") || p.startsWith("TWCore") || p.startsWith("RoboBot"))
 		        			continue;
 		            	int userId = getUserID(p);
@@ -554,11 +579,13 @@ public class twpoll extends SubspaceBot {
 		            		if (next)
 		            			continue;
 		            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
-		            			m_botAction.sendSmartPrivateMessage(p, "[Polls] There is at least 1 poll you have not voted yet.");
+		            			m_botAction.sendSmartPrivateMessage(p, "There is at least 1 poll you have not voted yet.");
 		            			m_botAction.sendSmartPrivateMessage(p, " ");
 		            			showPoll(p, pollId);
+		            			m_botAction.sendSmartPrivateMessage(p, "      To stop getting notified, type !ignore.");
 		            			try { Thread.sleep(3000); } catch (InterruptedException e) { }
 		            			next = true;
+		            			lastSpam.put(userId, System.currentTimeMillis());
 		            		}
 		            	}
 		            	if (!next) {
