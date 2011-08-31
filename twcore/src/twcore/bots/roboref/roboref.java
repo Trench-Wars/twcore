@@ -369,7 +369,8 @@ public class roboref extends SubspaceBot {
                     cmd_start(name);
                 else if (msg.equals("!zone"))
                     cmd_zone(name);
-                
+                else if (msg.startsWith("!remove ") || msg.startsWith("!rem ") || msg.startsWith("!rm "))
+                    cmd_remove(name, msg);
             }
             if (oplist.isSmod(name)) {
                 if (msg.startsWith("!debug"))
@@ -471,22 +472,27 @@ public class roboref extends SubspaceBot {
     
     public void cmd_votes(String name) {
         String[] msg = {
-                "Warbird Games: " + voteStats[0] + " | Javelin Games: " + voteStats[1],
-                "Voted Jav & lost: " + voteStats[3] + " | Voted WB & lost: " + voteStats[2],
-                "Unanimous WB: " + voteStats[4] + " | Unanimous Jav: " + voteStats[5],
+                "Games     WB: " + padNum("" + voteStats[0], 3) + " | Jav: " + padNum("" + voteStats[1], 3),
+                "Outvoted  WB: " + padNum("" + voteStats[3], 3) + " | Jav: " + padNum("" + voteStats[2], 3),
+                "Unanimous WB: " + padNum("" + voteStats[4], 3) + " | Jav: " + padNum("" + voteStats[5], 3),
                 "Ties: " + voteStats[6],
         };
         ba.smartPrivateMessageSpam(name, msg);
     }
     
+    private String padNum(String str, int len) {
+        while (str.length() < len)
+            str = " " + str;
+        return str;
+    }
+    
     /** Handles the !remove player command which will spec the player and erase stats */
     public void cmd_remove(String name, String cmd) {
-        if (state != State.PLAYING)
-            ba.sendPrivateMessage(name, "There is no game currently being played.");
-        else if (game != null) {
-            if (cmd.length() < 9) return;
+        if (cmd.indexOf(" ") + 1 == cmd.length()) return;
+        if (game != null && (state == State.STARTING || state == State.PLAYING))
             game.do_remove(name, cmd.substring(cmd.indexOf(" ") + 1));
-        }
+        else
+            ba.sendSmartPrivateMessage(name, "There is currently no game being played.");
     }
     
     /** Handles the !status command which displays current bot or game state */
