@@ -454,7 +454,7 @@ public class roboref extends SubspaceBot {
                     "|!stop             - Kills current game and prevents any future games (!off)             |",
                     "|!start            - Begins game and enables games to continue running (!on)             |",
                     "|!zone             - Forces the bot to send a default zone message                       |",
-                    //"|!remove <name>    - Removes <name> from the current game                                |",
+                    "|!remove <name>    - Removes <name> from the current game (!rm or !rem)                  |",
             };
             ba.privateMessageSpam(name, msg);
         }
