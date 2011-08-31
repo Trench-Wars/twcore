@@ -1066,26 +1066,21 @@ public class roboref extends SubspaceBot {
                     ship = wins.toArray(new Integer[wins.size()])[num];
                 } else
                     ship = random.nextInt(2) + 1;
-                if (ship == 1)
-                	voteStats[0]++;
-                else if (ship == 2)
-                	voteStats[1]++;
-            } else {
-                // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
+            } else
                 ship = wins.first();
-                if (ship == 1) {
-                    voteStats[0]++;
-                    if (count[1] > 0)
-                        voteStats[3] += count[2];
-                    else
-                        voteStats[4]++;
-                } else if (ship == 2) {
-                    voteStats[1]++;
-                    if (count[0] > 0)
-                        voteStats[2] += count[0];
-                    else
-                        voteStats[5]++;
-                }
+            // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
+            if (ship == 1) {
+                voteStats[0]++;
+                if (count[1] > 0)
+                    voteStats[3] += count[1];
+                else
+                    voteStats[4]++;
+            } else if (ship == 2) {
+                voteStats[1]++;
+                if (count[0] > 0)
+                    voteStats[2] += count[0];
+                else
+                    voteStats[5]++;
             }
             shipType = ShipType.type(ship);
             votes.clear();

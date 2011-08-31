@@ -144,12 +144,21 @@ public class ElimGame {
                     ep.setStatus(Status.SPAWN);
                 else
                     ep.setStatus(Status.IN);
-            } else
+            } else {
                 winners.remove(name.toLowerCase());
+                played.remove(low(name));
+                ElimPlayer ep = getPlayer(name);
+                if (ep != null)
+                    ep.setStatus(Status.SPEC);                
+            }
         } else if (event.getShipType() == 0) {
-            if (state == GameState.STARTING)
-                winners.remove(low(name));
-            else if (state == GameState.PLAYING)
+            if (state == GameState.NA || state == GameState.STARTING) {
+                winners.remove(name.toLowerCase());
+                played.remove(low(name));
+                ElimPlayer ep = getPlayer(name);
+                if (ep != null)
+                    ep.setStatus(Status.SPEC);                
+            } else if (state == GameState.PLAYING)
                 handleLagout(name);
         }
     }
@@ -170,8 +179,9 @@ public class ElimGame {
         if (name == null || !winners.contains(low(name))) return;
         if (state == GameState.PLAYING)
             handleLagout(name);
-        else {
+        else if (state == GameState.NA || state == GameState.STARTING){
             winners.remove(low(name));
+            played.remove(low(name));
             ElimPlayer ep = getPlayer(name);
             if (ep != null)
             	ep.setStatus(Status.SPEC);
