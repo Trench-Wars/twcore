@@ -159,7 +159,7 @@ public class roboref extends SubspaceBot {
         spy = new Spy(ba);
         DEBUG = false;
         debugger = "";
-        voteStats = new int[] { 0, 0, 0, 0, 0, 0, 0 };
+        voteStats = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
         votes = new HashMap<String, Integer>();
         alerts = new HashSet<String>();
         debugStatPlayers = new HashSet<String>();
@@ -471,10 +471,12 @@ public class roboref extends SubspaceBot {
     }
     
     public void cmd_votes(String name) {
+        // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
         String[] msg = {
                 "Games     WB: " + padNum("" + voteStats[0], 3) + " | Jav: " + padNum("" + voteStats[1], 3),
-                "Outvoted  WB: " + padNum("" + voteStats[3], 3) + " | Jav: " + padNum("" + voteStats[2], 3),
+                "Outvoted  WB: " + padNum("" + voteStats[2], 3) + " | Jav: " + padNum("" + voteStats[3], 3),
                 "Unanimous WB: " + padNum("" + voteStats[4], 3) + " | Jav: " + padNum("" + voteStats[5], 3),
+                "Total votes: " + voteStats[7],
                 "Ties: " + voteStats[6],
         };
         ba.smartPrivateMessageSpam(name, msg);
@@ -1077,12 +1079,14 @@ public class roboref extends SubspaceBot {
             // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
             if (ship == 1) {
                 voteStats[0]++;
+                voteStats[7] += count[0] + count[1];
                 if (count[1] > 0)
                     voteStats[3] += count[1];
                 else
                     voteStats[4]++;
             } else if (ship == 2) {
                 voteStats[1]++;
+                voteStats[7] += count[0] + count[1];
                 if (count[0] > 0)
                     voteStats[2] += count[0];
                 else

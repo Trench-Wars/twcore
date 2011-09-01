@@ -341,7 +341,7 @@ public class ElimPlayer {
     }
     
     public void scorereset(int ship) {
-        if (stats.getShip() == ship)
+        if (stats != null && stats.getShip() == ship)
             stats = null;
     }
     
