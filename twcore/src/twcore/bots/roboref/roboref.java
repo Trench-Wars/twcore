@@ -325,67 +325,84 @@ public class roboref extends SubspaceBot {
                 handleVote(name, msg);
         }
         
-        msg = msg.toLowerCase();
+        String cmd = msg.toLowerCase();
         
         if (type == Message.PRIVATE_MESSAGE) {
             if (state == State.OFF)
                 ba.sendPrivateMessage(name, "Bot disabled.");
-            else if (msg.equals("!help"))
+            else if (cmd.equals("!help"))
                 cmd_help(name);
-            else if (msg.equals("!lagout"))
+            else if (cmd.equals("!lagout"))
                 cmd_lagout(name);
-            else if (msg.startsWith("!rank "))
+            else if (cmd.startsWith("!rank "))
                 cmd_rank(name, msg);
-            else if (msg.startsWith("!rec "))
+            else if (cmd.startsWith("!rec "))
                 cmd_rec(name, msg);
-            else if (msg.startsWith("!stats"))
+            else if (cmd.startsWith("!stats"))
                 cmd_stats(name, msg);
-            else if (msg.startsWith("!streak"))
+            else if (cmd.startsWith("!streak"))
                 cmd_streak(name, msg);
-            else if (msg.startsWith("!scorereset") || msg.startsWith("!sr"))
+            else if (cmd.startsWith("!scorereset") || cmd.startsWith("!sr"))
                 cmd_scorereset(name, msg);
         }
         
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
-            if (msg.equals("!alert"))
+            if (cmd.equals("!alert"))
                 cmd_alert(name);
-            else if (msg.equals("!who"))
+            else if (cmd.equals("!who"))
                 cmd_who(name);
-            else if (msg.startsWith("!mvp"))
+            else if (cmd.startsWith("!mvp"))
                 cmd_mvp(name);
-            else if (msg.equals("!deaths"))
+            else if (cmd.equals("!deaths"))
                 cmd_deaths(name);
-            else if (msg.equals("!status"))
+            else if (cmd.equals("!status"))
                 cmd_status(name);
-            else if (msg.equals("!votes") || msg.equals("!vi"))
+            else if (cmd.equals("!votes") || cmd.equals("!vi"))
                 cmd_votes(name);
             
             if (oplist.isZH(name)) {
-                if (msg.equals("!die"))
+                if (cmd.equals("!die"))
                     cmd_die(name);
-                else if (msg.equals("!off") || msg.equals("!stop"))
+                else if (cmd.equals("!off") || cmd.equals("!stop"))
                     cmd_stop(name);
-                else if (msg.equals("!on") || msg.equals("!start"))
+                else if (cmd.equals("!on") || cmd.equals("!start"))
                     cmd_start(name);
-                else if (msg.equals("!zone"))
+                else if (cmd.equals("!zone"))
                     cmd_zone(name);
-                else if (msg.startsWith("!remove ") || msg.startsWith("!rem ") || msg.startsWith("!rm "))
+                else if (cmd.startsWith("!remove ") || cmd.startsWith("!rem ") || cmd.startsWith("!rm "))
                     cmd_remove(name, msg);
             }
             if (oplist.isSmod(name)) {
-                if (msg.startsWith("!debug"))
+                if (cmd.startsWith("!debug"))
                     cmd_debug(name);
-                else if (msg.startsWith("!ds "))
+                else if (cmd.startsWith("!ds "))
                     cmd_debugStats(name, msg);
-                else if (msg.startsWith("!hide"))
+                else if (cmd.startsWith("!hide"))
                     cmd_hiderFinder(name);
-                else if (msg.startsWith("!greet "))
+                else if (cmd.startsWith("!greet "))
                     cmd_greet(name, msg);
-                else if (msg.startsWith("!game "))
+                else if (cmd.startsWith("!game "))
                     cmd_game(name, msg);
             }
+            if (oplist.isOwner(name))
+                if (cmd.startsWith("!svi "))
+                    cmd_setStats(name, msg);
         }
         spy.handleEvent(event);
+    }
+    
+    public void cmd_setStats(String name, String cmd) {
+        String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(",");
+        if (args.length == 8) {
+            try {
+                for (int i = 0; i < voteStats.length; i++)
+                    voteStats[i] = Integer.valueOf(args[i]);
+                ba.sendSmartPrivateMessage(name, "Done!");
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name, "Error!");
+            }
+        } else
+            ba.sendSmartPrivateMessage(name, "Error! Bad length.");
     }
     
     /** Handles potential votes read from public chat during a voting period */
