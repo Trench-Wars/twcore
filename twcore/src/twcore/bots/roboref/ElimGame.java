@@ -22,6 +22,7 @@ import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
+import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -171,6 +172,17 @@ public class ElimGame {
         ElimPlayer ep = getPlayer(p.getPlayerName());
         if (ep != null)
             ep.handlePosition(event);
+    }
+    
+    public void handleEvent(WeaponFired event) {
+        if (event.getWeaponType() != WeaponFired.WEAPON_BOMB && event.getWeaponType() != WeaponFired.WEAPON_BULLET) 
+            return; 
+        String name = ba.getPlayerName(event.getPlayerID());
+        if (name != null) {
+            ElimPlayer ep = getPlayer(name);
+            if (ep != null)
+                ep.handleShot();
+        }
     }
     
     /** Handle left event for potential lagouts */

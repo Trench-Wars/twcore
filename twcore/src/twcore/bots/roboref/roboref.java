@@ -212,9 +212,7 @@ public class roboref extends SubspaceBot {
     /** Handles the WeaponFired event which reports shot stats if a game is being played */
     public void handleEvent(WeaponFired event) {
         if (state != State.PLAYING || game == null) return;
-        String name = ba.getPlayerName(event.getPlayerID());
-        if (name != null)
-            game.getPlayer(name).handleShot();
+        game.handleEvent(event);
     }
 
     /** Handles ship and freq change events if a game is being played */
