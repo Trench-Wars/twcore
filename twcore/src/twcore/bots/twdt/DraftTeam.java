@@ -68,7 +68,6 @@ public class DraftTeam {
         cmdTarget = null;
         resCheck = null;
         loadTeam();
-        ba.sendArenaMessage("Team created: " + teamName);
     }
     
     public void handleEvent(PlayerDeath event) {
@@ -84,9 +83,10 @@ public class DraftTeam {
         if (name != null) {
             DraftPlayer dp = getPlayer(name);
             if (dp != null && dp.getStatus() == Status.IN) {
-                score++;
+            	flag = true;
                 dp.handleFlagClaim();
-            }
+            } else if (dp == null)
+            	flag = false;
         }
     }
     
@@ -220,7 +220,7 @@ public class DraftTeam {
         if (p == null) {
             int stars = getStars(name);
             if (stars > -1) {
-                p = new DraftPlayer(ba, rules, name, freq, ship, stars);
+                p = new DraftPlayer(ba, this, name, freq, ship, stars);
             } else {
                 ba.sendSmartPrivateMessage(cap, name + " was not found on the team roster.");
                 return;
@@ -296,7 +296,7 @@ public class DraftTeam {
         if (p == null) {
             int stars = getStars(in);
             if (stars > -1) {
-                p = new DraftPlayer(ba, rules, in, freq, out.getShip(), stars);
+                p = new DraftPlayer(ba, this, in, freq, out.getShip(), stars);
             } else {
                 ba.sendSmartPrivateMessage(cap, in + " was not found on the team roster.");
                 return;
@@ -489,6 +489,10 @@ public class DraftTeam {
     
     public DraftPlayer getPlayer(String name) {
         return getPlayer(name, true);
+    }
+    
+    public DraftTeam getOpposing() {
+    	return round.getOpposing(this);
     }
     
     public void addPoint() {

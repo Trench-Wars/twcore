@@ -192,6 +192,13 @@ public class DraftRound {
         ticker.do_addTime(name);
     }
     
+    public DraftTeam getOpposing(DraftTeam team) {
+    	if (team1.getID() == team.getID())
+    		return team2;
+    	else
+    		return team1;
+    }
+    
     public RoundState getState() {
         return state;
     }

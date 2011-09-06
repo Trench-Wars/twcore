@@ -30,18 +30,20 @@ public class DraftPlayer {
     HashMap<Integer, DraftStats> ships;
     Status status;
     DraftStats statTracker;
+    DraftTeam team;
     String name;
     int freq, ship, lagouts, stars, specAt;
     long lastAttach;
     boolean botSpec;                // true if bot specced player for lag
     
-    public DraftPlayer(BotAction botAction, BotSettings gameRules, String name, int freq, int ship, int stars) {
+    public DraftPlayer(BotAction botAction, DraftTeam team, String name, int freq, int ship, int stars) {
         ba = botAction;
         this.name = name;
         this.freq = freq;
         this.ship = ship;
         this.stars = stars;
-        rules = gameRules;
+        this.team = team;
+        rules = team.rules;
         lastAttach = 0;
         lagouts = 0;
         statTracker = new DraftStats(ship);
@@ -72,7 +74,13 @@ public class DraftPlayer {
     }
     
     public void handleKill(DraftPlayer player) {
-        
+        if (team.isPlaying(player.getName())) {
+        	statTracker.handleTeamKill(player.getShip());
+        	team.getOpposing().addPoint();
+        } else {
+        	statTracker.handleKill(player.getShip());
+        	team.addPoint();
+        }
     }
     
     public void handleLagout() {
