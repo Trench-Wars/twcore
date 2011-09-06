@@ -1,5 +1,9 @@
 package twcore.bots.twdt;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.OperatorList;
@@ -22,33 +26,29 @@ public class DraftPlayer {
     enum Status { NONE, IN, LAGGED, OUT }
     
     private LagInfo lagInfo;
-    private int maxCurrPing;
-    private double maxPacketLoss;
-    //private double maxSlowPackets;
-    private double maxStandardDeviation;
-    private int maxNumSpikes;
     
+    HashMap<Integer, DraftStats> ships;
     Status status;
     DraftStats statTracker;
     String name;
-    int ship, lagouts, stars, specAt;
+    int freq, ship, lagouts, stars, specAt;
     long lastAttach;
     boolean botSpec;                // true if bot specced player for lag
     
-    public DraftPlayer(String name, int ship) {
+    public DraftPlayer(BotAction botAction, BotSettings gameRules, String name, int freq, int ship, int stars) {
+        ba = botAction;
         this.name = name;
+        this.freq = freq;
         this.ship = ship;
+        this.stars = stars;
+        rules = gameRules;
         lastAttach = 0;
         lagouts = 0;
         statTracker = new DraftStats(ship);
-        status = Status.IN;
-        lagInfo = new LagInfo(ba, name, rules.getInt("spikesize"));
-        lagInfo.updateLag();
-        maxCurrPing = rules.getInt("maxcurrping");
-        maxPacketLoss = rules.getDouble("maxploss");
-        //maxSlowPackets = rules.getDouble("maxslowpackets");
-        maxStandardDeviation = rules.getDouble("maxstandarddeviation");
-        maxNumSpikes = rules.getInt("maxnumspikes");
+        ships = new HashMap<Integer, DraftStats>();
+        ships.put(ship, statTracker);
+        status = Status.NONE;
+        ba.sendArenaMessage("Player created: " + name + " " + ship);
     }
     
     public void handleEvent(Message event) {
@@ -75,6 +75,10 @@ public class DraftPlayer {
         
     }
     
+    public void handleLagout() {
+        
+    }
+    
     public void handleAttach() {
         lastAttach = System.currentTimeMillis();
     }
@@ -87,8 +91,39 @@ public class DraftPlayer {
         return status;
     }
     
+    public String getName() {
+        return name;
+    }
+    
+    public int getShip() {
+        return ship;
+    }
+    
     public int getDeaths() {
         return statTracker.getStat(StatType.DEATHS).getValue();
+    }
+    
+    public int getScore() {
+        return statTracker.getScore();
+    }
+    
+    public int getRating() {
+        return statTracker.getRating();
+    }
+    
+    public boolean isPlaying() {
+        return (status == Status.IN || status == Status.LAGGED);
+    }
+    
+    public void reportStart() {
+    }
+    
+    public void reportEnd() {
+    }
+    
+    public void saveStats() {
+        String[] fields = { "fcName", "fnTeamID", "fnMatchID", "fnRound", "fnShip", "fnKills", "fnDeaths", "fnDoas", "fnTeamKills", "fnTerrKills", "fnMultiKills", "fnTopMultiKill", "fnKnockOuts", "fnKillJoys", "fnFlagClaims", "fnTopKillStreak", "fnTopDeathStreak", "fnShots", "fnBombs", "fnBursts", "fnRepels", "fnLagouts", "fnSubbed", "fnRating" };
+        
     }
     
     public void setLagSpec(boolean specced) {
@@ -103,39 +138,38 @@ public class DraftPlayer {
         ba.spec(name);
         ba.spec(name);
     }
-
-    public void checkLag() {
-        try {
-            int currentPing = lagInfo.getCurrentPing();
-            double s2c = lagInfo.getS2C();
-            double c2s = lagInfo.getC2S();
-            //double s2cSlowPercent = lagInfo.getS2CSlowPercent();
-            //double c2sSlowPercent = lagInfo.getC2SSlowPercent();
-            double spikeSD = lagInfo.getSpikeSD();
-            int numSpikes = lagInfo.getNumSpikes();
-            /*
-                m_botAction.sendArenaMessage("Lag for " + m_fcPlayerName + ":");
-                m_botAction.sendArenaMessage("Current Ping: " + currentPing + "ms.");
-                m_botAction.sendArenaMessage("C2S Packetloss: " + c2s + "%.  S2C Packetloss: " + s2c + "%.");
-                m_botAction.sendArenaMessage("C2S Slow Packets: " + c2sSlowPercent + "%.  S2C Slow Packets: " + s2cSlowPercent + "%.");
-                m_botAction.sendArenaMessage("Spike: +- " + spikeSD + "ms.  Number of spikes: " + numSpikes + ".");
-            */
-            if (status == Status.IN) {
-                if (currentPing > maxCurrPing)
-                    lagSpec("Current ping is: " + currentPing + "ms.  Maximum allowed ping is: " + maxCurrPing + "ms.");
-                else if (s2c > maxPacketLoss)
-                    lagSpec("Current S2C Packetloss is: " + s2c + "%.  Maximum allowed S2C Packetloss is: " + maxPacketLoss + "%.");
-                else if (c2s > maxPacketLoss)
-                    lagSpec("Current C2S Packetloss is: " + c2s + "%.  Maximum allowed C2S Packetloss is: " + maxPacketLoss + "%.");
-                //else if(s2cSlowPercent > maxSlowPackets)
-                //  specForLag("Current S2C Slow Packetloss is: " + s2cSlowPercent + "%.  Maximum allowed S2C Slow Packetloss is: " + maxSlowPackets + "%.");
-                //else if(c2sSlowPercent > maxSlowPackets)
-                //  specForLag("Current C2S Slow Packetloss is: " + c2sSlowPercent + "%.  Maximum allowed C2S Slow Packetloss is: " + maxSlowPackets + "%.");
-                else if (spikeSD > maxStandardDeviation)
-                    lagSpec("Current spiking: +- " + spikeSD + "ms.  " + "Maximum spiking allowed: +- " + maxStandardDeviation + "ms.");
-                else if (numSpikes > maxNumSpikes)
-                    lagSpec("Number of recent spikes: " + spikeSD + ".  Maximum spikes allowed: " + maxNumSpikes + ".");
-            }
-        } catch (Exception e) {}
+    
+    public void setShip(int s) {
+        System.out.println(name + " " + s);
+        if (status == Status.IN)
+            ba.setShip(name, s);
+        ship = s;
+        if (ships.containsKey(s))
+            statTracker = ships.get(s);
+        else {
+            statTracker = new DraftStats(s);
+            ships.put(s, statTracker);
+        }
+    }
+    
+    public void getIn() {
+        status = Status.IN;
+        setShip(ship);
+        ba.setFreq(name, freq);
+        ba.scoreReset(name);
+        lagInfo = new LagInfo(ba, name);
+        lagInfo.updateLag();
+    }
+    
+    public void getIn(int s) {
+        ship = s;
+        getIn();
+    }
+    
+    public void getOut() {
+        status = Status.OUT;
+        ba.spec(name);
+        ba.spec(name);
+        ba.setFreq(name, freq);
     }
 }

@@ -37,6 +37,4 @@ public class DraftStat {
     public int getValue() {
         return stat;
     }
-    
-
 }

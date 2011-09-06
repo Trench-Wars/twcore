@@ -7,9 +7,15 @@ import twcore.bots.twdt.DraftPlayer.Status;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.OperatorList;
+import twcore.core.events.FlagClaimed;
+import twcore.core.events.FlagReward;
+import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerPosition;
 import twcore.core.events.TurretEvent;
 import twcore.core.events.WeaponFired;
+import twcore.core.lag.LagHandler;
 import twcore.core.lag.LagReport;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Tools;
@@ -25,29 +31,47 @@ public class DraftRound {
     BotSettings rules;
     
     enum RoundState { NONE, LINEUPS, STARTING, PLAYING, FINISHED }
+
+    public static final String db = "website";
+    // Objons
+    public static final int TEN_SECONDS = 1;
+    public static final int FIVE_SECONDS = 2;
+    public static final int GOGOGO = 3;
+    public static final int GAMEOVER = 4;
+    public static final int SUDDENDEATH = 833;
     
     private MasterControl ticker;
+    public LagHandler lagHandler;
     private Objset objects;
     RoundState state;
     GameType type;
     DraftGame game;
     DraftTeam team1;
     DraftTeam team2;
+    boolean blueout, add2mins;
+    int[] coords1;
+    int[] coords2;
     int target;
     
     public DraftRound(DraftGame draftGame, GameType gameType, int team1ID, int team2ID, String team1Name, String team2Name) {
         game = draftGame;
         ba = game.ba;
-        state = RoundState.LINEUPS;
+        rules = game.rules;
+        state = RoundState.NONE;
         type = gameType;
-        team1 = new DraftTeam(this, team1Name, team1ID, 0);
-        team2 = new DraftTeam(this, team2Name, team2ID, 1);
+        coords1 = new int[] { rules.getInt("safe1x"), rules.getInt("safe1y"), rules.getInt("safe1xout"), rules.getInt("safe1yout") };
+        coords2 = new int[] { rules.getInt("safe2x"), rules.getInt("safe2y"), rules.getInt("safe2xout"), rules.getInt("safe2yout") };
+        team1 = new DraftTeam(this, team1Name, team1ID, 1);
+        team2 = new DraftTeam(this, team2Name, team2ID, 2);
+        blueout = false;
+        add2mins = false;
         if (type == GameType.BASING)
             target = 15 * 60;
         else
             target = 50;
+        lagHandler = new LagHandler(ba, rules, this, "handleLagReport");
         ticker = new MasterControl();
-        ba.scheduleTaskAtFixedRate(ticker, 3000, Tools.TimeInMillis.MINUTE);
+        ba.scheduleTaskAtFixedRate(ticker, 1000, Tools.TimeInMillis.SECOND);
     }
     
     public void handleEvent(PlayerDeath event) {
@@ -80,15 +104,67 @@ public class DraftRound {
         if (name != null) {
             DraftPlayer p = team1.getPlayer(name);
             if (p == null)
-                team2.getPlayer(name);
+                p = team2.getPlayer(name);
             if (p != null)
                 p.handleEvent(event);
         }
     }
+
+    public void handleEvent(FlagClaimed event) {
+        
+    }
+
+    public void handleEvent(FlagReward event) {
+        
+    }
+
+    public void handleEvent(FrequencyShipChange event) {
+        
+    }
+
+    public void handleEvent(PlayerPosition event) {
+        
+    }
+    
+    public void handleEvent(Message event) {
+        String msg = event.getMessage();
+        if (event.getMessageType() == Message.ARENA_MESSAGE) {
+            if (blueout && msg.equals("Public Messages UNLOCKED"))
+                ba.toggleLockPublicChat();
+            else if (!blueout && msg.equals("Public Messages LOCKED"))
+                ba.toggleLockPublicChat();
+            if (state == RoundState.LINEUPS || state == RoundState.PLAYING)
+                lagHandler.handleLagMessage(msg);
+        }
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
+            String name = ba.getPlayerName(event.getPlayerID());
+            if (name == null)
+                name = event.getMessager();
+            if (name == null) return;
+            if (msg.startsWith("!lag "))
+                cmd_lag(name, msg);
+        }
+        
+        // handle team commands...
+        if (team1 != null)
+            team1.handleEvent(event);
+        if (team2 != null)
+            team2.handleEvent(event);
+    }
     
     public void handleLagReport(LagReport report) {
-        if (!report.isBotRequest())
-            ba.privateMessageSpam(report.getRequester(), report.getLagStats());
+        if (!report.isBotRequest()) {
+            String req = report.getRequester();
+            if (!req.startsWith("!"))
+                ba.privateMessageSpam(report.getRequester(), report.getLagStats());
+            else {
+                req = req.substring(1);
+                if (req.equals("" + team1.getID()))
+                    team1.spamCaptains(report.getLagStats());
+                else
+                    team2.spamCaptains(report.getLagStats());
+            }
+        }
 
         DraftPlayer p = team1.getPlayer(report.getName(), true);
         if (p == null)
@@ -107,8 +183,21 @@ public class DraftRound {
         }
     }
     
+    public void cmd_lag(String name, String cmd) {
+        if (cmd.length() < 6) return;
+        lagHandler.requestLag(cmd.substring(cmd.indexOf(" ") + 1), name);
+    }
+    
+    public void cmd_addTime(String name) {
+        ticker.do_addTime(name);
+    }
+    
     public RoundState getState() {
         return state;
+    }
+    
+    public void sendLagRequest(String name, String req) {
+        lagHandler.requestLag(name, req);
     }
     
     public DraftPlayer getPlayer(String name) {
@@ -118,22 +207,28 @@ public class DraftRound {
         return p;        
     }
     
+    public void gameOver() {
+        ba.showObject(GAMEOVER);
+    }
+    
     private class MasterControl extends TimerTask {
         
         int timer;
+        long lastCheck;
 
         public MasterControl() {
             timer = 0;
+            lastCheck = 0;
         }
         
         @Override
         public void run() {
             switch(state) {
-                case NONE: doLineups();
-                case LINEUPS: doCheck();
-                case STARTING: doStarting();
-                case PLAYING: doPlaying();
-                case FINISHED: doFinished();
+                case NONE: doLineups(); break;
+                case LINEUPS: doCheck(); break;
+                case STARTING: doStarting(); break;
+                case PLAYING: doPlaying(); break;
+                case FINISHED: doFinished(); break;
             }
         }
         
@@ -142,6 +237,7 @@ public class DraftRound {
             int time = rules.getInt("LineupTime");
             timer = time * 60;
             ba.sendArenaMessage("Captains, you will have " + time + " minutes to setup your team correctly");
+            ba.setTimer(time);
         }
         
         private void doCheck() {
@@ -150,6 +246,7 @@ public class DraftRound {
                 return;
             if (team1.getSize() < game.minPlayers || team2.getSize() < game.minPlayers) {
                 // END GAME
+                ba.sendArenaMessage("TIME IS UP! Not enough players.");
                 return;
             } else if (timer < 1)
                 ba.sendArenaMessage("Time is up. Lineups are OKAY!");
@@ -157,8 +254,12 @@ public class DraftRound {
             timer = 30;
             state = RoundState.STARTING;
             ba.sendArenaMessage("Both teams are ready, game starts in 30 seconds!", 2);
-            // warp teams to safes
-            // do other pre game stuff
+            ba.setDoors(255);
+            team1.warpTeam(coords1[0], coords1[1]);
+            team2.warpTeam(coords2[0], coords2[1]);
+            blueout = true;
+            ba.toggleLockPublicChat();
+            ba.sendArenaMessage("Blueout has been enabled. Staff, do not speak in public from now on.");
         }
         
         private void doStarting() {
@@ -166,10 +267,24 @@ public class DraftRound {
             if (timer < 1) {
                 state = RoundState.PLAYING;
                 timer = game.gameTime * 60;
-                // GO GO GO
-            } else if (timer == 10) {
-                // signal 10 seconds
-            }
+                team1.warpTeam(coords1[2], coords1[3]);
+                team2.warpTeam(coords2[2], coords2[3]);
+                objects = ba.getObjectSet();
+                team1.reportStart();
+                team2.reportStart();
+                ba.setPlayerPositionUpdating(300);
+                ba.setReliableKills(1);
+                ba.scoreResetAll();
+                ba.shipResetAll();
+                ba.resetFlagGame();
+                ba.sendArenaMessage("GO GO GO!", 104);
+                ba.setDoors(0);
+                ba.showObject(GOGOGO);
+                ba.setTimer(game.gameTime);
+            } else if (timer == 10)
+                ba.showObject(TEN_SECONDS);
+            else if (timer == 5)
+                ba.showObject(FIVE_SECONDS);
         }
         
         private void doPlaying() {
@@ -184,14 +299,97 @@ public class DraftRound {
                 }
             }
             updateScoreboard();
+            checkLag();
             if (team1.getScore() >= target || team2.getScore() >= target || timer < 1)
                 state = RoundState.FINISHED;
+        }
+        
+        private void checkLag() {
+            long now = System.currentTimeMillis();
+            if (now - lastCheck > 5000) {
+                String name = team1.getNextPlayer();
+                if (name != null)
+                    lagHandler.requestLag(name);
+                name = team2.getNextPlayer();
+                if (name != null)
+                    lagHandler.requestLag(name);
+                lastCheck = now;
+            }
         }
         
         private void doFinished() {
             ba.cancelTask(ticker);
             ticker = null;
-            game.handleRound();
+            blueout = false;
+            ba.toggleLockPublicChat();
+            displayResult();
+            team1.reportEnd();
+            team2.reportEnd();
+            DraftPlayer mvp = getMVP();
+            ba.sendArenaMessage("MVP: " + mvp.getName() + "!", 7);
+            String[] fields = new String[] { "fnMatchID", "fnRound", "fnTeam1Score", "fnTeam2Score", "fcMvp" };
+            String[] values = new String[] { "" + game.gameID, "" + game.round, "" + team1.getScore(), "" + team2.getScore(), mvp.getName() };
+            ba.SQLInsertInto(db, "tblDraft__MatchRound", fields, values);
+            if (team1.getScore() >= target)
+                game.handleRound(team1);
+            else if (team2.getScore() >= target)
+                game.handleRound(team2);
+            else if (team1.getScore() > team2.getScore())
+                game.handleRound(team1);
+            else if (team1.getScore() < team2.getScore())
+                game.handleRound(team2);
+            else
+                game.handleRound(null);
+        }
+        
+        public void do_addTime(String name) {
+            if (state == RoundState.LINEUPS) {
+                if (add2mins)
+                    ba.sendSmartPrivateMessage(name, "The additional 2 minutes have already been added for this round.");
+                else {
+                    add2mins = true;
+                    timer += 2 * 60;
+                    ba.sendArenaMessage("An additional two (2) minutes has been given for lineups.");
+                    ba.sendSmartPrivateMessage(name, "Added 2 minutes.");
+                }
+            } else
+                ba.sendSmartPrivateMessage(name, "The lineup time extension can only be given while lineups are being setup.");
+        }
+        
+        private void displayResult() {
+            if (type != GameType.BASING)
+                ba.sendArenaMessage("Result of " + team1.getName() + " vs. " + team2.getName() + ": " + team1.getScore() + " - " + team2.getScore());
+            else {
+                String team1leadingZero = "";
+                String team2leadingZero = "";
+
+                if (team1.getScore() % 60 < 10)
+                    team1leadingZero = "0";
+                if (team2.getScore() % 60 < 10)
+                    team2leadingZero = "0";
+
+                ba.sendArenaMessage("Result of " + team1.getName() + " vs. " + team2.getName() + ": " + team1.getScore() / 60 + ":" + team1leadingZero
+                        + team1.getScore() % 60 + " - " + team2.getScore() / 60 + ":" + team2leadingZero + team2.getScore() % 60, 5);
+            }
+        }
+        
+        private DraftPlayer getMVP() {
+            DraftPlayer team1mvp = team1.getMVP();
+            DraftPlayer team2mvp = team2.getMVP();
+            DraftPlayer mvp = null;
+            if (type != GameType.BASING) {
+                if (team1mvp.getScore() > team2mvp.getScore())
+                    mvp = team1mvp;
+                else
+                    mvp = team2mvp;
+            } else {
+                if (team1mvp.getRating() > team2mvp.getRating())
+                    mvp = team1mvp;
+                else
+                    mvp = team2mvp;
+            }
+            
+            return mvp;
         }
         
         private void checkTime(DraftTeam team) {

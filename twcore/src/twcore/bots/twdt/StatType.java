@@ -11,9 +11,10 @@ import java.util.Map;
 public enum StatType {
     KILLS("fnKills"), 
     DEATHS("fnDeaths"), 
+    SCORE("fnScore"),
     TERR_KILLS("fnTerrKills"),
     TEAM_KILLS("fnTeamKills"),
-    DOAS("fnDOAs"),
+    DOAS("fnDoas"),
     MULTI_KILLS("fnMultiKills"), 
     KILL_STREAK("fnKillStreak"), 
     DEATH_STREAK("fnDeathStreak"),
