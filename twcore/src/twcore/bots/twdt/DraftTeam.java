@@ -529,6 +529,11 @@ public class DraftTeam {
             ba.privateMessageSpam(name, msg);
     }
     
+    public void msgCaptains(String msg) {
+        for (String name : caps)
+            ba.sendPrivateMessage(name, msg);
+    }
+    
     private void loadTeam() {
         String query = "SELECT * FROM tblDraft__Team WHERE fnTeamID = " + teamID + " LIMIT 1";
         try {

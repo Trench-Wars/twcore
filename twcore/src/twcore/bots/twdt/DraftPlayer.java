@@ -1,7 +1,5 @@
 package twcore.bots.twdt;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
 
 import twcore.core.BotAction;
@@ -32,8 +30,8 @@ public class DraftPlayer {
     DraftStats statTracker;
     DraftTeam team;
     String name;
-    int freq, ship, lagouts, stars, specAt;
-    long lastAttach;
+    int freq, ship, lagouts, stars, specAt, lagoutCount;
+    long lastAttach, lastLagout;
     boolean botSpec;                // true if bot specced player for lag
     
     public DraftPlayer(BotAction botAction, DraftTeam team, String name, int freq, int ship, int stars) {
@@ -45,7 +43,9 @@ public class DraftPlayer {
         this.team = team;
         rules = team.rules;
         lastAttach = 0;
-        lagouts = 0;
+        lagoutCount = 0;
+        lagouts = rules.getInt("lagouts");
+        specAt = rules.getInt("deaths");
         statTracker = new DraftStats(ship);
         ships = new HashMap<Integer, DraftStats>();
         ships.put(ship, statTracker);
@@ -70,21 +70,55 @@ public class DraftPlayer {
     }
     
     public void handleDeath(DraftPlayer player) {
+        if (statTracker.getStat(StatType.KILL_STREAK).getValue() > 2)
+            player.handleKillJoy();
+        statTracker.handleDeath();
+        if (specAt != -1 && getDeaths() >= specAt) {
+            status = Status.OUT;
+            ba.spec(name);
+            ba.spec(name);
+            ba.setFreq(name, freq);
+            ba.sendArenaMessage(name + " is out. " + statTracker.getStat(StatType.KILLS).getValue() + " wins " + getDeaths() + " losses");
+            player.handleKnockOut();
+        }
         
     }
     
-    public void handleKill(DraftPlayer player) {
+    public void handleKill(int points, DraftPlayer player) {
         if (team.isPlaying(player.getName())) {
-        	statTracker.handleTeamKill(player.getShip());
+        	statTracker.handleTeamKill(points, player.getShip());
         	team.getOpposing().addPoint();
         } else {
-        	statTracker.handleKill(player.getShip());
-        	team.addPoint();
+            statTracker.handleKill(points, player.getShip());
+            if (specAt != -1) {
+                team.addPoint();
+            }
         }
     }
     
+    public void handleKillJoy() {
+        statTracker.getStat(StatType.KILL_JOYS).increment();
+    }
+    
+    public void handleKnockOut() {
+        statTracker.getStat(StatType.KNOCK_OUTS).increment();
+    }
+    
     public void handleLagout() {
-        
+        status = Status.LAGGED;
+        lastLagout = System.currentTimeMillis();
+        lagoutCount++;
+        if (specAt > -1) {
+            statTracker.getStat(StatType.DEATHS).increment();
+            ba.sendArenaMessage(name + " has changed to spectator mode - +1 death");
+            if (getDeaths() >= specAt) {
+                status = Status.OUT;
+                ba.spec(name);
+                ba.spec(name);
+                ba.setFreq(name, freq);
+                ba.sendArenaMessage(name + " is out. " + statTracker.getStat(StatType.KILLS).getValue() + " wins " + getDeaths() + " losses");
+            }
+        }
     }
     
     public void handleAttach() {
@@ -130,7 +164,7 @@ public class DraftPlayer {
     }
     
     public void saveStats() {
-        String[] fields = { "fcName", "fnTeamID", "fnMatchID", "fnRound", "fnShip", "fnKills", "fnDeaths", "fnDoas", "fnTeamKills", "fnTerrKills", "fnMultiKills", "fnTopMultiKill", "fnKnockOuts", "fnKillJoys", "fnFlagClaims", "fnTopKillStreak", "fnTopDeathStreak", "fnShots", "fnBombs", "fnBursts", "fnRepels", "fnLagouts", "fnSubbed", "fnRating" };
+        //String[] fields = { "fcName", "fnTeamID", "fnMatchID", "fnRound", "fnShip", "fnKills", "fnDeaths", "fnDoas", "fnTeamKills", "fnTerrKills", "fnMultiKills", "fnTopMultiKill", "fnKnockOuts", "fnKillJoys", "fnFlagClaims", "fnTopKillStreak", "fnTopDeathStreak", "fnShots", "fnBombs", "fnBursts", "fnRepels", "fnLagouts", "fnSubbed", "fnRating" };
         
     }
     

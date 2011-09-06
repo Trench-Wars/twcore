@@ -35,12 +35,28 @@ public class DraftStats {
         stats.get(stat).setValue(value);
     }
     
-    public void handleKill(int kill) {
+    public void handleKill(int points, int kill) {
+        stats.get(StatType.KILLS).increment();
+        stats.get(StatType.KILL_STREAK).increment();
+        stats.get(StatType.SCORE).add(points);
+        if (stats.get(StatType.KILL_STREAK).getValue() > stats.get(StatType.BEST_KILL_STREAK).getValue())
+            stats.get(StatType.BEST_KILL_STREAK).setValue(stats.get(StatType.KILL_STREAK).getValue());
+        stats.get(StatType.DEATH_STREAK).setValue(0);
         eKills[kill-1]++;
     }
     
-    public void handleTeamKill(int kill) {
+    public void handleTeamKill(int points, int kill) {
+        stats.get(StatType.TEAM_KILLS).increment();
+        stats.get(StatType.SCORE).add(points);
         tKills[kill-1]++;
+    }
+    
+    public void handleDeath() {
+        stats.get(StatType.DEATHS).increment();
+        stats.get(StatType.DEATH_STREAK).increment();
+        if (stats.get(StatType.DEATH_STREAK).getValue() > stats.get(StatType.WORST_DEATH_STREAK).getValue())
+            stats.get(StatType.WORST_DEATH_STREAK).setValue(stats.get(StatType.DEATH_STREAK).getValue());
+        stats.get(StatType.KILL_STREAK).setValue(0);
     }
 
     public int getScore() {

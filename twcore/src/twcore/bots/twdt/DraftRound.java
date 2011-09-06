@@ -83,7 +83,7 @@ public class DraftRound {
             DraftPlayer loss = getPlayer(loser);
             if (win != null && loss != null) {
                 loss.handleDeath(win);
-                win.handleKill(loss);
+                win.handleKill(event.getKilledPlayerBounty(), loss);
             }
         }
     }
