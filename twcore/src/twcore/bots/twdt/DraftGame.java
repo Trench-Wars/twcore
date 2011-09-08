@@ -1,6 +1,5 @@
 package twcore.bots.twdt;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 
@@ -85,6 +84,7 @@ public class DraftGame {
         minPlayers = rules.getInt("MinPlayers");
     }
     
+    /** EVENT HANDLERS */
     public void handleEvent(PlayerDeath event) {
         if (currentRound != null)
             currentRound.handleEvent(event);
@@ -161,11 +161,13 @@ public class DraftGame {
             currentRound.handleEvent(event);
     }
     
+    /** Handles the status command which displays game status */
     public void cmd_status(String name) {
         if (currentRound != null) 
             ba.sendSmartPrivateMessage(name, getStatus());
     }
     
+    /** Returns a String with relevant game information */
     private String getStatus() {
         if (currentRound != null) {
             String msg = "Teams: " + team1Name + " vs. " + team2Name + " ";
@@ -176,37 +178,8 @@ public class DraftGame {
         }
         return "";
     }
-
-    public void cmd_loadGame(String name, String cmd) {
-        try {
-            gameID = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
-        } catch (NumberFormatException e) {
-            ba.sendSmartPrivateMessage(name, "Error, please use !load <gameID>");
-            return;
-        }
-        if (gameID < 1) return;
-        
-        String query = "SELECT * FROM tblDraft__Match WHERE fnMatchID = " + gameID + " LIMIT 1";
-        try {
-            ResultSet rs = ba.SQLQuery(db, query);
-            if (rs.next()) {
-                type = GameType.getType(rs.getInt("fnType"));
-                team1 = rs.getInt("fnTeam1");
-                team2 = rs.getInt("fnTeam2");
-                team1Name = rs.getString("fcTeam1");
-                team2Name = rs.getString("fcTeam2");
-                host = name;
-                ba.sendSmartPrivateMessage(name, "Success!");
-            } else {
-                ba.sendSmartPrivateMessage(name, "No game was found with ID: " + gameID);
-                gameID = -1;
-            }
-            ba.SQLClose(rs);
-        } catch (SQLException e) {
-            Tools.printStackTrace(e);
-        }        
-    }
     
+    /** Handles the start command which starts the lineup setup state */
     public void cmd_startPick(String name) {
         if (currentRound != null) {
             ba.sendSmartPrivateMessage(name, "This game has already been started.");
@@ -217,16 +190,19 @@ public class DraftGame {
         currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
     }
     
+    /** Returns the id number as given from the database */
     public int getMatchID() {
         return gameID;
     }
 
+    /** Returns true if a game has been properly loaded */
     public boolean getLoaded() {
         if (gameID > -1)
             return true;
         else return false;
     }
     
+    /** Reports the end of a round */
     public void handleRound(DraftTeam team) {
         if (type != GameType.BASING) {
             if (team != null) {
@@ -269,6 +245,7 @@ public class DraftGame {
         }
     }
     
+    /** Stores the result of the game to the database */
     private void storeResult() {
         try {
             String query = "UPDATE tblDraft__Match SET fnTeam1Score = " + team1score + ", fnTeam2Score = " + team2score + " WHERE fnMatchID = " + gameID;
@@ -278,6 +255,7 @@ public class DraftGame {
         }
     }
     
+    /** Returns game type */
     public GameType getType() {
         return type;
     }

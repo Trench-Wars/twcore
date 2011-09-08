@@ -84,6 +84,7 @@ public class DraftRound {
         ba.scheduleTaskAtFixedRate(ticker, 1000, Tools.TimeInMillis.SECOND);
     }
     
+    /** EVENT HANDLERS */
     public void handleEvent(PlayerDeath event) {
         if (state != RoundState.PLAYING) return; 
         String winner = ba.getPlayerName(event.getKillerID());
@@ -207,6 +208,7 @@ public class DraftRound {
             team2.handleEvent(event);
     }
     
+    /** Handles a lag report received from the lag handler */
     public void handleLagReport(LagReport report) {
         if (!report.isBotRequest()) {
             String req = report.getRequester();
@@ -238,15 +240,18 @@ public class DraftRound {
         }
     }
     
+    /** Requests a player's lag information */
     public void cmd_lag(String name, String cmd) {
         if (cmd.length() < 6) return;
         lagHandler.requestLag(cmd.substring(cmd.indexOf(" ") + 1), name);
     }
     
+    /** Adds an extra 2 minutes to lineup arrangement */
     public void cmd_addTime(String name) {
         ticker.addTime(name);
     }
     
+    /** Returns the opposing team */
     public DraftTeam getOpposing(DraftTeam team) {
     	if (team1.getID() == team.getID())
     		return team2;
@@ -254,14 +259,17 @@ public class DraftRound {
     		return team1;
     }
     
+    /** Returns the current state of the round */
     public RoundState getState() {
         return state;
     }
     
+    /** Sends a lag request to the lag handler */
     public void sendLagRequest(String name, String req) {
         lagHandler.requestLag(name, req);
     }
     
+    /** Returns the DraftPlayer object for a player with the given name or null if not found */
     public DraftPlayer getPlayer(String name) {
         DraftPlayer p = team1.getPlayer(name);
         if (p == null)
@@ -269,10 +277,12 @@ public class DraftRound {
         return p;        
     }
     
+    /** Turns the game over objon on */
     public void gameOver() {
         ba.showObject(GAMEOVER);
     }
     
+    /** Returns a String with round status information */
     public String getStatus() {
         if (state == RoundState.LINEUPS) {
             if (type == GameType.BASING)
@@ -288,6 +298,7 @@ public class DraftRound {
             return "";
     }
     
+    /** Returns the appropriate safe coordinates for the team of a player */
     private int[] getSafe(String name) {
         if (team1.isPlaying(name))
             return new int[] { coords1[0], coords1[1] };
@@ -295,10 +306,12 @@ public class DraftRound {
             return new int[] { coords2[0], coords1[1] };
     }
     
+    /** Lazy helper returns a lower case String */
     private String low(String str) {
         return str.toLowerCase();
     }
     
+    /** Helper prints out individual player and team stats */
     private void printScores() {
         ArrayList<String> stats = new ArrayList<String>();
         if (type == GameType.WARBIRD) {
@@ -326,6 +339,12 @@ public class DraftRound {
         ba.arenaMessageSpam(stats.toArray(new String[stats.size()]));
     }
     
+    /**
+     * MasterControl is a game ticker task that runs every second to update time related
+     * data as well as check for various game player and team states.
+     * 
+     * @author WingZero
+     */
     private class MasterControl extends TimerTask {
         
         int timer;
@@ -345,6 +364,7 @@ public class DraftRound {
             }
         }
         
+        /** Starts the lineup arrangement state allowing captains to add players */
         private void doLineups() {
             state = RoundState.LINEUPS;
             int time = rules.getInt("LineupTime");
@@ -353,6 +373,7 @@ public class DraftRound {
             ba.setTimer(time);
         }
         
+        /** Checks to see if both teams are ready or if time is up and reacts accordingly */
         private void doCheck() {
             timer--;
             if ((timer > 0) && !(team1.getReady() && team2.getReady()))
@@ -375,6 +396,7 @@ public class DraftRound {
             ba.sendArenaMessage("Blueout has been enabled. Staff, do not speak in public from now on.");
         }
         
+        /** Prepares the arena for the start of the game and does countdown */
         private void doStarting() {
             timer--;
             if (timer < 1) {
@@ -400,6 +422,7 @@ public class DraftRound {
                 ba.showObject(FIVE_SECONDS);
         }
         
+        /** Keeps scores updated and runs lag checks */
         private void doPlaying() {
             timer--;
             if (type == GameType.BASING) { 
@@ -417,6 +440,7 @@ public class DraftRound {
                 state = RoundState.FINISHED;
         }
         
+        /** Ends the round */
         private void doFinished() {
             ba.cancelTask(ticker);
             for (Bounds b : bounds.values())
@@ -446,6 +470,7 @@ public class DraftRound {
                 game.handleRound(null);
         }
         
+        /** Helper sends lag requests */
         private void checkLag() {
             if (timer % 5 == 0) {
                 String name = team1.getNextPlayer();
@@ -457,6 +482,7 @@ public class DraftRound {
             }
         }
         
+        /** Executes the add lineup extension time command */
         public void addTime(String name) {
             if (state == RoundState.LINEUPS) {
                 if (add2mins)
@@ -471,6 +497,7 @@ public class DraftRound {
                 ba.sendSmartPrivateMessage(name, "The lineup time extension can only be given while lineups are being setup.");
         }
         
+        /** Prints the round result */
         private void displayResult() {
             if (type != GameType.BASING)
                 ba.sendArenaMessage("Result of " + team1.getName() + " vs. " + team2.getName() + ": " + team1.getScore() + " - " + team2.getScore());
@@ -488,6 +515,7 @@ public class DraftRound {
             }
         }
         
+        /** Determines the round MVP */
         private DraftPlayer getMVP() {
             DraftPlayer team1mvp = team1.getMVP();
             DraftPlayer team2mvp = team2.getMVP();
@@ -507,6 +535,7 @@ public class DraftRound {
             return mvp;
         }
         
+        /** In basing, checks team scores and reports when 1 or 3 minutes to win */
         private void checkTime(DraftTeam team) {
             int score = team.getScore();
             if (score == (target * 60) - (3 * 60))
@@ -515,6 +544,7 @@ public class DraftRound {
                 ba.sendArenaMessage(team.getName() + " needs 1 minute of flag time to win!");
         }
         
+        /** Updates the scoreboard */
         private void updateScoreboard() {
             // handle objons
             if (objects != null) {
@@ -609,6 +639,12 @@ public class DraftRound {
 
     }
     
+    /**
+     * Out of bounds TimerTask is used in jav matches to keep players from
+     * hiding outside of the base.
+     * 
+     * @author WingZero
+     */
     private class Bounds extends TimerTask {
         
         String name;

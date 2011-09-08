@@ -35,6 +35,7 @@ public class twdt extends SubspaceBot {
         type = null;
     }
     
+    /** EVENT HANDLERS */
     public void handleEvent(ArenaJoined event) {
         ba.toggleLocked();
         ba.specAll();
@@ -113,6 +114,7 @@ public class twdt extends SubspaceBot {
             game.handleEvent(event);
     }
     
+    /** Handles the load command which retrieves the associated match information from the database */
     public void cmd_load(String name, String cmd) {
         if (game != null) {
             ba.sendSmartPrivateMessage(name, "Cannot load new game with a game currently in progress.");
@@ -161,17 +163,19 @@ public class twdt extends SubspaceBot {
         }        
     }
     
+    /** Moves bot to a different arena */
     public void cmd_go(String name, String cmd) {
         if (cmd.length() < 5) return;
         ba.changeArena(cmd.substring(cmd.indexOf(" ") + 1));
     }
     
+    /** Kills bot */
     public void cmd_die(String name) {
         ba.cancelTasks();
         ba.die();
     }
     
-    
+    /** Helper requests the required events */
     private void requestEvents() {
         EventRequester er = ba.getEventRequester();
         er.request(EventRequester.ARENA_JOINED);
