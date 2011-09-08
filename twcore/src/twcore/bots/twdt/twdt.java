@@ -1,5 +1,8 @@
 package twcore.bots.twdt;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import twcore.bots.twdt.DraftGame.GameType;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -7,6 +10,7 @@ import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.events.*;
+import twcore.core.util.Tools;
 
 /**
  *
@@ -17,7 +21,8 @@ public class twdt extends SubspaceBot {
     public BotAction ba;
     public OperatorList opList;
     public BotSettings rules;
-    
+
+    public static final String db = "website";
     public GameType type;
     public DraftGame game;
     
@@ -31,18 +36,8 @@ public class twdt extends SubspaceBot {
     }
     
     public void handleEvent(ArenaJoined event) {
-        String arena = ba.getArenaName();
-        if (!arena.startsWith("twdt")) return;
         ba.toggleLocked();
         ba.specAll();
-        arena = arena.substring(4, 5).toUpperCase();
-        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDT" + arena + ".txt");
-        switch (rules.getInt("Type")) {
-            case 0: type = GameType.BASING; break;
-            case 1: type = GameType.WARBIRD; break;
-            case 2: type = GameType.JAVELIN; break;
-            case 3: type = GameType.BASING; break;
-        }
     }
 
     public void handleEvent(LoggedOn event) {
@@ -119,9 +114,51 @@ public class twdt extends SubspaceBot {
     }
     
     public void cmd_load(String name, String cmd) {
-        if (game == null)
-            game = new DraftGame(this);
-        game.cmd_loadGame(name, cmd);
+        if (game != null) {
+            ba.sendSmartPrivateMessage(name, "Cannot load new game with a game currently in progress.");
+            return;
+        }
+        int gameID = -1;
+        try {
+            gameID = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Error, please use !load <gameID>");
+            return;
+        }
+        if (gameID < 1) return;
+        
+        String query = "SELECT * FROM tblDraft__Match WHERE fnMatchID = " + gameID + " LIMIT 1";
+        try {
+            ResultSet rs = ba.SQLQuery(db, query);
+            if (rs.next()) {
+                type = GameType.getType(rs.getInt("fnType"));
+                switch (type) {
+                    case WARBIRD: 
+                        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTD.txt");
+                        break;
+                    case JAVELIN:
+                        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTJ.txt");
+                        break;
+                    case BASING:
+                        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTB.txt");
+                        break;
+                }
+                int team1, team2;
+                String name1, name2;
+                team1 = rs.getInt("fnTeam1");
+                team2 = rs.getInt("fnTeam2");
+                name1 = rs.getString("fcTeam1");
+                name2 = rs.getString("fcTeam2");
+                game = new DraftGame(this, gameID, team1, team2, name1, name2, name);
+                ba.sendSmartPrivateMessage(name, "Success!");
+            } else {
+                ba.sendSmartPrivateMessage(name, "No game was found with ID: " + gameID);
+                gameID = -1;
+            }
+            ba.SQLClose(rs);
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }        
     }
     
     public void cmd_go(String name, String cmd) {

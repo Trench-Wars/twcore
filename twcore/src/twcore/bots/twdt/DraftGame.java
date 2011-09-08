@@ -63,14 +63,19 @@ public class DraftGame {
     int[] ships;
     String host, team1Name, team2Name;
     
-    public DraftGame(twdt bot) {
+    public DraftGame(twdt bot, int id, int team1id, int team2id, String name1, String name2, String staffer) {
         this.bot = bot;
         ba = bot.ba;
         opList = bot.opList;
         rules = bot.rules;
         type = bot.type;
-        gameID = -1;
+        gameID = id;
         round = 0;
+        team1 = team1id;
+        team2 = team2id;
+        team1Name = name1;
+        team2Name = name2;
+        host = staffer;
         team1score = 0;
         team2score = 0;
         winner = null;
@@ -86,11 +91,22 @@ public class DraftGame {
     }
 
     public void handleEvent(PlayerEntered event) {
+        String name = event.getPlayerName();
+        if (name == null) return;
         
+        if (currentRound != null) {
+            if (type == GameType.WARBIRD)
+                ba.sendSmartPrivateMessage(name, "Welcome to TWDTD! " + getStatus());
+            else if (type == GameType.JAVELIN)
+                ba.sendSmartPrivateMessage(name, "Welcome to TWDTJ! " + getStatus());
+            else if (type == GameType.BASING)
+                ba.sendSmartPrivateMessage(name, "Welcome to TWDTB! " + getStatus());
+        }
     }
 
     public void handleEvent(PlayerLeft event) {
-        
+        if (currentRound != null)
+            currentRound.handleEvent(event);
     }
 
     public void handleEvent(WeaponFired event) {
@@ -132,6 +148,9 @@ public class DraftGame {
             if (name == null) return;
             String msg = event.getMessage();
             
+            if (msg.equals("!status"))
+                cmd_status(name);
+            
             if (opList.isModerator(name)) {
                 if (msg.startsWith("!start"))
                     cmd_startPick(name);
@@ -140,6 +159,22 @@ public class DraftGame {
         
         if (currentRound != null)
             currentRound.handleEvent(event);
+    }
+    
+    public void cmd_status(String name) {
+        if (currentRound != null) 
+            ba.sendSmartPrivateMessage(name, getStatus());
+    }
+    
+    private String getStatus() {
+        if (currentRound != null) {
+            String msg = "Teams: " + team1Name + " vs. " + team2Name + " ";
+            msg += currentRound.getStatus();
+            if (type != GameType.BASING) 
+                msg += "Score: " + team1score + " - " + team2score;
+            return msg;
+        }
+        return "";
     }
 
     public void cmd_loadGame(String name, String cmd) {
@@ -155,17 +190,13 @@ public class DraftGame {
         try {
             ResultSet rs = ba.SQLQuery(db, query);
             if (rs.next()) {
-                if (type != GameType.getType(rs.getInt("fnType"))) {
-                    ba.sendSmartPrivateMessage(name, "Error, arena game type and match game type do not match!");
-                    gameID = -1;
-                } else {
-                    team1 = rs.getInt("fnTeam1");
-                    team2 = rs.getInt("fnTeam2");
-                    team1Name = rs.getString("fcTeam1");
-                    team2Name = rs.getString("fcTeam2");
-                    host = name;
-                    ba.sendSmartPrivateMessage(name, "Success!");
-                }
+                type = GameType.getType(rs.getInt("fnType"));
+                team1 = rs.getInt("fnTeam1");
+                team2 = rs.getInt("fnTeam2");
+                team1Name = rs.getString("fcTeam1");
+                team2Name = rs.getString("fcTeam2");
+                host = name;
+                ba.sendSmartPrivateMessage(name, "Success!");
             } else {
                 ba.sendSmartPrivateMessage(name, "No game was found with ID: " + gameID);
                 gameID = -1;
@@ -184,6 +215,10 @@ public class DraftGame {
         round = 1;
         ba.sendArenaMessage("" + type.toString() + " Draft Game: " + team1Name + " vs. " + team2Name);
         currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
+    }
+    
+    public int getMatchID() {
+        return gameID;
     }
 
     public boolean getLoaded() {

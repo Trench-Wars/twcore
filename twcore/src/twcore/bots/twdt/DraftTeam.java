@@ -2,6 +2,7 @@ package twcore.bots.twdt;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -10,8 +11,6 @@ import twcore.core.BotSettings;
 import twcore.core.OperatorList;
 import twcore.core.events.FlagClaimed;
 import twcore.core.events.Message;
-import twcore.core.events.PlayerDeath;
-import twcore.core.events.TurretEvent;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -30,7 +29,7 @@ public class DraftTeam {
     public static final int MAXRES_Y = 1024;
     
     BotAction ba;
-    OperatorList opList;
+    OperatorList oplist;
     BotSettings rules;
     GameType type;
     
@@ -38,7 +37,7 @@ public class DraftTeam {
     HashMap<String, DraftPlayer> players;
     HashMap<String, DraftPlayer> cache; 
     Vector<String> lagChecks;
-    int score, freq, teamID;
+    int score, freq, teamID, deaths;
     int[] shipMax, ships;
     String[] caps;
     String teamName;
@@ -53,29 +52,22 @@ public class DraftTeam {
         lagChecks = new Vector<String>();
         round = gameRound;
         ba = round.ba;
-        opList = round.opList;
+        oplist = round.oplist;
         rules = round.rules;
         type = round.type;
-        shipMax = round.game.ships;
+        shipMax = rules.getIntArray("ships", ",");
         ships = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         caps = new String[3];
         teamName = name;
         teamID = id;
         freq = freqNum;
+        deaths = rules.getInt("deaths");
         score = 0;
         ready = false;
         flag = false;
         cmdTarget = null;
         resCheck = null;
         loadTeam();
-    }
-    
-    public void handleEvent(PlayerDeath event) {
-        
-    }
-    
-    public void handleEvent(TurretEvent event) {
-        
     }
 
     public void handleEvent(FlagClaimed event) {
@@ -87,6 +79,13 @@ public class DraftTeam {
                 dp.handleFlagClaim();
             } else if (dp == null)
             	flag = false;
+        }
+    }
+    
+    public void handleFlagReward(int points) {
+        for (DraftPlayer p : players.values()) {
+            if (p.getStatus() == Status.IN)
+                p.handleFlagReward(points);
         }
     }
     
@@ -127,7 +126,7 @@ public class DraftTeam {
     }
     
     public void handleLagout(String name) {
-        
+        msgCaptains(name + " has lagged out or specced.");
     }
     
     public void cmd_ready(String cap) {
@@ -178,7 +177,7 @@ public class DraftTeam {
             } else if (ships[ship - 1] >= shipMax[ship - 1]) {
                 ba.sendSmartPrivateMessage(cap, "The maximum number of that ship type has already been reached.");
                 return;
-            } else if (ships[8] == round.game.maxPlayers) {
+            } else if (ships[8] == shipMax[8]) {
                 ba.sendSmartPrivateMessage(cap, "The maximum number ships has already been reached.");
                 return;
             }
@@ -230,6 +229,7 @@ public class DraftTeam {
             lagChecks.add(low(p.getName()));
             players.put(low(p.getName()), p);
             ships[ship - 1]++;
+            p.setSpecAt(deaths);
             p.getIn();
             if (type == GameType.BASING)
                 ba.sendArenaMessage(name + " has been added in ship " + ship);
@@ -308,6 +308,7 @@ public class DraftTeam {
             lagChecks.add(low(p.getName()));
             p.getIn(out.getShip());
             out.getOut();
+            out.handleSubbed();
             ba.sendArenaMessage(out.getName() + " has been substitutded by " + p.getName());
         }
     }
@@ -411,6 +412,38 @@ public class DraftTeam {
         }
     }
     
+    public ArrayList<String> getStats() {
+        ArrayList<String> stats = new ArrayList<String>();
+        if (type == GameType.WARBIRD) {
+            stats.add("|                          ,------+------+-----------+----+");
+            stats.add("| " + padString(teamName, 23) + " /  " + padNum(getTotal(StatType.KILLS), 4) + " | " + padNum(getTotal(StatType.DEATHS), 4) + " | " + padNum(getTotal(StatType.SCORE), 9) + " | " + padNum(getLagouts(), 2) + " |");
+            stats.add("+------------------------'        |      |           |    |");
+            for (DraftPlayer p : players.values())
+                stats.add("|  " + padString(p.getName(), 25) + " " + padNum(p.getStat(StatType.KILLS).getValue(), 4) + " | " + padNum(p.getDeaths(), 4) + " | " + padNum(p.getScore(), 9) + " | " + padNum(p.getLagouts(), 2) + " |");
+        } else if (type == GameType.JAVELIN) {
+            stats.add("|                          ,------+------+------+-----------+----+");
+            stats.add("| " + padString(teamName, 23) + " /  " + padNum(getTotal(StatType.KILLS), 4) + " | " + padNum(getTotal(StatType.DEATHS), 4) + " | " + padNum(getTotal(StatType.TEAM_KILLS), 4) + " | " + padNum(getTotal(StatType.SCORE), 9) + " | " + padNum(getLagouts(), 2) + " |");
+            stats.add("+------------------------'        |      |      |           |    |");
+            for (DraftPlayer p : players.values())
+                stats.add("|  " + padString(p.getName(), 25) + " " + padNum(p.getStat(StatType.KILLS).getValue(), 4) + " | " + padNum(p.getDeaths(), 4) + " | " + padNum(p.getStat(StatType.TEAM_KILLS).getValue(), 4) + " | " + padNum(p.getScore(), 9) + " | " + padNum(p.getLagouts(), 2) + " |");
+            
+        } else {
+            stats.add("|                          ,------+------+------+-----------+------+------+-----+-----------+----+");
+            stats.add("| " + padString(teamName, 23) + " /  " + padNum(getTotal(StatType.KILLS), 4) + " | " + padNum(getTotal(StatType.DEATHS), 4) + " | " + padNum(getTotal(StatType.TEAM_KILLS), 4) + " | " + padNum(getTotal(StatType.SCORE), 9) + " | " + padNum(getTotal(StatType.FLAG_CLAIMS), 4) + " | " + padNum(getTotal(StatType.TERR_KILLS), 4) + " | " + padNum(getTotal(StatType.REPELS)/2, 3) + " | " + padNum(getTotal(StatType.RATING), 9) + " | " + padNum(getLagouts(), 2) + " |");
+            stats.add("+------------------------'        |      |      |           |      |      |     |           |    |");
+            for (DraftPlayer p : players.values())
+                stats.add("|  " + padString(p.getName(), 25) + " " + padNum(p.getStat(StatType.KILLS).getValue(), 4) + " | " + padNum(p.getDeaths(), 4) + " | " + padNum(p.getStat(StatType.TEAM_KILLS).getValue(), 4) + " | " + padNum(p.getScore(), 9) + " | " + padNum(p.getStat(StatType.FLAG_CLAIMS).getValue(), 4) + " | " + padNum(p.getStat(StatType.TERR_KILLS).getValue(), 4) + " | " + p.getRPD() + " | " + padNum(p.getRating(), 9) + " | " + padNum(p.getLagouts(), 2) + " |");
+        }
+        return stats;
+    }
+    
+    public int getLagouts() {
+        int num = 0;
+        for (DraftPlayer p : players.values())
+            num += p.getLagouts();
+        return num;
+    }
+    
     public String getNextPlayer() {
         if (lagChecks.isEmpty())
             return null;
@@ -423,6 +456,13 @@ public class DraftTeam {
         return ready;
     }
     
+    public int getTotal(StatType stat) {
+        int result = 0;
+        for (DraftPlayer p : players.values())
+            result += p.getStat(stat).getValue();
+        return result;
+    }
+    
     public int getScore() {
         if (type == GameType.BASING)
             return score;
@@ -432,6 +472,10 @@ public class DraftTeam {
     
     public int getTime() {
         return score;
+    }
+    
+    public int getFreq() {
+        return freq;
     }
     
     public int getDeaths() {
@@ -547,6 +591,19 @@ public class DraftTeam {
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
+    }
+    
+    private String padString(String str, int length) {
+        while (str.length() < length)
+            str += " ";
+        return str;
+    }
+    
+    private String padNum(int num, int length) {
+        String str = "" + num;
+        while (str.length() < length)
+            str = " " + str;
+        return str;
     }
     
     private String low(String str) {

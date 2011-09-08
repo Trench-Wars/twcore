@@ -1,5 +1,6 @@
 package twcore.bots.twdt;
 
+import java.text.DecimalFormat;
 import java.util.EnumMap;
 
 import twcore.bots.twdt.StatType;
@@ -62,6 +63,24 @@ public class DraftStats {
     public int getScore() {
         return getStat(StatType.SCORE).getValue();
     }
+    
+    public double getRPD() {
+        int reps = getStat(StatType.REPELS).getValue() / 2;
+        int deaths = getStat(StatType.DEATHS).getValue();
+        if (reps > 0 && deaths > 0)
+            return (reps / deaths);
+        else if (reps > 0 && deaths == 0)
+            return (reps);
+        else
+            return 0;
+    }
+    
+    public String getRPDString() {
+        double rpd = getRPD();
+        if (rpd == 0)
+            return "   ";
+        return (new DecimalFormat("0.0").format(rpd));
+    }
 
     /**
      * Method getRating.
@@ -71,13 +90,38 @@ public class DraftStats {
      * jav: .6Points * (.05wb + .06jav + .066spid + 0.14terr + .07x + .05lanc + .09shark - .05deaths - (.07wbTK + .07javTK + .06spiderTK + .13terrTK + .06WeaselTK + .07LancTK + .09SharkTK))
      * spiders: .4points * (.06wb + .06jav + .04spid + .09terr + .05x + .05lanc + .089shark - .05deaths)
      * terr: 2.45points * (.03wb + .03jav + .036spid + .12terr + .35x + .025lanc + .052shark - .21deaths)
-     * weasel: .8points * (sum(.09allships) - 0.05deaths)
      * lanc: .6Points * (.07wb + .07jav + .055spid + 0.12terr + .05x + .06lanc + .08shark - .04deaths)
      * shark: points * (.65*repels/death + .005terr + .0015shark + sum(.001allotherships) - 0.001deaths - (.07(allothershipstks) + .72spider + .5x + .15terrtk + .08sharkTK)))
      */
     public int getRating() {
-        //do later
-        return 0;
+        int rating = 0;
+        switch(ship) {
+            case 1: 
+                rating = (int) ((0.45 * getScore()) * ((0.07 * eKills[0]) + (0.07 * eKills[1]) + (0.05 * eKills[2]) + (0.12 * eKills[4]) + (0.06 * eKills[6]) + (0.08 * eKills[7]) - (0.04 * getStat(StatType.DEATHS).getValue())));
+                getStat(StatType.RATING).setValue(rating);
+                return rating;
+            case 2:
+                rating = (int) ((0.6 * getScore()) * ((0.05 * eKills[0]) + (0.06 * eKills[1]) + (0.066 * eKills[2]) + (0.14 * eKills[4]) + (0.05 * eKills[6]) + (0.09 * eKills[7]) - (0.05 * getStat(StatType.DEATHS).getValue()) - (0.07 * tKills[0]) + (0.07 * tKills[1]) + (0.06 * tKills[2]) + (0.13 * tKills[4]) + (0.07 * tKills[6]) + (0.09 * tKills[7])));
+                getStat(StatType.RATING).setValue(rating);
+                return rating;
+            case 3:
+                rating = (int) ((0.4 * getScore()) * ((0.06 * eKills[0]) + (0.06 * eKills[1]) + (0.04 * eKills[2]) + (0.09 * eKills[4]) + (0.05 * eKills[6]) + (0.089 * eKills[7]) - (0.05 * getStat(StatType.DEATHS).getValue())));
+                getStat(StatType.RATING).setValue(rating);
+                return rating;
+            case 5:
+                rating = (int) ((2.45 * getScore()) * ((0.03 * eKills[0]) + (0.03 * eKills[1]) + (0.036 * eKills[2]) + (0.12 * eKills[4]) + (0.025 * eKills[6]) + (0.052 * eKills[7]) - (0.21 * getStat(StatType.DEATHS).getValue())));
+                getStat(StatType.RATING).setValue(rating);
+                return rating;
+            case 7:
+                rating = (int) ((0.6 * getScore()) * ((0.07 * eKills[0]) + (0.07 * eKills[1]) + (0.055 * eKills[2]) + (0.12 * eKills[4]) + (0.06 * eKills[6]) + (0.08 * eKills[7]) - (0.04 * getStat(StatType.DEATHS).getValue())));
+                getStat(StatType.RATING).setValue(rating);
+                return rating;
+            case 8:
+                rating = (int) ((getScore()) * ((0.65 * getRPD()) + (0.005 * eKills[4]) + (0.0015 * eKills[7]) + (0.001 * (eKills[0] + eKills[1] + eKills[2] + eKills[6]))) - (0.001 * getStat(StatType.DEATHS).getValue()) - ((0.07 * (tKills[0] + tKills[1] + tKills[6])) + (0.72 * tKills[2]) + (0.15 * tKills[4]) + (0.08 * tKills[7])));
+                getStat(StatType.RATING).setValue(rating);
+                return rating;
+            default: return 0;
+        }
     }
     
 }
