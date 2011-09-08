@@ -78,6 +78,7 @@ public class DraftGame {
         team1score = 0;
         team2score = 0;
         winner = null;
+        oldRounds = new LinkedList<DraftRound>();
         ships = rules.getIntArray("Ship", ",");
         gameTime = rules.getInt("Time");
         maxPlayers = rules.getInt("MaxPlayers");

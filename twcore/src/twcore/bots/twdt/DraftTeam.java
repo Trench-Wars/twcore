@@ -386,6 +386,16 @@ public class DraftTeam {
         
     }
     
+    public boolean isAlive() {
+        for (DraftPlayer p : players.values()) {
+            if (p.getStatus() == Status.IN)
+                return true;
+            else if (p.getStatus() == Status.LAGGED && p.getLastLagout() < 60)
+                return true;
+        }
+        return false;
+    }
+    
     public boolean checkStars(DraftPlayer name) {
         return true;
     }
@@ -467,7 +477,16 @@ public class DraftTeam {
         if (type == GameType.BASING)
             return score;
         else
-            return getDeaths();
+            return round.getOpposing(this).getDeaths() + (deaths * (5 - round.getOpposing(this).getPlayerCount()));
+    }
+    
+    public int getPlayerCount() {
+        int count = 0;
+        for (DraftPlayer p : players.values()) {
+            if (p.getStatus() == Status.IN || p.getStatus() == Status.OUT || (p.getStatus() == Status.LAGGED && p.getLastLagout() < 60))
+                count++;
+        }
+        return count;
     }
     
     public int getTime() {

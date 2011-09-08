@@ -56,13 +56,14 @@ public class DraftRound {
     boolean blueout, add2mins;
     int[] coords1;
     int[] coords2;
-    int target;
+    int target, round;
     
     public DraftRound(DraftGame draftGame, GameType gameType, int team1ID, int team2ID, String team1Name, String team2Name) {
         game = draftGame;
         ba = game.ba;
         oplist = game.opList;
         rules = game.rules;
+        round = game.round;
         TEN_SECONDS = rules.getInt("obj_countdown");
         GOGOGO = rules.getInt("obj_gogogo");
         GAMEOVER = rules.getInt("obj_gameover");
@@ -91,7 +92,7 @@ public class DraftRound {
         String loser = ba.getPlayerName(event.getKilleeID());
         if (winner != null && loser != null) {
             if (bounds.containsKey(low(loser)))
-                bounds.get(low(loser)).returned();
+                ba.cancelTask(bounds.remove(low(loser)));
             DraftPlayer win = getPlayer(winner);
             DraftPlayer loss = getPlayer(loser);
             if (win != null && loss != null) {
@@ -152,7 +153,7 @@ public class DraftRound {
         String name = ba.getPlayerName(event.getPlayerID());
         if (name != null) {
             if (bounds.containsKey(low(name)))
-                bounds.get(low(name)).returned();
+                ba.cancelTask(bounds.remove(low(name)));
             DraftPlayer p = getPlayer(name);
             if (p != null)
                 p.handleLagout();
@@ -169,10 +170,12 @@ public class DraftRound {
             if (x != safe[0] || y != safe[1])
                 ba.warpTo(name, safe[0], safe[1]);
         } else if (type == GameType.JAVELIN && state == RoundState.PLAYING) {
-            if (y > BORDER && !bounds.containsKey(low(name)))
-                new Bounds(name, false);
-            else if (y < BORDER && bounds.containsKey(low(name)))
-                bounds.get(low(name)).returned();
+            if (y > BORDER && !bounds.containsKey(low(name))) {
+                Bounds b = new Bounds(name, false);
+                bounds.put(low(name), b);
+                ba.scheduleTask(b, BOUNDS * 1000);
+            } else if (y < BORDER && bounds.containsKey(low(name)))
+                ba.cancelTask(bounds.remove(low(name)));
         }
     }
     
@@ -194,6 +197,8 @@ public class DraftRound {
             
             if (msg.startsWith("!lag "))
                 cmd_lag(name, msg);
+            else if (msg.equals("!score"))
+                cmd_score(name);
             
             if (oplist.isModerator(name)) {
                 if (msg.equals("!addtime"))
@@ -238,6 +243,10 @@ public class DraftRound {
                 ba.spec(report.getName());
             }
         }
+    }
+    
+    public void cmd_score(String name) {
+        ba.sendSmartPrivateMessage(name, "Score of " + team1.getName() + " vs. " +  team2.getName() + ": " + team1.getScore() + " - " + team2.getScore());
     }
     
     /** Requests a player's lag information */
@@ -293,7 +302,7 @@ public class DraftRound {
             if (type == GameType.BASING)
                 return "currently playing. Score: " + team1.getScore() + " - " + team2.getScore();
             else
-                return "currently playing. ";
+                return "currently playing round " + round + ". ";
         } else
             return "";
     }
@@ -413,13 +422,15 @@ public class DraftRound {
                 ba.shipResetAll();
                 ba.resetFlagGame();
                 ba.sendArenaMessage("GO GO GO!", 104);
-                ba.setDoors(0);
                 ba.showObject(GOGOGO);
                 ba.setTimer(game.gameTime);
-            } else if (timer == 10)
+            } else if (timer == 10) {
                 ba.showObject(TEN_SECONDS);
-            else if (timer == 5)
+                ba.sendArenaMessage("10");
+            } else if (timer == 5) {
                 ba.showObject(FIVE_SECONDS);
+                ba.sendArenaMessage("5");
+            }
         }
         
         /** Keeps scores updated and runs lag checks */
@@ -433,11 +444,12 @@ public class DraftRound {
                     team2.addPoint();
                     checkTime(team2);
                 }
-            }
+                if (team1.getScore() >= target * 60 || team2.getScore() >= target * 60 || timer < 1)
+                    state = RoundState.FINISHED;
+            } else if (!team1.isAlive() || !team2.isAlive() || timer < 1)
+                    state = RoundState.FINISHED;
             updateScoreboard();
             checkLag();
-            if (team1.getScore() >= target * 60 || team2.getScore() >= target * 60 || timer < 1)
-                state = RoundState.FINISHED;
         }
         
         /** Ends the round */
@@ -653,14 +665,15 @@ public class DraftRound {
         public Bounds(String name, boolean warned) {
             this.name = name;
             this.warned = warned;
-            bounds.put(low(name), this);
-            ba.scheduleTask(this, BOUNDS * 1000);
         }
         
+        @Override
         public void run() {
             if (!warned) {
                 ba.sendPrivateMessage(name, "Go to base! You have " + BOUNDS + " seconds before you gain a death.");
-                bounds.put(low(name), new Bounds(name, true));
+                Bounds b = new Bounds(name, true);
+                bounds.put(low(name), b);
+                ba.scheduleTask(b, BOUNDS * 1000);
             } else {
                 bounds.remove(low(name));
                 DraftPlayer p = getPlayer(name);
@@ -669,10 +682,6 @@ public class DraftRound {
                     p.handleDeath();
                 }
             }
-        }
-        
-        public void returned() {
-            ba.cancelTask(bounds.remove(low(name)));
         }
     }
 }

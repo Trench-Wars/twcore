@@ -24,7 +24,7 @@ public class DraftPlayer {
     OperatorList opList;
     BotSettings rules;
     
-    enum Status { NONE, IN, LAGGED, OUT }
+    enum Status { NONE, IN, LAGGED, SUBBED, OUT }
     
     private LagInfo lagInfo;
     
@@ -35,7 +35,7 @@ public class DraftPlayer {
     String name;
     int freq, ship, lagouts, stars, specAt, lagoutCount;
     long lastAttach, lastLagout;
-    boolean botSpec, subbed;                // true if bot specced player for lag
+    boolean botSpec;                // true if bot specced player for lag
     
     public DraftPlayer(BotAction botAction, DraftTeam team, String name, int freq, int ship, int stars) {
         ba = botAction;
@@ -48,7 +48,6 @@ public class DraftPlayer {
         lastAttach = 0;
         lagoutCount = 0;
         botSpec = false;
-        subbed = false;
         lagouts = rules.getInt("lagouts");
         specAt = rules.getInt("deaths");
         statTracker = new DraftStats(ship);
@@ -104,14 +103,10 @@ public class DraftPlayer {
     }
     
     public void handleKill(int points, DraftPlayer player) {
-        if (team.getID() == player.team.getID()) {
+        if (team.isPlaying(player.getName())) {
         	statTracker.handleTeamKill(points, player.getShip());
-        	team.getOpposing().addPoint();
         } else {
             statTracker.handleKill(points, player.getShip());
-            if (specAt != -1) {
-                team.addPoint();
-            }
         }
     }
     
@@ -151,7 +146,7 @@ public class DraftPlayer {
     }
     
     public void handleSubbed() {
-        subbed = true;
+        status = Status.SUBBED;
     }
     
     public void cmd_lagout() {
@@ -213,6 +208,10 @@ public class DraftPlayer {
     
     public int getRating() {
         return statTracker.getRating();
+    }
+    
+    public int getLastLagout() {
+        return (int)((System.currentTimeMillis() - lastLagout) / 1000);
     }
     
     public int getLagouts() {
@@ -286,7 +285,7 @@ public class DraftPlayer {
         values[19] = "" + statTracker.getStat(StatType.BURSTS).getValue();
         values[20] = "" + (statTracker.getStat(StatType.REPELS).getValue() / 2);
         values[21] = "" + lagoutCount;
-        values[22] = (subbed) ? "" + 1 : "" + 0;
+        values[22] = (status == Status.SUBBED) ? "" + 1 : "" + 0;
         values[23] = "" + statTracker.getScore();
         values[24] = (specAt == -1) ? "" + statTracker.getRating() : "" + 0;
         return values;
