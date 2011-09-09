@@ -55,13 +55,13 @@ public class DraftTeam {
         oplist = round.oplist;
         rules = round.rules;
         type = round.type;
-        shipMax = rules.getIntArray("ships", ",");
+        shipMax = rules.getIntArray("Ships", ",");
         ships = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         caps = new String[3];
         teamName = name;
         teamID = id;
         freq = freqNum;
-        deaths = rules.getInt("deaths");
+        deaths = rules.getInt("Deaths");
         score = 0;
         ready = false;
         flag = false;
@@ -71,6 +71,7 @@ public class DraftTeam {
     }
 
     public void handleEvent(FlagClaimed event) {
+        if (type != GameType.BASING) return; 
         String name = ba.getPlayerName(event.getPlayerID());
         if (name != null) {
             DraftPlayer dp = getPlayer(name);
@@ -83,6 +84,7 @@ public class DraftTeam {
     }
     
     public void handleFlagReward(int points) {
+        if (type != GameType.BASING) return; 
         for (DraftPlayer p : players.values()) {
             if (p.getStatus() == Status.IN)
                 p.handleFlagReward(points);
@@ -147,7 +149,7 @@ public class DraftTeam {
     public void cmd_list(String name) {
         ba.sendSmartPrivateMessage(name, teamName + " captains: " + caps[0] + ", " + caps[1] + ", " + caps[2]);
         for (DraftPlayer p : players.values()) {
-            ba.sendSmartPrivateMessage(name, p.getName() + ": " + p.getShip());
+            ba.sendSmartPrivateMessage(name, p.getName() + ": " + p.getShip() + " " + p.getStatus().toString());
         }
     }
 
@@ -225,19 +227,17 @@ public class DraftTeam {
                 return;
             }
         }
-        if (checkStars(p)) {
-            lagChecks.add(low(p.getName()));
-            players.put(low(p.getName()), p);
-            ships[ship - 1]++;
-            p.setSpecAt(deaths);
-            p.getIn();
-            if (type == GameType.BASING)
-                ba.sendArenaMessage(name + " has been added in ship " + ship);
-            else
-                ba.sendArenaMessage(name + " has been added");
-            if (round.getState() == RoundState.LINEUPS)
-                round.sendLagRequest(name, "!" + teamID);
-        }
+        lagChecks.add(low(p.getName()));
+        players.put(low(p.getName()), p);
+        ships[ship - 1]++;
+        p.setSpecAt(deaths);
+        p.getIn();
+        if (type == GameType.BASING)
+            ba.sendArenaMessage(name + " has been added in ship " + ship);
+        else
+            ba.sendArenaMessage(name + " has been added");
+        if (round.getState() == RoundState.LINEUPS)
+            round.sendLagRequest(name, "!" + teamID);
     }
     
     private int getStars(String name) {
@@ -382,10 +382,6 @@ public class DraftTeam {
             ba.setFreq(name, freq);
     }
     
-    public void cmd_lagout(String name, String cmd) {
-        
-    }
-    
     public boolean isAlive() {
         for (DraftPlayer p : players.values()) {
             if (p.getStatus() == Status.IN)
@@ -408,17 +404,10 @@ public class DraftTeam {
         ba.warpFreqToLocation(freq, x, y);
     }
     
-    public void reportStart() {
-        for (DraftPlayer p : players.values()) {
-            if (p.getStatus() == Status.IN)
-                p.reportStart();
-        }
-    }
-    
     public void reportEnd() {
         for (DraftPlayer p : players.values()) {
             if (p.getStatus() == Status.IN)
-                p.reportEnd();
+                p.saveStats();
         }
     }
     

@@ -30,6 +30,7 @@ public enum StatType {
     WORST_DEATH_STREAK("fnTopDeathStreak"),
     AIM("fnAim"),
     LAGOUTS("fnLagouts"),
+    SUBBED("fnSubbed"),
     RATING("fnRating");
     
     private String dbName;

@@ -2,6 +2,7 @@ package twcore.bots.twdt;
 
 import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.TimerTask;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -58,14 +59,14 @@ public class DraftGame {
     int maxPlayers;
     int minPlayers;
     int maxDeaths;
-    int gameTime;
+    int time;
     int[] ships;
     String host, team1Name, team2Name;
     
     public DraftGame(twdt bot, int id, int team1id, int team2id, String name1, String name2, String staffer) {
         this.bot = bot;
         ba = bot.ba;
-        opList = bot.opList;
+        opList = bot.oplist;
         rules = bot.rules;
         type = bot.type;
         gameID = id;
@@ -80,7 +81,7 @@ public class DraftGame {
         winner = null;
         oldRounds = new LinkedList<DraftRound>();
         ships = rules.getIntArray("Ship", ",");
-        gameTime = rules.getInt("Time");
+        time = rules.getInt("Time");
         maxPlayers = rules.getInt("MaxPlayers");
         minPlayers = rules.getInt("MinPlayers");
     }
@@ -141,11 +142,10 @@ public class DraftGame {
     }
     
     public void handleEvent(Message event) {
-
         if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
-            String name = ba.getPlayerName(event.getPlayerID());
+            String name = event.getMessager();
             if (name == null)
-                name = event.getMessager();
+                name = ba.getPlayerName(event.getPlayerID());
             if (name == null) return;
             String msg = event.getMessage();
             
@@ -168,6 +168,80 @@ public class DraftGame {
             ba.sendSmartPrivateMessage(name, getStatus());
     }
     
+    /** Handles the start command which starts the lineup setup state */
+    public void cmd_startPick(String name) {
+        if (currentRound != null) {
+            ba.sendSmartPrivateMessage(name, "This game has already been started.");
+            return;
+        }
+        round = 1;
+        ba.sendArenaMessage("" + type.toString() + " Draft Game: " + team1Name + " vs. " + team2Name);
+        currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
+    }
+    
+    public int getTime() {
+        return time;
+    }
+    
+    /** Returns the id number as given from the database */
+    public int getMatchID() {
+        return gameID;
+    }
+    
+    public int getRound() {
+        return round;
+    }
+    
+    /** Reports the end of a round */
+    public void handleRound(DraftTeam team) {
+        if (type != GameType.BASING) {
+            if (team != null) {
+                if (team.getID() == team1) {
+                    team1score++;
+                    if (team1score > 1) {
+                        winner = team;
+                        currentRound.gameOver();
+                        ba.sendArenaMessage("GAME OVER: " + team1Name + " wins!", 5);
+                        storeResult();
+                        currentRound = null;
+                    } else {
+                        round++;
+                        ba.sendArenaMessage("ROUND OVER: " + team1Name + " wins!", 5);
+                        ba.sendArenaMessage("Current game standing of " + team1Name + " vs. " + team2Name + ": " + team1score + " - " + team2score);
+                        oldRounds.add(currentRound);
+                        currentRound = null;
+                        nextRound();
+                    }
+                } else {
+                    team2score++;
+                    if (team2score > 1) {
+                        winner = team;
+                        currentRound.gameOver();
+                        ba.sendArenaMessage("GAME OVER: " + team2Name + " wins!", 5);
+                        storeResult();
+                        currentRound = null;
+                    } else {
+                        round++;
+                        ba.sendArenaMessage("ROUND OVER: " + team2Name + " wins!", 5);
+                        ba.sendArenaMessage("Current game standing of " + team1Name + " vs. " + team2Name + ": " + team1score + " - " + team2score);
+                        oldRounds.add(currentRound);
+                        currentRound = null;
+                        nextRound();
+                    }
+                }
+            }
+        } else {
+            winner = team;
+            currentRound.gameOver();
+            ba.sendArenaMessage("GAME OVER: " + winner.getName() + " wins!", 5);
+            team1score = currentRound.team1.getScore();
+            team2score = currentRound.team2.getScore();
+            storeResult();
+            oldRounds.add(currentRound);
+            currentRound = null;
+        }
+    }
+    
     /** Returns a String with relevant game information */
     private String getStatus() {
         if (currentRound != null) {
@@ -180,70 +254,18 @@ public class DraftGame {
         return "";
     }
     
-    /** Handles the start command which starts the lineup setup state */
-    public void cmd_startPick(String name) {
-        if (currentRound != null) {
-            ba.sendSmartPrivateMessage(name, "This game has already been started.");
-            return;
-        }
-        round = 1;
-        ba.sendArenaMessage("" + type.toString() + " Draft Game: " + team1Name + " vs. " + team2Name);
-        currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
-    }
-    
-    /** Returns the id number as given from the database */
-    public int getMatchID() {
-        return gameID;
-    }
-
-    /** Returns true if a game has been properly loaded */
-    public boolean getLoaded() {
-        if (gameID > -1)
-            return true;
-        else return false;
-    }
-    
-    /** Reports the end of a round */
-    public void handleRound(DraftTeam team) {
-        if (type != GameType.BASING) {
-            if (team != null) {
-                if (team.getID() == team1) {
-                    team1score++;
-                    if (team1score > 1) {
-                        winner = team;
-                        currentRound.gameOver();
-                        ba.sendArenaMessage(team1Name + " wins this game! ");
-                        storeResult();
-                    } else {
-                        round++;
-                        ba.sendArenaMessage("Current game standing of " + team1Name + " vs. " + team2Name + ": " + team1score + " - " + team2score);
-                        ba.sendArenaMessage("Prepare for round " + round + "!");
-                        oldRounds.add(currentRound);
-                        currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
-                    }
-                } else {
-                    team2score++;
-                    if (team2score > 1) {
-                        winner = team;
-                        currentRound.gameOver();
-                        ba.sendArenaMessage(team2Name + " wins this game! ");
-                        storeResult();
-                    } else {
-                        round++;
-                        ba.sendArenaMessage("Current game standing of " + team1Name + " vs. " + team2Name + ": " + team1score + " - " + team2score);
-                        ba.sendArenaMessage("Prepare for round " + round + "!");
-                        oldRounds.add(currentRound);
-                        currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
-                    }
-                }
+    private void nextRound() {
+        TimerTask next = new TimerTask() {
+            public void run() {
+                newRound();
             }
-        } else {
-            winner = team;
-            currentRound.gameOver();
-            team1score = currentRound.team1.getScore();
-            team2score = currentRound.team2.getScore();
-            storeResult();
-        }
+        };
+        ba.scheduleTask(next, 4000);
+    }
+    
+    private void newRound() {
+        ba.sendArenaMessage("Prepare for round " + round + "!");
+        currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
     }
     
     /** Stores the result of the game to the database */

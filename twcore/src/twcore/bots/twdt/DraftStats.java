@@ -17,6 +17,7 @@ public class DraftStats {
     private int ship;
 
     public DraftStats(int ship) {
+        this.ship = ship;
         eKills = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
         tKills = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
         stats = new EnumMap<StatType, DraftStat>(StatType.class);
@@ -58,6 +59,14 @@ public class DraftStats {
         if (stats.get(StatType.DEATH_STREAK).getValue() > stats.get(StatType.WORST_DEATH_STREAK).getValue())
             stats.get(StatType.WORST_DEATH_STREAK).setValue(stats.get(StatType.DEATH_STREAK).getValue());
         stats.get(StatType.KILL_STREAK).setValue(0);
+    }
+    
+    public void handleLagout() {
+        stats.get(StatType.LAGOUTS).increment();
+    }
+    
+    public void handleSubbed() {
+        stats.get(StatType.SUBBED).setValue(1);
     }
 
     public int getScore() {

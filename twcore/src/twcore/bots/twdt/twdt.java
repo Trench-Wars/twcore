@@ -2,6 +2,7 @@ package twcore.bots.twdt;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.TimerTask;
 
 import twcore.bots.twdt.DraftGame.GameType;
 import twcore.core.BotAction;
@@ -19,7 +20,7 @@ import twcore.core.util.Tools;
 public class twdt extends SubspaceBot {
     
     public BotAction ba;
-    public OperatorList opList;
+    public OperatorList oplist;
     public BotSettings rules;
 
     public static final String db = "website";
@@ -30,7 +31,7 @@ public class twdt extends SubspaceBot {
         super(botAction);
         ba = botAction;
         requestEvents();
-        opList = ba.getOperatorList();
+        oplist = ba.getOperatorList();
         game = null;
         type = null;
     }
@@ -103,7 +104,7 @@ public class twdt extends SubspaceBot {
             if (msg.startsWith("!load "))
                 cmd_load(name, msg);
             
-            if (opList.isModerator(name)) {
+            if (oplist.isModerator(name)) {
                 if (msg.equals("!die"))
                     cmd_die(name);
                 else if (msg.startsWith("!go "))
@@ -171,8 +172,8 @@ public class twdt extends SubspaceBot {
     
     /** Kills bot */
     public void cmd_die(String name) {
-        ba.cancelTasks();
-        ba.die();
+        ba.sendSmartPrivateMessage(name, "Killing myself...");
+        handleDisconnect();
     }
     
     /** Helper requests the required events */
@@ -190,5 +191,19 @@ public class twdt extends SubspaceBot {
         er.request(EventRequester.PLAYER_POSITION);
         er.request(EventRequester.WEAPON_FIRED);
         er.request(EventRequester.TURRET_EVENT);
+    }
+    
+    @Override
+    public void handleDisconnect() {
+        ba.cancelTasks();
+        ba.scheduleTask(new Die(), 2000);
+    }
+    
+    public class Die extends TimerTask {
+        
+        @Override
+        public void run() {
+            ba.die();
+        }
     }
 }

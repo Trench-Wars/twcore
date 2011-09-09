@@ -126,6 +126,9 @@ public class DraftPlayer {
         if (status != Status.IN) return; 
         status = Status.LAGGED;
         lastLagout = System.currentTimeMillis();
+        team.handleLagout(name);
+        if (team.round.getState() != RoundState.PLAYING) return;
+        statTracker.handleLagout();
         lagoutCount++;
         if (specAt > -1) {
             statTracker.getStat(StatType.DEATHS).increment();
@@ -147,6 +150,7 @@ public class DraftPlayer {
     
     public void handleSubbed() {
         status = Status.SUBBED;
+        statTracker.handleSubbed();
     }
     
     public void cmd_lagout() {
@@ -222,13 +226,6 @@ public class DraftPlayer {
         return (status == Status.IN || status == Status.LAGGED);
     }
     
-    public void reportStart() {
-    }
-    
-    public void reportEnd() {
-        saveStats();
-    }
-    
     public void saveStats() {
         String[] fields = { 
                 "fcName", 
@@ -255,21 +252,25 @@ public class DraftPlayer {
                 "fnLagouts", 
                 "fnSubbed", 
                 "fnScore",
-                "fnRating" }; // 24
+                "fnRating" 
+                };
         
-        String[] values = getStats(statTracker);
-        ba.SQLInsertInto(db, "tblDraft__PlayerRound", fields, values);
+        for (DraftStats shipStats : ships.values()) {
+            statTracker = shipStats;
+            String[] values = getStats();
+            ba.SQLBackgroundInsertInto(db, "tblDraft__PlayerRound", fields, values);            
+        }
     }
     
-    public String[] getStats(DraftStats statLog) {
+    public String[] getStats() {
         String[] values = new String[25];
         values[0] = name;
         values[1] = "" + team.getID();
         values[2] = "" + team.round.game.getMatchID();
         values[3] = "" + team.round.game.round;
-        values[4] = "" + ship;
+        values[4] = "" + statTracker.getShip();
         values[5] = "" + statTracker.getStat(StatType.KILLS).getValue();
-        values[6] = "" + getDeaths();
+        values[6] = "" + statTracker.getStat(StatType.DEATHS).getValue();
         values[7] = "" + statTracker.getStat(StatType.DOAS).getValue();
         values[8] = "" + statTracker.getStat(StatType.TEAM_KILLS).getValue();
         values[9] = "" + statTracker.getStat(StatType.TERR_KILLS).getValue();
@@ -284,8 +285,8 @@ public class DraftPlayer {
         values[18] = "" + statTracker.getStat(StatType.BOMBS).getValue();
         values[19] = "" + statTracker.getStat(StatType.BURSTS).getValue();
         values[20] = "" + (statTracker.getStat(StatType.REPELS).getValue() / 2);
-        values[21] = "" + lagoutCount;
-        values[22] = (status == Status.SUBBED) ? "" + 1 : "" + 0;
+        values[21] = "" + statTracker.getStat(StatType.LAGOUTS).getValue();
+        values[22] = "" + statTracker.getStat(StatType.SUBBED).getValue();
         values[23] = "" + statTracker.getScore();
         values[24] = (specAt == -1) ? "" + statTracker.getRating() : "" + 0;
         return values;
@@ -315,7 +316,6 @@ public class DraftPlayer {
     }
     
     public void setShip(int s) {
-        System.out.println(name + " " + s);
         if (status == Status.IN)
             ba.setShip(name, s);
         ship = s;
