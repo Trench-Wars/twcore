@@ -607,9 +607,9 @@ public class DraftRound {
                     //       This is only caused in TWLD and TWLJ arenas as they are using the lvz 'twl.lvz'
                     
                     for (int i = team1Score.length() - 1; i > -1; i--)
-                        objects.showObject(Integer.parseInt("" + team1Score.charAt(i)) + 200 + (team1Score.length() - 1 - i) * 10);
+                        objects.showObject(Integer.parseInt("" + team1Score.charAt(i)) + 100 + (team1Score.length() - 1 - i) * 10);
                     for (int i = team2Score.length() - 1; i > -1; i--)
-                        objects.showObject(Integer.parseInt("" + team2Score.charAt(i)) + 100 + (team2Score.length() - 1 - i) * 10);
+                        objects.showObject(Integer.parseInt("" + team2Score.charAt(i)) + 200 + (team2Score.length() - 1 - i) * 10);
                 }
                 if (timer >= 0) {
                     int seconds = timer % 60;

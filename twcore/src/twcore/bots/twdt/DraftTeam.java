@@ -127,7 +127,7 @@ public class DraftTeam {
                     cmd_change(name, msg);
                 else if (msg.startsWith("!switch "))
                     cmd_switch(name, msg);
-                else if (msg.startsWith("!rem "))
+                else if (msg.startsWith("!rem"))
                     cmd_remove(name, msg);
             }
         }
@@ -230,6 +230,7 @@ public class DraftTeam {
                 if (usedStars + stars <= 50) {
                     if (stars > 0)
                         setPlayed(name, true);
+                    usedStars += stars;
                     p = new DraftPlayer(ba, this, name, freq, ship, stars);
                 } else {
                     ba.sendSmartPrivateMessage(cap, "There are not enough stars remaining to add '" + name + "'. Used stars: " + usedStars);
@@ -359,7 +360,7 @@ public class DraftTeam {
     }
     
     public void cmd_remove(String cap, String cmd) {
-        if (round.getState() != RoundState.LINEUPS) return;
+        if (round.getState() != RoundState.LINEUPS || !cmd.contains(" ")) return;
         String name = cmd.substring(cmd.indexOf(" ") + 1);
         String temp = ba.getFuzzyPlayerName(name);
         if (temp != null)
@@ -371,6 +372,7 @@ public class DraftTeam {
         DraftPlayer p = getPlayer(name);
         if (p != null) {
             p.getOut();
+            usedStars -= p.getStars();
             players.remove(low(name));
         }
     }
