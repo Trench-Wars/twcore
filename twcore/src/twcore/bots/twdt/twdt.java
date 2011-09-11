@@ -101,11 +101,10 @@ public class twdt extends SubspaceBot {
                 name = event.getMessager();
             if (name == null) return;
             
-            if (msg.startsWith("!load "))
-                cmd_load(name, msg);
-            
-            if (oplist.isModerator(name)) {
-                if (msg.equals("!die"))
+            if (oplist.isER(name)) {
+                if (msg.startsWith("!load "))
+                    cmd_load(name, msg);
+                else if (msg.equals("!die"))
                     cmd_die(name);
                 else if (msg.startsWith("!go "))
                     cmd_go(name, msg);

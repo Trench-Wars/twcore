@@ -203,7 +203,7 @@ public class DraftRound {
             else if (msg.equals("!help"))
                 cmd_help(name);
             
-            if (oplist.isModerator(name)) {
+            if (oplist.isER(name)) {
                 if (msg.equals("!addtime"))
                     cmd_addTime(name);
             }

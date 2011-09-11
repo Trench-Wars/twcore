@@ -153,7 +153,7 @@ public class DraftGame {
             if (msg.equals("!status"))
                 cmd_status(name);
             
-            if (opList.isModerator(name)) {
+            if (opList.isER(name)) {
                 if (msg.startsWith("!start"))
                     cmd_startPick(name);
             }

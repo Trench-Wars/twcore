@@ -213,6 +213,7 @@ public class DraftTeam {
     
     private void do_add(String cap, String name, int ship) {
         System.out.println(cap + " " + name + " " + ship);
+        resCheck = null;
         DraftPlayer p = null;
         p = getPlayer(name, false);
         if (p != null && p.getStatus() != Status.NONE) {
