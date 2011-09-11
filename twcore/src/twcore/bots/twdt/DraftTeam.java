@@ -116,6 +116,9 @@ public class DraftTeam {
             
             if (msg.equals("!list"))
                 cmd_list(name);
+            else if (msg.equals("!myfreq"))
+                cmd_myFreq(name);
+            
             if (isCaptain(name)) {
                 if (msg.equals("!ready"))
                     cmd_ready(name);
@@ -291,8 +294,7 @@ public class DraftTeam {
         if (subs == 0) {
             ba.sendPrivateMessage(cap, "You have no more substitutions available.");
             return;
-        } else if (subs != -1)
-            subs--;
+        } 
         // out:in
         String[] names = cmd.substring(cmd.indexOf(" ") + 1).split(":");
         String temp = ba.getFuzzyPlayerName(names[1]);
@@ -355,6 +357,8 @@ public class DraftTeam {
         p.setSpecAt(out.getSpecAt() - out.getDeaths());
         out.getOut();
         out.handleSubbed();
+        if (subs != -1)
+            subs--;
         ba.sendArenaMessage(out.getName() + " has been substituted by " + p.getName());
         msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
     }
@@ -382,8 +386,7 @@ public class DraftTeam {
         if (changes < 1) {
             ba.sendPrivateMessage(cap, "You have no more changes available.");
             return;
-        } else
-            changes--;
+        } 
         String name = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
         String temp = ba.getFuzzyPlayerName(name);
         if (temp != null)
@@ -419,6 +422,7 @@ public class DraftTeam {
         ships[p.getShip() - 1]--;
         ships[ship - 1]++;
         p.setShip(ship);
+        changes--;
         ba.sendArenaMessage(p.getName() + " has been changed to ship " + ship);
     }
     
@@ -427,8 +431,7 @@ public class DraftTeam {
         if (switches < 1) {
             ba.sendPrivateMessage(cap, "You have no more changes available.");
             return;
-        } else
-            switches--;
+        }
         String[] names = cmd.substring(cmd.indexOf(" ") + 1).split(":");
         if (!isPlaying(names[0])) {
             ba.sendSmartPrivateMessage(cap, names[0] + " is not in the game.");
@@ -448,6 +451,7 @@ public class DraftTeam {
         int ship = p1.getShip();
         p1.setShip(p2.getShip());
         p2.setShip(ship);
+        switches--;
     }
     
     public void cmd_myFreq(String name) {
