@@ -574,7 +574,6 @@ public class DraftRound {
             // handle objons
             if (objects != null) {
                 objects.hideAllObjects();
-                timer -= 1;
                 String team1Score;
                 String team2Score;
 
