@@ -135,9 +135,10 @@ public class twdt extends SubspaceBot {
             return;
         } else if (cmd.contains(":")) {
             String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(":");
-            if (args.length == 3)
+            if (args.length == 3) {
                 cmd_load(name, args);
-            else {
+                return;
+            } else {
                 ba.sendSmartPrivateMessage(name, "Error, invalid command parameters. Exiting...");
                 return;
             }
