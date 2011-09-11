@@ -204,7 +204,7 @@ public class twdt extends SubspaceBot {
                     String team2name = rs.getString("fcName");
                     int team2 = rs.getInt("fnTeamID");
                     if (team1 != team2) {
-                        ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnSeason, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2) VALUES(7, " + ship + ", " + team1 + ", " + team2 + ", '" + team1name + "', '" + team2name +"')");
+                        ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnSeason, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2) VALUES(7, " + ship + ", " + team1 + ", " + team2 + ", '" + Tools.addSlashesToString(team1name) + "', '" + Tools.addSlashesToString(team2name) +"')");
                         ResultSet id = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
                         if (id.next())
                             cmd_load(name, "!load " + id.getInt(1));
