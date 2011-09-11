@@ -222,6 +222,10 @@ public class DraftPlayer {
         return lagoutCount;
     }
     
+    public int getStars() {
+        return stars;
+    }
+    
     public boolean isPlaying() {
         return (status == Status.IN || status == Status.LAGGED);
     }

@@ -109,10 +109,23 @@ public class twdt extends SubspaceBot {
                     cmd_die(name);
                 else if (msg.startsWith("!go "))
                     cmd_go(name, msg);
+                else if (msg.equals("!help"))
+                    cmd_help(name);
             }
         }
         if (game != null)
             game.handleEvent(event);
+    }
+    
+    public void cmd_help(String name) {
+        String[] msg = {
+                " !go <arena>, !die, !help",
+                " !load <id>                    - Loads a preset game with the game/match ID of <id>",
+                " !load <team1>:<team2>:<type#> - Loads a new game of <type#> (1-WB 2-JAV 3-BASE)",
+                " !start                        - Allows the team captains to start adding players if a game is loaded",
+                " !addtime                      - During lineup selection will add 2 minute extension",
+        };
+        ba.smartPrivateMessageSpam(name, msg);
     }
     
     /** Handles the load command which retrieves the associated match information from the database */
@@ -120,6 +133,14 @@ public class twdt extends SubspaceBot {
         if (game != null) {
             ba.sendSmartPrivateMessage(name, "Cannot load new game with a game currently in progress.");
             return;
+        } else if (cmd.contains(":")) {
+            String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(":");
+            if (args.length == 3)
+                cmd_load(name, args);
+            else {
+                ba.sendSmartPrivateMessage(name, "Error, invalid command parameters. Exiting...");
+                return;
+            }
         }
         int gameID = -1;
         try {
@@ -162,6 +183,45 @@ public class twdt extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }        
+    }
+    
+    public void cmd_load(String name, String[] args) {
+        int ship = -1;
+        try {
+            ship = Integer.valueOf(args[2]);
+            if (ship < 1 || ship > 3)
+                throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Error, invalid game type number. Exiting...");
+            return;
+        }
+        try {
+            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Team WHERE fnSeason = 7 AND (fcName = '" + Tools.addSlashesToString(args[0]) + "' OR fcName = '" + Tools.addSlashesToString(args[1]) + ")");
+            if (rs.next()) {
+                String team1name = rs.getString("fcName");
+                int team1 = rs.getInt("fnTeamID");
+                if (rs.next()) {
+                    String team2name = rs.getString("fcName");
+                    int team2 = rs.getInt("fnTeamID");
+                    if (team1 != team2) {
+                        ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnSeason, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2) VALUES(7, " + ship + ", " + team1 + ", " + team2 + ", '" + team1name + "', '" + team2name +"')");
+                        ResultSet id = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
+                        if (id.next())
+                            cmd_load(name, "!load " + id.getInt(1));
+                        else
+                            ba.sendSmartPrivateMessage(name, "SQL Error!");
+                        ba.SQLClose(id);
+                    } else
+                        ba.sendSmartPrivateMessage(name, "A team cannot play itself.");
+                } else
+                    ba.sendSmartPrivateMessage(name, "Error, a team could not be found in the database.");
+            } else
+                ba.sendSmartPrivateMessage(name, "Error, a team could not be found in the database.");
+            ba.SQLClose(rs);
+        } catch (SQLException e) {
+            ba.sendSmartPrivateMessage(name, "SQL Error!");
+            Tools.printStackTrace(e);
+        }
     }
     
     /** Moves bot to a different arena */

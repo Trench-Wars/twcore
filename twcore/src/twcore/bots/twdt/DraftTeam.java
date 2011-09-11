@@ -37,7 +37,7 @@ public class DraftTeam {
     HashMap<String, DraftPlayer> players;
     HashMap<String, DraftPlayer> cache; 
     Vector<String> lagChecks;
-    int score, freq, teamID, deaths;
+    int score, freq, teamID, deaths, usedStars;
     int[] shipMax, ships;
     String[] caps;
     String teamName;
@@ -61,6 +61,7 @@ public class DraftTeam {
         teamName = name;
         teamID = id;
         freq = freqNum;
+        usedStars = -1;
         deaths = rules.getInt("Deaths");
         score = 0;
         ready = false;
@@ -148,9 +149,8 @@ public class DraftTeam {
     
     public void cmd_list(String name) {
         ba.sendSmartPrivateMessage(name, teamName + " captains: " + caps[0] + ", " + caps[1] + ", " + caps[2]);
-        for (DraftPlayer p : players.values()) {
-            ba.sendSmartPrivateMessage(name, p.getName() + ": " + p.getShip() + " " + p.getStatus().toString());
-        }
+        for (DraftPlayer p : players.values())
+            ba.sendSmartPrivateMessage(name, padString(p.getName(), 25) + ": " + p.getShip() + " - " + p.getStatus().toString());
     }
 
     public void cmd_add(String cap, String cmd) {
@@ -216,12 +216,18 @@ public class DraftTeam {
             ba.sendSmartPrivateMessage(cap, p.getName() + " is already playing.");
             return;
         }
-        if (p == null && cache.containsKey(low(name)))
-            p = cache.get(low(name));
+        
         if (p == null) {
             int stars = getStars(name);
             if (stars > -1) {
-                p = new DraftPlayer(ba, this, name, freq, ship, stars);
+                if (usedStars + stars <= 50) {
+                    if (stars > 0)
+                        setPlayed(name, true);
+                    p = new DraftPlayer(ba, this, name, freq, ship, stars);
+                } else {
+                    ba.sendSmartPrivateMessage(cap, "There are not enough stars remaining to add '" + name + "'. Used stars: " + usedStars);
+                    return;
+                }
             } else {
                 ba.sendSmartPrivateMessage(cap, name + " was not found on the team roster.");
                 return;
@@ -240,14 +246,28 @@ public class DraftTeam {
             round.sendLagRequest(name, "!" + teamID);
     }
     
+    private void setPlayed(String name, boolean played) {
+        try {
+            if (played)
+                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayer = 1 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
+            else
+                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayer = 0 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+    }
+    
     private int getStars(String name) {
         int stars = -1;
         try {
-            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + 1 + " AND fcName = '" + name + "' LIMIT 1");
+            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + 7 + " AND fcName = '" + name + "' LIMIT 1");
             if (rs.next()) {
                 int team = rs.getInt("fnTeamID");
-                if (team == teamID)
+                if (team == teamID) {
                     stars = rs.getInt("fnStars");
+                    if (rs.getInt("fnPlayed") == 1)
+                        stars = 0;
+                }
             }
             ba.SQLClose(rs);
         } catch (SQLException e) {
@@ -296,21 +316,29 @@ public class DraftTeam {
         if (p == null) {
             int stars = getStars(in);
             if (stars > -1) {
+                if (stars > out.getStars()) {
+                    if (usedStars + (stars - out.getStars()) > 50) {
+                        ba.sendSmartPrivateMessage(cap, "There are not enough stars remaining to sub in '" + in + "'. Used stars: " + usedStars);
+                        return;
+                    }
+                    setPlayed(out.getName(), false);
+                    setPlayed(in, true);
+                } else
+                    stars = out.getStars();
+                usedStars = usedStars - out.getStars() + stars;
                 p = new DraftPlayer(ba, this, in, freq, out.getShip(), stars);
             } else {
                 ba.sendSmartPrivateMessage(cap, in + " was not found on the team roster.");
                 return;
             }
         }
-        if (checkStars(p)) {
-            players.put(low(p.getName()), p);
-            lagChecks.remove(low(out.getName()));
-            lagChecks.add(low(p.getName()));
-            p.getIn(out.getShip());
-            out.getOut();
-            out.handleSubbed();
-            ba.sendArenaMessage(out.getName() + " has been substitutded by " + p.getName());
-        }
+        players.put(low(p.getName()), p);
+        lagChecks.remove(low(out.getName()));
+        lagChecks.add(low(p.getName()));
+        p.getIn(out.getShip());
+        out.getOut();
+        out.handleSubbed();
+        ba.sendArenaMessage(out.getName() + " has been substituted by " + p.getName());
     }
     
     public void cmd_change(String cap, String cmd) {
@@ -392,8 +420,13 @@ public class DraftTeam {
         return false;
     }
     
-    public boolean checkStars(DraftPlayer name) {
-        return true;
+    public String checkStars(DraftPlayer name) {
+        
+        
+        
+        
+        
+        return "";
     }
     
     public void checkLineup() {
@@ -409,6 +442,7 @@ public class DraftTeam {
             if (p.getStatus() == Status.IN)
                 p.saveStats();
         }
+        ba.SQLBackgroundQuery(db, null, "UPDATE tblDraft__Team SET fnUsedStars = " + usedStars + " WHERE fnTeamID = " + teamID + "");
     }
     
     public ArrayList<String> getStats() {
@@ -594,6 +628,7 @@ public class DraftTeam {
                 caps[0] = rs.getString("fcCap");
                 caps[1] = rs.getString("fcAss1");
                 caps[2] = rs.getString("fcAss2");
+                usedStars = rs.getInt("fnUsedStars");
             }
             ba.SQLClose(rs);
         } catch (SQLException e) {

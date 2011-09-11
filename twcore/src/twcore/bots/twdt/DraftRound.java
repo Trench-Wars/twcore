@@ -200,6 +200,8 @@ public class DraftRound {
                 cmd_lag(name, msg);
             else if (msg.equals("!score"))
                 cmd_score(name);
+            else if (msg.equals("!help"))
+                cmd_help(name);
             
             if (oplist.isModerator(name)) {
                 if (msg.equals("!addtime"))
@@ -252,6 +254,20 @@ public class DraftRound {
             ba.sendSmartPrivateMessage(name, "Score of " + team1.getName() + " vs. " +  team2.getName() + ": " + team1.getScore() + " - " + team2.getScore());
         else
             ba.sendSmartPrivateMessage(name, "Score of " + team1.getName() + " vs. " +  team2.getName() + ": " + formatTime());
+    }
+    
+    public void cmd_help(String name) {
+        String[] msg = {
+                " !status !score !lagout !lag <name> ",
+                " !list        - Lists current players",
+        };
+        ba.privateMessageSpam(name, msg);
+        if (team1.isCaptain(name) || team2.isCaptain(name)) {
+            msg = new String[] {
+                    " !add <name>:<ship> !sub <out>:<in> !change <name>:<ship> !switch <name1>:<name1> ",
+            };
+            ba.privateMessageSpam(name, msg);
+        }
     }
     
     /** Requests a player's lag information */
