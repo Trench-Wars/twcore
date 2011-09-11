@@ -202,10 +202,11 @@ public class DraftTeam {
                 return;
             }
             if (type == GameType.WARBIRD) {
-                if (resCheck == null)
-                    resCheck = new ResCheck(name, cap, 1);
-                else
-                    ba.sendSmartPrivateMessage(cap, "A resolution check is still being processed for: " + resCheck.name);
+                do_add(cap, name, 1);
+                //if (resCheck == null)
+                //    resCheck = new ResCheck(name, cap, 1);
+                //else
+                //    ba.sendSmartPrivateMessage(cap, "A resolution check is still being processed for: " + resCheck.name);
             } else
                 do_add(cap, name, 2);
         }
@@ -307,10 +308,11 @@ public class DraftTeam {
             return;
         }
         if (type == GameType.WARBIRD) {
-            if (resCheck != null) {
-                ba.sendSmartPrivateMessage(cap, "A resolution check is in process for: " + resCheck.name);
-            } else
-                resCheck = new ResCheck(names[1], cap, out);
+            //if (resCheck != null) {
+            //    ba.sendSmartPrivateMessage(cap, "A resolution check is in process for: " + resCheck.name);
+            //} else
+            //    resCheck = new ResCheck(names[1], cap, out);
+            do_sub(cap, names[1], out);
         } else
             do_sub(cap, names[1], out);
     }
