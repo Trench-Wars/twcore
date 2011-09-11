@@ -240,6 +240,7 @@ public class DraftTeam {
         lagChecks.add(low(p.getName()));
         players.put(low(p.getName()), p);
         ships[ship - 1]++;
+        ships[8]++;
         p.setSpecAt(deaths);
         p.getIn();
         if (type == GameType.BASING)
