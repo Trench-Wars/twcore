@@ -127,6 +127,8 @@ public class DraftTeam {
                     cmd_change(name, msg);
                 else if (msg.startsWith("!switch "))
                     cmd_switch(name, msg);
+                else if (msg.startsWith("!rem "))
+                    cmd_remove(name, msg);
             }
         }
     }
@@ -349,10 +351,28 @@ public class DraftTeam {
         lagChecks.remove(low(out.getName()));
         lagChecks.add(low(p.getName()));
         p.getIn(out.getShip());
+        p.setSpecAt(out.getSpecAt() - out.getDeaths());
         out.getOut();
         out.handleSubbed();
         ba.sendArenaMessage(out.getName() + " has been substituted by " + p.getName());
         msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
+    }
+    
+    public void cmd_remove(String cap, String cmd) {
+        if (round.getState() != RoundState.LINEUPS) return;
+        String name = cmd.substring(cmd.indexOf(" ") + 1);
+        String temp = ba.getFuzzyPlayerName(name);
+        if (temp != null)
+            name = temp;
+        else {
+            ba.sendSmartPrivateMessage(cap, name + " was not found in this arena.");
+            return;
+        }
+        DraftPlayer p = getPlayer(name);
+        if (p != null) {
+            p.getOut();
+            players.remove(low(name));
+        }
     }
     
     public void cmd_change(String cap, String cmd) {
