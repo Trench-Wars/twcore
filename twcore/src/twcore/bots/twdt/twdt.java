@@ -196,7 +196,7 @@ public class twdt extends SubspaceBot {
             return;
         }
         try {
-            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Team WHERE fnSeason = 7 AND (fcName = '" + Tools.addSlashesToString(args[0]) + "' OR fcName = '" + Tools.addSlashesToString(args[1]) + ")");
+            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Team WHERE fnSeason = 7 AND (fcName = '" + Tools.addSlashesToString(args[0]) + "' OR fcName = '" + Tools.addSlashesToString(args[1]) + "')");
             if (rs.next()) {
                 String team1name = rs.getString("fcName");
                 int team1 = rs.getInt("fnTeamID");
