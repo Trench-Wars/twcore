@@ -198,7 +198,7 @@ public class DraftGame {
             if (team != null) {
                 if (team.getID() == team1) {
                     team1score++;
-                    if (team1score > 1) {
+                    if (team1score > 0) {
                         winner = team;
                         currentRound.gameOver();
                         ba.sendArenaMessage("GAME OVER: " + team1Name + " wins!", 5);
@@ -214,7 +214,7 @@ public class DraftGame {
                     }
                 } else {
                     team2score++;
-                    if (team2score > 1) {
+                    if (team2score > 0) {
                         winner = team;
                         currentRound.gameOver();
                         ba.sendArenaMessage("GAME OVER: " + team2Name + " wins!", 5);
