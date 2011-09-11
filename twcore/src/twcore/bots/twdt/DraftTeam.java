@@ -375,9 +375,11 @@ public class DraftTeam {
         }
         DraftPlayer p = getPlayer(name);
         if (p != null) {
+            ships[p.getShip()-1]--;
             p.getOut();
             usedStars -= p.getStars();
             players.remove(low(name));
+            ships[8]--;
         }
     }
     
