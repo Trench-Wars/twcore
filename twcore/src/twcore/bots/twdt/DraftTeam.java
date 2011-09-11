@@ -249,9 +249,9 @@ public class DraftTeam {
     private void setPlayed(String name, boolean played) {
         try {
             if (played)
-                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayer = 1 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
+                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 1 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
             else
-                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayer = 0 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
+                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 0 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
