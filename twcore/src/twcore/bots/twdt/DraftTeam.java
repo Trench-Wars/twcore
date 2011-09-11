@@ -699,6 +699,7 @@ public class DraftTeam {
             } else {
                 ba.sendSmartPrivateMessage(name, "You will not be able to play until your resolution is no greather than " + MAXRES_X  + "x" + MAXRES_Y + ".");
                 ba.sendSmartPrivateMessage(cap, name + " has a resolution greather than " + MAXRES_X  + "x" + MAXRES_Y + ".");
+                resCheck = null;
             }
         }
         
