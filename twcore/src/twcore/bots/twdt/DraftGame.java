@@ -84,6 +84,7 @@ public class DraftGame {
         time = rules.getInt("Time");
         maxPlayers = rules.getInt("MaxPlayers");
         minPlayers = rules.getInt("MinPlayers");
+        ba.sendArenaMessage("" + type.toString() + " Draft Game: " + team1Name + " vs. " + team2Name);
     }
     
     /** EVENT HANDLERS */
@@ -175,7 +176,6 @@ public class DraftGame {
             return;
         }
         round = 1;
-        ba.sendArenaMessage("" + type.toString() + " Draft Game: " + team1Name + " vs. " + team2Name);
         currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
     }
     

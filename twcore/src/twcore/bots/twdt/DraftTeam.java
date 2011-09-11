@@ -37,7 +37,7 @@ public class DraftTeam {
     HashMap<String, DraftPlayer> players;
     HashMap<String, DraftPlayer> cache; 
     Vector<String> lagChecks;
-    int score, freq, teamID, deaths, usedStars;
+    int score, freq, teamID, deaths, usedStars, subs, changes, switches;
     int[] shipMax, ships;
     String[] caps;
     String teamName;
@@ -62,7 +62,10 @@ public class DraftTeam {
         teamID = id;
         freq = freqNum;
         usedStars = -1;
+        subs = rules.getInt("Subs");
         deaths = rules.getInt("Deaths");
+        changes = rules.getInt("Changes");
+        switches = rules.getInt("Switches");
         score = 0;
         ready = false;
         flag = false;
@@ -244,6 +247,7 @@ public class DraftTeam {
             ba.sendArenaMessage(name + " has been added");
         if (round.getState() == RoundState.LINEUPS)
             round.sendLagRequest(name, "!" + teamID);
+        msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
     }
     
     private void setPlayed(String name, boolean played) {
@@ -278,6 +282,11 @@ public class DraftTeam {
     
     public void cmd_sub(String cap, String cmd) {
         if (cmd.length() < 5 || !cmd.contains(":")) return;
+        if (subs == 0) {
+            ba.sendPrivateMessage(cap, "You have no more substitutions available.");
+            return;
+        } else if (subs != -1)
+            subs--;
         // out:in
         String[] names = cmd.substring(cmd.indexOf(" ") + 1).split(":");
         String temp = ba.getFuzzyPlayerName(names[1]);
@@ -339,10 +348,16 @@ public class DraftTeam {
         out.getOut();
         out.handleSubbed();
         ba.sendArenaMessage(out.getName() + " has been substituted by " + p.getName());
+        msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
     }
     
     public void cmd_change(String cap, String cmd) {
         if (type != GameType.BASING || cmd.length() < 9 || !cmd.contains(":")) return;
+        if (changes < 1) {
+            ba.sendPrivateMessage(cap, "You have no more changes available.");
+            return;
+        } else
+            changes--;
         String name = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
         String temp = ba.getFuzzyPlayerName(name);
         if (temp != null)
@@ -383,6 +398,11 @@ public class DraftTeam {
     
     public void cmd_switch(String cap, String cmd) {
         if (type != GameType.BASING || cmd.length() < 9 || !cmd.contains(":")) return;
+        if (switches < 1) {
+            ba.sendPrivateMessage(cap, "You have no more changes available.");
+            return;
+        } else
+            switches--;
         String[] names = cmd.substring(cmd.indexOf(" ") + 1).split(":");
         if (!isPlaying(names[0])) {
             ba.sendSmartPrivateMessage(cap, names[0] + " is not in the game.");
@@ -418,19 +438,6 @@ public class DraftTeam {
                 return true;
         }
         return false;
-    }
-    
-    public String checkStars(DraftPlayer name) {
-        
-        
-        
-        
-        
-        return "";
-    }
-    
-    public void checkLineup() {
-        
     }
     
     public void warpTeam(int x, int y) {
