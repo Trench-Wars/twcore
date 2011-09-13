@@ -209,6 +209,25 @@ public class DraftRound {
                     cmd_addTime(name);
                 else if (msg.startsWith("!res")) 
                     cmd_resChecks(name);
+                else if (msg.startsWith("!t1-")) {
+                	if (msg.contains("-add"))
+                		team1.cmd_add(name, "!add " + msg.substring(msg.indexOf(" ") + 1));
+                	else if (msg.contains("-sub"))
+                		team1.cmd_add(name, "!sub " + msg.substring(msg.indexOf(" ") + 1));
+                	else if (msg.contains("-rem"))
+                		team1.cmd_add(name, "!rem " + msg.substring(msg.indexOf(" ") + 1));
+                	else if (msg.contains("-ready"))
+                		team1.cmd_add(name, "!ready");
+                } else if (msg.startsWith("!t2-")) {
+                	if (msg.contains("-add"))
+                		team2.cmd_add(name, "!add " + msg.substring(msg.indexOf(" ") + 1));
+                	else if (msg.contains("-sub"))
+                		team2.cmd_add(name, "!sub " + msg.substring(msg.indexOf(" ") + 1));
+                	else if (msg.contains("-rem"))
+                		team2.cmd_add(name, "!rem " + msg.substring(msg.indexOf(" ") + 1));
+                	else if (msg.contains("-ready"))
+                		team2.cmd_add(name, "!ready");
+                }
             }
         }
         
