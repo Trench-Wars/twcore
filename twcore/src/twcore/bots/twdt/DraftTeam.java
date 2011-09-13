@@ -453,7 +453,7 @@ public class DraftTeam {
     
     public void cmd_myFreq(String name) {
         Player p = ba.getPlayer(name);
-        if (p != null && name.equalsIgnoreCase(p.getSquadName()))
+        if (p != null && teamName.equalsIgnoreCase(p.getSquadName()))
             ba.setFreq(name, freq);
     }
     
