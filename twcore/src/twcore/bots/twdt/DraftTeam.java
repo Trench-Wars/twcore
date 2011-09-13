@@ -41,7 +41,7 @@ public class DraftTeam {
     int[] shipMax, ships;
     String[] caps;
     String teamName;
-    boolean ready, flag;
+    boolean ready, flag, resChecks;
     String cmdTarget;
     
     
@@ -68,6 +68,7 @@ public class DraftTeam {
         score = 0;
         ready = false;
         flag = false;
+        resChecks = true;
         cmdTarget = null;
         loadTeam();
     }
@@ -203,9 +204,12 @@ public class DraftTeam {
                 ba.sendSmartPrivateMessage(cap, name + " was not found in this arena.");
                 return;
             }
-            if (type == GameType.WARBIRD)
-                checks.put(low(name), new ResCheck(name, cap, 1));
-            else
+            if (type == GameType.WARBIRD) {
+                if (resChecks)
+                    checks.put(low(name), new ResCheck(name, cap, 1));
+                else
+                    do_add(cap, name, 1);
+            } else
                 do_add(cap, name, 2);
         }
     }
@@ -303,9 +307,12 @@ public class DraftTeam {
             ba.sendSmartPrivateMessage(cap, out.getName() + " is not in the game.");
             return;
         }
-        if (type == GameType.WARBIRD)
-            checks.put(low(names[1]), new ResCheck(names[1], cap, out));
-        else
+        if (type == GameType.WARBIRD) {
+            if (resChecks)
+                checks.put(low(names[1]), new ResCheck(names[1], cap, out));
+            else
+                do_sub(cap, names[1], out);
+        } else
             do_sub(cap, names[1], out);
     }
     
@@ -362,7 +369,10 @@ public class DraftTeam {
         if (p != null) {
             ships[p.getShip() - 1]--;
             p.getOut();
-            usedStars -= p.getStars();
+            if (p.getStars() > 0) {
+                setPlayed(p.getName(), false);
+                usedStars -= p.getStars();
+            }
             players.remove(low(name));
             ships[8]--;
         }
@@ -445,6 +455,10 @@ public class DraftTeam {
         Player p = ba.getPlayer(name);
         if (p != null && name.equalsIgnoreCase(p.getSquadName()))
             ba.setFreq(name, freq);
+    }
+    
+    public void do_resChecks(boolean res) {
+        resChecks = res;
     }
     
     public boolean isAlive() {

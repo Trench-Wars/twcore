@@ -53,7 +53,7 @@ public class DraftRound {
     DraftGame game;
     DraftTeam team1;
     DraftTeam team2;
-    boolean blueout, add2mins;
+    boolean blueout, add2mins, resChecks;
     int[] coords1;
     int[] coords2;
     int target, round;
@@ -76,6 +76,7 @@ public class DraftRound {
         team2 = new DraftTeam(this, team2Name, team2ID, 2);
         blueout = false;
         add2mins = false;
+        resChecks = true;
         bounds = new HashMap<String, Bounds>();
         if (type == GameType.BASING)
             target = rules.getInt("TargetTime");
@@ -206,6 +207,8 @@ public class DraftRound {
             if (oplist.isER(name)) {
                 if (msg.equals("!addtime"))
                     cmd_addTime(name);
+                else if (msg.startsWith("!res")) 
+                    cmd_resChecks(name);
             }
         }
         
@@ -268,6 +271,16 @@ public class DraftRound {
             };
             ba.privateMessageSpam(name, msg);
         }
+    }
+    
+    public void cmd_resChecks(String name) {
+        resChecks = !resChecks;
+        team1.do_resChecks(resChecks);
+        team2.do_resChecks(resChecks);
+        if (resChecks)
+            ba.sendSmartPrivateMessage(name, "Resolution check management has been ENABLED");
+        else
+            ba.sendSmartPrivateMessage(name, "Resolution check management has been DISABLED");
     }
     
     /** Requests a player's lag information */

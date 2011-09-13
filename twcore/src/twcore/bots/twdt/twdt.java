@@ -174,7 +174,7 @@ public class twdt extends SubspaceBot {
                 name1 = rs.getString("fcTeam1");
                 name2 = rs.getString("fcTeam2");
                 game = new DraftGame(this, gameID, team1, team2, name1, name2, name);
-                ba.sendSmartPrivateMessage(name, "Success!");
+                ba.sendSmartPrivateMessage(name, "Success! Game loaded from pre-existing information.");
             } else {
                 ba.sendSmartPrivateMessage(name, "No pre-existing match information found for: " + gameID + ". Attempting to load match fixture...");
                 ResultSet rs2 = ba.SQLQuery(db, "SELECT * FROM tblTWDT__Fixtures WHERE fnSeason = 7 AND fnFixtureID = " + gameID + " LIMIT 1");
