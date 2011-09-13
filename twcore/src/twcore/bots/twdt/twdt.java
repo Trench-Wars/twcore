@@ -178,7 +178,7 @@ public class twdt extends SubspaceBot {
             } else {
                 ba.sendSmartPrivateMessage(name, "No pre-existing match information found for: " + gameID + ". Attempting to load match fixture...");
                 ResultSet rs2 = ba.SQLQuery(db, "SELECT * FROM tblTWDT__Fixtures WHERE fnSeason = 7 AND fnFixtureID = " + gameID + " LIMIT 1");
-                if (rs.next()) {
+                if (rs2.next()) {
                     type = GameType.getType(rs.getInt("fnSubLeague"));
                     switch (type) {
                         case WARBIRD: 
@@ -193,11 +193,11 @@ public class twdt extends SubspaceBot {
                     }
                     int team1, team2;
                     String name1, name2;
-                    team1 = rs.getInt("fnTeamID1");
-                    team2 = rs.getInt("fnTeamID2");
-                    name1 = rs.getString("fcTeam1Name");
-                    name2 = rs.getString("fcTeam2Name");
-                    int week = rs.getInt("fnWeek");
+                    team1 = rs2.getInt("fnTeamID1");
+                    team2 = rs2.getInt("fnTeamID2");
+                    name1 = rs2.getString("fcTeam1Name");
+                    name2 = rs2.getString("fcTeam2Name");
+                    int week = rs2.getInt("fnWeek");
                     ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnMatchID, fnSeason, fnWeek, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2, fcHost) VALUES(" + gameID + ", 7, " + week + ", " + GameType.getInt(type) + ", " + team1 + ", " + team2 + ", " + Tools.addSlashesToString(name1) + ", " + Tools.addSlashesToString(name2) + ", " + Tools.addSlashesToString(name) + ")");
 
                     ba.sendSmartPrivateMessage(name, "Created new match information from TWDT fixture ID: " + gameID);
