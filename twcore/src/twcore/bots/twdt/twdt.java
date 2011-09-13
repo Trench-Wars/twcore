@@ -179,7 +179,7 @@ public class twdt extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "No pre-existing match information found for: " + gameID + ". Attempting to load match fixture...");
                 ResultSet rs2 = ba.SQLQuery(db, "SELECT * FROM tblTWDT__Fixtures WHERE fnSeason = 7 AND fnFixtureID = " + gameID + " LIMIT 1");
                 if (rs2.next()) {
-                    type = GameType.getType(rs.getInt("fnSubLeague"));
+                    type = GameType.getType(rs2.getInt("fnSubLeague"));
                     switch (type) {
                         case WARBIRD: 
                             rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTD.txt");
