@@ -177,7 +177,7 @@ public class twdt extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "Success!");
             } else {
                 ba.sendSmartPrivateMessage(name, "No pre-existing match information found for: " + gameID + ". Attempting to load match fixture...");
-                ResultSet rs2 = ba.SQLQuery(db, "SELECT * FROM tblTWDT__Fixture WHERE fnSeason = 7 AND fnFixtureID = " + gameID + " LIMIT 1");
+                ResultSet rs2 = ba.SQLQuery(db, "SELECT * FROM tblTWDT__Fixtures WHERE fnSeason = 7 AND fnFixtureID = " + gameID + " LIMIT 1");
                 if (rs.next()) {
                     type = GameType.getType(rs.getInt("fnSubLeague"));
                     switch (type) {
