@@ -35,7 +35,7 @@ public class DraftTeam {
     
     DraftRound round;
     HashMap<String, DraftPlayer> players;
-    HashMap<String, DraftPlayer> cache; 
+    HashMap<String, ResCheck> checks;
     Vector<String> lagChecks;
     int score, freq, teamID, deaths, usedStars, subs, changes, switches;
     int[] shipMax, ships;
@@ -43,12 +43,11 @@ public class DraftTeam {
     String teamName;
     boolean ready, flag;
     String cmdTarget;
-    ResCheck resCheck;
     
     
     public DraftTeam(DraftRound gameRound, String name, int id, int freqNum) {
         players = new HashMap<String, DraftPlayer>();
-        cache = new HashMap<String, DraftPlayer>();
+        checks = new HashMap<String, ResCheck>();
         lagChecks = new Vector<String>();
         round = gameRound;
         ba = round.ba;
@@ -70,7 +69,6 @@ public class DraftTeam {
         ready = false;
         flag = false;
         cmdTarget = null;
-        resCheck = null;
         loadTeam();
     }
 
@@ -102,10 +100,9 @@ public class DraftTeam {
         if (event.getMessageType() == Message.ARENA_MESSAGE) {
             if (msg.contains("Res:")) {
                 String name = msg.substring(0, msg.indexOf(":"));
-                if (resCheck != null && name.equalsIgnoreCase(resCheck.name)) {
+                if (checks.containsKey(low(name))) {
                     String res = msg.substring(msg.indexOf("Res: ") + 4, msg.indexOf("Client:"));
-                    resCheck.check(res);
-                    resCheck = null;
+                    checks.remove(low(name)).check(res);
                 }
             }
         } else if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
@@ -206,20 +203,14 @@ public class DraftTeam {
                 ba.sendSmartPrivateMessage(cap, name + " was not found in this arena.");
                 return;
             }
-            if (type == GameType.WARBIRD) {
-                do_add(cap, name, 1);
-                //if (resCheck == null)
-                //    resCheck = new ResCheck(name, cap, 1);
-                //else
-                //    ba.sendSmartPrivateMessage(cap, "A resolution check is still being processed for: " + resCheck.name);
-            } else
+            if (type == GameType.WARBIRD)
+                checks.put(low(name), new ResCheck(name, cap, 1));
+            else
                 do_add(cap, name, 2);
         }
     }
     
     private void do_add(String cap, String name, int ship) {
-        System.out.println(cap + " " + name + " " + ship);
-        resCheck = null;
         DraftPlayer p = null;
         p = getPlayer(name, false);
         if (p != null && p.getStatus() != Status.NONE) {
@@ -312,13 +303,9 @@ public class DraftTeam {
             ba.sendSmartPrivateMessage(cap, out.getName() + " is not in the game.");
             return;
         }
-        if (type == GameType.WARBIRD) {
-            //if (resCheck != null) {
-            //    ba.sendSmartPrivateMessage(cap, "A resolution check is in process for: " + resCheck.name);
-            //} else
-            //    resCheck = new ResCheck(names[1], cap, out);
-            do_sub(cap, names[1], out);
-        } else
+        if (type == GameType.WARBIRD)
+            checks.put(low(names[1]), new ResCheck(names[1], cap, out));
+        else
             do_sub(cap, names[1], out);
     }
     
@@ -329,8 +316,6 @@ public class DraftTeam {
             ba.sendSmartPrivateMessage(cap, p.getName() + " is already playing.");
             return;
         }
-        if (p == null && cache.containsKey(low(in)))
-            p = cache.get(low(in));
         if (p == null) {
             int stars = getStars(in);
             if (stars > -1) {
@@ -375,7 +360,7 @@ public class DraftTeam {
         }
         DraftPlayer p = getPlayer(name);
         if (p != null) {
-            ships[p.getShip()-1]--;
+            ships[p.getShip() - 1]--;
             p.getOut();
             usedStars -= p.getStars();
             players.remove(low(name));
@@ -729,7 +714,6 @@ public class DraftTeam {
             } else {
                 ba.sendSmartPrivateMessage(name, "You will not be able to play until your resolution is no greather than " + MAXRES_X  + "x" + MAXRES_Y + ".");
                 ba.sendSmartPrivateMessage(cap, name + " has a resolution greather than " + MAXRES_X  + "x" + MAXRES_Y + ".");
-                resCheck = null;
             }
         }
         

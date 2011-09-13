@@ -176,8 +176,37 @@ public class twdt extends SubspaceBot {
                 game = new DraftGame(this, gameID, team1, team2, name1, name2, name);
                 ba.sendSmartPrivateMessage(name, "Success!");
             } else {
-                ba.sendSmartPrivateMessage(name, "No game was found with ID: " + gameID);
-                gameID = -1;
+                ba.sendSmartPrivateMessage(name, "No pre-existing match information found for: " + gameID + ". Attempting to load match fixture...");
+                ResultSet rs2 = ba.SQLQuery(db, "SELECT * FROM tblTWDT__Fixture WHERE fnSeason = 7 AND fnFixtureID = " + gameID + " LIMIT 1");
+                if (rs.next()) {
+                    type = GameType.getType(rs.getInt("fnSubLeague"));
+                    switch (type) {
+                        case WARBIRD: 
+                            rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTD.txt");
+                            break;
+                        case JAVELIN:
+                            rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTJ.txt");
+                            break;
+                        case BASING:
+                            rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTB.txt");
+                            break;
+                    }
+                    int team1, team2;
+                    String name1, name2;
+                    team1 = rs.getInt("fnTeamID1");
+                    team2 = rs.getInt("fnTeamID2");
+                    name1 = rs.getString("fcTeam1Name");
+                    name2 = rs.getString("fcTeam2Name");
+                    int week = rs.getInt("fnWeek");
+                    ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnMatchID, fnSeason, fnWeek, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2, fcHost) VALUES(" + gameID + ", 7, " + week + ", " + GameType.getInt(type) + ", " + team1 + ", " + team2 + ", " + Tools.addSlashesToString(name1) + ", " + Tools.addSlashesToString(name2) + ", " + Tools.addSlashesToString(name) + ")");
+
+                    ba.sendSmartPrivateMessage(name, "Created new match information from TWDT fixture ID: " + gameID);
+                    game = new DraftGame(this, gameID, team1, team2, name1, name2, name);
+                    ba.SQLClose(rs2);
+                } else {
+                    gameID = -1;
+                    ba.sendSmartPrivateMessage(name, "Failure! You suck!");
+                }
             }
             ba.SQLClose(rs);
         } catch (SQLException e) {

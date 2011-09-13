@@ -44,6 +44,15 @@ public class DraftGame {
                 default: return NA;
             }
         }
+        
+        static int getInt(GameType t) {
+            switch(t) {
+                case WARBIRD: return 1;
+                case JAVELIN: return 2;
+                case BASING: return 3;
+                default: return -1;
+            }
+        }
     }
     
     GameType type;

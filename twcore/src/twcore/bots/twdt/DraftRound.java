@@ -425,7 +425,7 @@ public class DraftRound {
             } else if (timer < 1)
                 ba.sendArenaMessage("Time is up. Lineups are OKAY!");
 
-            timer = 10;
+            timer = 30;
             state = RoundState.STARTING;
             ba.sendArenaMessage("Both teams are ready, game starts in 30 seconds!", 2);
             ba.setDoors(255);
@@ -453,13 +453,10 @@ public class DraftRound {
                 ba.resetFlagGame();
                 ba.sendArenaMessage("GO GO GO!", 104);
                 ba.showObject(GOGOGO);
-            } else if (timer == 10) {
+            } else if (timer == 10)
                 ba.showObject(TEN_SECONDS);
-                ba.sendArenaMessage("10");
-            } else if (timer == 5) {
+            else if (timer == 5)
                 ba.showObject(FIVE_SECONDS);
-                ba.sendArenaMessage("5");
-            }
         }
         
         /** Keeps scores updated and runs lag checks */
