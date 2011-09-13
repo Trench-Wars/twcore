@@ -198,7 +198,7 @@ public class twdt extends SubspaceBot {
                     name1 = rs2.getString("fcTeam1Name");
                     name2 = rs2.getString("fcTeam2Name");
                     int week = rs2.getInt("fnWeek");
-                    ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnMatchID, fnSeason, fnWeek, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2, fcHost) VALUES(" + gameID + ", 7, " + week + ", " + GameType.getInt(type) + ", " + team1 + ", " + team2 + ", " + Tools.addSlashesToString(name1) + ", " + Tools.addSlashesToString(name2) + ", " + Tools.addSlashesToString(name) + ")");
+                    ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnMatchID, fnSeason, fnWeek, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2, fcHost) VALUES(" + gameID + ", 7, " + week + ", " + GameType.getInt(type) + ", " + team1 + ", " + team2 + ", '" + Tools.addSlashesToString(name1) + "', '" + Tools.addSlashesToString(name2) + "', '" + Tools.addSlashesToString(name) + "')");
 
                     ba.sendSmartPrivateMessage(name, "Created new match information from TWDT fixture ID: " + gameID);
                     game = new DraftGame(this, gameID, team1, team2, name1, name2, name);
