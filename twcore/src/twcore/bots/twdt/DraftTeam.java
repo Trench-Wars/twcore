@@ -214,76 +214,6 @@ public class DraftTeam {
         }
     }
     
-    private void do_add(String cap, String name, int ship) {
-        DraftPlayer p = null;
-        p = getPlayer(name, false);
-        if (p != null && p.getStatus() != Status.NONE) {
-            ba.sendSmartPrivateMessage(cap, p.getName() + " is already playing.");
-            return;
-        }
-        
-        if (p == null) {
-            int stars = getStars(name);
-            if (stars > -1) {
-                if (usedStars + stars <= 50) {
-                    if (stars > 0)
-                        setPlayed(name, true);
-                    usedStars += stars;
-                    p = new DraftPlayer(ba, this, name, freq, ship, stars);
-                } else {
-                    ba.sendSmartPrivateMessage(cap, "There are not enough stars remaining to add '" + name + "'. Used stars: " + usedStars);
-                    return;
-                }
-            } else {
-                ba.sendSmartPrivateMessage(cap, name + " was not found on the team roster.");
-                return;
-            }
-        }
-        lagChecks.add(low(p.getName()));
-        players.put(low(p.getName()), p);
-        ships[ship - 1]++;
-        ships[8]++;
-        p.setSpecAt(deaths);
-        p.getIn();
-        if (type == GameType.BASING)
-            ba.sendArenaMessage(name + " has been added in ship " + ship);
-        else
-            ba.sendArenaMessage(name + " has been added");
-        if (round.getState() == RoundState.LINEUPS)
-            round.sendLagRequest(name, "!" + teamID);
-        msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
-    }
-    
-    private void setPlayed(String name, boolean played) {
-        try {
-            if (played)
-                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 1 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
-            else
-                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 0 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
-        } catch (SQLException e) {
-            Tools.printStackTrace(e);
-        }
-    }
-    
-    private int getStars(String name) {
-        int stars = -1;
-        try {
-            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + 7 + " AND fcName = '" + name + "' LIMIT 1");
-            if (rs.next()) {
-                int team = rs.getInt("fnTeamID");
-                if (team == teamID) {
-                    stars = rs.getInt("fnStars");
-                    if (rs.getInt("fnPlayed") == 1)
-                        stars = 0;
-                }
-            }
-            ba.SQLClose(rs);
-        } catch (SQLException e) {
-            Tools.printStackTrace(e);
-        }
-        return stars;
-    }
-    
     public void cmd_sub(String cap, String cmd) {
         if (cmd.length() < 5 || !cmd.contains(":")) return;
         if (subs == 0) {
@@ -314,45 +244,6 @@ public class DraftTeam {
                 do_sub(cap, names[1], out);
         } else
             do_sub(cap, names[1], out);
-    }
-    
-    private void do_sub(String cap, String in, DraftPlayer out) {
-        DraftPlayer p = null;
-        p = getPlayer(in, false);
-        if (p != null && p.getStatus() != Status.NONE) {
-            ba.sendSmartPrivateMessage(cap, p.getName() + " is already playing.");
-            return;
-        }
-        if (p == null) {
-            int stars = getStars(in);
-            if (stars > -1) {
-                if (stars > out.getStars()) {
-                    if (usedStars + (stars - out.getStars()) > 50) {
-                        ba.sendSmartPrivateMessage(cap, "There are not enough stars remaining to sub in '" + in + "'. Used stars: " + usedStars);
-                        return;
-                    }
-                    setPlayed(out.getName(), false);
-                    setPlayed(in, true);
-                } else
-                    stars = out.getStars();
-                usedStars = usedStars - out.getStars() + stars;
-                p = new DraftPlayer(ba, this, in, freq, out.getShip(), stars);
-            } else {
-                ba.sendSmartPrivateMessage(cap, in + " was not found on the team roster.");
-                return;
-            }
-        }
-        players.put(low(p.getName()), p);
-        lagChecks.remove(low(out.getName()));
-        lagChecks.add(low(p.getName()));
-        p.getIn(out.getShip());
-        p.setSpecAt(out.getSpecAt() - out.getDeaths());
-        out.getOut();
-        out.handleSubbed();
-        if (subs != -1)
-            subs--;
-        ba.sendArenaMessage(out.getName() + " has been substituted by " + p.getName());
-        msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
     }
     
     public void cmd_remove(String cap, String cmd) {
@@ -455,6 +346,116 @@ public class DraftTeam {
         Player p = ba.getPlayer(name);
         if (p != null && teamName.equalsIgnoreCase(p.getSquadName()))
             ba.setFreq(name, freq);
+    }
+    
+    private void do_add(String cap, String name, int ship) {
+        DraftPlayer p = null;
+        p = getPlayer(name, false);
+        if (p != null && p.getStatus() != Status.NONE) {
+            ba.sendSmartPrivateMessage(cap, p.getName() + " is already playing.");
+            return;
+        }
+        
+        if (p == null) {
+            int stars = getStars(name);
+            if (stars > -1) {
+                if (usedStars + stars <= 50) {
+                    if (stars > 0)
+                        setPlayed(name, true);
+                    usedStars += stars;
+                    p = new DraftPlayer(ba, this, name, freq, ship, stars);
+                } else {
+                    ba.sendSmartPrivateMessage(cap, "There are not enough stars remaining to add '" + name + "'. Used stars: " + usedStars);
+                    return;
+                }
+            } else {
+                ba.sendSmartPrivateMessage(cap, name + " was not found on the team roster.");
+                return;
+            }
+        }
+        lagChecks.add(low(p.getName()));
+        players.put(low(p.getName()), p);
+        ships[ship - 1]++;
+        ships[8]++;
+        p.setSpecAt(deaths);
+        p.getIn();
+        if (type == GameType.BASING)
+            ba.sendArenaMessage(name + " has been added in ship " + ship);
+        else
+            ba.sendArenaMessage(name + " has been added");
+        if (round.getState() == RoundState.LINEUPS)
+            round.sendLagRequest(name, "!" + teamID);
+        msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
+    }
+    
+    private void do_sub(String cap, String in, DraftPlayer out) {
+        DraftPlayer p = null;
+        p = getPlayer(in, false);
+        if (p != null && p.getStatus() != Status.NONE) {
+            ba.sendSmartPrivateMessage(cap, p.getName() + " is already playing.");
+            return;
+        }
+        if (p == null) {
+            int stars = getStars(in);
+            if (stars > -1) {
+                if (stars > out.getStars()) {
+                    if (usedStars + (stars - out.getStars()) > 50) {
+                        ba.sendSmartPrivateMessage(cap, "There are not enough stars remaining to sub in '" + in + "'. Used stars: " + usedStars);
+                        return;
+                    }
+                    setPlayed(out.getName(), false);
+                    setPlayed(in, true);
+                } else
+                    stars = out.getStars();
+                usedStars = usedStars - out.getStars() + stars;
+                p = new DraftPlayer(ba, this, in, freq, out.getShip(), stars);
+            } else {
+                ba.sendSmartPrivateMessage(cap, in + " was not found on the team roster.");
+                return;
+            }
+        }
+        players.put(low(p.getName()), p);
+        lagChecks.remove(low(out.getName()));
+        lagChecks.add(low(p.getName()));
+        p.getIn(out.getShip());
+        if (type != GameType.BASING)
+            p.setSpecAt(out.getSpecAt() - out.getDeaths());
+        out.getOut();
+        out.handleSubbed();
+        if (subs != -1)
+            subs--;
+        ba.sendArenaMessage(out.getName() + " has been substituted by " + p.getName());
+        msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
+    }
+    
+    private void setPlayed(String name, boolean played) {
+        try {
+            if (played)
+                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 1 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
+            else
+                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 0 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+    }
+    
+    private int getStars(String name) {
+        int stars = -1;
+        try {
+            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + 7 + " AND fcName = '" + name + "' LIMIT 1");
+            if (rs.next()) {
+                int team = rs.getInt("fnTeamID");
+                if (team == teamID) {
+                    stars = rs.getInt("fnStars");
+                    if (rs.getInt("fnPlayed") == 1)
+                        stars = 0;
+                }
+            }
+            ba.SQLClose(rs);
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+        return stars;
     }
     
     public void do_resChecks(boolean res) {

@@ -120,9 +120,9 @@ public class twdt extends SubspaceBot {
         String[] msg = {
                 " !go <arena>, !die, !help",
                 " !load <id>                    - Loads a preset game with the game/match ID of <id>",
-                " !load <team1>:<team2>:<type#> - Loads a new game of <type#> (1-WB 2-JAV 3-BASE)",
                 " !start                        - Allows the team captains to start adding players if a game is loaded",
                 " !addtime                      - During lineup selection will add 2 minute extension",
+                " !zone                         - Sends a zone message for the current game",
         };
         ba.smartPrivateMessageSpam(name, msg);
     }

@@ -209,7 +209,7 @@ public class DraftRound {
                     cmd_addTime(name);
                 else if (msg.startsWith("!res")) 
                     cmd_resChecks(name);
-                else if (msg.startsWith("!t1-")) {
+                else if (msg.startsWith("!t1-") && msg.contains(" ")) {
                 	if (msg.contains("-add"))
                 		team1.cmd_add(name, "!add " + msg.substring(msg.indexOf(" ") + 1));
                 	else if (msg.contains("-sub"))
@@ -218,7 +218,7 @@ public class DraftRound {
                 		team1.cmd_add(name, "!rem " + msg.substring(msg.indexOf(" ") + 1));
                 	else if (msg.contains("-ready"))
                 		team1.cmd_add(name, "!ready");
-                } else if (msg.startsWith("!t2-")) {
+                } else if (msg.startsWith("!t2-") && msg.contains(" ")) {
                 	if (msg.contains("-add"))
                 		team2.cmd_add(name, "!add " + msg.substring(msg.indexOf(" ") + 1));
                 	else if (msg.contains("-sub"))
@@ -284,9 +284,15 @@ public class DraftRound {
                 " !list        - Lists current players",
         };
         ba.privateMessageSpam(name, msg);
-        if (team1.isCaptain(name) || team2.isCaptain(name)) {
+        if (team1.isCaptain(name) || team2.isCaptain(name) || oplist.isER(name)) {
+            if (oplist.isER(name))
+                ba.sendPrivateMessage(name, "Prefix command with t1- or t2- (!t1-add): ");
             msg = new String[] {
-                    " !add <name>:<ship> !sub <out>:<in> !change <name>:<ship> !switch <name1>:<name1> ",
+                    " !add <name>:<ship> ",
+                    " !sub <out>:<in> ", 
+                    " !change <name>:<ship> ", 
+                    " !switch <name1>:<name1> ",
+                    " !rem <name>",
             };
             ba.privateMessageSpam(name, msg);
         }
@@ -375,7 +381,7 @@ public class DraftRound {
         if (team1.isPlaying(name))
             return new int[] { coords1[0], coords1[1] };
         else
-            return new int[] { coords2[0], coords1[1] };
+            return new int[] { coords2[0], coords2[1] };
     }
     
     /** Lazy helper returns a lower case String */
@@ -452,7 +458,19 @@ public class DraftRound {
                 return;
             if (team1.getSize() < game.minPlayers || team2.getSize() < game.minPlayers) {
                 // END GAME
-                ba.sendArenaMessage("TIME IS UP! Not enough players.");
+                if (team1.getSize() < game.minPlayers && team2.getSize() < game.minPlayers) {
+                    ba.sendArenaMessage("TIME IS UP! Not enough players.");
+                    storeRound(0, 0, "-none-");
+                    game.handleRound(null);
+                } else if (team2.getSize() < game.minPlayers) {
+                    ba.sendArenaMessage("TIME IS UP! " + team2.getName() + " does not have enough players.");
+                    storeRound(50, 0, "-none-");
+                    game.handleRound(team1);
+                } else {
+                    ba.sendArenaMessage("TIME IS UP! " + team1.getName() + " does not have enough players.");
+                    storeRound(0, 50, "-none-");
+                    game.handleRound(team2);
+                }
                 return;
             } else if (timer < 1)
                 ba.sendArenaMessage("Time is up. Lineups are OKAY!");
@@ -512,18 +530,9 @@ public class DraftRound {
         
         /** Ends the round */
         private void doFinished() {
-            ba.cancelTask(ticker);
-            for (Bounds b : bounds.values())
-                ba.cancelTask(b);
-            bounds.clear();
-            ticker = null;
-            if (blueout)
-                ba.sendArenaMessage("Blueout disabled, you may speak in public now.");
-            blueout = false;
-            ba.toggleLockPublicChat();
             team1.reportEnd();
             team2.reportEnd();
-            DraftPlayer mvp = getMVP();
+            String mvp = getMVP();
             displayResult();
             printScores();
             if (type != GameType.BASING) {
@@ -541,10 +550,24 @@ public class DraftRound {
                 else
                     game.handleRound(null);
             }
+            storeRound(team1.getScore(), team2.getScore(), mvp);
+            if (mvp != null && !mvp.equals("-none-"))
+                ba.sendArenaMessage("MVP: " + mvp + "!", 7);
+        }
+        
+        private void storeRound(int score1, int score2, String mvp) {
+            ba.cancelTask(ticker);
+            for (Bounds b : bounds.values())
+                ba.cancelTask(b);
+            bounds.clear();
+            ticker = null;
+            if (blueout)
+                ba.sendArenaMessage("Blueout disabled, you may speak in public now.");
+            blueout = false;
+            ba.toggleLockPublicChat();
             String[] fields = new String[] { "fnMatchID", "fnRound", "fnTeam1Score", "fnTeam2Score", "fcMvp" };
-            String[] values = new String[] { "" + game.getMatchID(), "" + game.getRound(), "" + team1.getScore(), "" + team2.getScore(), mvp.getName() };
+            String[] values = new String[] { "" + game.getMatchID(), "" + game.getRound(), "" + score1, "" + score2, "'" + Tools.addSlashesToString(mvp) + "'"};
             ba.SQLInsertInto(db, "tblDraft__MatchRound", fields, values);
-            ba.sendArenaMessage("MVP: " + mvp.getName() + "!", 7);
         }
         
         /** Helper sends lag requests */
@@ -570,10 +593,18 @@ public class DraftRound {
         }
         
         /** Determines the round MVP */
-        private DraftPlayer getMVP() {
+        private String getMVP() {
             DraftPlayer team1mvp = team1.getMVP();
             DraftPlayer team2mvp = team2.getMVP();
             DraftPlayer mvp = null;
+            if (team1mvp == null || team2mvp == null) {
+                if (team1mvp != null)
+                    return team1mvp.getName();
+                else if (team2mvp != null)
+                    return team2mvp.getName();
+                else
+                    return "-none-";
+            }
             if (type != GameType.BASING) {
                 if (team1mvp.getScore() > team2mvp.getScore())
                     mvp = team1mvp;
@@ -585,8 +616,7 @@ public class DraftRound {
                 else
                     mvp = team2mvp;
             }
-            
-            return mvp;
+            return mvp.getName();
         }
         
         /** In basing, checks team scores and reports when 1 or 3 minutes to win */

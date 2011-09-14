@@ -48,8 +48,8 @@ public class DraftPlayer {
         lastAttach = 0;
         lagoutCount = 0;
         botSpec = false;
-        lagouts = rules.getInt("lagouts");
-        specAt = rules.getInt("deaths");
+        lagouts = rules.getInt("Lagouts");
+        specAt = rules.getInt("Deaths");
         statTracker = new DraftStats(ship);
         ships = new HashMap<Integer, DraftStats>();
         ships.put(ship, statTracker);
@@ -130,7 +130,7 @@ public class DraftPlayer {
         if (team.round.getState() != RoundState.PLAYING) return;
         statTracker.handleLagout();
         lagoutCount++;
-        if (specAt > -1) {
+        if (specAt != -1) {
             statTracker.getStat(StatType.DEATHS).increment();
             ba.sendArenaMessage(name + " has changed to spectator mode - +1 death");
             if (getDeaths() >= specAt) {

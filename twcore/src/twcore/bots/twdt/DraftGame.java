@@ -71,6 +71,7 @@ public class DraftGame {
     int time;
     int[] ships;
     String host, team1Name, team2Name;
+    boolean zoned;
     
     public DraftGame(twdt bot, int id, int team1id, int team2id, String name1, String name2, String staffer) {
         this.bot = bot;
@@ -88,6 +89,7 @@ public class DraftGame {
         team1score = 0;
         team2score = 0;
         winner = null;
+        zoned = false;
         oldRounds = new LinkedList<DraftRound>();
         ships = rules.getIntArray("Ship", ",");
         time = rules.getInt("Time");
@@ -165,6 +167,8 @@ public class DraftGame {
             if (opList.isER(name)) {
                 if (msg.startsWith("!start"))
                     cmd_startPick(name);
+                else if (msg.equals("!zone"))
+                    cmd_zone(name);
             }
         }
         
@@ -186,6 +190,25 @@ public class DraftGame {
         }
         round = 1;
         currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
+    }
+    
+    public void cmd_zone(String name) {
+        if (zoned) {
+            ba.sendSmartPrivateMessage(name, "The zoner for this game has already been used.");
+            return;
+        }
+        zoned = true;
+        switch (type) {
+            case WARBIRD:
+                ba.sendZoneMessage("[TWDT-D] " + team1Name + " vs. " + team2Name + " starting in ?go " + ba.getArenaName());
+                break;
+            case JAVELIN:
+                ba.sendZoneMessage("[TWDT-J] " + team1Name + " vs. " + team2Name + " starting in ?go " + ba.getArenaName());
+                break;
+            case BASING:
+                ba.sendZoneMessage("[TWDT-B] " + team1Name + " vs. " + team2Name + " starting in ?go " + ba.getArenaName());
+                break;
+        }
     }
     
     public int getTime() {
@@ -238,13 +261,28 @@ public class DraftGame {
                         nextRound();
                     }
                 }
+            } else {
+                winner = null;
+                currentRound.gameOver();
+                ba.sendArenaMessage("GAME OVER: Draw!", 5);
+                team1score = 0;
+                team2score = 0;
+                storeResult();
+                oldRounds.add(currentRound);
+                currentRound = null;
             }
         } else {
             winner = team;
             currentRound.gameOver();
-            ba.sendArenaMessage("GAME OVER: " + winner.getName() + " wins!", 5);
-            team1score = currentRound.team1.getScore();
-            team2score = currentRound.team2.getScore();
+            if (winner != null) {
+                ba.sendArenaMessage("GAME OVER: " + winner.getName() + " wins!", 5);
+                team1score = currentRound.team1.getScore();
+                team2score = currentRound.team2.getScore();
+            } else {
+                ba.sendArenaMessage("GAME OVER: Draw!", 5);
+                team1score = 0;
+                team2score = 0;
+            }
             storeResult();
             oldRounds.add(currentRound);
             currentRound = null;
@@ -256,8 +294,8 @@ public class DraftGame {
         if (currentRound != null) {
             String msg = "Teams: " + team1Name + " vs. " + team2Name + " ";
             msg += currentRound.getStatus();
-            if (type != GameType.BASING) 
-                msg += "Score: " + team1score + " - " + team2score;
+            //if (type != GameType.BASING) 
+            //    msg += "Score: " + team1score + " - " + team2score;
             return msg;
         }
         return "";
@@ -280,7 +318,7 @@ public class DraftGame {
     /** Stores the result of the game to the database */
     private void storeResult() {
         try {
-            String query = "UPDATE tblDraft__Match SET fnTeam1Score = " + team1score + ", fnTeam2Score = " + team2score + " WHERE fnMatchID = " + gameID;
+            String query = "UPDATE tblDraft__Match SET fdPlayed = NOW() fnTeam1Score = " + team1score + ", fnTeam2Score = " + team2score + " WHERE fnMatchID = " + gameID;
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {
             Tools.printStackTrace(e);

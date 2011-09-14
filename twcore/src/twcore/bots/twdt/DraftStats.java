@@ -45,6 +45,8 @@ public class DraftStats {
             stats.get(StatType.BEST_KILL_STREAK).setValue(stats.get(StatType.KILL_STREAK).getValue());
         stats.get(StatType.DEATH_STREAK).setValue(0);
         eKills[kill-1]++;
+        if (kill == 5)
+            stats.get(StatType.TERR_KILLS).increment();
     }
     
     public void handleTeamKill(int points, int kill) {
