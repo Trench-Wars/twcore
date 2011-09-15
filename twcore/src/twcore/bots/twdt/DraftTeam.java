@@ -80,9 +80,9 @@ public class DraftTeam {
             DraftPlayer dp = getPlayer(name);
             if (dp != null && dp.getStatus() == Status.IN) {
             	flag = true;
+            	round.getOpposing(this).handleFlagLoss();
                 dp.handleFlagClaim();
-            } else if (dp == null)
-            	flag = false;
+            }
         }
     }
     
@@ -136,6 +136,10 @@ public class DraftTeam {
     
     public void handleLagout(String name) {
         msgCaptains(name + " has lagged out or specced.");
+    }
+    
+    public void handleFlagLoss() {
+    	flag = false;
     }
     
     public void cmd_ready(String cap) {
