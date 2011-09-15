@@ -76,8 +76,8 @@ public class DraftStats {
     }
     
     public double getRPD() {
-        int reps = getStat(StatType.REPELS).getValue() / 2;
-        int deaths = getStat(StatType.DEATHS).getValue();
+        double reps = getStat(StatType.REPELS).getValue() / 2;
+        double deaths = getStat(StatType.DEATHS).getValue();
         if (reps > 0 && deaths > 0)
             return (reps / deaths);
         else if (reps > 0 && deaths == 0)

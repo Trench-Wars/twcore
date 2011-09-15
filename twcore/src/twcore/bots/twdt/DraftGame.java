@@ -318,7 +318,7 @@ public class DraftGame {
     /** Stores the result of the game to the database */
     private void storeResult() {
         try {
-            String query = "UPDATE tblDraft__Match SET fdPlayed = NOW() fnTeam1Score = " + team1score + ", fnTeam2Score = " + team2score + " WHERE fnMatchID = " + gameID;
+            String query = "UPDATE tblDraft__Match SET fdPlayed = NOW(), fnTeam1Score = " + team1score + ", fnTeam2Score = " + team2score + " WHERE fnMatchID = " + gameID;
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {
             Tools.printStackTrace(e);

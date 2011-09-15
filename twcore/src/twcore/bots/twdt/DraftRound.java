@@ -359,7 +359,7 @@ public class DraftRound {
                 return "currently in round " + game.round + " arranging lineups. ";
         } else if (state == RoundState.STARTING || state == RoundState.PLAYING) {
             if (type == GameType.BASING)
-                return "currently playing. Score: " + team1.getScore() + " - " + team2.getScore();
+                return "currently playing. Score: " + formatTime(team1.getScore()) + " - " + formatTime(team2.getScore());
             else
                 return "currently playing round " + round + ". ";
         } else
@@ -374,6 +374,13 @@ public class DraftRound {
         if (team2.getScore() % 60 < 10)
             team2leadingZero = "0";        
         return team1.getScore() / 60 + ":" + team1leadingZero + team1.getScore() % 60 + " - " + team2.getScore() / 60 + ":" + team2leadingZero + team2.getScore() % 60;
+    }
+    
+    public String formatTime(int score) {
+    	String leadingZero = "";
+    	if (score % 60 < 10)
+    		leadingZero = "0";
+    	return "" + score / 60 + ":" + leadingZero;
     }
     
     /** Returns the appropriate safe coordinates for the team of a player */
@@ -736,6 +743,7 @@ public class DraftRound {
                     timer += 2 * 60;
                     ba.sendArenaMessage("An additional two (2) minutes has been given for lineups.");
                     ba.sendSmartPrivateMessage(name, "Added 2 minutes.");
+                    ba.setTimer(0);
                 }
             } else
                 ba.sendSmartPrivateMessage(name, "The lineup time extension can only be given while lineups are being setup.");

@@ -256,20 +256,16 @@ public class DraftTeam {
         String temp = ba.getFuzzyPlayerName(name);
         if (temp != null)
             name = temp;
-        else {
-            ba.sendSmartPrivateMessage(cap, name + " was not found in this arena.");
-            return;
-        }
         DraftPlayer p = getPlayer(name);
         if (p != null) {
             ships[p.getShip() - 1]--;
+            ships[8]--;
             p.getOut();
             if (p.getStars() > 0) {
                 setPlayed(p.getName(), false);
                 usedStars -= p.getStars();
             }
             players.remove(low(name));
-            ships[8]--;
         }
     }
     
