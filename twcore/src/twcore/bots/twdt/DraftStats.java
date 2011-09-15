@@ -87,7 +87,15 @@ public class DraftStats {
     }
     
     public String getRPDString() {
-        double rpd = getRPD();
+    	double rpd = 0;
+        int reps = ((getStat(StatType.REPELS).getValue()) / 2);
+        double deaths = getStat(StatType.DEATHS).getValue();
+        if (reps > 0 && deaths > 0)
+            rpd = (double)(reps / deaths);
+        else if (reps > 0 && deaths == 0)
+            rpd = (double)(reps);
+        else
+            rpd = 0;
         if (rpd == 0)
             return "   ";
         return (new DecimalFormat("0.0").format(rpd));
