@@ -184,9 +184,9 @@ public class DraftRound {
     public void handleEvent(Message event) {
         String msg = event.getMessage();
         if (event.getMessageType() == Message.ARENA_MESSAGE) {
-            if (blueout && msg.equals("Public Messages UNLOCKED"))
+            if (blueout && msg.startsWith("Public Messages UNLOCKED"))
                 ba.toggleLockPublicChat();
-            else if (!blueout && msg.equals("Public Messages LOCKED"))
+            else if (!blueout && msg.startsWith("Public Messages LOCKED"))
                 ba.toggleLockPublicChat();
             if (state == RoundState.LINEUPS || state == RoundState.PLAYING)
                 lagHandler.handleLagMessage(msg);
@@ -209,6 +209,8 @@ public class DraftRound {
                     cmd_addTime(name);
                 else if (msg.startsWith("!res")) 
                     cmd_resChecks(name);
+                else if (msg.equals("!reload"))
+                	cmd_reloadCaps(name);
                 else if (msg.startsWith("!t1-") && msg.contains(" ")) {
                 	if (msg.contains("-add"))
                 		team1.cmd_add(name, "!add " + msg.substring(msg.indexOf(" ") + 1));
@@ -270,12 +272,18 @@ public class DraftRound {
         }
     }
     
+    public void cmd_reloadCaps(String name) {
+    	team1.reloadCaps();
+    	team2.reloadCaps();
+    	ba.sendSmartPrivateMessage(name, "Captains and assistants have been reloaded for both teams.");
+    }
+    
     public void cmd_score(String name) {
         if (state != RoundState.PLAYING) return; 
         if (type != GameType.BASING)
             ba.sendSmartPrivateMessage(name, "Score of " + team1.getName() + " vs. " +  team2.getName() + ": " + team1.getScore() + " - " + team2.getScore());
         else
-            ba.sendSmartPrivateMessage(name, "Score of " + team1.getName() + " vs. " +  team2.getName() + ": " + formatTime());
+            ba.sendSmartPrivateMessage(name, "Score of " + team1.getName() + " vs. " +  team2.getName() + ": " + team1.getTime() + " - " + team2.getTime());
     }
     
     public void cmd_help(String name) {
@@ -359,28 +367,11 @@ public class DraftRound {
                 return "currently in round " + game.round + " arranging lineups. ";
         } else if (state == RoundState.STARTING || state == RoundState.PLAYING) {
             if (type == GameType.BASING)
-                return "currently playing. Score: " + formatTime(team1.getScore()) + " - " + formatTime(team2.getScore());
+                return "currently playing. Score: " + team1.getTime() + " - " + team2.getTime();
             else
                 return "currently playing round " + round + ". ";
         } else
             return "";
-    }
-    
-    public String formatTime() {
-        String team1leadingZero = "";
-        String team2leadingZero = "";
-        if (team1.getScore() % 60 < 10)
-            team1leadingZero = "0";
-        if (team2.getScore() % 60 < 10)
-            team2leadingZero = "0";        
-        return team1.getScore() / 60 + ":" + team1leadingZero + team1.getScore() % 60 + " - " + team2.getScore() / 60 + ":" + team2leadingZero + team2.getScore() % 60;
-    }
-    
-    public String formatTime(int score) {
-    	String leadingZero = "";
-    	if (score % 60 < 10)
-    		leadingZero = "0";
-    	return "" + score / 60 + ":" + leadingZero;
     }
     
     /** Returns the appropriate safe coordinates for the team of a player */
@@ -433,9 +424,11 @@ public class DraftRound {
     private class MasterControl extends TimerTask {
         
         int timer;
+        boolean setTime;
 
         public MasterControl() {
             timer = 0;
+            setTime = false;
         }
         
         @Override
@@ -461,6 +454,10 @@ public class DraftRound {
         /** Checks to see if both teams are ready or if time is up and reacts accordingly */
         private void doCheck() {
             timer--;
+            if (setTime && timer % 60 == 0) {
+            	setTime = false;
+            	ba.setTimer(timer / 60);
+            }
             if ((timer > 0) && !(team1.getReady() && team2.getReady()))
                 return;
             if (team1.getSize() < game.minPlayers || team2.getSize() < game.minPlayers) {
@@ -556,9 +553,9 @@ public class DraftRound {
                 else
                     game.handleRound(null);
             } else {
-                if (team1.getTime() >= target * 60)
+                if (team1.getScore() >= target * 60)
                     game.handleRound(team1);
-                else if (team2.getTime() >= target * 60)
+                else if (team2.getScore() >= target * 60)
                     game.handleRound(team2);
                 else
                     game.handleRound(null);
@@ -601,7 +598,7 @@ public class DraftRound {
                 ba.sendArenaMessage("Result of " + team1.getName() + " vs. " + team2.getName() + ": " + team1.getScore() + " - " + team2.getScore());
             else {
 
-                ba.sendArenaMessage("Result of " + team1.getName() + " vs. " + team2.getName() + ": " + formatTime(), 5);
+                ba.sendArenaMessage("Result of " + team1.getName() + " vs. " + team2.getName() + ": " + team1.getTime() + " - " + team2.getTime(), 5);
             }
         }
         
@@ -674,10 +671,6 @@ public class DraftRound {
                     objects.showObject(230 + team2Minutes % 10);
                     objects.showObject(240 + (team2Minutes - team2Minutes % 10) / 10);
                 } else {
-                    //Else display ld lj on normal scoreboard
-                    // Note: Scoreboard is not logical, scores for team 1 are object ids 200+, scores for team 2 are object ids 100+
-                    //       This is only caused in TWLD and TWLJ arenas as they are using the lvz 'twl.lvz'
-                    
                     for (int i = team1Score.length() - 1; i > -1; i--)
                         objects.showObject(Integer.parseInt("" + team1Score.charAt(i)) + 100 + (team1Score.length() - 1 - i) * 10);
                     for (int i = team2Score.length() - 1; i > -1; i--)
@@ -741,6 +734,7 @@ public class DraftRound {
                 else {
                     add2mins = true;
                     timer += 2 * 60;
+                    setTime = true;
                     ba.sendArenaMessage("An additional two (2) minutes has been given for lineups.");
                     ba.sendSmartPrivateMessage(name, "Added 2 minutes.");
                     ba.setTimer(0);
@@ -748,7 +742,6 @@ public class DraftRound {
             } else
                 ba.sendSmartPrivateMessage(name, "The lineup time extension can only be given while lineups are being setup.");
         }
-
     }
     
     /**

@@ -498,7 +498,6 @@ public class DraftTeam {
             stats.add("+------------------------'        |      |      |           |    |");
             for (DraftPlayer p : players.values())
                 stats.add("|  " + padString(p.getName(), 25) + " " + padNum(p.getStat(StatType.KILLS).getValue(), 4) + " | " + padNum(p.getDeaths(), 4) + " | " + padNum(p.getStat(StatType.TEAM_KILLS).getValue(), 4) + " | " + padNum(p.getScore(), 9) + " | " + padNum(p.getLagouts(), 2) + " |");
-            
         } else {
             stats.add("|                          ,------+------+------+-----------+------+------+-----+-----------+----+");
             stats.add("| " + padString(teamName, 23) + " /  " + padNum(getTotal(StatType.KILLS), 4) + " | " + padNum(getTotal(StatType.DEATHS), 4) + " | " + padNum(getTotal(StatType.TEAM_KILLS), 4) + " | " + padNum(getTotal(StatType.SCORE), 9) + " | " + padNum(getTotal(StatType.FLAG_CLAIMS), 4) + " | " + padNum(getTotal(StatType.TERR_KILLS), 4) + " | " + padNum((getTotal(StatType.REPELS) / 2), 3) + " | " + padNum(getTotal(StatType.RATING), 9) + " | " + padNum(getLagouts(), 2) + " |");
@@ -551,8 +550,8 @@ public class DraftTeam {
         return count;
     }
     
-    public int getTime() {
-        return score;
+    public String getTime() {
+        return formatTime(score);
     }
     
     public int getFreq() {
@@ -659,6 +658,21 @@ public class DraftTeam {
             ba.sendPrivateMessage(name, msg);
     }
     
+    public void reloadCaps() {
+        String query = "SELECT * FROM tblDraft__Team WHERE fnTeamID = " + teamID + " LIMIT 1";
+        try {
+            ResultSet rs = ba.SQLQuery(db, query);
+            if (rs.next()) {
+                caps[0] = rs.getString("fcCap");
+                caps[1] = rs.getString("fcAss1");
+                caps[2] = rs.getString("fcAss2");
+            }
+            ba.SQLClose(rs);
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+    }
+    
     private void loadTeam() {
         String query = "SELECT * FROM tblDraft__Team WHERE fnTeamID = " + teamID + " LIMIT 1";
         try {
@@ -686,6 +700,13 @@ public class DraftTeam {
         while (str.length() < length)
             str = " " + str;
         return str;
+    }
+    
+    private String formatTime(int score) {
+    	String leadingZero = "";
+    	if (score % 60 < 10)
+    		leadingZero = "0";
+    	return "" + (score / 60) + ":" + leadingZero + (score % 60);
     }
     
     private String low(String str) {

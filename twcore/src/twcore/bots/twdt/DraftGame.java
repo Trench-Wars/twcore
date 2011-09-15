@@ -63,8 +63,12 @@ public class DraftGame {
     
     int gameID;
     int round;
-    int team1, team1score;
-    int team2, team2score;
+    int team1;
+    int team2;
+    int score1;
+    int score2;
+    String team1score;
+    String team2score;
     int maxPlayers;
     int minPlayers;
     int maxDeaths;
@@ -86,8 +90,10 @@ public class DraftGame {
         team1Name = name1;
         team2Name = name2;
         host = staffer;
-        team1score = 0;
-        team2score = 0;
+        team1score = "0";
+        team2score = "0";
+        score1 = 0;
+        score2 = 0;
         winner = null;
         zoned = false;
         oldRounds = new LinkedList<DraftRound>();
@@ -229,8 +235,9 @@ public class DraftGame {
         if (type != GameType.BASING) {
             if (team != null) {
                 if (team.getID() == team1) {
-                    team1score++;
-                    if (team1score > 0) {
+                    score1++;
+                    team1score = "" + score1;
+                    if (score1 >= rules.getInt("Rounds")) {
                         winner = team;
                         currentRound.gameOver();
                         ba.sendArenaMessage("GAME OVER: " + team1Name + " wins!", 5);
@@ -245,8 +252,9 @@ public class DraftGame {
                         nextRound();
                     }
                 } else {
-                    team2score++;
-                    if (team2score > 0) {
+                    score2++;
+                    team2score = "" + score2;
+                    if (score2 >= rules.getInt("Rounds")) {
                         winner = team;
                         currentRound.gameOver();
                         ba.sendArenaMessage("GAME OVER: " + team2Name + " wins!", 5);
@@ -265,8 +273,6 @@ public class DraftGame {
                 winner = null;
                 currentRound.gameOver();
                 ba.sendArenaMessage("GAME OVER: Draw!", 5);
-                team1score = 0;
-                team2score = 0;
                 storeResult();
                 oldRounds.add(currentRound);
                 currentRound = null;
@@ -276,13 +282,12 @@ public class DraftGame {
             currentRound.gameOver();
             if (winner != null) {
                 ba.sendArenaMessage("GAME OVER: " + winner.getName() + " wins!", 5);
-                team1score = currentRound.team1.getScore();
-                team2score = currentRound.team2.getScore();
-            } else {
+                score1 = currentRound.team1.getScore();
+                score2 = currentRound.team2.getScore();
+                team1score = currentRound.team1.getTime();
+                team2score = currentRound.team2.getTime();
+            } else
                 ba.sendArenaMessage("GAME OVER: Draw!", 5);
-                team1score = 0;
-                team2score = 0;
-            }
             storeResult();
             oldRounds.add(currentRound);
             currentRound = null;
@@ -294,8 +299,6 @@ public class DraftGame {
         if (currentRound != null) {
             String msg = "Teams: " + team1Name + " vs. " + team2Name + " ";
             msg += currentRound.getStatus();
-            //if (type != GameType.BASING) 
-            //    msg += "Score: " + team1score + " - " + team2score;
             return msg;
         }
         return "";
@@ -318,7 +321,7 @@ public class DraftGame {
     /** Stores the result of the game to the database */
     private void storeResult() {
         try {
-            String query = "UPDATE tblDraft__Match SET fdPlayed = NOW(), fnTeam1Score = " + team1score + ", fnTeam2Score = " + team2score + " WHERE fnMatchID = " + gameID;
+            String query = "UPDATE tblDraft__Match SET fdPlayed = NOW(), fcTeam1Score = " + team1score + ", fcTeam2Score = " + team2score + " WHERE fnMatchID = " + gameID;
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {
             Tools.printStackTrace(e);
