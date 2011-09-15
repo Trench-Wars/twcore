@@ -464,11 +464,17 @@ public class DraftRound {
                     game.handleRound(null);
                 } else if (team2.getSize() < game.minPlayers) {
                     ba.sendArenaMessage("TIME IS UP! " + team2.getName() + " does not have enough players.");
-                    storeRound(50, 0, "-none-");
+                    if (type != GameType.BASING)
+                    	storeRound(50, 0, "-none-");
+                    else
+                    	storeRound(15*60, 0, "-none-");
                     game.handleRound(team1);
                 } else {
                     ba.sendArenaMessage("TIME IS UP! " + team1.getName() + " does not have enough players.");
-                    storeRound(0, 50, "-none-");
+                    if (type != GameType.BASING)
+                    	storeRound(0, 50, "-none-");
+                    else
+                    	storeRound(0, 15*60, "-none-");
                     game.handleRound(team2);
                 }
                 return;
