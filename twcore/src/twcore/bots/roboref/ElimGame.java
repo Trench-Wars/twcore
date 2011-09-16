@@ -517,7 +517,8 @@ public class ElimGame {
             ElimPlayer ep = players.remove(low(player));
             if (ep != null)
                 ep.cancelTasks();
-            ba.specWithoutLock(player);
+            ba.spec(player);
+            ba.spec(player);
             ba.sendPrivateMessage(player, "You have been forcibly removed from the game.");
             ba.sendPrivateMessage(name, player + " has been removed from the game.");
             checkWinner();
