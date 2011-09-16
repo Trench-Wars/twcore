@@ -315,9 +315,10 @@ public class roboref extends SubspaceBot {
                 ba.toggleLocked();
             else if (msg.equals("Arena LOCKED") && !arenaLock)
                 ba.toggleLocked();
-            else if (game != null)
+            else if (game != null) {
                 game.handleHider(msg);
-            game.handleEvent(event);
+                game.handleEvent(event);
+            }
         }
         
         if (type == Message.PUBLIC_MESSAGE) {
