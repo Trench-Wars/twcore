@@ -135,8 +135,7 @@ public class roboref extends SubspaceBot {
 
     private Spy spy;
     
-    private PreparedStatement updateStats, storeGame;
-    //private PreparedStatement updateRank;
+    private PreparedStatement updateStats, storeGame, showLadder;
     
     public roboref(BotAction botAction) {
         super(botAction);
@@ -168,7 +167,7 @@ public class roboref extends SubspaceBot {
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
-        //updateRank = ba.createPreparedStatement(db, connectionID, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = ? AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
+        showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank DESC LIMIT ?");
         if (updateStats == null) {
             debug("Update was null.");
             this.handleDisconnect();
@@ -362,6 +361,8 @@ public class roboref extends SubspaceBot {
                 cmd_status(name);
             else if (cmd.equals("!votes") || cmd.equals("!vi"))
                 cmd_votes(name);
+            else if (cmd.startsWith("!lad"))
+                cmd_ladder(name, msg);
             
             if (oplist.isZH(name)) {
                 if (cmd.equals("!die"))
@@ -448,6 +449,8 @@ public class roboref extends SubspaceBot {
         String[] msg = new String[] {
                 ",-- Robo Ref Commands -------------------------------------------------------------------.",
                 "|!lag <name>       - Checks the lag of player <name>                                     |",
+                "|!ladder <ship>    - (!lad) Prints the top 5 ranking players for <ship>                  |",
+                "|!lad <ship>:<#>   - Prints the 3 players surrounding rank <#> in <ship>                 |",
                 "|!votes            - Warbird and Javelin vote analysis                                   |",
                 "|!alert            - Toggles new game private message alerts on or off                   |",
                 "|!lagout           - Return to game after lagging out                                    |",
@@ -533,6 +536,8 @@ public class roboref extends SubspaceBot {
         else if (state == State.STARTING || state == State.PLAYING || state == State.ENDING)
             ba.sendSmartPrivateMessage(name, game.toString());
     }
+    
+    
     
     /** Handles the !scorereset (sr) command which resets the stats for the specified ship */
     public void cmd_scorereset(String name, String cmd) {
@@ -640,6 +645,68 @@ public class roboref extends SubspaceBot {
             game.do_streak(name, cmd);
         else 
             ba.sendPrivateMessage(name, "There is no game being played at the moment.");        
+    }
+    
+    /** Handles the ladder command which displays the top 5 players or the 3 players surrounding a particular rank */
+    public void cmd_ladder(String name, String cmd) {
+        if (!cmd.contains(" ")) return;
+        if (!cmd.contains(":")) {
+            int ship = 1;
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+                if (ship < 1 || ship > 8) {
+                    ba.sendSmartPrivateMessage(name, "Invalid ship number.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !lad <ship#>");
+                return;
+            }
+            try {
+                showLadder.clearParameters();
+                showLadder.setInt(1, ship);
+                showLadder.setInt(2, 1);
+                showLadder.setInt(3, 5);
+                ResultSet rs = showLadder.executeQuery();
+                ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
+                while (rs.next())
+                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName"));
+                rs.close();
+            } catch (SQLException e) {
+                Tools.printStackTrace(e);
+            }
+        } else {
+            int ship = 1;
+            int rank = 2;
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1), cmd.indexOf(":"));
+                if (ship < 1 || ship > 8) {
+                    ba.sendSmartPrivateMessage(name, "Invalid ship number.");
+                    return;
+                }
+                rank = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+                if (rank < 2) {
+                    ba.sendSmartPrivateMessage(name, "Rank must be greater than 1.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !lad <ship#>");
+                return;
+            }
+            try {
+                showLadder.clearParameters();
+                showLadder.setInt(1, ship);
+                showLadder.setInt(2, (rank--));
+                showLadder.setInt(3, 3);
+                ResultSet rs = showLadder.executeQuery();
+                ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
+                while (rs.next())
+                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName"));
+                rs.close();
+            } catch (SQLException e) {
+                Tools.printStackTrace(e);
+            }
+        }
     }
     
     /** Handles the !rank command which returns a players rank according to ship */
@@ -965,8 +1032,8 @@ public class roboref extends SubspaceBot {
     private void doVoting() {
         if (state != State.VOTING) return;
         if (voteType == VoteType.NA) {
-            ba.sendChatMessage(2, "The next game of ELIMBETA is about to begin. We are voting on ship.");
-            ba.sendChatMessage(3, "The next game of ELIMBETA is about to begin. We are voting on ship.");
+            ba.sendChatMessage(2, "The next game of ELIM is about to begin. We are voting on ship.");
+            ba.sendChatMessage(3, "The next game of ELIM is about to begin. We are voting on ship.");
             voteType = VoteType.SHIP;
             ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 4-Leviathen, 5-Terrier, 6-Weasel, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
         } else if (voteType == VoteType.SHIP) {
@@ -1072,17 +1139,8 @@ public class roboref extends SubspaceBot {
     /** Executes the updateRank statement which adjusts the ranks of every elim player */
     private void updateRanks() {
         try {
-            long now = System.currentTimeMillis();
-            // removed: AND (fnKills + fnDeaths) > " + INITIAL_RATING + "
-            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = " + shipType.getNum() + "  ORDER BY fnRating DESC");
-            if (rs.next())
-                debug("Rank update for " + shipType.toString() + " was successful");
-            else
-                debug("Rank update for " + shipType.toString() + " returned an empty result set");
+            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE (fnKills + fnDeaths) > " + INITIAL_RATING + " AND fnShip = " + shipType.getNum() + " ORDER BY fnRating DESC");
             ba.SQLClose(rs);
-            //updateRank.setInt(1, shipType.getNum());
-            //updateRank.execute();
-            debug("Update completed in " + ((System.currentTimeMillis() - now) / Tools.TimeInMillis.SECOND) + " seconds.");
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
@@ -1254,7 +1312,7 @@ public class roboref extends SubspaceBot {
         ba.cancelTasks();
         ba.closePreparedStatement(db, connectionID, this.updateStats);
         ba.closePreparedStatement(db, connectionID, this.storeGame);
-        //ba.closePreparedStatement(db, connectionID, this.updateRank);
+        ba.closePreparedStatement(db, connectionID, this.showLadder);
         ba.scheduleTask(new Die(), 2000);
     }
     
