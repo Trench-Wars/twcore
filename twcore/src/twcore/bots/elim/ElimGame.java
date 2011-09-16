@@ -633,6 +633,7 @@ public class ElimGame {
                 hiderFinder.stop();
             winner = getPlayer(winners.first());
             winner.saveWin();
+            storeLosses();
             setMVP();
             bot.storeGame(winner, (ratingCount / playerCount), playerCount);
         }

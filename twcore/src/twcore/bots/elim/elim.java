@@ -1108,7 +1108,6 @@ public class elim extends SubspaceBot {
                 }
             };
             ba.scheduleTask(t, 3000);
-            game.storeLosses();
             updatePlayer(winner);  
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
