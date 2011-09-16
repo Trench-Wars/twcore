@@ -317,6 +317,7 @@ public class roboref extends SubspaceBot {
                 ba.toggleLocked();
             else if (game != null)
                 game.handleHider(msg);
+            game.handleEvent(event);
         }
         
         if (type == Message.PUBLIC_MESSAGE) {

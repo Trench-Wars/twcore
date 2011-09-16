@@ -20,6 +20,7 @@ import twcore.bots.roboref.roboref.State;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
@@ -215,6 +216,14 @@ public class ElimGame {
             if (ep != null)
             	ep.setStatus(Status.SPEC);
         }
+    }
+
+    /**
+     * @param event
+     */
+    public void handleEvent(Message event) {
+        if (event.getMessageType() == Message.ARENA_MESSAGE)
+            lagHandler.handleLagMessage(event.getMessage());
     }
     
     /** Handles a lag report received from the lag handler */
