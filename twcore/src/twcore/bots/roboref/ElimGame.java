@@ -217,10 +217,7 @@ public class ElimGame {
             	ep.setStatus(Status.SPEC);
         }
     }
-
-    /**
-     * @param event
-     */
+    
     public void handleEvent(Message event) {
         if (event.getMessageType() == Message.ARENA_MESSAGE)
             lagHandler.handleLagMessage(event.getMessage());
