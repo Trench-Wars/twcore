@@ -1,1824 +1,1339 @@
 package twcore.bots.elim;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.TimerTask;
-
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
+import java.util.TimerTask;
+import java.util.TreeSet;
 
-import javax.swing.text.NumberFormatter;
-
-import twcore.core.BotAction;
+import twcore.bots.elim.ElimPlayer.Status;
+import twcore.bots.elim.StatType;
 import twcore.core.SubspaceBot;
+import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
-import twcore.core.events.Message;
 import twcore.core.events.ArenaJoined;
+import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.LoggedOn;
-import twcore.core.events.SQLResultEvent;
-import twcore.core.events.WeaponFired;
+import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
-import twcore.core.events.PlayerPosition;
 import twcore.core.events.PlayerLeft;
-import twcore.core.events.FrequencyShipChange;
-import twcore.core.events.FrequencyChange;
+import twcore.core.events.PlayerPosition;
+import twcore.core.events.SQLResultEvent;
+import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
-import twcore.core.util.Tools;
 import twcore.core.util.Spy;
+import twcore.core.util.Tools;
 
+/**
+ * New bot to manage elim jav and wb
+ * @author WingZero
+ */
 public class elim extends SubspaceBot {
-	
-	public OperatorList opList;
-	public Spy racismWatcher;
-	public String db = "website";
-	public Random rand = new Random();
-	public static DecimalFormat decForm = new DecimalFormat("0.##");
-	public static NumberFormatter format = new NumberFormatter(decForm);
-	
-	//Class variables
-	public int botMode = 1;
-	public int gameStyle = 1;
-	public int shipType = -1;
-	public int deaths = -1;
-	public int kills = -1;
-	public int shrap = 0;
-	public int avg_rating = 0;
-	public String lastWinner = "-anonymous-";
-	public int winStreak = 0;
-	public long lastZoner = 0;
-	public ElimPlayer winner;
-	
-	//Game collections
-	public GameStatus game = new GameStatus();
-	public TreeMap<String, CasualPlayer> casualPlayers = new TreeMap<String, CasualPlayer>();
-	public TreeMap<String, ElimPlayer> elimPlayers = new TreeMap<String, ElimPlayer>();
-	public TreeMap<String, ElimPlayer> lagouts = new TreeMap<String, ElimPlayer>();
-	public TreeMap<String, ElimPlayer> losers = new TreeMap<String, ElimPlayer>();
-	public TreeMap<Integer, Integer> votes = new TreeMap<Integer, Integer>();
-	public ArrayList<String> enabled = new ArrayList<String>();
-	public ArrayList<String> classicMode = new ArrayList<String>();
-	public ArrayList<String> pm = new ArrayList<String>();
+    
+    BotAction ba;
+    OperatorList oplist;
+    BotSettings rules;
+    
+    public enum State { OFF, IDLE, WAITING, VOTING, STARTING, PLAYING, ENDING, UPDATING }
+    public enum VoteType { NA, SHIP, DEATHS, SHRAP, GAME }
+    public enum ShipType {
+        WARBIRD(1, 0), 
+        JAVELIN(2, 1), 
+        SPIDER(3, 0), 
+        LEVIATHAN(4, 0), 
+        TERRIER(5, 1), 
+        WEASEL(6, 1),
+        LANCASTER(7, 0), 
+        SHARK(8, 1);
+        
+        private int ship, freq;
+        
+        private static final Map<Integer, ShipType> lookup = new HashMap<Integer, ShipType>();
+        
+        static {
+            for (ShipType s : EnumSet.allOf(ShipType.class))
+                lookup.put(s.getNum(), s);
+        }
+        
+        private ShipType(int num, int startFreq) {
+            ship = num;
+            freq = startFreq;
+        }
+        
+        public static ShipType type(int n) {
+            return lookup.get(n);
+        }
+        
+        public int getNum() {
+            return ship;
+        }
+        
+        public boolean hasShrap() {
+            return (ship == 8 || ship == 2);
+        }
+        
+        public int getFreq() {
+            return freq;
+        }
+        
+        public boolean inBase() {
+            if (freq == 0)
+                return false;
+            else
+                return true;
+        }
+        
+        public String getType() {
+            if (inBase())
+                return "BASEELIM";
+            else
+                return "ELIM";
+        }
+    }
+    
+    State state;
+    VoteType voteType;
+    ShipType shipType;
+    
+    Random random;
+    
+    ElimGame game;
+    HashMap<String, Integer> votes;
+    HashSet<String> alerts;
+    
+    boolean DEBUG;
+    String debugger;
+    HashSet<String> debugStatPlayers;
+    
+    private String connectionID;
+    static final String db = "website";
+    static final int INITIAL_RATING = 300;
+    static final int MIN_ZONER = 15;       // The minimum amount of minutes in between zoners
+    static final int ALERT_DELAY = 2;      // Minimum amount of time between alert messages
+    
+    TimerTask timer;
+    String arena;
+    ElimPlayer lastWinner;
+    ElimPlayer winner;
+    int deaths;
+    int winStreak;
+    int voteTime;
+    long lastZoner, lastAlert;
+    int[] voteStats;                       // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
+    String[] updateFields;
+    boolean shrap;
+    boolean arenaLock;
+    boolean hiderCheck;
 
-	
-	//BotSettings variables
-	BotSettings cfg;
-	public int cfg_minPlayers, cfg_maxDeaths, cfg_maxKills, cfg_defaultShip, cfg_gameType;
-	public int cfg_votingLength, cfg_waitLength, cfg_zone, cfg_border, cfg_casualAllowed;
-	public int[] cfg_safe, cfg_competitive, cfg_casual, cfg_barY;
-	public int[][] cfg_barspots;
-	public String cfg_arena, cfg_chats, cfg_gameName;
-	public ArrayList<Integer> cfg_shipTypes = new ArrayList<Integer>();
-	
-	//Defaults
-	public int[] defaultElimTypes = {1,3,4,7,9};
-	public int[] defaultBelimTypes = {2,5,6,8,9};
-	public String[]  sMessages = {
-			"On Fire!",
-			"Killing Spree!",
-			"Rampage!",
-			"Dominating!",
-			"Unstoppable!",
-			"God-like!",
-			"Cheater!",
-			"Juggernaut!",
-			"Kill Frenzy!",
-			"Running Riot!",
-			"Utter Chaos!",
-			"Grim Reaper!",
-			"Bulletproof!",
-			"Invincible!",
-			"Certified Veteran!",
-			"Trench Wars Most Wanted!",
-			"Unforeseeable paradoxes have ripped a hole in the fabric of the universe!"
-		};
-	
-	//Enums
-	public static final int ELIM = 1;          //Game type and game style
-	public static final int BASEELIM = 2;      //Game type
-	public static final int KILLRACE = 2;      //Game style
-	public static final int OFF = 0;           //Simple boolean used for int variables
-	public static final int ON = 1;            //Simple boolean used for int variables
-	public static final int DISCONNECT = 2;    //Bot mode... bot will disconnect after game finishes
-	public static final int SPAWN_TIME = 5005; //Time to wait before warping a player after a death in milliseconds
-	public static final int SPAWN_NC = 1;      //Time that a spawn kill won't count after spawning in seconds
-	public static final int LAGOUT_TIME = 30;  //Time you must wait before returning from a lagout in seconds
-	public static final int LAGOUT_RETURN = 60;//Time you must return before when returning from a lagout in seconds
-	public static final int MAX_LAGOUT = 2;    //Maximum number of lagouts allowed
-	public static final int DOUBLE_KILL = 5;   //Number of seconds after a kill for another kill to be considered duplicate
-	public static final int MIN_ZONER = 15;    //The minimum amount of minutes that another zoner can be sent
-	public static final int BOUNDARY_TIME = 30;//The maximum amount of time you can be outside of base in seconds
-	public static final int STREAK_INIT = 5;   //The number of kills needed for the first streak
-	public static final int STREAK_REPEAT = 2; //The number of kills needed for streak messages after the initial streak
-	public static final int SAFE_HEIGHT = 14;  //The height of the safety area in tiles
-	public static final int ANY_SHIP = 9;      //A ship type... all ships within the cfg_shipTypes are allowed
-	public static final int SPEC_FREQ = 9999;  //The spec frequency
-	public static final int MAX_FREQ = 99;     //The maximum frequency casual players can be on
-	public static final int LIMIT_STREAK = 3;  //The amount of consecutive game wins to limit minimum kill/death voting
-	public static final int MIN_FOR_STREAK = 5;//The minimum kills/deaths allowable to vote on during a game winning streak
-	public static final int INIT_RATING = 300; //The initial rating that players begin at.
-	public static final int INIT_RANKING = 500;//The number of combined kills and deaths needed to be ranked.
-	
-	//LVZ
-	public static final int CASUAL_SPLASH_LVZ = 1;    //Displays temporary image below energy bar that says "This is casual play"
-	public static final int CASUAL_LOGO_LVZ = 2;      //Displays casual logo above radar.
-	
+    private Spy spy;
+    
+    private PreparedStatement updateStats, storeGame, showLadder;
+    
     public elim(BotAction botAction) {
         super(botAction);
+        ba = botAction;
+        connectionID = "elimplayerstats"; 
+        random = new Random();
+    }
+
+    /** Handles the LoggedOn event which prepares the bot to run the elim arena */
+    public void handleEvent(LoggedOn event) {
         requestEvents();
-        racismWatcher = new Spy(botAction);
-        opList = m_botAction.getOperatorList();
-        reinstantiateCFG();        
+        oplist = ba.getOperatorList();
+        rules = ba.getBotSettings();
+        arena = rules.getString("Arena1");
+        if (rules.getInt("Zoners") == 1)
+            lastZoner = System.currentTimeMillis();
+        else
+            lastZoner = -1;
+        lastAlert = 0;
+        spy = new Spy(ba);
+        DEBUG = false;
+        debugger = "";
+        voteStats = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+        votes = new HashMap<String, Integer>();
+        alerts = new HashSet<String>();
+        debugStatPlayers = new HashSet<String>();
+        state = State.IDLE;
+        voteType = VoteType.NA;
+        updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
+        updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
+        storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
+        showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank ASC LIMIT ?");
+        if (updateStats == null) {
+            debug("Update was null.");
+            this.handleDisconnect();
+        }
+        ba.joinArena(arena);
     }
     
-    public void reinstantiateCFG(){
-    	cfg = m_botAction.getBotSettings();
-    	int botnum = getBotNumber(cfg);
-        cfg_minPlayers = cfg.getInt("MinPlayers");
-        cfg_maxDeaths = cfg.getInt("MaxDeaths");
-        cfg_maxKills = cfg.getInt("MaxKills");
-        cfg_votingLength = cfg.getInt("VotingLength");
-        cfg_waitLength = (cfg.getInt("WaitLength") - 10);
-        cfg_zone = cfg.getInt("SendZoner");
-        cfg_border = cfg.getInt("Border");
-        cfg_arena = cfg.getString("Arena" + botnum);        
-        cfg_gameType = cfg.getInt("GameType" + botnum);
-        cfg_defaultShip = cfg.getInt("DefaultShip" + cfg_gameType);
-        cfg_chats = cfg.getString("Chats" + cfg_gameType);
-        cfg_safe = cfg.getIntArray("Safe" + cfg_gameType, ",");
-        cfg_competitive = cfg.getIntArray("Competitive" + cfg_gameType, ",");
-        cfg_casualAllowed = cfg.getInt("CasualAllowed");
-        cfg_casual = cfg.getIntArray("Casual" + cfg_gameType, ",");
-        if(cfg_gameType == ELIM) cfg_gameName = "elim";
-        else{
-        	cfg_gameName = "belim";
-        	cfg_barY = cfg.getIntArray("BarwarpY", ",");
-        	cfg_barspots = new int[cfg.getInt("Barspots")][4];
-        	for(int i=0;i<cfg_barspots.length;i++)
-	        	cfg_barspots[i] = cfg.getIntArray("Barspot" + (i+1), ",");
-        }
-        String[] types = cfg.getString("ShipTypes" + cfg_gameType).split(",");
-        cfg_shipTypes.clear();
-        try{
-	        for(int i=0;i<types.length;i++)
-	        	cfg_shipTypes.add(Integer.parseInt(types[i]));        	
-        }catch(NumberFormatException e){
-        	if(cfg_gameType == ELIM){
-        		for(int i=0;i<defaultElimTypes.length;i++)
-    	        	cfg_shipTypes.add(defaultElimTypes[i]);    
-        	} else {
-        		for(int i=0;i<defaultBelimTypes.length;i++)
-    	        	cfg_shipTypes.add(defaultBelimTypes[i]); 
-        	}   	
-        }
+    /** Handles ArenaJoined event which initializes bot startup */
+    public void handleEvent(ArenaJoined event) {
+        voteTime = rules.getInt("Time");
+        ba.sendUnfilteredPublicMessage("?chat=" + rules.getString("Chats"));
+        game = null;
+        shipType = null;
+        ba.receiveAllPlayerDeaths();
+        ba.setPlayerPositionUpdating(300);
+        winStreak = 0;
+        lastWinner = null;
+        winner = null;
+        arenaLock = false;
+        hiderCheck = true;
+        ba.toggleLocked();
+        ba.specAll();
+        state = State.IDLE;
+        handleState();
     }
-	
-	public String[] getHelpMsg(String name){
-		ArrayList<String> help = new ArrayList<String>();
-		String[] reghelp = {
-				"+=============================== HELP MENU ==================================+",
-				"| !help         - Displays this menu. (?)                                    |",
-				"| !play         - Toggles whether or not you wish to play. (!p)              |",
-				"| !lagout       - Puts you back into the game if you've lagged out. (!l)     |",
-				"| !status       - Displays the game status. (!s)                             |",
-				"| !mvp          - Shows the three players with the best and worst recs.      |",
-				"| !wl           - Shows the three players with the most and least losses.    |",
-				"| !who          - Shows all remaining players in the game.                   |",
-				"| !rank <#>     - Returns the player at rank <#>.                            |",
-				"| !stats        - Shows your statistics including your rank.                 |",
-				"| !stats <name> - Shows statistics of <name>.                                |",
-				"| !rec          - Shows your wins and losses. (!r)                           |",
-				"| !rec <name>   - Shows the wins and losses of <name>.                       |",
-				"| !classic      - Toggles whether or not you'd like to be spec'd when out.   |",
-				"| !warp         - Warps you out of the safe if you're stuck.                 |",
-				"| !scorereset   - Resets all of your stats to zero. No going back. (!sr)     |",
-				"| !pm           - On the 30 second wait, you will be notified of a game.     |",
 
-		};List<String> reg = Arrays.asList(reghelp);
-		String[] modHelp = {
-		        "+=============================== MOD MENU ===================================+",
-		        "| !remove <name> - Removes <name> from the game                              |",
-		};List<String> mod = Arrays.asList(modHelp);
-		String[] smodhelp = {
-				"+=============================== SMOD MENU ==================================+",
-				"| !zone         - Toggles whether or not the bot should zone for games.      |",
-				"| !stop         - Ends the current game and prevents new games from starting.|",
-				"| !off          - Prevents new games from starting once the current one ends.|",
-				"| !on           - Turns off !off mode and allows new games to begin          |",
-				"| !shutdown     - Causes the bot to disconnect once the current game ends.   |",
-				"| !die          - Causes the bot to disconnect.                              |",
-		};List<String> smod = Arrays.asList(smodhelp);				
-		help.addAll(reg);
-		if(opList.isModerator(name))
-		    help.addAll(mod);
-		if(opList.isSmod(name))
-			help.addAll(smod);
-		if(opList.isSysop(name)) {
-			help.add("| !updatecfg    - Updates the bot to the most current CFG file.              |");
-			help.add("| !greetmsg <m> - Sets arena greet message(Sysop only).                      |");
-		}
-		help.add("+============================================================================+");
-		return help.toArray(new String[help.size()]);
+    /** Handles PlayerEntered events announcing state of elim */
+    public void handleEvent(PlayerEntered event) {
+        if (state == State.OFF) return; 
+        String name = event.getPlayerName();
+        if (name == null || name.length() < 1)
+            name = ba.getPlayerName(event.getPlayerID());
+        cmd_status(name);
+    }
 
-	}
-	
-	public String getStatusMsg(){
-		switch(game.state){
-			case GameStatus.OFF_MODE:
-				return "Elimination is temporarily disabled.";
-			case GameStatus.WAITING_FOR_PLAYERS:
-				return "A new elimination match will begin when " + (cfg_minPlayers - elimPlayers.size()) + " more player(s) enter.";
-			case GameStatus.VOTING_ON_SHIP:
-				return "We are currently voting on ship type.";
-			case GameStatus.VOTING_ON_DEATHS:
-				if(gameStyle == ELIM)
-					return "We are playing " + Tools.shipName(shipType) + " elim. We are currently voting on number of deaths.";
-				else return "We are playing " + Tools.shipName(shipType) + " kill race. We are currently voting on number of kills.";
-			case GameStatus.VOTING_ON_SHRAP:
-				if(gameStyle == ELIM)
-					return "We are playing " + Tools.shipName(shipType) + " elim to " + deaths + ". We are currently voting on shrap.";
-				else return "We are playing " + Tools.shipName(shipType) + " kill race to " + kills + ". We are currently voting on shrap.";
-			case GameStatus.WAITING_TO_START:
-				if(gameStyle == ELIM)
-					return "We are playing " + Tools.shipName(shipType) + " elim to " + deaths + ". The game will start soon. Enter to play!";
-				else return "We are playing " + Tools.shipName(shipType) + " kill race to " + kills + ". The game will start soon. Enter to play!";
-			case GameStatus.TEN_SECONDS:
-				return "The game will begin in less than ten seconds. No more entries";
-			case GameStatus.GAME_IN_PROGRESS:
-				if(gameStyle == ELIM)
-					return "We are currently playing " + Tools.shipName(shipType) + " elim to " + deaths + ". " + elimPlayers.size() + " players left.";
-				else return "We are currently playing " + Tools.shipName(shipType) + " kill race to " + kills + ". " + elimPlayers.size() + " players playing.";
-			case GameStatus.GAME_OVER:
-				return "A new elimination match will begin shortly.";
-			default: return null;
-		}
-	}
-        
+    /** Handles PlayerLeft events */
+    public void handleEvent(PlayerLeft event) {
+        if (state == State.OFF || game == null) return; 
+        game.handleEvent(event);
+    }
+
+    /** Handles the WeaponFired event which reports shot stats if a game is being played */
+    public void handleEvent(WeaponFired event) {
+        if (state != State.PLAYING || game == null) return;
+        game.handleEvent(event);
+    }
+
+    /** Handles ship and freq change events if a game is being played */
+    public void handleEvent(FrequencyShipChange event) {
+        if (state == State.PLAYING || state == State.STARTING) {
+            if (game != null);
+                game.handleEvent(event);
+        }
+        if (state == State.WAITING)
+            handleState();
+    }
+
+    /** Handles PlayerPosition events */
+    public void handleEvent(PlayerPosition event) {
+        if (game != null && (state == State.PLAYING || state == State.STARTING))
+            game.handleEvent(event);            
+    }
+
+    /** Death event handler sends if a game is being played */
+    public void handleEvent(PlayerDeath event) {
+        if (state != State.PLAYING || game == null) return;
+        game.handleEvent(event);
+    }
+    
+    /** Handles received background queries for stats */
+    public void handleEvent(SQLResultEvent event) {
+        String id = event.getIdentifier();
+        ResultSet rs = event.getResultSet();
+        try {
+            if (state == State.OFF) { 
+                ba.SQLClose(rs);
+                return;
+            } else if (game != null && id.startsWith("load:")) {
+                String name = id.substring(id.indexOf(":") + 1).toLowerCase();
+                if (rs.next() && rs.getInt("fnShip") == shipType.getNum()) {
+                    game.handleStats(name, rs);
+                } else {
+                    ba.SQLQueryAndClose(db, "INSERT INTO tblElim__Player (fcName, fnShip) VALUES('" + Tools.addSlashesToString(name) + "', " + shipType.getNum() + ")");
+                    ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + shipType.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+                }
+            } else if (id.startsWith("stats:")) {
+                String[] args = id.split(":");
+                if (args.length == 4) {
+                    ElimStats stats = new ElimStats(Integer.valueOf(args[3]));
+                    if (rs.next()) {
+                        stats.loadStats(rs);
+                        ba.privateMessageSpam(args[1], stats.getStats(args[2]));
+                    } else
+                        ba.sendPrivateMessage(args[1], "No " + Tools.shipName(Integer.valueOf(args[3])) + " stats found for " + args[2]);
+                }
+            } else if (id.startsWith("allstats:")) {
+                String[] args = id.split(":");
+                if (args.length == 3) {
+                    ElimStats stats = new ElimStats(1);
+                    if (rs.next()) {
+                        stats.loadAllShips(rs);
+                        ba.privateMessageSpam(args[1], stats.getAll(args[2]));
+                    } else
+                        ba.sendPrivateMessage(args[1], "No stats found for " + args[2]);
+                }
+            } else if (id.startsWith("rec:")) {
+                String[] args = id.split(":");
+                if (rs.next()) {
+                    int k = rs.getInt("k");
+                    int d = rs.getInt("d");
+                    String target = rs.getString("n");
+                    if (args.length == 3)
+                        ba.sendPrivateMessage(args[1], "" + target + "[" + args[2] + "]: (" + k + "-" + d + ")");
+                    else if (args.length == 2)
+                        ba.sendPrivateMessage(args[1], "" + target + "[all]: (" + k + "-" + d + ")");
+                } else
+                    ba.sendPrivateMessage(args[1], "Error processing record request for: " + args[2]);
+            } else if (id.startsWith("rank:")) {
+                String[] args = id.split(":");
+                if (rs.next()) {
+                    String target = rs.getString("n");
+                    int r = rs.getInt("r");
+                    int s = rs.getInt("s");
+                    ba.sendPrivateMessage(args[1], target + " rank in " + ShipType.type(s).toString() + ": " + r);
+                } else
+                    ba.sendPrivateMessage(args[1], args[2] + " is not yet ranked in " + ShipType.type(Integer.valueOf(args[3])).toString());
+            }
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+        ba.SQLClose(rs);
+    }
+
+    /** Message event handler checks arena lock and diffuses commands */
     public void handleEvent(Message event) {
-    	String message = event.getMessage();
-		String name = event.getMessager() == null ? m_botAction.getPlayerName(event.getPlayerID()) : event.getMessager();
-		int messageType = event.getMessageType();
-		
-		if(messageType == Message.PUBLIC_MESSAGE        ||
-				messageType == Message.TEAM_MESSAGE          ||
-				messageType == Message.OPPOSING_TEAM_MESSAGE ||
-				messageType == Message.PUBLIC_MACRO_MESSAGE)
-					racismWatcher.handleEvent(event);
-		
-		if(messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE){
-			handleCommands(name, message);
-			if (opList.isModerator(name))
-			    handleModeratorCommands(name, message);
-			if(opList.isSmod(name))
-				handleSmodCommands(name, message);
-			if(opList.isSysop(name))
-				handleSysopCommands(name, message);
-		}
-		else if(messageType == Message.ARENA_MESSAGE && message.contains("UserId:"))
-			doEInfo(message);
-		else if(messageType == Message.PUBLIC_MESSAGE &&
-				game.isVoting()                       &&
-				Tools.isAllDigits(message)            &&
-				message.length() <= 2)
-			vote(name, message);
-    }
-    
-    public void handleCommands(String name, String cmd){
-    	if(cmd.equalsIgnoreCase("!help") || cmd.equals("?"))
-    		m_botAction.smartPrivateMessageSpam(name, getHelpMsg(name));
-    	else if(cmd.equalsIgnoreCase("!play") || cmd.equalsIgnoreCase("!p") || cmd.equals(""))
-    		cmd_play(name);
-    	else if(cmd.equalsIgnoreCase("!status") || cmd.equalsIgnoreCase("!s"))
-    		m_botAction.sendSmartPrivateMessage( name, getStatusMsg());
-    	else if(cmd.equalsIgnoreCase("!mvp"))
-    		cmd_mvp(name);
-    	else if(cmd.equalsIgnoreCase("!wl"))
-    		cmd_wl(name);
-    	else if(cmd.equalsIgnoreCase("!who"))
-    		cmd_who(name);
-    	else if(cmd.equalsIgnoreCase("!rec") || cmd.equalsIgnoreCase("!r"))
-    		cmd_rec(name, name);
-    	else if(cmd.startsWith("!rec "))
-    		cmd_rec(name, cmd.substring(5));
-    	else if(cmd.equalsIgnoreCase("!classic") || cmd.equalsIgnoreCase("!c"))
-    		cmd_classic(name);
-    	else if(cmd.equalsIgnoreCase("!warp") || cmd.equalsIgnoreCase("!w"))
-    		cmd_warp(name);
-    	else if(cmd.equalsIgnoreCase("!lagout") || cmd.equalsIgnoreCase("!l"))
-    		cmd_lagout(name);
-    	else if(cmd.equalsIgnoreCase("!scorereset") || cmd.equalsIgnoreCase("!sr"))
-    		cmd_scorereset(name);
-    	else if(cmd.equalsIgnoreCase("!stats"))
-    		cmd_stats(name, name);
-    	else if(cmd.startsWith("!stats "))
-    		cmd_stats(name, cmd.substring(7));
-    	else if(cmd.startsWith("!rank "))
-    		cmd_rank(name, cmd.substring(6));
-    	else if(cmd.equalsIgnoreCase("!pm"))
-    	    cmd_pm(name);
-    }
-    
-    private void cmd_pm(String name) {
-        name = name.toLowerCase();
+        int type = event.getMessageType();
+        String msg = event.getMessage();
+        String name = ba.getPlayerName(event.getPlayerID());
+        if (name == null)
+            name = event.getMessager();
         
-        if (pm.contains(name)) {
-            pm.remove(name);
-            m_botAction.sendSmartPrivateMessage(name, "Removed from alert list!");
-        } else {
-            pm.add(name);
-            m_botAction.sendSmartPrivateMessage(name, "Added to alert list!");
-        }
-    }
-
-        
-
-    public void handleModeratorCommands(String name, String cmd) {
-        if(cmd.startsWith("!remove "))
-            cmd_remove(name, cmd.substring(8));
-    }
-    
-    public void handleSmodCommands(String name, String cmd){
-    	if(cmd.equalsIgnoreCase("!zone"))
-    		cmd_zone(name);
-    	else if(cmd.equalsIgnoreCase("!stop"))
-    		cmd_stop(name);
-    	else if(cmd.equalsIgnoreCase("!off"))
-    		cmd_off(name, false);
-    	else if(cmd.equalsIgnoreCase("!on"))
-    		cmd_on(name);
-    	else if(cmd.equalsIgnoreCase("!shutdown"))
-    		cmd_off(name, true);
-    	else if(cmd.equalsIgnoreCase("!die")){
-    		try{
-    			m_botAction.scheduleTask(new DieTask(name), 500);
-    		}catch(Exception e){}
-    	}
-    }
-    
-    public void handleSysopCommands(String name, String cmd){
-    	if(cmd.startsWith("!greetmsg "))
-			m_botAction.sendUnfilteredPublicMessage( "?set misc:greetmessage:"+cmd.substring(10) );
-    	else if(cmd.equalsIgnoreCase("!updatecfg"))
-    		reinstantiateCFG();
-    }
-    
-    public void cmd_play(String name){
-    	if(name == null)return;
-    	if(enabled.remove(name)){
-            if( cfg_casualAllowed == 1 )
-                m_botAction.sendSmartPrivateMessage( name, "You have disabled !play. Type !play again to compete.");
-            else
-                m_botAction.sendSmartPrivateMessage( name, "You have disabled !play. Because casual is not enabled, you have been removed from the game. Type !play again to compete.");
-    		if(elimPlayers.containsKey(name) && game.state == GameStatus.GAME_IN_PROGRESS){
-    			m_botAction.sendArenaMessage(name + " is out. " + elimPlayers.get(name).wins + " wins " + elimPlayers.get(name).losses + " losses (Resigned)");
-        		losers.put(name, elimPlayers.remove(name));        		
-    		}
-    		else if(elimPlayers.containsKey(name))
-    			elimPlayers.remove(name);
-    		doWarpIntoCasual(name);
-    	}else {
-    	    if( cfg_casualAllowed == 1 )
-    	        m_botAction.sendSmartPrivateMessage( name, "You have enabled !play. Type !play again to play casually.");
-    	    else
-                m_botAction.sendSmartPrivateMessage( name, "You have enabled !play, and can now play in the next elimination.");
-    		enabled.add(name);
-    		Player p = m_botAction.getPlayer(name);
-    		if(p == null)return;
-    		if(p.getShipType() > 0 && !game.isInProgress()){
-    			elimPlayers.put(name, new ElimPlayer(name));
-    			doWarpIntoElim(name);
-    			if(elimPlayers.size() >= cfg_minPlayers && game.state == GameStatus.WAITING_FOR_PLAYERS)
-        			game.moveOn();
-    		}    		
-    	}
-    }
-    
-    public void cmd_mvp(String name){
-    	CompareByWinsLossesAccuracy byMVP = new CompareByWinsLossesAccuracy();
-    	List<ElimPlayer> l = Arrays.asList(elimPlayers.values().toArray(new ElimPlayer[elimPlayers.values().size()]));
-    	Collections.sort(l, Collections.reverseOrder(byMVP));
-    	int index = 1;
-    	Iterator<ElimPlayer> i = l.iterator();
-    	m_botAction.sendSmartPrivateMessage( name, "------------- Best Records ------------");
-    	while( i.hasNext() && index <= 3){
-    		ElimPlayer p = i.next();
-    		m_botAction.sendSmartPrivateMessage( name, index + ") " + p.name + " (" + p.wins + "-" + p.losses + ")");
-    		index++;
-    	}
-    	Collections.sort(l, byMVP);
-    	i = l.iterator();
-    	index = 1;
-    	m_botAction.sendSmartPrivateMessage( name, "------------ Worst Records ------------");
-    	while( i.hasNext() && index <= 3){
-    		ElimPlayer p = i.next();
-    		m_botAction.sendSmartPrivateMessage( name, index + ") " + p.name + " (" + p.wins + "-" + p.losses + ")");
-    		index++;
-    	}
-    }
-    
-    public void cmd_wl(String name){
-    	CompareByLosses byLosses = new CompareByLosses();
-    	List<ElimPlayer> l = Arrays.asList(elimPlayers.values().toArray(new ElimPlayer[elimPlayers.values().size()]));
-    	Collections.sort(l, Collections.reverseOrder(byLosses));
-    	int index = 1;
-    	Iterator<ElimPlayer> i = l.iterator();
-    	m_botAction.sendSmartPrivateMessage( name, "------- Most Deaths ---- Limit: " + deaths + "-------");
-    	while( i.hasNext() && index <= 3){
-    		ElimPlayer p = i.next();
-    		m_botAction.sendSmartPrivateMessage( name, index + ") " + p.name + " (" + p.wins + "-" + p.losses + ")");
-    		index++;
-    	}
-    	Collections.sort(l, byLosses);
-    	i = l.iterator();
-    	index = 1;
-    	m_botAction.sendSmartPrivateMessage( name, "------ Least Deaths --- Players: " + elimPlayers.size() + "------");
-    	while( i.hasNext() && index <= 3){
-    		ElimPlayer p = i.next();
-    		m_botAction.sendSmartPrivateMessage( name, index + ") " + p.name + " (" + p.wins + "-" + p.losses + ")");
-    		index++;
-    	}
-    }
-    
-    public void cmd_who(String name){
-    	if(!game.isInProgress()){
-    		m_botAction.sendSmartPrivateMessage( name, "There is no game in progress.");
-    		return;
-    	}
-    	m_botAction.sendSmartPrivateMessage( name, elimPlayers.size() + " players remaining:");
-    	ArrayList<String> pNames = new ArrayList<String>();
-    	CompareAlphabetical byName = new CompareAlphabetical();
-    	List<ElimPlayer> l = Arrays.asList(elimPlayers.values().toArray(new ElimPlayer[elimPlayers.values().size()]));
-    	Collections.sort(l, byName);
-    	Iterator<ElimPlayer> i = l.iterator();    	
-    	while( i.hasNext() ){
-    		ElimPlayer ep = i.next();
-    		pNames.add(ep.name + "(" + ep.wins + "-" + ep.losses + ")");
-    		if(pNames.size() == 5){
-    			String message = pNames.toString();
-    			m_botAction.sendSmartPrivateMessage( name, message.substring(1, message.indexOf("]")));
-    			pNames.clear();
-    		}
-    	}
-    	if(!pNames.isEmpty()){
-    		String message = pNames.toString();
-			m_botAction.sendSmartPrivateMessage( name, message.substring(1, message.indexOf("]")));
-    	}
-    }
-    
-    public void cmd_rec(String name, String target){
-    	String clone = m_botAction.getFuzzyPlayerName(target);
-    	if(clone == null)clone = target;
-    	try{
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnKills, fnDeaths FROM tblElimCasualRecs WHERE fcUserName = '" + Tools.addSlashesToString(clone.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-    		if(rs != null && rs.next()){
-    			int kills = rs.getInt("fnKills");
-    			int deaths = rs.getInt("fnDeaths");
-    			m_botAction.SQLClose(rs);
-    			if(casualPlayers.containsKey(clone)){
-    				kills += casualPlayers.get(clone).wins;
-    				deaths += casualPlayers.get(clone).losses;
-    			}
-    			m_botAction.sendSmartPrivateMessage( name, "'" + clone + "' (" + kills + "-" + deaths + ")");
-    		} else {
-    			m_botAction.SQLClose(rs);
-    			m_botAction.sendSmartPrivateMessage( name, "No record was found for '" + clone + "'.");
-    		}
-    	}catch(SQLException e){
-    		m_botAction.sendSmartPrivateMessage( name, "Error retrieving record. Please try again later. If problem persists contact a staff member.");
-    	}
-    }
-    
-    public void cmd_remove(String name, String target) {
-        boolean spec = true;
-        String clone = m_botAction.getFuzzyPlayerName(target);
-        
-        if (clone == null) {
-            clone = target;
-            spec = false;
+        if (type == Message.ARENA_MESSAGE) {
+            if (msg.equals("Arena UNLOCKED") && arenaLock)
+                ba.toggleLocked();
+            else if (msg.equals("Arena LOCKED") && !arenaLock)
+                ba.toggleLocked();
+            else if (game != null) {
+                game.handleHider(msg);
+                game.handleEvent(event);
+            }
         }
         
-        if(!elimPlayers.containsKey(clone) && !lagouts.containsKey(clone)) {
-            m_botAction.sendPrivateMessage(name, clone + " could not be found in the playing players list.");
+        if (type == Message.PUBLIC_MESSAGE) {
+            if (state == State.VOTING && Tools.isAllDigits(msg))
+                handleVote(name, msg);
+        }
+        
+        String cmd = msg.toLowerCase();
+        
+        if (type == Message.PRIVATE_MESSAGE) {
+            if (state == State.OFF)
+                ba.sendPrivateMessage(name, "Bot disabled.");
+            else if (cmd.equals("!help"))
+                cmd_help(name);
+            else if (cmd.startsWith("!lag "))
+                cmd_lag(name, msg);
+            else if (cmd.equals("!lagout"))
+                cmd_lagout(name);
+            else if (cmd.startsWith("!rank "))
+                cmd_rank(name, msg);
+            else if (cmd.startsWith("!rec "))
+                cmd_rec(name, msg);
+            else if (cmd.startsWith("!stats"))
+                cmd_stats(name, msg);
+            else if (cmd.startsWith("!streak"))
+                cmd_streak(name, msg);
+            else if (cmd.startsWith("!scorereset") || cmd.startsWith("!sr"))
+                cmd_scorereset(name, msg);
+        }
+        
+        if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
+            if (cmd.equals("!alert"))
+                cmd_alert(name);
+            else if (cmd.equals("!who"))
+                cmd_who(name);
+            else if (cmd.startsWith("!mvp"))
+                cmd_mvp(name);
+            else if (cmd.equals("!deaths"))
+                cmd_deaths(name);
+            else if (cmd.equals("!status"))
+                cmd_status(name);
+            else if (cmd.equals("!votes") || cmd.equals("!vi"))
+                cmd_votes(name);
+            else if (cmd.startsWith("!lad"))
+                cmd_ladder(name, msg);
+            
+            if (oplist.isZH(name)) {
+                if (cmd.equals("!die"))
+                    cmd_die(name);
+                else if (cmd.equals("!off") || cmd.equals("!stop"))
+                    cmd_stop(name);
+                else if (cmd.equals("!on") || cmd.equals("!start"))
+                    cmd_start(name);
+                else if (cmd.equals("!zone"))
+                    cmd_zone(name);
+                else if (cmd.startsWith("!remove ") || cmd.startsWith("!rem ") || cmd.startsWith("!rm "))
+                    cmd_remove(name, msg);
+            }
+            if (oplist.isSmod(name)) {
+                if (cmd.startsWith("!debug"))
+                    cmd_debug(name);
+                else if (cmd.startsWith("!ds "))
+                    cmd_debugStats(name, msg);
+                else if (cmd.startsWith("!hide"))
+                    cmd_hiderFinder(name);
+                else if (cmd.startsWith("!greet "))
+                    cmd_greet(name, msg);
+                else if (cmd.startsWith("!game "))
+                    cmd_game(name, msg);
+            }
+            if (oplist.isOwner(name))
+                if (cmd.startsWith("!svi "))
+                    cmd_setStats(name, msg);
+        }
+        spy.handleEvent(event);
+    }
+    
+    /** Handles potential votes read from public chat during a voting period */
+    public void handleVote(String name, String cmd) {
+        Player p = ba.getPlayer(name);
+        if (p != null && p.getShipType() == 0) {
+            ba.sendPrivateMessage(name, "You must be in a ship in order to vote.");
             return;
         }
-        
-        if (elimPlayers.containsKey(clone))
-            losers.put(clone, elimPlayers.remove(clone));
-        else if (lagouts.containsKey(clone))
-            losers.put(clone, lagouts.remove(clone));
-        
-        if (spec)
-            m_botAction.specWithoutLock(clone);
-        
-        m_botAction.sendPrivateMessage(name, clone + " has been removed from the game.");
-    }
-    
-    public void cmd_lagout(String name){
-    	if(game.state != GameStatus.GAME_IN_PROGRESS)return;
-    	if(lagouts.containsKey(name)){
-    		if(System.currentTimeMillis() - lagouts.get(name).lagTime > LAGOUT_TIME * Tools.TimeInMillis.SECOND){
-    			if(System.currentTimeMillis() - lagouts.get(name).lagTime < LAGOUT_RETURN * Tools.TimeInMillis.SECOND) {
-			    	elimPlayers.put(name, lagouts.remove(name));
-			    	if(!enabled.contains(name))
-			    		enabled.add(name);
-			    	m_botAction.sendSmartPrivateMessage( name, "You have been put back into the game. You have " + (MAX_LAGOUT-elimPlayers.get(name).lagouts) + " lagouts left.");
-			    	elimPlayers.get(name).clearBorderInfo();
-			    	m_botAction.setShip(name, elimPlayers.get(name).shiptype);
-			    	m_botAction.setFreq(name, elimPlayers.get(name).frequency);
-			    	doWarpIntoElim(name);
-    			} else
-    				m_botAction.sendSmartPrivateMessage( name, "You have taken too long to return. Please wait for the next game to begin.");
-    		} else
-    			m_botAction.sendSmartPrivateMessage( name, "You must wait for " + (LAGOUT_TIME-((System.currentTimeMillis() - lagouts.get(name).lagTime)/Tools.TimeInMillis.SECOND)) + " more seconds.");
-    	} else
-    		m_botAction.sendSmartPrivateMessage( name, "You aren't in the game!");    		
-    }
-    
-    public void cmd_scorereset(String name){
-		m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimCasualRecs SET fnKills = 0, fnDeaths = 0 WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-		m_botAction.SQLBackgroundQuery(db, null, "DELETE FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-		m_botAction.sendSmartPrivateMessage( name, "Your wins and losses have been reset to zero.");
-    }
-    
-    public void cmd_classic(String name){
-        if( cfg_casualAllowed == 1 ) {
-            int wantsClassic = 0;
-            if(classicMode.remove(name))
-                m_botAction.sendSmartPrivateMessage( name, "You will be moved to the casual arena when you are out.");
-            else {
-                wantsClassic = 1;
-                classicMode.add(name);
-                m_botAction.sendSmartPrivateMessage( name, "You will be specced when you are out.");
-            }
-            
-            m_botAction.SQLBackgroundQuery(db, null,"UPDATE tblElimPlayer SET fnSpecWhenOut = " + wantsClassic + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-        } else {
-            m_botAction.sendSmartPrivateMessage( name, "Casual play has been disabled.");
-        }
-    }
-    
-    public void cmd_warp(String name){
-    	Player p = m_botAction.getPlayer(name);
-    	if(p == null)return;
-    	if((p.getYTileLocation() > (cfg_safe[1]-SAFE_HEIGHT) && p.getYTileLocation() < (cfg_safe[1]+SAFE_HEIGHT) && cfg_gameType == BASEELIM) ||
-    	   (p.getYTileLocation() > (cfg_safe[1]-SAFE_HEIGHT) && p.getYTileLocation() < (cfg_safe[1]+SAFE_HEIGHT) && cfg_gameType == ELIM))
-    		m_botAction.specificPrize(name, Tools.Prize.WARP);
-    	else
-    		m_botAction.sendSmartPrivateMessage( name, "This command is for players in the safe.");
-    }
-    
-    public void cmd_stats(String name, String target){
-    	String t = m_botAction.getFuzzyPlayerName(target);
-    	if(t != null)
-    		target = t;
-    	try{
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(target.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-    		if( rs != null && rs.next() ){
-    			int ranking = rs.getInt("fnRank");
-    			int rating = rs.getInt("fnRating");
-    			int kills = rs.getInt("fnKills");
-    			int deaths = rs.getInt("fnDeaths");
-    			float ave = rs.getFloat("fnAve");
-    			double aimNum = rs.getDouble("fnAim");
-    			int cks = rs.getInt("fnCKS");
-    			int cls = rs.getInt("fnCLS");
-    			int bks = rs.getInt("fnBKS");
-    			int wls = rs.getInt("fnWLS");
-    			int bws = rs.getInt("fnBWS");
-    			int pe = rs.getInt("fnPe");
-    			int dk = rs.getInt("fnDK");
-    			int sb = rs.getInt("fnSB");
-    			int gamesWon = rs.getInt("fnGamesWon");
-    			int gamesPlayed = rs.getInt("fnGamesPlayed");
-    			m_botAction.SQLClose(rs);
-    			String aim = format.valueToString(aimNum);
-    			String rank;
-    			if(ranking == 0)
-    				rank = "Not ranked";
-    			else
-    				rank = "#" + ranking;
-    			m_botAction.sendSmartPrivateMessage( name, "=== Player: '" + target + "' Rank: " + rank + " Rating: " + rating + " ===");
-    			m_botAction.sendSmartPrivateMessage( name, "Kills: " + kills + " Deaths: " + deaths + " Ave: " + Math.round(ave) + " AIM:" + aim + "% CKS:" + cks + " BKS:" + bks + " CLS:" + cls + " WLS:" + wls + " BWS:" + bws);
-    			m_botAction.sendSmartPrivateMessage( name, "Games Won: " + gamesWon + " Games Played: " + gamesPlayed + " PE:" + pe + " DK:" + dk + " SB:" + sb);
-    		} else {
-    			m_botAction.SQLClose(rs);
-    			m_botAction.sendSmartPrivateMessage( name, "User '" + target + "' not found.");	
-    		}
-    	} catch(Exception e){
-    		m_botAction.sendSmartPrivateMessage( name, "There was a problem handling your request. Please try again in a minute.");
-    	}
-    }
-    
-    public void cmd_rank(String name, String message){
-    	int rank;
-    	try{
-    		rank = Integer.parseInt(message);
-    	}catch(NumberFormatException e){
-    		m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !rank 1");
-    		return;
-    	}
-    	try{
-    		if(rank < 3)rank = 3;
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnRank, fnRating, fcUserName FROM tblElimPlayer WHERE fnGameType = " + cfg_gameType + " AND fnRank BETWEEN " + (rank - 2) + " AND " + (rank + 2) + " ORDER BY fnRank ASC");
-    		while(rs != null && rs.next()){
-    			int rsRank = rs.getInt("fnRank");
-    			int rsRating = rs.getInt("fnRating");
-    			String rsName = rs.getString("fcUserName");
-    			m_botAction.sendSmartPrivateMessage( name, "#" + rsRank + ") " + rsName + " - " + rsRating);
-    		}
-    		m_botAction.SQLClose(rs);
-    	}catch(Exception e){
-    		Tools.printStackTrace(e);
-    	}
-    }
-    
-    public void cmd_zone(String name){
-    	if(cfg_zone == ON){
-    		cfg_zone = OFF;
-    		m_botAction.sendSmartPrivateMessage( name, "The bot will no longer zone at the start of elimination matches.");
-    	}else{
-    		cfg_zone = ON;
-    		m_botAction.sendSmartPrivateMessage( name, "The bot will now zone at the start of elimination matches.");
-    	}
-    }
-    
-    public void cmd_stop(String name){
-    	if(game.state != GameStatus.OFF_MODE){
-    		m_botAction.sendArenaMessage("This game has been brutally killed by " + name);
-    		game.state = GameStatus.OFF_MODE;
-    		lastWinner = "-anonymous-";
-    		winStreak = 0;
-    		Iterator<String> i = elimPlayers.keySet().iterator();
-    		while( i.hasNext() ){
-    			doWarpIntoCasual(i.next());
-    			i.remove();
-    		}
-    		lagouts.clear();
-    		losers.clear();
-    		votes.clear();
-    		m_botAction.cancelTasks();
-    	}
-    	else
-    		m_botAction.sendSmartPrivateMessage( name, "There is currently no game in progress.");
-    }
-    
-    public void cmd_off(String name, boolean shouldDisconnect){
-    	if((botMode == OFF && !shouldDisconnect) || (botMode == DISCONNECT && shouldDisconnect)){
-    		m_botAction.sendSmartPrivateMessage( name, "The bot is already set for that task.");
-    		return;
-    	}
-    	if(!shouldDisconnect){
-    		botMode = OFF;
-    		m_botAction.sendSmartPrivateMessage( name, "New games will be prevented from starting once the current game ends.");
-    	}else{
-    		botMode = DISCONNECT;
-    		if(game.state == GameStatus.OFF_MODE || game.state == GameStatus.WAITING_FOR_PLAYERS)
-    			try{
-    				m_botAction.scheduleTask(new DieTask(name), 500);
-    			}catch(Exception e){}
-    		else
-    			m_botAction.sendSmartPrivateMessage( name, "The bot will disconnect once the current game ends.");
-    	}
-    }
-    
-    public void cmd_on(String name){
-    	if(botMode == ON){
-    		m_botAction.sendSmartPrivateMessage( name, "The bot is already on.");
-    		return;
-    	}
-    	if(botMode == OFF)
-    		m_botAction.sendSmartPrivateMessage( name, "Off mode disabled. New games will be allowed to start.");
-    	else
-    		m_botAction.sendSmartPrivateMessage( name, "Shutdown mode disabled. New games will be allowed to start.");
-    	botMode = ON;
-    	if(game.state == GameStatus.OFF_MODE)
-    		game.moveOn();
-    }
-    
-    public void doEInfo(String message){
-    	String name, userid;
-    	int IDindex, ID;
-    	IDindex = message.indexOf("UserId:");
-    	name = message.substring(0,IDindex-2);
-    	userid = message.substring(IDindex + 8, message.indexOf("  Res:"));
-    	try{
-    		ID = Integer.parseInt(userid);
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimJavsRecs WHERE fnUserID = " + ID);
-    		if(rs != null && rs.next()){
-    			int kills = rs.getInt("fnKills"), deaths = rs.getInt("fnDeaths");
-    			m_botAction.SQLClose(rs);
-    			m_botAction.SQLBackgroundQuery(db, null, "DELETE FROM tblElimJavsRecs WHERE fnUserID = " + ID);
-    			casualPlayers.get(name).wins += kills;
-    			casualPlayers.get(name).losses += deaths;    			
-    			m_botAction.sendSmartPrivateMessage( name, "Your record has been updated from ?go javs. PM me with !rec to view your wins and losses.");
-    		}
-    		else m_botAction.SQLClose(rs);
-    	}catch(Exception e){}
-    }
-    
-    public void doWaitingForPlayers(){
-    	game.state = GameStatus.WAITING_FOR_PLAYERS;
-    	int neededPlayers = cfg_minPlayers - elimPlayers.size();
-    	if(neededPlayers <= 0) {
-    	    if(cfg_zone == ON)
-    	        doElimZoner();
-    	        for(int i=1;i<=10;i++)
-                    m_botAction.sendChatMessage(i, "Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play");  
-                    TimerTask wait10Seconds = new TimerTask() {
-                        public void run() {
-                            game.moveOn();
-                        } 
-                        };
-                        try{
-                            m_botAction.scheduleTask(wait10Seconds, 10 * Tools.TimeInMillis.SECOND);
-                        }catch(Exception e){}
-                    } else
-                        m_botAction.sendArenaMessage("A new elimination match will begin when " + neededPlayers + " more player(s) enter.");
-    
-    	                if (pm.size() > 0) {
-                            for (int i = 0; i < pm.size(); i++) {
-                                m_botAction.sendSmartPrivateMessage(pm.get(i), "Next " + cfg_gameName +
-                                        " is starting! Type ?go " + cfg_arena + " to play!");
-                                
-
-                            }}}
-    
-
-
-    public void doVotingOnShip(){
-    	game.state = GameStatus.VOTING_ON_SHIP;
-    	shipType = cfg_defaultShip;
-    	shrap = OFF;
-    	Iterator<String> it = enabled.iterator();
-    	while( it.hasNext() )
-    		doWarpIntoElim(it.next());
-    	String s = "Vote: ";
-    	for(int i=0;i<cfg_shipTypes.size();i++){
-    		s += Tools.shipName(cfg_shipTypes.get(i)) + " - " + cfg_shipTypes.get(i) + ", ";
-    		votes.put(cfg_shipTypes.get(i),0);
-    		votes.put(cfg_shipTypes.get(i) * 10, 0);
-    	}
-    	s = s.substring(0, s.length()-2);
-    	m_botAction.sendArenaMessage(s);
-    	m_botAction.sendArenaMessage("NOTICE: To vote for a kill race add a 0 on the end of your vote.");
-    	game.moveOn(cfg_votingLength * Tools.TimeInMillis.SECOND);
-    	
-    }
-    
-    public void doVotingOnDeaths(){
-    	game.state = GameStatus.VOTING_ON_DEATHS;
-    	deaths = -1;
-    	kills = -1;
-    	int min = 1;
-    	if(winStreak >= LIMIT_STREAK)
-    		min = MIN_FOR_STREAK;
-    	if(gameStyle == ELIM)
-    		for(int i=min;i<=cfg_maxDeaths;i++)
-    			votes.put(i, 0);
-    	else
-    		for(int i=min;i<=cfg_maxKills;i++)
-    			votes.put(i, 0);
-    	game.moveOn(cfg_votingLength * Tools.TimeInMillis.SECOND);
-    }
-    
-    public void doVotingOnShrap(){
-    	game.state = GameStatus.VOTING_ON_SHRAP;
-    	votes.put(0,0);
-    	votes.put(1,0);
-    	game.moveOn(cfg_votingLength * Tools.TimeInMillis.SECOND);
-    }
-    
-    public void doWaitingToStart(){
-    	game.state = GameStatus.WAITING_TO_START;
-    	m_botAction.sendArenaMessage("Enter to play. Game will begin in " + (cfg_waitLength + 10) + " seconds");
-    	if(deaths == 1 && gameStyle == ELIM)
-    		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Die "+ deaths + " time and you are out");
-    	else if(gameStyle == ELIM)
-    		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Die "+ deaths + " times and you are out");
-    	else if(kills == 1 && gameStyle == KILLRACE)
-    		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Get "+ kills + " kill to win");
-    	else
-    		m_botAction.sendArenaMessage("Rules: All on own freq, no teaming! Get "+ kills + " kills to win");
-    	
-    	game.moveOn(cfg_waitLength * Tools.TimeInMillis.SECOND);
-    }
-    
-
-
-    public void doTenSeconds(){
-    	game.state = GameStatus.TEN_SECONDS;
-    	m_botAction.sendArenaMessage("Get ready. Game will start in 10 seconds");//No new entries
-    	int freq = 600;
-    	Iterator<ElimPlayer> i = elimPlayers.values().iterator();
-    	while(i.hasNext()){
-    		ElimPlayer ep = i.next();
-    		Player p = m_botAction.getPlayer(ep.name);
-    		if(p == null || p.getShipType() == 0){
-    			i.remove();
-    			continue;
-    		}
-    		ep.frequency = freq;
-    		if(p.getFrequency() != ep.frequency)
-    			m_botAction.setFreq(ep.name, freq);
-    		ep.shiptype = p.getShipType();
-    		if(shipType == ANY_SHIP){
-    			if(!cfg_shipTypes.contains(p.getShipType())){
-    				m_botAction.setShip(p.getPlayerName(), cfg_defaultShip);
-    				ep.shiptype = cfg_defaultShip;
-    			}
-    		}
-    		else if(p.getShipType() != shipType){
-    			ep.shiptype = shipType;
-    			m_botAction.setShip(p.getPlayerName(), shipType);
-    		}
-    		freq++;
-    	}
-    	if(elimPlayers.size() >= 15)
-    		m_botAction.setDoors("00001000");
-    	else
-    		m_botAction.setDoors(255);
-    	game.moveOn(10 * Tools.TimeInMillis.SECOND);
-    }
-    
-    public void doGameInProgress(){
-    	game.state = GameStatus.GAME_IN_PROGRESS;
-    	lagouts.clear();
-    	losers.clear();
-    	m_botAction.sendArenaMessage("GO! GO! GO!", Tools.Sound.GOGOGO);
-    	Iterator<ElimPlayer> i = elimPlayers.values().iterator();
-    	while(i.hasNext()){
-    		ElimPlayer ep = i.next();
-    		ep.gotChangeWarning = false;
-    		if(shrap == ON)
-        		m_botAction.specificPrize(ep.name, Tools.Prize.SHRAPNEL);
-        	m_botAction.specificPrize(ep.name, Tools.Prize.MULTIFIRE);
-    		ep.resetScore();
-    		m_botAction.scoreReset(ep.name);
-    		    try{
-    		        boolean newPlayer = false;
-    		        ResultSet rs = m_botAction.SQLQuery(db, "SELECT * FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-    		        if(rs != null && rs.next()){
-    		            ep.ave = rs.getFloat("fnAve");
-    		            ep.BDK = rs.getInt("fnBDK");
-    		            ep.streak = rs.getInt("fnCKS");
-    		            ep.BKS = rs.getInt("fnBKS");
-    		            ep.lstreak = rs.getInt("fnCLS");
-    		            ep.WLS = rs.getInt("fnWLS");
-    		            ep.initWins = rs.getInt("fnKills");
-    		            ep.initLosses = rs.getInt("fnDeaths");
-    		            ep.initRating = rs.getInt("fnRating");
-    		        }
-    		        else newPlayer = true;
-    		        m_botAction.SQLClose(rs);
-    		        if(newPlayer){
-    		            ep.initRating = INIT_RATING;
-    		            ep.ave = INIT_RATING;
-    		            m_botAction.SQLBackgroundQuery(db, null, "INSERT INTO tblElimPlayer (fcUserName, fnGameType, fnRating, fnElim, ftUpdated) VALUES ('" + Tools.addSlashesToString(ep.name.toLowerCase()) + "'," + cfg_gameType + "," + INIT_RATING + ",1,NOW())");
-    		        }
-    		    }catch(SQLException e){
-    		        Tools.printStackTrace(e);
-    		    }
-    	}
-    }
-    
-    public void doGameOver(){
-    	game.state = GameStatus.GAME_OVER;
-    	CompareByWinsLossesAccuracy byMVP = new CompareByWinsLossesAccuracy();
-    	Iterator<ElimPlayer> i = lagouts.values().iterator();
-    	while( i.hasNext() ){
-    		ElimPlayer ep = i.next();
-    		if(((((float)ep.getTotalWins()/(float)ep.getTotalLosses())*ep.ave) - ep.initRating) < 0)
-    			losers.put(ep.name, ep);
-    	}
-    	lagouts.clear();
-    	losers.put(winner.name, winner);
-    	i = losers.values().iterator();
-    	while( i.hasNext() ){
-    		ElimPlayer ep = i.next();
-    		avg_rating += ep.initRating;
-    		
-			if(ep.name.equalsIgnoreCase(winner.name)){
-				if(lastWinner.equalsIgnoreCase(ep.name)){
-					winStreak++;
-					m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
-							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
-							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
-							", fnPE = fnPE + " + ep.eliminations + 
-							", fnSB = fnSB + " + ep.streakBreaks + 
-							", fnDK = fnDK + " + ep.doublekills +
-							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
-							" ELSE ((fnKills/fnShots)*100) END), " + 
-							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
-							", fnCWS = fnCWS + 1, fnBWS = (CASE WHEN (fnCWS > fnBWS) THEN fnCWS ELSE fnBWS END), " + 
-							"fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
-							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
-							"' AND fnGameType = " + cfg_gameType);
-				} else {
-					winStreak = 1;
-					m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnGamesWon = fnGamesWon + 1, " + 
-							"fnGamesPlayed = fnGamesPlayed + 1, fnKills = fnKills + " + ep.wins + 
-							", fnDeaths = fnDeaths + " + ep.losses + ", fnShots = fnShots + " + ep.shots +
-							", fnPE = fnPE + " + ep.eliminations + 
-							", fnSB = fnSB + " + ep.streakBreaks + 
-							", fnDK = fnDK + " + ep.doublekills +
-							", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
-							" ELSE ((fnKills/fnShots)*100) END), " + 
-							"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
-							", fnCWS = 1, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
-							"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
-							"' AND fnGameType = " + cfg_gameType);
-				}
-			} else {
-				m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnGamesPlayed = fnGamesPlayed + 1, " + 
-						"fnKills = fnKills + " + ep.wins + ", fnDeaths = fnDeaths + " + ep.losses + 
-						", fnShots = fnShots + " + ep.shots +
-						", fnPE = fnPE + " + ep.eliminations + 
-						", fnSB = fnSB + " + ep.streakBreaks +
-						", fnDK = fnDK + " + ep.doublekills +
-						", fnAve = " + ep.ave + ", fnAim = (CASE WHEN (fnAim = 0 OR fnShots = 0) THEN " + ep.hitRatio + 
-						" ELSE ((fnKills/fnShots)*100) END), " + 
-						"fnCKS = " + ep.streak + ", fnCLS = " + ep.lstreak + 
-						", fnCWS = 0, fnRating = (CASE WHEN (fnDeaths = 0) THEN 0 ELSE ((fnKills/fnDeaths)*fnAve) END) " + 
-						"WHERE fcUserName = '" + Tools.addSlashesToString(ep.name.toLowerCase()) + 
-						"' AND fnGameType = " + cfg_gameType);
-			}
-    	}
-    	avg_rating /= losers.size();
-	    List<ElimPlayer> l = Arrays.asList(losers.values().toArray(new ElimPlayer[losers.values().size()]));
-	    Collections.sort(l, Collections.reverseOrder(byMVP));//Best record
-	    new MVPTimer(l.get(0).name);
-	    m_botAction.sendArenaMessage("GAME OVER. Winner: " + winner.name + "!", Tools.Sound.HALLELUJAH);
-	    lastWinner = winner.name;
-    	Iterator<String> s = enabled.iterator();
-    	while( s.hasNext() ){
-    		String playerName = s.next();
-    		Player p = m_botAction.getPlayer(playerName);
-    		if(p == null)continue;
-    		elimPlayers.put(playerName, new ElimPlayer(playerName));
-    		doWarpIntoElim(playerName);
-    		
-    	}
-    	
-    	try{
-    		m_botAction.SQLQueryAndClose(db, "INSERT INTO tblElimGame (fnGameType, fcWinnerName, fnWinnerKills, fnWinnerDeaths, fnShipType, fnDeaths, fnNumPlayers, fnAvgRating, fdPlayed) VALUES( " + cfg_gameType + ", '" + Tools.addSlashesToString(winner.name.toLowerCase()) + "', " + winner.wins + ", " + winner.losses + ", " + shipType + ", " + deaths + ", " + losers.size() + ", " + avg_rating + ", NOW())");
-    		m_botAction.SQLBackgroundQuery(db, null, "SET @i=0; UPDATE tblElimPlayer SET fnRank = (@i:=@i+1) WHERE fnGameType = " + cfg_gameType + " AND (fnKills + fnDeaths) > " + INIT_RANKING + " ORDER BY fnRating DESC;");
-    	}catch(SQLException e){
-    		Tools.printStackTrace(e);
-    	}
-    	
-    	game.moveOn(20 * Tools.TimeInMillis.SECOND);
-    }
-    
-    public void vote(String name, String message){
-    	if(!elimPlayers.containsKey(name)){
-    		m_botAction.sendSmartPrivateMessage( name, "You must be playing to vote!");
-    		return;
-    	}
-    	int vote = 0;
-    	ElimPlayer player;
-    	try{
-    		vote = Integer.parseInt(message);
-    	} catch(NumberFormatException e){
-    		Tools.printStackTrace(e);//This should never happen
-    	}
-    	player = elimPlayers.get(name);
-    	if(votes.containsKey(vote)){
-    		if(player.vote != -1)
-        		votes.put(player.vote, votes.get(player.vote) - 1);
-    		player.vote = vote;
-			votes.put(vote, votes.get(vote) + 1);
-    	}    	
-    }
-    
-    public void countVotes(){
-    	int max = 0;
-		ArrayList<Integer> winners = new ArrayList<Integer>();		
-		Iterator<Integer> i = votes.keySet().iterator();
-		while( i.hasNext() ){
-			int x = i.next();
-			if( votes.get(x) > max ){
-				max = votes.get(x);
-				winners.clear();
-				winners.add(x);
-			}
-			else if( votes.get(x) == max && max != 0) winners.add(x);
-		}
-		if(game.state == GameStatus.VOTING_ON_SHIP){//The ship vote
-			if(winners.isEmpty()){
-				shipType = cfg_defaultShip;
-			}else if(winners.size() > 1){
-				shipType = winners.get(rand.nextInt(winners.size()-1));
-			}else
-				shipType = winners.get(0);
-			gameStyle = ELIM;
-			if(shipType > 10){
-				shipType /= 10;
-				gameStyle = KILLRACE;
-			}
-			int min = 1;
-	    	if(winStreak >= LIMIT_STREAK)
-	    		min = MIN_FOR_STREAK;
-			if(gameStyle == ELIM)
-				m_botAction.sendArenaMessage("This will be " + Tools.shipName(shipType) + " elim. VOTE: How many deaths? (" + min + "-" + cfg_maxDeaths + ")");
-			else
-				m_botAction.sendArenaMessage("This will be " + Tools.shipName(shipType) + " kill race. VOTE: How many kills? (" + min + "-" + cfg_maxKills + ")");
-		} else if(game.state == GameStatus.VOTING_ON_DEATHS){//The deaths vote
-			if(gameStyle == ELIM){
-				if(winners.isEmpty())
-					deaths = cfg_maxDeaths;
-				else if(winners.size() > 1)
-					deaths = winners.get(rand.nextInt(winners.size()-1));
-				else
-					deaths = winners.get(0);
-				if(cfg_gameType == ELIM || shipType != 2)
-					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths);
-				else
-					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths + ". VOTE: Shrap on or off? (1-on, 0-off)");
-			} else {
-				if(winners.isEmpty())
-					kills = cfg_maxKills;
-				else if(winners.size() > 1)
-					kills = winners.get(rand.nextInt(winners.size()-1));
-				else
-					kills = winners.get(0);
-				if(cfg_gameType == ELIM || shipType != 2)
-					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " kill race to " + kills);
-				else
-					m_botAction.sendArenaMessage(Tools.shipName(shipType) + " kill race to " + kills + ". VOTE: Shrap on or off? (1-on, 0-off)");
-			}
-		} else if(game.state == GameStatus.VOTING_ON_SHRAP){//Shrap vote(Only for baseelim)
-			if(winners.isEmpty() || winners.size() > 1)
-				shrap = OFF;
-			else
-				shrap = winners.get(0);
-			if(shrap == OFF)
-				m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths + ". Shrap: [OFF]");
-			else
-				m_botAction.sendArenaMessage(Tools.shipName(shipType) + " elim to " + deaths + ". Shrap: [ON]");
-		}
-		//Clear votes
-		votes = new TreeMap<Integer,Integer>();
-		Iterator<ElimPlayer> it = elimPlayers.values().iterator();
-		while( it.hasNext() )
-			it.next().vote = -1;
-    }
-    
-    public void doElimZoner(){
-    	if((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE))return;
-    	if(winStreak == 1)
-    		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Last round's winner was " + lastWinner + " (" + winner.wins + ":" + winner.losses + ")! Type ?go " + cfg_arena + " to play -" + m_botAction.getBotName());
-    	else if(winStreak > 1)
-    		switch(winStreak){
-	    		case 2:m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") has won 2 back to back! Type ?go " + cfg_arena + " to play -" + m_botAction.getBotName());
-	    			break;
-	    		case 3:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is on fire with a triple win! Type ?go " + cfg_arena + " to end the streak! -" + m_botAction.getBotName(), Tools.Sound.CROWD_OOO);
-	    			break;
-	    		case 4:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is on a rampage! 4 wins in a row! Type ?go " + cfg_arena + " to put a stop to the carnage! -" + m_botAction.getBotName(), Tools.Sound.CROWD_GEE);
-	    			break;
-	    		case 5:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is dominating with a 5 game streak! Type ?go " + cfg_arena + " to end this madness! -" + m_botAction.getBotName(), Tools.Sound.SCREAM);
-	    			break;
-	    		default:m_botAction.sendZoneMessage(cfg_gameName.toUpperCase() + ": " + lastWinner + " (" + winner.wins + ":" + winner.losses + ") is bringing the zone to shame with " + winStreak + " consecutive wins! Type ?go " + cfg_arena + " to redeem yourselves! -" + m_botAction.getBotName(), Tools.Sound.INCONCEIVABLE);
-	    			break;
-    		}
-    	else
-    		m_botAction.sendZoneMessage("Next " + cfg_gameName + " is starting. Type ?go " + cfg_arena + " to play -" + m_botAction.getBotName());
-    	lastZoner = System.currentTimeMillis();
-
-            
-    }
-    
-    public void doWarpIntoElim(String name){
-        if( cfg_casualAllowed == 1 )
-            m_botAction.sendUnfilteredPrivateMessage(name, "*objoff " + CASUAL_LOGO_LVZ);
-    	if(shipType == 6 && cfg_gameType == BASEELIM){
-    		int[] xarena = cfg.getIntArray("XArena" + rand.nextInt(3), ",");
-    		m_botAction.warpTo(name, xarena[0], xarena[1], xarena[2]);
-    	}
-    }
-    
-    public void doWarpIntoCasual(String name){
-        if( cfg_casualAllowed == 1 ) {
-            m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
-            m_botAction.warpTo(name, cfg_casual[0], cfg_casual[1], cfg_casual[2]);
-        } else {
-            m_botAction.specWithoutLock(name);            
-        }
-    }
-    
-    public void doWarpIntoCasualSafe(String name){
-    	if(cfg_casualAllowed != 1 || classicMode.contains(name))
-    		m_botAction.specWithoutLock(name);
-    	else{
-	    	for(int i=0;i<9999;i++){
-	    		if(m_botAction.getFrequencySize(i) == 0){
-	    			m_botAction.setFreq(name, i);
-	    			break;
-	    		}    			
-	    	}
-	    	m_botAction.warpTo(name, cfg_safe[0], cfg_safe[1], cfg_safe[2]);
-	    	m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_SPLASH_LVZ);
-	    	m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
-    	}
-    }
-    
-
-private class CasualPlayer{
-	private int wins = 0, losses = 0;
-	private String name;
-	
-	private CasualPlayer(String name){
-		this.name = name;
-		try{
-			ResultSet rs = m_botAction.SQLQuery(db, "SELECT fcUserName FROM tblElimCasualRecs WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-			if(rs == null || !rs.next()){
-				m_botAction.SQLClose(rs);
-				m_botAction.SQLBackgroundQuery(db, null, "INSERT INTO tblElimCasualRecs (fcUserName, fnKills, fnDeaths, fnGameType) VALUES ('" + Tools.addSlashesToString(name.toLowerCase()) + "', 0, 0, " + cfg_gameType + ")");
-			}else m_botAction.SQLClose(rs);
-		}catch(SQLException e){
-			Tools.printStackTrace(e);
-		}
-	}
-	
-	private void gotWin(){
-		wins += 1;
-	}
-	
-	private void gotLoss(){
-		losses += 1;
-	}
-	
-	private void storeStats(){
-		// avoid unnecessary updates to the database
-		if (wins != 0 || losses != 0)
-			m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimCasualRecs SET fnKills = fnKills + " + wins + ", fnDeaths = fnDeaths + " + losses + " WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType );
-	}
-}
-    
-private class ElimPlayer{
-	private String name;
-	//========================================================================
-	//Bot variables
-	//========================================================================
-	private int shiptype = -1, vote = -1, frequency = -1, lagouts = 0;
-	private long outOfBounds = 0, lagTime = -1, spawnTime = -1, killTime = -1;
-	private boolean gotBorderWarning = false, gotChangeWarning = false;
-	//========================================================================
-	//Database variables
-	//========================================================================
-	private int initRating = 0, initWins = 0, initLosses = 0, BKS = 0, WLS = 0, BDK = 0;
-	private float ave = 0;
-	//========================================================================
-	//Game statistic variables
-	//========================================================================
-	private int wins = 0, losses = 0;	
-	private int shots = 0, quickKills = 0, streak = 0, lstreak = 0;
-	private int streakBreaks = 0, eliminations = 0, doublekills = 0;
-	private double hitRatio = 0;
-	
-	private ElimPlayer(String name){
-		this.name = name;	
-	}
-	
-	private void resetScore(){
-		wins = 0;
-		losses = 0;
-		lagouts = 0;
-	}
-	
-	private void gotWin(int enemyRating){
-		if(System.currentTimeMillis() - killTime < (DOUBLE_KILL * Tools.TimeInMillis.SECOND)){
-			quickKills++;
-			doQuickKill();
-		}
-		else quickKills = 0;
-		lstreak = 0;
-		killTime = System.currentTimeMillis();
-		wins += 1;
-		ave = ((ave * (float)getTotalWins()) + (float)enemyRating)/((float)getTotalWins() + 1f);	
-		streak += 1;
-		if(streak >= STREAK_INIT && (streak - STREAK_INIT)%STREAK_REPEAT == 0){
-			int i = (streak-STREAK_INIT)/STREAK_REPEAT;
-			if(i>=sMessages.length)
-				i = sMessages.length - 1;
-			m_botAction.sendArenaMessage(name + " - " + sMessages[i] + "(" + streak + ":0)");
-		}
-		if(streak > BKS){
-			BKS = streak;
-			m_botAction.SQLBackgroundQuery(db, null,"UPDATE tblElimPlayer SET fnBKS = " + streak + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
-		}
-	}
-	
-	private int getTotalWins(){
-		return (wins + initWins);
-	}
-	
-	private void gotLoss(boolean resetStreak){
-		losses += 1;
-		lstreak += 1;
-		if(resetStreak)
-			streak = 0;
-		if(lstreak > WLS){
-			WLS = lstreak;
-			m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnWLS = " + lstreak + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
-		}
-	}
-	
-	private int getTotalLosses(){
-		return (losses + initLosses) == 0 ? 1 : (losses + initLosses);
-	}
-	
-	private void doQuickKill(){
-		doublekills++;
-		switch(quickKills){
-			case 1:m_botAction.sendArenaMessage(name + " - Double kill!", Tools.Sound.CROWD_OHH);break;
-			case 2:m_botAction.sendArenaMessage(name + " - Triple kill!", Tools.Sound.CROWD_GEE);break;
-			case 3:m_botAction.sendArenaMessage(name + " - Quadruple kill!", Tools.Sound.INCONCEIVABLE);break;
-			case 4:m_botAction.sendArenaMessage(name + " - Quintuple kill!", Tools.Sound.SCREAM);break;
-			case 5:m_botAction.sendArenaMessage(name + " - Sextuple kill!", Tools.Sound.CRYING);break;
-			case 6:m_botAction.sendArenaMessage(name + " - Septuple kill!", Tools.Sound.GAME_SUCKS);break;		
-		}
-		
-		if(quickKills > BDK){
-			BDK = quickKills;
-			m_botAction.SQLBackgroundQuery(db, null, "UPDATE tblElimPlayer SET fnBDK = " + BDK + " WHERE fnGameType = " + cfg_gameType + " AND fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "'");
-		}
-	}
-	
-	private void calculateRatios(){
-		if(shots != 0)
-			hitRatio = (((double)wins / shots) * 100);
-		else
-			hitRatio = (((double)wins / 1) * 100);
-		if(hitRatio > 100) 
-			hitRatio = 100;
-	}
-	
-	private void clearBorderInfo(){
-		outOfBounds = 0;
-		gotBorderWarning = false;
-	}
-
-}
-
-public class CompareByLosses implements Comparator<ElimPlayer> {
-	public int compare(ElimPlayer a, ElimPlayer b){
-		if(a.losses > b.losses)return 1;
-		else if(a.losses == b.losses)return 0;
-		else return -1;
-	}
-}
-
-public class CompareAlphabetical implements Comparator<ElimPlayer> {
-	public int compare(ElimPlayer a, ElimPlayer b){
-		return a.name.compareToIgnoreCase(b.name);
-	}
-}
-
-public class CompareByWinsLossesAccuracy implements Comparator<ElimPlayer> {
-	public int compare(ElimPlayer a,ElimPlayer b) {
-		// compare by wins first
-		if (a.wins > b.wins)return 1;
-		else if(a.wins < b.wins)return -1;
-		// least losses
-		else if(a.losses < b.losses)return 1;
-		else if(a.losses > b.losses)return -1;
-		// try accuracy
-		a.calculateRatios();
-		b.calculateRatios();
-		if(a.hitRatio > b.hitRatio)return 1;
-		else if(a.hitRatio < b.hitRatio)return -1;
-		// they did equally well...we leave it to the underlying implementation of Collections.sort for a pseudorandom pick
-		return 0;
-	}
-}
-private class GameStatus{
-	private static final int OFF_MODE = -1;
-	private static final int WAITING_FOR_PLAYERS = 0;
-	private static final int VOTING_ON_SHIP = 1;
-	private static final int VOTING_ON_DEATHS = 2;
-	private static final int VOTING_ON_SHRAP = 3;
-	private static final int WAITING_TO_START = 4;
-	private static final int TEN_SECONDS = 5;
-	private static final int GAME_IN_PROGRESS = 6;
-	private static final int GAME_OVER = 7;
-	private int state = 0;
-	private TimerTask task;
-	
-	private GameStatus(){}
-	
-	private void moveOn(long millis){
-		m_botAction.cancelTask(task);
-		task = new TimerTask(){
-			public void run(){
-				moveOn();
-				this.cancel();
-			}
-		};
-		try{ 
-			m_botAction.scheduleTask(task, millis);
-		}catch(Exception e){}
-	}
-	
-	private void moveOn(){
-		if(elimPlayers.size() < cfg_minPlayers && state < GAME_IN_PROGRESS){
-			state = OFF_MODE;
-			lastWinner = "-anonymous-";
-			winStreak = 0;
-		}
-		switch(state){
-			case OFF_MODE:
-				doWaitingForPlayers();
-				break;
-			case WAITING_FOR_PLAYERS:
-				doVotingOnShip();
-				break;
-			case VOTING_ON_SHIP:
-				countVotes();
-				doVotingOnDeaths();
-				break;
-			case VOTING_ON_DEATHS:
-				countVotes();
-				if(cfg_gameType == ELIM || shipType != 2){
-					doWaitingToStart();
-				} else {
-					doVotingOnShrap();
-				}
-				break;
-			case VOTING_ON_SHRAP:
-				countVotes();
-				doWaitingToStart();
-				break;
-			case WAITING_TO_START:
-				doTenSeconds();
-				break;
-			case TEN_SECONDS:
-				doGameInProgress();
-				break;
-			case GAME_IN_PROGRESS:
-				doGameOver();
-				break;
-			case GAME_OVER:
-				if(botMode == ON)
-					doWaitingForPlayers();
-				else if(botMode == OFF){
-					state = OFF_MODE;
-					lastWinner = "-anonymous-";
-					winStreak = 0;
-				}
-				else if(botMode == DISCONNECT){
-					try{
-						m_botAction.scheduleTask(new DieTask(m_botAction.getBotName()), 500);
-					}catch( Exception e ){}
-				}
-				break;
-		}	
-	}
-	
-	public boolean isVoting(){
-		if(state == VOTING_ON_SHIP || state == VOTING_ON_DEATHS || state == VOTING_ON_SHRAP)
-			return true;
-		else return false;
-	}
-	
-	public boolean isInProgress(){
-		if(state == TEN_SECONDS || state == GAME_IN_PROGRESS)
-			return true;
-		else return false;
-	}
-	
-}
-
-private class SpawnTimer {
-    private String name;
-    private boolean casual;
-    private TimerTask runIt = new TimerTask() {
-        public void run() {
-        	if(!casual){
-	        	if(shrap == ON)
-	        		m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
-	        	m_botAction.specificPrize(name, Tools.Prize.MULTIFIRE);
-	        	doWarpIntoElim(name);
-	        	if(elimPlayers.containsKey(name)){
-	        		elimPlayers.get(name).spawnTime = System.currentTimeMillis();
-	        		if(elimPlayers.get(name).shiptype == 8){
-	        			m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
-	        			m_botAction.specificPrize(name, Tools.Prize.SHRAPNEL);
-	        		}
-	        	}
-        	}else
-        		doWarpIntoCasual(name);
-        }
-    };
-        
-    public SpawnTimer(String name, boolean casual) {
-        this.name = name;
-        if( cfg_casualAllowed == 1 )
-            this.casual = casual;
-        else
-            this.casual = false;
+        name = name.toLowerCase();
+        int vote = -1;
         try {
-            m_botAction.scheduleTask(runIt, SPAWN_TIME);
-        } catch( Exception e) {}
-    }
-}
-
-private class MVPTimer {
-    private String name;
-    private TimerTask runIt = new TimerTask() {
-        public void run() {
-        	m_botAction.sendArenaMessage("MVP: " + name, Tools.Sound.INCONCEIVABLE);
+            vote = Integer.valueOf(cmd);
+        } catch (NumberFormatException e) {
+            return;
         }
-    };
-        
-    public MVPTimer(String name) {
-        this.name = name;
-        try{
-        	m_botAction.scheduleTask(runIt, 5 * Tools.TimeInMillis.SECOND);
-        } catch( Exception e){}
-    }
-}
-
-////////////////////////////////////////////////////
-//                    EVENTS                      //
-////////////////////////////////////////////////////
-
-    public void handleEvent(LoggedOn event) {    	       
-    	m_botAction.joinArena(cfg_arena);
-    	m_botAction.specAll();
-    	m_botAction.receiveAllPlayerDeaths();
-    	m_botAction.setPlayerPositionUpdating( 400 );
-    	m_botAction.sendUnfilteredPublicMessage("?chat=" + cfg_chats);
-    }
-    
-    public void handleEvent(ArenaJoined event) {
-    	for(int z=0;z<4;z++){
-    		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-x:" + cfg_competitive[0]);
-    		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-y:" + cfg_competitive[1]);
-    		m_botAction.sendUnfilteredPublicMessage( "?set spawn:team" + z + "-radius:" + cfg_competitive[2]);
-    	}
-    	Iterator<Player> i = m_botAction.getPlayerIterator();
-    	while( i.hasNext() ){
-    		Player p = i.next();
-    		String name = p.getPlayerName();
-    		if(!opList.isBotExact(name)){
-    		    if( cfg_casualAllowed == 1 ) {
-    		        casualPlayers.put(name, new CasualPlayer(name));
-    		        if(cfg_gameType == BASEELIM)
-    		            m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");
-    		        enabled.add(name);
-    		    } else {
-    	            if(p.getShipType() > 0){
-    	                elimPlayers.put(name, new ElimPlayer(name));
-    	                doWarpIntoElim(name);
-    	            }
-    		    }
-    		}
-    		try{
-        		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-        		if(rs != null && rs.next()){
-        			if(rs.getInt("fnElim") == 0)
-        				enabled.remove(name);
-        			if(cfg_casualAllowed != 1 || rs.getInt("fnSpecWhenOut") == 1)
-        				classicMode.add(name);
-        		}
-        		m_botAction.SQLClose(rs);
-        	}catch(SQLException e){
-        		Tools.printStackTrace(e);
-        	}
-    	}
-    	game.moveOn();
+        if (voteType == VoteType.SHIP) {
+            if (vote > 0 && vote < 9) {
+                votes.put(name, vote);
+                ba.sendPrivateMessage(name, "Vote counted for: " + ShipType.type(vote).toString());
+            }
+        } else if (voteType == VoteType.DEATHS) {
+            if (vote > 0 && vote <= rules.getInt("MaxDeaths")) {
+                votes.put(name, vote);
+                ba.sendPrivateMessage(name, "Vote counted for: " + vote + " deaths");
+            }
+        } else if (voteType == VoteType.SHRAP) {
+            if (vote > -1 && vote < 2) {
+                votes.put(name, vote);
+                String shrap = "ON";
+                if (vote == 0)
+                    shrap = "OFF";
+                ba.sendPrivateMessage(name, "Vote counted for: " + shrap);
+            }
+        }
     }
     
-    public void handleEvent(WeaponFired event) {
-    	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	if(name == null)return;
-    	else if(!game.isInProgress() || !elimPlayers.containsKey(name))return;
-    	elimPlayers.get(name).shots += 1;   	
+    public void cmd_setStats(String name, String cmd) {
+        String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(",");
+        if (args.length == 8) {
+            try {
+                for (int i = 0; i < voteStats.length; i++)
+                    voteStats[i] = Integer.valueOf(args[i]);
+                ba.sendSmartPrivateMessage(name, "Done!");
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name, "Error!");
+            }
+        } else
+            ba.sendSmartPrivateMessage(name, "Error! Bad length.");
     }
     
-    public void handleEvent(PlayerDeath event) {
-    	String win = m_botAction.getPlayerName(event.getKillerID());
-    	String loss = m_botAction.getPlayerName(event.getKilleeID());
-    	if(win == null || loss == null)return;
-    	Player winp = m_botAction.getPlayer(win);
-    	Player lossp = m_botAction.getPlayer(loss);
-    	if(opList.isBotExact(win) || opList.isBotExact(loss) || winp == null || lossp == null)return;
-    	casualPlayers.get(win).gotWin();
-    	casualPlayers.get(loss).gotLoss();
-    	ElimPlayer w = findCollection(win);
-    	ElimPlayer l = findCollection(loss);
-    	if(!(game.state == GameStatus.GAME_IN_PROGRESS) || w == null || l == null || winp.getYTileLocation() < (cfg_safe[1] + SAFE_HEIGHT)){
-    		new SpawnTimer(loss, true);
-    		return;
-    	}
-    	if((System.currentTimeMillis() - l.spawnTime) < (SPAWN_NC * Tools.TimeInMillis.SECOND)||
-    	   (System.currentTimeMillis() - w.spawnTime) < (SPAWN_NC * Tools.TimeInMillis.SECOND)){
-    		m_botAction.sendSmartPrivateMessage( win, "Spawn kill(No count).");
-    		m_botAction.sendSmartPrivateMessage( loss, "Spawn kill(No count).");
-    		return;
-    	}
-    	if(winp.getShipType() == 0 || elimPlayers.containsKey(win))
-    		w.gotWin(l.initRating);
-    	if(l.streak >= 5){
-    		w.streakBreaks++;
-    		m_botAction.sendArenaMessage("Streak breaker! " + loss + "(" + l.streak + ":0) broken by " + win + "!", Tools.Sound.INCONCEIVABLE);
-    	}
-    	if(lossp.getShipType() == 0 || elimPlayers.containsKey(loss))
-    		l.gotLoss(true);
-    	if(gameStyle == ELIM && l.losses == deaths && elimPlayers.containsKey(loss)){
-    		w.eliminations++;
-    		m_botAction.sendArenaMessage(loss + " is out. " + l.wins + " wins " + l.losses + " losses");
-    		losers.put(loss, elimPlayers.remove(loss));
-    		doWarpIntoCasualSafe(loss);
-    	}else if(gameStyle == KILLRACE && w.wins == kills && elimPlayers.containsKey(win)){
-    		Iterator<ElimPlayer> i = elimPlayers.values().iterator();
-    		while( i.hasNext() ){
-    			ElimPlayer ep = i.next();
-    			if(!ep.name.equalsIgnoreCase(w.name)){
-    				losers.put(ep.name, ep);
-    				doWarpIntoCasualSafe(ep.name);
-    				i.remove();    				
-    			}
-    		}
-    	}else if(elimPlayers.containsKey(loss)){
-    		l.clearBorderInfo();
-    		new SpawnTimer(loss, false);
-    	}else
-    		new SpawnTimer(loss, true);
-    	if(elimPlayers.size() == 1){
-    		winner = elimPlayers.get(elimPlayers.firstKey());
-    		game.moveOn();
-    	}
+    /** Handles the !help command */
+    public void cmd_help(String name) {
+        String[] msg = new String[] {
+                ",-- Robo Ref Commands -------------------------------------------------------------------.",
+                "|!lag <name>       - Checks the lag of player <name>                                     |",
+                "|!ladder <ship>    - (!lad) Prints the top 5 ranking players for <ship>                  |",
+                "|!lad <ship>:<#>   - Prints the 3 players surrounding rank <#> in <ship>                 |",
+                "|!votes            - Warbird and Javelin vote analysis                                   |",
+                "|!alert            - Toggles new game private message alerts on or off                   |",
+                "|!lagout           - Return to game after lagging out                                    |",
+                "|!status           - Displays current game status                                        |",
+                "|!rank <#>         - Shows your current rank in ship <#>                                 |",
+                "|!rank <name>:<#>  - Shows the rank of <name> in ship <#>                                |",
+                "|!rec <#>          - Gets your own record in ship <#>                                    |",
+                "|!rec <name>:<#>   - Gets the record of <name> in ship <#>                               |",
+                "|                     NOTE: Use -1 as <#> for all ships                                  |",
+                "|!who              - Lists the remaining players and their records                       |",
+                "|!stats <#>        - Spams all of your ship <#> statistics if available                  |",
+                "|!stats <name>:<#> - Spams all statistic information for <name> in ship <#> if available |",
+                "|                     NOTE: Use -1 as <#> for all ships                                  |",
+                "|!streak           - Displays your current streak information                            |",
+                "|!streak <name>    - Displays streak information for <name>                              |",
+                "|!mvp              - Lists current game best/worst player record information             |",
+                "|!deaths           - Lists current game most/least player death information              |",
+                "|!scorereset <#>   - Resets all scores and statistics for the ship <#> specified (!sr)   |",
+        };
+        ba.privateMessageSpam(name, msg);
+        if (oplist.isZH(name)) {
+            msg = new String[] {
+                    ":-- Staff Commands ----------------------------------------------------------------------+",
+                    "|!die              - Forces the bot to shutdown and log off                              |",
+                    "|!stop             - Kills current game and prevents any future games (!off)             |",
+                    "|!start            - Begins game and enables games to continue running (!on)             |",
+                    "|!zone             - Forces the bot to send a default zone message                       |",
+                    "|!remove <name>    - Removes <name> from the current game (!rm or !rem)                  |",
+            };
+            ba.privateMessageSpam(name, msg);
+        }
+        if (oplist.isSmod(name)) {
+            msg = new String[] {
+                    ":-- Smod Commands -----------------------------------------------------------------------+",
+                    "|!hider            - Disables the hiding player checker/reporter (only during games)     |",
+                    "|!debug            - Toggles the debugger which sends debug messages to you when enabled |",
+                    "|!greet <msg>      - Changes the greeting message for the arena                          |",
+            };
+            ba.privateMessageSpam(name, msg);
+        }
+        ba.sendPrivateMessage(name, "`----------------------------------------------------------------------------------------'");
     }
     
-    public void handleEvent(PlayerEntered event) {
-    	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	if(name == null || opList.isBotExact(name))return;
-    	casualPlayers.put(name, new CasualPlayer(name));
-    	if(cfg_gameType == BASEELIM)
-    		m_botAction.sendUnfilteredPrivateMessage(name, "*einfo");    	
-    	m_botAction.sendSmartPrivateMessage( name, "Welcome to " + cfg_arena + "! " + getStatusMsg());
-    	enabled.add(name);
-    	if(!game.isInProgress()){
-    		elimPlayers.put(name, new ElimPlayer(name));
-    		if(elimPlayers.size() >= cfg_minPlayers && game.state == GameStatus.WAITING_FOR_PLAYERS)
-    			game.moveOn();
-    	}
-    	try{
-    		ResultSet rs = m_botAction.SQLQuery(db, "SELECT fnSpecWhenOut, fnElim FROM tblElimPlayer WHERE fcUserName = '" + Tools.addSlashesToString(name.toLowerCase()) + "' AND fnGameType = " + cfg_gameType);
-    		if(rs != null && rs.next()){
-    			if(rs.getInt("fnElim") == 0)
-    				enabled.remove(name);
-    			if(cfg_casualAllowed != 1 || rs.getInt("fnSpecWhenOut") == 1)
-    				classicMode.add(name);
-    		}
-    		m_botAction.SQLClose(rs);
-    	}catch(SQLException e){
-    		Tools.printStackTrace(e);
-    	}
+    public void cmd_votes(String name) {
+        // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
+        String[] msg = {
+                "Games     WB: " + padNum("" + voteStats[0], 3) + " | Jav: " + padNum("" + voteStats[1], 3),
+                "Outvoted  WB: " + padNum("" + voteStats[2], 3) + " | Jav: " + padNum("" + voteStats[3], 3),
+                "Unanimous WB: " + padNum("" + voteStats[4], 3) + " | Jav: " + padNum("" + voteStats[5], 3),
+                "Total votes: " + voteStats[7],
+                "Ties: " + voteStats[6],
+        };
+        ba.smartPrivateMessageSpam(name, msg);
     }
     
-    public void handleEvent(PlayerLeft event) {
-    	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	if(name == null || opList.isBotExact(name))return;
-    	enabled.remove(name);
-    	classicMode.remove(name);
-    	CasualPlayer c = casualPlayers.get(name);
-    	if( c != null )
-    	    c.storeStats();
-    	casualPlayers.remove(name);
-    	if(game.isInProgress() && elimPlayers.containsKey(name)){
-    		lagouts.put(name, elimPlayers.remove(name));
-    		lagouts.get(name).lagTime = System.currentTimeMillis();
-    		lagouts.get(name).lagouts++;
-    		if(lagouts.get(name).lagouts >= MAX_LAGOUT){
-    			m_botAction.sendArenaMessage(name + " is out. " + lagouts.get(name).wins + " wins " + lagouts.get(name).losses + " losses (Too many lagouts)");
-    			losers.put(name, lagouts.remove(name));
-        		doWarpIntoCasualSafe(name);
-    		}
-    	}
-    	else if(!game.isInProgress() && elimPlayers.containsKey(name))
-    		elimPlayers.remove(name);
-    	if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
-			winner = elimPlayers.get(elimPlayers.firstKey());
-    		game.moveOn();
-		}
+    /** Handles the !remove player command which will spec the player and erase stats */
+    public void cmd_remove(String name, String cmd) {
+        if (cmd.indexOf(" ") + 1 == cmd.length()) return;
+        if (game != null && (state == State.STARTING || state == State.PLAYING))
+            game.do_remove(name, cmd.substring(cmd.indexOf(" ") + 1));
+        else
+            ba.sendSmartPrivateMessage(name, "There is currently no game being played.");
     }
     
-    public void handleEvent(FrequencyShipChange event) {
-    	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	if(game.isInProgress() && elimPlayers.containsKey(name) && event.getShipType() == 0){
-    		lagouts.put(name, elimPlayers.remove(name));
-    		lagouts.get(name).lagTime = System.currentTimeMillis();
-    		lagouts.get(name).lagouts++;
-    		if(lagouts.get(name).lagouts >= MAX_LAGOUT){
-    			m_botAction.sendArenaMessage(name + " is out. " + lagouts.get(name).wins + " wins " + lagouts.get(name).losses + " losses (Too many lagouts)");
-    			losers.put(name, lagouts.remove(name));
-        		doWarpIntoCasualSafe(name);
-    		}   		
-    		if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
-    			winner = elimPlayers.get(elimPlayers.firstKey());
-        		game.moveOn();
-    		}
-    	} else if(!elimPlayers.containsKey(name) && event.getShipType() != cfg_defaultShip && event.getShipType() > 0){
-    		m_botAction.setShip(name, cfg_defaultShip);
-    		doWarpIntoCasual(name);
-    	} else if(!elimPlayers.containsKey(name) && game.isInProgress() && event.getShipType() > 0){
-    	    if( cfg_casualAllowed == 1 ) {
-    	        m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_LOGO_LVZ);
-    	        m_botAction.sendUnfilteredPrivateMessage(name, "*objon " + CASUAL_SPLASH_LVZ);
-                if(enabled.contains(name))
-                    m_botAction.sendSmartPrivateMessage( name, "You have entered casual play. Please wait for the next game to begin to participate.");
-    	    }
-    		doWarpIntoCasual(name);
-    	} else if(game.isInProgress() && elimPlayers.containsKey(name) && event.getShipType() > 0){
-    		ElimPlayer ep = elimPlayers.get(name);
-    		if(event.getShipType() != ep.shiptype){
-	    		m_botAction.setShip(name, ep.shiptype);
-	    		doWarpIntoElim(name);
-	    		if(game.state == GameStatus.GAME_IN_PROGRESS){
-		    		if(!ep.gotChangeWarning){
-		    			ep.gotLoss(false);
-		    			m_botAction.sendArenaMessage(name + " has attempted to change ships - +1 death");
-		    			if(ep.losses == deaths && gameStyle == ELIM){
-		    	    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses");
-		    	    		losers.put(ep.name, elimPlayers.remove(ep.name));
-		    	    		doWarpIntoCasualSafe(ep.name);
-		    	    	}else{
-		    	    		m_botAction.sendSmartPrivateMessage( name, "Attempt to change ships or frequencies again and you will be removed from the game. You have been warned.");
-		    	    		ep.gotChangeWarning = true;
-		    	    	}
-		    		}else{
-		    			m_botAction.sendArenaMessage(name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Disqualified)");
-		    			losers.put(name, elimPlayers.remove(name));
-		        		doWarpIntoCasualSafe(name);
-		    		}
-		    		if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
-		    			winner = elimPlayers.get(elimPlayers.firstKey());
-		        		game.moveOn();
-		    		}
-	    		}
-    		}
-    	} else if(enabled.contains(name) && !elimPlayers.containsKey(name) && !game.isInProgress() && event.getShipType() > 0){
-    		doWarpIntoElim(name);
-    		elimPlayers.put(name, new ElimPlayer(name));
-    		if(elimPlayers.size() >= cfg_minPlayers && game.state == GameStatus.WAITING_FOR_PLAYERS)
-    			game.moveOn();
-    	}
+    public void cmd_lag(String name, String cmd) {
+        if (cmd.indexOf(" ") + 1 == cmd.length()) return;
+        if (game != null && state == State.PLAYING) {
+            String lagger = cmd.substring(cmd.indexOf(" ") + 1);
+            String temp = ba.getFuzzyPlayerName(lagger);
+            if (temp != null)
+                lagger = temp;
+            game.do_lag(name, lagger);
+        } else
+            ba.sendPrivateMessage(name, "Lag handler not available at this time.");
     }
     
-    public void handleEvent(FrequencyChange event){
-    	String name = m_botAction.getPlayerName(event.getPlayerID());
-    	if(game.isInProgress() && elimPlayers.containsKey(name)){
-    		if(event.getFrequency() != elimPlayers.get(name).frequency  && event.getFrequency() != SPEC_FREQ){
-    			ElimPlayer ep = elimPlayers.get(name);
-    			m_botAction.setFreq(name, ep.frequency);
-    			doWarpIntoElim(name);
-    			if(!ep.gotChangeWarning){
-    				ep.gotLoss(false);
-    				m_botAction.sendArenaMessage(name + " has attempted to change frequencies - +1 death");
-    				if(ep.losses == deaths && gameStyle == ELIM){
-	    	    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses");
-	    	    		losers.put(ep.name, elimPlayers.remove(ep.name));
-	    	    		doWarpIntoCasualSafe(ep.name);
-	    	    	}else{
-	    	    		m_botAction.sendSmartPrivateMessage( name, "Attempt to change ships or frequencies again and you will be removed from the game. You have been warned.");
-    					ep.gotChangeWarning = true;
-	    	    	}
-    			} else {		
-    				m_botAction.sendArenaMessage(name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Disqualified)");
-    				losers.put(name, elimPlayers.remove(name));
-    				doWarpIntoCasualSafe(name);
-    			}
-    		}
-    	} else if(!elimPlayers.containsKey(name) && event.getFrequency() > MAX_FREQ){
-    		m_botAction.sendSmartPrivateMessage( name, "Please choose a private frequency under " + (MAX_FREQ+1) + ".");
-    		doWarpIntoCasual(name);
-    	}
-    }
-    
-    public void handleEvent(PlayerPosition event){
-    	Player p = m_botAction.getPlayer(event.getPlayerID());
-    	if(p == null)return;
-    	if(p.getYTileLocation() < (cfg_safe[1]+SAFE_HEIGHT) && elimPlayers.containsKey(p.getPlayerName())){
-    		m_botAction.specificPrize(p.getPlayerName(), Tools.Prize.WARP);
-    		doWarpIntoElim(p.getPlayerName()); 
-    	}
-    	else if(p.getYTileLocation() > (cfg_safe[1]+SAFE_HEIGHT) && !elimPlayers.containsKey(p.getPlayerName())){
-    		doWarpIntoCasual(p.getPlayerName());
-    	}
-    	if(cfg_gameType == ELIM)return;
-    	ElimPlayer ep = elimPlayers.get(p.getPlayerName());
-	    if(ep != null && game.isInProgress()){
-	    	if(p.getYTileLocation() < cfg_border)
-	    		ep.clearBorderInfo();
-		    else if(p.getYTileLocation() > cfg_border){    		
-		    	if(ep.outOfBounds == 0)
-		    		ep.outOfBounds = System.currentTimeMillis();
-		    	else if((System.currentTimeMillis() - ep.outOfBounds) > BOUNDARY_TIME * Tools.TimeInMillis.SECOND){
-		    		m_botAction.sendArenaMessage(ep.name + " is out. " + ep.wins + " wins " + ep.losses + " losses (Too long outside base)");
-		       		losers.put(ep.name, elimPlayers.remove(ep.name));
-		       		doWarpIntoCasualSafe(ep.name);
-		    	}
-		    	else if((System.currentTimeMillis() - ep.outOfBounds) > (BOUNDARY_TIME/2) * Tools.TimeInMillis.SECOND && !ep.gotBorderWarning){
-		    		m_botAction.sendSmartPrivateMessage( ep.name, "Get in the base!");
-		    		ep.gotBorderWarning = true;
-		    	}    		
-		    }
-		    if(elimPlayers.size() == 1 && game.state == GameStatus.GAME_IN_PROGRESS){
-		    	winner = elimPlayers.get(elimPlayers.firstKey());
-		    	game.moveOn();
-		    }
-    	} else {
-    		//Barwarp
-    		if(p.getYTileLocation() > cfg_barY[0] && p.getYTileLocation() < cfg_barY[1]){
-    			for(int i=0;i<cfg_barspots.length;i++){
-    				if(p.getXTileLocation() > cfg_barspots[i][0] && p.getXTileLocation() < cfg_barspots[i][1])
-    					m_botAction.warpTo(p.getPlayerName(), cfg_barspots[i][2], cfg_barspots[i][3]);
-    			}
-    		}
-    	}
+    /** Handles the !status command which displays current bot or game state */
+    public void cmd_status(String name) {
+        if (state == State.WAITING)
+            ba.sendSmartPrivateMessage(name, "A new game will begin when there are at least two (2) people playing.");
+        else if (state == State.VOTING)
+            ba.sendSmartPrivateMessage(name, "We are voting on the next game.");
+        else if (state == State.STARTING || state == State.PLAYING || state == State.ENDING)
+            ba.sendSmartPrivateMessage(name, game.toString());
     }
     
     
-    /* (non-Javadoc)
-     * @see twcore.core.SubspaceBot#handleEvent(twcore.core.events.SQLResultEvent)
+    
+    /** Handles the !scorereset (sr) command which resets the stats for the specified ship */
+    public void cmd_scorereset(String name, String cmd) {
+        if (!cmd.contains(" ")) {
+            ba.sendPrivateMessage(name, "You have to specify the ship whose scores you want to reset.");
+            return;
+        }
+        if (cmd.indexOf(" ") + 1 >= cmd.length()) return;
+        int ship = -1;
+        try {
+            ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+            if (ship < 1 || ship > 8) {
+                ba.sendPrivateMessage(name, "Invalid ship number, " + ship + "!");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            ba.sendPrivateMessage(name, "Invalid syntax, please use !sr <#>");
+            return;
+        }
+        ElimPlayer ep = null;
+        if (game != null) {
+            ep = game.getPlayer(name);
+            if (ep != null) {
+                if (shipType.getNum() == ship && ep.isPlaying() && ep.getStatus() != Status.LAGGED) {
+                    ba.sendPrivateMessage(name, "You can not do a scorereset while playing a game with the ship you want to reset.");
+                    return;
+                } else 
+                    ep.scorereset(ship);
+            }
+        }
+        try {
+            ba.SQLQueryAndClose(db, "DELETE FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "'");
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+        if (shipType != null && ship == shipType.getNum() && ep != null && state == State.STARTING)
+            ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+        ba.sendPrivateMessage(name, "Your " + ShipType.type(ship) + " scores have been reset.");
+    }
+    
+    /** Handles the !stats command which displays stats for a given ship if possible */
+    public void cmd_stats(String name, String cmd) {
+        int ship = -1;
+        String target = name;
+        if (!cmd.contains(":")) {
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+                if (ship != -1 && (ship < 1 || ship > 8)) {
+                    ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !stats <#> or !stats <name>:<#>");
+                return;
+            }
+        } else if (cmd.indexOf(":") < cmd.length()) {
+            target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error parsing ship number!");
+                return;
+            }
+            if (ship != -1 && (ship < 1 || ship > 8)) {
+                ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                return;
+            }
+        } else {
+            ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !stats <name>:<#> or !stats <#>");
+            return;
+        }
+        if (ship != -1)
+            ba.SQLBackgroundQuery(db, "stats:" + name + ":" + target + ":" + ship, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1");
+        else
+            ba.SQLBackgroundQuery(db, "allstats:" + name + ":" + target, "SELECT * FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
+    }
+    
+    /** Handles the !who command which displays the remaining players and their records */
+    public void cmd_who(String name) {
+        if (game != null && state == State.PLAYING)
+            game.do_who(name);
+        else 
+            ba.sendPrivateMessage(name, "There is no game being played at the moment.");
+    }
+    
+    /** Handles the !mvp command which lists the top 3 best and worst players */
+    public void cmd_mvp(String name) {
+        if (game != null && state == State.PLAYING)
+            game.do_mvp(name);
+        else 
+            ba.sendPrivateMessage(name, "There is no game being played at the moment.");
+    }
+    
+    /** Handles the !deaths command which lists the players with most deaths and least deaths */
+    public void cmd_deaths(String name) {
+        if (game != null && state == State.PLAYING)
+            game.do_deaths(name);
+        else 
+            ba.sendPrivateMessage(name, "There is no game being played at the moment.");
+    }
+    
+    /** Handles the !streak command which will show current streak stats if a game is being played */
+    public void cmd_streak(String name, String cmd) {
+        if (game != null && state == State.PLAYING)
+            game.do_streak(name, cmd);
+        else 
+            ba.sendPrivateMessage(name, "There is no game being played at the moment.");        
+    }
+    
+    /** Handles the ladder command which displays the top 5 players or the 3 players surrounding a particular rank */
+    public void cmd_ladder(String name, String cmd) {
+        if (!cmd.contains(" ")) return;
+        if (!cmd.contains(":")) {
+            int ship = 1;
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+                if (ship < 1 || ship > 8) {
+                    ba.sendSmartPrivateMessage(name, "Invalid ship number.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !lad <ship#>");
+                return;
+            }
+            try {
+                showLadder.clearParameters();
+                showLadder.setInt(1, ship);
+                showLadder.setInt(2, 1);
+                showLadder.setInt(3, 5);
+                ResultSet rs = showLadder.executeQuery();
+                ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
+                while (rs.next())
+                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName"));
+                rs.close();
+            } catch (SQLException e) {
+                Tools.printStackTrace(e);
+            }
+        } else {
+            int ship = 1;
+            int rank = 2;
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1), cmd.indexOf(":"));
+                if (ship < 1 || ship > 8) {
+                    ba.sendSmartPrivateMessage(name, "Invalid ship number.");
+                    return;
+                }
+                rank = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+                if (rank < 2) {
+                    ba.sendSmartPrivateMessage(name, "Rank must be greater than 1.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !lad <ship#>");
+                return;
+            }
+            try {
+                showLadder.clearParameters();
+                showLadder.setInt(1, ship);
+                showLadder.setInt(2, (rank - 1));
+                showLadder.setInt(3, 3);
+                ResultSet rs = showLadder.executeQuery();
+                ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
+                while (rs.next())
+                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName"));
+                rs.close();
+            } catch (SQLException e) {
+                Tools.printStackTrace(e);
+            }
+        }
+    }
+    
+    /** Handles the !rank command which returns a players rank according to ship */
+    public void cmd_rank(String name, String cmd) {
+        if (cmd.length() < 7) return;
+        int ship = 1;
+        String target = name;
+        if (!cmd.contains(":")) {
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+                if (ship < 1 || ship > 8) {
+                    ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !rank <#>");
+                return;
+            }
+        } else if (cmd.indexOf(":") < cmd.length()) {
+            debug(":=" + cmd.indexOf(":") + " length=" + cmd.length());
+            target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error parsing ship number!");
+                return;
+            }
+            if (ship < 1 || ship > 8) {
+                ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                return;
+            }
+        } else {
+            ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !rank <name>:<#> or !rank <#>");
+            return;
+        }
+        String query = "SELECT fcName as n, fnRank as r, fnShip as s FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1";
+        ba.SQLBackgroundQuery(db, "rank:" + name + ":" + target + ":" + ship, query);
+    }
+    
+    /** Handles the !rec command which displays a player's current overall record */
+    public void cmd_rec(String name, String cmd) {
+        if (cmd.length() < 5) return;
+        int ship = -1;
+        String target = name;
+        if (!cmd.contains(":")) {
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+                if (ship != -1 && (ship < 1 || ship > 8)) {
+                    ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !rec <#> or !rec <name>:<#>");
+                return;
+            }
+        } else if (cmd.indexOf(":") < cmd.length()) {
+            target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
+            try {
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+            } catch (NumberFormatException e) {
+                ba.sendPrivateMessage(name, "Error parsing ship number!");
+                return;
+            }
+            if (ship != -1 && (ship < 1 || ship > 8)) {
+                ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+                return;
+            }
+        } else {
+            ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !rec <name>:<#> or !rec <#>");
+            return;
+        }
+        if (ship != -1)
+            ba.SQLBackgroundQuery(db, "rec:" + name + ":" + ship, "SELECT fnKills as k, fnDeaths as d, fcName as n FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1");
+        else
+            ba.SQLBackgroundQuery(db, "rec:" + name, "SELECT SUM(fnKills) as k, SUM(fnDeaths) as d, fcName as n FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
+    }
+    
+    /** Handles the !lagout command which returns a lagged out player to the game */
+    public void cmd_lagout(String name) {
+        if (game != null) {
+            ElimPlayer ep = game.getPlayer(name);
+            if (ep != null) {
+                if (ep.getStatus() == Status.LAGGED)
+                    game.do_lagout(name);
+                else
+                    ba.sendPrivateMessage(name, "You are not in the game.");
+            } else
+                ba.sendPrivateMessage(name, "You are not in the game.");
+        } else
+            ba.sendPrivateMessage(name, "There is not a game being played.");
+    }
+    
+    /** Handles the !alert command which enables or disables new game alert pms */
+    public void cmd_alert(String name) {
+        if (alerts.remove(name.toLowerCase()))
+            ba.sendSmartPrivateMessage(name, "New game alert messages DISABLED.");
+        else {
+            alerts.add(name.toLowerCase());
+            ba.sendSmartPrivateMessage(name, "New game alert messages ENABLED.");
+        }
+    }
+    
+    public void cmd_game(String name, String cmd) {
+        // !game 2;10;0
+        state = State.OFF;
+        ba.cancelTasks();
+        game = null;
+        if (!cmd.contains(";") || cmd.length() < 10) return;
+        String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(";");
+        if (args.length != 3) return;
+        try {
+            int ship = Integer.valueOf(args[0]);
+            int deaths = Integer.valueOf(args[1]);
+            int shrap = Integer.valueOf(args[2]);
+            if (ship < 1 || ship > 8)
+                ba.sendPrivateMessage(name, "Invalid ship: " + ship);
+            else if (deaths < 1 || deaths > 15)
+                ba.sendPrivateMessage(name, "Invalid deaths: " + deaths);
+            else {
+                shipType = ShipType.type(ship);
+                this.deaths = deaths;
+                if (shrap == 1)
+                    this.shrap = true;
+                else
+                    this.shrap = false;
+                ba.sendArenaMessage("Game of " + shipType.toString() + " elim to " + deaths + " forcefully created by " + name + "!");
+                state = State.STARTING;
+                handleState();                
+            }
+        } catch (NumberFormatException e) {
+            ba.sendPrivateMessage(name, "Invalid syntax, please use !game ship#;deaths#;shrap#");
+            return;
+        }
+    }
+    
+    /** Handles the !debug command which enables or disables debug mode */
+    public void cmd_debug(String name) {
+        if (!DEBUG) {
+            debugger = name;
+            DEBUG = true;
+            ba.sendSmartPrivateMessage(name, "Debugging ENABLED. You are now set as the debugger.");
+        } else if (debugger.equalsIgnoreCase(name)){
+            debugger = "";
+            DEBUG = false;
+            ba.sendSmartPrivateMessage(name, "Debugging DISABLED and debugger reset.");
+            debugStatPlayers.clear();
+        } else {
+            ba.sendChatMessage(name + " has overriden " + debugger + " as the target of debug messages.");
+            ba.sendSmartPrivateMessage(name, "Debugging still ENABLED and you have replaced " + debugger + " as the debugger.");
+            debugger = name;
+        }
+    }
+    
+    public void cmd_debugStats(String name, String cmd) {
+        if (!debugger.equalsIgnoreCase(name)) {
+            ba.sendSmartPrivateMessage(name, "You are not set as the debugger.");
+            return;
+        }
+        if (cmd.contains(" ") && cmd.length() > 7) {
+            String p = cmd.substring(cmd.indexOf(" ") + 1);
+            if (debugStatPlayers.remove(p.toLowerCase()))
+                ba.sendSmartPrivateMessage(name, p + " has been removed from the debug list.");
+            else {
+                debugStatPlayers.add(p.toLowerCase());
+                ba.sendSmartPrivateMessage(name, p + " has been added to the debug list.");
+            }
+        }
+    }
+    
+    /** Handles the !greet command which is used to change the arena greeting message */
+    public void cmd_greet(String name, String cmd) {
+        if (cmd.length() < 8) return;
+        ba.sendUnfilteredPublicMessage("?set misc:greetmessage:" + cmd.substring(cmd.indexOf(" ") + 1));
+        ba.sendSmartPrivateMessage(name, "Greeting set to: " + cmd.substring(cmd.indexOf(" ") + 1));
+    }
+    
+    /** Handles the !hider command which will start or stop the hiding player task in the current game */
+    public void cmd_hiderFinder(String name) {
+        hiderCheck = !hiderCheck;
+        if (game != null && state == State.PLAYING)
+            game.do_hiderFinder(name);
+        else {
+            if (hiderCheck)
+                ba.sendSmartPrivateMessage(name, "The hider finder has been ENABLED for subsequent games.");
+            else
+                ba.sendSmartPrivateMessage(name, "The hider finder has been DISABLED for subsequent games.");
+        }
+    }
+    
+    /** Kills the bot */
+    public void cmd_die(String name) {
+        ba.sendSmartPrivateMessage(name, "Disconnecting...");
+        this.handleDisconnect();
+    }
+    
+    /** Handles the !stop command which turns the bot off and prevents games from running */
+    public void cmd_stop(String name) {
+        state = State.OFF;
+        ba.cancelTasks();
+        if (game != null) {
+            game = null;
+            ba.sendArenaMessage("Bot disabled and current game aborted.", Tools.Sound.NOT_DEALING_WITH_ATT);
+        } else
+            ba.sendArenaMessage("Bot has been disabled.", Tools.Sound.NOT_DEALING_WITH_ATT);
+    }
+    
+    /** Handles the !start command which restarts the bot after being stopped */
+    public void cmd_start(String name) {
+        state = State.IDLE;
+        handleState();
+    }
+    
+    /** Forces a zone message to be sent regardless of how long ago the last zoner was */
+    public void cmd_zone(String name) {
+        lastZoner = 0;
+        sendZoner();
+    }
+    
+    /** Sets the winner of the last elim event prompting end game routines and stores the finished game information to the database */
+    public void storeGame(ElimPlayer winner, int aveRating, int players) {
+        this.winner = winner;
+        try {
+            storeGame.clearParameters();
+            storeGame.setInt(1, shipType.getNum());
+            storeGame.setString(2, Tools.addSlashesToString(winner.name));
+            storeGame.setInt(3, deaths);
+            storeGame.setInt(4, winner.getScores()[0]);
+            storeGame.setInt(5, winner.getScores()[1]);
+            storeGame.setInt(6, players);
+            storeGame.setInt(7, aveRating);
+            storeGame.execute();
+        } catch (SQLException e) {
+            Tools.printStackTrace("Elim store game error!", e);
+        }
+        handleState();
+    }
+    
+    /**
+     * Saves a particular player's stats to the database using a prepared statement. 
+     * It then reports the player updated to determine if updates are complete.
      */
+    public void updatePlayer(ElimPlayer name) {
+        ElimStats stats = name.getStats();
+        try {
+            updateStats.clearParameters();
+            String debugs = "";
+            for (int i = 0; i < updateFields.length; i++) {
+                String col = updateFields[i];
+                if (col.equals("fcName")) {
+                    updateStats.setString(i + 1, Tools.addSlashesToString(name.name));
+                    debugs += "Name(" + name.name + ") ";
+                } else if (col.equals("fnShip")) {
+                    updateStats.setInt(i + 1, stats.getShip());
+                    debugs += col + "(" + stats.getShip() + ") ";
+                } else {
+                    StatType stat = StatType.sql(col);
+                    if (stat.isInt()) {
+                        updateStats.setInt(i + 1, stats.getDB(stat));
+                        debugs += col + "(" + stats.getDB(stat) + ") ";
+                    } else if (stat.isDouble()) {
+                        updateStats.setDouble(i + 1, stats.getAimDB(stat));
+                        debugs += col + "(" + stats.getAimDB(stat) + ") ";
+                    } else if (stat.isFloat()) {
+                        updateStats.setFloat(i + 1, stats.getAveDB(stat));
+                        debugs += col + "(" + stats.getAveDB(stat) + ") ";
+                    }
+                }
+            }
+            updateStats.execute();
+            if (debugStatPlayers.contains(name.name.toLowerCase()))
+                debug(debugs);
+            else
+                debug("Updated player: " + name.name + " Count: " + updateStats.getUpdateCount());
+            if (game.gotUpdate(name.name)) {
+                state = State.ENDING;
+                handleState();
+            }
+        } catch (SQLException e) {
+            Tools.printStackTrace("Elim player stats update error!", e);
+        }
+    }
+    
+    /** Handles game state by calling the appropriate state methods */
+    public void handleState() {
+        switch (state) {
+            case IDLE: doIdle(); break;
+            case WAITING: doWaiting(); break;
+            case VOTING: doVoting(); break;
+            case STARTING: doStarting(); break;
+            case PLAYING: doPlaying(); break;
+            case ENDING: doEnding(); break;
+        }
+    }
+    
+    /** Idle state simply puts the bot into motion after spawning or being disabled */
+    private void doIdle() {
+        ba.sendArenaMessage("Starting up...", Tools.Sound.CROWD_OOO);
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                if (ba.getNumPlaying() < 2) 
+                    ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
+                state = State.WAITING;
+                handleState();
+            }
+        };
+        ba.scheduleTask(task, 3000);
+    }
+    
+    /** Waiting state stalls until there are enough players to continue */
+    private void doWaiting() {
+        sendZoner();
+        if (ba.getNumPlaying() > 1) {
+            sendAlerts();
+            state = State.VOTING;
+            votes.clear();
+            voteType = VoteType.NA;
+            handleState();
+        }
+    }
+    
+    /** Voting state runs in between vote periods to call for next vote after counting prior */
+    private void doVoting() {
+        if (state != State.VOTING) return;
+        if (voteType == VoteType.NA) {
+            ba.sendChatMessage(2, "The next game of ELIM is about to begin. We are voting on ship.");
+            ba.sendChatMessage(3, "The next game of ELIM is about to begin. We are voting on ship.");
+            voteType = VoteType.SHIP;
+            ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 4-Leviathen, 5-Terrier, 6-Weasel, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
+        } else if (voteType == VoteType.SHIP) {
+            voteType = VoteType.DEATHS;
+            ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + ")");
+        } else if (voteType == VoteType.DEATHS) {
+            if (shipType.hasShrap()) {
+                voteType = VoteType.SHRAP;
+                ba.sendArenaMessage("" + Tools.shipName(shipType.getNum()) + " elim to " + deaths + ". VOTE: Shrap on or off? 0-OFF, 1-ON");
+            } else {
+                shrap = false;
+                state = State.STARTING;
+                String msg = "" + Tools.shipName(shipType.getNum()) + " elim to " + deaths + ". ";
+                ba.sendArenaMessage(msg);
+                handleState();
+                return;
+            }
+        } else {
+            state = State.STARTING;
+            String msg = "" + Tools.shipName(shipType.getNum()) + " elim to " + deaths + ". ";
+            if (shipType.hasShrap()) {
+                if (shrap)
+                    msg += "Shrap: [ON]";
+                else
+                    msg += "Shrap: [OFF]";
+            }
+            ba.sendArenaMessage(msg);
+            handleState();
+            return;            
+        }
+        
+        TimerTask task = new TimerTask() {
+            public void run() {
+                countVotes();
+            }
+        };
+        ba.scheduleTask(task, 10 * Tools.TimeInMillis.SECOND);
+    }
+    
+    /** Starting state creates new ElimGame and initiates player stat trackers */
+    private void doStarting() {
+        game = new ElimGame(this, shipType, deaths, shrap);
+        ba.sendArenaMessage("Enter to play. Arena will be locked in 15 seconds!", 9);
+        timer = new TimerTask() {
+            public void run() {
+                if (ba.getNumPlaying() < 2) {
+                    game.stop();
+                    abort();
+                } else {
+                    String erules = "RULES: One player per freq and NO TEAMING! Die " + deaths + " times and you're out. ";
+                    if (shipType == ShipType.WEASEL)
+                        erules += "Warping is illegal and will be penalized with by a death.";
+                    ba.sendArenaMessage(erules);
+                    arenaLock = true;
+                    ba.toggleLocked();
+                    game.checkStats();
+                }
+            }
+        };
+        ba.scheduleTask(timer, 15000);
+    }
+    
+    /** Playing state runs after winner is set and ends game accordingly */
+    private void doPlaying() {
+        if (winner != null && game != null && game.mvp != null) {
+            ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
+            final String mvp = game.mvp;
+            ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " elim.");
+            TimerTask t = new TimerTask() {
+                public void run() {
+                    ba.sendArenaMessage("MVP: " + mvp, Tools.Sound.INCONCEIVABLE);  
+                }
+            };
+            ba.scheduleTask(t, 3000);
+            game.storeLosses();
+            updatePlayer(winner);  
+            if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
+                winStreak++;
+            else
+                winStreak = 0;
+            lastWinner = winner;
+            winner = null;
+        }
+    }
+    
+    /** Ending state updates rankings and prepares for next event */
+    private void doEnding() {
+        state = State.UPDATING;
+        arenaLock = false;
+        game = null;
+        ba.toggleLocked();
+        TimerTask enter = new TimerTask() {
+            public void run() {
+                updateRanks();
+                state = State.WAITING;
+                if (ba.getNumPlaying() < 2)
+                    ba.sendArenaMessage("A new game will begin when 2 or more players enter a ship. -" + ba.getBotName());
+            }
+        };
+        ba.scheduleTask(enter, 3000);
+    }
+    
+    /** Executes the updateRank statement which adjusts the ranks of every elim player */
+    private void updateRanks() {
+        try {
+            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE (fnKills + fnDeaths) > " + INITIAL_RATING + " AND fnShip = " + shipType.getNum() + " ORDER BY fnRating DESC");
+            ba.SQLClose(rs);
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+    }
+    
+    /** Counts votes after voting ends and acts accordingly */
+    private void countVotes() {
+        if (voteType == VoteType.SHIP) {
+            int[] count = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+            for (Integer i : votes.values())
+                count[i - 1]++;
+            TreeSet<Integer> wins = new TreeSet<Integer>();
+            int high = count[0];
+            int ship = 1;
+            wins.add(ship);
+            for (int i = 1; i < 8; i++) {
+                if (count[i] > high) {
+                    wins.clear();
+                    high = count[i];
+                    ship = i + 1;
+                    wins.add(ship);
+                } else if (count[i] == high)
+                    wins.add(i + 1);
+            }
+            if (wins.size() > 1) {
+                voteStats[6]++;
+                if (high > 0) {
+                    int num = random.nextInt(wins.size());
+                    ship = wins.toArray(new Integer[wins.size()])[num];
+                } else
+                    ship = random.nextInt(2) + 1;
+            } else
+                ship = wins.first();
+            // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
+            if (ship == 1) {
+                voteStats[0]++;
+                voteStats[7] += count[0] + count[1];
+                if (count[1] > 0)
+                    voteStats[3] += count[1];
+                else
+                    voteStats[4]++;
+            } else if (ship == 2) {
+                voteStats[1]++;
+                voteStats[7] += count[0] + count[1];
+                if (count[0] > 0)
+                    voteStats[2] += count[0];
+                else
+                    voteStats[5]++;
+            }
+            shipType = ShipType.type(ship);
+            votes.clear();
+        } else if (voteType == VoteType.DEATHS) {
+            int[] count = new int[rules.getInt("MaxDeaths")];
+            for (int i = 0; i < count.length; i++)
+                count[i] = 0;
+            for (Integer i : votes.values())
+                count[i - 1]++;
+            HashSet<Integer> wins = new HashSet<Integer>();
+            int high = count[0];
+            int val = 1;
+            wins.add(val);
+            for (int i = 0; i < rules.getInt("MaxDeaths"); i++) {
+                if (count[i] > high) {
+                    wins.clear();
+                    high = count[i];
+                    val = i + 1;
+                    wins.add(val);
+                } else if (count[i] == high)
+                    wins.add(i + 1);
+            }
+            if (wins.size() > 1) {
+                if (high > 0) {
+                    int num = random.nextInt(wins.size());
+                    this.deaths = wins.toArray(new Integer[wins.size()])[num];
+                } else
+                    this.deaths = random.nextInt(rules.getInt("MaxDeaths")) + 1;
+            } else
+                this.deaths = wins.iterator().next();
+            votes.clear();
+        } else if (voteType == VoteType.SHRAP) {
+            int[] count = new int[] { 0, 0 };
+            for (Integer i : votes.values())
+                count[i]++;
+            if (count[0] > count[1])
+                shrap = false;
+            else if (count[1] > count[0])
+                shrap = true;
+            else
+                shrap = false;
+            votes.clear();
+        }
+        handleState();
+    }
+    
+    /** Checks to make sure it didn't already send a recent alert and then sends pms */
+    private void sendAlerts() {
+        long now = System.currentTimeMillis();
+        if ((now - lastAlert) < ALERT_DELAY * Tools.TimeInMillis.MINUTE) return; 
+        for (String p : alerts)
+            ba.sendSmartPrivateMessage(p, "The next game of elim is about to begin in ?go " + arena + " (reply with !alert to disable this message)");
+        lastAlert = now;
+    }
+    
+    /** Sends periodic zone messages advertising elim and announcing streaks */
+    private void sendZoner() {
+        if (lastZoner == -1) return;
+        else if ((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) return;
+        
+        if (winStreak == 1)
+            ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena + " to play -" + ba.getBotName());
+        else if(winStreak > 1)
+            switch (winStreak) {
+                case 2: ba.sendZoneMessage("Next elim is starting. " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") has won 2 back to back! Type ?go " + arena + " to play -" + ba.getBotName());
+                    break;
+                case 3: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on fire with a triple win! Type ?go " + arena + " to end the win streak! -" + ba.getBotName(), Tools.Sound.CROWD_OOO);
+                    break;
+                case 4: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 kills in a row! Type ?go " + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
+                    break;
+                case 5: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is dominating with a 5 game winning streak! Type ?go " + arena + " to end this madness! -" + ba.getBotName(), Tools.Sound.SCREAM);
+                    break;
+                default: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is bringing the zone to shame with " + winStreak + " consecutive wins! Type ?go " + arena + " to redeem yourselves! -" + ba.getBotName(), Tools.Sound.INCONCEIVABLE);
+                    break;
+            }
+        else
+            m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
+        lastZoner = System.currentTimeMillis();
+    }
+    
+    private String padNum(String str, int len) {
+        while (str.length() < len)
+            str = " " + str;
+        return str;
+    }
+    
+    /** Requests the needed events */
+    private void requestEvents() {
+        EventRequester er = ba.getEventRequester();
+        er.request(EventRequester.ARENA_JOINED);
+        er.request(EventRequester.LOGGED_ON);
+        er.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+        er.request(EventRequester.MESSAGE);
+        er.request(EventRequester.PLAYER_DEATH);
+        er.request(EventRequester.PLAYER_ENTERED);
+        er.request(EventRequester.PLAYER_LEFT);
+        er.request(EventRequester.PLAYER_POSITION);
+        er.request(EventRequester.WEAPON_FIRED);
+    }
+    
+    /** Prevents the game from starting usually due to lack of players */
+    public void abort() {
+        game = null;
+        state = State.WAITING;
+        voteType = VoteType.NA;
+        votes.clear();
+        arenaLock = false;
+        ba.toggleLocked();
+        ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
+        handleState();
+    }
+    
+    /** Debug message handler */
+    public void debug(String msg) {
+        if (DEBUG)
+            ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
+    }
+    
     @Override
-    public void handleEvent(SQLResultEvent event) {
-    	if(event.getResultSet() != null) {
-    		// Just close any background queries that were done, all background queries are INSERT / UPDATE that we don't care about the result
-    		try {
-    			event.getResultSet().close();
-    		} catch(SQLException sqle) {
-    			Tools.printStackTrace(sqle);
-    		}
-    	}
-    	
-    }
-
-	public void requestEvents() {
-        EventRequester req = m_botAction.getEventRequester();
-        req.request(EventRequester.MESSAGE);
-        req.request(EventRequester.LOGGED_ON);
-        req.request(EventRequester.PLAYER_ENTERED);
-        req.request(EventRequester.PLAYER_LEFT);
-        req.request(EventRequester.WEAPON_FIRED);
-        req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
-        req.request(EventRequester.FREQUENCY_CHANGE);
-        req.request(EventRequester.PLAYER_DEATH);
-        req.request(EventRequester.PLAYER_POSITION);
-        req.request(EventRequester.ARENA_JOINED);
-    }
-
-    public ElimPlayer findCollection(String name){
-    	if(elimPlayers.containsKey(name))
-    		return elimPlayers.get(name);
-    	else if(losers.containsKey(name))
-    		return losers.get(name);
-    	else if(lagouts.containsKey(name))
-    		return lagouts.get(name);
-    	else return null;
+    public void handleDisconnect() {
+        ba.cancelTasks();
+        ba.closePreparedStatement(db, connectionID, this.updateStats);
+        ba.closePreparedStatement(db, connectionID, this.storeGame);
+        ba.closePreparedStatement(db, connectionID, this.showLadder);
+        ba.scheduleTask(new Die(), 2000);
     }
     
-    public String padString(String s, int length){
-    	if(s.length() == length)return s;
-    	while(s.length() < length)
-    		s += " ";
-    	return s;
-    }
-    
-    public int getBotNumber(BotSettings cfg){ 
-        for (int i = 1; i <= cfg.getInt("Max Bots"); i++){
-            if (cfg.getString("Name" + i).equalsIgnoreCase(m_botAction.getBotName()))
-                return i;
+    /** TimerTask used to guarantee the MVP has had enough time to be determined */
+    public class MVP extends TimerTask {
+        public MVP() {
+            ba.scheduleTask(this, 4000);
         }
-        return 1;
-    }
-    
-    private class DieTask extends TimerTask {
-        String m_initiator;
-
-        public DieTask( String name ) {
-            super();
-            m_initiator = name;
-        }
-
+        
         public void run() {
-            m_botAction.die( "!die initiated by " + m_initiator );
+            ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);
         }
     }
     
-    public void handleDisconnect(){
-    	m_botAction.cancelTasks();
+    /** Cleanly kills bot */
+    private class Die extends TimerTask {
+        
+        @Override
+        public void run() {
+            ba.die();
+        }
+        
     }
 }
