@@ -331,6 +331,8 @@ public class roboref extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Bot disabled.");
             else if (cmd.equals("!help"))
                 cmd_help(name);
+            else if (cmd.startsWith("!lag "))
+                cmd_lag(name, msg);
             else if (cmd.equals("!lagout"))
                 cmd_lagout(name);
             else if (cmd.startsWith("!rank "))
@@ -390,20 +392,6 @@ public class roboref extends SubspaceBot {
         spy.handleEvent(event);
     }
     
-    public void cmd_setStats(String name, String cmd) {
-        String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(",");
-        if (args.length == 8) {
-            try {
-                for (int i = 0; i < voteStats.length; i++)
-                    voteStats[i] = Integer.valueOf(args[i]);
-                ba.sendSmartPrivateMessage(name, "Done!");
-            } catch (NumberFormatException e) {
-                ba.sendSmartPrivateMessage(name, "Error!");
-            }
-        } else
-            ba.sendSmartPrivateMessage(name, "Error! Bad length.");
-    }
-    
     /** Handles potential votes read from public chat during a voting period */
     public void handleVote(String name, String cmd) {
         Player p = ba.getPlayer(name);
@@ -439,10 +427,25 @@ public class roboref extends SubspaceBot {
         }
     }
     
+    public void cmd_setStats(String name, String cmd) {
+        String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(",");
+        if (args.length == 8) {
+            try {
+                for (int i = 0; i < voteStats.length; i++)
+                    voteStats[i] = Integer.valueOf(args[i]);
+                ba.sendSmartPrivateMessage(name, "Done!");
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name, "Error!");
+            }
+        } else
+            ba.sendSmartPrivateMessage(name, "Error! Bad length.");
+    }
+    
     /** Handles the !help command */
     public void cmd_help(String name) {
         String[] msg = new String[] {
                 ",-- Robo Ref Commands -------------------------------------------------------------------.",
+                "|!lag <name>       - Checks the lag of player <name>                                     |",
                 "|!votes            - Warbird and Javelin vote analysis                                   |",
                 "|!alert            - Toggles new game private message alerts on or off                   |",
                 "|!lagout           - Return to game after lagging out                                    |",
@@ -498,12 +501,6 @@ public class roboref extends SubspaceBot {
         ba.smartPrivateMessageSpam(name, msg);
     }
     
-    private String padNum(String str, int len) {
-        while (str.length() < len)
-            str = " " + str;
-        return str;
-    }
-    
     /** Handles the !remove player command which will spec the player and erase stats */
     public void cmd_remove(String name, String cmd) {
         if (cmd.indexOf(" ") + 1 == cmd.length()) return;
@@ -511,6 +508,18 @@ public class roboref extends SubspaceBot {
             game.do_remove(name, cmd.substring(cmd.indexOf(" ") + 1));
         else
             ba.sendSmartPrivateMessage(name, "There is currently no game being played.");
+    }
+    
+    public void cmd_lag(String name, String cmd) {
+        if (cmd.indexOf(" ") + 1 == cmd.length()) return;
+        if (game != null && state == State.PLAYING) {
+            String lagger = cmd.substring(cmd.indexOf(" ") + 1);
+            String temp = ba.getFuzzyPlayerName(lagger);
+            if (temp != null)
+                lagger = temp;
+            game.do_lag(name, lagger);
+        } else
+            ba.sendPrivateMessage(name, "Lag handler not available at this time.");
     }
     
     /** Handles the !status command which displays current bot or game state */
@@ -1198,6 +1207,12 @@ public class roboref extends SubspaceBot {
         else
             m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
         lastZoner = System.currentTimeMillis();
+    }
+    
+    private String padNum(String str, int len) {
+        while (str.length() < len)
+            str = " " + str;
+        return str;
     }
     
     /** Requests the needed events */

@@ -395,6 +395,10 @@ public class ElimGame {
             ba.sendPrivateMessage(name, "You are not lagged out.");
     }
     
+    public void do_lag(String req, String name) {
+        lagHandler.requestLag(name, req);
+    }
+    
     /** Handles the grunt work for the !deaths command */
     public void do_deaths(String name) {
         List<ElimPlayer> list = getPlayed();
