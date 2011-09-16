@@ -1,7 +1,8 @@
 package twcore.bots.twdt;
 
 /**
- *
+ * DraftStat represents and manipulates a single statistic for a player.
+ * 
  * @author WingZero
  */
 public class DraftStat {

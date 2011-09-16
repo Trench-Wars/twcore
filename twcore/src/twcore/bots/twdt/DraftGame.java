@@ -27,10 +27,10 @@ public class DraftGame {
 
     public static final String db = "website";
     
-    twdt bot;
-    BotAction ba;
-    OperatorList opList;
-    BotSettings rules;
+    twdt            bot;
+    BotAction       ba;
+    OperatorList    opList;
+    BotSettings     rules;
     
     public enum GameType { 
         NA, WARBIRD, JAVELIN, BASING;
@@ -55,28 +55,28 @@ public class DraftGame {
         }
     }
     
-    GameType type;
+    LinkedList<DraftRound>  oldRounds;
+    DraftRound              currentRound;
+    DraftTeam               winner;
+    GameType                type;
     
-    LinkedList<DraftRound> oldRounds;
-    DraftRound currentRound;
-    DraftTeam winner;
-    
-    int gameID;
-    int round;
-    int team1;
-    int team2;
-    int score1;
-    int score2;
-    String team1score;
-    String team2score;
-    int maxPlayers;
-    int minPlayers;
-    int maxDeaths;
-    int time;
-    int[] ships;
-    String host, team1Name, team2Name;
+    int     gameID;
+    int     round;
+    int     team1;
+    int     team2;
+    int     maxPlayers;
+    int     minPlayers;
+    int     maxDeaths;
+    int     time;
+    int     score1;
+    int     score2;
+    String  team1score;
+    String  team2score;
+    String  team1Name;
+    String  team2Name;
+    String  host;
     boolean zoned;
-    
+
     public DraftGame(twdt bot, int id, int team1id, int team2id, String name1, String name2, String staffer) {
         this.bot = bot;
         ba = bot.ba;
@@ -97,7 +97,6 @@ public class DraftGame {
         winner = null;
         zoned = false;
         oldRounds = new LinkedList<DraftRound>();
-        ships = rules.getIntArray("Ship", ",");
         time = rules.getInt("Time");
         maxPlayers = rules.getInt("MaxPlayers");
         minPlayers = rules.getInt("MinPlayers");
@@ -113,15 +112,20 @@ public class DraftGame {
     public void handleEvent(PlayerEntered event) {
         String name = event.getPlayerName();
         if (name == null) return;
+        String msg = "";
+        if (type == GameType.WARBIRD)
+            msg += "Welcome to TWDTD! ";
+        else if (type == GameType.JAVELIN)
+            msg += "Welcome to TWDTJ! ";
+        else if (type == GameType.BASING)
+            msg += "Welcome to TWDTB! ";
         
-        if (currentRound != null) {
-            if (type == GameType.WARBIRD)
-                ba.sendSmartPrivateMessage(name, "Welcome to TWDTD! " + getStatus());
-            else if (type == GameType.JAVELIN)
-                ba.sendSmartPrivateMessage(name, "Welcome to TWDTJ! " + getStatus());
-            else if (type == GameType.BASING)
-                ba.sendSmartPrivateMessage(name, "Welcome to TWDTB! " + getStatus());
-        }
+        if (currentRound != null)
+            msg += getStatus();
+        else
+            msg += team1Name + " vs. " + team2Name + " will begin momentarily.";
+        
+        ba.sendPrivateMessage(name, msg);
     }
 
     public void handleEvent(PlayerLeft event) {
@@ -198,6 +202,7 @@ public class DraftGame {
         currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
     }
     
+    /** Handles the zone command which will send a zoner for the current game unless it has already been zoned once */
     public void cmd_zone(String name) {
         if (zoned) {
             ba.sendSmartPrivateMessage(name, "The zoner for this game has already been used.");
@@ -217,6 +222,7 @@ public class DraftGame {
         }
     }
     
+    /** Returns the default total game time */
     public int getTime() {
         return time;
     }
@@ -226,6 +232,7 @@ public class DraftGame {
         return gameID;
     }
     
+    /** Returns the current round number */
     public int getRound() {
         return round;
     }
@@ -304,6 +311,7 @@ public class DraftGame {
         return "";
     }
     
+    /** Creates the next round after 4 seconds */
     private void nextRound() {
         TimerTask next = new TimerTask() {
             public void run() {
@@ -313,6 +321,7 @@ public class DraftGame {
         ba.scheduleTask(next, 4000);
     }
     
+    /** A new round is created and set to currentRound */
     private void newRound() {
         ba.sendArenaMessage("Prepare for round " + round + "!");
         currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);

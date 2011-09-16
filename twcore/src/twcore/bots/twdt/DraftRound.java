@@ -29,9 +29,9 @@ import twcore.core.util.Tools;
  */
 public class DraftRound {
     
-    BotAction ba;
-    OperatorList oplist;
-    BotSettings rules;
+    BotAction       ba;
+    OperatorList    oplist;
+    BotSettings     rules;
     
     enum RoundState { NONE, LINEUPS, STARTING, PLAYING, FINISHED }
 
@@ -44,19 +44,19 @@ public class DraftRound {
     public int GOGOGO = 3;
     public int GAMEOVER = 4;
     
-    private MasterControl ticker;
     public LagHandler lagHandler;
-    private Objset objects;
+    
+    private MasterControl           ticker;
     private HashMap<String, Bounds> bounds;
-    RoundState state;
-    GameType type;
-    DraftGame game;
-    DraftTeam team1;
-    DraftTeam team2;
-    boolean blueout, add2mins, resChecks;
-    int[] coords1;
-    int[] coords2;
-    int target, round;
+    private Objset                  objects;
+    RoundState                      state;
+    GameType                        type;
+    DraftGame                       game;
+    DraftTeam                       team1;
+    DraftTeam                       team2;
+    boolean                         blueout, add2mins, resChecks;
+    int[]                           coords1, coords2;
+    int                             target, round;
     
     public DraftRound(DraftGame draftGame, GameType gameType, int team1ID, int team2ID, String team1Name, String team2Name) {
         game = draftGame;
@@ -255,14 +255,12 @@ public class DraftRound {
             }
         }
 
-        DraftPlayer p = team1.getPlayer(report.getName(), true);
-        if (p == null)
-            p = team2.getPlayer(report.getName(), true);
-
         if (report.isOverLimits()) {
             if (!report.isBotRequest())
                 ba.sendPrivateMessage(report.getRequester(), report.getLagReport());
-            
+            DraftPlayer p = team1.getPlayer(report.getName(), true);
+            if (p == null)
+                p = team2.getPlayer(report.getName(), true);
             if (p != null && ba.getPlayer(report.getName()).getShipType() != 0 && p.getStatus() == Status.IN) {
                 ba.sendPrivateMessage(report.getName(), report.getLagReport());
                 p.setLagSpec(true);
@@ -272,12 +270,14 @@ public class DraftRound {
         }
     }
     
+    /** Handles the !reload command which reloads captains and assistants for each team from the database */
     public void cmd_reloadCaps(String name) {
     	team1.reloadCaps();
     	team2.reloadCaps();
     	ba.sendSmartPrivateMessage(name, "Captains and assistants have been reloaded for both teams.");
     }
     
+    /** Handles the score command which displays current scores */
     public void cmd_score(String name) {
         if (state != RoundState.PLAYING) return; 
         if (type != GameType.BASING)
@@ -286,6 +286,7 @@ public class DraftRound {
             ba.sendSmartPrivateMessage(name, "Score of " + team1.getName() + " vs. " +  team2.getName() + ": " + team1.getTime() + " - " + team2.getTime());
     }
     
+    /** Handles the help command */
     public void cmd_help(String name) {
         String[] msg = {
                 " !status !score !lagout !lag <name> ",
@@ -306,6 +307,7 @@ public class DraftRound {
         }
     }
     
+    /** Handles the !res command which disables/enables res checks for warbird division */
     public void cmd_resChecks(String name) {
         resChecks = !resChecks;
         team1.do_resChecks(resChecks);
@@ -565,6 +567,7 @@ public class DraftRound {
                 ba.sendArenaMessage("MVP: " + mvp + "!", 7);
         }
         
+        /** Helper saves the round results to the database */
         private void storeRound(int score1, int score2, String mvp) {
             ba.cancelTask(ticker);
             for (Bounds b : bounds.values())
@@ -596,10 +599,8 @@ public class DraftRound {
         private void displayResult() {
             if (type != GameType.BASING)
                 ba.sendArenaMessage("Result of " + team1.getName() + " vs. " + team2.getName() + ": " + team1.getScore() + " - " + team2.getScore());
-            else {
-
+            else
                 ba.sendArenaMessage("Result of " + team1.getName() + " vs. " + team2.getName() + ": " + team1.getTime() + " - " + team2.getTime(), 5);
-            }
         }
         
         /** Determines the round MVP */

@@ -6,6 +6,8 @@ import java.util.EnumMap;
 import twcore.bots.twdt.StatType;
 
 /**
+ * DraftStats is the stats controller class used by DraftPlayer to track stat records.
+ * Each instance represents stats for only one ship.
  *
  * @author WingZero
  */
@@ -25,18 +27,22 @@ public class DraftStats {
             stats.put(stat, new DraftStat(stat));
     }
     
+    /** Returns the associated ship number */
     public int getShip() {
         return ship;
     }
     
+    /** Returns a particular stat */
     public DraftStat getStat(StatType stat) {
         return stats.get(stat);
     }
     
+    /** Changes the value of a stat to the new value specified */
     public void setStat(StatType stat, int value) {
         stats.get(stat).setValue(value);
     }
     
+    /** Reports a kill by incrementing the kills stat and adjusting related stats */
     public void handleKill(int points, int kill) {
         stats.get(StatType.KILLS).increment();
         stats.get(StatType.KILL_STREAK).increment();
@@ -49,12 +55,14 @@ public class DraftStats {
             stats.get(StatType.TERR_KILLS).increment();
     }
     
+    /** Reports the teamkill of a particular ship */
     public void handleTeamKill(int points, int kill) {
         stats.get(StatType.TEAM_KILLS).increment();
         stats.get(StatType.SCORE).add(points);
         tKills[kill-1]++;
     }
     
+    /** Reports a death by incrementing the deaths stat and adjusting related stats */
     public void handleDeath() {
         stats.get(StatType.DEATHS).increment();
         stats.get(StatType.DEATH_STREAK).increment();
@@ -63,18 +71,22 @@ public class DraftStats {
         stats.get(StatType.KILL_STREAK).setValue(0);
     }
     
+    /** Reports a lagout */
     public void handleLagout() {
         stats.get(StatType.LAGOUTS).increment();
     }
     
+    /** Reports the player as subbed */
     public void handleSubbed() {
         stats.get(StatType.SUBBED).setValue(1);
     }
 
+    /** Returns score stat  a.k.a. points */
     public int getScore() {
         return getStat(StatType.SCORE).getValue();
     }
     
+    /** Returns a double representing repels per death calculated using repels and deaths stats */
     public double getRPD() {
         double reps = getStat(StatType.REPELS).getValue() / 2;
         double deaths = getStat(StatType.DEATHS).getValue();
@@ -86,6 +98,7 @@ public class DraftStats {
             return 0;
     }
     
+    /** Returns a String representation of the repels per death double or empty spaces if RPD is 0 */
     public String getRPDString() {
     	double rpd = 0;
         int reps = ((getStat(StatType.REPELS).getValue()) / 2);

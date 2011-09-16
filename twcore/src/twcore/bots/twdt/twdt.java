@@ -14,6 +14,15 @@ import twcore.core.events.*;
 import twcore.core.util.Tools;
 
 /**
+ * This bot is used to regulate the league games of TWDT (Draft Tournament). Modeled after MatchBots,
+ * the bot makes use of several classes that represent different pieces of a league game. This main 
+ * class passes on events and also loads match information from the database using a given ID number.
+ * A new DraftGame is created for the loaded match ID. A DraftRound is created inside DraftGame when 
+ * the hosting staff member does !start. DraftRound controls most of the routine match states and procedures.
+ * DraftRound creates two DraftTeams to represent the opposing teams. DraftTeam maintains a collection of 
+ * DraftPlayers and keeps track of relevant team information and acts as a communication mediator in some cases.
+ * DraftPlayer bridges game events with player stats and states. DraftRound uses LagHandler to check the lag of
+ * a player from each team every 5 seconds. 
  *
  * @author WingZero
  */
@@ -116,6 +125,7 @@ public class twdt extends SubspaceBot {
             game.handleEvent(event);
     }
     
+    /** Handles the help command */
     public void cmd_help(String name) {
         String[] msg = {
                 " !go <arena>, !die, !help",
@@ -214,6 +224,7 @@ public class twdt extends SubspaceBot {
         }        
     }
     
+    /** Loads a new game by creating game information from team names and a game type */
     public void cmd_load(String name, String[] args) {
         int ship = -1;
         try {

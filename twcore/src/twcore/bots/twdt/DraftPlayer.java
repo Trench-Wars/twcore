@@ -5,37 +5,38 @@ import java.util.HashMap;
 import twcore.bots.twdt.DraftRound.RoundState;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
-import twcore.core.OperatorList;
 import twcore.core.events.Message;
 import twcore.core.events.WeaponFired;
 import twcore.core.lag.LagInfo;
 import twcore.core.util.Tools;
 
 /**
+ * DraftPlayer is responsible for handling all relevant information for a given player.
+ * It works as a mediator between events and stat tracking. It has some action functions
+ * but is primarily used for information transparency.
  *
  * @author WingZero
  */
 public class DraftPlayer {
 
-    public static final String db = "website";
+    public static final String db = "website"; 
     public static final int DOA_TIME = 3; // seconds
     
-    BotAction ba;
-    OperatorList opList;
+    BotAction   ba;
     BotSettings rules;
     
     enum Status { NONE, IN, LAGGED, SUBBED, OUT }
     
     private LagInfo lagInfo;
     
-    HashMap<Integer, DraftStats> ships;
-    Status status;
-    DraftStats statTracker;
-    DraftTeam team;
-    String name;
-    int freq, ship, lagouts, stars, specAt, lagoutCount;
-    long lastAttach, lastLagout;
-    boolean botSpec;                // true if bot specced player for lag
+    HashMap<Integer, DraftStats>    ships;
+    Status                          status;
+    DraftStats                      statTracker;
+    DraftTeam                       team;
+    String                          name;
+    int                             freq, ship, lagouts, stars, specAt, lagoutCount;
+    long                            lastAttach, lastLagout;
+    boolean                         botSpec; // true if bot specced player for lag
     
     public DraftPlayer(BotAction botAction, DraftTeam team, String name, int freq, int ship, int stars) {
         ba = botAction;
@@ -56,6 +57,7 @@ public class DraftPlayer {
         status = Status.NONE;
     }
     
+    /** EVENT HANDLERS **/
     public void handleEvent(Message event) {
         String player = ba.getPlayerName(event.getPlayerID());
         if (player == null)
@@ -79,6 +81,7 @@ public class DraftPlayer {
             statTracker.getStat(StatType.REPELS).increment();
     }
     
+    /** Handles a death event given the DraftPlayer object of the killer. Handles relevent stats and checks for player out */
     public void handleDeath(DraftPlayer player) {
         if (specAt == -1) {
             if (System.currentTimeMillis() - lastAttach <= DOA_TIME * Tools.TimeInMillis.SECOND)
@@ -94,6 +97,7 @@ public class DraftPlayer {
         }
     }
     
+    /** Minimal death handler simply increments deaths and specs if player out */
     public void handleDeath() {
         statTracker.handleDeath();
         if (specAt != -1 && getDeaths() >= specAt) {
@@ -102,26 +106,30 @@ public class DraftPlayer {
         }        
     }
     
+    /** Handles a kill given the DraftPlayer of the victim */
     public void handleKill(int points, DraftPlayer player) {
-        if (team.isPlaying(player.getName())) {
+        if (team.isPlaying(player.getName()))
         	statTracker.handleTeamKill(points, player.getShip());
-        } else {
+        else
             statTracker.handleKill(points, player.getShip());
-        }
     }
     
+    /** Records flag reward points */
     public void handleFlagReward(int points) {
         statTracker.getStat(StatType.SCORE).add(points);
     }
     
+    /** Records a kill joy */
     public void handleKillJoy() {
         statTracker.getStat(StatType.KILL_JOYS).increment();
     }
     
+    /** Records a knock out */
     public void handleKnockOut() {
         statTracker.getStat(StatType.KNOCK_OUTS).increment();
     }
     
+    /** Handles a lagout where a player is either specced/specs or leaves the arena */
     public void handleLagout() {
         if (status != Status.IN) return; 
         status = Status.LAGGED;
@@ -140,19 +148,23 @@ public class DraftPlayer {
         }
     }
     
+    /** Records attach time (used to catch DOAs) */
     public void handleAttach() {
         lastAttach = System.currentTimeMillis();
     }
     
+    /** Records a flag claim */
     public void handleFlagClaim() {
         statTracker.getStat(StatType.FLAG_CLAIMS).increment();
     }
     
+    /** Records the player as subbed */
     public void handleSubbed() {
         status = Status.SUBBED;
         statTracker.handleSubbed();
     }
     
+    /** Handles the lagout command which returns a player to the game if allowable */
     public void cmd_lagout() {
         if (status == Status.LAGGED) {
             if (team.round.getState() == RoundState.PLAYING) {
@@ -182,54 +194,67 @@ public class DraftPlayer {
             ba.sendPrivateMessage(name, "You are not lagged out.");
     }
     
+    /** Sets the number of deaths allowed before player is removed from game */
     public void setSpecAt(int spec) {
         specAt = spec;
     }
     
+    /** Returns number of deaths until player is removed from game */
     public int getSpecAt() {
         return specAt;
     }
     
+    /** Returns current player status */
     public Status getStatus() {
         return status;
     }
     
+    /** Returns player name */
     public String getName() {
         return name;
     }
     
+    /** Returns current ship number */
     public int getShip() {
         return ship;
     }
     
+    /** Returns player deaths */
     public int getDeaths() {
         return statTracker.getStat(StatType.DEATHS).getValue();
     }
-    
+
+    /** Returns player score (points) */
     public int getScore() {
         return statTracker.getScore();
     }
-    
+
+    /** Returns player rating after being calculated in statTracker */
     public int getRating() {
         return statTracker.getRating();
     }
-    
+
+    /** Returns the amount of time passed since the player's last lagout */
     public int getLastLagout() {
         return (int)((System.currentTimeMillis() - lastLagout) / 1000);
     }
-    
+
+    /** Returns the number of times the player has lagged out of the game */
     public int getLagouts() {
         return lagoutCount;
     }
-    
+
+    /** Returns player stars (can be 0 depending on whether or not player played in prior games) */
     public int getStars() {
         return stars;
     }
-    
+
+    /** Returns true if the player is currently playing in a game (in or lagged out) */
     public boolean isPlaying() {
         return (status == Status.IN || status == Status.LAGGED);
     }
-    
+
+    /** Records all stats into the database */
     public void saveStats() {
         String[] fields = { 
                 "fcName", 
@@ -265,7 +290,8 @@ public class DraftPlayer {
             ba.SQLBackgroundInsertInto(db, "tblDraft__PlayerRound", fields, values);            
         }
     }
-    
+
+    /** Returns String array of every single stat available */
     public String[] getStats() {
         String[] values = new String[25];
         values[0] = name;
@@ -295,21 +321,25 @@ public class DraftPlayer {
         values[24] = (specAt == -1) ? "" + statTracker.getRating() : "" + 0;
         return values;
     }
-    
+
+    /** Returns a single DraftStat Object */
     public DraftStat getStat(StatType stat) {
         return statTracker.getStat(stat);
     }
-    
+
+    /** Returns the player's RPD as a String if applicable */
     public String getRPD() {
         return statTracker.getRPDString();
     }
-    
+
+    /** Records bot spec */
     public void setLagSpec(boolean specced) {
         botSpec = specced;
         if (botSpec)
             status = Status.LAGGED;
     }
-    
+
+    /** Specs a player for lag */
     public void lagSpec(String reason) {
         status = Status.LAGGED;
         lagoutCount++;
@@ -318,7 +348,8 @@ public class DraftPlayer {
         ba.spec(name);
         ba.spec(name);
     }
-    
+
+    /** Sets ship of player and prepares stat tracker with the associated ship */
     public void setShip(int s) {
         if (status == Status.IN)
             ba.setShip(name, s);
@@ -330,7 +361,8 @@ public class DraftPlayer {
             ships.put(s, statTracker);
         }
     }
-    
+
+    /** Puts player in game */
     public void getIn() {
         status = Status.IN;
         setShip(ship);
@@ -339,12 +371,14 @@ public class DraftPlayer {
         lagInfo = new LagInfo(ba, name);
         lagInfo.updateLag();
     }
-    
+
+    /** Puts player into game in a specified ship */
     public void getIn(int s) {
         ship = s;
         getIn();
     }
-    
+
+    /** Removes player from the game */
     public void getOut() {
         status = Status.OUT;
         ba.spec(name);

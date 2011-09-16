@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * StatType enum is used to refer to different types of stats using highly human readable identifiers.
+ * Each identifier is also linked to the database column name to which it is associated.
  *
  * @author WingZero
  */

@@ -19,6 +19,8 @@ import twcore.bots.twdt.DraftPlayer.Status;
 import twcore.bots.twdt.DraftRound.RoundState;
 
 /**
+ * DraftTeam handles all things team related. Handles all team captain commands
+ * and also maintains relevant team information.  
  *
  * @author WingZero
  */
@@ -28,22 +30,20 @@ public class DraftTeam {
     public static final int MAXRES_X = 1440;
     public static final int MAXRES_Y = 1024;
     
-    BotAction ba;
-    OperatorList oplist;
-    BotSettings rules;
-    GameType type;
-    
-    DraftRound round;
-    HashMap<String, DraftPlayer> players;
-    HashMap<String, ResCheck> checks;
-    Vector<String> lagChecks;
-    int score, freq, teamID, deaths, usedStars, subs, changes, switches;
-    int[] shipMax, ships;
-    String[] caps;
-    String teamName;
-    boolean ready, flag, resChecks;
-    String cmdTarget;
-    
+    BotAction       ba;
+    OperatorList    oplist;
+    BotSettings     rules;
+    GameType        type;
+    DraftRound      round;
+    String[]        caps;
+    String          teamName;
+    boolean         ready, flag, resChecks;
+    int[]           shipMax, ships;
+    int             score, freq, teamID, deaths, usedStars, subs, changes, switches;
+
+    HashMap<String, DraftPlayer>    players;
+    HashMap<String, ResCheck>       checks;
+    Vector<String>                  lagChecks;
     
     public DraftTeam(DraftRound gameRound, String name, int id, int freqNum) {
         players = new HashMap<String, DraftPlayer>();
@@ -69,10 +69,10 @@ public class DraftTeam {
         ready = false;
         flag = false;
         resChecks = true;
-        cmdTarget = null;
         loadTeam();
     }
 
+    /** EVENT HANDLERS **/
     public void handleEvent(FlagClaimed event) {
         if (type != GameType.BASING) return; 
         String name = ba.getPlayerName(event.getPlayerID());
@@ -134,14 +134,17 @@ public class DraftTeam {
         }
     }
     
+    /** Reports a lagged out player to team captains */
     public void handleLagout(String name) {
         msgCaptains(name + " has lagged out or specced.");
     }
     
+    /** Sets flag to false representing flag possesion */
     public void handleFlagLoss() {
     	flag = false;
     }
     
+    /** Handles the ready command which toggles whether or not a team is finished setting up a lineup */
     public void cmd_ready(String cap) {
         if (!isCaptain(cap)) 
             return;
@@ -157,16 +160,19 @@ public class DraftTeam {
         }
     }
     
+    /** Handles the list command which prints a list of each teams captains and current line ups */
     public void cmd_list(String name) {
         ba.sendSmartPrivateMessage(name, teamName + " captains: " + caps[0] + ", " + caps[1] + ", " + caps[2]);
         for (DraftPlayer p : players.values())
             ba.sendSmartPrivateMessage(name, padString(p.getName(), 25) + ": " + p.getShip() + " - " + p.getStatus().toString());
     }
-
+    
+    /** Handles the add command which attempts to add a player into the game */
     public void cmd_add(String cap, String cmd) {
         if (type == GameType.BASING) { 
             if (!cmd.contains(":"))
                 return;
+            // Try to match completely or partially the name of someone in arena with the given pattern
             String name = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
             String temp = ba.getFuzzyPlayerName(name);
             if (temp != null)
@@ -175,6 +181,7 @@ public class DraftTeam {
                 ba.sendSmartPrivateMessage(cap, name + " was not found in this arena.");
                 return;
             }
+            // Parse the specified ship number
             int ship;
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
@@ -182,7 +189,7 @@ public class DraftTeam {
                 ba.sendSmartPrivateMessage(cap, "Invalid syntax, please use !add <name>:<ship#>");
                 return;
             }
-
+            // Check if ship exists and if ship is available
             if (ship < 1 || ship > 8 || ship == 4 || ship == 6) {
                 ba.sendSmartPrivateMessage(cap, "Invalid ship: " + ship);
                 return;
@@ -195,11 +202,13 @@ public class DraftTeam {
             }
             do_add(cap, name, ship);
         } else {
+            // Check to see if there is room for another player
             if (ships[8] == round.game.maxPlayers) {
                 ba.sendSmartPrivateMessage(cap, "The maximum number ships has already been reached.");
                 return;
             }
             if (cmd.length() < 6) return;
+            // Try to match completely or partially the name of someone in arena with the given pattern
             String name = cmd.substring(cmd.indexOf(" ") + 1);
             String temp = ba.getFuzzyPlayerName(name);
             if (temp != null)
@@ -208,6 +217,7 @@ public class DraftTeam {
                 ba.sendSmartPrivateMessage(cap, name + " was not found in this arena.");
                 return;
             }
+            // For warbird games, create a new ResCheck, otherwise, add player
             if (type == GameType.WARBIRD) {
                 if (resChecks)
                     checks.put(low(name), new ResCheck(name, cap, 1));
@@ -218,13 +228,16 @@ public class DraftTeam {
         }
     }
     
+    /** Handles the sub command */
     public void cmd_sub(String cap, String cmd) {
         if (cmd.length() < 5 || !cmd.contains(":")) return;
+        // Check for available subs
         if (subs == 0) {
             ba.sendPrivateMessage(cap, "You have no more substitutions available.");
             return;
         } 
-        // out:in
+        // Command syntax -> out:in
+        // Try to match completely or partially the name of someone in arena with the given pattern
         String[] names = cmd.substring(cmd.indexOf(" ") + 1).split(":");
         String temp = ba.getFuzzyPlayerName(names[1]);
         if (temp != null)
@@ -233,6 +246,7 @@ public class DraftTeam {
             ba.sendSmartPrivateMessage(cap, names[1] + " must be in the arena.");
             return;
         }
+        // Get and check player to be subbed
         DraftPlayer out = getPlayer(names[0], false);
         if (out == null) {
             ba.sendSmartPrivateMessage(cap, names[0] + " was not found playing.");
@@ -241,6 +255,7 @@ public class DraftTeam {
             ba.sendSmartPrivateMessage(cap, out.getName() + " is not in the game.");
             return;
         }
+        // Execute
         if (type == GameType.WARBIRD) {
             if (resChecks)
                 checks.put(low(names[1]), new ResCheck(names[1], cap, out));
@@ -250,18 +265,22 @@ public class DraftTeam {
             do_sub(cap, names[1], out);
     }
     
+    /** Handles the remove command which removes a player but only during lineup state */
     public void cmd_remove(String cap, String cmd) {
         if (round.getState() != RoundState.LINEUPS || !cmd.contains(" ")) return;
         String name = cmd.substring(cmd.indexOf(" ") + 1);
+        // Try to match completely or partially the name of someone in arena with the given pattern
         String temp = ba.getFuzzyPlayerName(name);
         if (temp != null)
             name = temp;
         DraftPlayer p = getPlayer(name);
         if (p != null) {
+            // Decrement ship counts
             ships[p.getShip() - 1]--;
             ships[8]--;
             p.getOut();
             if (p.getStars() > 0) {
+                // If player's stars were greater than 0 then it was player's first time added for the week so reset played
                 setPlayed(p.getName(), false);
                 usedStars -= p.getStars();
             }
@@ -269,6 +288,7 @@ public class DraftTeam {
         }
     }
     
+    /** Handles the change command which changes a player's ship in a basing match */
     public void cmd_change(String cap, String cmd) {
         if (type != GameType.BASING || cmd.length() < 9 || !cmd.contains(":")) return;
         if (changes < 1) {
@@ -276,6 +296,7 @@ public class DraftTeam {
             return;
         } 
         String name = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
+        // Try to match completely or partially the name of someone in arena with the given pattern
         String temp = ba.getFuzzyPlayerName(name);
         if (temp != null)
             name = temp;
@@ -288,7 +309,7 @@ public class DraftTeam {
             ba.sendSmartPrivateMessage(cap, name + " is not in the game.");
             return;
         }
-        
+        // Parse ship number specified
         int ship;
         try {
             ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
@@ -296,7 +317,7 @@ public class DraftTeam {
             ba.sendSmartPrivateMessage(cap, "Invalid syntax, please use !change <name>:<ship#>");
             return;
         }
-
+        // Verify acceptable ship number 
         if (ship < 1 || ship > 8 || ship == 4 || ship == 6) {
             ba.sendSmartPrivateMessage(cap, "Invalid ship: " + ship);
             return;
@@ -307,6 +328,7 @@ public class DraftTeam {
             ba.sendSmartPrivateMessage(cap, name + " is already in that ship.");
             return;
         }
+        // Adjust ship counts
         ships[p.getShip() - 1]--;
         ships[ship - 1]++;
         p.setShip(ship);
@@ -314,6 +336,7 @@ public class DraftTeam {
         ba.sendArenaMessage(p.getName() + " has been changed to ship " + ship);
     }
     
+    /** Handles the switch command which switches the ships of two players in a basing match */
     public void cmd_switch(String cap, String cmd) {
         if (type != GameType.BASING || cmd.length() < 9 || !cmd.contains(":")) return;
         if (switches < 1) {
@@ -342,12 +365,14 @@ public class DraftTeam {
         switches--;
     }
     
+    /** Handles the myfreq command which puts a player on the team freq */
     public void cmd_myFreq(String name) {
         Player p = ba.getPlayer(name);
         if (p != null && teamName.equalsIgnoreCase(p.getSquadName()))
             ba.setFreq(name, freq);
     }
     
+    /** Executes the adding of a player by the add command */
     private void do_add(String cap, String name, int ship) {
         DraftPlayer p = null;
         p = getPlayer(name, false);
@@ -357,10 +382,13 @@ public class DraftTeam {
         }
         
         if (p == null) {
+            // Player was not previously added so create new
             int stars = getStars(name);
+            // If stars are less than 0 then the player was found on the team's roster
             if (stars > -1) {
                 if (usedStars + stars <= 50) {
-                    if (stars > 0)
+                    // Add player unless teams star max would be exceeded
+                    if (stars > 0) // stars will be 0 if this player's stars were already added in a previous game
                         setPlayed(name, true);
                     usedStars += stars;
                     p = new DraftPlayer(ba, this, name, freq, ship, stars);
@@ -388,6 +416,7 @@ public class DraftTeam {
         msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
     }
     
+    /** Executes the substitution of one player for another */ 
     private void do_sub(String cap, String in, DraftPlayer out) {
         DraftPlayer p = null;
         p = getPlayer(in, false);
@@ -396,6 +425,7 @@ public class DraftTeam {
             return;
         }
         if (p == null) {
+            // If player IN has more stars, then count the IN player's stars and disregard OUT's; if OUT has more then nothing
             int stars = getStars(in);
             if (stars > -1) {
                 if (stars > out.getStars()) {
@@ -428,6 +458,7 @@ public class DraftTeam {
         msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
     }
     
+    /** Helper sets a player's "played" status in the database */
     private void setPlayed(String name, boolean played) {
         try {
             if (played)
@@ -439,6 +470,7 @@ public class DraftTeam {
         }
     }
     
+    /** Retrieves a player's star count from the database or 0 meaning played player or -1 meaning not found on roster */
     private int getStars(String name) {
         int stars = -1;
         try {
@@ -458,10 +490,12 @@ public class DraftTeam {
         return stars;
     }
     
+    /** Toggles res checks */
     public void do_resChecks(boolean res) {
         resChecks = res;
     }
     
+    /** Returns true if any players are not yet out */
     public boolean isAlive() {
         for (DraftPlayer p : players.values()) {
             if (p.getStatus() == Status.IN)
@@ -472,10 +506,12 @@ public class DraftTeam {
         return false;
     }
     
+    /** Warps team */
     public void warpTeam(int x, int y) {
         ba.warpFreqToLocation(freq, x, y);
     }
     
+    /** Updates database with team star information */
     public void reportEnd() {
         for (DraftPlayer p : players.values()) {
             if (p.getStatus() == Status.IN)
@@ -484,6 +520,7 @@ public class DraftTeam {
         ba.SQLBackgroundQuery(db, null, "UPDATE tblDraft__Team SET fnUsedStars = " + usedStars + " WHERE fnTeamID = " + teamID + "");
     }
     
+    /** Returns ArrayList of formatted end game stats report for whole team and individual players */
     public ArrayList<String> getStats() {
         ArrayList<String> stats = new ArrayList<String>();
         if (type == GameType.WARBIRD) {
@@ -508,6 +545,7 @@ public class DraftTeam {
         return stats;
     }
     
+    /** Gets total  number of lagouts used */
     public int getLagouts() {
         int num = 0;
         for (DraftPlayer p : players.values())
@@ -515,6 +553,7 @@ public class DraftTeam {
         return num;
     }
     
+    /** Removes next player to lag check and then add to back of queue */ 
     public String getNextPlayer() {
         if (lagChecks.isEmpty())
             return null;
@@ -523,10 +562,12 @@ public class DraftTeam {
         return name;
     }
     
+    /** Returns ready status */
     public boolean getReady() {
         return ready;
     }
     
+    /** Returns the sum of a particular stat across each team player */
     public int getTotal(StatType stat) {
         int result = 0;
         for (DraftPlayer p : players.values())
@@ -534,6 +575,7 @@ public class DraftTeam {
         return result;
     }
     
+    /** Returns basing second score count or dueling enemy death count */
     public int getScore() {
         if (type == GameType.BASING)
             return score;
@@ -541,6 +583,7 @@ public class DraftTeam {
             return round.getOpposing(this).getDeaths() + (deaths * (5 - round.getOpposing(this).getPlayerCount()));
     }
     
+    /** Get number of players currently playing */
     public int getPlayerCount() {
         int count = 0;
         for (DraftPlayer p : players.values()) {
@@ -550,14 +593,17 @@ public class DraftTeam {
         return count;
     }
     
+    /** Returns String representation of team time score in minutes and second */
     public String getTime() {
         return formatTime(score);
     }
     
+    /** Returns team freq */
     public int getFreq() {
         return freq;
     }
     
+    /** Returns total deaths for whole team */
     public int getDeaths() {
         int deaths = 0;
         for (DraftPlayer p : players.values())
@@ -565,6 +611,7 @@ public class DraftTeam {
         return deaths;
     }
     
+    /** Determines team MVP by comparing scores and returns a DraftPlayer Object */
     public DraftPlayer getMVP() {
         DraftPlayer mvp = null;
         for (DraftPlayer p : players.values()) {
@@ -580,14 +627,17 @@ public class DraftTeam {
         return mvp;
     }
     
+    /** Returns team name */
     public String getName() {
         return teamName;
     }
     
+    /** Returns team ID number */
     public int getID() {
         return teamID;
     }
     
+    /** Returns a DraftPlayer Object of the player specified by name or null if not found */
     public DraftPlayer getPlayer(String name, boolean exact) {
         if (exact)
             return players.get(low(name));
@@ -611,26 +661,32 @@ public class DraftTeam {
         }
     }
     
+    /** Returns a DraftPlayer Object of a player with the exact name specified */
     public DraftPlayer getPlayer(String name) {
         return getPlayer(name, true);
     }
     
+    /** Returns the opposing team DraftTeam Object */
     public DraftTeam getOpposing() {
     	return round.getOpposing(this);
     }
     
+    /** Increments score */
     public void addPoint() {
         score++;
     }
     
+    /** Returns size of players collection */
     public int getSize() {
         return players.size();
     }
     
+    /** Returns true if team has possession of flag */
     public boolean hasFlag() {
         return flag;
     }
     
+    /** Returns true if a player with the name specified is currently playing */
     public boolean isPlaying(String name) {
         DraftPlayer p = getPlayer(name, false);
         if (p != null) {
@@ -640,6 +696,7 @@ public class DraftTeam {
         return false;
     }
     
+    /** Checks if name is a team captain */
     public boolean isCaptain(String name) {
         for (String cap : caps)
             if (name.equalsIgnoreCase(cap))
@@ -647,17 +704,20 @@ public class DraftTeam {
         return false;
     }
     
+    /** Sends an array of private messages to the team captains */
     public void spamCaptains(String[] msg) {
         if (msg[0].contains("PING") && round.getState() != RoundState.LINEUPS) return;
         for (String name : caps)
             ba.privateMessageSpam(name, msg);
     }
     
+    /** Sends a private message to the team captains */
     public void msgCaptains(String msg) {
         for (String name : caps)
             ba.sendPrivateMessage(name, msg);
     }
     
+    /** Reloads current captain and assistant names from the database */
     public void reloadCaps() {
         String query = "SELECT * FROM tblDraft__Team WHERE fnTeamID = " + teamID + " LIMIT 1";
         try {
@@ -673,6 +733,7 @@ public class DraftTeam {
         }
     }
     
+    /** Loads team information from the database */
     private void loadTeam() {
         String query = "SELECT * FROM tblDraft__Team WHERE fnTeamID = " + teamID + " LIMIT 1";
         try {
@@ -689,12 +750,14 @@ public class DraftTeam {
         }
     }
     
+    /** Adds spaces to the end of a String to meet a certain length */
     private String padString(String str, int length) {
         while (str.length() < length)
             str += " ";
         return str;
     }
     
+    /** Adds spaces in front of a number to create a String of a certain length */
     private String padNum(int num, int length) {
         String str = "" + num;
         while (str.length() < length)
@@ -702,6 +765,7 @@ public class DraftTeam {
         return str;
     }
     
+    /** Converts time in seconds to time in minutes and seconds MM:ss */
     private String formatTime(int score) {
     	String leadingZero = "";
     	if (score % 60 < 10)
@@ -709,10 +773,18 @@ public class DraftTeam {
     	return "" + (score / 60) + ":" + leadingZero + (score % 60);
     }
     
+    /** Lazy helper returns lower case String */
     private String low(String str) {
         return str.toLowerCase();
     }
     
+    /**
+     * ResCheck is used to get the resolution a player is using via *einfo and then verifies
+     * that the player's resolution complies with the league standard. If it does, then the player
+     * is added or subbed as usual. Otherwise, the player and captains are warned about the illegal resolution.
+     *
+     * @author WingZero
+     */
     private class ResCheck {
         
         boolean isSub;
