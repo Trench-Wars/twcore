@@ -135,7 +135,7 @@ public class roboref extends SubspaceBot {
 
     private Spy spy;
     
-    private PreparedStatement updateStats;
+    private PreparedStatement updateStats, storeGame;
     //private PreparedStatement updateRank;
     
     public roboref(BotAction botAction) {
@@ -167,6 +167,7 @@ public class roboref extends SubspaceBot {
         voteType = VoteType.NA;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
+        storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
         //updateRank = ba.createPreparedStatement(db, connectionID, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE fnShip = ? AND (fnKills + fnDeaths) > " + INITIAL_RATING + " ORDER BY fnRating DESC");
         if (updateStats == null) {
             debug("Update was null.");
@@ -846,9 +847,22 @@ public class roboref extends SubspaceBot {
         sendZoner();
     }
     
-    /** Sets the winner of the last elim event prompting end game routines */
-    public void setWinner(ElimPlayer winner) {
+    /** Sets the winner of the last elim event prompting end game routines and stores the finished game information to the database */
+    public void storeGame(ElimPlayer winner, int aveRating, int players) {
         this.winner = winner;
+        try {
+            storeGame.clearParameters();
+            storeGame.setInt(1, shipType.getNum());
+            storeGame.setString(2, Tools.addSlashesToString(winner.name));
+            storeGame.setInt(3, deaths);
+            storeGame.setInt(4, winner.getScores()[0]);
+            storeGame.setInt(5, winner.getScores()[1]);
+            storeGame.setInt(6, players);
+            storeGame.setInt(7, aveRating);
+            storeGame.execute();
+        } catch (SQLException e) {
+            Tools.printStackTrace("Elim store game error!", e);
+        }
         handleState();
     }
     
@@ -1222,6 +1236,7 @@ public class roboref extends SubspaceBot {
     public void handleDisconnect() {
         ba.cancelTasks();
         ba.closePreparedStatement(db, connectionID, this.updateStats);
+        ba.closePreparedStatement(db, connectionID, this.storeGame);
         //ba.closePreparedStatement(db, connectionID, this.updateRank);
         ba.scheduleTask(new Die(), 2000);
     }

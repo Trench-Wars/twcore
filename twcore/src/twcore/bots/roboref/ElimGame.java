@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.TreeSet;
+import java.util.Vector;
 
 import twcore.bots.roboref.ElimPlayer.Status;
 import twcore.bots.roboref.roboref.ShipType;
@@ -24,6 +25,8 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
+import twcore.core.lag.LagHandler;
+import twcore.core.lag.LagReport;
 import twcore.core.util.Tools;
 
 /**
@@ -63,6 +66,7 @@ public class ElimGame {
     
     HiderFinder hiderFinder;
     
+    Vector<String> lagChecks;
     HashMap<String, ElimPlayer> players;    // holds any ElimPlayer regardless of activity
     HashMap<String, ElimPlayer> played;     // contains only players who actually played in the current game
     TreeSet<String> winners;
@@ -71,6 +75,11 @@ public class ElimGame {
     HashMap<String, Lagout> laggers;
     ElimPlayer winner;
     String mvp;
+    
+    TimerTask lagCheck;
+    
+    public LagHandler lagHandler;
+    
     
     /**
      * Representation of a single elim event and all relevant player and game info.
@@ -103,12 +112,16 @@ public class ElimGame {
         losers = new HashSet<String>();
         loaded = new HashSet<String>();
         laggers = new HashMap<String, Lagout>();
+        lagChecks = new Vector<String>();
+        lagCheck = null;
+        lagHandler = new LagHandler(ba, rules, this, "handleLagReport");
         Iterator<Player> i = ba.getPlayingPlayerIterator();
         while (i.hasNext()) {
             Player p = i.next();
             String name = p.getPlayerName();
             String low = name.toLowerCase();
             winners.add(low);
+            lagChecks.add(low);
             ElimPlayer ep = new ElimPlayer(ba, this, name, ship.getNum(), deaths);
             players.put(low, ep);
         }
@@ -141,12 +154,14 @@ public class ElimGame {
                     players.put(name.toLowerCase(), ep);
                 }
                 winners.add(name.toLowerCase());
+                lagChecks.add(low(name));
                 if (ship.inBase())
                     ep.setStatus(Status.SPAWN);
                 else
                     ep.setStatus(Status.IN);
             } else {
                 winners.remove(name.toLowerCase());
+                lagChecks.remove(low(name));
                 played.remove(low(name));
                 ElimPlayer ep = getPlayer(name);
                 if (ep != null)
@@ -155,6 +170,7 @@ public class ElimGame {
         } else if (event.getShipType() == 0) {
             if (state == GameState.NA || state == GameState.STARTING) {
                 winners.remove(name.toLowerCase());
+                lagChecks.remove(low(name));
                 played.remove(low(name));
                 ElimPlayer ep = getPlayer(name);
                 if (ep != null)
@@ -193,10 +209,28 @@ public class ElimGame {
             handleLagout(name);
         else if (state == GameState.NA || state == GameState.STARTING){
             winners.remove(low(name));
+            lagChecks.remove(low(name));
             played.remove(low(name));
             ElimPlayer ep = getPlayer(name);
             if (ep != null)
             	ep.setStatus(Status.SPEC);
+        }
+    }
+    
+    /** Handles a lag report received from the lag handler */
+    public void handleLagReport(LagReport report) {
+        if (!report.isBotRequest())
+            ba.privateMessageSpam(report.getRequester(), report.getLagStats());
+        if (report.isOverLimits()) {
+            if (!report.isBotRequest())
+                ba.sendPrivateMessage(report.getRequester(), report.getLagReport());
+            ElimPlayer p = getPlayer(report.getName());
+            if (p != null && ba.getPlayer(report.getName()).getShipType() != 0 && p.getStatus() == Status.IN) {
+                ba.sendPrivateMessage(report.getName(), report.getLagReport());
+                p.handleLagout();
+                ba.spec(report.getName());
+                ba.spec(report.getName());
+            }
         }
     }
     
@@ -230,6 +264,7 @@ public class ElimGame {
     /** Handles a lagged out player */
     public void handleLagout(String name) {
         winners.remove(low(name));
+        lagChecks.remove(low(name));
         ElimPlayer ep = getPlayer(name);
         if (ep != null && ep.isPlaying()) {
             if (!ep.handleLagout())
@@ -327,6 +362,15 @@ public class ElimGame {
                 if (!ship.inBase())
                     hiderFinder = new HiderFinder();
                 countStats();
+                
+                lagCheck = new TimerTask() {
+                    public void run() {
+                        String name = lagChecks.remove(0);
+                        lagChecks.add(name);
+                        lagHandler.requestLag(name);
+                    }
+                };
+                ba.scheduleTask(lagCheck, 3000);
                 starter = null;
             }
         };
@@ -457,6 +501,7 @@ public class ElimGame {
         String temp = ba.getFuzzyPlayerName(player);
         if (temp != null && temp.equalsIgnoreCase(player)) {
             winners.remove(low(player));
+            lagChecks.remove(low(player));
             losers.remove(low(player));
             played.remove(low(player));
             ElimPlayer ep = players.remove(low(player));
@@ -484,14 +529,6 @@ public class ElimGame {
         laggers.clear();
     } 
     
-    /** Stores the finished game information to the database */
-    public void storeGame() {
-        int aveRating = ratingCount / playerCount;
-        String query = "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) " +
-                "VALUES(" + ship.getNum() + ", '" + Tools.addSlashesToString(winner.name) + "', " + deaths + ", " + winner.getScores()[0] + ", " + winner.getScores()[1] + ", " + playerCount + ", " + aveRating + ")";
-        ba.SQLBackgroundQuery(db, null, query);
-    }
-    
     /** Returns a List of ElimPlayers built from an ElimPlayer array (used for sorting) */
     public List<ElimPlayer> getPlayed() {
         return Arrays.asList(played.values().toArray(new ElimPlayer[played.size()]));
@@ -511,6 +548,7 @@ public class ElimGame {
     public boolean gotUpdate(String name) {
         losers.remove(name.toLowerCase());
         winners.remove(name.toLowerCase());
+        lagChecks.remove(low(name));
         if (winners.isEmpty() && losers.isEmpty())
             return true;
         else return false;
@@ -519,6 +557,7 @@ public class ElimGame {
     /** Remove player from the game player list into the loser list and flush stats */
     public void removePlayer(ElimPlayer loser) {
         winners.remove(low(loser.name));
+        lagChecks.remove(low(loser.name));
         losers.add(low(loser.name));
         bot.updatePlayer(loser);
         checkWinner();
@@ -563,14 +602,15 @@ public class ElimGame {
     /** Check if game has been won */
     private void checkWinner() {
         if (state == GameState.PLAYING && winners.size() == 1) {
+            ba.cancelTask(lagCheck);
+            lagCheck = null;
             state = GameState.ENDING;
             if (hiderFinder != null)
                 hiderFinder.stop();
             winner = getPlayer(winners.first());
             winner.saveWin();
             setMVP();
-            storeGame();
-            bot.setWinner(winner);      
+            bot.storeGame(winner, (ratingCount / playerCount), playerCount);
         }
     }
     
@@ -611,6 +651,8 @@ public class ElimGame {
         ba.cancelTasks();
         if (starter != null)
             starter = null;
+        if (lagCheck != null)
+            lagCheck = null;
     }
     
     /** Lazy toLowerCase() String helper */
