@@ -679,7 +679,7 @@ public class elim extends SubspaceBot {
             int ship = 1;
             int rank = 2;
             try {
-                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1), cmd.indexOf(":"));
+                ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":")));
                 if (ship < 1 || ship > 8) {
                     ba.sendSmartPrivateMessage(name, "Invalid ship number.");
                     return;
@@ -690,7 +690,7 @@ public class elim extends SubspaceBot {
                     return;
                 }
             } catch (NumberFormatException e) {
-                ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !lad <ship#>");
+                ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !lad <ship#>:<rank#>");
                 return;
             }
             try {
