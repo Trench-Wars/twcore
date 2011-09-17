@@ -797,6 +797,16 @@ public class ElimGame {
     public class CompareAll implements Comparator<ElimPlayer> {
         @Override
         public int compare(ElimPlayer p1, ElimPlayer p2) {
+            if (p1 == null && p2 == null) {
+                Tools.printLog("[ELIM] p1 and p2 were both null.");
+                return 0;
+            } else if (p1 != null && p2 == null) {
+                Tools.printLog("[ELIM] p1 == " + p1.name + " but p2 was null.");
+                return 1;
+            } else if (p1 == null && p2 != null) {
+                Tools.printLog("[ELIM] p1 was null but p2 == " + p2.name + ".");
+                return -1;
+            }
             // kills -> least deaths -> accuracy
             if (p1.getKills() > p2.getKills())
                 return 1;
