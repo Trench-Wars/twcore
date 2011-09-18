@@ -372,7 +372,7 @@ public class DraftRound {
             if (type == GameType.BASING)
                 return "currently playing. Score: " + team1.getTime() + " - " + team2.getTime();
             else
-                return "currently playing round " + round + ". ";
+                return "currently playing round " + round + ". Score: " + team1.getScore() + " - " + team2.getScore();
         } else
             return "";
     }
