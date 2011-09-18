@@ -61,7 +61,6 @@ public class ElimPlayer {
     public ElimPlayer(BotAction act, ElimGame elimGame, String name, int ship, int deaths) {
         ba = act;
         this.name = name;
-        stats = null;
         spawn = null;
         bounds = null;
         lagouts = 3;
@@ -243,15 +242,36 @@ public class ElimPlayer {
     }
     
     public int getKills() {
-        return stats.getStat(StatType.KILLS);
+        if (stats != null)
+            return stats.getStat(StatType.KILLS);
+        else {
+            System.out.println("[ELIM]* (kills) NullPointer: stats null for '" + name + "'");
+            Tools.printLog("[ELIM] (kills) NullPointer: stats null for '" + name + "'");
+            ba.sendSmartPrivateMessage("WingZero", "[ELIM] (kills) NullPointer: stats null for '" + name + "'");
+            return 0;
+        }
     }
     
     public int getDeaths() {
-        return stats.getStat(StatType.DEATHS);
+        if (stats != null)
+            return stats.getStat(StatType.DEATHS);
+        else {
+            System.out.println("[ELIM]* (deaths) NullPointer: stats null for '" + name + "'");
+            Tools.printLog("[ELIM] (deaths) NullPointer: stats null for '" + name + "'");
+            ba.sendSmartPrivateMessage("WingZero", "[ELIM] (deaths) NullPointer: stats null for '" + name + "'");
+            return 0;
+        }
     }
     
     public double getAim() {
-        return stats.getAim(StatType.AIM);
+        if (stats != null)
+            return stats.getAim(StatType.AIM);
+        else {
+            System.out.println("[ELIM]* (aim) NullPointer: stats null for '" + name + "'");
+            Tools.printLog("[ELIM] (aim) NullPointer: stats null for '" + name + "'");
+            ba.sendSmartPrivateMessage("WingZero", "[ELIM] (aim) NullPointer: stats null for '" + name + "'");
+            return 0;
+        }
     }
     
     public int getLastShot() {
