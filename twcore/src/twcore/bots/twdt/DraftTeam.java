@@ -374,8 +374,19 @@ public class DraftTeam {
     /** Handles the myfreq command which puts a player on the team freq */
     public void cmd_myFreq(String name) {
         Player p = ba.getPlayer(name);
-        if (p != null && teamName.equalsIgnoreCase(p.getSquadName()))
+        if (p == null) return;
+        if (teamName.equalsIgnoreCase(p.getSquadName()))
             ba.setFreq(name, freq);
+        else {
+            try {
+                ResultSet rs = ba.SQLQuery(db, "SELECT fcName FROM tblDraft__Player WHERE fnTeamID = " + teamID + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+                if (rs.next()) 
+                    ba.setFreq(name, freq);
+                ba.SQLClose(rs);
+            } catch (SQLException e) {
+                Tools.printStackTrace(e);
+            }
+        }
     }
     
     /** Executes the adding of a player by the add command */
