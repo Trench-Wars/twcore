@@ -302,6 +302,7 @@ public class DraftRound {
                     " !change <name>:<ship> ", 
                     " !switch <name1>:<name1> ",
                     " !rem <name>",
+                    " !stars",
             };
             ba.privateMessageSpam(name, msg);
         }

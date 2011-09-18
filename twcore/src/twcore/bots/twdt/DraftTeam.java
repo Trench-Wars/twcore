@@ -130,6 +130,8 @@ public class DraftTeam {
                     cmd_switch(name, msg);
                 else if (msg.startsWith("!rem"))
                     cmd_remove(name, msg);
+                else if (msg.startsWith("!stars"))
+                    cmd_stars(name);
             }
         }
     }
@@ -158,6 +160,10 @@ public class DraftTeam {
             } else if (!ready)
                 ba.sendPrivateMessage(cap, "You must have at least " + round.game.minPlayers + " players.");
         }
+    }
+    
+    public void cmd_stars(String name) {
+        ba.sendPrivateMessage(name, "" + teamName + " star count: " + usedStars);
     }
     
     /** Handles the list command which prints a list of each teams captains and current line ups */
