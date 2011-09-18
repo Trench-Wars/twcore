@@ -519,10 +519,8 @@ public class DraftTeam {
     
     /** Updates database with team star information */
     public void reportEnd() {
-        for (DraftPlayer p : players.values()) {
-            if (p.getStatus() == Status.IN)
-                p.saveStats();
-        }
+        for (DraftPlayer p : players.values())
+            p.saveStats();
         ba.SQLBackgroundQuery(db, null, "UPDATE tblDraft__Team SET fnUsedStars = " + usedStars + " WHERE fnTeamID = " + teamID + "");
     }
     
