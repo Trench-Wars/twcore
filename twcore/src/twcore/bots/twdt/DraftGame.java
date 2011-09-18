@@ -198,6 +198,7 @@ public class DraftGame {
             ba.sendSmartPrivateMessage(name, "This game has already been started.");
             return;
         }
+        host = name;
         round = 1;
         currentRound = new DraftRound(this, type, team1, team2, team1Name, team2Name);
     }
@@ -330,7 +331,7 @@ public class DraftGame {
     /** Stores the result of the game to the database */
     private void storeResult() {
         try {
-            String query = "UPDATE tblDraft__Match SET fdPlayed = NOW(), fcTeam1Score = " + team1score + ", fcTeam2Score = " + team2score + " WHERE fnMatchID = " + gameID;
+            String query = "UPDATE tblDraft__Match SET fdPlayed = NOW(), fcTeam1Score = " + team1score + ", fcTeam2Score = " + team2score + ", fcHost = '" + Tools.addSlashesToString(host) + "', WHERE fnMatchID = " + gameID;
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {
             Tools.printStackTrace(e);
