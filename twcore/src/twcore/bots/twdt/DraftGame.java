@@ -331,7 +331,7 @@ public class DraftGame {
     /** Stores the result of the game to the database */
     private void storeResult() {
         try {
-            String query = "UPDATE tblDraft__Match SET fdPlayed = NOW(), fcTeam1Score = " + team1score + ", fcTeam2Score = " + team2score + ", fcHost = '" + Tools.addSlashesToString(host) + "', WHERE fnMatchID = " + gameID;
+            String query = "UPDATE tblDraft__Match SET fdPlayed = NOW(), fcTeam1Score = '" + Tools.addSlashesToString(team1score) + "', fcTeam2Score = '" + Tools.addSlashesToString(team2score) + "', fcHost = '" + Tools.addSlashesToString(host) + "', WHERE fnMatchID = " + gameID;
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {
             Tools.printStackTrace(e);
