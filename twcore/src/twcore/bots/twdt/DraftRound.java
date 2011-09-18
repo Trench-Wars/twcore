@@ -580,7 +580,7 @@ public class DraftRound {
             blueout = false;
             ba.toggleLockPublicChat();
             String[] fields = new String[] { "fnMatchID", "fnRound", "fnTeam1Score", "fnTeam2Score", "fcMvp" };
-            String[] values = new String[] { "" + game.getMatchID(), "" + game.getRound(), "" + score1, "" + score2, "'" + Tools.addSlashesToString(mvp) + "'"};
+            String[] values = new String[] { "" + game.getMatchID(), "" + game.getRound(), "" + score1, "" + score2, Tools.addSlashesToString(mvp)};
             ba.SQLInsertInto(db, "tblDraft__MatchRound", fields, values);
         }
         
