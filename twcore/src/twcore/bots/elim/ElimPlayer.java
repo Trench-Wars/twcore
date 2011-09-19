@@ -245,7 +245,6 @@ public class ElimPlayer {
         if (stats != null)
             return stats.getStat(StatType.KILLS);
         else {
-            System.out.println("[ELIM]* (kills) NullPointer: stats null for '" + name + "'");
             Tools.printLog("[ELIM] (kills) NullPointer: stats null for '" + name + "'");
             ba.sendSmartPrivateMessage("WingZero", "[ELIM] (kills) NullPointer: stats null for '" + name + "'");
             return 0;
@@ -256,7 +255,6 @@ public class ElimPlayer {
         if (stats != null)
             return stats.getStat(StatType.DEATHS);
         else {
-            System.out.println("[ELIM]* (deaths) NullPointer: stats null for '" + name + "'");
             Tools.printLog("[ELIM] (deaths) NullPointer: stats null for '" + name + "'");
             ba.sendSmartPrivateMessage("WingZero", "[ELIM] (deaths) NullPointer: stats null for '" + name + "'");
             return 0;
@@ -267,9 +265,7 @@ public class ElimPlayer {
         if (stats != null)
             return stats.getAim(StatType.AIM);
         else {
-            System.out.println("[ELIM]* (aim) NullPointer: stats null for '" + name + "'");
             Tools.printLog("[ELIM] (aim) NullPointer: stats null for '" + name + "'");
-            ba.sendSmartPrivateMessage("WingZero", "[ELIM] (aim) NullPointer: stats null for '" + name + "'");
             return 0;
         }
     }

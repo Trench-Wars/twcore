@@ -521,6 +521,19 @@ public class ElimGame {
             ba.sendPrivateMessage(name, "Player '" + player + "' not found in the arena.");
     }
     
+    public void do_scorereset(ElimPlayer ep, int ship) {
+        ep.cancelTasks();
+        if (laggers.containsKey(low(ep.name)))
+            ba.cancelTask(laggers.remove(low(ep.name)));
+        lagChecks.remove(low(ep.name));
+        winners.remove(low(ep.name));
+        losers.remove(low(ep.name));
+        played.remove(low(ep.name));
+        loaded.remove(low(ep.name));
+        players.remove(low(ep.name));
+        ep.scorereset(ship);
+    }
+    
     /** Record losses for anyone still lagged out */
     public void storeLosses() {
         for (Lagout lagger : laggers.values()) {
@@ -797,16 +810,6 @@ public class ElimGame {
     public class CompareAll implements Comparator<ElimPlayer> {
         @Override
         public int compare(ElimPlayer p1, ElimPlayer p2) {
-            if (p1 == null && p2 == null) {
-                Tools.printLog("[ELIM] p1 and p2 were both null.");
-                return 0;
-            } else if (p1 != null && p2 == null) {
-                Tools.printLog("[ELIM] p1 == " + p1.name + " but p2 was null.");
-                return 1;
-            } else if (p1 == null && p2 != null) {
-                Tools.printLog("[ELIM] p1 was null but p2 == " + p2.name + ".");
-                return -1;
-            }
             // kills -> least deaths -> accuracy
             if (p1.getKills() > p2.getKills())
                 return 1;

@@ -562,10 +562,10 @@ public class elim extends SubspaceBot {
             ep = game.getPlayer(name);
             if (ep != null) {
                 if (shipType.getNum() == ship && ep.isPlaying() && ep.getStatus() != Status.LAGGED) {
-                    ba.sendPrivateMessage(name, "You can not do a scorereset while playing a game with the ship you want to reset.");
+                    ba.sendPrivateMessage(name, "You cannot do a scorereset while playing a game with the ship you want to reset.");
                     return;
                 } else 
-                    ep.scorereset(ship);
+                    game.do_scorereset(ep, ship);
             }
         }
         try {
