@@ -228,6 +228,9 @@ public class ElimPlayer {
         if (status == Status.SPAWN) { 
             spawn = new Spawn(false);
             ba.scheduleTask(spawn, 2 * SPAWN_BOUND * Tools.TimeInMillis.SECOND);
+        } else if (spawn != null){
+            spawn.returned();
+            ba.sendSmartPrivateMessage("WingZero", "spawn fuckup for: " + name);
         }
     }
     
