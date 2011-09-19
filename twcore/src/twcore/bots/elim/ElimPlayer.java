@@ -138,6 +138,7 @@ public class ElimPlayer {
     public void handlePosition(PlayerPosition event) {
         if (getLastDeath() < SPAWN_TIME || !isPlaying()) return; 
         int y = event.getYLocation();
+        ba.sendSmartPrivateMessage("WingZero", name + ": " + y);
         if (ship != 6) { 
             if (y < BOUNDARY) {
                 // inside base
@@ -403,8 +404,8 @@ public class ElimPlayer {
         }
         
         public void returned() {
-            spawn = null;
             ba.cancelTask(this);
+            spawn = null;
         }
     }
     
