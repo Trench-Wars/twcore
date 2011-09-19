@@ -136,7 +136,10 @@ public class ElimPlayer {
     }
     
     public void handlePosition(PlayerPosition event) {
-        if (getLastDeath() < SPAWN_TIME || !isPlaying()) return; 
+        if (getLastDeath() < SPAWN_TIME || !isPlaying()) {
+            ba.sendSmartPrivateMessage("WingZero", name + ": lastdeath=" + getLastDeath() + " isP=" + isPlaying()); 
+            return;
+        }
         int y = event.getYLocation();
         ba.sendSmartPrivateMessage("WingZero", name + ": " + y);
         if (ship != 6) { 
@@ -229,9 +232,6 @@ public class ElimPlayer {
         if (status == Status.SPAWN) { 
             spawn = new Spawn(false);
             ba.scheduleTask(spawn, 2 * SPAWN_BOUND * Tools.TimeInMillis.SECOND);
-        } else if (spawn != null){
-            spawn.returned();
-            ba.sendSmartPrivateMessage("WingZero", "spawn fuckup for: " + name);
         }
     }
     
