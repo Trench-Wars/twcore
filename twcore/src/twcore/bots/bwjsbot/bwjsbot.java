@@ -209,8 +209,8 @@ public class bwjsbot extends SubspaceBot {
         message = event.getMessage();
         sender = m_botAction.getPlayerName(event.getPlayerID());
         messageType = event.getMessageType();
-        
-        racismWatcher.handleEvent(event);   //Racism watcher
+        if (messageType != Message.REMOTE_PRIVATE_MESSAGE || messageType != Message.PRIVATE_MESSAGE)
+            racismWatcher.handleEvent(event);   //Racism watcher
         
         if (messageType == Message.ARENA_MESSAGE) {
             checkArenaLock(message);    //Checks if the arena should be locked
