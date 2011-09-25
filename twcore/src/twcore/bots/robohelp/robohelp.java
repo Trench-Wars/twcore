@@ -2205,12 +2205,16 @@ public class robohelp extends SubspaceBot {
 
         if( event.getMessageType() == Message.ALERT_MESSAGE ){
             String command = event.getAlertCommandType().toLowerCase();
+
+            //clean msg of ": (" for reuse
+            String msg = event.getMessage().replace(": (", ":(");
+
             if( command.equals( "help" )){
-                handleHelp( event.getMessager(), event.getMessage() );
+                handleHelp( event.getMessager(), msg );
             } else if( command.equals( "cheater" )){
-                handleCheater( event.getMessager(), event.getMessage() );
+                handleCheater( event.getMessager(), msg );
             } else if( command.equals( "advert" )){
-                handleAdvert( event.getMessager(), event.getMessage() );
+                handleAdvert( event.getMessager(), msg );
             }
         }
         else if (event.getMessageType() == Message.CHAT_MESSAGE) {
