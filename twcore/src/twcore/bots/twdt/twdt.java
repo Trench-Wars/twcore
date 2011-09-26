@@ -120,6 +120,11 @@ public class twdt extends SubspaceBot {
                 else if (msg.equals("!help"))
                     cmd_help(name);
             }
+            
+            if (oplist.isModerator(name)) {
+                if (msg.equals("!reset"))
+                    cmd_reset(name);
+            }
         }
         if (game != null)
             game.handleEvent(event);
@@ -135,6 +140,22 @@ public class twdt extends SubspaceBot {
                 " !zone                         - Sends a zone message for the current game",
         };
         ba.smartPrivateMessageSpam(name, msg);
+        if (oplist.isModerator(name)) {
+            ba.sendSmartPrivateMessage(name, " !reset                        - Resets player and team star counts");
+        }
+    }
+    
+    public void cmd_reset(String name) {
+        try {
+            String query = "UPDATE tblDraft__Team SET fnUsedStars = 0 WHERE fnSeason = 7";
+            ba.SQLQueryAndClose(db, query);
+            query = "UPDATE tblDraft__Player SET fnPlayed = 0";
+            ba.SQLQueryAndClose(db, query);
+            ba.sendSmartPrivateMessage(name, "Player and team star counts have been reset.");
+        } catch (SQLException e) {
+            ba.sendSmartPrivateMessage(name, "There was an error processing your request.");
+            Tools.printStackTrace(e);
+        }
     }
     
     /** Handles the load command which retrieves the associated match information from the database */
