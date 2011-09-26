@@ -493,7 +493,7 @@ public class DraftTeam {
     private int getStars(String name) {
         int stars = -1;
         try {
-            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + 7 + " AND fcName = '" + name + "' LIMIT 1");
+            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + 7 + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
             if (rs.next()) {
                 int team = rs.getInt("fnTeamID");
                 if (team == teamID) {
