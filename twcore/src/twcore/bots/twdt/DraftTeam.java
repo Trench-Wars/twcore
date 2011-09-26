@@ -338,7 +338,8 @@ public class DraftTeam {
         ships[p.getShip() - 1]--;
         ships[ship - 1]++;
         p.setShip(ship);
-        changes--;
+        if (round.getState() == RoundState.PLAYING)
+            changes--;
         ba.sendArenaMessage(p.getName() + " has been changed to ship " + ship);
     }
     
@@ -368,7 +369,8 @@ public class DraftTeam {
         int ship = p1.getShip();
         p1.setShip(p2.getShip());
         p2.setShip(ship);
-        switches--;
+        if (round.getState() == RoundState.PLAYING)
+            switches--;
     }
     
     /** Handles the myfreq command which puts a player on the team freq */
