@@ -1,7 +1,5 @@
 package twcore.core.util.ipc;
 
-import twcore.bots.twdhub.Command;
-
 /**
  *
  * @author WingZero
