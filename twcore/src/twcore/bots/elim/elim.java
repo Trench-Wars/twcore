@@ -1256,7 +1256,7 @@ public class elim extends SubspaceBot {
                     break;
                 case 3: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on fire with a triple win! Type ?go " + arena + " to end the win streak! -" + ba.getBotName(), Tools.Sound.CROWD_OOO);
                     break;
-                case 4: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 kills in a row! Type ?go " + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
+                case 4: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 wins in a row! Type ?go " + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
                     break;
                 case 5: ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is dominating with a 5 game winning streak! Type ?go " + arena + " to end this madness! -" + ba.getBotName(), Tools.Sound.SCREAM);
                     break;
