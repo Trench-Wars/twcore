@@ -15,6 +15,17 @@ public class IPCTWD {
     int score2;
     int id;
     
+    public IPCTWD(EventType type, String arena, String bot) {
+        this.type = type;
+        this.arena = arena;
+        this.bot = bot;
+        this.squad1 = null;
+        this.squad2 = null;
+        this.id = 0;
+        score1 = 0;
+        score2 = 0;
+    }
+    
     public IPCTWD(EventType type, String arena, String bot, String squad1, String squad2, int id) {
         this.type = type;
         this.arena = arena;
