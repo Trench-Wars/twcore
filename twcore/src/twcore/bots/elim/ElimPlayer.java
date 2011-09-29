@@ -225,6 +225,10 @@ public class ElimPlayer {
     }
     
     public void handleStart() {
+        if (spawn != null)
+            spawn.returned();
+        if (bounds != null)
+            bounds.returned();
         if (status == Status.SPAWN) { 
             spawn = new Spawn(false);
             ba.scheduleTask(spawn, 2 * SPAWN_BOUND * Tools.TimeInMillis.SECOND);
