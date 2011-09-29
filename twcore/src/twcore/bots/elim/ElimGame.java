@@ -373,6 +373,8 @@ public class ElimGame {
                 };
                 ba.scheduleTask(lagCheck, 3000);
                 starter = null;
+                if (playerCount > 9)
+                    ba.sendArenaMessage("The winner of this game gets pubbux!");
             }
         };
         ba.scheduleTask(starter, 10 * Tools.TimeInMillis.SECOND);

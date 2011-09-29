@@ -115,6 +115,7 @@ public class elim extends SubspaceBot {
     
     private String connectionID;
     static final String db = "website";
+    static final String pub = "pubstats";
     static final int INITIAL_RATING = 300;
     static final int MIN_ZONER = 15;       // The minimum amount of minutes in between zoners
     static final int ALERT_DELAY = 2;      // Minimum amount of time between alert messages
@@ -941,6 +942,16 @@ public class elim extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace("Elim store game error!", e);
         }
+        
+        if (players > 9) {
+            int money = 1000 + ((players - 10) * 100);
+            String query = "UPDATE tblPlayerStats SET fnMoney = (fnMoney + " + money + ") WHERE fcName = '" + Tools.addSlashesToString(winner.name) + "'";
+            ba.SQLBackgroundQuery(pub, null, query);
+            query = "INSERT INTO tblPlayerDonations (fcName, fcNameTo, fnMoney) VALUES('" + Tools.addSlashesToString(ba.getBotName()) + "', '" + Tools.addSlashesToString(winner.name) + ", " + money + ")";
+            ba.SQLBackgroundQuery(pub, null, query);
+            ba.sendSmartPrivateMessage(winner.name, "You've won! " + money + " has been added to your pubbux account.");
+        }
+        
         handleState();
     }
     
