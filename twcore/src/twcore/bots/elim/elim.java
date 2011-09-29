@@ -947,7 +947,7 @@ public class elim extends SubspaceBot {
             int money = 1000 + ((players - 10) * 100);
             String query = "UPDATE tblPlayerStats SET fnMoney = (fnMoney + " + money + ") WHERE fcName = '" + Tools.addSlashesToString(winner.name) + "'";
             ba.SQLBackgroundQuery(pub, null, query);
-            query = "INSERT INTO tblPlayerDonations (fcName, fcNameTo, fnMoney) VALUES('" + Tools.addSlashesToString(ba.getBotName()) + "', '" + Tools.addSlashesToString(winner.name) + "', " + money + ")";
+            query = "INSERT INTO tblPlayerDonations (fcName, fcNameTo, fnMoney, fdDate) VALUES('" + Tools.addSlashesToString(ba.getBotName()) + "', '" + Tools.addSlashesToString(winner.name) + "', " + money + ", NOW())";
             ba.SQLBackgroundQuery(pub, null, query);
             ba.sendSmartPrivateMessage(winner.name, "You've won! $" + money + " has been added to your pubbux account.");
         }
