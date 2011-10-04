@@ -454,9 +454,9 @@ public class DraftTeam {
                     }
                     setPlayed(out.getName(), false);
                     setPlayed(in, true);
+                    usedStars = usedStars - out.getStars() + stars;
                 } else
-                    stars = 0;
-                usedStars = usedStars - out.getStars() + stars;
+                    stars = out.getStars();
                 p = new DraftPlayer(ba, this, in, freq, out.getShip(), stars);
             } else {
                 ba.sendSmartPrivateMessage(cap, in + " was not found on the team roster.");
