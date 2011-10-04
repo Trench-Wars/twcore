@@ -1141,8 +1141,7 @@ public class elim extends SubspaceBot {
             public void run() {
                 updateRanks();
                 state = State.WAITING;
-                if (ba.getNumPlaying() < 2)
-                    ba.sendArenaMessage("A new game will begin when 2 or more players enter a ship. -" + ba.getBotName());
+                handleState();
             }
         };
         ba.scheduleTask(enter, 3000);
