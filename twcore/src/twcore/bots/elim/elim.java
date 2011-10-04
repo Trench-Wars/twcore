@@ -117,7 +117,7 @@ public class elim extends SubspaceBot {
     static final String db = "website";
     static final String pub = "pubstats";
     static final int INITIAL_RATING = 300;
-    static final int MIN_ZONER = 15;       // The minimum amount of minutes in between zoners
+    static final int MIN_ZONER = 10;       // The minimum amount of minutes in between zoners
     static final int ALERT_DELAY = 2;      // Minimum amount of time between alert messages
     
     TimerTask timer;
