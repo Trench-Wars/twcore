@@ -28,7 +28,6 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.events.WeaponFired;
-import twcore.core.game.Player;
 import twcore.core.util.Spy;
 import twcore.core.util.Tools;
 
@@ -1089,7 +1088,7 @@ public class elim extends SubspaceBot {
     /** Starting state creates new ElimGame and initiates player stat trackers */
     private void doStarting() {
         game = new ElimGame(this, shipType, deaths, shrap);
-        ba.sendArenaMessage("Enter to play. Arena will be locked in 15 seconds!", 9);
+        ba.sendArenaMessage("Enter to play. Arena will be locked in 30 seconds!", 9);
         timer = new TimerTask() {
             public void run() {
                 if (ba.getNumPlaying() < 2) {
@@ -1098,7 +1097,7 @@ public class elim extends SubspaceBot {
                 } else {
                     String erules = "RULES: One player per freq and NO TEAMING! Die " + deaths + " times and you're out. ";
                     if (shipType == ShipType.WEASEL)
-                        erules += "Warping is illegal and will be penalized with by a death.";
+                        erules += "Warping is illegal and will be penalized by a death.";
                     ba.sendArenaMessage(erules);
                     arenaLock = true;
                     ba.toggleLocked();
@@ -1106,7 +1105,7 @@ public class elim extends SubspaceBot {
                 }
             }
         };
-        ba.scheduleTask(timer, 15000);
+        ba.scheduleTask(timer, 30000);
     }
     
     /** Playing state runs after winner is set and ends game accordingly */
