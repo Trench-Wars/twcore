@@ -1030,7 +1030,7 @@ public class elim extends SubspaceBot {
     /** Waiting state stalls until there are enough players to continue */
     private void doWaiting() {
         sendZoner();
-        if (ba.getNumPlaying() > 1) {
+        if (ba.getNumPlaying() > 0) {
             sendAlerts();
             state = State.VOTING;
             votes.clear();
