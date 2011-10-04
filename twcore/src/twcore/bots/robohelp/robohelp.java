@@ -1530,12 +1530,16 @@ public class robohelp extends SubspaceBot {
         return str;
     }
     
-    private String getTimeString(long time) {
+    private String getTimeString(HelpRequest call) {
+    	long time = 0;
         if (timeFormat) {
             DateFormat f = new SimpleDateFormat("HH:mm");
             return f.format(time);
         } else {
-            time = System.currentTimeMillis() - time;
+        	if (call.isTaken())
+        		time = call.getTime() - call.getClaim();
+        	else
+        		time = System.currentTimeMillis() - time;
             time /= 1000;
             int hour = ((int) (time / 60 / 60) % 60);
             time -= (hour * 60 * 60);
@@ -1587,7 +1591,7 @@ public class robohelp extends SubspaceBot {
             int id = helpList.lastKey();
             do {
                 HelpRequest call = helpList.get(id);
-                String msg = "#" + call.getID() + " " + getTimeString(call.getTime()) + " ";
+                String msg = "#" + call.getID() + " " + getTimeString(call) + " ";
                 if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
                     int ct = call.getClaimType();
                     String taker = call.getTaker();
@@ -2365,6 +2369,7 @@ public class robohelp extends SubspaceBot {
         static final int CLEAN = 4;
         
         long        m_time;
+        long		m_claim;
         String      m_question;
         String[]    m_responses;
         String      m_playerName;
@@ -2437,24 +2442,28 @@ public class robohelp extends SubspaceBot {
             m_claimer = name;
             m_claimed = true;
             m_claimType = TAKEN;
+            m_claim = System.currentTimeMillis();
         }
         
         public void mine(String name) {
             m_claimer = name;
             m_claimed = true;
             m_claimType = MINE;
+            m_claim = System.currentTimeMillis();
         }
         
         public void forget() {
             m_claimer = "[forgot]";
             m_claimed = true;
             m_claimType = FORGOT;
+            m_claim = System.currentTimeMillis();
         }
         
         public void clean() {
             m_claimer = "[clean]";
             m_claimed = true;
             m_claimType = CLEAN;
+            m_claim = System.currentTimeMillis();
         }
         
         public int getClaimType() {
@@ -2574,6 +2583,10 @@ public class robohelp extends SubspaceBot {
         
         public long getTime() {
         	return this.m_time;
+        }
+        
+        public long getClaim() {
+        	return this.m_claim;
         }
         
         public String getQuestion() {
