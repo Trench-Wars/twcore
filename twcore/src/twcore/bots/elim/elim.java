@@ -398,11 +398,13 @@ public class elim extends SubspaceBot {
     
     /** Handles potential votes read from public chat during a voting period */
     public void handleVote(String name, String cmd) {
-        Player p = ba.getPlayer(name);
+        /* testing this without
         if (p != null && p.getShipType() == 0) {
+            Player p = ba.getPlayer(name);
             ba.sendPrivateMessage(name, "You must be in a ship in order to vote.");
             return;
         }
+        */
         name = name.toLowerCase();
         int vote = -1;
         try {
