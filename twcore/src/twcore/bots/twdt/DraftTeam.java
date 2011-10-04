@@ -455,7 +455,7 @@ public class DraftTeam {
                     setPlayed(out.getName(), false);
                     setPlayed(in, true);
                 } else
-                    stars = out.getStars();
+                    stars = 0;
                 usedStars = usedStars - out.getStars() + stars;
                 p = new DraftPlayer(ba, this, in, freq, out.getShip(), stars);
             } else {
