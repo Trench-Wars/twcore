@@ -1539,7 +1539,7 @@ public class robohelp extends SubspaceBot {
         	if (call.isTaken())
         		time = call.getClaim() - call.getTime();
         	else
-        		time = System.currentTimeMillis() - time;
+        		time = System.currentTimeMillis() - call.getTime();
             time /= 1000;
             int hour = ((int) (time / 60 / 60) % 60);
             time -= (hour * 60 * 60);
