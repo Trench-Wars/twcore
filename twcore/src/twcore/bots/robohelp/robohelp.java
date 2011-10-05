@@ -1537,7 +1537,7 @@ public class robohelp extends SubspaceBot {
             return f.format(time);
         } else {
         	if (call.isTaken())
-        		time = call.getTime() - call.getClaim();
+        		time = call.getClaim() - call.getTime();
         	else
         		time = System.currentTimeMillis() - time;
             time /= 1000;
