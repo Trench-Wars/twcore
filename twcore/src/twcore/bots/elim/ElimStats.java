@@ -91,6 +91,8 @@ public class ElimStats {
     public void crunchRating() {
         if (getTotal(StatType.DEATHS) > 0) 
             setStat(StatType.RATING, (getTotal(StatType.KILLS) / getTotal(StatType.DEATHS) * getStat(StatType.AVE)));
+        else
+            setStat(StatType.RATING, 300);
     }
     
     /** Decrements the stat of type StatType as long as it is an integer data stat */
