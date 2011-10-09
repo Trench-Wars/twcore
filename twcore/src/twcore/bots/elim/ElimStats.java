@@ -91,7 +91,7 @@ public class ElimStats {
         if (getTotal(StatType.DEATHS) > 0) 
             setStat(StatType.RATING, (getTotal(StatType.KILLS) / getTotal(StatType.DEATHS) * getStat(StatType.AVE)));
         else
-            setStat(StatType.RATING, (double) 300);
+            setStat(StatType.RATING, (getTotal(StatType.KILLS) * getStat(StatType.AVE)));
     }
     
     /** Decrements the stat of type StatType as long as it is an integer data stat */
