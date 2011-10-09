@@ -82,9 +82,8 @@ public class ElimStats {
     }
     
     /** Computes and sets the ave stat given the rating of the player killed */
-    public float crunchAve(int rating) {
+    public void crunchAve(int rating) {
         setStat(StatType.AVE, (((getAve(StatType.AVE)) * (float) getTotal(StatType.KILLS)) + (float) rating) / ((float) getTotal(StatType.KILLS) + 1f));
-        return (((getAve(StatType.AVE)) * (float) getTotal(StatType.KILLS)) + (float) rating) / ((float) getTotal(StatType.KILLS) + 1f);
     }
     
     /** Computes and sets the player's rating after a game */
@@ -92,7 +91,7 @@ public class ElimStats {
         if (getTotal(StatType.DEATHS) > 0) 
             setStat(StatType.RATING, (getTotal(StatType.KILLS) / getTotal(StatType.DEATHS) * getStat(StatType.AVE)));
         else
-            setStat(StatType.RATING, 300);
+            setStat(StatType.RATING, (double) 300);
     }
     
     /** Decrements the stat of type StatType as long as it is an integer data stat */
@@ -120,6 +119,10 @@ public class ElimStats {
     /** Returns the integer value of stat */
     public int getStat(StatType stat) {
         return stats.get(stat).getInt();
+    }
+    
+    public int getRating() {
+        return stats.get(StatType.RATING).getInt();
     }
 
     /** Returns the double value of stat */
@@ -301,8 +304,8 @@ public class ElimStats {
         total.get(StatType.KNOCK_OUTS).add(getStat(StatType.KNOCK_OUTS));
         total.get(StatType.MULTI_KILLS).add(getStat(StatType.MULTI_KILLS));
         loadStat(StatType.RATING, getStat(StatType.RATING));
-        loadStat(StatType.AVE, getStat(StatType.AVE));
-        loadStat(StatType.AIM, getStat(StatType.AIM));
+        loadStat(StatType.AVE, getAve(StatType.AVE));
+        loadStat(StatType.AIM, getAim(StatType.AIM));
         loadStat(StatType.WIN_STREAK, getStat(StatType.WIN_STREAK));
         loadStat(StatType.KILL_STREAK, getStat(StatType.KILL_STREAK));
         loadStat(StatType.DEATH_STREAK, getStat(StatType.DEATH_STREAK));
