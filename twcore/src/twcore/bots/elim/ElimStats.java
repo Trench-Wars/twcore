@@ -82,8 +82,9 @@ public class ElimStats {
     }
     
     /** Computes and sets the ave stat given the rating of the player killed */
-    public void crunchAve(int rating) {
+    public float crunchAve(int rating) {
         setStat(StatType.AVE, (((getAve(StatType.AVE)) * (float) getTotal(StatType.KILLS)) + (float) rating) / ((float) getTotal(StatType.KILLS) + 1f));
+        return (((getAve(StatType.AVE)) * (float) getTotal(StatType.KILLS)) + (float) rating) / ((float) getTotal(StatType.KILLS) + 1f);
     }
     
     /** Computes and sets the player's rating after a game */
