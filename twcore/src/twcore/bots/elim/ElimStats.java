@@ -83,15 +83,15 @@ public class ElimStats {
     
     /** Computes and sets the ave stat given the rating of the player killed */
     public void crunchAve(int rating) {
-        setStat(StatType.AVE, (((getAve(StatType.AVE)) * (float) getTotal(StatType.KILLS)) + (float) rating) / ((float) getTotal(StatType.KILLS) + 1f));
+        setStat(StatType.AVE, (Float) (((getAve(StatType.AVE)) * (float) getTotal(StatType.KILLS)) + (float) rating) / ((float) getTotal(StatType.KILLS) + 1f));
     }
     
     /** Computes and sets the player's rating after a game */
     public void crunchRating() {
         if (getTotal(StatType.DEATHS) > 0) 
-            setStat(StatType.RATING, (getTotal(StatType.KILLS) / getTotal(StatType.DEATHS) * getStat(StatType.AVE)));
+            setStat(StatType.RATING, (getTotal(StatType.KILLS) / getTotal(StatType.DEATHS) * getAve(StatType.AVE)));
         else
-            setStat(StatType.RATING, (getTotal(StatType.KILLS) * getStat(StatType.AVE)));
+            setStat(StatType.RATING, (getTotal(StatType.KILLS) * getAve(StatType.AVE)));
     }
     
     /** Decrements the stat of type StatType as long as it is an integer data stat */
