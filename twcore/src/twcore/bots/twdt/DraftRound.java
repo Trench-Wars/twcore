@@ -207,7 +207,7 @@ public class DraftRound {
             if (oplist.isER(name)) {
                 if (msg.equals("!addtime"))
                     cmd_addTime(name);
-                else if (msg.startsWith("!res")) 
+                else if (msg.startsWith("!rescheck")) 
                     cmd_resChecks(name);
                 else if (msg.equals("!reload"))
                 	cmd_reloadCaps(name);
