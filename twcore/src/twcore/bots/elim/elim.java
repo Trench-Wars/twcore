@@ -1144,14 +1144,19 @@ public class elim extends SubspaceBot {
         arenaLock = false;
         game = null;
         ba.toggleLocked();
-        TimerTask enter = new TimerTask() {
+        TimerTask ranks = new TimerTask() {
             public void run() {
                 updateRanks();
+            }
+        };
+        ba.scheduleTask(ranks, 3000);
+        TimerTask wait = new TimerTask() {
+            public void run() {
                 state = State.WAITING;
                 handleState();
             }
         };
-        ba.scheduleTask(enter, 3000);
+        ba.scheduleTask(wait, 10000);
     }
     
     /** Executes the updateRank statement which adjusts the ranks of every elim player */
