@@ -224,6 +224,20 @@ public class ElimGame {
             lagHandler.handleLagMessage(event.getMessage());
     }
     
+    public void cmd_getRating(String name, String cmd) {
+        String p = cmd.substring(cmd.indexOf(" ") + 1);
+        if (players.containsKey(low(p))) {
+            ElimPlayer player = players.get(low(p));
+            ElimStats stats = player.getStats();
+            if (stats != null) { 
+                ElimStat stat = stats.stats.get(StatType.RATING);
+                ba.sendSmartPrivateMessage(name, "" + p + ": I:" + stat.getInt() + " D:" + stat.getDouble() + " F:" + stat.getFloat());
+                stat = stats.total.get(StatType.RATING);
+                ba.sendSmartPrivateMessage(name, "" + p + " Total: I:" + stat.getInt() + " D:" + stat.getDouble() + " F:" + stat.getFloat());
+            }
+        }
+    }
+    
     /** Handles a lag report received from the lag handler */
     public void handleLagReport(LagReport report) {
         if (!report.isBotRequest())
