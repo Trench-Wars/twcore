@@ -878,7 +878,11 @@ public class ElimGame {
     
     /** Returns a string describing the current elimination game */
     public String toString() {
-        String ret = "We are playing " + ship.toString() + " elim to " + deaths + " deaths";
+        String ret = "";
+        if (state == GameState.STARTING)
+            ret = "We are about to start " + ship.toString() + " elim to " + deaths + " deaths";
+        else
+            ret = "We are playing " + ship.toString() + " elim to " + deaths + " deaths";
         if (ship.hasShrap()) {
             if (shrap)
                 ret += " with shrap";
