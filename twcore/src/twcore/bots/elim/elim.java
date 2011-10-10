@@ -956,6 +956,12 @@ public class elim extends SubspaceBot {
         handleState();
     }
     
+    public void deadGame() {
+        Tools.printLog("[ELIM] Dead game.");
+        state = State.WAITING;
+        handleState();
+    }
+    
     /**
      * Saves a particular player's stats to the database using a prepared statement. 
      * It then reports the player updated to determine if updates are complete.

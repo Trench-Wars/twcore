@@ -640,7 +640,8 @@ public class ElimGame {
     
     /** Check if game has been won */
     private void checkWinner() {
-        if (state == GameState.PLAYING && winners.size() == 1) {
+        if (state != GameState.PLAYING) return;
+        if (winners.size() == 1) {
             ba.cancelTask(lagCheck);
             lagCheck = null;
             state = GameState.ENDING;
@@ -651,6 +652,14 @@ public class ElimGame {
             storeLosses();
             setMVP();
             bot.storeGame(winner, (ratingCount / playerCount), playerCount);
+        } else if (winners.size() == 0) {
+            ba.cancelTask(lagCheck);
+            lagCheck = null;
+            state = GameState.ENDING;
+            if (hiderFinder != null)
+                hiderFinder.stop();
+            storeLosses();
+            bot.deadGame();
         }
     }
     
