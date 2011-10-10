@@ -230,6 +230,7 @@ public class ElimGame {
             ElimPlayer player = players.get(low(p));
             ElimStats stats = player.getStats();
             if (stats != null) { 
+                stats.crunchRating();
                 ElimStat stat = stats.stats.get(StatType.RATING);
                 ba.sendSmartPrivateMessage(name, "" + p + ": I:" + stat.getInt() + " D:" + stat.getDouble() + " F:" + stat.getFloat());
                 stat = stats.total.get(StatType.RATING);
