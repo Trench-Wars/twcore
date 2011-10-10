@@ -39,7 +39,7 @@ public class ElimStats {
         for (StatType stat : StatType.values()) {
             stats.put(stat, new ElimStat(stat));
             total.put(stat, new ElimStat(stat));
-        }        
+        }
         loaded = false;
     }
     

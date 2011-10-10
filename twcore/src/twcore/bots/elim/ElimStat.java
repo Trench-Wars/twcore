@@ -23,6 +23,10 @@ public class ElimStat {
         iValue = 0;
         dValue = 0;
         fValue = 0;
+        if (name == StatType.RATING)
+            iValue = 300;
+        if (name == StatType.AVE)
+            fValue = 300;
     }
     
     /** Increment integer value stat. NOTE: Only works for integer types */
