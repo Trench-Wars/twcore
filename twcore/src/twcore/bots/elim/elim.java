@@ -1134,7 +1134,7 @@ public class elim extends SubspaceBot {
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
             else
-                winStreak = 0;
+                winStreak = 1;
             lastWinner = winner;
             winner = null;
         }
