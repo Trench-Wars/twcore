@@ -194,7 +194,7 @@ public class ElimGame {
     public void handleEvent(WeaponFired event) {
         if (event.getWeaponType() != WeaponFired.WEAPON_BOMB && event.getWeaponType() != WeaponFired.WEAPON_BULLET) 
             return; 
-        if (ship == ShipType.JAVELIN && event.getWeaponType() != WeaponFired.WEAPON_BOMB) return; 
+        if (ship == ShipType.JAVELIN && event.getWeaponType() == WeaponFired.WEAPON_BULLET) return; 
         String name = ba.getPlayerName(event.getPlayerID());
         if (name != null) {
             ElimPlayer ep = getPlayer(name);

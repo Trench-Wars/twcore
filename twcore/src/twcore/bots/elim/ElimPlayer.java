@@ -125,8 +125,8 @@ public class ElimPlayer {
         } else
             consecutiveKills = 0;
         lastKill = System.currentTimeMillis();
-        ba.sendPrivateMessage("WingZero", "name:" + name + " dead:"  + dead.getRating() + " getAve:" + stats.getAve(StatType.AVE));
         stats.crunchAve(dead.getRating());
+        ba.sendPrivateMessage("WingZero", "name:" + name + " dead:"  + dead.getRating() + " getAve:" + stats.getAve(StatType.AVE));
         int killStreak = stats.getStat(StatType.KILL_STREAK);
         if (killStreak >= STREAK_INIT && (killStreak - STREAK_INIT) % STREAK_REPEAT == 0) {
             int i = (killStreak - STREAK_INIT) / STREAK_REPEAT;

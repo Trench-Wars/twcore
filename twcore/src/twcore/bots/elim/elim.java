@@ -867,7 +867,7 @@ public class elim extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "You are not set as the debugger.");
             return;
         }
-        if (cmd.contains(" ") && cmd.length() > 7) {
+        if (cmd.contains(" ") && cmd.length() > 6) {
             String p = cmd.substring(cmd.indexOf(" ") + 1);
             if (debugStatPlayers.remove(p.toLowerCase()))
                 ba.sendSmartPrivateMessage(name, p + " has been removed from the debug list.");
