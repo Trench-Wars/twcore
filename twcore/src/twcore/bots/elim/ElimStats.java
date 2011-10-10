@@ -103,12 +103,14 @@ public class ElimStats {
     
     /** Sets the stat to the value specified as integer double or float */
     public void setStat(StatType stat, Object value) {
-        if (value instanceof Integer)
+        if (stat == StatType.RATING)
             stats.get(stat).setValue((Integer) value);
-        else if (value instanceof Double)
-            stats.get(stat).setValue((Double) value);
-        else if (value instanceof Float)
+        else if (stat == StatType.AVE)
             stats.get(stat).setValue((Float) value);
+        else if (stat == StatType.AIM)
+            stats.get(stat).setValue((Double) value);
+        else
+            stats.get(stat).setValue((Integer) value);
     }
     
     /** Returns the total of stat by adding current game stat with database stat */
