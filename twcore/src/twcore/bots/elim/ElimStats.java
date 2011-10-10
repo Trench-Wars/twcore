@@ -101,14 +101,25 @@ public class ElimStats {
     
     /** Sets the stat to the value specified as integer double or float */
     public void setStat(StatType stat, Object value) {
-        if (stat == StatType.RATING)
+        if (value instanceof Integer)
             stats.get(stat).setValue((Integer) value);
-        else if (stat == StatType.AVE)
+        else if (value instanceof Float)
             stats.get(stat).setValue((Float) value);
-        else if (stat == StatType.AIM)
+        else if (value instanceof Double)
             stats.get(stat).setValue((Double) value);
-        else
-            stats.get(stat).setValue((Integer) value);
+    }
+    
+    /** Loads the stat from the database into the total stats array */
+    public void loadStat(StatType stat, Object value) {
+        if (value instanceof Integer)
+            total.get(stat).setValue((Integer) value);
+        else if (value instanceof Double)
+            total.get(stat).setValue((Double) value);
+        else if (value instanceof Float)
+            total.get(stat).setValue((Float) value);
+        
+        if (stat.dependent())
+            setStat(stat, value);
     }
     
     /** Returns the total of stat by adding current game stat with database stat */
@@ -150,19 +161,6 @@ public class ElimStats {
     /** Returns the ave stat from the database stats */
     public float getAveDB(StatType stat) {
         return total.get(stat).getFloat();
-    }
-    
-    /** Loads the stat from the database into the total stats array */
-    public void loadStat(StatType stat, Object value) {
-        if (value instanceof Integer)
-            total.get(stat).setValue((Integer) value);
-        else if (value instanceof Double)
-            total.get(stat).setValue((Double) value);
-        else if (value instanceof Float)
-            total.get(stat).setValue((Float) value);
-        
-        if (stat.dependent())
-            setStat(stat, value);
     }
     
     /** Checks to see if database stats have been loaded */
