@@ -1084,9 +1084,11 @@ public class elim extends SubspaceBot {
             handleState();
             return;            
         }
+        final long time = System.currentTimeMillis();
         
         TimerTask task = new TimerTask() {
             public void run() {
+                debug("Elapsed vote time: " + ((System.currentTimeMillis() - time) / Tools.TimeInMillis.SECOND) + " seconds");
                 countVotes();
             }
         };
