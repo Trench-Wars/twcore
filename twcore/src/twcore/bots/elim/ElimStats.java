@@ -91,7 +91,7 @@ public class ElimStats {
     /** Computes and sets the player's rating after a game */
     public void crunchRating() {
         if (getTotal(StatType.DEATHS) > 0) 
-            setStat(StatType.RATING, Math.round(getTotal(StatType.KILLS) / getTotal(StatType.DEATHS) * getAve(StatType.AVE)));
+            setStat(StatType.RATING, Math.round((float)getTotal(StatType.KILLS) / getTotal(StatType.DEATHS) * getAve(StatType.AVE)));
     }
     
     /** Decrements the stat of type StatType as long as it is an integer data stat */
