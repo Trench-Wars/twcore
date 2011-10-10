@@ -209,7 +209,7 @@ public class ElimStats {
             rank = "#" + getDB(StatType.RANK); 
         String[] msg = {
                 "" + ShipType.type(ship).toString() + " stats for " + name + ": Rank " + rank + " Rating: " + getDB(StatType.RATING),
-                " K:" + getTotal(StatType.KILLS) + " D:" + getTotal(StatType.DEATHS) + " Ave:" + getAve(StatType.AVE) + " Aim:" + decimal.format(getAimDB(StatType.AIM)) + "% BestKillStreak:" + getDB(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getDB(StatType.WORST_DEATH_STREAK),
+                " K:" + getTotal(StatType.KILLS) + " D:" + getTotal(StatType.DEATHS) + " Ave:" + getAve(StatType.AVE) + " Aim:" + decimal.format(getAim(StatType.AIM)) + "% BestKillStreak:" + getDB(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getDB(StatType.WORST_DEATH_STREAK),
                 " KOs:" + getDB(StatType.KNOCK_OUTS) + " KillJoys:" + getDB(StatType.KILL_JOYS) + " MultiKills:" + getDB(StatType.MULTI_KILLS) + " BestMultiKill:" + getDB(StatType.BEST_MULTI_KILL),
                 " Games:" + getDB(StatType.GAMES) + " Wins:" + getDB(StatType.WINS) + " BestWinStreak:" + getDB(StatType.BEST_WIN_STREAK) + " CurrentStreak:" + getDB(StatType.WIN_STREAK),
         };
