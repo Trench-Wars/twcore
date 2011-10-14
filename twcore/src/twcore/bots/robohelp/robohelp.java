@@ -62,8 +62,6 @@ public class robohelp extends SubspaceBot {
     String              lastNewPlayerName = "";
 
     final String mySQLHost = "website";
-    Vector<EventData> eventList = new Vector<EventData>();
-    TreeMap<String, EventData> events = new TreeMap<String, EventData>();
     Vector<EventData> callList = new Vector<EventData>();
     Vector<NewPlayer> newbs = new Vector<NewPlayer>();
     HashMap<String, String> banned = new HashMap<String, String>();
@@ -75,7 +73,6 @@ public class robohelp extends SubspaceBot {
     /** Wing's way */
     TreeMap<Integer, HelpRequest> helpList = new TreeMap<Integer, HelpRequest>();
     Vector<Integer> calls = new Vector<Integer>();
-    TreeMap<String, Integer> nameList = new TreeMap<String, Integer>();
     long lastAlert;
     int callsUntilAd = 7;
     int currentID = 1;
@@ -139,6 +136,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!time", acceptedMessages, this, "changeTimeFormatP", OperatorList.ZH_LEVEL );
         
         // Smod
+        m_commandInterpreter.registerCommand( "!truncate", acceptedMessages, this, "handleTruncate", OperatorList.SMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!say", acceptedMessages, this, "handleSay", OperatorList.SMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!banned", acceptedMessages, this, "handleListTellBanned", OperatorList.SMOD_LEVEL );
         m_commandInterpreter.registerCommand( "!unban", acceptedMessages, this, "unbanTell", OperatorList.SMOD_LEVEL );
@@ -336,8 +334,7 @@ public class robohelp extends SubspaceBot {
     
     // This is to catch any backgroundqueries even though none of them need to be catched to do something with the results
     public void handleEvent(SQLResultEvent event) {
-    	if (event.getIdentifier().equals("robohelp"))
-    		m_botAction.SQLClose( event.getResultSet() );
+        m_botAction.SQLClose( event.getResultSet() );
     }
 
     public void getArenaSize(int adID, String arena) {
@@ -352,6 +349,19 @@ public class robohelp extends SubspaceBot {
                 line += " ";
         }
         return line;
+    }
+    
+    public void handleTruncate(String name, String msg) {
+        m_botAction.sendSmartPrivateMessage(name, "Reducing helpList from a size of " + helpList.size() + " to a maximum of 100.");
+        Iterator<Integer> i = helpList.descendingKeySet().iterator();
+        int index = 0;
+        while (i.hasNext()) {
+            i.next();
+            if (index > 99)
+                i.remove();
+            index++;
+        }
+        m_botAction.sendSmartPrivateMessage(name, "Done, now size: " + helpList.size());
     }
 
     public void handleAdvert ( String playerName, String message ){
@@ -1722,7 +1732,7 @@ public class robohelp extends SubspaceBot {
                 m_botAction.SQLClose(result);
                 return;                
             }
-            
+            m_botAction.SQLClose(result);
             result = m_botAction.SQLQuery(mySQLHost, "SELECT COUNT(fnAlertID) FROM tblCallNewb WHERE fnTaken != 2 AND fnTaken != 3 AND fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00'");
             if (result.next()) {
                 allNewbs = result.getInt(1);
