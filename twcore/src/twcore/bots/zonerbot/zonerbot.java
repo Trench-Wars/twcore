@@ -259,7 +259,8 @@ public class zonerbot extends SubspaceBot {
                     "| !grants yyyy-MM        - Displays the total number of grants given for yyyy-MM                |",
                     "| !grants <name>         - Displays the total adverts granted by <name> this month              |",
                     "| !grants <name>:yyyy-MM - Displays total grants by <name> in month MM of year yyyy             |",
-                    "| !give <ZH>:<Arena>     - Adds the arena and ZH who is allowed to host unsupervised.         |", };
+                    "| !give <ZH>:<Arena>     - Adds the arena and ZH who is allowed to host unsupervised.           |", 
+                    "| !arenas                - Shows a ZH what arenas are available or shows a specified ZH         |"};
             ba.smartPrivateMessageSpam(name, msg);
         }
         if (oplist.isSmod(name)) {
@@ -335,7 +336,7 @@ public class zonerbot extends SubspaceBot {
 
     /** Handles a ZH claim request for a specific arena */
     private void cmd_claim(String name, String msg) {
-        String msgs = msg.substring(msg.indexOf(" "));
+        String msgs = msg.substring(msg.indexOf(" ") + 1);
         try {
             ResultSet result = ba.SQLQuery(db, "SELECT fcArena FROM tblZHGrants WHERE fcZH = '" + Tools.addSlashesToString(name)
                     + "' AND fcArena = '" + Tools.addSlashesToString(msgs) + "'");
