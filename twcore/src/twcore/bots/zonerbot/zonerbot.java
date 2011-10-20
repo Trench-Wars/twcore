@@ -9,7 +9,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
-import java.util.StringTokenizer;
 import java.util.TimerTask;
 
 import twcore.core.BotAction;
@@ -113,8 +112,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_free(name);
                 else if (msg.toLowerCase().startsWith("!set "))
                     cmd_setAdvert(name, msg);
-                else if (msg.toLowerCase().startsWith("!givemeadvert "))
-                    cmd_allowZH(name, msg);
+                else if (msg.toLowerCase().startsWith("!claim "))
+                    cmd_claim(name, msg);
                 else if (msg.toLowerCase().startsWith("!sound "))
                     cmd_setSound(name, msg);
                 else if (msg.toLowerCase().startsWith("!view"))
@@ -141,8 +140,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_die(name);
                 else if (msg.toLowerCase().startsWith("!grants"))
                     cmd_grants(name, msg);
-                else if (msg.toLowerCase().startsWith("!arenaapprove "))
-                    cmd_arenapp(name, msg);
+                else if (msg.toLowerCase().startsWith("!give "))
+                    cmd_give(name, msg);
             }
             if (oplist.isSmod(name)) {
                 if (msg.toLowerCase().startsWith("!add "))
@@ -167,54 +166,6 @@ public class zonerbot extends SubspaceBot {
                     cmd_zone(name, msg);
             }
 
-        }
-    }
-
-    private void cmd_arenapp(String name, String msg) {
-        StringTokenizer args = new StringTokenizer(msg.substring(14), ":");
-
-        if (!(args.countTokens() == 2)) {
-            m_botAction.sendSmartPrivateMessage(name, "Syntax format..Type it right please.");
-        } else {
-            String zh = args.nextToken();
-            String arena = args.nextToken();
-
-            try {
-                m_botAction.SQLQueryAndClose("website", "INSERT INTO tblZHGrants(fcUserName, fcArena, fcZH, fdCreated) VALUES ('"
-                        + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(arena) + "', '" + Tools.addSlashesToString(zh)
-                        + "', NOW())");
-                m_botAction.sendSmartPrivateMessage(name, zh + " has now has been granted non supervisional powers to advert in the arena " + arena);
-            } catch (SQLException e) {
-                Tools.printStackTrace(e);
-            }
-        }
-    }
-
-    public void cmd_allowZH(String name, String msg) {
-        String msgs = msg.substring(14);
-        try {
-            ResultSet result = m_botAction.SQLQuery("website", "SELECT fcArena FROM tblZHGrants WHERE fcZH = '" + Tools.addSlashesToString(name)
-                    + "' AND fcArena = '" + Tools.addSlashesToString(msgs) + "'");
-            if (!result.next()) {
-                ba.sendSmartPrivateMessage(name, "That arena has not been found to give you permission to host unsupervised.");
-                ba.SQLClose(result);
-            } else {
-                ba.SQLClose(result);
-                if (!queue.containsKey(name)) {
-                    debug("Queueing new Advert");
-                    queue.put(name, new Advert(name));
-                    if (queue.indexOfKey(name) == 0)
-                        prepareNext();
-                    else
-                        sendQueuePosition(name);
-                } else {
-                    ba.sendSmartPrivateMessage(name, "You have already claimed an advert and cannot claim another until it is used.");
-                    sendQueuePosition(name);
-                }
-            }
-
-        } catch (SQLException e) {
-            Tools.printStackTrace(e);
         }
     }
 
@@ -281,7 +232,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !help command **/
-    public void cmd_help(String name) {
+    private void cmd_help(String name) {
         String[] msg = { ",-- ZonerBot Commands --------------------------------------------------------------------------.",
                 "| !hosted                - Lists the hosted event counts for last 24 hours                      |",
                 "| !hosted <hours>        - Lists the hosted event counts for last <hours> hours                 |",
@@ -296,7 +247,7 @@ public class zonerbot extends SubspaceBot {
                 "| !readvert              - Sends a last call default advert for the arena in your !advert       |",
                 "| !readvert <sub-event>  - Sends a readvert about <sub-event> for the arena in your !advert     |",
                 "| !renew                 - Prolongs the expiration of the advert for an extra 2 minutes         |",
-                "| !givemeadvert <arena>  - For ZHs who are allowed to host unsupervised in a certain arena      |", };
+                "| !claim <arena>         - For ZHs who are allowed to host unsupervised in a certain arena      |", };
         ba.smartPrivateMessageSpam(name, msg);
         if (trainers.contains(name.toLowerCase()) || oplist.isSmod(name)) {
             msg = new String[] { "+-- ZonerBot Trainer Commands ------------------------------------------------------------------+",
@@ -308,7 +259,7 @@ public class zonerbot extends SubspaceBot {
                     "| !grants yyyy-MM        - Displays the total number of grants given for yyyy-MM                |",
                     "| !grants <name>         - Displays the total adverts granted by <name> this month              |",
                     "| !grants <name>:yyyy-MM - Displays total grants by <name> in month MM of year yyyy             |",
-                    "| !arenaapprove <ZH:Arena> - Adds the arena and ZH who is allowed to host unsupervised.         |", };
+                    "| !give <ZH>:<Arena>     - Adds the arena and ZH who is allowed to host unsupervised.         |", };
             ba.smartPrivateMessageSpam(name, msg);
         }
         if (oplist.isSmod(name)) {
@@ -327,13 +278,13 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !reload command which cancels and clears the loaded periodics and then reloads the periodics from the db **/
-    public void cmd_reload(String name) {
+    private void cmd_reload(String name) {
         loadPeriodics();
         ba.sendSmartPrivateMessage(name, "Periodic zone messages have been reloaded from database.");
     }
 
     /** Handles the owner command !zone <message> which simply zones a message **/
-    public void cmd_zone(String name, String cmd) {
+    private void cmd_zone(String name, String cmd) {
         if (cmd.length() < 7)
             return;
         String zone = cmd.substring(6);
@@ -362,8 +313,55 @@ public class zonerbot extends SubspaceBot {
             ba.sendZoneMessage(zone);
     }
 
+    /** Handles the give command which is used to give a ZH unsupervised access to host a certain arena */
+    private void cmd_give(String name, String msg) {
+    	String[] args = msg.substring(msg.indexOf(" ") + 1).split(":");
+        if (args.length != 2)
+            ba.sendSmartPrivateMessage(name, "Syntax format..Type it right please.");
+        else {
+            String zh = args[0];
+            String arena = args[1];
+
+            try {
+                ba.SQLQueryAndClose("website", "INSERT INTO tblZHGrants(fcUserName, fcArena, fcZH, fdCreated) VALUES ('"
+                        + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(arena) + "', '" + Tools.addSlashesToString(zh)
+                        + "', NOW())");
+                ba.sendSmartPrivateMessage(name, zh + " has now has been granted unsupervised access to advert in the arena " + arena);
+            } catch (SQLException e) {
+                Tools.printStackTrace(e);
+            }
+        }
+    }
+
+    /** Handles a ZH claim request for a specific arena */
+    private void cmd_claim(String name, String msg) {
+        String msgs = msg.substring(msg.indexOf(" "));
+        try {
+            ResultSet result = ba.SQLQuery(db, "SELECT fcArena FROM tblZHGrants WHERE fcZH = '" + Tools.addSlashesToString(name)
+                    + "' AND fcArena = '" + Tools.addSlashesToString(msgs) + "'");
+            if (!result.next())
+                ba.sendSmartPrivateMessage(name, "That arena has not been found to give you permission to host unsupervised.");
+            else {
+                if (!queue.containsKey(name)) {
+                    debug("Queueing new Advert");
+                    queue.put(name, new Advert(name));
+                    if (queue.indexOfKey(name) == 0)
+                        prepareNext();
+                    else
+                        sendQueuePosition(name);
+                } else {
+                    ba.sendSmartPrivateMessage(name, "You have already claimed an advert and cannot claim another until it is used.");
+                    sendQueuePosition(name);
+                }
+            }
+            ba.SQLClose(result);
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+    }
+
     /** Handles the !add trainer command **/
-    public void cmd_add(String name, String cmd) {
+    private void cmd_add(String name, String cmd) {
         if (cmd.length() < 5)
             return;
         String staff = cmd.substring(5).trim().toLowerCase();
@@ -371,11 +369,10 @@ public class zonerbot extends SubspaceBot {
             BotSettings settings = ba.getBotSettings();
             String ops = settings.getString("Trainers");
 
-            if (ops.length() < 1) {
+            if (ops.length() < 1)
                 settings.put("Trainers", staff);
-            } else {
+            else
                 settings.put("Trainers", ops + "," + staff);
-            }
             ba.sendSmartPrivateMessage(name, "Trainer added: " + staff);
             settings.save();
             loadTrainers();
@@ -384,7 +381,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !remove trainer command **/
-    public void cmd_remove(String name, String cmd) {
+    private void cmd_remove(String name, String cmd) {
         if (cmd.length() < 8)
             return;
         String staff = cmd.substring(8).trim().toLowerCase();
@@ -405,12 +402,12 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !ops trainer list command **/
-    public void cmd_ops(String name) {
+    private void cmd_ops(String name) {
         ba.sendSmartPrivateMessage(name, "Trainers: " + ba.getBotSettings().getString("Trainers"));
     }
 
     /** Changes periodic zoners auto-zone after being loaded **/
-    public void cmd_autoZone(String name) {
+    private void cmd_autoZone(String name) {
         ZONE_ON_LOAD = !ZONE_ON_LOAD;
         if (ZONE_ON_LOAD)
             ba.sendSmartPrivateMessage(name, "Periodic zone on load: ENABLED");
@@ -419,7 +416,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !hosted command **/
-    public void cmd_hosted(String name, String cmd) {
+    private void cmd_hosted(String name, String cmd) {
         int hours = 24;
         try {
             if (cmd.length() > 7) {
@@ -435,7 +432,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !grants <name> and !grants <name>:yyyy-MM commands **/
-    public void cmd_grants(String name, String cmd) {
+    private void cmd_grants(String name, String cmd) {
         String query = "SELECT COUNT(*) as c, fcGranter as g, MONTHNAME(fdTime) as m, YEAR(fdTime) as y";
         int year = Calendar.getInstance().get(Calendar.YEAR);
         int month = Calendar.getInstance().get(Calendar.MONTH);
@@ -495,7 +492,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !status command **/
-    public void cmd_status(String name) {
+    private void cmd_status(String name) {
         int i = queue.indexOfKey(name);
         if (i > 0 && advertTimer != null)
             ba.sendSmartPrivateMessage(name, "The current advert belongs to: " + queue.firstValue().getName() + " Next advert: "
@@ -507,7 +504,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !claim command or ?advert **/
-    public void cmd_claim(String name) {
+    private void cmd_claim(String name) {
         if (oplist.isZHExact(name)) {
             ba.sendSmartPrivateMessage(name, "You are not allowed to claim an advert. Have a trainer or high mod !grant you one instead.");
             return;
@@ -526,7 +523,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !grant command **/
-    public void cmd_grant(String name, String cmd) {
+    private void cmd_grant(String name, String cmd) {
         if (cmd.length() < 7 || !cmd.contains(" ")) {
             ba.sendSmartPrivateMessage(name, "Failed to evaluate command due to syntax error.");
             return;
@@ -548,7 +545,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !free command or ?advert free **/
-    public void cmd_free(String name) {
+    private void cmd_free(String name) {
         if (queue.containsKey(name)) {
             Advert advert = queue.get(name);
             if (advert.getStatus() < Advert.ZONED) {
@@ -574,7 +571,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !set command **/
-    public void cmd_setAdvert(String name, String cmd) {
+    private void cmd_setAdvert(String name, String cmd) {
         if (cmd.length() < 6 || !cmd.contains(" "))
             return;
         String msg = cmd.substring(cmd.indexOf(" ") + 1);
@@ -585,7 +582,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !sound command **/
-    public void cmd_setSound(String name, String cmd) {
+    private void cmd_setSound(String name, String cmd) {
         if (cmd.length() < 7 || !cmd.contains(" "))
             return;
         int sound = Advert.DEFAULT_SOUND;
@@ -602,7 +599,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !view command as well as the !view <name> command **/
-    public void cmd_view(String name, String cmd) {
+    private void cmd_view(String name, String cmd) {
         if (cmd.contains(" ") && cmd.length() > 6) {
             String adverter = cmd.substring(cmd.indexOf(" ") + 1);
             if (queue.containsKey(adverter)) {
@@ -620,7 +617,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !approve command with or without the zh name **/
-    public void cmd_approve(String name, String cmd) {
+    private void cmd_approve(String name, String cmd) {
         if (cmd.length() > 8 && cmd.contains(" ")) {
             String zh = cmd.substring(cmd.indexOf(" ") + 1);
             if (queue.containsKey(zh))
@@ -640,7 +637,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !advert command which executes the current advert if possible **/
-    public void cmd_advert(String name, String cmd) {
+    private void cmd_advert(String name, String cmd) {
         if (queue.containsKey(name)) {
             if (queue.indexOfKey(name) > 0)
                 sendQueuePosition(name);
@@ -696,7 +693,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !readvert command which sends a default zone message for a given arena **/
-    public void cmd_readvert(String name, String cmd) {
+    private void cmd_readvert(String name, String cmd) {
         if (cmd.equals("!readvert"))
             cmd = null;
         else if (cmd.length() > (10 + 20)) {
@@ -732,7 +729,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !renew command which if the advert hasn't been zoned or expired, prolongs the expire time **/
-    public void cmd_renew(String name) {
+    private void cmd_renew(String name) {
         if (!queue.containsKey(name))
             ba.sendSmartPrivateMessage(name, "There is no advert available for renewal.");
         else if (queue.indexOfKey(name) != 0)
@@ -751,7 +748,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !per <delay>;<duration>;<message> command where delay minutes, and duration hours **/
-    public void cmd_periodic(String name, String cmd) {
+    private void cmd_periodic(String name, String cmd) {
         // !per <delay>;<interval>;<message>
         if (cmd.length() < 9 || !cmd.contains(";"))
             return;
@@ -781,7 +778,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !list command which lists the active periodic zoners **/
-    public void cmd_listPeriodics(String name) {
+    private void cmd_listPeriodics(String name) {
         if (periodic.isEmpty()) {
             ba.sendSmartPrivateMessage(name, "There are no periodic zoners currently set.");
             return;
@@ -791,7 +788,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !remper <index> command which removes periodic zoner at index <index> as shown in !list **/
-    public void cmd_removePeriodic(String name, String cmd) {
+    private void cmd_removePeriodic(String name, String cmd) {
         // !remper #
         if (cmd.length() < 9)
             return;
@@ -811,7 +808,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !die command **/
-    public void cmd_die(String name) {
+    private void cmd_die(String name) {
         try {
             if (expireTimer != null)
                 expireTimer.endNow();
@@ -1499,7 +1496,7 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !debug command which toggles debug mode and the debugger name **/
-    public void cmd_debug(String name) {
+    private void cmd_debug(String name) {
         if (!DEBUG) {
             debugger = name;
             DEBUG = true;
