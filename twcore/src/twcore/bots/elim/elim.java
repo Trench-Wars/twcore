@@ -387,8 +387,6 @@ public class elim extends SubspaceBot {
                     cmd_greet(name, msg);
                 else if (cmd.startsWith("!game "))
                     cmd_game(name, msg);
-                else if (cmd.startsWith("!rat ") && game != null)
-                    game.cmd_getRating(name, msg);
             }
             if (oplist.isOwner(name))
                 if (cmd.startsWith("!svi "))
