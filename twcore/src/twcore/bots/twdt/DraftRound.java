@@ -427,11 +427,13 @@ public class DraftRound {
     private class MasterControl extends TimerTask {
         
         int timer;
+        int extend;
         boolean setTime;
 
         public MasterControl() {
             timer = 0;
             setTime = false;
+            extend = rules.getInt("DrawExtend");
         }
         
         @Override
@@ -535,8 +537,17 @@ public class DraftRound {
                 }
                 if (team1.getScore() >= target * 60 || team2.getScore() >= target * 60 || timer < 1)
                     state = RoundState.FINISHED;
-            } else if (!team1.isAlive() || !team2.isAlive() || timer < 1)
+            } else if (!team1.isAlive() || !team2.isAlive())
                     state = RoundState.FINISHED;
+            else if (timer < 1) {
+                if (extend > 0) {
+                    extend = 0;
+                    ba.sendArenaMessage("Time extended.");
+                    timer = rules.getInt("Extension") * 60;
+                    ba.setTimer(rules.getInt("Extension"));
+                } else
+                    state = RoundState.FINISHED;
+            }
             updateScoreboard();
             checkLag();
         }
@@ -548,10 +559,15 @@ public class DraftRound {
             String mvp = getMVP();
             displayResult();
             printScores();
+            storeRound(team1.getScore(), team2.getScore(), mvp);
             if (type != GameType.BASING) {
                 if (team1.isAlive() && !team2.isAlive())
                     game.handleRound(team1);
                 else if (team2.isAlive() && !team1.isAlive())
+                    game.handleRound(team2);
+                else if (team1.getScore() > team2.getScore())
+                    game.handleRound(team1);
+                else if (team2.getScore() > team1.getScore())
                     game.handleRound(team2);
                 else
                     game.handleRound(null);
@@ -563,13 +579,8 @@ public class DraftRound {
                 else
                     game.handleRound(null);
             }
-            storeRound(team1.getScore(), team2.getScore(), mvp);
             if (mvp != null && !mvp.equals("-none-"))
                 ba.sendArenaMessage("MVP: " + mvp + "!", 7);
-        }
-        
-        /** Helper saves the round results to the database */
-        private void storeRound(int score1, int score2, String mvp) {
             ba.cancelTask(ticker);
             for (Bounds b : bounds.values())
                 ba.cancelTask(b);
@@ -579,6 +590,10 @@ public class DraftRound {
                 ba.sendArenaMessage("Blueout disabled, you may speak in public now.");
             blueout = false;
             ba.toggleLockPublicChat();
+        }
+        
+        /** Helper saves the round results to the database */
+        private void storeRound(int score1, int score2, String mvp) {
             String[] fields = new String[] { "fnMatchID", "fnRound", "fnTeam1Score", "fnTeam2Score", "fcMvp" };
             String[] values = new String[] { "" + game.getMatchID(), "" + game.getRound(), "" + score1, "" + score2, Tools.addSlashesToString(mvp)};
             ba.SQLInsertInto(db, "tblDraft__MatchRound", fields, values);
