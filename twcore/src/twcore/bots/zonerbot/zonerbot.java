@@ -319,7 +319,7 @@ public class zonerbot extends SubspaceBot {
     /** Handles the !arenas command which lists the arenas available to a ZH not supervised */
     private void cmd_arenas(String name, String cmd) {
     	String zh = name;
-    	if (cmd.contains(" "))
+    	if (cmd.contains(" ") && cmd.length() > 8)
     		zh = cmd.substring(cmd.indexOf(" ") + 1);
     	if (!oplist.isZHExact(zh)) {
     		ba.sendSmartPrivateMessage(name, zh + " is not a ZH.");
