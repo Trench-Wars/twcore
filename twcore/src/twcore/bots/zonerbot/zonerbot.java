@@ -173,55 +173,50 @@ public class zonerbot extends SubspaceBot {
     private void cmd_arenapp(String name, String msg) {
         StringTokenizer args = new StringTokenizer(msg.substring(14), ":");
 
-        if(!(args.countTokens() == 2)){
+        if (!(args.countTokens() == 2)) {
             m_botAction.sendSmartPrivateMessage(name, "Syntax format..Type it right please.");
         } else {
-        String zh = args.nextToken();
-        String arena = args.nextToken();
+            String zh = args.nextToken();
+            String arena = args.nextToken();
 
-        try {
-            m_botAction.SQLQueryAndClose("website", "INSERT INTO tblZHGrants(fcUserName, fcArena, fcZH, fdCreated) VALUES ('"
-                    + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(arena) + "', '" + Tools.addSlashesToString(zh) + "', NOW())");
-            m_botAction.sendSmartPrivateMessage(name, zh + " has now has been granted non supervisional powers to advert in the arena " + arena);
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+            try {
+                m_botAction.SQLQueryAndClose("website", "INSERT INTO tblZHGrants(fcUserName, fcArena, fcZH, fdCreated) VALUES ('"
+                        + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(arena) + "', '" + Tools.addSlashesToString(zh)
+                        + "', NOW())");
+                m_botAction.sendSmartPrivateMessage(name, zh + " has now has been granted non supervisional powers to advert in the arena " + arena);
+            } catch (SQLException e) {
+                Tools.printStackTrace(e);
+            }
         }
     }
 
     public void cmd_allowZH(String name, String msg) {
         String msgs = msg.substring(14);
         try {
-            ResultSet result = m_botAction.SQLQuery("website", "SELECT fcArena FROM tblZHGrants WHERE fcZH = '" + Tools.addSlashesToString(name) + "'");
+            ResultSet result = m_botAction.SQLQuery("website", "SELECT fcArena FROM tblZHGrants WHERE fcZH = '" + Tools.addSlashesToString(name)
+                    + "' AND fcArena = '" + Tools.addSlashesToString(msgs) + "'");
             if (!result.next()) {
-                m_botAction.sendSmartPrivateMessage(name, "Seems you aren't allowed to host unsupervised yet :P");
+                ba.sendSmartPrivateMessage(name, "That arena has not been found to give you permission to host unsupervised.");
+                ba.SQLClose(result);
             } else {
-                String arena = result.getString("fcArena");
-                if (!arena.equalsIgnoreCase(msgs)) {
-                    m_botAction.sendSmartPrivateMessage(name, "You do not have sufficent permission to host in this arena unsupervised.");
-                } else {
-                    if (!queue.containsKey(name)) {
-                        debug("Queueing new Advert");
-                        queue.put(name, new Advert(name));
-                        if (queue.indexOfKey(name) == 0)
-                            prepareNext();
-                        else
-                            sendQueuePosition(name);
-                    } else {
-                        ba.sendSmartPrivateMessage(name, "You have already claimed an advert and cannot claim another until it is used.");
+                ba.SQLClose(result);
+                if (!queue.containsKey(name)) {
+                    debug("Queueing new Advert");
+                    queue.put(name, new Advert(name));
+                    if (queue.indexOfKey(name) == 0)
+                        prepareNext();
+                    else
                         sendQueuePosition(name);
-                    }
+                } else {
+                    ba.sendSmartPrivateMessage(name, "You have already claimed an advert and cannot claim another until it is used.");
+                    sendQueuePosition(name);
                 }
-                m_botAction.SQLClose(result);
             }
+
         } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Tools.printStackTrace(e);
         }
     }
-    
-   
 
     /** Handles ResultSet events created by the !hosted and !grants commands **/
     public void handleEvent(SQLResultEvent event) {
