@@ -128,6 +128,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_help(name);
                 else if (msg.toLowerCase().startsWith("!hosted"))
                     cmd_hosted(name, msg);
+                else if (msg.toLowerCase().startsWith("!arenas"))
+                	cmd_arenas(name, msg);
             }
             if (oplist.isHighmod(name) || trainers.contains(name.toLowerCase())) {
                 if (msg.toLowerCase().startsWith("!grant "))
@@ -247,7 +249,8 @@ public class zonerbot extends SubspaceBot {
                 "| !readvert              - Sends a last call default advert for the arena in your !advert       |",
                 "| !readvert <sub-event>  - Sends a readvert about <sub-event> for the arena in your !advert     |",
                 "| !renew                 - Prolongs the expiration of the advert for an extra 2 minutes         |",
-                "| !claim <arena>         - For ZHs who are allowed to host unsupervised in a certain arena      |", };
+                "| !claim <arena>         - For ZHs who are allowed to host unsupervised in a certain arena      |", 
+                "| !arenas                - Shows a ZH what arenas are available or shows a specified ZH         |" };
         ba.smartPrivateMessageSpam(name, msg);
         if (trainers.contains(name.toLowerCase()) || oplist.isSmod(name)) {
             msg = new String[] { "+-- ZonerBot Trainer Commands ------------------------------------------------------------------+",
@@ -259,8 +262,7 @@ public class zonerbot extends SubspaceBot {
                     "| !grants yyyy-MM        - Displays the total number of grants given for yyyy-MM                |",
                     "| !grants <name>         - Displays the total adverts granted by <name> this month              |",
                     "| !grants <name>:yyyy-MM - Displays total grants by <name> in month MM of year yyyy             |",
-                    "| !give <ZH>:<Arena>     - Adds the arena and ZH who is allowed to host unsupervised.           |", 
-                    "| !arenas                - Shows a ZH what arenas are available or shows a specified ZH         |"};
+                    "| !give <ZH>:<Arena>     - Adds the arena and ZH who is allowed to host unsupervised.           |",};
             ba.smartPrivateMessageSpam(name, msg);
         }
         if (oplist.isSmod(name)) {
@@ -312,6 +314,31 @@ public class zonerbot extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "Sound " + sound + " is prohibited from use.");
         } else
             ba.sendZoneMessage(zone);
+    }
+    
+    /** Handles the !arenas command which lists the arenas available to a ZH not supervised */
+    private void cmd_arenas(String name, String cmd) {
+    	String zh = name;
+    	if (cmd.contains(" "))
+    		zh = cmd.substring(cmd.indexOf(" ") + 1);
+    	if (!oplist.isZHExact(zh)) {
+    		ba.sendSmartPrivateMessage(name, zh + " is not a ZH.");
+    		return;
+    	}
+    	ResultSet rs = null;
+    	try {
+    		rs = ba.SQLQuery(db, "SELECT fcUserName as s, fcArena as a FROM tblZHGrants WHERE fcZH = '" + Tools.addSlashesToString(zh) + "'");
+    		if (rs.next()) {
+    			do {
+    				ba.sendSmartPrivateMessage(name, "" + padString(rs.getString("a"), 20) + " by " + rs.getString("s"));
+    			} while (rs.next());
+    		} else
+    			ba.sendSmartPrivateMessage(name, "No arenas found for " + zh + ".");
+    		ba.SQLClose(rs);
+    	} catch (SQLException e) {
+    		Tools.printStackTrace(e);
+    		ba.SQLClose(rs);
+    	}
     }
 
     /** Handles the give command which is used to give a ZH unsupervised access to host a certain arena */
