@@ -1733,9 +1733,14 @@ public class robohelp extends SubspaceBot {
                 return;                
             }
             m_botAction.SQLClose(result);
-            result = m_botAction.SQLQuery(mySQLHost, "SELECT COUNT(fnAlertID) FROM tblCallNewb WHERE fnTaken != 2 AND fnTaken != 3 AND fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00'");
+            result = m_botAction.SQLQuery(mySQLHost, "SELECT COUNT(fnAlertID) FROM tblCallNewb WHERE fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00'");
             if (result.next()) {
                 allNewbs = result.getInt(1);
+            }
+            m_botAction.SQLClose(result);
+            result = m_botAction.SQLQuery(mySQLHost, "SELECT COUNT(fnAlertID) FROM tblCallNewb WHERE (fnTaken = 2 OR fnTaken == 3) AND fdCreated > '" + date + "-01 00:00:00' AND fdCreated < '" + date2 + "-01 00:00:00'");
+            if (result.next()) {
+                trueNewbs = result.getInt(1);
             }
             m_botAction.SQLClose(result);
         } catch (Exception e) {
