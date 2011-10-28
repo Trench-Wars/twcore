@@ -67,6 +67,7 @@ public class whobot extends SubspaceBot {
     private TimerTask locate;
     private TimerTask go;
     
+    private boolean alert;
     private boolean DEBUG;
     private String debugger;
     
@@ -85,6 +86,7 @@ public class whobot extends SubspaceBot {
         locating = "";
         debugger = "";
         DEBUG = false;
+        alert = true;
         String[] nogos = ba.getBotSettings().getString("NoGoArenas").split(" ");
         for (String n : nogos)
             nogo.add(n);
@@ -207,7 +209,8 @@ public class whobot extends SubspaceBot {
                 ba.ipcTransmit(IPC, new IPCEvent(name + ":" + msg, System.currentTimeMillis(), EventRequester.MESSAGE));
                 return;
             } else if (msg.toLowerCase().startsWith("!whohas ") || msg.toLowerCase().startsWith("!s ") || msg.toLowerCase().startsWith("!squad ")) {
-                ba.sendChatMessage(name + " said: " + msg);
+                if (alert)
+                    ba.sendChatMessage(name + " said: " + msg);
                 ba.ipcTransmit(IPC, new IPCEvent(name + ":" + msg, System.currentTimeMillis(), EventRequester.MESSAGE));
                 return;
             }
@@ -224,6 +227,8 @@ public class whobot extends SubspaceBot {
                     start(name);
                 else if (msg.equals("!debug"))
                     debugger(name);
+                else if (msg.equals("!alert"))
+                    alert(name);
                 else if (msg.equals("!die"))
                     die(name);
                 else if (msg.equals("!pro"))
@@ -250,6 +255,14 @@ public class whobot extends SubspaceBot {
                     ba.sendSmartPrivateMessage(name, "Sorry, don't mind me! I'm just passing through. I won't tell anyone about your super secret hideout, trust me!");
             }
         }
+    }
+    
+    private void alert(String name) {
+        alert = !alert;
+        if (alert)
+            ba.sendChatMessage("Command relay alerts: ENABLED");
+        else
+            ba.sendChatMessage("Command relay alerts: DISABLED");
     }
     
     private void say(String name, String cmd) {
