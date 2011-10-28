@@ -206,13 +206,17 @@ public class whobot extends SubspaceBot {
                 about(name);
                 ba.ipcTransmit(IPC, new IPCEvent(name + ":" + msg, System.currentTimeMillis(), EventRequester.MESSAGE));
                 return;
+            } else if (msg.toLowerCase().startsWith("!whohas ") || msg.toLowerCase().startsWith("!s ") || msg.toLowerCase().startsWith("!squad ")) {
+                ba.sendChatMessage(name + " said: " + msg);
+                ba.ipcTransmit(IPC, new IPCEvent(name + ":" + msg, System.currentTimeMillis(), EventRequester.MESSAGE));
+                return;
             }
             
             if ((ops.isSmod(name) || name.equalsIgnoreCase("flared")) && msg.startsWith("!say ")) {
                 say(name, msg);
                 return;
             }
-
+            
             if (ops.isHighmod(name) || ops.isDeveloperExact(name)) {
                 if (msg.equals("!stop"))
                     stop(name);
