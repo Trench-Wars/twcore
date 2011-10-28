@@ -880,6 +880,49 @@ public class attackbot extends SubspaceBot {
             ba.sendArenaMessage("Game type changed to " + gameTime + " minute timed");
         }
     }
+    
+    /** Handles !stats which spams private messages with the current game stats just like at the end of the game **/
+    public void cmd_stats(String name) {
+        if (pastStats != null) {
+            ba.privateMessageSpam(name, pastStats);
+            return;
+        }
+        String msg = "Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score;
+        ba.sendPrivateMessage(name, msg);
+        String[] msgs = {
+                ",-------------------------------+------+------+------+------+----+--------+--------+----------+----.",
+                "|                             S |    K |    D |   TK |  TeK | LO |     TO | Steals |  Poss(s) |  G |",
+                "|                          ,----+------+------+------+------+----+--------+--------+----------+----+",
+                "| Freq " + team[0].freq + "                  /     |" + padNumber(team[0].getKills(), 5) + " |" + padNumber(team[0].getDeaths(), 5) + " |" + padNumber(team[0].getTeamKills(), 5) + " |" + padNumber(team[0].getTerrKills(), 5) + " |" + padNumber(team[0].getLagouts(), 3) + " |" + padNumber(team[0].getTurnovers(), 7) + " |"+ padNumber(team[0].getSteals(), 7) + " |" + padNumber(team[0].getPossession(), 9) + " |" + padNumber(team[0].score, 3) + " |",
+                "+------------------------'      |      |      |      |      |    |        |        |          |    |",
+        };
+        ba.privateMessageSpam(name, msgs);
+        for (Attacker p : team[0].stats.values()) {
+            msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
+            ba.sendPrivateMessage(name, msg);
+        }
+        for (Attacker p : team[0].oldStats) {
+            msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
+            ba.sendPrivateMessage(name, msg);
+        }
+        
+        msgs = new String[] {
+                "+-------------------------------+------+------+------+------+----+--------+--------+----------+----+",
+                "|                          ,----+------+------+------+------+----+--------+--------+----------+----+",
+                "| Freq " + team[1].freq + "                  /     |" + padNumber(team[1].getKills(), 5) + " |" + padNumber(team[1].getDeaths(), 5) + " |" + padNumber(team[1].getTeamKills(), 5) + " |" + padNumber(team[1].getTerrKills(), 5) + " |" + padNumber(team[1].getLagouts(), 3) + " |" + padNumber(team[1].getTurnovers(), 7) + " |"+ padNumber(team[1].getSteals(), 7) + " |" + padNumber(team[1].getPossession(), 9) + " |" + padNumber(team[1].score, 3) + " |",
+                "+------------------------'      |      |      |      |      |    |        |        |          |    |",
+        };
+        ba.privateMessageSpam(name, msgs);
+        for (Attacker p : team[1].stats.values()) {
+            msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
+            ba.sendPrivateMessage(name, msg);
+        }
+        for (Attacker p : team[1].oldStats) {
+            msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
+            ba.sendPrivateMessage(name, msg);
+        }
+        ba.sendPrivateMessage(name, "`-------------------------------+------+------+------+------+----+--------+--------+----------+----'");
+    }
 
     /**
      * Handles the !kill and !end (game) commands. !killgame destroys the game and !endgame 
@@ -1008,49 +1051,6 @@ public class attackbot extends SubspaceBot {
         team[1].teamWarp();
     }
     
-    /** Handles !stats which spams private messages with the current game stats just like at the end of the game **/
-    public void cmd_stats(String name) {
-        if (pastStats != null) {
-            ba.privateMessageSpam(name, pastStats);
-            return;
-        }
-        String msg = "Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score;
-        ba.sendPrivateMessage(name, msg);
-        String[] msgs = {
-                ",-------------------------------+------+------+------+------+----+--------+--------+----------+----.",
-                "|                             S |    K |    D |   TK |  TeK | LO |     TO | Steals |  Poss(s) |  G |",
-                "|                          ,----+------+------+------+------+----+--------+--------+----------+----+",
-                "| Freq " + team[0].freq + "                  /     |" + padNumber(team[0].getKills(), 5) + " |" + padNumber(team[0].getDeaths(), 5) + " |" + padNumber(team[0].getTeamKills(), 5) + " |" + padNumber(team[0].getTerrKills(), 5) + " |" + padNumber(team[0].getLagouts(), 3) + " |" + padNumber(team[0].getTurnovers(), 7) + " |"+ padNumber(team[0].getSteals(), 7) + " |" + padNumber(team[0].getPossession(), 9) + " |" + padNumber(team[0].score, 3) + " |",
-                "+------------------------'      |      |      |      |      |    |        |        |          |    |",
-        };
-        ba.privateMessageSpam(name, msgs);
-        for (Attacker p : team[0].stats.values()) {
-            msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendPrivateMessage(name, msg);
-        }
-        for (Attacker p : team[0].oldStats) {
-            msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendPrivateMessage(name, msg);
-        }
-        
-        msgs = new String[] {
-                "+-------------------------------+------+------+------+------+----+--------+--------+----------+----+",
-                "|                          ,----+------+------+------+------+----+--------+--------+----------+----+",
-                "| Freq " + team[1].freq + "                  /     |" + padNumber(team[1].getKills(), 5) + " |" + padNumber(team[1].getDeaths(), 5) + " |" + padNumber(team[1].getTeamKills(), 5) + " |" + padNumber(team[1].getTerrKills(), 5) + " |" + padNumber(team[1].getLagouts(), 3) + " |" + padNumber(team[1].getTurnovers(), 7) + " |"+ padNumber(team[1].getSteals(), 7) + " |" + padNumber(team[1].getPossession(), 9) + " |" + padNumber(team[1].score, 3) + " |",
-                "+------------------------'      |      |      |      |      |    |        |        |          |    |",
-        };
-        ba.privateMessageSpam(name, msgs);
-        for (Attacker p : team[1].stats.values()) {
-            msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendPrivateMessage(name, msg);
-        }
-        for (Attacker p : team[1].oldStats) {
-            msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendPrivateMessage(name, msg);
-        }
-        ba.sendPrivateMessage(name, "`-------------------------------+------+------+------+------+----+--------+--------+----------+----'");
-    }
-    
     /** Helper method prints all the game statistics to an array for temporary post game access **/
     private void printStats() {
         ArrayList<String> statArray = new ArrayList<String>();
@@ -1177,10 +1177,9 @@ public class attackbot extends SubspaceBot {
         ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score + "  Detailed stats (!stats) available until picking starts");
         state = WAITING;
         lagouts.clear();
-        if (autoMode) {
-            ba.specAll();
+        ba.specAll();
+        if (autoMode)
             ba.sendArenaMessage("A new game will begin when two players PM me !cap -" + ba.getBotName());
-        }
         team[0].reset();
         team[1].reset();
         
@@ -2156,8 +2155,6 @@ public class attackbot extends SubspaceBot {
         private byte ballID;
         private long timestamp;
         private long carryTime;
-        private short ballX;
-        private short ballY;
         // absCarrier = Absolute carrier -> always contains the last player to have the ball (no nulls)
         private String carrier, absCarrier;
         private final Stack<String> carriers;
@@ -2178,8 +2175,6 @@ public class attackbot extends SubspaceBot {
             ballID = event.getBallID();
             this.timestamp = event.getTimeStamp();
             long now = System.currentTimeMillis();
-            ballX = event.getXLocation();
-            ballY = event.getYLocation();
             short carrierID = event.getCarrier();
             String newCarrier;
             if (carrierID != -1)
@@ -2294,16 +2289,6 @@ public class attackbot extends SubspaceBot {
         /** Gets the last ball update timestamp **/
         public long getTimeStamp() {
             return timestamp;
-        }
-
-        /** Most recent ball x coordinate **/
-        public short getBallX() {
-            return ballX;
-        }
-
-        /** Most recent ball y coordinate **/
-        public short getBallY() {
-            return ballY;
         }
     }  
     
