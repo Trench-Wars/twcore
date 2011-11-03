@@ -412,7 +412,7 @@ public class elim extends SubspaceBot {
             return;
         }
         if (voteType == VoteType.SHIP) {
-            if (vote > 0 && vote < 9) {
+            if (vote > 0 && vote < 9 && vote != 6 && vote != 4) {
                 votes.put(name, vote);
                 ba.sendPrivateMessage(name, "Vote counted for: " + ShipType.type(vote).toString());
             }
@@ -703,7 +703,7 @@ public class elim extends SubspaceBot {
                 ResultSet rs = showLadder.executeQuery();
                 ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
                 while (rs.next())
-                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName"));
+                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName") + " - " + rs.getInt("fnRating"));
                 rs.close();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
@@ -1053,7 +1053,7 @@ public class elim extends SubspaceBot {
             ba.sendChatMessage(2, "The next game of ELIM is about to begin. We are voting on ship.");
             ba.sendChatMessage(3, "The next game of ELIM is about to begin. We are voting on ship.");
             voteType = VoteType.SHIP;
-            ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 4-Leviathen, 5-Terrier, 6-Weasel, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
+            ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 5-Terrier, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
         } else if (voteType == VoteType.SHIP) {
             voteType = VoteType.DEATHS;
             ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + ")");
