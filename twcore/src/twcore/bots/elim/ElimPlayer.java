@@ -114,7 +114,7 @@ public class ElimPlayer {
      * Increments and adjusts all relevant kill statistics.
      * @param dead The player object for the kill victim
      */
-    public void handleKill(ElimPlayer dead) {
+    public int handleKill(ElimPlayer dead) {
         stats.handleKill();
         if (System.currentTimeMillis() - lastKill < (MULTI_KILL_TIME * Tools.TimeInMillis.SECOND)){
             consecutiveKills++;
@@ -133,7 +133,8 @@ public class ElimPlayer {
             if (i >= streaks.length)
                 i = streaks.length - 1;
             ba.sendArenaMessage(name + " - " + streaks[i] + "(" + killStreak + ":0)");
-        } 
+        }
+        return stats.getStat(StatType.KILLS);
     }
     
     public void handlePosition(PlayerPosition event) {

@@ -59,7 +59,7 @@ public class ElimGame {
     GameState state;
     ShipType ship;
     int freq;
-    int deaths;
+    int goal;
     int playerCount;
     int ratingCount;
     boolean shrap;
@@ -99,7 +99,7 @@ public class ElimGame {
         rules = bot.rules;
         ship = type;
         freq = ship.getFreq();
-        this.deaths = deaths;
+        this.goal = deaths;
         this.shrap = shrap;
         ratingCount = 0;
         playerCount = 0;
@@ -135,9 +135,22 @@ public class ElimGame {
         if (killer == null || killee == null) return;
         ElimPlayer win = getPlayer(killer);
         ElimPlayer loss = getPlayer(killee);
+        int kills = 1;
         if (win != null && loss != null) {
-            win.handleKill(loss);
+            kills = win.handleKill(loss);
             loss.handleDeath(win);
+        }
+        if (bot.gameType == elim.KILLRACE && kills >= goal) {
+            for (String name : winners) {
+                if (!name.equalsIgnoreCase(killer)) {
+                    ElimPlayer p = getPlayer(low(name));
+                    if (p != null) {
+                        p.saveLoss();
+                        removePlayer(p);
+                    }
+                }
+            }
+            checkWinner();
         }
     }
     
@@ -151,7 +164,7 @@ public class ElimGame {
                     ba.cancelTask(laggers.remove(low(name)));
                 ElimPlayer ep = getPlayer(name);
                 if (ep == null) {
-                    ep = new ElimPlayer(ba, this, name, ship.getNum(), deaths);
+                    ep = new ElimPlayer(ba, this, name, ship.getNum(), goal);
                     players.put(name.toLowerCase(), ep);
                 }
                 winners.add(name.toLowerCase());
@@ -431,7 +444,7 @@ public class ElimGame {
             for (int i = 0; i < 3 && i < list.size(); i++)
                 worst[i] = list.get(i);
             ArrayList<String> msg = new ArrayList<String>();
-            msg.add(",---- Most Deaths ---- Max: " + deaths + " -----.---- Least Deaths ----------------."); //34
+            msg.add(",---- Most Deaths ---- Max: " + goal + " -----.---- Least Deaths ----------------."); //34
             msg.add("|" + padString(" 1) " + best[0].name + " (" + best[0].getKills() + "-" + best[0].getDeaths() + ")", 34) + 
                     "|" + padString(" 1) " + worst[0].name + " (" + worst[0].getKills() + "-" + worst[0].getDeaths() + ")", 34) + "|");
             if (list.size() > 1) {
@@ -880,9 +893,9 @@ public class ElimGame {
     public String toString() {
         String ret = "";
         if (state == GameState.STARTING)
-            ret = "We are about to start " + ship.toString() + " elim to " + deaths + " deaths";
+            ret = "We are about to start " + ship.toString() + " elim to " + goal + " deaths";
         else
-            ret = "We are playing " + ship.toString() + " elim to " + deaths + " deaths";
+            ret = "We are playing " + ship.toString() + " elim to " + goal + " deaths";
         if (ship.hasShrap()) {
             if (shrap)
                 ret += " with shrap";

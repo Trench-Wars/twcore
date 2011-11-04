@@ -98,9 +98,14 @@ public class elim extends SubspaceBot {
         }
     }
     
+    public static final int ELIM = 0;
+    public static final int KILLRACE = 1;
+    
     State state;
     VoteType voteType;
     ShipType shipType;
+    int gameType;
+    boolean allowRace;
     
     Random random;
     
@@ -123,7 +128,7 @@ public class elim extends SubspaceBot {
     String arena;
     ElimPlayer lastWinner;
     ElimPlayer winner;
-    int deaths;
+    int goal;
     int winStreak;
     int voteTime;
     long lastZoner, lastAlert;
@@ -164,6 +169,8 @@ public class elim extends SubspaceBot {
         debugStatPlayers = new HashSet<String>();
         state = State.IDLE;
         voteType = VoteType.NA;
+        gameType = ELIM;
+        allowRace = true;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
@@ -373,6 +380,8 @@ public class elim extends SubspaceBot {
                     cmd_start(name);
                 else if (cmd.equals("!zone"))
                     cmd_zone(name);
+                else if (cmd.equals("!killrace"))
+                    cmd_killrace(name);
                 else if (cmd.startsWith("!remove ") || cmd.startsWith("!rem ") || cmd.startsWith("!rm "))
                     cmd_remove(name, msg);
             }
@@ -420,6 +429,11 @@ public class elim extends SubspaceBot {
             if (vote > 0 && vote <= rules.getInt("MaxDeaths")) {
                 votes.put(name, vote);
                 ba.sendPrivateMessage(name, "Vote counted for: " + vote + " deaths");
+            } else if (allowRace && vote > 15 && vote <= 30) {
+                vote -= 10;
+                votes.put(name, vote);
+                ba.sendPrivateMessage(name, "Vote counted for: " + vote + " killrace.");
+                
             }
         } else if (voteType == VoteType.SHRAP) {
             if (vote > -1 && vote < 2) {
@@ -430,6 +444,14 @@ public class elim extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Vote counted for: " + shrap);
             }
         }
+    }
+    
+    public void cmd_killrace(String name) {
+        allowRace = !allowRace;
+        if (!allowRace)
+            ba.sendSmartPrivateMessage(name, "KillRaces: DISABLED");
+        else
+            ba.sendSmartPrivateMessage(name, "KillRaces: ENABLED");
     }
     
     public void cmd_setStats(String name, String cmd) {
@@ -538,8 +560,6 @@ public class elim extends SubspaceBot {
         else if (state == State.STARTING || state == State.PLAYING || state == State.ENDING)
             ba.sendSmartPrivateMessage(name, game.toString());
     }
-    
-    
     
     /** Handles the !scorereset (sr) command which resets the stats for the specified ship */
     public void cmd_scorereset(String name, String cmd) {
@@ -829,7 +849,7 @@ public class elim extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Invalid deaths: " + deaths);
             else {
                 shipType = ShipType.type(ship);
-                this.deaths = deaths;
+                this.goal = deaths;
                 if (shrap == 1)
                     this.shrap = true;
                 else
@@ -934,7 +954,7 @@ public class elim extends SubspaceBot {
             storeGame.clearParameters();
             storeGame.setInt(1, shipType.getNum());
             storeGame.setString(2, Tools.addSlashesToString(winner.name));
-            storeGame.setInt(3, deaths);
+            storeGame.setInt(3, goal);
             storeGame.setInt(4, winner.getScores()[0]);
             storeGame.setInt(5, winner.getScores()[1]);
             storeGame.setInt(6, players);
@@ -1056,22 +1076,36 @@ public class elim extends SubspaceBot {
             ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 5-Terrier, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
         } else if (voteType == VoteType.SHIP) {
             voteType = VoteType.DEATHS;
-            ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + ")");
+            if (allowRace)
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + " or 15-30 for killrace" +")");
+            else 
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + ")");
         } else if (voteType == VoteType.DEATHS) {
             if (shipType.hasShrap()) {
                 voteType = VoteType.SHRAP;
-                ba.sendArenaMessage("" + Tools.shipName(shipType.getNum()) + " elim to " + deaths + ". VOTE: Shrap on or off? 0-OFF, 1-ON");
+                if (gameType == ELIM)
+                    ba.sendArenaMessage("" + Tools.shipName(shipType.getNum()) + " elim to " + goal + ". VOTE: Shrap on or off? 0-OFF, 1-ON");
+                else
+                    ba.sendArenaMessage("" + Tools.shipName(shipType.getNum()) + " killrace to " + goal + ". VOTE: Shrap on or off? 0-OFF, 1-ON");
             } else {
                 shrap = false;
                 state = State.STARTING;
-                String msg = "" + Tools.shipName(shipType.getNum()) + " elim to " + deaths + ". ";
+                String msg;
+                if (gameType == ELIM)
+                    msg = "" + Tools.shipName(shipType.getNum()) + " elim to " + goal + ". ";
+                else
+                    msg = "" + Tools.shipName(shipType.getNum()) + " killrace to " + goal + ". ";
                 ba.sendArenaMessage(msg);
                 handleState();
                 return;
             }
         } else {
             state = State.STARTING;
-            String msg = "" + Tools.shipName(shipType.getNum()) + " elim to " + deaths + ". ";
+            String msg;
+            if (gameType == ELIM)
+                msg = "" + Tools.shipName(shipType.getNum()) + " elim to " + goal + ". ";
+            else
+                msg = "" + Tools.shipName(shipType.getNum()) + " killrace to " + goal + ". ";
             if (shipType.hasShrap()) {
                 if (shrap)
                     msg += "Shrap: [ON]";
@@ -1095,7 +1129,7 @@ public class elim extends SubspaceBot {
     
     /** Starting state creates new ElimGame and initiates player stat trackers */
     private void doStarting() {
-        game = new ElimGame(this, shipType, deaths, shrap);
+        game = new ElimGame(this, shipType, goal, shrap);
         ba.sendArenaMessage("Enter to play. Arena will be locked in 30 seconds!", 9);
         timer = new TimerTask() {
             public void run() {
@@ -1103,7 +1137,11 @@ public class elim extends SubspaceBot {
                     game.stop();
                     abort();
                 } else {
-                    String erules = "RULES: One player per freq and NO TEAMING! Die " + deaths + " times and you're out. ";
+                    String erules = "RULES: One player per freq and NO TEAMING! ";
+                    if (gameType == ELIM)
+                        erules = "Die " + goal + " times and you're out. ";
+                    else
+                        erules = "First to " + goal + " kills wins. ";
                     if (shipType == ShipType.WEASEL)
                         erules += "Warping is illegal and will be penalized by a death.";
                     ba.sendArenaMessage(erules);
@@ -1121,7 +1159,10 @@ public class elim extends SubspaceBot {
         if (winner != null && game != null && game.mvp != null) {
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", 5);
             final String mvp = game.mvp;
-            ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " elim.");
+            if (gameType == ELIM)
+                ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " elim.");
+            else
+                ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " killrace.");
             TimerTask t = new TimerTask() {
                 public void run() {
                     ba.sendArenaMessage("MVP: " + mvp, Tools.Sound.INCONCEIVABLE);  
@@ -1216,7 +1257,7 @@ public class elim extends SubspaceBot {
             shipType = ShipType.type(ship);
             votes.clear();
         } else if (voteType == VoteType.DEATHS) {
-            int[] count = new int[rules.getInt("MaxDeaths")];
+            int[] count = new int[rules.getInt("MaxDeaths") + 20];
             for (int i = 0; i < count.length; i++)
                 count[i] = 0;
             for (Integer i : votes.values())
@@ -1225,7 +1266,7 @@ public class elim extends SubspaceBot {
             int high = count[0];
             int val = 1;
             wins.add(val);
-            for (int i = 0; i < rules.getInt("MaxDeaths"); i++) {
+            for (int i = 0; i < (rules.getInt("MaxDeaths") + 20); i++) {
                 if (count[i] > high) {
                     wins.clear();
                     high = count[i];
@@ -1237,12 +1278,20 @@ public class elim extends SubspaceBot {
             if (wins.size() > 1) {
                 if (high > 0) {
                     int num = random.nextInt(wins.size());
-                    this.deaths = wins.toArray(new Integer[wins.size()])[num];
-                } else
-                    this.deaths = random.nextInt(rules.getInt("MaxDeaths")) + 1;
+                    this.goal = wins.toArray(new Integer[wins.size()])[num];
+                } else {
+                    this.goal = random.nextInt(rules.getInt("MaxDeaths") + 20) + 1;
+                    if (this.goal > 10 && this.goal < 16)
+                        this.goal += 5;
+                }
             } else
-                this.deaths = wins.iterator().next();
+                this.goal = wins.iterator().next();
             votes.clear();
+            if (this.goal > 10) {
+                this.goal -= 10;
+                gameType = KILLRACE;
+            } else
+                gameType = ELIM;
         } else if (voteType == VoteType.SHRAP) {
             int[] count = new int[] { 0, 0 };
             for (Integer i : votes.values())
