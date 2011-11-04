@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.TreeSet;
@@ -141,17 +142,16 @@ public class ElimGame {
             loss.handleDeath(win);
         }
         if (bot.gameType == elim.KILLRACE && kills >= goal) {
-            String name;
-            Iterator<String> i = winners.iterator();
-            while (i.hasNext()) {
-                name = i.next();
-                if (!name.equalsIgnoreCase(killer)) {
-                    ElimPlayer p = getPlayer(low(name));
-                    if (p != null) {
-                        i.remove();
-                        p.saveLoss();
-                        removePlayer(p);
-                    }
+            LinkedList<String> temp = new LinkedList<String>();
+            for (String name : winners)
+                if (!name.equalsIgnoreCase(killer))
+                    temp.add(name);
+                
+            for (String p : temp) {
+                ElimPlayer ep = getPlayer(low(p));
+                if (ep != null) {
+                    ep.saveLoss();
+                    removePlayer(ep);
                 }
             }
             checkWinner();
