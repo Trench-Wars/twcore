@@ -1281,7 +1281,12 @@ public class elim extends SubspaceBot {
                     int num = random.nextInt(wins.size());
                     this.goal = wins.toArray(new Integer[wins.size()])[num];
                 } else {
-                    this.goal = random.nextInt(rules.getInt("MaxDeaths") + 20) + 1;
+                    int r = random.nextInt(3);
+                    if (r > 2)
+                        this.goal = random.nextInt(rules.getInt("MaxDeaths") + 20) + 1;
+                    else
+                        this.goal = random.nextInt(rules.getInt("MaxDeaths")) + 1;
+                        
                     if (this.goal > 10 && this.goal < 16)
                         this.goal += 5;
                 }
