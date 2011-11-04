@@ -895,11 +895,16 @@ public class ElimGame {
     
     /** Returns a string describing the current elimination game */
     public String toString() {
+        String type;
+        if (bot.gameType == elim.ELIM)
+            type = " elim to " + goal + " deaths";
+        else
+            type = " killrace to " + goal + " kills";
         String ret = "";
         if (state == GameState.STARTING)
-            ret = "We are about to start " + ship.toString() + " elim to " + goal + " deaths";
+            ret = "We are about to start " + ship.toString() + type;
         else
-            ret = "We are playing " + ship.toString() + " elim to " + goal + " deaths";
+            ret = "We are playing " + ship.toString() + type;
         if (ship.hasShrap()) {
             if (shrap)
                 ret += " with shrap";

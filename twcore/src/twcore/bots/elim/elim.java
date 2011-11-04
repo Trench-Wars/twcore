@@ -431,8 +431,7 @@ public class elim extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Vote counted for: " + vote + " deaths");
             } else if (allowRace && vote >= 15 && vote <= 30) {
                 votes.put(name, vote);
-                ba.sendPrivateMessage(name, "Vote counted for: " + (vote-10) + " killrace.");
-                
+                ba.sendPrivateMessage(name, "Vote counted for: KillRace to " + (vote-10) + ".");
             }
         } else if (voteType == VoteType.SHRAP) {
             if (vote > -1 && vote < 2) {
@@ -1077,24 +1076,24 @@ public class elim extends SubspaceBot {
         } else if (voteType == VoteType.SHIP) {
             voteType = VoteType.DEATHS;
             if (allowRace)
-                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + " or 15-30 for killrace" +")");
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + " or 15-30 for KillRace" +")");
             else 
                 ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + ")");
         } else if (voteType == VoteType.DEATHS) {
             if (shipType.hasShrap()) {
                 voteType = VoteType.SHRAP;
                 if (gameType == ELIM)
-                    ba.sendArenaMessage("" + Tools.shipName(shipType.getNum()) + " elim to " + goal + ". VOTE: Shrap on or off? 0-OFF, 1-ON");
+                    ba.sendArenaMessage("" + Tools.shipName(shipType.getNum()) + " ELIM to " + goal + ". VOTE: Shrap on or off? 0-OFF, 1-ON");
                 else
-                    ba.sendArenaMessage("" + Tools.shipName(shipType.getNum()) + " killrace to " + goal + ". VOTE: Shrap on or off? 0-OFF, 1-ON");
+                    ba.sendArenaMessage("" + Tools.shipName(shipType.getNum()) + " KILLRACE to " + goal + ". VOTE: Shrap on or off? 0-OFF, 1-ON");
             } else {
                 shrap = false;
                 state = State.STARTING;
                 String msg;
                 if (gameType == ELIM)
-                    msg = "" + Tools.shipName(shipType.getNum()) + " elim to " + goal + ". ";
+                    msg = "" + Tools.shipName(shipType.getNum()) + " ELIM to " + goal + ". ";
                 else
-                    msg = "" + Tools.shipName(shipType.getNum()) + " killrace to " + goal + ". ";
+                    msg = "" + Tools.shipName(shipType.getNum()) + " KILLRACE to " + goal + ". ";
                 ba.sendArenaMessage(msg);
                 handleState();
                 return;
@@ -1103,9 +1102,9 @@ public class elim extends SubspaceBot {
             state = State.STARTING;
             String msg;
             if (gameType == ELIM)
-                msg = "" + Tools.shipName(shipType.getNum()) + " elim to " + goal + ". ";
+                msg = "" + Tools.shipName(shipType.getNum()) + " ELIM to " + goal + ". ";
             else
-                msg = "" + Tools.shipName(shipType.getNum()) + " killrace to " + goal + ". ";
+                msg = "" + Tools.shipName(shipType.getNum()) + " KILLRACE to " + goal + ". ";
             if (shipType.hasShrap()) {
                 if (shrap)
                     msg += "Shrap: [ON]";
@@ -1162,7 +1161,7 @@ public class elim extends SubspaceBot {
             if (gameType == ELIM)
                 ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " elim.");
             else
-                ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " killrace.");
+                ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " KillRace.");
             TimerTask t = new TimerTask() {
                 public void run() {
                     ba.sendArenaMessage("MVP: " + mvp, Tools.Sound.INCONCEIVABLE);  
