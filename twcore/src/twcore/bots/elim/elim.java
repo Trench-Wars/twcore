@@ -1139,9 +1139,9 @@ public class elim extends SubspaceBot {
                 } else {
                     String erules = "RULES: One player per freq and NO TEAMING! ";
                     if (gameType == ELIM)
-                        erules = "Die " + goal + " times and you're out. ";
+                        erules += "Die " + goal + " times and you're out. ";
                     else
-                        erules = "First to " + goal + " kills wins. ";
+                        erules += "First to " + goal + " kills wins. ";
                     if (shipType == ShipType.WEASEL)
                         erules += "Warping is illegal and will be penalized by a death.";
                     ba.sendArenaMessage(erules);
