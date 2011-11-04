@@ -141,10 +141,14 @@ public class ElimGame {
             loss.handleDeath(win);
         }
         if (bot.gameType == elim.KILLRACE && kills >= goal) {
-            for (String name : winners) {
+            String name;
+            Iterator<String> i = winners.iterator();
+            while (i.hasNext()) {
+                name = i.next();
                 if (!name.equalsIgnoreCase(killer)) {
                     ElimPlayer p = getPlayer(low(name));
                     if (p != null) {
+                        i.remove();
                         p.saveLoss();
                         removePlayer(p);
                     }
