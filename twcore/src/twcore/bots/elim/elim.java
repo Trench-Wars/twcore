@@ -430,9 +430,8 @@ public class elim extends SubspaceBot {
                 votes.put(name, vote);
                 ba.sendPrivateMessage(name, "Vote counted for: " + vote + " deaths");
             } else if (allowRace && vote >= 15 && vote <= 30) {
-                vote -= 10;
                 votes.put(name, vote);
-                ba.sendPrivateMessage(name, "Vote counted for: " + vote + " killrace.");
+                ba.sendPrivateMessage(name, "Vote counted for: " + (vote-10) + " killrace.");
                 
             }
         } else if (voteType == VoteType.SHRAP) {
@@ -1282,7 +1281,7 @@ public class elim extends SubspaceBot {
                     this.goal = wins.toArray(new Integer[wins.size()])[num];
                 } else {
                     int r = random.nextInt(3);
-                    if (r > 2)
+                    if (r > 1)
                         this.goal = random.nextInt(rules.getInt("MaxDeaths") + 20) + 1;
                     else
                         this.goal = random.nextInt(rules.getInt("MaxDeaths")) + 1;
