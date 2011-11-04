@@ -429,7 +429,7 @@ public class elim extends SubspaceBot {
             if (vote > 0 && vote <= rules.getInt("MaxDeaths")) {
                 votes.put(name, vote);
                 ba.sendPrivateMessage(name, "Vote counted for: " + vote + " deaths");
-            } else if (allowRace && vote > 15 && vote <= 30) {
+            } else if (allowRace && vote >= 15 && vote <= 30) {
                 vote -= 10;
                 votes.put(name, vote);
                 ba.sendPrivateMessage(name, "Vote counted for: " + vote + " killrace.");
@@ -503,6 +503,7 @@ public class elim extends SubspaceBot {
                     "|!start            - Begins game and enables games to continue running (!on)             |",
                     "|!zone             - Forces the bot to send a default zone message                       |",
                     "|!remove <name>    - Removes <name> from the current game (!rm or !rem)                  |",
+                    "|!killrace         - Enables and disables killrace availability                          |",
             };
             ba.privateMessageSpam(name, msg);
         }
