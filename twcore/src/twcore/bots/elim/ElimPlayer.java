@@ -93,7 +93,7 @@ public class ElimPlayer {
                 ba.sendArenaMessage("Kill Joy! " + killer.name + " terminates the (" + lastStreak + ":0) kill streak of " + name + "!", Tools.Sound.INCONCEIVABLE);
         }
         stats.handleDeath();
-        if (stats.getStat(StatType.DEATHS) >= specAt) {
+        if (game.bot.gameType == elim.ELIM && stats.getStat(StatType.DEATHS) >= specAt) {
             status = Status.OUT;
             stats.handleLoss();
             ba.spec(name);
