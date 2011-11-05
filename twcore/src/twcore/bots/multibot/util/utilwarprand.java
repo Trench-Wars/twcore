@@ -186,10 +186,6 @@ public class utilwarprand extends MultiUtil
                     cmd_where(name);
                 else if (message.equalsIgnoreCase("!stopspec"))
                     cmd_stopSpec(name);
-                else if (message.startsWith("!pos "))
-                    cmd_position(name, message);
-                else if (message.startsWith("!pos2 "))
-                    cmd_position2(name, message);
 			}
 		}
 	}
@@ -208,28 +204,6 @@ public class utilwarprand extends MultiUtil
 	private void cmd_where(String name) {
 	    m_botAction.sendPrivateMessage(name, "(" + m_botAction.getShip().getX()/16 + "," + m_botAction.getShip().getY()/16 + ")");
 	}
-	
-	private void cmd_position(String name, String cmd) {
-	    cmd = cmd.substring(cmd.indexOf(" ") + 1);
-	    if (cmd.length() > 0) {
-	        int x = Integer.valueOf(cmd);
-	        m_botAction.setPlayerPositionUpdating(x);
-	        m_botAction.sendPrivateMessage(name, "Position updating set to " + x);
-	    }
-	}
-    
-    private void cmd_position2(String name, String cmd) {
-        String[] args = cmd.split(" ");
-        if (args.length == 2) {
-            int x = Integer.valueOf(args[1]);
-            m_botAction.setPlayerPositionUpdating(x);
-            m_botAction.getShip().setMovingUpdateTime(x);
-            m_botAction.getShip().setUnmovingUpdateTime(x);
-            m_botAction.sendPrivateMessage(name, "ALL position updating set to " + x);
-        } else if (args.length == 3) {
-            m_botAction.moveToTile(Integer.valueOf(args[1]), Integer.valueOf(args[2]));
-        }
-    }
 	
 	private void cmd_stopSpec(String name) {
 	    m_botAction.sendPrivateMessage(name, "spec: " + m_botAction.getShip().getSpectatorUpdateTime() + " unmov: " + m_botAction.getShip().getUnmovingUpdateTime() + " mov: " + m_botAction.getShip().getMovingUpdateTime());
@@ -253,7 +227,6 @@ public class utilwarprand extends MultiUtil
         debug("[Position] " + player.getPlayerName() + ": " + event.getXLocation()/16 + "," + event.getYLocation()/16);
 		if(active)
 		{
-		    player.updatePlayer(event);
 			int current = regions.getRegion(player);
 			if(current != -1)
 			{
@@ -266,7 +239,7 @@ public class utilwarprand extends MultiUtil
 					if(p != null)
 					{
 						m_botAction.warpTo(event.getPlayerID(), (int)p.getX(), (int)p.getY());
-						m_botAction.scheduleTask(new WarpCooldown(name), 2000);
+						m_botAction.scheduleTask(new WarpCooldown(name), 3000);
 					    m_botAction.stopSpectatingPlayer();
 					}
 				}
@@ -321,14 +294,9 @@ public class utilwarprand extends MultiUtil
 		if(active = !active)
 		{
 			m_botAction.sendPrivateMessage(name, "Warping active.");
-			if (positions.length == 1) {
-			    m_botAction.stopReliablePositionUpdating();
-                Point p = positions[0];
-                m_botAction.moveToTile((int)p.getX(), (int)p.getY());
-			} else {
-			    jumpTask = new Reposition();
-			    m_botAction.scheduleTaskAtFixedRate(jumpTask, 0, 2000);
-			}
+            m_botAction.stopReliablePositionUpdating();
+            jumpTask = new Reposition();
+            m_botAction.scheduleTaskAtFixedRate(jumpTask, 0, 2000);
 		}
 		else
 		{
