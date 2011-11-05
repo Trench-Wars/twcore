@@ -58,8 +58,10 @@ public class attackbot extends SubspaceBot {
     private MasterControl mc;
     
     private TimerTask advert;
+    private long lastZoner;
     
     public static final String db = "website";
+    public static final int ZONER_TIME = 5;
     
     // Objons
     public static final int TEN_SECONDS = 1;
@@ -111,6 +113,7 @@ public class attackbot extends SubspaceBot {
         gameTime = 10;
         DEBUG = false;
         debugger = "";
+        lastZoner = 0;
     }
 
     /** Handles the LoggedOn event **/
@@ -363,6 +366,8 @@ public class attackbot extends SubspaceBot {
                     cmd_allTerrs(name);
                 else if (msg.equalsIgnoreCase("!autocap"))
                     cmd_autocap(name);
+                else if (msg.startsWith("!zone "))
+                    cmd_zone(name, msg);
             }
         }
         
@@ -391,6 +396,30 @@ public class attackbot extends SubspaceBot {
                 else if (msg.equalsIgnoreCase("!per"))
                     cmd_periodic(name);
             }
+        }
+    }
+
+    public void cmd_zone(String name, String cmd) {
+        long now = System.currentTimeMillis();
+        if (now - lastZoner > ZONER_TIME * Tools.TimeInMillis.MINUTE || oplist.isSmod(name)) {
+            lastZoner = now;
+            String msg = "";
+            if (cmd.length() > 7) {
+                msg = cmd.substring(cmd.indexOf(" ") + 1);
+                if (msg.toLowerCase().contains("?go")) {
+                    ba.sendSmartPrivateMessage(name, "Please do not include ?go attack in the zoner as I will add this for you automatically.");
+                    return;
+                } else if (msg.toLowerCase().contains("-" + name.toLowerCase())) {
+                    ba.sendSmartPrivateMessage(name, "Please do not include your name in the zoner as I will provide mine automatically.");
+                    return;
+                }
+            } else
+                msg = "A game of ATTACK is about to begin! Type ?go ATTACK to play. -" + ba.getBotName();
+            ba.sendZoneMessage(msg, 2);
+        } else {
+            int mins = (int)(((ZONER_TIME * Tools.TimeInMillis.MINUTE) - (now - lastZoner)) / Tools.TimeInMillis.MINUTE);
+            int secs = (int)(((ZONER_TIME * Tools.TimeInMillis.MINUTE) - (now - lastZoner) - (mins / Tools.TimeInMillis.MINUTE)) / Tools.TimeInMillis.SECOND);
+            ba.sendSmartPrivateMessage(name, "Next zoner will be available in " + mins + " minutes " + secs + " seconds");
         }
     }
     
@@ -461,6 +490,7 @@ public class attackbot extends SubspaceBot {
         
         String[] staff = {
                 "+-- Staff Commands -------------------------------------------------------------------------+",
+                "| !zone                    - Sends a default zoner or one that you provide                  |",
                 "| !autocap                 - Allows/dissallows player set captains                          |",
                 "| !setcap <team>:<name>    - Sets <name> as captain of <team> (0 or 1)                      |",
                 "| !settime <mins>          - Changes game to a timed game to <mins> minutes                 |",
