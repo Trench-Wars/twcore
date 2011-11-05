@@ -164,9 +164,9 @@ public class attackbot extends SubspaceBot {
         
         if (state == WAITING) {
             if (autoMode)
-                ba.sendPrivateMessage(name, "A new game will begin after two players PM me with !cap");
+                ba.sendSmartPrivateMessage(name, "A new game will begin after two players PM me with !cap");
             else
-                ba.sendPrivateMessage(name, "Request a new game with '?help start attack please'");
+                ba.sendSmartPrivateMessage(name, "Request a new game with '?help start attack please'");
         } else if (state == PICKING) {
             String msg = "A game is about to start. ";
             if (team[0].cap != null)
@@ -178,19 +178,19 @@ public class attackbot extends SubspaceBot {
             else
                 msg += "-no captain- ";
             msg += "are picking teams.";
-            ba.sendPrivateMessage(name, msg);
+            ba.sendSmartPrivateMessage(name, msg);
         } else if (state >= STARTING) {
             if (timed) 
-                ba.sendPrivateMessage(name, "A timed game to " + gameTime + " minutes is currently being played. Score: " + team[0].score + " - " + team[1].score);
+                ba.sendSmartPrivateMessage(name, "A timed game to " + gameTime + " minutes is currently being played. Score: " + team[0].score + " - " + team[1].score);
             else
-                ba.sendPrivateMessage(name, "A game to " + goals + " goals is currently being played. Score: " + team[0].score + " - " + team[1].score);
+                ba.sendSmartPrivateMessage(name, "A game to " + goals + " goals is currently being played. Score: " + team[0].score + " - " + team[1].score);
         }
         
         if (lagouts.contains(name.toLowerCase()))
-            ba.sendPrivateMessage(name, "Use !lagout to return to the game.");
+            ba.sendSmartPrivateMessage(name, "Use !lagout to return to the game.");
         if (notplaying.contains(name.toLowerCase())) {
             ba.setFreq(name, NP_FREQ);
-            ba.sendPrivateMessage(name, "You are still set as not playing and captains will be unable to pick you. If you want to play, use !notplaying again.");
+            ba.sendSmartPrivateMessage(name, "You are still set as not playing and captains will be unable to pick you. If you want to play, use !notplaying again.");
         }
     }
     
@@ -206,7 +206,7 @@ public class attackbot extends SubspaceBot {
         }
         Team t = getTeam(name);
         if (t != null && t.cap != null && !t.isCap(name))
-            ba.sendPrivateMessage(t.cap, name + " has lagged out or left the arena.");
+            ba.sendSmartPrivateMessage(t.cap, name + " has lagged out or left the arena.");
     }
 
     /** Monitors goal scoring **/
@@ -277,10 +277,10 @@ public class attackbot extends SubspaceBot {
         if (event.getShipType() == 0 && isPlaying(name) && !lagouts.contains(name.toLowerCase())) {
             lagouts.add(name.toLowerCase());
             getPlayer(name).addLagout();
-            ba.sendPrivateMessage(name, "Use !lagout to return to the game.");
+            ba.sendSmartPrivateMessage(name, "Use !lagout to return to the game.");
             Team t = getTeam(name);
             if (t != null && !t.isCap(name) && t.cap != null)
-                ba.sendPrivateMessage(t.cap, name + " has lagged out.");
+                ba.sendSmartPrivateMessage(t.cap, name + " has lagged out.");
         }
         
         
@@ -424,7 +424,7 @@ public class attackbot extends SubspaceBot {
                 "|  flank to help destroy the enemy. Just be sure not to leave your base unguarded!          |",
                 "`-------------------------------------------------------------------------------------------'", 
         };
-        ba.privateMessageSpam(name, about);
+        ba.smartPrivateMessageSpam(name, about);
     }
 
     /**
@@ -476,14 +476,14 @@ public class attackbot extends SubspaceBot {
                 "| !greet <message>         - Sets the arena greet message to <message>                      |",
         };
         String end = "`-------------------------------------------------------------------------------------------'";
-        ba.privateMessageSpam(name, help);
+        ba.smartPrivateMessageSpam(name, help);
         if (isCaptain(name))
-            ba.privateMessageSpam(name, cap);
+            ba.smartPrivateMessageSpam(name, cap);
         if (oplist.isZH(name))
-            ba.privateMessageSpam(name, staff);
+            ba.smartPrivateMessageSpam(name, staff);
         if (oplist.isSmod(name) || name.equalsIgnoreCase("diakka"))
-            ba.privateMessageSpam(name, staff2);
-        ba.sendPrivateMessage(name, end);
+            ba.smartPrivateMessageSpam(name, staff2);
+        ba.sendSmartPrivateMessage(name, end);
     }
 
     public void cmd_periodic(String name) {
@@ -558,9 +558,9 @@ public class attackbot extends SubspaceBot {
     
     public void cmd_rules(String name) {
         if (timed)
-            ba.sendPrivateMessage(name, "RULES: Timed game to " + gameTime + " minutes most goals wins or sudden death. 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
+            ba.sendSmartPrivateMessage(name, "RULES: Timed game to " + gameTime + " minutes most goals wins or sudden death. 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
         else
-            ba.sendPrivateMessage(name, "RULES: First to " + goals + " goals wins. Max of 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
+            ba.sendSmartPrivateMessage(name, "RULES: First to " + goals + " goals wins. Max of 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
     }
     
     /** Handles the !notplaying command which prevents a player from being added and/or removes them from the game **/
@@ -569,17 +569,17 @@ public class attackbot extends SubspaceBot {
             if (!notplaying.contains(name.toLowerCase())) {
                 notplaying.add(name.toLowerCase());
                 ba.setFreq(name, NP_FREQ);
-                ba.sendPrivateMessage(name, "You have been added to not playing. Captains will not be able to add you. If you wish to return, do !notplaying again.");
+                ba.sendSmartPrivateMessage(name, "You have been added to not playing. Captains will not be able to add you. If you wish to return, do !notplaying again.");
             } else {
                 notplaying.remove(name.toLowerCase());
                 ba.setShip(name, 1);
                 ba.specWithoutLock(name);
-                ba.sendPrivateMessage(name, "You have been removed from not playing. Captains will be able to add you.");
+                ba.sendSmartPrivateMessage(name, "You have been removed from not playing. Captains will be able to add you.");
             }
         } else {
             getTeam(name).notPlaying(name);
             ba.setFreq(name, NP_FREQ);
-            ba.sendPrivateMessage(name, "You have been added to not playing. Captains will not be able to add you. If you wish to return, do !notplaying again.");
+            ba.sendSmartPrivateMessage(name, "You have been added to not playing. Captains will not be able to add you. If you wish to return, do !notplaying again.");
         }
     }
     
@@ -595,15 +595,15 @@ public class attackbot extends SubspaceBot {
         if (cmd.length() < 8 || !cmd.contains(" ") || !cmd.contains(":")) return;
         String cap = ba.getFuzzyPlayerName(cmd.substring(cmd.indexOf(":") + 1));
         if (cap == null) {
-            ba.sendPrivateMessage(name, "Player not found in this arena.");
+            ba.sendSmartPrivateMessage(name, "Player not found in this arena.");
             return;
         }
         
         if (isCaptain(cap)) {
-            ba.sendPrivateMessage(name, cap + " is already the captain of a team.");
+            ba.sendSmartPrivateMessage(name, cap + " is already the captain of a team.");
             return;
         } else if (!isNotBot(cap)) {
-            ba.sendPrivateMessage(name, cap + " is a bot.");
+            ba.sendSmartPrivateMessage(name, cap + " is a bot.");
             return;
         }
         
@@ -611,14 +611,14 @@ public class attackbot extends SubspaceBot {
             int freq = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":")));
             if (freq == 0 || freq == 1) {
                 if (isPlaying(cap) && getTeam(cap).freq != freq) {
-                    ba.sendPrivateMessage(name, cap + " is playing on the other team.");
+                    ba.sendSmartPrivateMessage(name, cap + " is playing on the other team.");
                     return;
                 }
                 team[freq].cap = cap;
                 ba.sendArenaMessage(cap + " has been assigned captain of freq " + team[freq].freq, Tools.Sound.BEEP1);
             }
         } catch (NumberFormatException e) {
-            ba.sendPrivateMessage(name, "Invalid team number (must be 0 or 1).");
+            ba.sendSmartPrivateMessage(name, "Invalid team number (must be 0 or 1).");
         }
     }
     
@@ -676,17 +676,17 @@ public class attackbot extends SubspaceBot {
         if (team[0].cap != null)
             msg = team[0].cap + " is captain of Freq " + team[0].freq + ".";
         else msg = "Captain needed for Freq " + team[0].freq;
-        ba.sendPrivateMessage(name, msg);
+        ba.sendSmartPrivateMessage(name, msg);
         if (team[1].cap != null)
             msg = team[1].cap + " is captain of Freq " + team[1].freq + ".";
         else msg = "Captain needed for Freq " + team[1].freq;
-        ba.sendPrivateMessage(name, msg);
+        ba.sendSmartPrivateMessage(name, msg);
     }
     
     /** Handles the !list command which sends a list of team players with ships and statuses **/
     public void cmd_list(String name) {
         team[0].sendTeam(name);
-        ba.sendPrivateMessage(name, "`");
+        ba.sendSmartPrivateMessage(name, "`");
         team[1].sendTeam(name);
     }
 
@@ -696,7 +696,7 @@ public class attackbot extends SubspaceBot {
         Team t = getTeam(name);
         if (t == null) return;
         if (state == PICKING && !t.pick) {
-            ba.sendPrivateMessage(name, "It is not your turn");
+            ba.sendSmartPrivateMessage(name, "It is not your turn");
             return;
         }
         String player = msg.substring(msg.indexOf(" ") + 1, msg.indexOf(":"));
@@ -704,12 +704,12 @@ public class attackbot extends SubspaceBot {
         try {
             ship = Integer.valueOf(msg.substring(msg.indexOf(":") + 1).trim());
         } catch (NumberFormatException e) {
-            ba.sendPrivateMessage(name, "Invalid ship number");
+            ba.sendSmartPrivateMessage(name, "Invalid ship number");
             return;
         }
         if (ship > 0 && ship < 9) {
             String res = t.addPlayer(player, ship);
-            ba.sendPrivateMessage(name, res);
+            ba.sendSmartPrivateMessage(name, res);
         }
     }
 
@@ -720,7 +720,7 @@ public class attackbot extends SubspaceBot {
         if (t == null) return;
         String res = t.remove(msg.substring(msg.indexOf(" ") + 1));
         if (res != null)
-            ba.sendPrivateMessage(name, res);
+            ba.sendSmartPrivateMessage(name, res);
         
     }
 
@@ -732,7 +732,7 @@ public class attackbot extends SubspaceBot {
         String[] players = msg.substring(msg.indexOf(" ") + 1).split(":");
         String res = t.subPlayer(players[0], players[1]);
         if (res != null)
-            ba.sendPrivateMessage(name, res);
+            ba.sendSmartPrivateMessage(name, res);
     }
     
     /** Handles the !change command if given by a captain **/
@@ -745,13 +745,13 @@ public class attackbot extends SubspaceBot {
         try {
             ship = Integer.valueOf(msg.substring(msg.indexOf(":") + 1).trim());
         } catch (NumberFormatException e) {
-            ba.sendPrivateMessage(name, "Invalid ship number");
+            ba.sendSmartPrivateMessage(name, "Invalid ship number");
             return;
         }
         if (ship > 0 && ship < 9) {
             String res = t.changeShip(player, ship);
             if (res != null)
-                ba.sendPrivateMessage(name, res);
+                ba.sendSmartPrivateMessage(name, res);
         }
     }
     
@@ -763,7 +763,7 @@ public class attackbot extends SubspaceBot {
         String[] players = msg.substring(msg.indexOf(" ") + 1).split(":");
         String res = t.switchPlayers(players[0], players[1]);
         if (res != null)
-            ba.sendPrivateMessage(name, res);
+            ba.sendSmartPrivateMessage(name, res);
     }
     
     /** Handles the !ready command if given by a team captain **/
@@ -797,7 +797,7 @@ public class attackbot extends SubspaceBot {
             ba.setShip(name, t.getShip(name));
             ba.setFreq(name, t.freq);
         } else 
-            ba.sendPrivateMessage(name, "You are not lagged out and/or not in the game.");
+            ba.sendSmartPrivateMessage(name, "You are not lagged out and/or not in the game.");
     }
     
     public void cmd_terrs(String name) {
@@ -807,9 +807,9 @@ public class attackbot extends SubspaceBot {
     }
     
     public void cmd_allTerrs(String name) {
-        ba.sendPrivateMessage(name, "Freq " + team[0].freq + " terrs:");
+        ba.sendSmartPrivateMessage(name, "Freq " + team[0].freq + " terrs:");
         team[0].locateTerrs(name);
-        ba.sendPrivateMessage(name, "Freq " + team[1].freq + " terrs:");
+        ba.sendSmartPrivateMessage(name, "Freq " + team[1].freq + " terrs:");
         team[1].locateTerrs(name);
     }
 
@@ -830,26 +830,26 @@ public class attackbot extends SubspaceBot {
         try {
             winGoal = Integer.valueOf(cmd.substring(cmd.indexOf(" ")+1));
         } catch (NumberFormatException e) {
-            ba.sendPrivateMessage(name, "Syntax error: please use !setgoals <goals>");
+            ba.sendSmartPrivateMessage(name, "Syntax error: please use !setgoals <goals>");
             return;
         }
         if (winGoal < 1 || winGoal > MAX_GOALS) {
-            ba.sendPrivateMessage(name, "Goals can only be set between 1 and " + MAX_GOALS + ".");
+            ba.sendSmartPrivateMessage(name, "Goals can only be set between 1 and " + MAX_GOALS + ".");
             return;
         } 
         if (!timed) {
             if (goals != winGoal) {
                 if (state == PLAYING && (winGoal <= team[0].score || winGoal <= team[1].score))
-                    ba.sendPrivateMessage(name, "Setting goals to " + winGoal + " conflicts with the current game score.");
+                    ba.sendSmartPrivateMessage(name, "Setting goals to " + winGoal + " conflicts with the current game score.");
                 else {
                     goals = winGoal;
                     ba.sendArenaMessage("Game type set to first to " + goals + " goals");                    
                 }
             } else
-                ba.sendPrivateMessage(name, "Goals already set to " + goals + ".");
+                ba.sendSmartPrivateMessage(name, "Goals already set to " + goals + ".");
         } else {
             if (state == PLAYING)
-                ba.sendPrivateMessage(name, "Game type cannot be changed to goals while a timed game is being played.");
+                ba.sendSmartPrivateMessage(name, "Game type cannot be changed to goals while a timed game is being played.");
             else {
                 timed = false;
                 goals = winGoal;
@@ -865,15 +865,15 @@ public class attackbot extends SubspaceBot {
         try {
             mins = Integer.valueOf(cmd.substring(cmd.indexOf(" ")+1));
         } catch (NumberFormatException e) {
-            ba.sendPrivateMessage(name, "Syntax error: please use !settime <minutes>");
+            ba.sendSmartPrivateMessage(name, "Syntax error: please use !settime <minutes>");
             return;
         }
         if (mins < 2 || mins > MAX_TIME) {
-            ba.sendPrivateMessage(name, "Timed game can only be between 2 and " + MAX_TIME + " minutes.");
+            ba.sendSmartPrivateMessage(name, "Timed game can only be between 2 and " + MAX_TIME + " minutes.");
         } else if (timed && mins == gameTime) {
-            ba.sendPrivateMessage(name, "Time already set to " + gameTime + " minutes.");
+            ba.sendSmartPrivateMessage(name, "Time already set to " + gameTime + " minutes.");
         } else if (state == PLAYING) {
-            ba.sendPrivateMessage(name, "Game type cannot be changed to timed if a game is being played."); 
+            ba.sendSmartPrivateMessage(name, "Game type cannot be changed to timed if a game is being played."); 
         } else if (timed) {
             gameTime = mins;
             ba.sendArenaMessage("Game type changed to " + gameTime + " minute timed");
@@ -887,11 +887,11 @@ public class attackbot extends SubspaceBot {
     /** Handles !stats which spams private messages with the current game stats just like at the end of the game **/
     public void cmd_stats(String name) {
         if (pastStats != null) {
-            ba.privateMessageSpam(name, pastStats);
+            ba.smartPrivateMessageSpam(name, pastStats);
             return;
         }
         String msg = "Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score;
-        ba.sendPrivateMessage(name, msg);
+        ba.sendSmartPrivateMessage(name, msg);
         String[] msgs = {
                 ",-------------------------------+------+------+------+------+----+--------+--------+----------+----.",
                 "|                             S |    K |    D |   TK |  TeK | LO |     TO | Steals |  Poss(s) |  G |",
@@ -899,14 +899,14 @@ public class attackbot extends SubspaceBot {
                 "| Freq " + team[0].freq + "                  /     |" + padNumber(team[0].getKills(), 5) + " |" + padNumber(team[0].getDeaths(), 5) + " |" + padNumber(team[0].getTeamKills(), 5) + " |" + padNumber(team[0].getTerrKills(), 5) + " |" + padNumber(team[0].getLagouts(), 3) + " |" + padNumber(team[0].getTurnovers(), 7) + " |"+ padNumber(team[0].getSteals(), 7) + " |" + padNumber(team[0].getPossession(), 9) + " |" + padNumber(team[0].score, 3) + " |",
                 "+------------------------'      |      |      |      |      |    |        |        |          |    |",
         };
-        ba.privateMessageSpam(name, msgs);
+        ba.smartPrivateMessageSpam(name, msgs);
         for (Attacker p : team[0].stats.values()) {
             msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendPrivateMessage(name, msg);
+            ba.sendSmartPrivateMessage(name, msg);
         }
         for (Attacker p : team[0].oldStats) {
             msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendPrivateMessage(name, msg);
+            ba.sendSmartPrivateMessage(name, msg);
         }
         
         msgs = new String[] {
@@ -915,16 +915,16 @@ public class attackbot extends SubspaceBot {
                 "| Freq " + team[1].freq + "                  /     |" + padNumber(team[1].getKills(), 5) + " |" + padNumber(team[1].getDeaths(), 5) + " |" + padNumber(team[1].getTeamKills(), 5) + " |" + padNumber(team[1].getTerrKills(), 5) + " |" + padNumber(team[1].getLagouts(), 3) + " |" + padNumber(team[1].getTurnovers(), 7) + " |"+ padNumber(team[1].getSteals(), 7) + " |" + padNumber(team[1].getPossession(), 9) + " |" + padNumber(team[1].score, 3) + " |",
                 "+------------------------'      |      |      |      |      |    |        |        |          |    |",
         };
-        ba.privateMessageSpam(name, msgs);
+        ba.smartPrivateMessageSpam(name, msgs);
         for (Attacker p : team[1].stats.values()) {
             msg = "|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendPrivateMessage(name, msg);
+            ba.sendSmartPrivateMessage(name, msg);
         }
         for (Attacker p : team[1].oldStats) {
             msg = "|  " + padString("-" + p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.teamKills, 5) + " |" + padNumber(p.terrKills, 5) + " |" + padNumber(p.lagouts, 3) + " |" + padNumber(p.turnovers, 7) + " |" + padNumber(p.steals, 7) + " |" + padNumber((int) p.possession/1000, 9) + " |" + padNumber(p.goals, 3) + " |";
-            ba.sendPrivateMessage(name, msg);
+            ba.sendSmartPrivateMessage(name, msg);
         }
-        ba.sendPrivateMessage(name, "`-------------------------------+------+------+------+------+----+--------+--------+----------+----'");
+        ba.sendSmartPrivateMessage(name, "`-------------------------------+------+------+------+------+----+--------+--------+----------+----'");
     }
 
     /**
@@ -954,20 +954,20 @@ public class attackbot extends SubspaceBot {
                     gameOver(-1);
             }
         } else if (state == WAITING || state == OFF)
-            ba.sendPrivateMessage(name, "There is no game currently running.");
+            ba.sendSmartPrivateMessage(name, "There is no game currently running.");
     }
 
     /** Handles the !status command which displays the score if a game is running **/
     public void cmd_status(String name) {
         if (state == PLAYING) {
-            ba.sendPrivateMessage(name, "[---  SCORE  ---]");
-            ba.sendPrivateMessage(name, "[--Freq 0: " + team[0].score + " --]");
-            ba.sendPrivateMessage(name, "[--Freq 1: " + team[1].score + " --]");
+            ba.sendSmartPrivateMessage(name, "[---  SCORE  ---]");
+            ba.sendSmartPrivateMessage(name, "[--Freq 0: " + team[0].score + " --]");
+            ba.sendSmartPrivateMessage(name, "[--Freq 1: " + team[1].score + " --]");
         } else if (state == WAITING) {
             if (autoMode)
-                ba.sendPrivateMessage(name, "A new game will begin after two players volunteer to captain using !cap");
+                ba.sendSmartPrivateMessage(name, "A new game will begin after two players volunteer to captain using !cap");
             else 
-                ba.sendPrivateMessage(name, "There is no game currently running.");
+                ba.sendSmartPrivateMessage(name, "There is no game currently running.");
         } else if (state == PICKING) {
             String msg = "We are currently picking teams. Captains: ";
             if (team[0].cap != null)
@@ -979,9 +979,9 @@ public class attackbot extends SubspaceBot {
                 msg += team[1].cap;
             else
                 msg += "[needs captain]";
-            ba.sendPrivateMessage(name, msg);
+            ba.sendSmartPrivateMessage(name, msg);
         } else if (state == STARTING) {
-            ba.sendPrivateMessage(name, "We are about to start a new game.");
+            ba.sendSmartPrivateMessage(name, "We are about to start a new game.");
         }
     }   
     
@@ -989,9 +989,9 @@ public class attackbot extends SubspaceBot {
     public void cmd_autocap(String name) {
         autoMode = !autoMode;
         if (autoMode)
-            ba.sendPrivateMessage(name, "Captains can now be set by players using !cap.");
+            ba.sendSmartPrivateMessage(name, "Captains can now be set by players using !cap.");
         else
-            ba.sendPrivateMessage(name, "Captains can now only be set by staff.");
+            ba.sendSmartPrivateMessage(name, "Captains can now only be set by staff.");
     }
 
     /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
@@ -1710,7 +1710,7 @@ public class attackbot extends SubspaceBot {
             players.put(p.toLowerCase(), ship);
             stats.put(p.toLowerCase(), new Attacker(p, ship));
             result = "Player " + p + " added to game";
-            ba.sendPrivateMessage(p, "You have been put in the game");
+            ba.sendSmartPrivateMessage(p, "You have been put in the game");
             ba.sendArenaMessage(p + " in for Freq " + freq + " with ship " + ship);
             if (pick)
                 pick = false;
@@ -1803,7 +1803,7 @@ public class attackbot extends SubspaceBot {
                 ba.setFreq(subin, freq);
                 players.put(subin.toLowerCase(), ship);
                 stats.put(subin.toLowerCase(), new Attacker(subin, ship));
-                ba.sendPrivateMessage(subin, "You have been put in the game");
+                ba.sendSmartPrivateMessage(subin, "You have been put in the game");
                 ba.sendArenaMessage(subout + " has been substituted by " + subin + ".");
                 result = null;
             } else {
@@ -2003,7 +2003,7 @@ public class attackbot extends SubspaceBot {
             for (int i = 0; i < terrs.length; i++) {
                 if (terrs[i] != null) {
                     msg = getLocation(terrs[i].getX(), terrs[i].getY(), team0);
-                    ba.sendPrivateMessage(name, terrs[i].getName() + msg + " [" + terrs[i].getTimePassed() + "s ago]");
+                    ba.sendSmartPrivateMessage(name, terrs[i].getName() + msg + " [" + terrs[i].getTimePassed() + "s ago]");
                 }
             }
         }
@@ -2067,10 +2067,10 @@ public class attackbot extends SubspaceBot {
             if (cap != null)
                 msg += cap;
             msg += ")";
-            ba.sendPrivateMessage(name, msg);
+            ba.sendSmartPrivateMessage(name, msg);
             if (size() < 1) return;
             msg = "Name:                   - Ship:      - Status:";
-            ba.sendPrivateMessage(name, msg);
+            ba.sendSmartPrivateMessage(name, msg);
             for (String p : players.keySet()) {
                 msg = padString(p, 23);
                 msg += " - ";
@@ -2080,7 +2080,7 @@ public class attackbot extends SubspaceBot {
                     msg += "LAGGED OUT";
                 else 
                     msg += "IN";
-                ba.sendPrivateMessage(name, msg);
+                ba.sendSmartPrivateMessage(name, msg);
             }
         }
         
