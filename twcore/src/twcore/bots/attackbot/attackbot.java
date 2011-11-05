@@ -497,26 +497,21 @@ public class attackbot extends SubspaceBot {
     
     public void cmd_periodic(String name, String cmd) {
         if (cmd.length() < 10 || !cmd.contains(":")) return;
-        String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(":");
-        // !per mins:msg
-        if (args.length == 2) {
-            int delay = Integer.valueOf(args[0]);
-            final String msg = args[1];
-            if (delay > 0 && msg.length() > 1) {
-                if (advert != null)
-                    ba.cancelTask(advert);
-                advert = new TimerTask() {
-                    public void run() {
-                        ba.sendChatMessage(msg);
-                        ba.sendArenaMessage(msg);
-                    }
-                };
-                ba.scheduleTask(advert, 0, delay);
-                ba.sendSmartPrivateMessage(name, "Periodic every " + delay + "min: " + msg);
-            } else
-                ba.sendSmartPrivateMessage(name, "ERROR: Delay and message must be greater than 0.");
+        int delay = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":")));
+        final String msg = cmd.substring(cmd.indexOf(":") + 1);
+        if (delay > 0 && msg.length() > 1) {
+            if (advert != null)
+                ba.cancelTask(advert);
+            advert = new TimerTask() {
+                public void run() {
+                    ba.sendChatMessage(msg);
+                    ba.sendArenaMessage(msg);
+                }
+            };
+            ba.scheduleTask(advert, 0, delay * Tools.TimeInMillis.MINUTE);
+            ba.sendSmartPrivateMessage(name, "Periodic every " + delay + "min: " + msg);
         } else
-            ba.sendSmartPrivateMessage(name, "ERROR: Invalid syntax, please use !per <mins>:<message>");
+            ba.sendSmartPrivateMessage(name, "ERROR: Delay and message must be greater than 0.");
     }
     
     public void cmd_signup(String name) {
