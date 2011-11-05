@@ -375,7 +375,6 @@ public class ElimGame {
                 bot.state = State.PLAYING;
                 state = GameState.PLAYING;
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
-                ba.shipResetAll();
                 if (shrap)
                     ba.prizeAll(Tools.Prize.SHRAPNEL);
                 else {
