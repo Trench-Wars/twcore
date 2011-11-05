@@ -33,8 +33,8 @@ import twcore.core.util.Tools;
  *  0 - Normal player    no special privileges
  *  1 - Bot              used for determining if player is a bot          [moderate.txt]
  *  2 - Outsider         limited privileges; for non-staff coders         [outsider.cfg]
- *  3 - Zone Helper      limited privileges; limited bot access           [moderate.txt]
- *  4 - League Ref       limited privileges; only TWL related access      [moderate.txt]
+ *  3 - League Ref       limited privileges; only TWL related access      [moderate.txt]
+ *  4 - Zone Helper      limited privileges; limited bot access           [moderate.txt]
  *  5 - Event Ref        regular privileges; first stage of real access   [moderate.txt]
  *  6 - Moderator        expanded privileges for administrative duties    [moderate.txt]
  *  7 - High Moderator   additional privileges normally only for smods    [highmod.cfg ]
@@ -49,8 +49,8 @@ public class OperatorList {
 	public static final int PLAYER_LEVEL = 0;
     public static final int BOT_LEVEL = 1;
     public static final int OUTSIDER_LEVEL = 2;
-    public static final int ZH_LEVEL = 3;
-    public static final int LR_LEVEL = 4;
+    public static final int LR_LEVEL = 3;
+    public static final int ZH_LEVEL = 4;
     public static final int ER_LEVEL = 5;
     public static final int MODERATOR_LEVEL = 6;
     public static final int HIGHMOD_LEVEL = 7;
@@ -667,8 +667,8 @@ public class OperatorList {
             case 0: return "Player [lvl " + accessLevel + "]";
             case 1: return "Bot [lvl " + accessLevel + "]";
             case 2: return "Outsider [lvl " + accessLevel + "]";
-            case 3: return "ZH [lvl "+ accessLevel + "]";
-            case 4: return "LR [lvl "+ accessLevel + "]";
+            case 3: return "LR [lvl "+ accessLevel + "]";
+            case 4: return "ZH [lvl "+ accessLevel + "]";
             case 5: return "ER [lvl " + accessLevel + "]";
             case 6: return "Mod [lvl " + accessLevel + "]";
             case 7: return "HighMod [lvl " + accessLevel + "]";
