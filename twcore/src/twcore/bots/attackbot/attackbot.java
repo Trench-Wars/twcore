@@ -1,5 +1,7 @@
 package twcore.bots.attackbot;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -54,6 +56,8 @@ public class attackbot extends SubspaceBot {
     private Team[] team;
     
     private MasterControl mc;
+    
+    public static final String db = "website";
     
     // Objons
     public static final int TEN_SECONDS = 1;
@@ -335,6 +339,10 @@ public class attackbot extends SubspaceBot {
                 cmd_terrs(name);
             else if (msg.startsWith("!myf"))
                 cmd_myFreq(name);
+            else if (msg.equalsIgnoreCase("!signup"))
+                cmd_signup(name);
+            else if (msg.equalsIgnoreCase("!count"))
+                cmd_count(name);
 
             if (oplist.isZH(name)) {
                 if (msg.equalsIgnoreCase("!drop"))
@@ -398,6 +406,7 @@ public class attackbot extends SubspaceBot {
     public void cmd_help(String name) {
         String[] help = {
                 "+-- AttackBot Commands ---------------------------------------------------------------------.",
+                "| !signup                  - Registers for the Attack tournament                            |",
                 "| !about                   - Rules, tips and general information regarding Attack           |",
                 "| !terr                    - Reports location of your team terriers (!t)                    |",
                 "| !cap                     - Claims captain of a team if a team is missing a cap            |",
@@ -440,6 +449,42 @@ public class attackbot extends SubspaceBot {
         if (oplist.isZH(name))
             ba.privateMessageSpam(name, staff);
         ba.sendPrivateMessage(name, end);
+    }
+    
+    public void cmd_signup(String name) {
+        ResultSet rs = null;
+        
+        try {
+            rs = ba.SQLQuery(db, "SELECT ftUpdated as t FROM tblAttack WHERE fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+            if (rs.next())
+                ba.sendSmartPrivateMessage(name, "You already signed up for the Attack tournament on " + rs.getString("t"));
+            else {
+                ba.SQLBackgroundQuery(db, null, "INSERT INTO tblAttack (fcName, ftUpdated) VALUES('" + Tools.addSlashesToString(name) + "', NOW())");
+                ba.sendSmartPrivateMessage(name, "Signup successful!");
+            }
+        } catch (SQLException e) {
+            ba.sendSmartPrivateMessage(name, "An error occured and your signup did not complete.");
+            Tools.printStackTrace(e);
+        } finally {
+            ba.SQLClose(rs);
+        }
+    }
+    
+    public void cmd_count(String name) {
+        ResultSet rs = null;
+        try {
+            rs = ba.SQLQuery(db, "SELECT COUNT(fnAttackID) as c FROM tblAttack");
+            
+            if (rs.next())
+                ba.sendSmartPrivateMessage(name, "Total players signedup: " + rs.getInt("c"));
+            else
+                ba.sendSmartPrivateMessage(name, "No players have signed up.");
+        } catch (SQLException e) {
+            ba.sendSmartPrivateMessage(name, "An error occured and your request could not be completed.");
+            Tools.printStackTrace(e);
+        } finally {
+            ba.SQLClose(rs);
+        }
     }
     
     public void cmd_rules(String name) {
