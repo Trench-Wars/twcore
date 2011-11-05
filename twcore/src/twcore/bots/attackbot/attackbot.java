@@ -370,7 +370,18 @@ public class attackbot extends SubspaceBot {
                 else if (msg.equalsIgnoreCase("!autocap"))
                     cmd_autocap(name);
             }
+            
+            if (oplist.isSmod(name) || name.equalsIgnoreCase("diakka")) {
+                if (msg.startsWith("!greet "))
+                    cmd_greet(name, msg);
+            }
         }
+    }
+    
+    public void cmd_greet(String name, String cmd) {
+        if (cmd.length() < 8) return;
+        ba.sendUnfilteredPublicMessage("?set misc:greetmessage:" + cmd.substring(cmd.indexOf(" ") + 1));
+        ba.sendSmartPrivateMessage(name, "Greeting set to: " + cmd.substring(cmd.indexOf(" ") + 1));
     }
 
     public void cmd_about(String name) {
