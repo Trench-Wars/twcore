@@ -37,6 +37,9 @@ public class utilwarprand extends MultiUtil
 	private boolean active;
 	/** The warp cooldown list. */
 	private HashSet<String> queue;
+	
+	String debugger;
+	boolean DEBUG;
 
 	/** The help message to be sent to bot operators */
 	private final String helpMessage[] =
@@ -57,6 +60,8 @@ public class utilwarprand extends MultiUtil
      */
 	public void init()
 	{
+	    DEBUG = false;
+	    debugger = "";
 		regions = new MapRegions();
 		positions = new Point[0];
 		queue = new HashSet<String>();
@@ -175,9 +180,27 @@ public class utilwarprand extends MultiUtil
 				{
 					c_LoadWarps(name, message.substring(11));
 				}
+				else if (message.equalsIgnoreCase("!debug"))
+				    cmd_debug(name);
 			}
 		}
 	}
+	
+	private void cmd_debug(String name) {
+	    DEBUG = !DEBUG;
+	    if (DEBUG) {
+	        debugger = name;
+	        m_botAction.sendPrivateMessage(name, "Debugger ENABLED");
+	    } else {
+            debugger = "";
+            m_botAction.sendPrivateMessage(name, "Debugger DISABLED");
+	    }
+	}
+    
+    private void debug(String msg) {
+        if (DEBUG)
+            m_botAction.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
+    }
 
 	/**
      * Event: PlayerPosition
@@ -187,13 +210,15 @@ public class utilwarprand extends MultiUtil
 	{
 		Player player = m_botAction.getPlayer(event.getPlayerID());
 		if(player == null)return;
+        debug("[Position] " + player.getPlayerName() + ": " + event.getXLocation() + "," + event.getYLocation());
 		if(active)
 		{
+		    player.updatePlayer(event);
 			int current = regions.getRegion(player);
 			if(current != -1)
 			{
 				int dest = targetRegions[current];
-				String name = m_botAction.getPlayerName(event.getPlayerID());
+				String name = player.getPlayerName();
 				if(dest != -1 && !queue.contains(name))
 				{
 					queue.add(name);
