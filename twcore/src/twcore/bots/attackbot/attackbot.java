@@ -456,9 +456,11 @@ public class attackbot extends SubspaceBot {
         
         try {
             rs = ba.SQLQuery(db, "SELECT ftUpdated as t FROM tblAttack WHERE fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
-            if (rs.next())
-                ba.sendSmartPrivateMessage(name, "You already signed up for the Attack tournament on " + rs.getString("t"));
-            else {
+            if (rs.next()) {
+                String t = rs.getString("t");
+                t = t.substring(0, 11) + " at " + t.substring(12, 16);
+                ba.sendSmartPrivateMessage(name, "You already signed up on " + t + ".");
+            } else {
                 ba.SQLBackgroundQuery(db, null, "INSERT INTO tblAttack (fcName, ftUpdated) VALUES('" + Tools.addSlashesToString(name) + "', NOW())");
                 ba.sendSmartPrivateMessage(name, "Signup successful!");
             }
@@ -476,7 +478,7 @@ public class attackbot extends SubspaceBot {
             rs = ba.SQLQuery(db, "SELECT COUNT(fnAttackID) as c FROM tblAttack");
             
             if (rs.next())
-                ba.sendSmartPrivateMessage(name, "Total players signedup: " + rs.getInt("c"));
+                ba.sendSmartPrivateMessage(name, "Total players registerd: " + rs.getInt("c"));
             else
                 ba.sendSmartPrivateMessage(name, "No players have signed up.");
         } catch (SQLException e) {
