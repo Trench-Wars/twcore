@@ -310,33 +310,6 @@ public class attackbot extends SubspaceBot {
                 ba.toggleLocked();
         }
         
-        if (type == Message.CHAT_MESSAGE || type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
-
-            if (msg.equalsIgnoreCase("!help"))
-                cmd_help(name);
-            else if (msg.equalsIgnoreCase("!about"))
-                cmd_about(name);
-            else if (msg.equalsIgnoreCase("!status"))
-                cmd_status(name);
-            else if (msg.equalsIgnoreCase("!signup"))
-                cmd_signup(name);
-            else if (msg.equalsIgnoreCase("!count"))
-                cmd_count(name);
-            else if (msg.equalsIgnoreCase("!stats"))
-                cmd_stats(name);
-            else if (msg.equalsIgnoreCase("!rules"))
-                cmd_rules(name);
-            
-            if (oplist.isSmod(name) || name.equalsIgnoreCase("diakka")) {
-                if (msg.startsWith("!greet "))
-                    cmd_greet(name, msg);
-                else if (msg.startsWith("!per "))
-                    cmd_periodic(name, msg);
-                else if (msg.equalsIgnoreCase("!per"))
-                    cmd_periodic(name);
-            }
-        }
-        
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
             if (msg.equalsIgnoreCase("!caps"))
                 cmd_caps(name);
@@ -390,6 +363,33 @@ public class attackbot extends SubspaceBot {
                     cmd_allTerrs(name);
                 else if (msg.equalsIgnoreCase("!autocap"))
                     cmd_autocap(name);
+            }
+        }
+        
+        if (type == Message.CHAT_MESSAGE || type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
+
+            if (msg.equalsIgnoreCase("!help"))
+                cmd_help(name);
+            else if (msg.equalsIgnoreCase("!about"))
+                cmd_about(name);
+            else if (msg.equalsIgnoreCase("!status"))
+                cmd_status(name);
+            else if (msg.equalsIgnoreCase("!signup"))
+                cmd_signup(name);
+            else if (msg.equalsIgnoreCase("!count"))
+                cmd_count(name);
+            else if (msg.equalsIgnoreCase("!stats"))
+                cmd_stats(name);
+            else if (msg.equalsIgnoreCase("!rules"))
+                cmd_rules(name);
+            
+            if (oplist.isSmod(name) || name.equalsIgnoreCase("diakka")) {
+                if (msg.startsWith("!greet "))
+                    cmd_greet(name, msg);
+                else if (msg.startsWith("!per "))
+                    cmd_periodic(name, msg);
+                else if (msg.equalsIgnoreCase("!per"))
+                    cmd_periodic(name);
             }
         }
     }
