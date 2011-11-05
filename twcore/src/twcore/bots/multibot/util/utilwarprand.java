@@ -182,7 +182,7 @@ public class utilwarprand extends MultiUtil
 				}
 				else if (message.equalsIgnoreCase("!debug"))
 				    cmd_debug(name);
-                else if (message.equalsIgnoreCase("!where"))
+                else if (message.equalsIgnoreCase("!wu"))
                     cmd_where(name);
                 else if (message.equalsIgnoreCase("!stopspec"))
                     cmd_stopSpec(name);
@@ -217,6 +217,7 @@ public class utilwarprand extends MultiUtil
 	}
 	
 	private void cmd_stopSpec(String name) {
+	    m_botAction.sendPrivateMessage(name, "spec: " + m_botAction.getShip().getSpectatorUpdateTime() + " unmov: " + m_botAction.getShip().getUnmovingUpdateTime() + " mov: " + m_botAction.getShip().getMovingUpdateTime());
 	    m_botAction.stopSpectatingPlayer();
         m_botAction.sendPrivateMessage(name, "Stopped.");
 	}
