@@ -188,6 +188,8 @@ public class utilwarprand extends MultiUtil
                     cmd_stopSpec(name);
                 else if (message.startsWith("!pos "))
                     cmd_position(name, message);
+                else if (message.startsWith("!pos2 "))
+                    cmd_position2(name, message);
 			}
 		}
 	}
@@ -215,6 +217,19 @@ public class utilwarprand extends MultiUtil
 	        m_botAction.sendPrivateMessage(name, "Position updating set to " + x);
 	    }
 	}
+    
+    private void cmd_position2(String name, String cmd) {
+        String[] args = cmd.split(" ");
+        if (args.length == 2) {
+            int x = Integer.valueOf(args[1]);
+            m_botAction.setPlayerPositionUpdating(x);
+            m_botAction.getShip().setMovingUpdateTime(x);
+            m_botAction.getShip().setUnmovingUpdateTime(x);
+            m_botAction.sendPrivateMessage(name, "ALL position updating set to " + x);
+        } else if (args.length == 3) {
+            m_botAction.moveToTile(Integer.valueOf(args[1]), Integer.valueOf(args[2]));
+        }
+    }
 	
 	private void cmd_stopSpec(String name) {
 	    m_botAction.sendPrivateMessage(name, "spec: " + m_botAction.getShip().getSpectatorUpdateTime() + " unmov: " + m_botAction.getShip().getUnmovingUpdateTime() + " mov: " + m_botAction.getShip().getMovingUpdateTime());
