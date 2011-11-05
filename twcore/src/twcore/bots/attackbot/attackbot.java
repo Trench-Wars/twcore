@@ -496,7 +496,7 @@ public class attackbot extends SubspaceBot {
     }
     
     public void cmd_periodic(String name, String cmd) {
-        if (cmd.length() < 10 || !cmd.contains(";")) return;
+        if (cmd.length() < 10 || !cmd.contains(":")) return;
         String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(":");
         // !per mins:msg
         if (args.length == 2) {
@@ -512,6 +512,7 @@ public class attackbot extends SubspaceBot {
                     }
                 };
                 ba.scheduleTask(advert, 0, delay);
+                ba.sendSmartPrivateMessage(name, "Periodic every " + delay + "min: " + msg);
             } else
                 ba.sendSmartPrivateMessage(name, "ERROR: Delay and message must be greater than 0.");
         } else
