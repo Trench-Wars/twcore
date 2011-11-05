@@ -201,7 +201,7 @@ public class utilwarprand extends MultiUtil
 					if(p != null)
 					{
 						m_botAction.warpTo(event.getPlayerID(), (int)p.getX(), (int)p.getY());
-						m_botAction.scheduleTask(new WarpCooldown(name), 5000);
+						m_botAction.scheduleTask(new WarpCooldown(name), 2000);
 					}
 				}
 			}
