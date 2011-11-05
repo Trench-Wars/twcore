@@ -255,8 +255,14 @@ public class utilwarprand extends MultiUtil
 		if(active = !active)
 		{
 			m_botAction.sendPrivateMessage(name, "Warping active.");
-			jumpTask = new Reposition();
-			m_botAction.scheduleTaskAtFixedRate(jumpTask, 0, 2000);
+			if (positions.length == 1) {
+			    m_botAction.stopReliablePositionUpdating();
+                Point p = positions[0];
+                m_botAction.moveToTile((int)p.getX(), (int)p.getY());
+			} else {
+			    jumpTask = new Reposition();
+			    m_botAction.scheduleTaskAtFixedRate(jumpTask, 0, 2000);
+			}
 		}
 		else
 		{
