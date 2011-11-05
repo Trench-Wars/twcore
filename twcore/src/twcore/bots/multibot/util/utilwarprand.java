@@ -267,6 +267,7 @@ public class utilwarprand extends MultiUtil
 					{
 						m_botAction.warpTo(event.getPlayerID(), (int)p.getX(), (int)p.getY());
 						m_botAction.scheduleTask(new WarpCooldown(name), 2000);
+					    m_botAction.stopSpectatingPlayer();
 					}
 				}
 			}
