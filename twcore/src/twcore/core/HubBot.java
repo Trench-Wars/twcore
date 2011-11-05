@@ -513,6 +513,26 @@ public class HubBot extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(messager, pm);
             }
         }
+
+        // LRs
+        HashSet<String> lrs = (list.getAllOfAccessLevel(OperatorList.LR_LEVEL));
+        m_botAction.sendSmartPrivateMessage( messager, " ");
+        m_botAction.sendSmartPrivateMessage( messager, "LRs ("+lrs.size()+")");
+        if(lrs.size() > 0) {
+            String pm = "  ";
+
+            for(String lr:lrs) {
+                if(pm.length() < linelength) {
+                    pm += lr + ", ";
+                } else {
+                    m_botAction.sendSmartPrivateMessage(messager, pm);
+                    pm = "  ";
+                }
+            }
+            if(pm.length()>0) {
+                m_botAction.sendSmartPrivateMessage(messager, pm);
+            }
+        }
     	
     	// Outsiders
     	HashSet<String> outsiders = (list.getAllOfAccessLevel(OperatorList.OUTSIDER_LEVEL));
