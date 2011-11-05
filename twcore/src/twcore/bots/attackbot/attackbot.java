@@ -525,7 +525,7 @@ public class attackbot extends SubspaceBot {
             rs = ba.SQLQuery(db, "SELECT ftUpdated as t FROM tblAttack WHERE fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
             if (rs.next()) {
                 String t = rs.getString("t");
-                t = t.substring(0, 10) + " at " + t.substring(12, 17);
+                t = t.substring(0, 10) + " at " + t.substring(11, 16);
                 ba.sendSmartPrivateMessage(name, "You already signed up on " + t + ".");
             } else {
                 ba.SQLBackgroundQuery(db, null, "INSERT INTO tblAttack (fcName, ftUpdated) VALUES('" + Tools.addSlashesToString(name) + "', NOW())");
