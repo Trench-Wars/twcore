@@ -151,11 +151,11 @@ public class attackbot extends SubspaceBot {
         
         advert = new TimerTask() {
             public void run() {
-                ba.sendChatMessage("Attack tournament coming soon! Sign up by typing !signup in this chat -- More information coming soon!");
-                ba.sendArenaMessage("Attack tournament coming soon! Sign up by typing :AttackBot:!signup -- More information coming soon!");
+                ba.sendChatMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
+                ba.sendArenaMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
             }
         };
-        ba.scheduleTask(advert, 0, 60 * Tools.TimeInMillis.MINUTE);
+        ba.scheduleTask(advert, 0, 45 * Tools.TimeInMillis.MINUTE);
     }
     
     /** Handles the PlayerEntered event **/
@@ -349,11 +349,11 @@ public class attackbot extends SubspaceBot {
                 else if (msg.equalsIgnoreCase("!start"))
                     mc.startGame();
                 else if (msg.startsWith("!kill"))
-                    stopGame(name, true);
+                    cmd_stop(name, true);
                 else if (msg.startsWith("!end"))
-                    stopGame(name, false);
+                    cmd_stop(name, false);
                 else if (msg.equalsIgnoreCase("!die"))
-                    die(name);
+                    cmd_die(name);
                 else if (msg.startsWith("!setcap "))
                     cmd_setCap(name, msg);
                 else if (msg.equalsIgnoreCase("!debug"))
@@ -399,7 +399,7 @@ public class attackbot extends SubspaceBot {
         }
     }
 
-    public void cmd_zone(String name, String cmd) {
+    private void cmd_zone(String name, String cmd) {
         long now = System.currentTimeMillis();
         if (now - lastZoner > ZONER_TIME * Tools.TimeInMillis.MINUTE || oplist.isSmod(name)) {
             lastZoner = now;
@@ -423,13 +423,13 @@ public class attackbot extends SubspaceBot {
         }
     }
     
-    public void cmd_greet(String name, String cmd) {
+    private void cmd_greet(String name, String cmd) {
         if (cmd.length() < 8) return;
         ba.sendUnfilteredPublicMessage("?set misc:greetmessage:" + cmd.substring(cmd.indexOf(" ") + 1));
         ba.sendSmartPrivateMessage(name, "Greeting set to: " + cmd.substring(cmd.indexOf(" ") + 1));
     }
 
-    public void cmd_about(String name) {
+    private void cmd_about(String name) {
         String[] about = { 
                 "+-- Rules of Attack ------------------------------------------------------------------------.",
                 "| The goal of attack is to score more points than the opposing team in the given amount of  |",
@@ -459,7 +459,7 @@ public class attackbot extends SubspaceBot {
     /**
      * !help Displays help message.
      */
-    public void cmd_help(String name) {
+    private void cmd_help(String name) {
         String[] help = {
                 "+-- AttackBot Commands ---------------------------------------------------------------------.",
                 "| !signup                  - Registers for the Attack tournament                            |",
@@ -516,7 +516,7 @@ public class attackbot extends SubspaceBot {
         ba.sendSmartPrivateMessage(name, end);
     }
 
-    public void cmd_periodic(String name) {
+    private void cmd_periodic(String name) {
         if (advert != null) {
             ba.cancelTask(advert);
             advert = null;
@@ -525,7 +525,7 @@ public class attackbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "No periodic messages are currently set.");
     }
     
-    public void cmd_periodic(String name, String cmd) {
+    private void cmd_periodic(String name, String cmd) {
         if (cmd.length() < 10 || !cmd.contains(":")) return;
         int delay = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":")));
         final String msg = cmd.substring(cmd.indexOf(":") + 1);
@@ -544,7 +544,7 @@ public class attackbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "ERROR: Delay and message must be greater than 0.");
     }
     
-    public void cmd_signup(String name) {
+    private void cmd_signup(String name) {
         ResultSet rs = null;
         
         try {
@@ -565,7 +565,7 @@ public class attackbot extends SubspaceBot {
         }
     }
     
-    public void cmd_count(String name) {
+    private void cmd_count(String name) {
         ResultSet rs = null;
         try {
             rs = ba.SQLQuery(db, "SELECT COUNT(fnAttackID) as c FROM tblAttack");
@@ -582,7 +582,7 @@ public class attackbot extends SubspaceBot {
         }
     }
     
-    public void cmd_rules(String name) {
+    private void cmd_rules(String name) {
         if (timed)
             ba.sendSmartPrivateMessage(name, "RULES: Timed game to " + gameTime + " minutes most goals wins or sudden death. 10 players in basing ships per team. Ship limits: 1WB 1JAV 2TERR 2SHARK");
         else
@@ -590,7 +590,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !notplaying command which prevents a player from being added and/or removes them from the game **/
-    public void cmd_notPlaying(String name) {
+    private void cmd_notPlaying(String name) {
         if (!isPlaying(name)) {
             if (!notplaying.contains(name.toLowerCase())) {
                 notplaying.add(name.toLowerCase());
@@ -609,7 +609,7 @@ public class attackbot extends SubspaceBot {
         }
     }
     
-    public void cmd_myFreq(String name) {
+    private void cmd_myFreq(String name) {
         if (!isCaptain(name)) return;
         Team t = getTeam(name);
         if (t != null)
@@ -617,7 +617,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !setcap command which assigns a player as captain of a team (0 or 1) **/
-    public void cmd_setCap(String name, String cmd) {
+    private void cmd_setCap(String name, String cmd) {
         if (cmd.length() < 8 || !cmd.contains(" ") || !cmd.contains(":")) return;
         String cap = ba.getFuzzyPlayerName(cmd.substring(cmd.indexOf(":") + 1));
         if (cap == null) {
@@ -654,7 +654,7 @@ public class attackbot extends SubspaceBot {
      * sender will replace the absent captain unless sender is on opposite team.
      * @param name
      */
-    public void cmd_cap(String name) {
+    private void cmd_cap(String name) {
         if (isCaptain(name) || !autoMode) {
             cmd_caps(name);
             return;
@@ -691,13 +691,13 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !removecap command which removes the captain from being captain **/
-    public void cmd_removeCap(String name) {
+    private void cmd_removeCap(String name) {
         if (!isCaptain(name)) return;
         getTeam(name).removeCap();
     }
     
     /** Handles the !caps command which returns the current team captains **/
-    public void cmd_caps(String name) {
+    private void cmd_caps(String name) {
         String msg = "";
         if (team[0].cap != null)
             msg = team[0].cap + " is captain of Freq " + team[0].freq + ".";
@@ -710,14 +710,14 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !list command which sends a list of team players with ships and statuses **/
-    public void cmd_list(String name) {
+    private void cmd_list(String name) {
         team[0].sendTeam(name);
         ba.sendSmartPrivateMessage(name, "`");
         team[1].sendTeam(name);
     }
 
     /** Handles the !add command if given by a captain **/
-    public void cmd_add(String name, String msg) {
+    private void cmd_add(String name, String msg) {
         if (state < PICKING || !isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 5) return;
         Team t = getTeam(name);
         if (t == null) return;
@@ -740,7 +740,7 @@ public class attackbot extends SubspaceBot {
     }
 
     /** Handles the !remove command if given by a captain **/
-    public void cmd_remove(String name, String msg) {
+    private void cmd_remove(String name, String msg) {
         if (state != PICKING || !isCaptain(name) || !msg.contains(" ") || msg.length() < 8) return;
         Team t = getTeam(name);
         if (t == null) return;
@@ -751,7 +751,7 @@ public class attackbot extends SubspaceBot {
     }
 
     /** Handles the !sub command if given by a captain **/
-    public void cmd_sub(String name, String msg) {
+    private void cmd_sub(String name, String msg) {
         if (state < STARTING|| !isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 5) return;
         Team t = getTeam(name);
         if (t == null) return;
@@ -762,7 +762,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !change command if given by a captain **/
-    public void cmd_changeShip(String name, String msg) {
+    private void cmd_changeShip(String name, String msg) {
         if (!isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 8) return;
         Team t = getTeam(name);
         if (t == null) return;
@@ -782,7 +782,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !switch command if given by a captain **/
-    public void cmd_switchShips(String name, String msg) {
+    private void cmd_switchShips(String name, String msg) {
         if (!isCaptain(name) || !msg.contains(" ") || !msg.contains(":") || msg.length() < 8) return;
         Team t = getTeam(name);
         if (t == null) return;
@@ -793,7 +793,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles the !ready command if given by a team captain **/
-    public void cmd_ready(String name) {
+    private void cmd_ready(String name) {
         if (state != PICKING || !isCaptain(name)) return;
         if (team[0].isCap(name)) {
             if (team[0].ready) {
@@ -815,7 +815,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Returns a lagged out player to the game **/
-    public void cmd_lagout(String name) {
+    private void cmd_lagout(String name) {
         if (lagouts.contains(name.toLowerCase())) {
             lagouts.remove(name.toLowerCase());
             Team t = getTeam(name);
@@ -826,13 +826,13 @@ public class attackbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "You are not lagged out and/or not in the game.");
     }
     
-    public void cmd_terrs(String name) {
+    private void cmd_terrs(String name) {
         Team t = getTeam(name);
         if (t != null)
             t.locateTerrs(name);
     }
     
-    public void cmd_allTerrs(String name) {
+    private void cmd_allTerrs(String name) {
         ba.sendSmartPrivateMessage(name, "Freq " + team[0].freq + " terrs:");
         team[0].locateTerrs(name);
         ba.sendSmartPrivateMessage(name, "Freq " + team[1].freq + " terrs:");
@@ -840,9 +840,9 @@ public class attackbot extends SubspaceBot {
     }
 
     /** Handles !die command which kills the bot **/
-    public void die(String name) {
+    private void cmd_die(String name) {
         if (state > WAITING) {
-            stopGame(name, true);
+            cmd_stop(name, true);
         }
         ba.sendSmartPrivateMessage(name, "I'm melting! I'm melting...");
         ba.cancelTasks();
@@ -850,7 +850,7 @@ public class attackbot extends SubspaceBot {
     }
 
     /** Handles !setgoals which will change the game to first to goals win if possible **/
-    public void cmd_setGoals(String name, String cmd) {
+    private void cmd_setGoals(String name, String cmd) {
         if (cmd.length() < 10 || !cmd.contains(" ")) return;
         int winGoal = 0;
         try {
@@ -885,7 +885,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles !settime which will change the game to a timed game if possible **/
-    public void cmd_setTime(String name, String cmd) {
+    private void cmd_setTime(String name, String cmd) {
         if (cmd.length() < 9 || !cmd.contains(" ")) return;
         int mins = 0;
         try {
@@ -911,7 +911,7 @@ public class attackbot extends SubspaceBot {
     }
     
     /** Handles !stats which spams private messages with the current game stats just like at the end of the game **/
-    public void cmd_stats(String name) {
+    private void cmd_stats(String name) {
         if (pastStats != null) {
             ba.smartPrivateMessageSpam(name, pastStats);
             return;
@@ -959,7 +959,7 @@ public class attackbot extends SubspaceBot {
      * @param name
      * @param kill true if !killgame otherwise !endgame with stats
      */
-    public void stopGame(String name, boolean kill) {
+    private void cmd_stop(String name, boolean kill) {
         if (state > 0) {
             if (kill) {
                 scoreboard.hideAllObjects();
@@ -984,7 +984,7 @@ public class attackbot extends SubspaceBot {
     }
 
     /** Handles the !status command which displays the score if a game is running **/
-    public void cmd_status(String name) {
+    private void cmd_status(String name) {
         if (state == PLAYING) {
             ba.sendSmartPrivateMessage(name, "[---  SCORE  ---]");
             ba.sendSmartPrivateMessage(name, "[--Freq 0: " + team[0].score + " --]");
@@ -1012,39 +1012,12 @@ public class attackbot extends SubspaceBot {
     }   
     
     /** Handles the !autocap command which toggles staff set captains and player set captains **/
-    public void cmd_autocap(String name) {
+    private void cmd_autocap(String name) {
         autoMode = !autoMode;
         if (autoMode)
             ba.sendSmartPrivateMessage(name, "Captains can now be set by players using !cap.");
         else
             ba.sendSmartPrivateMessage(name, "Captains can now only be set by staff.");
-    }
-
-    /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
-    public void dropBall() {
-        Ship s = ba.getShip();
-        s.setShip(0);
-        s.setFreq(1234);
-        final TimerTask drop = new TimerTask() {
-            public void run() {
-                ba.getShip().move(512 * 16, 600 * 16);
-                ba.getShip().sendPositionPacket();
-                try {
-                    Thread.sleep(75);
-                } catch (InterruptedException e) {}
-                ba.getBall(ball.getBallID(), (int) ball.getTimeStamp());
-                ba.getShip().move(512 * 16, 512 * 16);
-                ba.getShip().sendPositionPacket();
-                try {
-                    Thread.sleep(75);
-                } catch (InterruptedException e) {}
-            }
-        };
-        drop.run();
-        s.setShip(8);
-        ba.specWithoutLock(ba.getBotName());
-        ball.clear();
-        ba.setPlayerPositionUpdating(300);
     }
     
     private String getLocation(short x, short y, boolean team0) {
@@ -1277,20 +1250,6 @@ public class attackbot extends SubspaceBot {
     }
     
     /**
-     * Helper method adds spaces in front of a number to fit a certain length
-     * @param n
-     * @param length
-     * @return String of length with spaces preceeding a number
-     */
-    private String padNumber(int n, int length) {
-        String str = "";
-        String x = "" + n;
-        for (int i = 0; i + x.length() < length; i++)
-            str += " ";
-        return str + x;
-    }
-    
-    /**
      * Helper method prints winning freq and game stats in arena messages
      * @param freq Winning freq
      */
@@ -1305,7 +1264,6 @@ public class attackbot extends SubspaceBot {
         ba.sendArenaMessage("Final score: " + team[0].score + " - " + team[1].score + "  Detailed stats (!stats) available until picking starts");
         state = WAITING;
         lagouts.clear();
-        ba.specAll();
         if (autoMode)
             ba.sendArenaMessage("A new game will begin when two players PM me !cap -" + ba.getBotName());
         team[0].reset();
@@ -1313,12 +1271,39 @@ public class attackbot extends SubspaceBot {
         
         TimerTask sb = new TimerTask() {
             public void run() {
-                //Scoreboard
                 scoreboard.hideAllObjects();
                 ba.setObjects();
             }
         };
         ba.scheduleTask(sb, 3000);
+        ba.sendChatMessage("A game of ATTACK has just ended, so a new one will start soon! ?go ATTACK");
+    }
+
+    /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
+    public void dropBall() {
+        Ship s = ba.getShip();
+        s.setShip(0);
+        s.setFreq(1234);
+        final TimerTask drop = new TimerTask() {
+            public void run() {
+                ba.getShip().move(512 * 16, 600 * 16);
+                ba.getShip().sendPositionPacket();
+                try {
+                    Thread.sleep(75);
+                } catch (InterruptedException e) {}
+                ba.getBall(ball.getBallID(), (int) ball.getTimeStamp());
+                ba.getShip().move(512 * 16, 512 * 16);
+                ba.getShip().sendPositionPacket();
+                try {
+                    Thread.sleep(75);
+                } catch (InterruptedException e) {}
+            }
+        };
+        drop.run();
+        s.setShip(8);
+        ba.specWithoutLock(ba.getBotName());
+        ball.clear();
+        ba.setPlayerPositionUpdating(300);
     }
 
     /** MasterControl is responsible for the start and end of the game as well as time keeping if game is timed or goal checking if not **/
@@ -1366,6 +1351,8 @@ public class attackbot extends SubspaceBot {
         /** Begins the player picking process if both team's have a captain **/
         private void checkCaps() {
             if (team[0].cap != null && team[1].cap != null) {
+                if (state == WAITING)
+                    ba.specAll();
                 state = PICKING;
                 pick = 0;
                 team[0].pick = true;
@@ -1401,6 +1388,84 @@ public class attackbot extends SubspaceBot {
             }
             if (team[0].ready && team[1].ready)
                 startGame();
+        }
+        
+        /**
+         * Updates the scoreboard
+         */
+        private void updateScoreboard() {
+            scoreboard.hideAllObjects();
+
+            String lastPos = ball.peekLastCarrierName();
+            //Flag status
+            if (lastPos == null || !isNotBot(lastPos)) {
+                scoreboard.showObject(740);
+                scoreboard.showObject(742);
+                scoreboard.hideObject(741);
+                scoreboard.hideObject(743);
+            } else if(team[0].isPlayersTeam(lastPos)) {
+                scoreboard.showObject(740);
+                scoreboard.showObject(743);
+                scoreboard.hideObject(741);
+                scoreboard.hideObject(742);
+            } else if(team[1].isPlayersTeam(lastPos)) {
+                scoreboard.showObject(741);
+                scoreboard.showObject(742);
+                scoreboard.hideObject(743);
+                scoreboard.hideObject(740);
+            }
+            
+            String scoreTeam1 = "" + team[0].score;
+            String scoreTeam2 = "" + team[1].score;
+
+            for (int i = scoreTeam1.length() - 1; i > -1; i--)
+                scoreboard.showObject(Integer.parseInt("" + scoreTeam1.charAt(i)) + 100 + (scoreTeam1.length() - 1 - i) * 10);
+            for (int i = scoreTeam2.length() - 1; i > -1; i--)
+                scoreboard.showObject(Integer.parseInt("" + scoreTeam2.charAt(i)) + 200 + (scoreTeam2.length() - 1 - i) * 10);
+            /* Time Left if timed */
+            if (timed && timer >= 0) {
+                int seconds = timer % 60;
+                int minutes = (timer - seconds) / 60;
+                scoreboard.showObject(730 + ((minutes - minutes % 10) / 10));
+                scoreboard.showObject(720 + (minutes % 10));
+                scoreboard.showObject(710 + ((seconds - seconds % 10) / 10));
+                scoreboard.showObject(700 + (seconds % 10));
+            }
+            
+            // Show Team Names
+            String n1 = "freq" + team[0].freq;
+            String n2 = "freq" + team[1].freq;
+            String s1 = "", s2 = "";
+            for (int i = 0; i < n1.length(); i++)
+                if ((n1.charAt(i) >= '0') && (n1.charAt(i) <= 'z') && (s1.length() < 5))
+                    s1 = s1 + n1.charAt(i);
+
+            for (int i = 0; i < n2.length(); i++)
+                if ((n2.charAt(i) >= '0') && (n2.charAt(i) <= 'z') && (s2.length() < 5))
+                    s2 = s2 + n2.charAt(i);
+
+            for (int i = 0; i < s1.length(); i++) {
+                int t = new Integer(Integer.toString(
+                        ((s1.getBytes()[i]) - 97) + 30) + Integer.toString(i + 0)).intValue();
+                if (t < -89) {
+                    t = new Integer(Integer.toString(((s1.getBytes()[i])) + 30) + Integer.toString(i + 0)).intValue();
+                    t -= 220;
+                }
+                scoreboard.showObject(t);
+            }
+            
+            for (int i = 0; i < s2.length(); i++) {
+                int t = new Integer(Integer.toString(
+                        ((s2.getBytes()[i]) - 97) + 30) + Integer.toString(i + 5)).intValue();
+                if (t < -89) {
+                    t = new Integer(Integer.toString(((s2.getBytes()[i])) + 30) + Integer.toString(i + 5)).intValue();
+                    t -= 220;
+                }
+                scoreboard.showObject(t);
+            }
+            
+            //Display everything
+            ba.setObjects();
         }
 
         /** Begins the game starter sequence **/
@@ -1468,88 +1533,6 @@ public class attackbot extends SubspaceBot {
                     gameOver(team[1].freq);
                 }
             }
-        }
-        
-        /**
-         * Updates the scoreboard
-         */
-        private void updateScoreboard() {
-            scoreboard.hideAllObjects();
-
-            String lastPos = ball.peekLastCarrierName();
-            //Flag status
-            if (lastPos == null || !isNotBot(lastPos)) {
-                scoreboard.showObject(740);
-                scoreboard.showObject(742);
-                scoreboard.hideObject(741);
-                scoreboard.hideObject(743);
-            } else if(team[0].isPlayersTeam(lastPos)) {
-                scoreboard.showObject(740);
-                scoreboard.showObject(743);
-                scoreboard.hideObject(741);
-                scoreboard.hideObject(742);
-            } else if(team[1].isPlayersTeam(lastPos)) {
-                scoreboard.showObject(741);
-                scoreboard.showObject(742);
-                scoreboard.hideObject(743);
-                scoreboard.hideObject(740);
-            }
-            
-            String scoreTeam1 = "" + team[0].score;
-            String scoreTeam2 = "" + team[1].score;
-
-            for (int i = scoreTeam1.length() - 1; i > -1; i--)
-                scoreboard.showObject(Integer.parseInt("" + scoreTeam1.charAt(i)) + 100 + (scoreTeam1.length() - 1 - i) * 10);
-            for (int i = scoreTeam2.length() - 1; i > -1; i--)
-                scoreboard.showObject(Integer.parseInt("" + scoreTeam2.charAt(i)) + 200 + (scoreTeam2.length() - 1 - i) * 10);
-            /* Time Left if timed */
-            if (timed && timer >= 0) {
-                int seconds = timer % 60;
-                int minutes = (timer - seconds) / 60;
-                scoreboard.showObject(730 + ((minutes - minutes % 10) / 10));
-                scoreboard.showObject(720 + (minutes % 10));
-                scoreboard.showObject(710 + ((seconds - seconds % 10) / 10));
-                scoreboard.showObject(700 + (seconds % 10));
-            }
-            
-            /*
-             * Show Team Names
-             */
-            String n1 = "freq" + team[0].freq;
-            String n2 = "freq" + team[1].freq;
-            
-            String s1 = "", s2 = "";
-
-            for (int i = 0; i < n1.length(); i++)
-                if ((n1.charAt(i) >= '0') && (n1.charAt(i) <= 'z') && (s1.length() < 5))
-                    s1 = s1 + n1.charAt(i);
-
-            for (int i = 0; i < n2.length(); i++)
-                if ((n2.charAt(i) >= '0') && (n2.charAt(i) <= 'z') && (s2.length() < 5))
-                    s2 = s2 + n2.charAt(i);
-
-            for (int i = 0; i < s1.length(); i++) {
-                int t = new Integer(Integer.toString(
-                        ((s1.getBytes()[i]) - 97) + 30) + Integer.toString(i + 0)).intValue();
-                if (t < -89) {
-                    t = new Integer(Integer.toString(((s1.getBytes()[i])) + 30) + Integer.toString(i + 0)).intValue();
-                    t -= 220;
-                }
-                scoreboard.showObject(t);
-            }
-            
-            for (int i = 0; i < s2.length(); i++) {
-                int t = new Integer(Integer.toString(
-                        ((s2.getBytes()[i]) - 97) + 30) + Integer.toString(i + 5)).intValue();
-                if (t < -89) {
-                    t = new Integer(Integer.toString(((s2.getBytes()[i])) + 30) + Integer.toString(i + 5)).intValue();
-                    t -= 220;
-                }
-                scoreboard.showObject(t);
-            }
-            
-            //Display everything
-            ba.setObjects();
         }
         
         public void announceTimeLeft() {
@@ -2419,6 +2402,20 @@ public class attackbot extends SubspaceBot {
             return timestamp;
         }
     }  
+    
+    /**
+     * Helper method adds spaces in front of a number to fit a certain length
+     * @param n
+     * @param length
+     * @return String of length with spaces preceeding a number
+     */
+    private String padNumber(int n, int length) {
+        String str = "";
+        String x = "" + n;
+        for (int i = 0; i + x.length() < length; i++)
+            str += " ";
+        return str + x;
+    }
     
     private void cmd_debug(String name) {
         if (!DEBUG) {
