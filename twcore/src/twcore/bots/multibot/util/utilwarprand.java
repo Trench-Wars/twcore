@@ -182,6 +182,12 @@ public class utilwarprand extends MultiUtil
 				}
 				else if (message.equalsIgnoreCase("!debug"))
 				    cmd_debug(name);
+                else if (message.equalsIgnoreCase("!where"))
+                    cmd_where(name);
+                else if (message.equalsIgnoreCase("!stopspec"))
+                    cmd_stopSpec(name);
+                else if (message.startsWith("!pos "))
+                    cmd_position(name, message);
 			}
 		}
 	}
@@ -195,6 +201,24 @@ public class utilwarprand extends MultiUtil
             debugger = "";
             m_botAction.sendPrivateMessage(name, "Debugger DISABLED");
 	    }
+	}
+	
+	private void cmd_where(String name) {
+	    m_botAction.sendPrivateMessage(name, "(" + m_botAction.getShip().getX()/16 + "," + m_botAction.getShip().getY()/16 + ")");
+	}
+	
+	private void cmd_position(String name, String cmd) {
+	    cmd = cmd.substring(cmd.indexOf(" ") + 1);
+	    if (cmd.length() > 0) {
+	        int x = Integer.valueOf(cmd);
+	        m_botAction.setPlayerPositionUpdating(x);
+	        m_botAction.sendPrivateMessage(name, "Position updating set to " + x);
+	    }
+	}
+	
+	private void cmd_stopSpec(String name) {
+	    m_botAction.stopSpectatingPlayer();
+        m_botAction.sendPrivateMessage(name, "Stopped.");
 	}
     
     private void debug(String msg) {
@@ -210,7 +234,7 @@ public class utilwarprand extends MultiUtil
 	{
 		Player player = m_botAction.getPlayer(event.getPlayerID());
 		if(player == null)return;
-        debug("[Position] " + player.getPlayerName() + ": " + event.getXLocation() + "," + event.getYLocation());
+        debug("[Position] " + player.getPlayerName() + ": " + event.getXLocation()/16 + "," + event.getYLocation()/16);
 		if(active)
 		{
 		    player.updatePlayer(event);
