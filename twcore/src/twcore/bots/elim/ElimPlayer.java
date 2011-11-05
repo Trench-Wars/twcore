@@ -344,6 +344,7 @@ public class ElimPlayer {
     
     /** Record the loss of an elimination game and flush dynamic game stats */
     public void saveLoss() {
+        cancelTasks();
         stats.handleLoss();
     }
 
@@ -406,8 +407,8 @@ public class ElimPlayer {
         }
         
         public void returned() {
-            spawn = null;
             ba.cancelTask(this);
+            spawn = null;
         }
     }
     

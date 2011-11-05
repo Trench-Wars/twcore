@@ -1389,7 +1389,12 @@ public class elim extends SubspaceBot {
         ba.closePreparedStatement(db, connectionID, this.updateStats);
         ba.closePreparedStatement(db, connectionID, this.storeGame);
         ba.closePreparedStatement(db, connectionID, this.showLadder);
-        ba.scheduleTask(new Die(), 2000);
+        TimerTask die = new TimerTask() {
+            public void run() {
+                ba.die();
+            }
+        };
+        ba.scheduleTask(die, 2500);
     }
     
     /** TimerTask used to guarantee the MVP has had enough time to be determined */
@@ -1401,15 +1406,5 @@ public class elim extends SubspaceBot {
         public void run() {
             ba.sendArenaMessage("MVP: " + game.mvp, Tools.Sound.INCONCEIVABLE);
         }
-    }
-    
-    /** Cleanly kills bot */
-    private class Die extends TimerTask {
-        
-        @Override
-        public void run() {
-            ba.die();
-        }
-        
     }
 }
