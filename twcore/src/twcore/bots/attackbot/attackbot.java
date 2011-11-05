@@ -57,6 +57,8 @@ public class attackbot extends SubspaceBot {
     
     private MasterControl mc;
     
+    private TimerTask advert;
+    
     public static final String db = "website";
     
     // Objons
@@ -114,6 +116,7 @@ public class attackbot extends SubspaceBot {
     /** Handles the LoggedOn event **/
     public void handleEvent(LoggedOn event) {
         ba.joinArena(ba.getBotSettings().getString("InitialArena"));
+        ba.sendUnfilteredPublicMessage("?chat=attack");
         state = WAITING;
         goals = rules.getInt("Goals");
         safes = rules.getIntArray("Safes", ",");
@@ -142,6 +145,14 @@ public class attackbot extends SubspaceBot {
         ba.specAll();
         ba.setAlltoFreq(SPEC_FREQ);
         ba.setTimer(0);
+        
+        advert = new TimerTask() {
+            public void run() {
+                ba.sendChatMessage("Attack tournament coming soon! Sign up by typing in this chat -- More information coming soon!");
+                ba.sendArenaMessage("Attack tournament coming soon! Sign up by typing :AttackBot:!signup -- More information coming soon!");
+            }
+        };
+        ba.scheduleTask(advert, 0, 60 * Tools.TimeInMillis.MINUTE);
     }
     
     /** Handles the PlayerEntered event **/
@@ -299,7 +310,7 @@ public class attackbot extends SubspaceBot {
                 ba.toggleLocked();
         }
         
-        if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
+        if (type == Message.CHAT_MESSAGE || type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
 
             if (msg.equalsIgnoreCase("!help"))
                 cmd_help(name);
@@ -307,7 +318,27 @@ public class attackbot extends SubspaceBot {
                 cmd_about(name);
             else if (msg.equalsIgnoreCase("!status"))
                 cmd_status(name);
-            else if (msg.equalsIgnoreCase("!caps"))
+            else if (msg.equalsIgnoreCase("!signup"))
+                cmd_signup(name);
+            else if (msg.equalsIgnoreCase("!count"))
+                cmd_count(name);
+            else if (msg.equalsIgnoreCase("!stats"))
+                cmd_stats(name);
+            else if (msg.equalsIgnoreCase("!rules"))
+                cmd_rules(name);
+            
+            if (oplist.isSmod(name) || name.equalsIgnoreCase("diakka")) {
+                if (msg.startsWith("!greet "))
+                    cmd_greet(name, msg);
+                else if (msg.startsWith("!per "))
+                    cmd_periodic(name, msg);
+                else if (msg.equalsIgnoreCase("!per"))
+                    cmd_periodic(name);
+            }
+        }
+        
+        if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
+            if (msg.equalsIgnoreCase("!caps"))
                 cmd_caps(name);
             else if (msg.equalsIgnoreCase("!ready"))
                 cmd_ready(name);
@@ -331,18 +362,10 @@ public class attackbot extends SubspaceBot {
                 cmd_notPlaying(name);
             else if (msg.equalsIgnoreCase("!removecap"))
                 cmd_removeCap(name);
-            else if (msg.equalsIgnoreCase("!stats"))
-                cmd_stats(name);
-            else if (msg.equalsIgnoreCase("!rules"))
-                cmd_rules(name);
             else if (msg.startsWith("!t"))
                 cmd_terrs(name);
             else if (msg.startsWith("!myf"))
                 cmd_myFreq(name);
-            else if (msg.equalsIgnoreCase("!signup"))
-                cmd_signup(name);
-            else if (msg.equalsIgnoreCase("!count"))
-                cmd_count(name);
 
             if (oplist.isZH(name)) {
                 if (msg.equalsIgnoreCase("!drop"))
@@ -355,8 +378,6 @@ public class attackbot extends SubspaceBot {
                     stopGame(name, false);
                 else if (msg.equalsIgnoreCase("!die"))
                     die(name);
-                else if (msg.startsWith("!go "))
-                    cmd_go(name, msg);
                 else if (msg.startsWith("!setcap "))
                     cmd_setCap(name, msg);
                 else if (msg.equalsIgnoreCase("!debug"))
@@ -369,11 +390,6 @@ public class attackbot extends SubspaceBot {
                     cmd_allTerrs(name);
                 else if (msg.equalsIgnoreCase("!autocap"))
                     cmd_autocap(name);
-            }
-            
-            if (oplist.isSmod(name) || name.equalsIgnoreCase("diakka")) {
-                if (msg.startsWith("!greet "))
-                    cmd_greet(name, msg);
             }
         }
     }
@@ -429,6 +445,7 @@ public class attackbot extends SubspaceBot {
                 "| !lagout                  - Returns a player to the game after lagging out                 |",
                 "| !rules                   - Briefly displays the rules the bot is currently set to         |",
         };
+        
         String[] cap = {
                 "+-- Captain Commands -----------------------------------------------------------------------+",
                 "| !myfreq                  - Moves you to your team's freq while in spec                    |",
@@ -453,13 +470,53 @@ public class attackbot extends SubspaceBot {
                 "| !endgame                 - Prematurely ends the current game with stats and scores        |",
                 "| !killgame                - Abruptly kills the current game without a winner or stats      |",
         };
+        
+        String[] staff2 = {
+                "| !per <mins>:<message>    - Sends chat and arena messages every <mins> minutes             |",
+                "| !per                     - Disable the periodic messages if currently enabled             |",
+                "| !greet <message>         - Sets the arena greet message to <message>                      |",
+        };
         String end = "`-------------------------------------------------------------------------------------------'";
         ba.privateMessageSpam(name, help);
         if (isCaptain(name))
             ba.privateMessageSpam(name, cap);
         if (oplist.isZH(name))
             ba.privateMessageSpam(name, staff);
+        if (oplist.isSmod(name) || name.equalsIgnoreCase("diakka"))
+            ba.privateMessageSpam(name, staff2);
         ba.sendPrivateMessage(name, end);
+    }
+
+    public void cmd_periodic(String name) {
+        if (advert != null) {
+            ba.cancelTask(advert);
+            advert = null;
+            ba.sendSmartPrivateMessage(name, "Periodic messages have been disabled.");
+        } else
+            ba.sendSmartPrivateMessage(name, "No periodic messages are currently set.");
+    }
+    
+    public void cmd_periodic(String name, String cmd) {
+        if (cmd.length() < 10 || !cmd.contains(";")) return;
+        String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(":");
+        // !per mins:msg
+        if (args.length == 2) {
+            int delay = Integer.valueOf(args[0]);
+            final String msg = args[1];
+            if (delay > 0 && msg.length() > 1) {
+                if (advert != null)
+                    ba.cancelTask(advert);
+                advert = new TimerTask() {
+                    public void run() {
+                        ba.sendChatMessage(msg);
+                        ba.sendArenaMessage(msg);
+                    }
+                };
+                ba.scheduleTask(advert, 0, delay);
+            } else
+                ba.sendSmartPrivateMessage(name, "ERROR: Delay and message must be greater than 0.");
+        } else
+            ba.sendSmartPrivateMessage(name, "ERROR: Invalid syntax, please use !per <mins>:<message>");
     }
     
     public void cmd_signup(String name) {
