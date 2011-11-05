@@ -148,7 +148,7 @@ public class attackbot extends SubspaceBot {
         
         advert = new TimerTask() {
             public void run() {
-                ba.sendChatMessage("Attack tournament coming soon! Sign up by typing in this chat -- More information coming soon!");
+                ba.sendChatMessage("Attack tournament coming soon! Sign up by typing !signup in this chat -- More information coming soon!");
                 ba.sendArenaMessage("Attack tournament coming soon! Sign up by typing :AttackBot:!signup -- More information coming soon!");
             }
         };
@@ -465,7 +465,6 @@ public class attackbot extends SubspaceBot {
                 "| !setcap <team>:<name>    - Sets <name> as captain of <team> (0 or 1)                      |",
                 "| !settime <mins>          - Changes game to a timed game to <mins> minutes                 |",
                 "| !setgoals <goals>        - Changes game rules to first to <goals> goals wins              |",
-                "| !go <arena>              - Sends bot to <arena>                                           |",
                 "| !die                     - Kills bot                                                      |",
                 "| !endgame                 - Prematurely ends the current game with stats and scores        |",
                 "| !killgame                - Abruptly kills the current game without a winner or stats      |",
@@ -589,105 +588,6 @@ public class attackbot extends SubspaceBot {
         Team t = getTeam(name);
         if (t != null)
             ba.setFreq(name, t.freq);
-    }
-    
-    private String getLocation(short x, short y, boolean team0) {
-        if (x == -1 || y == -1)
-            return " location unknown";
-        final int SPAWN = 0;
-        final int LEFT = 1;
-        final int RIGHT = 2;
-        final int ENTRANCE = 0;
-        final int FRONT = 1;
-        final int BACK = 2;
-        final int MIDDLE = 0;
-        final int TOP = 1;
-        final int BOTTOM = 2;
-        String pos = " ";
-        int base = -1; // spawn, left, right
-        int hor = -1;  // entrance, front, back
-        int ver = -1;  // center, top, bottom
-
-        debug("" + x + " and " + y);
-        if (y > 8000 && y < 8384)
-            ver = MIDDLE;
-        else if (y < 8000)
-            ver = TOP;
-        else if (y > 8384)
-            ver = BOTTOM;
-        
-        if (x < 7440) {
-            base = LEFT;
-            if (x > 6080 && y > 7680 && y < 8800)
-                hor = ENTRANCE;
-            else if (x > 5120)
-                hor = FRONT;
-            else
-                hor = BACK;
-                
-            if (hor == ENTRANCE) {
-                pos = "ENTRANCE";
-            } else if (hor == FRONT) {
-                if (ver == MIDDLE)
-                    pos = "GOAL ROOM";
-                else if (ver == TOP)
-                    pos = "NORTH FRONT corner of base";
-                else if (ver == BOTTOM)
-                    pos = "SOUTH FRONT corner of base";
-            } else if (hor == BACK) {
-                if (ver == TOP)
-                    pos = "NORTH BACK end of base";
-                else if (ver == BOTTOM) 
-                    pos = "SOUTH BACK end of base";
-                else
-                    pos = "CENTRAL BACK end of base";
-            }
-        } else if (x > 8944) {
-            base = RIGHT;
-            if (x < 10304 && y > 7680 && y < 8800)
-                hor = ENTRANCE;
-            else if (x < 11264)
-                hor = FRONT;
-            else
-                hor = BACK;
-            
-            if (hor == ENTRANCE) {
-                pos = "ENTRANCE";
-            } else if (hor == FRONT) {
-                if (ver == MIDDLE)
-                    pos = "GOAL ROOM";
-                else if (ver == TOP)
-                    pos = "NORTH FRONT corner of base";
-                else if (ver == BOTTOM) {
-                    pos = "SOUTH FRONT corner of base";
-                }
-            } else if (hor == BACK) {
-                if (ver == TOP)
-                    pos = "NORTH BACK end of base";
-                else if (ver == BOTTOM) 
-                    pos = "SOUTH BACK end of base";
-                else
-                    pos = "CENTRAL BACK end of base";
-            }
-        } else {
-            base = SPAWN;
-            pos = " in SPAWN AREA";
-        }
-        
-        if (base != SPAWN) {
-            if (base == LEFT) {
-                if (team0)
-                    pos = " @ HOME in " + pos;
-                else
-                    pos = " @ ENEMY in " + pos;
-            } else if (base == RIGHT) {
-                if (team0)
-                    pos = " @ ENEMY in " + pos;
-                else
-                    pos = " @ HOME in " + pos;
-            }
-        }
-        return pos;
     }
     
     /** Handles the !setcap command which assigns a player as captain of a team (0 or 1) **/
@@ -913,18 +813,6 @@ public class attackbot extends SubspaceBot {
         team[1].locateTerrs(name);
     }
 
-    /** Sends the bot to a specified arena (only attack and attack2 are currently supported) **/
-    public void cmd_go(String name, String cmd) {
-        String arena = cmd.substring(cmd.indexOf(" ") + 1);
-        if (arena.length() > 0) {
-            if (state > WAITING) {
-                stopGame(name, true);
-            }
-            ba.sendSmartPrivateMessage(name, "Moving to " + arena);
-            ba.changeArena(arena);
-        }
-    }
-
     /** Handles !die command which kills the bot **/
     public void die(String name) {
         if (state > WAITING) {
@@ -1105,6 +993,132 @@ public class attackbot extends SubspaceBot {
         else
             ba.sendPrivateMessage(name, "Captains can now only be set by staff.");
     }
+
+    /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
+    public void dropBall() {
+        Ship s = ba.getShip();
+        s.setShip(0);
+        s.setFreq(1234);
+        final TimerTask drop = new TimerTask() {
+            public void run() {
+                ba.getShip().move(512 * 16, 600 * 16);
+                ba.getShip().sendPositionPacket();
+                try {
+                    Thread.sleep(75);
+                } catch (InterruptedException e) {}
+                ba.getBall(ball.getBallID(), (int) ball.getTimeStamp());
+                ba.getShip().move(512 * 16, 512 * 16);
+                ba.getShip().sendPositionPacket();
+                try {
+                    Thread.sleep(75);
+                } catch (InterruptedException e) {}
+            }
+        };
+        drop.run();
+        s.setShip(8);
+        ba.specWithoutLock(ba.getBotName());
+        ball.clear();
+        ba.setPlayerPositionUpdating(300);
+    }
+    
+    private String getLocation(short x, short y, boolean team0) {
+        if (x == -1 || y == -1)
+            return " location unknown";
+        final int SPAWN = 0;
+        final int LEFT = 1;
+        final int RIGHT = 2;
+        final int ENTRANCE = 0;
+        final int FRONT = 1;
+        final int BACK = 2;
+        final int MIDDLE = 0;
+        final int TOP = 1;
+        final int BOTTOM = 2;
+        String pos = " ";
+        int base = -1; // spawn, left, right
+        int hor = -1;  // entrance, front, back
+        int ver = -1;  // center, top, bottom
+
+        debug("" + x + " and " + y);
+        if (y > 8000 && y < 8384)
+            ver = MIDDLE;
+        else if (y < 8000)
+            ver = TOP;
+        else if (y > 8384)
+            ver = BOTTOM;
+        
+        if (x < 7440) {
+            base = LEFT;
+            if (x > 6080 && y > 7680 && y < 8800)
+                hor = ENTRANCE;
+            else if (x > 5120)
+                hor = FRONT;
+            else
+                hor = BACK;
+                
+            if (hor == ENTRANCE) {
+                pos = "ENTRANCE";
+            } else if (hor == FRONT) {
+                if (ver == MIDDLE)
+                    pos = "GOAL ROOM";
+                else if (ver == TOP)
+                    pos = "NORTH FRONT corner of base";
+                else if (ver == BOTTOM)
+                    pos = "SOUTH FRONT corner of base";
+            } else if (hor == BACK) {
+                if (ver == TOP)
+                    pos = "NORTH BACK end of base";
+                else if (ver == BOTTOM) 
+                    pos = "SOUTH BACK end of base";
+                else
+                    pos = "CENTRAL BACK end of base";
+            }
+        } else if (x > 8944) {
+            base = RIGHT;
+            if (x < 10304 && y > 7680 && y < 8800)
+                hor = ENTRANCE;
+            else if (x < 11264)
+                hor = FRONT;
+            else
+                hor = BACK;
+            
+            if (hor == ENTRANCE) {
+                pos = "ENTRANCE";
+            } else if (hor == FRONT) {
+                if (ver == MIDDLE)
+                    pos = "GOAL ROOM";
+                else if (ver == TOP)
+                    pos = "NORTH FRONT corner of base";
+                else if (ver == BOTTOM) {
+                    pos = "SOUTH FRONT corner of base";
+                }
+            } else if (hor == BACK) {
+                if (ver == TOP)
+                    pos = "NORTH BACK end of base";
+                else if (ver == BOTTOM) 
+                    pos = "SOUTH BACK end of base";
+                else
+                    pos = "CENTRAL BACK end of base";
+            }
+        } else {
+            base = SPAWN;
+            pos = " in SPAWN AREA";
+        }
+        
+        if (base != SPAWN) {
+            if (base == LEFT) {
+                if (team0)
+                    pos = " @ HOME in " + pos;
+                else
+                    pos = " @ ENEMY in " + pos;
+            } else if (base == RIGHT) {
+                if (team0)
+                    pos = " @ ENEMY in " + pos;
+                else
+                    pos = " @ HOME in " + pos;
+            }
+        }
+        return pos;
+    }
     
     /**
      * Gets the Team object of a player
@@ -1248,33 +1262,6 @@ public class attackbot extends SubspaceBot {
         for (int i = 0; i + x.length() < length; i++)
             str += " ";
         return str + x;
-    }
-
-    /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
-    public void dropBall() {
-        Ship s = ba.getShip();
-        s.setShip(0);
-        s.setFreq(1234);
-        final TimerTask drop = new TimerTask() {
-            public void run() {
-                ba.getShip().move(512 * 16, 600 * 16);
-                ba.getShip().sendPositionPacket();
-                try {
-                    Thread.sleep(75);
-                } catch (InterruptedException e) {}
-                ba.getBall(ball.getBallID(), (int) ball.getTimeStamp());
-                ba.getShip().move(512 * 16, 512 * 16);
-                ba.getShip().sendPositionPacket();
-                try {
-                    Thread.sleep(75);
-                } catch (InterruptedException e) {}
-            }
-        };
-        drop.run();
-        s.setShip(8);
-        ba.specWithoutLock(ba.getBotName());
-        ball.clear();
-        ba.setPlayerPositionUpdating(300);
     }
     
     /**
