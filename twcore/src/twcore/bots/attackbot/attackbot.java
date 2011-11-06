@@ -1302,7 +1302,7 @@ public class attackbot extends SubspaceBot {
             ba.sendArenaMessage("A new game will begin when two players PM me !cap -" + ba.getBotName());
         team[0].reset();
         team[1].reset();
-        
+        ba.specAll();
         TimerTask sb = new TimerTask() {
             public void run() {
                 scoreboard.hideAllObjects();
@@ -1385,8 +1385,6 @@ public class attackbot extends SubspaceBot {
         /** Begins the player picking process if both team's have a captain **/
         private void checkCaps() {
             if (team[0].cap != null && team[1].cap != null) {
-                if (state == WAITING)
-                    ba.specAll();
                 state = PICKING;
                 pick = 0;
                 team[0].pick = true;
