@@ -442,8 +442,8 @@ public class attackbot extends SubspaceBot {
                     return;
                 }
             } else
-                msg = "A game of ATTACK is about to begin! Type ?go ATTACK to play. -" + ba.getBotName();
-            ba.sendZoneMessage(msg, 2);
+                msg = "A game of ATTACK is about to begin!";
+            ba.sendZoneMessage(msg + " Type ?go ATTACK to play. -" + ba.getBotName(), 2);
         } else {
             int mins = (int)(((ZONER_TIME * Tools.TimeInMillis.MINUTE) - (now - lastZoner)) / Tools.TimeInMillis.MINUTE);
             int secs = (int)(((ZONER_TIME * Tools.TimeInMillis.MINUTE) - (now - lastZoner) - (mins / Tools.TimeInMillis.MINUTE)) / Tools.TimeInMillis.SECOND);
