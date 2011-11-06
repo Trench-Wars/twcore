@@ -2455,7 +2455,7 @@ public class attackbot extends SubspaceBot {
         ArrayList<String> lines = new ArrayList<String>();
         while (msg.length() > 0) {
             if (msg.length() > MAX_CHARS) {
-                int sp = msg.substring(0, MAX_CHARS).lastIndexOf(' ') - MAX_CHARS;
+                int sp = MAX_CHARS - msg.substring(0, MAX_CHARS).lastIndexOf(' ');
                 lines.add(msg.substring(0, sp));
                 msg = msg.substring(sp + 1);
             } else {
