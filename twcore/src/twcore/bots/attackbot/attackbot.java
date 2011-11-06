@@ -22,6 +22,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
+import twcore.core.events.SQLResultEvent;
 import twcore.core.events.SoccerGoal;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
@@ -62,6 +63,7 @@ public class attackbot extends SubspaceBot {
     
     public static final String db = "website";
     public static final int ZONER_TIME = 5;
+    public static final int MAX_CHARS = 220;
     
     // Objons
     public static final int TEN_SECONDS = 1;
@@ -297,6 +299,27 @@ public class attackbot extends SubspaceBot {
             }
         }
     }
+    
+    public void handleEvent(SQLResultEvent event) {
+        String name = event.getIdentifier();
+        String msg = "";
+        ResultSet rs = event.getResultSet();
+        try {
+            if (rs.next()) {
+                do
+                    msg += rs.getString("fcName") + ", ";
+                while (rs.next());
+                msg = msg.substring(0, msg.lastIndexOf(','));
+                ba.sendSmartPrivateMessage(name, "Registerd players:");
+                ba.smartPrivateMessageSpam(name, wrapLines(msg));
+            } else
+                ba.sendSmartPrivateMessage(name, "No registered players found.");
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        } finally {
+            ba.SQLClose(rs);
+        }
+    }
 
     /**
      * Command handler.
@@ -395,6 +418,8 @@ public class attackbot extends SubspaceBot {
                     cmd_periodic(name, msg);
                 else if (msg.equalsIgnoreCase("!per"))
                     cmd_periodic(name);
+                else if (msg.startsWith("!reg"))
+                    cmd_registered(name);
             }
         }
     }
@@ -580,6 +605,11 @@ public class attackbot extends SubspaceBot {
         } finally {
             ba.SQLClose(rs);
         }
+    }
+    
+    private void cmd_registered(String name) {
+        ba.sendSmartPrivateMessage(name, "Processing request...");
+        ba.SQLBackgroundQuery(db, name, "SELECT fcName FROM tblAttack ORDER BY ftUpdated ASC");
     }
     
     private void cmd_rules(String name) {
@@ -2415,6 +2445,20 @@ public class attackbot extends SubspaceBot {
         for (int i = 0; i + x.length() < length; i++)
             str += " ";
         return str + x;
+    }
+    
+    private String[] wrapLines(String msg) {
+        ArrayList<String> lines = new ArrayList<String>();
+        while (msg.length() > 0) {
+            if (msg.length() > MAX_CHARS) {
+                lines.add(msg.substring(0, MAX_CHARS));
+                msg = msg.substring(MAX_CHARS);
+            } else {
+                lines.add(msg);
+                msg = "";
+            }
+        }
+        return lines.toArray(new String[lines.size()]);
     }
     
     private void cmd_debug(String name) {
