@@ -121,7 +121,7 @@ public class attackbot extends SubspaceBot {
     /** Handles the LoggedOn event **/
     public void handleEvent(LoggedOn event) {
         ba.joinArena(ba.getBotSettings().getString("InitialArena"));
-        ba.sendUnfilteredPublicMessage("?chat=attack");
+        ba.sendUnfilteredPublicMessage("?chat=attack,alerts");
         state = WAITING;
         goals = rules.getInt("Goals");
         safes = rules.getIntArray("Safes", ",");
@@ -154,6 +154,7 @@ public class attackbot extends SubspaceBot {
         advert = new TimerTask() {
             public void run() {
                 ba.sendChatMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
+                ba.sendChatMessage(2, "Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
                 ba.sendArenaMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
             }
         };
@@ -564,6 +565,7 @@ public class attackbot extends SubspaceBot {
             advert = new TimerTask() {
                 public void run() {
                     ba.sendChatMessage(msg);
+                    ba.sendChatMessage(2, msg);
                     ba.sendArenaMessage(msg);
                 }
             };
@@ -1310,7 +1312,8 @@ public class attackbot extends SubspaceBot {
             }
         };
         ba.scheduleTask(sb, 3000);
-        ba.sendChatMessage("A game of ATTACK has just ended, so a new one will start soon! ?go ATTACK");
+        ba.sendChatMessage("A game of ATTACK has just ended. A new one will begin shortly! ?go ATTACK");
+        ba.sendChatMessage(2, "A game of ATTACK has just ended. A new one will begin shortly! ?go ATTACK");
     }
 
     /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
