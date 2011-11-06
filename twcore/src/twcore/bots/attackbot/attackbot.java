@@ -411,6 +411,11 @@ public class attackbot extends SubspaceBot {
             else if (msg.equalsIgnoreCase("!rules"))
                 cmd_rules(name);
             
+            if (oplist.isZH(name)) {
+                if (msg.startsWith("!reg"))
+                    cmd_registered(name);
+            }
+            
             if (oplist.isSmod(name) || name.equalsIgnoreCase("diakka")) {
                 if (msg.startsWith("!greet "))
                     cmd_greet(name, msg);
@@ -418,8 +423,6 @@ public class attackbot extends SubspaceBot {
                     cmd_periodic(name, msg);
                 else if (msg.equalsIgnoreCase("!per"))
                     cmd_periodic(name);
-                else if (msg.startsWith("!reg"))
-                    cmd_registered(name);
             }
         }
     }
@@ -523,6 +526,7 @@ public class attackbot extends SubspaceBot {
                 "| !die                     - Kills bot                                                      |",
                 "| !endgame                 - Prematurely ends the current game with stats and scores        |",
                 "| !killgame                - Abruptly kills the current game without a winner or stats      |",
+                "| !reg                     - Short for !registered lists all the players signed up          |",
         };
         
         String[] staff2 = {
@@ -2451,8 +2455,9 @@ public class attackbot extends SubspaceBot {
         ArrayList<String> lines = new ArrayList<String>();
         while (msg.length() > 0) {
             if (msg.length() > MAX_CHARS) {
-                lines.add(msg.substring(0, MAX_CHARS));
-                msg = msg.substring(MAX_CHARS);
+                int sp = msg.substring(0, MAX_CHARS).lastIndexOf(' ') - MAX_CHARS;
+                lines.add(msg.substring(0, sp));
+                msg = msg.substring(sp + 1);
             } else {
                 lines.add(msg);
                 msg = "";
