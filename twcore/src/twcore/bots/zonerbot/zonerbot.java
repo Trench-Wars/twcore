@@ -226,6 +226,7 @@ public class zonerbot extends SubspaceBot {
                 } else
                     ba.sendSmartPrivateMessage(name, "No records found matching the given parameters.");
             } catch (SQLException e) {
+                ba.SQLClose(rs);
                 ba.sendSmartPrivateMessage(name, "SQL Error!");
                 Tools.printStackTrace("ZonerBot !hosted SQL error.", e);
             }
@@ -267,7 +268,7 @@ public class zonerbot extends SubspaceBot {
         }
         if (oplist.isSmod(name)) {
             msg = new String[] { "+-- ZonerBot Smod Commands ---------------------------------------------------------------------+",
-                    "| !per <del>;<dur>;<msg> - Sets a periodic zoner to repeat every <del> min for <dur> hr %%%#    |",
+                    "| !per <del>;<dur>;<msg> - Sets a periodic zoner to repeat every <del> min for <dur> hr  %%#    |",
                     "| !remper <index>        - Removes the periodic zoner at <index>                                |",
                     "| !list                  - List of the currently active periodic zoners                         |",
                     "| !ops                   - List of the current staff trainers                                   |",
@@ -1392,7 +1393,10 @@ public class zonerbot extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "There was an error in adding the advert to the database. As a result, it will not be reactivated if the bot should respawn.");
             index = periodic.size();
             periodic.add(index, this);
-            ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
+            if (ZONE_ON_LOAD)
+                ba.scheduleTask(this, 1500, delay * Tools.TimeInMillis.MINUTE);
+            else
+                ba.scheduleTask(this, delay * Tools.TimeInMillis.MINUTE, delay * Tools.TimeInMillis.MINUTE);
         }
 
         /**
@@ -1453,8 +1457,8 @@ public class zonerbot extends SubspaceBot {
         public int create() {
             if (delay > 0 && duration > 0 && advert.length() > 0) {
                 try {
-                    ba.SQLQueryAndClose(db, "INSERT INTO tblPeriodic (fcUserName, fcMessage, fnSound, fnDelay, fnDuration) VALUES('" + name + "', '"
-                            + advert + "', " + sound + ", " + delay + ", " + duration + ")");
+                    ba.SQLQueryAndClose(db, "INSERT INTO tblPeriodic (fcUserName, fcMessage, fnSound, fnDelay, fnDuration) VALUES('" + Tools.addSlashesToString(name) + "', '"
+                            + Tools.addSlashesToString(advert) + "', " + sound + ", " + delay + ", " + duration + ")");
                     ResultSet rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID() as id");
                     if (rs.next())
                         id = rs.getInt("id");
