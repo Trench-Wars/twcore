@@ -390,7 +390,7 @@ public class attackbot extends SubspaceBot {
                     cmd_allTerrs(name);
                 else if (msg.equalsIgnoreCase("!autocap"))
                     cmd_autocap(name);
-                else if (msg.startsWith("!zone "))
+                else if (msg.startsWith("!zone"))
                     cmd_zone(name, msg);
             }
         }
