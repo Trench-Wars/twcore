@@ -48,7 +48,9 @@ public class attackbot extends SubspaceBot {
     private int goals, pick, gameTime;
     private boolean autoMode; // if true then game is run with caps who volunteer via !cap
     private boolean timed;
+    private boolean locked;
     private boolean DEBUG;
+    private boolean mainBot;  // the main bot is the only bot that does chat messages/alert messages
     private String debugger;
     private LinkedList<String> notplaying;
     private LinkedList<String> lagouts;
@@ -60,7 +62,8 @@ public class attackbot extends SubspaceBot {
     
     private TimerTask advert;
     private long lastZoner;
-    
+
+    public static final String BOT_NAME = "AttackBot";
     public static final String db = "website";
     public static final int ZONER_TIME = 5;
     public static final int MAX_CHARS = 220;
@@ -113,56 +116,28 @@ public class attackbot extends SubspaceBot {
         pastStats = null;
         timed = true;
         gameTime = 10;
+        locked = false;
         DEBUG = false;
         debugger = "";
         lastZoner = 0;
+        if (ba.getBotName().equalsIgnoreCase(BOT_NAME))
+            mainBot = true;
+        else
+            mainBot = false;
     }
 
     /** Handles the LoggedOn event **/
     public void handleEvent(LoggedOn event) {
         ba.joinArena(ba.getBotSettings().getString("InitialArena"));
-        ba.sendUnfilteredPublicMessage("?chat=attack,alerts");
-        state = WAITING;
-        goals = rules.getInt("Goals");
-        safes = rules.getIntArray("Safes", ",");
-        SHIP_LIMITS = rules.getIntArray("Ships", ",");
-        if (SHIP_LIMITS.length != 8)
-            SHIP_LIMITS = new int[] { 1, 1, rules.getInt("MaxPlayers"), 0, 2, 0, rules.getInt("MaxPlayers"), 2 };
-        team = new Team[] { new Team(0), new Team(1) };
     }
 
     /** Handles the ArenaJoined event **/
     public void handleEvent(ArenaJoined event) {
-        scoreboard = ba.getObjectSet();
-        ba.setPlayerPositionUpdating(300);
-        ba.setReliableKills(1);  //Reliable kills so the bot receives every packet
-        try {
-            mc.cancel();
-        } catch (Exception e) {};
-        mc = new MasterControl();
-        ba.scheduleTaskAtFixedRate(mc, Tools.TimeInMillis.SECOND, Tools.TimeInMillis.SECOND);
-        ball = new Ball();
-        ba.toggleLocked();
-        if (autoMode)
-            ba.sendArenaMessage("A new game will begin when two players PM me with !cap -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
-        else
-            ba.sendArenaMessage("Request a new game with '?help start attack please'", Tools.Sound.CROWD_GEE);
-        ba.specAll();
-        ba.setAlltoFreq(SPEC_FREQ);
-        ba.setTimer(0);
-        
-        advert = new TimerTask() {
-            public void run() {
-                ba.sendChatMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
-                ba.sendChatMessage(2, "Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
-                ba.sendArenaMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
-            }
-        };
-        ba.scheduleTask(advert, 0, 45 * Tools.TimeInMillis.MINUTE);
     }
     
     /** Handles the PlayerEntered event **/
     public void handleEvent(PlayerEntered event) {
+        if (!locked) return;
         String name = event.getPlayerName();
         if (name == null) 
             name = ba.getPlayerName(event.getPlayerID());
@@ -202,6 +177,7 @@ public class attackbot extends SubspaceBot {
     
     /** Handles the PlayerLeft event (lagouts) **/
     public void handleEvent(PlayerLeft event) {
+        if (!locked) return;
         if (state < PICKING) return;
         String name = ba.getPlayerName(event.getPlayerID());
         if (name == null) return;
@@ -217,6 +193,7 @@ public class attackbot extends SubspaceBot {
 
     /** Monitors goal scoring **/
     public void handleEvent(SoccerGoal event) {
+        if (!locked) return;
         if (state == PLAYING) {
             short scoringFreq = event.getFrequency();
             if (scoringFreq == team[0].freq) {
@@ -252,6 +229,7 @@ public class attackbot extends SubspaceBot {
     }
     
     public void handleEvent(PlayerDeath event) {
+        if (!locked) return;
         if (state != PLAYING) return;
         String killer = ba.getPlayerName(event.getKillerID());
         String killee = ba.getPlayerName(event.getKilleeID());
@@ -263,6 +241,7 @@ public class attackbot extends SubspaceBot {
     }
     
     public void handleEvent(PlayerPosition event) {
+        if (!locked) return;
         Player p = ba.getPlayer(event.getPlayerID());
         if (p.getShipType() != 5) return;
         Team t = getTeam(p.getPlayerName());
@@ -272,11 +251,13 @@ public class attackbot extends SubspaceBot {
     }
 
     public void handleEvent(BallPosition event) {
+        if (!locked) return;
         ball.update(event);
     }
 
     /** Handles the FrequencyShipChange event indicating potential lagouts **/
     public void handleEvent(FrequencyShipChange event) {
+        if (!locked) return;
         if (state < PICKING) return;
         String name = ba.getPlayerName(event.getPlayerID());
         if (name == null) return;
@@ -288,8 +269,7 @@ public class attackbot extends SubspaceBot {
             if (t != null && !t.isCap(name) && t.cap != null)
                 ba.sendSmartPrivateMessage(t.cap, name + " has lagged out.");
         }
-        
-        
+               
         if (state > 0) {
             byte shipType = event.getShipType();
             int playerName = event.getPlayerID();
@@ -338,6 +318,45 @@ public class attackbot extends SubspaceBot {
         }
         
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
+
+            if (oplist.isZH(name)) {
+                if (msg.startsWith("!lock"))
+                    cmd_lock(name);
+                else if (msg.startsWith("!go "))
+                    cmd_go(name, msg);
+                
+                if (!locked) {
+                    ba.sendSmartPrivateMessage(name, "I have not been arena locked.");
+                    return;
+                }
+                if (msg.equalsIgnoreCase("!drop"))
+                    dropBall();
+                else if (msg.equalsIgnoreCase("!start"))
+                    mc.startGame();
+                else if (msg.startsWith("!kill"))
+                    cmd_stop(name, true);
+                else if (msg.startsWith("!end"))
+                    cmd_stop(name, false);
+                else if (msg.equalsIgnoreCase("!die"))
+                    cmd_die(name);
+                else if (msg.startsWith("!setcap "))
+                    cmd_setCap(name, msg);
+                else if (msg.equalsIgnoreCase("!debug"))
+                    cmd_debug(name);
+                else if (msg.startsWith("!settime "))
+                    cmd_setTime(name, msg);
+                else if (msg.startsWith("!setgoals "))
+                    cmd_setGoals(name, msg);
+                else if (msg.startsWith("!al"))
+                    cmd_allTerrs(name);
+                else if (msg.equalsIgnoreCase("!autocap"))
+                    cmd_autocap(name);
+                else if (msg.startsWith("!zone"))
+                    cmd_zone(name, msg);
+            }
+            
+            if (!locked) return;
+            
             if (msg.equalsIgnoreCase("!caps"))
                 cmd_caps(name);
             else if (msg.equalsIgnoreCase("!ready"))
@@ -366,33 +385,6 @@ public class attackbot extends SubspaceBot {
                 cmd_terrs(name);
             else if (msg.startsWith("!myf"))
                 cmd_myFreq(name);
-
-            if (oplist.isZH(name)) {
-                if (msg.equalsIgnoreCase("!drop"))
-                    dropBall();
-                else if (msg.equalsIgnoreCase("!start"))
-                    mc.startGame();
-                else if (msg.startsWith("!kill"))
-                    cmd_stop(name, true);
-                else if (msg.startsWith("!end"))
-                    cmd_stop(name, false);
-                else if (msg.equalsIgnoreCase("!die"))
-                    cmd_die(name);
-                else if (msg.startsWith("!setcap "))
-                    cmd_setCap(name, msg);
-                else if (msg.equalsIgnoreCase("!debug"))
-                    cmd_debug(name);
-                else if (msg.startsWith("!settime "))
-                    cmd_setTime(name, msg);
-                else if (msg.startsWith("!setgoals "))
-                    cmd_setGoals(name, msg);
-                else if (msg.startsWith("!al"))
-                    cmd_allTerrs(name);
-                else if (msg.equalsIgnoreCase("!autocap"))
-                    cmd_autocap(name);
-                else if (msg.startsWith("!zone"))
-                    cmd_zone(name, msg);
-            }
         }
         
         if (type == Message.CHAT_MESSAGE || type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
@@ -427,6 +419,71 @@ public class attackbot extends SubspaceBot {
             }
         }
     }
+    
+    private void cmd_lock(String name) {
+        if (!ba.getArenaName().toLowerCase().startsWith("attack")) {
+            ba.sendSmartPrivateMessage(name, BOT_NAME + "'s can only be locked while in attack arenas.");
+            return;
+        } else if (locked) {
+            ba.sendSmartPrivateMessage(name, "I am locked until death do us part.");
+            return;
+        }
+        ba.sendSmartPrivateMessage(name, "Locking in " + ba.getArenaName() + ".");
+        locked = true;
+        if (mainBot) {
+            ba.sendUnfilteredPublicMessage("?chat=attack,alerts");
+            advert = new TimerTask() {
+                public void run() {
+                    ba.sendChatMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
+                    ba.sendChatMessage(2, "Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
+                    ba.sendArenaMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
+                }
+            };
+            ba.scheduleTask(advert, 0, 45 * Tools.TimeInMillis.MINUTE);
+        } else {
+            advert = new TimerTask() {
+                public void run() {
+                }
+            };
+            ba.scheduleTask(advert, 0, 45 * Tools.TimeInMillis.MINUTE);
+        }
+        state = WAITING;
+        goals = rules.getInt("Goals");
+        safes = rules.getIntArray("Safes", ",");
+        SHIP_LIMITS = rules.getIntArray("Ships", ",");
+        if (SHIP_LIMITS.length != 8)
+            SHIP_LIMITS = new int[] { 1, 1, rules.getInt("MaxPlayers"), 0, 2, 0, rules.getInt("MaxPlayers"), 2 };
+        team = new Team[] { new Team(0), new Team(1) };
+        
+        scoreboard = ba.getObjectSet();
+        ba.setPlayerPositionUpdating(300);
+        ba.setReliableKills(1);  //Reliable kills so the bot receives every packet
+        try {
+            mc.cancel();
+        } catch (Exception e) {};
+        mc = new MasterControl();
+        ba.scheduleTaskAtFixedRate(mc, Tools.TimeInMillis.SECOND, Tools.TimeInMillis.SECOND);
+        ball = new Ball();
+        ba.toggleLocked();
+        if (autoMode)
+            ba.sendArenaMessage("A new game will begin when two players PM me with !cap -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
+        else
+            ba.sendArenaMessage("Request a new game with '?help start attack please'", Tools.Sound.CROWD_GEE);
+        ba.specAll();
+        ba.setAlltoFreq(SPEC_FREQ);
+        ba.setTimer(0);
+    }
+    
+    private void cmd_go(String name, String cmd) {
+        if (cmd.length() < 5) return;
+        if (locked) {
+            ba.sendSmartPrivateMessage(name, "I am locked in this arena and cannot be moved.");
+            return;
+        }
+        String arena = cmd.substring(cmd.indexOf(" ") + 1);
+        ba.sendSmartPrivateMessage(name, "Going to " + arena + ". Remember to lock me before attempting to use.");
+        ba.changeArena(arena);
+    }
 
     private void cmd_zone(String name, String cmd) {
         long now = System.currentTimeMillis();
@@ -444,7 +501,7 @@ public class attackbot extends SubspaceBot {
                 }
             } else
                 msg = "A game of ATTACK is about to begin!";
-            ba.sendZoneMessage(msg + " Type ?go ATTACK to play. -" + ba.getBotName(), 2);
+            ba.sendZoneMessage(msg + " Type ?go " + ba.getArenaName().toUpperCase() + " to play. -" + ba.getBotName(), 2);
         } else {
             int mins = (int)(((ZONER_TIME * Tools.TimeInMillis.MINUTE) - (now - lastZoner)) / Tools.TimeInMillis.MINUTE);
             int secs = (int)(((ZONER_TIME * Tools.TimeInMillis.MINUTE) - (now - lastZoner) - (mins / Tools.TimeInMillis.MINUTE)) / Tools.TimeInMillis.SECOND);
@@ -519,6 +576,7 @@ public class attackbot extends SubspaceBot {
         
         String[] staff = {
                 "+-- Staff Commands -------------------------------------------------------------------------+",
+                "| !lock                    - Locks the bot in the current arena if it is an attack arena    |",
                 "| !zone                    - Sends a default zoner or one that you provide                  |",
                 "| !autocap                 - Allows/dissallows player set captains                          |",
                 "| !setcap <team>:<name>    - Sets <name> as captain of <team> (0 or 1)                      |",
@@ -1312,8 +1370,10 @@ public class attackbot extends SubspaceBot {
             }
         };
         ba.scheduleTask(sb, 3000);
-        ba.sendChatMessage("A game of ATTACK has just ended. A new one will begin shortly! ?go ATTACK");
-        ba.sendChatMessage(2, "A game of ATTACK has just ended. A new one will begin shortly! ?go ATTACK");
+        if (mainBot) {
+            ba.sendChatMessage("A game of ATTACK has just ended. A new one will begin shortly! ?go " + ba.getArenaName().toUpperCase() + "");
+            ba.sendChatMessage(2, "A game of ATTACK has just ended. A new one will begin shortly! ?go " + ba.getArenaName().toUpperCase() + "");
+        }
     }
 
     /** Bot grabs the ball regardless of its status and drops it into the center after warping each team **/
