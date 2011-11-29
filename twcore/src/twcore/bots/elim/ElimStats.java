@@ -26,6 +26,7 @@ public class ElimStats {
     protected int ship;
     
     DecimalFormat decimal = new DecimalFormat("#0.00");
+    DecimalFormat df = new DecimalFormat("##0.0###");
     
     /**
      * Constructs a new set of statistics for a given ship.
@@ -65,9 +66,6 @@ public class ElimStats {
                 aim = (((double) getStat(StatType.KILLS) / 1) * 100);
             if (aim > 100)
                 aim = 100;
-            setStat(StatType.AIM, aim);
-            loadStat(StatType.AIM, aim);
-            return aim;
         } else {
             int shots = getTotal(StatType.SHOTS);
             int kills = getTotal(StatType.KILLS);
@@ -77,10 +75,11 @@ public class ElimStats {
                 aim = (((double) kills / 1) * 100);
             if (aim > 100)
                 aim = 100;
-            setStat(StatType.AIM, aim);
-            loadStat(StatType.AIM, aim);
-            return aim;
         }
+        aim = new Double(df.format(aim)).doubleValue();
+        setStat(StatType.AIM, aim);
+        loadStat(StatType.AIM, aim);
+        return aim;
     }
     
     /** Computes and sets the ave stat given the rating of the player killed */
