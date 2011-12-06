@@ -43,16 +43,16 @@ lagouts=3
 aliascheck=1
 
 [Arena]
-safe1x=447
-safe1y=412
-safe1xout=447
-safe1yout=400
-safe2x=577
-safe2y=412
+safe1x=446
+safe1y=453
+safe1xout=446
+safe1yout=444
+safe2x=576
+safe2y=453
 safe2xout=577
-safe2yout=400
+safe2yout=444
 
-yborder=428
+yborder=467
 outofbordertime=40
 outifexceed=1
 
