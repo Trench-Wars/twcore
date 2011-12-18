@@ -1255,7 +1255,7 @@ public class attackbot extends SubspaceBot {
     
     /** Helper determines if player is a bot (oplist doesn't work for bots on other cores) **/
     private boolean isNotBot(String name) {
-        if (oplist.isBotExact(name) || (oplist.isSysop(name) && !oplist.isOwner(name) && !name.equalsIgnoreCase("wiibimbo") && !name.equalsIgnoreCase("Dral") && !name.equalsIgnoreCase("flared") && !name.equalsIgnoreCase("pinkstar") && !name.equalsIgnoreCase("Pure_Luck")))
+        if (oplist.isBotExact(name) || (oplist.isSysop(name) && !oplist.isOwner(name) && !name.equalsIgnoreCase("wiibimbo") && !name.equalsIgnoreCase("Dral") && !name.equalsIgnoreCase("flared") && !name.equalsIgnoreCase("pinkstar") && !name.equalsIgnoreCase("Pure_Luck") && !name.equalsIgnoreCase("M_M God") && !name.equalsIgnoreCase("Demonic")))
             return false;
         else return true;
     }
