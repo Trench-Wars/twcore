@@ -17,37 +17,30 @@ import twcore.core.util.Tools;
 public class DuelPlayer {
 
     boolean record;
-    BotAction m_botAction;
-    Player m_player;
-    BotSettings m_rules;
+    BotAction ba;
+    Player player;
+    BotSettings rules;
     
     private static final String DB = "website";
 
     // Regular game stats
-    int m_ship = 1;
-    int m_specAt = 5;
-    int m_freq = 0;
-    int m_lagouts = 0;
-    int m_status = 0;
-    int m_out = -1;
+    PlayerStats stats;
+    int ship = 1;
+    int specAt = 5;
+    int freq = 0;
+    int status = 0;
+    int out = -1;
     
+    int userID;
     
-    
-    int m_kills;
-    int m_deaths;
-    int m_spawns;
-    int m_warps;
-    
-    int m_userID;
-    
-    DuelTeam m_team;
-    duel2bot m_bot;
+    DuelTeam team;
+    duel2bot bot;
     
     // holds all registered league team IDs 
     // index = league, 0 = userID
-    int[] m_teams;
+    int[] teams;
     
-    String m_name;
+    String name;
     
     // TWEL Info
     int d_noCount;
@@ -73,543 +66,523 @@ public class DuelPlayer {
     static final int LAGOUTS = 2;
     static final int SPAWNS = 3;
     
-    private long m_lastFoul = 0;
-    private long m_lastDeath = 0;
-    private String m_lastKiller = "";
+    private long lastFoul = 0;
+    private long lastDeath = 0;
+    private String lastKiller = "";
     
-    String m_challPartner = null;
-    int m_scrimFreq = -1;
+    String challPartner = null;
+    int scrimFreq = -1;
     
     TimerTask spawner, dying;
     TimerTask lagout;
     
     public DuelPlayer(Player p, duel2bot bot) {
-        m_name = p.getPlayerName();
-        m_bot = bot;
-        m_team = null;
-        m_teams = new int[6];
-        m_botAction = m_bot.m_botAction;
-        m_rules = null;
-        m_freq = p.getFrequency();
-        m_ship = p.getShipType();
-        if (m_ship > 0) 
-            m_status = IN;
+        name = p.getPlayerName();
+        this.bot = bot;
+        team = null;
+        teams = new int[6];
+        ba = bot.ba;
+        rules = null;
+        freq = p.getFrequency();
+        ship = p.getShipType();
+        if (ship > 0) 
+            status = IN;
         else 
-            m_status = SPEC;
-        d_season = m_bot.d_season;
-        d_noCount = m_bot.d_noCount;
-        d_deathTime = m_bot.d_deathTime;
-        d_spawnTime = m_bot.d_spawnTime;
-        d_spawnLimit = m_bot.d_spawnLimit;
-        d_maxLagouts = m_bot.d_maxLagouts;
-        m_kills = 0;
-        m_deaths = 0;
-        m_spawns = 0;
-        m_warps = 0;
+            status = SPEC;
+        getRules();
     }
     
     public DuelPlayer(String name, DuelTeam team, duel2bot bot) {
-        m_name = name;
-        m_bot = bot;
-        m_team = team;
-        m_teams = new int[6];
-        m_botAction = m_bot.m_botAction;
-        m_rules = m_team.m_rules;
-        m_freq = m_team.m_freq;
-        d_season = m_bot.d_season;
-        d_noCount = m_bot.d_noCount;
-        d_deathTime = m_bot.d_deathTime;
-        d_spawnTime = m_bot.d_spawnTime;
-        d_spawnLimit = m_bot.d_spawnLimit;
-        d_maxLagouts = m_bot.d_maxLagouts;
-        m_kills = 0;
-        m_deaths = 0;
-        m_spawns = 0;
-        m_warps = 0;
+        this.name = name;
+        this.bot = bot;
+        this.team = team;
+        teams = new int[6];
+        ba = bot.ba;
+        rules = team.rules;
+        freq = team.freq;
+        getRules();
     }
     
     public DuelPlayer(String name, duel2bot bot) {
-        m_name = name;
-        m_bot = bot;
-        m_team = null;
-        m_teams = new int[6];
-        m_botAction = m_bot.m_botAction;
-        m_rules = null;
-        m_freq = 9999;
-        d_season = m_bot.d_season;
-        d_noCount = m_bot.d_noCount;
-        d_deathTime = m_bot.d_deathTime;
-        d_spawnTime = m_bot.d_spawnTime;
-        d_spawnLimit = m_bot.d_spawnLimit;
-        d_maxLagouts = m_bot.d_maxLagouts;
-        m_kills = 0;
-        m_deaths = 0;
-        m_spawns = 0;
-        m_warps = 0;
+        this.name = name;
+        this.bot = bot;
+        team = null;
+        teams = new int[6];
+        ba = bot.ba;
+        rules = null;
+        freq = 9999;
+        getRules();
     }
     
-    public void team(DuelTeam team) {
-        m_team = team;
-        m_rules = m_team.m_rules;
-        m_freq = m_team.m_freq;
-        if (m_team.m_type != 5)
-            m_ship = m_team.m_ship;
-        else {
-            Player p = m_botAction.getPlayer(m_name);
-            m_ship = p.getShipType();
-        }
-    }
-    
-    public void scrim(String name, int freq) {
-        m_challPartner = name;
-        m_scrimFreq = freq;
-    }
-    
-    public void cancelScrim() {
-        m_challPartner = null;
-        m_scrimFreq = -1;
-    }
-    
-    public String getName() {
-        return m_name;
+    private void getRules() {
+        d_season = bot.d_season;
+        d_noCount = bot.d_noCount;
+        d_deathTime = bot.d_deathTime;
+        d_spawnTime = bot.d_spawnTime;
+        d_spawnLimit = bot.d_spawnLimit;
+        d_maxLagouts = bot.d_maxLagouts;
     }
     
     public void handlePosition(PlayerPosition event) {
-        if (m_status == WARPING || m_status == LAGGED || m_status == OUT || m_status == REOUT || m_status == RETURN)
+        if (status == WARPING || status == LAGGED || status == OUT || status == REOUT || status == RETURN)
             return;
         
         int x = event.getXLocation() / 16;
         int y = event.getYLocation() / 16;
-        //Player p = m_botAction.getPlayer(m_name);
+        //Player p = ba.getPlayer(name);
         // 416 591
-        if (m_team != null) {
-            if ((x < m_team.m_game.m_box.getAreaMinX()) || (y < m_team.m_game.m_box.getAreaMinY()) || (x > m_team.m_game.m_box.getAreaMaxX()) || (y > m_team.m_game.m_box.getAreaMaxY())) {
-                warped(true);
-            }
+        if (team != null) {
+            if ((x < team.game.box.getAreaMinX()) || (y < team.game.box.getAreaMinY()) || 
+                    (x > team.game.box.getAreaMaxX()) || 
+                    (y > team.game.box.getAreaMaxY()))
+                handleWarp(true);
         }
-    }
-    
-    public void warped(boolean pos) {
-        if (m_status == WARPING || m_status == RETURN)
-            return;        
-
-        status(WARPING);
-
-        long now = System.currentTimeMillis();
-        if ((now - m_lastFoul > 500) && (m_team.m_game.m_state == DuelGame.IN_PROGRESS))
-            m_warps++;
-        
-        if (m_warps < 5 && m_team.m_game.m_state == DuelGame.IN_PROGRESS) {
-            if (now - m_lastFoul > 500) {
-                if (pos)
-                    m_botAction.sendPrivateMessage(m_name, "Warping is illegal in this league and if you warp again, you will forfeit.");
-                else {
-                    m_botAction.sendPrivateMessage(m_name, "Changing freq or ship is illegal in this league and if you do this again, you will forfeit.");
-                }
-            }
-            m_team.warpWarper(this);
-        } else if (m_team.m_game.m_state != DuelGame.IN_PROGRESS) {
-            m_team.safe(this);
-        }else {
-            m_botAction.sendPrivateMessage(m_name, "You have forfeited due to warp abuse.");
-            remove(WARPS);
-        }
-        
-        m_lastFoul = now;
     }
     
     public void handleFreq(FrequencyChange event) {
-        if (m_status == WARPING || m_status == RETURN)
+        if (status == WARPING || status == RETURN)
             return;
-        int freq = event.getFrequency();
+        int f = event.getFrequency();
         
-        if (m_team != null && m_team.m_game != null) {
-            if (freq != m_freq) {
-                if (m_status == LAGGED) {
-                    status(WARPING);
-                    m_botAction.setFreq(m_name, m_freq);
-                    status(LAGGED);
-                } else if (m_status == PLAYING){
-                    status(WARPING);
-                    m_botAction.setFreq(m_name, m_freq);
-                    m_botAction.specificPrize(m_name, -13);
-                    status(PLAYING);
-                    warped(false);
-                } else if (m_status == OUT) {
-                    m_botAction.sendPrivateMessage(m_name, "Please stay on your freq until your duel is finished.");
-                    m_botAction.setFreq(m_name, m_freq);
-                    status(OUT);
+        if (team != null && team.game != null) {
+            if (f != freq) {
+                if (status == LAGGED) {
+                    setStatus(WARPING);
+                    ba.setFreq(name, freq);
+                    setStatus(LAGGED);
+                } else if (status == PLAYING){
+                    setStatus(WARPING);
+                    ba.setFreq(name, freq);
+                    ba.specificPrize(name, -13);
+                    setStatus(PLAYING);
+                    handleWarp(false);
+                } else if (status == OUT) {
+                    ba.sendPrivateMessage(name, "Please stay on your freq until your duel is finished.");
+                    ba.setFreq(name, freq);
+                    setStatus(OUT);
                 }
             }
-        } else if (m_bot.m_freqs.contains(freq)) {
-            if (m_freq == 9999)
-                m_botAction.specWithoutLock(m_name);
-            m_botAction.setFreq(m_name, m_freq);
+        } else if (bot.freqs.contains(f)) {
+            if (freq == 9999)
+                ba.specWithoutLock(name);
+            ba.setFreq(name, freq);
         } else {
-            if (freq != m_scrimFreq) {
-                m_bot.removeScrimChalls(m_scrimFreq);
-                m_challPartner = null;
-                m_scrimFreq = -1;
+            if (f != scrimFreq) {
+                bot.removeScrimChalls(scrimFreq);
+                challPartner = null;
+                scrimFreq = -1;
             }
-            m_freq = freq;
+            freq = f;
         }
     }
     
     public void handleFSC(FrequencyShipChange event) {
-        int ship = event.getShipType();
-        if (m_status == WARPING || ((m_status == LAGGED || m_status == OUT) && ship == 0) || m_status == RETURN)
+        int shipNum = event.getShipType();
+        if (status == WARPING || ((status == LAGGED || status == OUT) && shipNum == 0) || status == RETURN)
             return;
-        int freq = event.getFrequency();
-        int status = m_status;
-        status(WARPING);
-        if (status == OUT) {
-            m_botAction.sendPrivateMessage(m_name, "Please stay in spec and on your freq until your duel is finished.");
-            m_botAction.specWithoutLock(m_name);
-            if (m_freq != freq)
-                m_botAction.setFreq(m_name, m_freq);
-            status(OUT);
+        int f = event.getFrequency();
+        int statusID = status;
+        setStatus(WARPING);
+        if (statusID == OUT) {
+            ba.sendPrivateMessage(name, "Please stay in spec and on your freq until your duel is finished.");
+            ba.specWithoutLock(name);
+            if (freq != f)
+                ba.setFreq(name, freq);
+            setStatus(OUT);
             return;
-        } else if (status == LAGGED) {
-            m_botAction.specWithoutLock(m_name);
-            if (m_freq != freq)
-                m_botAction.setFreq(m_name, m_freq);
-            m_botAction.sendPrivateMessage(m_name, "Please use !lagout to return to your duel.");
-            status(LAGGED);
+        } else if (statusID == LAGGED) {
+            ba.specWithoutLock(name);
+            if (freq != f)
+                ba.setFreq(name, freq);
+            ba.sendPrivateMessage(name, "Please use !lagout to return to your duel.");
+            setStatus(LAGGED);
             return;                
         }
-        if (m_team == null) {
-            if (ship == 4 || ship == 6) {
-                if (m_ship != 0)
-                    m_botAction.setShip(m_name, m_ship);
+        if (team == null) {
+            if (shipNum == 4 || shipNum == 6) {
+                if (ship != 0)
+                    ba.setShip(name, ship);
                 else
-                    m_botAction.specWithoutLock(m_name);
-                m_botAction.sendPrivateMessage(m_name, "Invalid ship!");
-            } else if (ship == 0 && m_scrimFreq > -1 && m_challPartner != null) {
-                m_bot.removeScrimChalls(m_scrimFreq);
-                m_scrimFreq = -1;
-                m_challPartner = null;
-                m_ship = ship;
+                    ba.specWithoutLock(name);
+                ba.sendPrivateMessage(name, "Invalid ship!");
+            } else if (shipNum == 0 && scrimFreq > -1 && challPartner != null) {
+                bot.removeScrimChalls(scrimFreq);
+                scrimFreq = -1;
+                challPartner = null;
+                ship = shipNum;
             } else 
-                m_ship = ship;
+                ship = shipNum;
             
             /*
-            if (m_bot.m_freqs.contains(freq))
-                m_botAction.setFreq(m_name, m_freq);
+            if (bot.freqs.contains(freq))
+                ba.setFreq(name, freq);
             else
-                m_freq = freq;
+                freq = freq;
             */
                 
         } else {
             
             boolean foul = false;
-            if (ship == 0 && (status == PLAYING)) {
-                m_botAction.setFreq(m_name, m_freq);
-                lagout();
+            if (shipNum == 0 && (statusID == PLAYING)) {
+                ba.setFreq(name, freq);
+                handleLagout();
                 return;
             }
             
             /*
-            if (freq != m_freq) {
+            if (freq != freq) {
                 foul = true;
-                m_botAction.setFreq(m_name, m_freq);
+                ba.setFreq(name, freq);
             }
             */
             
-            if ((ship != m_ship) && (m_team.m_game.m_state != DuelGame.SETUP)) {
+            if ((shipNum != ship) && (team.game.state != DuelGame.SETUP)) {
                 foul = true;
-                m_botAction.setShip(m_name, m_ship);
-                m_botAction.specificPrize(m_name, -13);
-            } else if ((m_team.m_game.m_type == 5) && (m_team.m_game.m_state == DuelGame.SETUP)) {
-                if (ship == 6 || ship == 4)
-                    m_botAction.setShip(m_name, m_ship);
+                ba.setShip(name, ship);
+                ba.specificPrize(name, -13);
+            } else if ((team.game.type == 5) && (team.game.state == DuelGame.SETUP)) {
+                if (shipNum == 6 || shipNum == 4)
+                    ba.setShip(name, ship);
                 else
-                    m_ship = ship;
-            } else if ((ship != m_ship) && (m_team.m_game.m_type != 5) && (m_team.m_game.m_state == DuelGame.SETUP)) {
-                m_botAction.setShip(m_name, m_ship);
+                    ship = shipNum;
+            } else if ((shipNum != ship) && (team.game.type != 5) && (team.game.state == DuelGame.SETUP)) {
+                ba.setShip(name, ship);
             }
             
-            if (foul || m_team.m_game.m_state == DuelGame.IN_PROGRESS) {
-                m_status = status;
-                warped(false);
+            if (foul || team.game.state == DuelGame.IN_PROGRESS) {
+                status = statusID;
+                handleWarp(false);
                 return;
             } else 
-                m_team.safe(this);
+                team.safe(this);
         }
-        m_status = status;
+        status = statusID;
     }
     
-    public void lagout() {
-        if (m_team == null)
-            return;
-
-        status(LAGGED);
-        
-        if (m_team.m_game.m_state == DuelGame.IN_PROGRESS)
-            m_lagouts++;
-        
-        if (m_lagouts <= d_maxLagouts) {
-            m_botAction.sendSmartPrivateMessage(m_name, "You have 1 minute to return (!lagout) to your duel or you will forfeit! (!lagout)");
-            lagout = new TimerTask() {
-                @Override
-                public void run() {
-                    m_bot.m_laggers.remove(m_name.toLowerCase());
-                    m_botAction.sendSmartPrivateMessage(m_name, "You have forfeited since you have been lagged out for over a minute.");
-                    remove(LAGOUTS);                    
-                }
-            };
-            m_botAction.scheduleTask(lagout, 60000);
-            m_bot.m_laggers.put(m_name.toLowerCase(), this);
-            m_team.lagout(m_name);
-        } else {
-            m_botAction.sendSmartPrivateMessage(m_name, "You have exceeded the lagout limit and forfeit your duel.");
-            remove(LAGOUTS);
-        }
-    }
-    
-    public void handleLagout() {
-        if (m_status != LAGGED) {
-            m_botAction.sendPrivateMessage(m_name, "You are not lagged out.");
+    public void doLagout() {
+        if (status != LAGGED) {
+            ba.sendPrivateMessage(name, "You are not lagged out.");
             return;
         }
-        status(RETURN);
-        m_botAction.cancelTask(lagout);
-        m_bot.m_laggers.remove(m_name.toLowerCase());
-        m_botAction.sendPrivateMessage(m_name, "You have " + (d_maxLagouts - m_lagouts) + " lagouts remaining.");
-        m_lastFoul = System.currentTimeMillis();
-        m_botAction.setShip(m_name, m_ship);
-        m_botAction.setFreq(m_name, m_freq);
-        if (m_team.m_game.m_state == DuelGame.IN_PROGRESS)
-            m_team.warp(this);
-        else if (m_team.m_game.m_state == DuelGame.SETUP)
-            m_team.safe(this);
+        setStatus(RETURN);
+        ba.cancelTask(lagout);
+        bot.laggers.remove(name.toLowerCase());
+        ba.sendPrivateMessage(name, "You have " + (d_maxLagouts - stats.getStat(StatType.LAGOUTS)) + " lagouts remaining.");
+        lastFoul = System.currentTimeMillis();
+        ba.setShip(name, ship);
+        ba.setFreq(name, freq);
+        if (team.game.state == DuelGame.IN_PROGRESS)
+            team.warp(this);
+        else if (team.game.state == DuelGame.SETUP)
+            team.safe(this);
     }
     
     public void handleReturn() {
-        status(RETURN);
-        m_botAction.specWithoutLock(m_name);
-        m_botAction.setFreq(m_name, m_freq);
-        m_botAction.sendPrivateMessage(m_name, "To return to your duel, reply with !lagout");
-        status(LAGGED);
-    }
-    
-    public void warpDelay(DuelPlayer p) {
-        status(WARPING);
-        m_team.safe(this);
-        
-        spawner = new TimerTask() {
-            @Override
-            public void run() {
-                if (m_status == PLAYING)
-                    m_team.warp(DuelPlayer.this);
-                else if (m_status == OUT)
-                    remove(NORMAL);
-            }
-        };
-        m_botAction.scheduleTask(spawner, d_deathTime * 1000);
-        
+        setStatus(RETURN);
+        ba.specWithoutLock(name);
+        ba.setFreq(name, freq);
+        ba.sendPrivateMessage(name, "To return to your duel, reply with !lagout");
+        setStatus(LAGGED);
     }
     
     public void handleDeath(String killerName) {
-        if (m_team == null)
+        if (team == null)
             return;
-        status(WARPING);
+        setStatus(WARPING);
         long now = System.currentTimeMillis();
-        DuelPlayer killer = m_bot.m_players.get(killerName.toLowerCase());
+        DuelPlayer killer = bot.players.get(killerName.toLowerCase());
 
-        m_team.safe(this);
+        team.safe(this);
         // DoubleKill check - remember to add a timer in case its the last death
-        if ((killer != null) && (killer.timeFromLastDeath() < 2001) && (m_name.equalsIgnoreCase(killer.getLastKiller()))) {
-            m_botAction.sendSmartPrivateMessage(m_name, "Double kill, doesn't count.");
-            m_botAction.sendSmartPrivateMessage(killerName, "Double kill, doesn't count.");
-            killer.removeDeath();      
-            m_kills--;
-        } else if (!m_team.wasTK(m_name, killerName)) {
-            if ((now - m_lastDeath) < ((d_spawnTime + d_deathTime) * 1000)) {
-                m_botAction.sendPrivateMessage(m_name, "Spawn Kill, doesn't count.");
-                killer.spawnKill();
+        if ((killer != null) && (killer.timeFromLastDeath() < 2001) && (name.equalsIgnoreCase(killer.getLastKiller()))) {
+            ba.sendSmartPrivateMessage(name, "Double kill, doesn't count.");
+            ba.sendSmartPrivateMessage(killerName, "Double kill, doesn't count.");
+            killer.removeDeath();
+            stats.decrementStat(StatType.KILLS);
+        } else if (!team.wasTK(name, killerName)) {
+            if ((now - lastDeath) < ((d_spawnTime + d_deathTime) * 1000)) {
+                ba.sendPrivateMessage(name, "Spawn Kill, doesn't count.");
+                killer.handleSpawnKill();
             } else {
-                m_deaths++;
+                stats.handleDeath();
                 killer.addKill();
             }
-        } else if (m_team.wasTK(m_name, killerName)) {
-            m_deaths++;
-        }
+        } else if (team.wasTK(name, killerName))
+            stats.handleDeath();
 
-        m_lastDeath = now;
-        m_lastKiller = killerName;  
+        lastDeath = now;
+        lastKiller = killerName;  
         
-        if (m_deaths >= m_specAt) {
-            status(OUT);
+        if (stats.getStat(StatType.DEATHS) >= specAt) {
+            setStatus(OUT);
             dying = new TimerTask() {
                 @Override
                 public void run() {
-                    if (m_status == OUT) {
+                    if (status == OUT) {
                         remove(NORMAL);
-                        m_botAction.cancelTask(spawner);
+                        ba.cancelTask(spawner);
                     }
                 }
             };
-            m_botAction.scheduleTask(dying, 2000);  
+            ba.scheduleTask(dying, 2000);  
         }
         
         spawner = new TimerTask() {
             @Override
             public void run() {
-                if (m_status == PLAYING)
-                    m_team.spawn(DuelPlayer.this);
-                else if (m_status == OUT)
+                if (status == PLAYING)
+                    team.spawn(DuelPlayer.this);
+                else if (status == OUT)
                     remove(NORMAL);
             }
         };
-        m_botAction.scheduleTask(spawner, d_deathTime * 1000);
-        m_team.m_game.updateScore();
+        ba.scheduleTask(spawner, d_deathTime * 1000);
+        team.game.updateScore();
     }
     
-    public void spawnKill() {
-        if (m_team == null)
+    public void handleSpawnKill() {
+        if (team == null)
             return;
-        m_spawns++;
-        if (m_spawns < d_spawnLimit)
-            m_botAction.sendPrivateMessage(m_name, "Spawn killing is illegal. If you should continue to spawn kill you will forfeit your match.");
+        stats.handleSpawn();
+        if (stats.getStat(StatType.SPAWNS) < d_spawnLimit)
+            ba.sendPrivateMessage(name, "Spawn killing is illegal. If you should continue to spawn kill you will forfeit your match.");
         else
             remove(SPAWNS);
     }
     
+    public void handleWarp(boolean pos) {
+        if (status == WARPING || status == RETURN)
+            return;        
+
+        setStatus(WARPING);
+
+        long now = System.currentTimeMillis();
+        if ((now - lastFoul > 500) && (team.game.state == DuelGame.IN_PROGRESS))
+            stats.handleWarp();
+        
+        if (stats.getStat(StatType.WARPS) < 5 && team.game.state == DuelGame.IN_PROGRESS) {
+            if (now - lastFoul > 500) {
+                if (pos)
+                    ba.sendPrivateMessage(name, "Warping is illegal in this league and if you warp again, you will forfeit.");
+                else {
+                    ba.sendPrivateMessage(name, "Changing freq or ship is illegal in this league and if you do this again, you will forfeit.");
+                }
+            }
+            team.warpWarper(this);
+        } else if (team.game.state != DuelGame.IN_PROGRESS) {
+            team.safe(this);
+        }else {
+            ba.sendPrivateMessage(name, "You have forfeited due to warp abuse.");
+            remove(WARPS);
+        }
+        
+        lastFoul = now;
+    }
+    
+    public void handleLagout() {
+        if (team == null)
+            return;
+
+        setStatus(LAGGED);
+        
+        if (team.game.state == DuelGame.IN_PROGRESS)
+            stats.handleLagout();
+        
+        if (stats.getStat(StatType.LAGOUTS) <= d_maxLagouts) {
+            ba.sendSmartPrivateMessage(name, "You have 1 minute to return (!lagout) to your duel or you will forfeit! (!lagout)");
+            lagout = new TimerTask() {
+                @Override
+                public void run() {
+                    bot.laggers.remove(name.toLowerCase());
+                    ba.sendSmartPrivateMessage(name, "You have forfeited since you have been lagged out for over a minute.");
+                    remove(LAGOUTS);                    
+                }
+            };
+            ba.scheduleTask(lagout, 60000);
+            bot.laggers.put(name.toLowerCase(), this);
+            team.lagout(name);
+        } else {
+            ba.sendSmartPrivateMessage(name, "You have exceeded the lagout limit and forfeit your duel.");
+            remove(LAGOUTS);
+        }
+    }
+    
+    public void setTeam(DuelTeam team) {
+        this.team = team;
+        rules = team.rules;
+        freq = team.freq;
+        if (team.div != 5)
+            ship = team.ship;
+        else {
+            Player p = ba.getPlayer(name);
+            ship = p.getShipType();
+        }
+    }
+    
+    public void setScrim(String name, int freq) {
+        challPartner = name;
+        scrimFreq = freq;
+    }
+    
+    public void cancelScrim() {
+        challPartner = null;
+        scrimFreq = -1;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void warpDelay(DuelPlayer p) {
+        setStatus(WARPING);
+        team.safe(this);
+        
+        spawner = new TimerTask() {
+            @Override
+            public void run() {
+                if (status == PLAYING)
+                    team.warp(DuelPlayer.this);
+                else if (status == OUT)
+                    remove(NORMAL);
+            }
+        };
+        ba.scheduleTask(spawner, d_deathTime * 1000);
+        
+    }
+    
     public long timeFromLastDeath() {
-        return System.currentTimeMillis() - m_lastDeath;
+        return System.currentTimeMillis() - lastDeath;
     }
     
     public String getLastKiller() {
-        return m_lastKiller;
+        return lastKiller;
     }
     
     public void endGame() {
-        if (m_ship > 0)
-            m_status = SPEC;
+        if (ship > 0)
+            status = SPEC;
         else
-            m_status = IN;
-        m_team = null;
-        m_botAction.cancelTask(lagout);
-        m_botAction.cancelTask(spawner);
-        m_botAction.cancelTask(dying);
-        m_botAction.shipReset(m_name);
-        m_botAction.warpTo(m_name, 512, 502);
-        m_spawns = 0;
-        m_deaths = 0;
-        m_kills = 0;
-        m_lagouts = 0;
-        m_warps = 0;
-        m_out = -1;
+            status = IN;
+        team = null;
+        ba.cancelTask(lagout);
+        ba.cancelTask(spawner);
+        ba.cancelTask(dying);
+        ba.shipReset(name);
+        ba.warpTo(name, 512, 502);
+        out = -1;
     }
     
     public void removeDeath() {
-        if (m_deaths == m_specAt)
-            status(PLAYING);
-        if (m_deaths > 0)
-            m_deaths--;
+        if (stats.getStat(StatType.DEATHS) == specAt)
+            setStatus(PLAYING);
+        if (stats.getStat(StatType.DEATHS) > 0)
+            stats.decrementStat(StatType.DEATHS);
     }
     
     public void removeKill() {
-        if (m_kills > 0) 
-            m_kills--;
+        if (stats.getStat(StatType.KILLS) > 0) 
+            stats.decrementStat(StatType.KILLS);
     }
     
     public void addKill() {
-        m_kills++;
+        stats.handleKill();
     }
     
     public int getKills() {
-        return m_kills;
+        return stats.getStat(StatType.KILLS);
     }
     
     public int getDeaths() {
-        return m_deaths;
+        return stats.getStat(StatType.DEATHS);
     }
     
-    public int status() {
-        return m_status;
+    public int getStatus() {
+        return status;
     }
     
-    public void status(int s) {
-        m_status = s;
+    public void setStatus(int s) {
+        status = s;
     }
     
     public void remove(int reason) {
-        m_botAction.specWithoutLock(m_name);
-        m_botAction.setFreq(m_name, m_freq);
-        if (m_status == REOUT) {
-            status(OUT);
+        ba.specWithoutLock(name);
+        ba.setFreq(name, freq);
+        if (status == REOUT) {
+            setStatus(OUT);
             return;
         }
-        m_out = reason;
-        if (m_deaths != m_specAt)
-            m_deaths = m_specAt;
-        status(OUT);
-        m_team.playerOut(this);
+        out = reason;
+        if (stats.getStat(StatType.DEATHS) != specAt)
+            stats.setStat(StatType.DEATHS, specAt);
+        setStatus(OUT);
+        team.playerOut(this);
     }
     
     public void warp(int x, int y) {
-        status(WARPING);
-        Player p1 = m_botAction.getPlayer(m_name);
-        m_botAction.shipReset(m_name);
-        m_botAction.warpTo(m_name, x, y);
+        setStatus(WARPING);
+        Player p1 = ba.getPlayer(name);
+        ba.shipReset(name);
+        ba.warpTo(name, x, y);
         p1.updatePlayerPositionManuallyAfterWarp(x, y);
-        status(PLAYING);
+        setStatus(PLAYING);
     }
     
     public void warpWarper(int x, int y) {
-        status(WARPING);
-        Player p1 = m_botAction.getPlayer(m_name);
-        m_botAction.warpTo(m_name, x, y);
+        setStatus(WARPING);
+        Player p1 = ba.getPlayer(name);
+        ba.warpTo(name, x, y);
         p1.updatePlayerPositionManuallyAfterWarp(x, y);
-        status(PLAYING);
+        setStatus(PLAYING);
     }
     
-    public void starting(int ship, int x, int y) {
-        if (m_status == LAGGED)
+    public void starting(int shipNum, int x, int y) {
+        if (status == LAGGED)
             return;
-        status(WARPING);
-        if (ship > -1) {
-            m_botAction.setShip(m_name, m_ship);
-        } else if (m_ship == 0) {
-            m_botAction.setShip(m_name, 1);
-            m_ship = 1;
+        setStatus(WARPING);
+        if (shipNum > -1) {
+            ba.setShip(name, ship);
+        } else if (ship == 0) {
+            ba.setShip(name, 1);
+            ship = 1;
         }
-        m_botAction.setFreq(m_name, m_freq);
+        ba.setFreq(name, freq);
+
+        stats = new PlayerStats(ship);
+        
         warp(x, y);
+    }
+
+    public int getReason() {
+        return out;
+    }
+    
+    public void cancelGame(String name) {
+        if (team == null || team.game == null) {
+            ba.sendPrivateMessage(name, "No game found.");
+            return;
+        } else {
+            team.game.cancelGame(name);
+        }
     }
     
     public void sql_teamPop() {
         ResultSet rs;
-        String query = "SELECT fnUserID AS u, fnTeamID AS id, fnLeagueTypeID AS type FROM tblDuel__2league WHERE fnSeason = " + d_season + " AND fnStatus = 1 AND fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '" + Tools.addSlashesToString(m_name) + "' ORDER BY fnUserID ASC LIMIT 1)";
+        String query = "SELECT fnUserID AS u, fnTeamID AS id, fnLeagueTypeID AS type FROM tblDuel__2league WHERE fnSeason = " + d_season + " AND fnStatus = 1 AND fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '" + Tools.addSlashesToString(name) + "' ORDER BY fnUserID ASC LIMIT 1)";
         
         try {
-            rs = m_botAction.SQLQuery(DB, query);
+            rs = ba.SQLQuery(DB, query);
 
             if (rs.next()) {
-                m_userID = rs.getInt("u");
+                userID = rs.getInt("u");
                 do {
-                    m_teams[rs.getInt("type")] = rs.getInt("id");                    
+                    teams[rs.getInt("type")] = rs.getInt("id");                    
                 } while (rs.next());
-                m_teams[0] = m_userID;
+                teams[0] = userID;
             }
 
-            m_botAction.SQLClose(rs);
+            ba.SQLClose(rs);
         } catch (Exception e) {
-            System.out.println("SQLException teamPop for " + m_name);
-        }
-    }
-
-    public int getReason() {
-        return m_out;
-    }
-    
-    public void cancelGame(String name) {
-        if (m_team == null || m_team.m_game == null) {
-            m_botAction.sendPrivateMessage(name, "No game found.");
-            return;
-        } else {
-            m_team.m_game.cancelGame(name);
+            System.out.println("SQLException teamPop for " + name);
         }
     }
     
