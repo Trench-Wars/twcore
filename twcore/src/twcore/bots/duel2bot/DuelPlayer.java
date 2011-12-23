@@ -70,8 +70,8 @@ public class DuelPlayer {
     private long lastDeath = 0;
     private String lastKiller = "";
     
-    String challPartner = null;
-    int scrimFreq = -1;
+    String partner = null;
+    int duelFreq = -1;
     
     TimerTask spawner, dying;
     TimerTask lagout;
@@ -167,10 +167,10 @@ public class DuelPlayer {
                 ba.specWithoutLock(name);
             ba.setFreq(name, freq);
         } else {
-            if (f != scrimFreq) {
-                bot.removeScrimChalls(scrimFreq);
-                challPartner = null;
-                scrimFreq = -1;
+            if (f != duelFreq) {
+                bot.removeChalls(duelFreq);
+                partner = null;
+                duelFreq = -1;
             }
             freq = f;
         }
@@ -205,10 +205,10 @@ public class DuelPlayer {
                 else
                     ba.specWithoutLock(name);
                 ba.sendPrivateMessage(name, "Invalid ship!");
-            } else if (shipNum == 0 && scrimFreq > -1 && challPartner != null) {
-                bot.removeScrimChalls(scrimFreq);
-                scrimFreq = -1;
-                challPartner = null;
+            } else if (shipNum == 0 && duelFreq > -1 && partner != null) {
+                bot.removeChalls(duelFreq);
+                duelFreq = -1;
+                partner = null;
                 ship = shipNum;
             } else 
                 ship = shipNum;
@@ -257,24 +257,6 @@ public class DuelPlayer {
                 team.safe(this);
         }
         status = statusID;
-    }
-    
-    public void doLagout() {
-        if (status != LAGGED) {
-            ba.sendPrivateMessage(name, "You are not lagged out.");
-            return;
-        }
-        setStatus(RETURN);
-        ba.cancelTask(lagout);
-        bot.laggers.remove(name.toLowerCase());
-        ba.sendPrivateMessage(name, "You have " + (d_maxLagouts - stats.getStat(StatType.LAGOUTS)) + " lagouts remaining.");
-        lastFoul = System.currentTimeMillis();
-        ba.setShip(name, ship);
-        ba.setFreq(name, freq);
-        if (team.game.state == DuelGame.IN_PROGRESS)
-            team.warp(this);
-        else if (team.game.state == DuelGame.SETUP)
-            team.safe(this);
     }
     
     public void handleReturn() {
@@ -330,6 +312,7 @@ public class DuelPlayer {
         spawner = new TimerTask() {
             @Override
             public void run() {
+                // BACKTRACK
                 if (status == PLAYING)
                     team.spawn(DuelPlayer.this);
                 else if (status == OUT)
@@ -337,6 +320,7 @@ public class DuelPlayer {
             }
         };
         ba.scheduleTask(spawner, d_deathTime * 1000);
+        // BACKTRACK
         team.game.updateScore();
     }
     
@@ -368,8 +352,10 @@ public class DuelPlayer {
                     ba.sendPrivateMessage(name, "Changing freq or ship is illegal in this league and if you do this again, you will forfeit.");
                 }
             }
+            // BACKTRACK
             team.warpWarper(this);
         } else if (team.game.state != DuelGame.IN_PROGRESS) {
+            // BACKTRACK
             team.safe(this);
         }else {
             ba.sendPrivateMessage(name, "You have forfeited due to warp abuse.");
@@ -399,12 +385,31 @@ public class DuelPlayer {
                 }
             };
             ba.scheduleTask(lagout, 60000);
+            // BACKTRACK
             bot.laggers.put(name.toLowerCase(), this);
-            team.lagout(name);
+            team.partnerLagout(name);
         } else {
             ba.sendSmartPrivateMessage(name, "You have exceeded the lagout limit and forfeit your duel.");
             remove(LAGOUTS);
         }
+    }
+    
+    public void doLagout() {
+        if (status != LAGGED) {
+            ba.sendPrivateMessage(name, "You are not lagged out.");
+            return;
+        }
+        setStatus(RETURN);
+        ba.cancelTask(lagout);
+        bot.laggers.remove(name.toLowerCase());
+        ba.sendPrivateMessage(name, "You have " + (d_maxLagouts - stats.getStat(StatType.LAGOUTS)) + " lagouts remaining.");
+        lastFoul = System.currentTimeMillis();
+        ba.setShip(name, ship);
+        ba.setFreq(name, freq);
+        if (team.game.state == DuelGame.IN_PROGRESS)
+            team.warpPlayer(this);
+        else if (team.game.state == DuelGame.SETUP)
+            team.safe(this);
     }
     
     public void setTeam(DuelTeam team) {
@@ -419,14 +424,14 @@ public class DuelPlayer {
         }
     }
     
-    public void setScrim(String name, int freq) {
-        challPartner = name;
-        scrimFreq = freq;
+    public void setDuel(String name, int freq) {
+        partner = name;
+        duelFreq = freq;
     }
     
-    public void cancelScrim() {
-        challPartner = null;
-        scrimFreq = -1;
+    public void cancelDuel() {
+        partner = null;
+        duelFreq = -1;
     }
     
     public String getName() {
@@ -441,7 +446,7 @@ public class DuelPlayer {
             @Override
             public void run() {
                 if (status == PLAYING)
-                    team.warp(DuelPlayer.this);
+                    team.warpPlayer(DuelPlayer.this);
                 else if (status == OUT)
                     remove(NORMAL);
             }

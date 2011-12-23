@@ -8,16 +8,16 @@ import twcore.core.BotSettings;
 
 public class DuelTeam {
 
-    BotAction ba;
-    BotSettings rules;
+    BotAction               ba;
+    BotSettings             rules;
 
     static final String db = "website";
 
-    int teamID;
-    int freq;
-    int score;
-    int div;
-    int ship;
+    int                     teamID;
+    int                     freq;
+    int                     score;
+    int                     div;
+    int                     ship;
 
     private int[] safe1, safe2, spawn1, spawn2;
 
@@ -26,26 +26,29 @@ public class DuelTeam {
     public static final int HERE = 1;
     public static final int GAME = 2;
 
-    int status;
+    int                     status;
 
-    boolean out;
-    boolean record;
+    boolean                 out;
 
-    TimerTask go;
-    String[] pname;
-    int[] userID;
-    DuelPlayer[] player;
-    DuelGame game;
-    duel2bot bot;
+    boolean                 ranked;
+
+    TimerTask               go;
+    String[]                pname;
+    int[]                   userID;
+    DuelPlayer[]            player;
+    DuelGame                game;
+    duel2bot                bot;
 
     public DuelTeam(duel2bot bot, int id, int freq, String[] names, int[] coords, DuelGame game) {
-        record = false;
+        ranked = game.ranked;
         this.bot = bot;
         this.game = game;
         ba = bot.ba;
         rules = game.rules;
         div = game.type;
         this.freq = freq;
+
+        // BACKTRACK
         bot.freqs.addElement(freq);
         player = new DuelPlayer[2];
         out = false;
@@ -53,6 +56,7 @@ public class DuelTeam {
         pname = names;
         teamID = id;
         status = HERE;
+
         // ships
         if (div == 1)
             ship = 1;
@@ -69,17 +73,12 @@ public class DuelTeam {
         spawn1 = new int[] { coords[0], coords[1] };
         safe2 = new int[] { coords[6], coords[7] };
         spawn2 = new int[] { coords[4], coords[5] };
+
+        // BACKTRACK
         player[0] = bot.players.get(names[0].toLowerCase());
         player[1] = bot.players.get(names[1].toLowerCase());
         player[0].setTeam(this);
         player[1].setTeam(this);
-
-    }
-
-    public DuelTeam(int id, String name) {
-        record = true;
-        teamID = id;
-
     }
 
     public void setScore(int s) {
@@ -121,6 +120,7 @@ public class DuelTeam {
     public void playerOut(DuelPlayer p) {
         if ((player[0].getStatus() == DuelPlayer.OUT) && (player[1].getStatus() == DuelPlayer.OUT))
             out = true;
+        // BACKTRACK
         game.playerOut(p);
     }
 
@@ -128,25 +128,27 @@ public class DuelTeam {
         return out;
     }
 
-    public void lagout(String name) {
+    public void partnerLagout(String name) {
         ba.sendPrivateMessage(getPartner(name),
                 "Your partner has lagged out or specced, and has 1 minute to return or will forefeit.");
+        // BACKTRACK
         game.lagout(teamID);
     }
 
-    public void opLagout() {
+    public void opponentLagout() {
         ba.sendPrivateMessage(pname[0],
                 "Your opponent has lagged out or specced, and has 1 minute to return or will forfeit.");
         ba.sendPrivateMessage(pname[1],
                 "Your opponent has lagged out or specced, and has 1 minute to return or will forfeit.");
     }
 
-    public void returned(String name) {
+    public void partnerReturned(String name) {
         ba.sendPrivateMessage(getPartner(name), "Your partner has returned from being lagged out.");
+        // BACKTRACK
         game.returned(teamID);
     }
 
-    public void opReturned() {
+    public void opponentReturned() {
         ba.sendPrivateMessage(pname[0], "Your opponent has returned from being lagged out.");
         ba.sendPrivateMessage(pname[1], "Your opponent has returned from being lagged out.");
     }
@@ -186,20 +188,22 @@ public class DuelTeam {
                 }
             }
         };
+
+        String r = ranked ? "[RANKED] " : "[CASUAL] ";
         if (mixed) {
-            ba.sendPrivateMessage(pname[0], "Duel Begins in 30 Seconds Against '" + nme[0]
+            ba.sendPrivateMessage(pname[0], r + "Duel Begins in 30 Seconds Against '" + nme[0]
                     + "' and '" + nme[1] + "'", 29);
             ba.sendPrivateMessage(pname[0],
                     "You may change your ship until that time! No ship changes will be allowed after the duel starts.");
-            ba.sendPrivateMessage(pname[1], "Duel Begins in 30 Seconds Against '" + nme[0]
+            ba.sendPrivateMessage(pname[1], r + "Duel Begins in 30 Seconds Against '" + nme[0]
                     + "' and '" + nme[1] + "'", 29);
             ba.sendPrivateMessage(pname[1],
                     "You may change your ship until that time! No ship changes will be allowed after the duel starts.");
             ba.scheduleTask(go, 30000);
         } else {
-            ba.sendPrivateMessage(pname[0], "Duel Begins in 15 Seconds Against '" + nme[0]
+            ba.sendPrivateMessage(pname[0], r + "Duel Begins in 15 Seconds Against '" + nme[0]
                     + "' and '" + nme[1] + "'", 27);
-            ba.sendPrivateMessage(pname[1], "Duel Begins in 15 Seconds Against '" + nme[0]
+            ba.sendPrivateMessage(pname[1], r + "Duel Begins in 15 Seconds Against '" + nme[0]
                     + "' and '" + nme[1] + "'", 27);
             ba.scheduleTask(go, 15000);
         }
@@ -207,6 +211,7 @@ public class DuelTeam {
 
     public void endGame() {
         ba.cancelTask(go);
+        // BACKTRACK
         bot.freqs.removeElement(freq);
         bot.playing.remove(pname[0].toLowerCase());
         bot.playing.remove(pname[1].toLowerCase());
@@ -218,7 +223,6 @@ public class DuelTeam {
         ship = 0;
         player[0].endGame();
         player[1].endGame();
-
     }
 
     public void spawn(DuelPlayer player) {
@@ -237,7 +241,7 @@ public class DuelTeam {
             player.warp(safe2[0], safe2[1]);
     }
 
-    public void warp(DuelPlayer player) {
+    public void warpPlayer(DuelPlayer player) {
         WarpPoint wp = game.box.getRandomWarpPoint();
         player.warp(wp.getXCoord(), wp.getYCoord());
     }
@@ -247,12 +251,12 @@ public class DuelTeam {
         player.warpWarper(wp.getXCoord(), wp.getYCoord());
     }
 
-    public void spawn() {
+    public void warpToSpawns() {
         player[0].warp(spawn1[0], spawn1[1]);
         player[1].warp(spawn2[0], spawn2[1]);
     }
 
-    public void safe() {
+    public void warpToSafes() {
         player[0].warp(safe1[0], safe1[1]);
         player[1].warp(safe2[0], safe2[1]);
     }
