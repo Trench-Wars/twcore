@@ -644,7 +644,7 @@ public class DuelPlayer {
         user = new UserData(ba, db, name, true);
         userID = user.getUserID();
         name = user.getUserName();
-        
+        bot.debug("SetupUser: " + userID + " " + name + "");
         // check if registered
         String query = "SELECT fnEnabled FROM tblDuel2__player WHERE fnUserID = " + userID + " LIMIT 1";
         ResultSet rs = null;

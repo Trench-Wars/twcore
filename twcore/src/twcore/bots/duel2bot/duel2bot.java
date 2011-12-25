@@ -104,7 +104,8 @@ public class duel2bot extends SubspaceBot{
         laggers = new HashMap<String, DuelPlayer>();
         challs = new HashMap<String, DuelChallenge>();
         freqs = new Vector<Integer>();
-        DEBUG = false;
+        DEBUG = true;
+        debugger = "WingZero";
     }
 
     @Override
@@ -158,6 +159,7 @@ public class duel2bot extends SubspaceBot{
         int type = event.getMessageType();
 
         if (type == Message.ARENA_MESSAGE) {
+            debug(msg);
             if (msg.startsWith("IP: ")) {
                 handleInfo(msg);
             }
