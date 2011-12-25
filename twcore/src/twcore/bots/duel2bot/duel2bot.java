@@ -159,8 +159,7 @@ public class duel2bot extends SubspaceBot{
         int type = event.getMessageType();
 
         if (type == Message.ARENA_MESSAGE) {
-            debug(msg);
-            if (msg.startsWith("IP: ")) {
+            if (msg.startsWith("IP:")) {
                 handleInfo(msg);
             }
         }
