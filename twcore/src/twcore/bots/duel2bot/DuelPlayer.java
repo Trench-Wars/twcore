@@ -619,9 +619,8 @@ public class DuelPlayer {
                     ids += ", " + rs.getInt(1);
                 sql_reportAlias(ids);
             } else {
-                ba.SQLClose(rs);
                 query = "INSERT INTO tblDuel2__player (fnUserID, fcIP, fnMID) VALUES(" + userID + ", '" + Tools.addSlashesToString(ip) + "', " + mid + ")";
-                ba.SQLQuery(db, query);
+                ba.SQLQueryAndClose(db, query);
                 registered = true;
                 ba.sendSmartPrivateMessage(name, "You have been successfully registered to play ranked team duels!");
             }
@@ -667,7 +666,7 @@ public class DuelPlayer {
                 registered = true;
             ba.SQLClose(rs);
             query = "SELECT fnActive FROM tblDuel2__ban WHERE fnUserID = " + userID + " AND fnActive = 1";
-            ba.SQLQuery(db, query);
+            rs = ba.SQLQuery(db, query);
             if (rs.next())
                 banned = true;
         } catch (SQLException e) {
