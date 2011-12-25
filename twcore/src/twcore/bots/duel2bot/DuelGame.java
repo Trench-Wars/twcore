@@ -1,5 +1,7 @@
 package twcore.bots.duel2bot;
 
+import java.sql.SQLException;
+
 import twcore.bots.duel2bot.DuelPlayer;
 import twcore.bots.duel2bot.DuelTeam;
 import twcore.bots.duel2bot.duel2bot;
@@ -50,7 +52,8 @@ public class DuelGame {
         d_spawnTime = bot.d_spawnTime;
         d_spawnLimit = bot.d_spawnLimit;
         d_maxLagouts = bot.d_maxLagouts;
-        id = bot.getID(chall.ranked);
+        ranked = chall.ranked;
+        id = bot.getID(ranked);
 
         // Ax1,Ay1,safeAx1,safeAy1,Ax2,Ay2,safeAx2,safeAy2
         int[] coords1 = new int[] { box.getAX1(), box.getAY1(), box.getSafeAX1(), box.getSafeAY1(),
@@ -147,10 +150,10 @@ public class DuelGame {
         ba.sendPrivateMessage(loser[1], "You and '" + loser[0] + "' have been defeated by '"
                 + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore
                 + ")");
-        ba.sendTeamMessage(ranked ? "[RANKED] " : "[SCRIM] " + "'" + winner[0] + " and '"
+        ba.sendTeamMessage(ranked ? "[RANKED] " : "[CASUAL] " + "'" + winner[0] + " and '"
                 + winner[1] + "' defeat '" + loser[0] + "' and '" + loser[1] + "' in "
                 + getDivision() + " score: (" + winnerScore + "-" + loserScore + ")", 21);
-
+        
         t1 = team1.getTeamID();
         t2 = team2.getTeamID();
 
@@ -168,6 +171,9 @@ public class DuelGame {
         names = team2.getNames();
         bot.playing.remove(names[0].toLowerCase());
         bot.playing.remove(names[1].toLowerCase());
+        
+        if (ranked)
+            sql_storeGame();
     }
 
     public void cancelGame(String name) {
@@ -233,5 +239,20 @@ public class DuelGame {
                     + "' is out due to spawn kill abuse", 26);
         }
         updateScore();
+    }
+    
+    public void sql_storeGame() {
+        //TODO:
+        String query = "INSERT INTO tblDuel2__match (fnDivision, fnTeam1, fnTeam2, fnScore1, fnScore2) VALUES(" +
+                    "" + type + ", ";
+        int t1 = team1.sql_storeTeam();
+        int t2 = team2.sql_storeTeam();
+        if (t1 < 0 || t2 < 0) return;
+        query += t1 + ", " + t2 + ", " + team2.getDeaths() + ", " + team1.getDeaths() + ")";
+        try {
+            ba.SQLQueryAndClose(db, query);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -153,17 +153,25 @@ public class duel2bot extends SubspaceBot{
 
     @Override
     public void handleEvent(Message event) {
-        String name = ba.getPlayerName(event.getPlayerID());
         String msg = event.getMessage();
         String cmd = msg.toLowerCase();
         int type = event.getMessageType();
 
+        if (type == Message.ARENA_MESSAGE) {
+            if (msg.startsWith("IP: ")) {
+                handleInfo(msg);
+            }
+        }
+        
+        String name = ba.getPlayerName(event.getPlayerID());
         if (oplist.isBotExact(name)) return;
 
         if (type == Message.PRIVATE_MESSAGE || type == Message.PUBLIC_MESSAGE) {
-            if (cmd.startsWith("!chr ") || cmd.startsWith("!challenge "))
+            if (cmd.equals("!signup"))
+                cmd_signup(name);
+            else if (cmd.startsWith("!chr ") || cmd.startsWith("!challenge "))
                 cmd_challenge(name, splitArgs(msg), true);
-            else if (cmd.startsWith("!chp ") || cmd.startsWith("!challengep "))
+            else if (cmd.startsWith("!ch ") || cmd.startsWith("!challenge "))
                 cmd_challenge(name, splitArgs(msg), false);
             else if (cmd.startsWith("!a ") || cmd.startsWith("!accept "))
                 cmd_accept(name, splitArgs(msg));
@@ -192,6 +200,18 @@ public class duel2bot extends SubspaceBot{
         }
     }
 
+    private void handleInfo(String msg) {
+        //Sorts information from *info
+        String[] pieces = msg.split("  ");
+        String name = pieces[3].substring(10);
+        DuelPlayer p = getPlayer(name);
+        if (p != null) {
+            String ip = pieces[0].substring(3);
+            String mid = pieces[5].substring(10);
+            p.sql_createPlayer(ip, mid);
+        }
+    }
+    
     @Override
     public void handleEvent(PlayerEntered event) {
         Player ptest = ba.getPlayer(event.getPlayerID());
@@ -295,6 +315,18 @@ public class duel2bot extends SubspaceBot{
         if (players.containsKey(name.toLowerCase()))
             players.get(name.toLowerCase()).handleFSC(event);
     }
+    
+    private void cmd_signup(String name) {
+        DuelPlayer p = getPlayer(name);
+        if (p == null) {
+            Player info = ba.getPlayer(name);
+            if (info == null) return;
+            p = new DuelPlayer(info, this);
+            players.put(name.toLowerCase(), p);
+        }
+        if (p != null)
+            p.doSignup();
+    }
 
     /** Handles the !debug command which enables or disables debug mode */
     private void cmd_debug(String name) {
@@ -383,7 +415,8 @@ public class duel2bot extends SubspaceBot{
      * @param args */
     private void cmd_challenge(String name, String[] args, boolean ranked) {
         if (args.length != 2) return;
-
+        // TODO: remove when not debugging
+        ranked = false;
         int div = -1;
         try {
             div = Integer.valueOf(args[1]);
@@ -408,13 +441,13 @@ public class duel2bot extends SubspaceBot{
         Player p = ba.getPlayer(name);
         if (ba.getFrequencySize(p.getFrequency()) != 2) {
             ba.sendPrivateMessage(name,
-                    "Your freq size must be 2 exactly players to challenge for a 2v2 duel.");
+                    "Your freq size must be 2 players exactly to challenge for a 2v2 duel.");
             return;
         }
         Player o = ba.getFuzzyPlayer(args[0]);
         if (o == null || ba.getFrequencySize(o.getFrequency()) != 2) {
             ba.sendPrivateMessage(name,
-                    "The enemy freq size must be 2 exactly players to challenge for a 2v2 duel.");
+                    "The enemy freq size must be 2 players exactly to challenge for a 2v2 duel.");
             return;
         }
 
@@ -441,11 +474,30 @@ public class duel2bot extends SubspaceBot{
             else
                 names2[0] = p2.getPlayerName();
         }
-
-        players.get(names1[0].toLowerCase()).setDuel(names1[1], freq1);
-        players.get(names1[1].toLowerCase()).setDuel(names1[0], freq1);
-        players.get(names2[0].toLowerCase()).setDuel(names2[1], freq2);
-        players.get(names2[1].toLowerCase()).setDuel(names2[0], freq2);
+        
+        DuelPlayer[] tests = new DuelPlayer[] {
+                players.get(names1[0].toLowerCase()),
+                players.get(names1[1].toLowerCase()),
+                players.get(names2[0].toLowerCase()),
+                players.get(names2[1].toLowerCase())
+        };
+        
+        if (ranked) {
+            boolean clear = true;
+            for (DuelPlayer dp : tests) {
+                if (!dp.canPlay()) {
+                    clear = false;
+                    ba.sendOpposingTeamMessageByFrequency(freq1, "[ERROR] Player not registered for ranked play: " + dp.getName());
+                }
+            }
+            if (!clear)
+                return;
+        }
+        
+        tests[0].setDuel(names1[1], freq1);
+        tests[1].setDuel(names1[0], freq1);
+        tests[2].setDuel(names2[1], freq2);
+        tests[3].setDuel(names2[0], freq2);
 
         final String key = "" + freq1 + " " + freq2 + "";
         if (challs.containsKey(key)) {
@@ -537,6 +589,10 @@ public class duel2bot extends SubspaceBot{
         else
             ba.sendPrivateMessage(name, "You are not lagged out.");
     }
+    
+    public DuelPlayer getPlayer(String name) {
+        return players.get(name.toLowerCase());
+    }
 
     /** Removes all challenges involving two specific freqs
      * 
@@ -614,7 +670,8 @@ public class duel2bot extends SubspaceBot{
      * 
      * @param division
      *            the division id number
-     * @return true if an open box exists */
+     * @return true if an open box exists 
+     */
     private boolean boxOpen(int division) {
         int i = 0;
         Iterator<String> it = boxes.keySet().iterator();

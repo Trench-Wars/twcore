@@ -1,6 +1,7 @@
 package twcore.bots.duel2bot;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.TimerTask;
 
 import twcore.core.BotAction;
@@ -284,4 +285,21 @@ public class DuelTeam {
         }
     }
 
+    
+    public int sql_storeTeam() {
+        // TODO: add in functionality for prior team ups
+        String query = "INSERT INTO tblDuel2__team (fnMatchID, fnUser1, fnUser2) VALUES(" + userID[0] + ", " + userID[1] + ")";
+        try {
+            ba.SQLQueryAndClose(db, query);
+            ResultSet rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
+            int id = rs.getInt(1);
+            ba.SQLClose(rs);
+            player[0].sql_storeStats(id);
+            player[1].sql_storeStats(id);
+            return id;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
 }
