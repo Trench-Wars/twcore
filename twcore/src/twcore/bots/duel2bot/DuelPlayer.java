@@ -107,18 +107,6 @@ public class DuelPlayer {
         sql_setupUser();
     }
 
-    public DuelPlayer(String name, duel2bot bot) {
-        this.name = name;
-        this.bot = bot;
-        team = null;
-        teams = new int[6];
-        ba = bot.ba;
-        rules = null;
-        freq = 9999;
-        getRules();
-        sql_setupUser();
-    }
-
     private void getRules() {
         d_season = bot.d_season;
         d_noCount = bot.d_noCount;

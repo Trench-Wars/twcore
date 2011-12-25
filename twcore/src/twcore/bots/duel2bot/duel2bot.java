@@ -232,7 +232,7 @@ public class duel2bot extends SubspaceBot{
             players.get(name.toLowerCase()).handleReturn();
 
         } else {
-            players.put(name.toLowerCase(), new DuelPlayer(name, this));
+            players.put(name.toLowerCase(), new DuelPlayer(ptest, this));
             ba.sendPrivateMessage(name, greet);
         }
     }
