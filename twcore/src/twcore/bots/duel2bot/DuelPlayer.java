@@ -14,7 +14,7 @@ import twcore.core.util.Tools;
 
 public class DuelPlayer {
 
-    boolean create, registered, banned;
+    boolean create, registered, banned, enabled;
     BotAction ba;
     Player player;
     BotSettings rules;
@@ -30,6 +30,8 @@ public class DuelPlayer {
     int out = -1;
 
     int userID;
+    int userMID;
+    String userIP;
 
     UserData user;
     DuelTeam team;
@@ -91,6 +93,9 @@ public class DuelPlayer {
         create = false;
         registered = false;
         banned = false;
+        enabled = false;
+        userMID = -1;
+        userIP = "";
         getRules();
         sql_setupUser();
     }
@@ -400,6 +405,20 @@ public class DuelPlayer {
             ba.sendUnfilteredPrivateMessage(name, "*info");
         }
     }
+    
+    public void doDisable() {
+        if (registered && !enabled && !banned)
+            sql_disablePlayer();
+        else 
+            ba.sendSmartPrivateMessage(name, "Could not disable because name is not registered/enabled or is banned.");
+    }
+    
+    public void doEnable() {
+        if (registered && !enabled && !banned)
+            sql_enablePlayer();
+        else
+            ba.sendSmartPrivateMessage(name, "A name can only be enabled if not banned and already registered but disabled");
+    }
 
     public void setTeam(DuelTeam team) {
         this.team = team;
@@ -428,7 +447,11 @@ public class DuelPlayer {
     }
     
     public boolean canPlay() {
-        return registered && !banned;
+        return registered && enabled && !banned;
+    }
+    
+    public boolean isEnabled() {
+        return enabled;
     }
     
     public boolean isRegistered() {
@@ -620,13 +643,50 @@ public class DuelPlayer {
         }
     }
     
+    private void sql_disablePlayer() {
+        String query = "UPDATE tblDuel2__player SET fnEnabled = 0 WHERE fnUserID = " + userID;
+        try {
+            ba.SQLQueryAndClose(db, query);
+            enabled = false;
+            create = false;
+            ba.sendSmartPrivateMessage(name, "Successfully disabled name from use in 2v2 TWEL duels. ");
+        } catch (SQLException e) {
+            bot.debug("[sql_disablePlayer] Could not disable: " + name);
+            e.printStackTrace();
+        }
+    }
+    
+    private void sql_enablePlayer() {
+        String query = "SELECT fnUserID FROM tblDuel2__player WHERE fnEnabled = 1 AND (fcIP = '" + userIP + "' OR (fcIP = '" + userIP + "' AND fnMID = " + userMID + ")) OR fnUserID = " + userID;
+        ResultSet rs = null;
+        try {
+            rs = ba.SQLQuery(db, query);
+            if (rs.next()) {
+                String ids = "" + rs.getInt(1);
+                while (rs.next())
+                    ids += ", " + rs.getInt(1);
+                sql_reportAlias(ids);
+            } else {
+                query = "UPDATE tblDuel2__player SET fnEnabled = 1 WHERE fnUserID = " + userID;
+                ba.SQLQueryAndClose(db, query);
+                enabled = true;
+                ba.sendSmartPrivateMessage(name, "You have been successfully registered to play ranked team duels!");
+            }
+        } catch (SQLException e) {
+            bot.debug("[sql_enablePlayer] Could not enable: " + name);
+            e.printStackTrace();
+        } finally {
+            ba.SQLClose(rs);
+        }
+    }
+    
     private void sql_reportAlias(String ids) {
         String query = "SELECT fcUserName FROM tblUser WHERE fnUserID IN (" + ids + ")";
         ResultSet rs = null;
         try {
             rs = ba.SQLQuery(db, query);
             if (rs.next()) {
-                String msg = "[ERROR] The following name(s) must first be disabled before you can register a different name: ";
+                String msg = "The following name(s) must first be disabled before you can register a different name: ";
                 msg += rs.getString(1);
                 while (rs.next())
                     msg += ", " + rs.getString(1);
@@ -646,12 +706,17 @@ public class DuelPlayer {
         name = user.getUserName();
         bot.debug("SetupUser: " + userID + " " + name + "");
         // check if registered
-        String query = "SELECT fnEnabled FROM tblDuel2__player WHERE fnUserID = " + userID + " LIMIT 1";
+        String query = "SELECT fnEnabled, fcIP, fnMID FROM tblDuel2__player WHERE fnUserID = " + userID + " LIMIT 1";
         ResultSet rs = null;
         try {
             rs = ba.SQLQuery(db, query);
-            if (rs.next() && rs.getInt("fnEnabled") == 1)
+            if (rs.next()) {
                 registered = true;
+                if (rs.getInt("fnEnabled") == 1)
+                    enabled = true;
+                userIP = rs.getString("fcIP");
+                userMID = rs.getInt("fnMID");
+            }
             ba.SQLClose(rs);
             query = "SELECT fnActive FROM tblDuel2__ban WHERE fnUserID = " + userID + " AND fnActive = 1";
             rs = ba.SQLQuery(db, query);

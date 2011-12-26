@@ -3,6 +3,7 @@ package twcore.bots.duel2bot;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.Vector;
 
 import twcore.bots.duel2bot.DuelBox;
@@ -104,6 +105,7 @@ public class duel2bot extends SubspaceBot{
         laggers = new HashMap<String, DuelPlayer>();
         challs = new HashMap<String, DuelChallenge>();
         freqs = new Vector<Integer>();
+        
         DEBUG = true;
         debugger = "WingZero";
     }
@@ -170,6 +172,10 @@ public class duel2bot extends SubspaceBot{
         if (type == Message.PRIVATE_MESSAGE || type == Message.PUBLIC_MESSAGE) {
             if (cmd.equals("!signup"))
                 cmd_signup(name);
+            else if (cmd.equals("!disable"))
+                cmd_disable(name);
+            else if (cmd.equals("!enable"))
+                cmd_enable(name);
             else if (cmd.startsWith("!chr ") || cmd.startsWith("!challenge "))
                 cmd_challenge(name, splitArgs(msg), true);
             else if (cmd.startsWith("!ch ") || cmd.startsWith("!challenge "))
@@ -180,7 +186,10 @@ public class duel2bot extends SubspaceBot{
                 cmd_lagout(name);
             else if (cmd.startsWith("!help") || (cmd.startsWith("!h")))
                 cmd_help(name);
-            else if (cmd.startsWith("!score")) cmd_score(name, msg);
+            else if (cmd.startsWith("!score")) 
+                cmd_score(name, msg);
+            else if (cmd.equals("!teams"))
+                cmd_teams(name);
         }
 
         if (oplist.isModerator(name)
@@ -198,18 +207,6 @@ public class duel2bot extends SubspaceBot{
             else if (cmd.startsWith("!freqs"))
                 cmd_freqs();
             else if (cmd.startsWith("!challs")) cmd_challs();
-        }
-    }
-
-    private void handleInfo(String msg) {
-        //Sorts information from *info
-        String[] pieces = msg.split("  ");
-        String name = pieces[3].substring(10);
-        DuelPlayer p = getPlayer(name);
-        if (p != null) {
-            String ip = pieces[0].substring(3);
-            String mid = pieces[5].substring(10);
-            p.sql_createPlayer(ip, mid);
         }
     }
     
@@ -316,6 +313,40 @@ public class duel2bot extends SubspaceBot{
         if (players.containsKey(name.toLowerCase()))
             players.get(name.toLowerCase()).handleFSC(event);
     }
+
+    private void handleInfo(String msg) {
+        //Sorts information from *info
+        String[] pieces = msg.split("  ");
+        String name = pieces[3].substring(10);
+        DuelPlayer p = getPlayer(name);
+        if (p != null) {
+            String ip = pieces[0].substring(3);
+            String mid = pieces[5].substring(10);
+            p.sql_createPlayer(ip, mid);
+        }
+    }
+
+    /** Handles the !help command */
+    private void cmd_help(String name) {
+        String[] help = {
+                "+-ABOUT-------------------------------------------------------------------------------------------------------+  ",
+                "   2v2 scrimmage dueling (non-league) is currently being developed for TWEL. No signup necessary for now, so ",
+                "   try it out and let us know what you think! Please message WingZero if there are any bugs/problems, thanks.",
+                "   When complete you'll be able to play 2v2 league duels or 2v2 scrim duels (like how it is now but together).",
+                "+-COMMANDS----------------------------------------------------------------------------------------------------+",
+                "  !ch <player>:<division number>          - Challenges the freq with <player> to a duel in <division num>",
+                "                                            * You must have exactly 2 players per freq",
+                "                                            * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
+                "  !a <player>                             - Accepts a challenge from <player>",
+                "  !teams                                  - Lists current teams eligible for ranked league play", 
+                "  !score <player>                         - Displays the score of <player>'s duel, if dueling",
+                "  !signup                                 - Registers for TWEL 2v2 league play",
+                "  !disable                                - Disables name to allow for the enabling of another name",
+                "  !enable                                 - Enables name if already registered but disabled" 
+                };
+
+        ba.privateMessageSpam(name, help);
+    }
     
     private void cmd_signup(String name) {
         DuelPlayer p = getPlayer(name);
@@ -327,6 +358,51 @@ public class duel2bot extends SubspaceBot{
         }
         if (p != null)
             p.doSignup();
+    }
+    
+    private void cmd_disable(String name) {
+        DuelPlayer p = getPlayer(name);
+        if (p == null) {
+            Player info = ba.getPlayer(name);
+            if (info == null) return;
+            p = new DuelPlayer(info, this);
+            players.put(name.toLowerCase(), p);
+        }
+        if (p != null)
+            p.doDisable();
+    }
+    
+    private void cmd_enable(String name) {
+        DuelPlayer p = getPlayer(name);
+        if (p == null) {
+            Player info = ba.getPlayer(name);
+            if (info == null) return;
+            p = new DuelPlayer(info, this);
+            players.put(name.toLowerCase(), p);
+        }
+        if (p != null)
+            p.doEnable();
+    }
+    
+    private void cmd_teams(String name) {
+        TreeMap<Integer, Player> freqs = new TreeMap<Integer, Player>();
+        Iterator<Player> i = ba.getPlayingPlayerIterator();
+        while (i.hasNext()) {
+            Player p = i.next();
+            if (ba.getFrequencySize(p.getFrequency()) == 2) {
+                DuelPlayer dp = getPlayer(p.getPlayerName());
+                if (dp != null) {
+                    if (dp.canPlay()) {
+                        if (freqs.containsKey(p.getFrequency()))
+                            ba.sendSmartPrivateMessage(name, "Team: '" + freqs.get(p.getFrequency()).getPlayerName() + "' and '" + p.getPlayerName() + "'");
+                        else
+                            freqs.put((int) p.getFrequency(), p);
+                    }
+                }
+            }
+        }
+        if (freqs.isEmpty())
+            ba.sendSmartPrivateMessage(name, "No eligable teams of two were found.");
     }
 
     /** Handles the !debug command which enables or disables debug mode */
@@ -390,24 +466,6 @@ public class duel2bot extends SubspaceBot{
             }
         } else
             ba.sendPrivateMessage(name, "Invalid syntax");
-    }
-
-    /** Handles the !help command */
-    private void cmd_help(String name) {
-        String[] help = {
-                "+-ABOUT-------------------------------------------------------------------------------------------------------+  ",
-                "   2v2 scrimmage dueling (non-league) is currently being developed for TWEL. No signup necessary for now, so ",
-                "   try it out and let us know what you think! Please message WingZero if there are any bugs/problems, thanks.",
-                "   When complete you'll be able to play 2v2 league duels or 2v2 scrim duels (like how it is now but together).",
-                "+-COMMANDS----------------------------------------------------------------------------------------------------+",
-                "  !ch <player>:<division number>          - Challenges the freq with <player> to a duel in <division num>",
-                "                                            * You must have exactly 2 players per freq",
-                "                                            * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
-                "  !a <player>                             - Accepts a challenge from <player>",
-                "  !score <player>                         - Displays the score of <player>'s duel, if dueling",
-                "   ... more to come                             " };
-
-        ba.privateMessageSpam(name, help);
     }
 
     /** Handles the !ch command
@@ -516,11 +574,11 @@ public class duel2bot extends SubspaceBot{
         DuelChallenge chall = new DuelChallenge(this, ba, ranked, freq1, freq2, names1, names2, div);
         challs.put(key, chall);
         ba.scheduleTask(chall, 60000);
-        ba.sendOpposingTeamMessageByFrequency(freq1, (ranked ? "" : "[SCRIM] ")
+        ba.sendOpposingTeamMessageByFrequency(freq1, (ranked ? "[RANKED] " : "[SCRIM] ")
                 + "You have challenged " + names2[0] + " and " + names2[1] + " to a "
                 + (ranked ? "RANKED " : "CASUAL ") + getDivision(div)
                 + " duel. This challenge will expire in 1 minute.", 26);
-        ba.sendOpposingTeamMessageByFrequency(freq2, (ranked ? "" : "[SCRIM] ")
+        ba.sendOpposingTeamMessageByFrequency(freq2, (ranked ? "[RANKED] " : "[SCRIM] ")
                 + "You are being challenged to a " + (ranked ? "RANKED " : "CASUAL ")
                 + getDivision(div) + " duel by " + names1[0] + " and " + names1[1]
                 + ". Use !a <name> (<name> is one of your opponenents) to accept.", 26);
