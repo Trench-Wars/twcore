@@ -421,7 +421,7 @@ public class DuelPlayer {
     }
     
     public void doDisable() {
-        if (registered && !enabled && !banned)
+        if (registered && enabled && !banned)
             sql_disablePlayer();
         else 
             ba.sendSmartPrivateMessage(name, "Could not disable because name is not registered/enabled or is banned.");

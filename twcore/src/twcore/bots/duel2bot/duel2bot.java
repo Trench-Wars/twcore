@@ -420,7 +420,7 @@ public class duel2bot extends SubspaceBot{
             }
         }
         if (freqs.isEmpty())
-            ba.sendSmartPrivateMessage(name, "No eligable teams of two were found.");
+            ba.sendSmartPrivateMessage(name, "No eligable teams of two could be found.");
     }
 
     /** Handles the !debug command which enables or disables debug mode */
