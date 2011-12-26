@@ -900,7 +900,7 @@ public class ElimGame {
         else
             type = " killrace to " + goal + " kills";
         String ret = "";
-        if (state == GameState.STARTING || state == GameState.STATS)
+        if (state != GameState.PLAYING)
             ret = "We are about to start " + ship.toString() + type;
         else
             ret = "We are playing " + ship.toString() + type;
