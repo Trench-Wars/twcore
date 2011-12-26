@@ -403,7 +403,7 @@ public class duel2bot extends SubspaceBot{
     }
     
     private void cmd_teams(String name) {
-        TreeMap<Integer, Player> freqs = new TreeMap<Integer, Player>();
+        TreeMap<Short, Player> freqs = new TreeMap<Short, Player>();
         Iterator<Player> i = ba.getPlayingPlayerIterator();
         while (i.hasNext()) {
             Player p = i.next();
@@ -414,7 +414,7 @@ public class duel2bot extends SubspaceBot{
                         if (freqs.containsKey(p.getFrequency()))
                             ba.sendSmartPrivateMessage(name, "Team: '" + freqs.get(p.getFrequency()).getPlayerName() + "' and '" + p.getPlayerName() + "'");
                         else
-                            freqs.put((int) p.getFrequency(), p);
+                            freqs.put(p.getFrequency(), p);
                     }
                 }
             }

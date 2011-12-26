@@ -647,9 +647,10 @@ public class DuelPlayer {
                 query = "INSERT INTO tblDuel2__player (fnUserID, fcIP, fnMID) VALUES(" + userID + ", '" + Tools.addSlashesToString(ip) + "', " + mid + ")";
                 ba.SQLQueryAndClose(db, query);
                 registered = true;
+                enabled = true;
                 ba.sendSmartPrivateMessage(name, "You have been successfully registered to play ranked team duels!");
                 if (staffer != null) {
-                    ba.sendSmartPrivateMessage(staffer, "Registration successful: " + name);
+                    ba.sendSmartPrivateMessage(staffer, "Registration successful for " + name);
                     staffer = null;
                 }
             }
