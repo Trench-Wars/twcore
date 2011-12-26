@@ -196,6 +196,8 @@ public class duel2bot extends SubspaceBot{
                 && (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE)) {
             if (cmd.startsWith("!die"))
                 ba.die();
+            else if (cmd.startsWith("!signup ") && cmd.length() > 9)
+                cmd_signup(name, msg);
             else if (cmd.startsWith("!debug"))
                 cmd_debug(name);
             else if (cmd.startsWith("!cancel"))
@@ -358,6 +360,22 @@ public class duel2bot extends SubspaceBot{
         }
         if (p != null)
             p.doSignup();
+    }
+    
+    private void cmd_signup(String name, String cmd) {
+        String pname = cmd.substring(cmd.indexOf(" ") + 1);
+        DuelPlayer p = getPlayer(pname);
+        if (p == null) {
+            Player info = ba.getPlayer(name);
+            if (info == null) {
+                ba.sendSmartPrivateMessage(name, "Player '" + pname + "' must be in the arena to be registered.");
+                return;
+            }
+            p = new DuelPlayer(info, this);
+            players.put(name.toLowerCase(), p);
+        }
+        if (p != null)
+            p.doSignup(name);
     }
     
     private void cmd_disable(String name) {

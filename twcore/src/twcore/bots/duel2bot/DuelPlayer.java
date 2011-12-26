@@ -32,6 +32,8 @@ public class DuelPlayer {
     int userID;
     int userMID;
     String userIP;
+    
+    String staffer;
 
     UserData user;
     DuelTeam team;
@@ -78,6 +80,7 @@ public class DuelPlayer {
     TimerTask lagout;
 
     public DuelPlayer(Player p, duel2bot bot) {
+        staffer = null;
         name = p.getPlayerName();
         this.bot = bot;
         team = null;
@@ -406,6 +409,17 @@ public class DuelPlayer {
         }
     }
     
+    public void doSignup(String staff) {
+        if (registered)
+            ba.sendSmartPrivateMessage(staff, name + " is already registered to play.");
+        else if (!banned) {
+            create = true;
+            staffer = staff;
+            bot.debug("[signup] Attempting to signup player: " + name);
+            ba.sendUnfilteredPrivateMessage(name, "*info");
+        }        
+    }
+    
     public void doDisable() {
         if (registered && !enabled && !banned)
             sql_disablePlayer();
@@ -436,7 +450,7 @@ public class DuelPlayer {
         partner = name;
         duelFreq = freq;
     }
-
+    
     public void cancelDuel() {
         partner = null;
         duelFreq = -1;
@@ -624,7 +638,7 @@ public class DuelPlayer {
         ResultSet rs = null;
         try {
             rs = ba.SQLQuery(db, query);
-            if (rs.next()) {
+            if (staffer == null && rs.next()) {
                 String ids = "" + rs.getInt(1);
                 while (rs.next())
                     ids += ", " + rs.getInt(1);
@@ -634,8 +648,13 @@ public class DuelPlayer {
                 ba.SQLQueryAndClose(db, query);
                 registered = true;
                 ba.sendSmartPrivateMessage(name, "You have been successfully registered to play ranked team duels!");
+                if (staffer != null) {
+                    ba.sendSmartPrivateMessage(staffer, "Registration successful: " + name);
+                    staffer = null;
+                }
             }
         } catch (SQLException e) {
+            staffer = null;
             bot.debug("[sql_createPlayer] Error creating player: " + name + " IP: " + ip + " MID: " + mid);
             e.printStackTrace();
         } finally {
