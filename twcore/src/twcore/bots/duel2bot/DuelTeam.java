@@ -7,6 +7,11 @@ import java.util.TimerTask;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 
+/**
+ * Manages and represents a team of two duel partners.
+ *
+ * @author WingZero
+ */
 public class DuelTeam {
 
     BotAction               ba;
@@ -28,9 +33,7 @@ public class DuelTeam {
     public static final int GAME = 2;
 
     int                     status;
-
     boolean                 out;
-
     boolean                 ranked;
 
     TimerTask               go;
@@ -41,13 +44,13 @@ public class DuelTeam {
     duel2bot                bot;
 
     public DuelTeam(duel2bot bot, int id, int freq, String[] names, int[] coords, DuelGame game) {
-        ranked = game.ranked;
         this.bot = bot;
         this.game = game;
+        this.freq = freq;
+        ranked = game.ranked;
         ba = bot.ba;
         rules = game.rules;
-        div = game.type;
-        this.freq = freq;
+        div = game.div;
 
         // BACKTRACK
         bot.freqs.addElement(freq);
@@ -111,7 +114,7 @@ public class DuelTeam {
             return -1;
     }
 
-    public boolean wasTK(String killee, String killer) {
+    public boolean checkTeamKill(String killee, String killer) {
         if (killer.equalsIgnoreCase(getPartner(killee)))
             return true;
         else
@@ -129,6 +132,7 @@ public class DuelTeam {
         return out;
     }
 
+    /** Sends a message to partner about partner lagout */
     public void partnerLagout(String name) {
         ba.sendPrivateMessage(getPartner(name),
                 "Your partner has lagged out or specced, and has 1 minute to return or will forefeit.");
@@ -136,6 +140,7 @@ public class DuelTeam {
         game.lagout(teamID);
     }
 
+    /** Sends messages to each player about an opponent lagout */
     public void opponentLagout() {
         ba.sendPrivateMessage(pname[0],
                 "Your opponent has lagged out or specced, and has 1 minute to return or will forfeit.");
@@ -143,17 +148,27 @@ public class DuelTeam {
                 "Your opponent has lagged out or specced, and has 1 minute to return or will forfeit.");
     }
 
+    /** Reports a partner return from lagout and calls game */
     public void partnerReturned(String name) {
         ba.sendPrivateMessage(getPartner(name), "Your partner has returned from being lagged out.");
         // BACKTRACK
         game.returned(teamID);
     }
 
+    /** Sends messages about an opponents return from lagout */
     public void opponentReturned() {
         ba.sendPrivateMessage(pname[0], "Your opponent has returned from being lagged out.");
         ba.sendPrivateMessage(pname[1], "Your opponent has returned from being lagged out.");
     }
 
+    /**
+     * Returns the name of the player's partner given the player's name.
+     *
+     * @param name
+     *      name String of the known player
+     * @return
+     *      name String of the unknown partner
+     */
     public String getPartner(String name) {
         if (name.equalsIgnoreCase(pname[0]))
             return pname[1];
@@ -161,6 +176,12 @@ public class DuelTeam {
             return pname[0];
     }
 
+    /**
+     * Returns the DuelPlayer object for the specified name if name is on team.
+     *
+     * @param name
+     * @return
+     */
     public DuelPlayer getPlayer(String name) {
         if (name.equalsIgnoreCase(pname[0]))
             return player[0];
@@ -174,7 +195,6 @@ public class DuelTeam {
         status = GAME;
         player[0].starting(ship, safe1[0], safe1[1]);
         player[1].starting(ship, safe2[0], safe2[1]);
-
         go = new TimerTask() {
             @Override
             public void run() {
@@ -189,7 +209,6 @@ public class DuelTeam {
                 }
             }
         };
-
         String r = ranked ? "[RANKED] " : "[CASUAL] ";
         if (mixed) {
             ba.sendPrivateMessage(pname[0], r + "Duel Begins in 30 Seconds Against '" + nme[0]
@@ -226,7 +245,7 @@ public class DuelTeam {
         player[1].endGame();
     }
 
-    public void spawn(DuelPlayer player) {
+    public void warpToSpawn(DuelPlayer player) {
         String name = player.getName();
         if (name.equalsIgnoreCase(pname[0]))
             player.warp(spawn1[0], spawn1[1]);
@@ -234,7 +253,7 @@ public class DuelTeam {
             player.warp(spawn2[0], spawn2[1]);
     }
 
-    public void safe(DuelPlayer player) {
+    public void warpToSafe(DuelPlayer player) {
         String name = player.getName();
         if (name.equalsIgnoreCase(pname[0]))
             player.warp(safe1[0], safe1[1]);
@@ -262,40 +281,17 @@ public class DuelTeam {
         player[1].warp(safe2[0], safe2[1]);
     }
 
-    public void sql_setup() {
-
-        ResultSet rs;
-        String query = "SELECT fnLeagueTypeID AS type, fnUser1ID AS id1, u1.fcUserName AS p1, fnUser2ID AS id2, u2.fcUserName AS p2 FROM tblDuel__2team JOIN tblUser u1 ON fnUser1ID = u1.fnUserID JOIN tblUser u2 ON fnUser2ID = u2.fnUserID WHERE fnSeason = "
-                + bot.d_season + " AND fnStatus = 1 AND fnTeamID = " + teamID + " LIMIT 1";
-
-        try {
-            rs = ba.SQLQuery(db, query);
-
-            if (rs.next()) {
-                div = rs.getInt("type");
-                userID = new int[] { rs.getInt("id1"), rs.getInt("id2") };
-                pname = new String[] { rs.getString("p1"), rs.getString("p2") };
-
-                bot.teams.put(teamID, this);
-            }
-
-            ba.SQLClose(rs);
-        } catch (Exception e) {
-            System.out.println("SQLException teamSetup for " + teamID);
-        }
-    }
-
-    
-    public int sql_storeTeam() {
+    /** Creates a new team in the database and returns the insert row (team id) */
+    public int sql_storeTeam(boolean won) {
         // TODO: add in functionality for prior team ups
-        String query = "INSERT INTO tblDuel2__team (fnMatchID, fnUser1, fnUser2) VALUES(" + userID[0] + ", " + userID[1] + ")";
+        String query = "INSERT INTO tblDuel2__team (fnUser1, fnUser2) VALUES(" + userID[0] + ", " + userID[1] + ")";
         try {
             ba.SQLQueryAndClose(db, query);
             ResultSet rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
             int id = rs.getInt(1);
             ba.SQLClose(rs);
-            player[0].sql_storeStats(id);
-            player[1].sql_storeStats(id);
+            player[0].sql_storeStats(id, won);
+            player[1].sql_storeStats(id, won);
             return id;
         } catch (SQLException e) {
             e.printStackTrace();

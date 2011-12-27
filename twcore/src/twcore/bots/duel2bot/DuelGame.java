@@ -7,7 +7,15 @@ import twcore.bots.duel2bot.DuelTeam;
 import twcore.bots.duel2bot.duel2bot;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
+import twcore.core.util.Tools;
 
+/**
+ * Manages and represents a 2v2 TWEL duel. Holds team and player objects
+ * and any immediate relevant information as well as methods involved in
+ * general duel management.
+ *
+ * @author WingZero
+ */
 public class DuelGame {
 
     BotAction           ba;
@@ -30,7 +38,7 @@ public class DuelGame {
     DuelBox             box;
 
     int                 id;
-    int                 type;
+    int                 div;
     int                 state;
     int[]               score;
     boolean             ranked;
@@ -42,7 +50,7 @@ public class DuelGame {
 
     public DuelGame(DuelBox box, DuelChallenge chall, BotAction botaction, duel2bot bot) {
         this.box = box;
-        type = chall.getDiv();
+        div = chall.getDiv();
         ba = botaction;
         this.bot = bot;
         state = SETUP;
@@ -71,6 +79,7 @@ public class DuelGame {
         bot.games.put(id, this);
     }
 
+    /** Reports the current scores to each team freq */
     public void updateScore() {
         int t2 = team1.getDeaths();
         int t1 = team2.getDeaths();
@@ -89,10 +98,12 @@ public class DuelGame {
                 + score[1], 26);
     }
 
+    /** Returns game state */
     public int getState() {
         return state;
     }
 
+    /** Returns a String describing the score of the duel */
     public String getScore() {
         String[] t1 = team1.getNames();
         String[] t2 = team2.getNames();
@@ -100,6 +111,7 @@ public class DuelGame {
                 + " and " + t2[1];
     }
 
+    /** Starts the duel, updates the bot collections and sends announcements */
     public void startGame() {
         if (team1 == null || team2 == null) return;
 
@@ -113,7 +125,7 @@ public class DuelGame {
         bot.playing.put(names2[1].toLowerCase(), id);
 
         score = new int[] { 0, 0 };
-        if (type == 5) {
+        if (div == 5) {
             team1.startGame(true, team2.getNames());
             team2.startGame(true, team1.getNames());
         } else {
@@ -124,8 +136,19 @@ public class DuelGame {
                 + names1[1] + "' VS '" + names2[0] + "' and '" + names2[1] + "'");
     }
 
+    /**
+     * Ends the duel by sending announcements and initiating post-game
+     * cleanup and database updating.
+     *
+     * @param t1
+     *      the final score for team 1
+     * @param t2
+     *      the final score for team 2
+     */
     public void endGame(int t1, int t2) {
         state = ENDING;
+        score[0] = t1;
+        score[1] = t2;
         String[] winner, loser;
         int winnerScore, loserScore;
         if (t1 > t2) {
@@ -176,6 +199,7 @@ public class DuelGame {
             sql_storeGame();
     }
 
+    /** Cancels the duel and notifies the name given */
     public void cancelGame(String name) {
         team1.endGame();
         team2.endGame();
@@ -183,6 +207,7 @@ public class DuelGame {
         ba.sendPrivateMessage(name, "Game cancelled.");
     }
 
+    /** Reports the lagout of a player to the opposing team */
     public void lagout(int id) {
         if (team1.getTeamID() == id)
             team2.opponentLagout();
@@ -190,6 +215,7 @@ public class DuelGame {
             team1.opponentLagout();
     }
 
+    /** Reports the return of a lagger to the opposing team */
     public void returned(int id) {
         if (team1.getTeamID() == id)
             team2.opponentReturned();
@@ -197,16 +223,17 @@ public class DuelGame {
             team1.opponentReturned();
     }
 
+    /** Converts the division ID into a String */
     public String getDivision() {
-        if (type == 1)
+        if (div == 1)
             return "Warbird";
-        else if (type == 2)
+        else if (div == 2)
             return "Javelin";
-        else if (type == 3)
+        else if (div == 3)
             return "Spider";
-        else if (type == 4 || type == 7)
+        else if (div == 4 || div == 7)
             return "Lancaster";
-        else if (type == 5)
+        else if (div == 5)
             return "Mixed";
         else
             return "Unknown";
@@ -214,7 +241,7 @@ public class DuelGame {
 
     // handle player position
     // call Player to warp
-
+    /** Reports a player removal and then updates scores */
     public void playerOut(DuelPlayer player) {
         int why = player.getReason();
         if (why == DuelPlayer.NORMAL) {
@@ -241,14 +268,26 @@ public class DuelGame {
         updateScore();
     }
     
+    /** Records the duel results in the database */
     public void sql_storeGame() {
         //TODO:
         String query = "INSERT INTO tblDuel2__match (fnDivision, fnTeam1, fnTeam2, fnScore1, fnScore2) VALUES(" +
-                    "" + type + ", ";
-        int t1 = team1.sql_storeTeam();
-        int t2 = team2.sql_storeTeam();
+                    "" + div + ", ";
+        int t1, t2;
+        if (score[0] > score[1]) {
+            t1 = team1.sql_storeTeam(true);
+            t2 = team2.sql_storeTeam(false);
+        } else if (score[0] < score[1]) {
+            t1 = team1.sql_storeTeam(false);
+            t2 = team2.sql_storeTeam(true);
+        } else {
+            bot.debug("[TEAMDUEL] Tied duel encountered.");
+            Tools.printLog("[TEAMDUEL] Tied duel encountered.");
+            return;
+        }
+            
         if (t1 < 0 || t2 < 0) return;
-        query += t1 + ", " + t2 + ", " + team2.getDeaths() + ", " + team1.getDeaths() + ")";
+        query += t1 + ", " + t2 + ", " + score[0] + ", " + score[1] + ")";
         try {
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {

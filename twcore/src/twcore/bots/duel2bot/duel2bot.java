@@ -1,5 +1,7 @@
 package twcore.bots.duel2bot;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
@@ -24,7 +26,9 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
+import twcore.core.events.SQLResultEvent;
 import twcore.core.game.Player;
+import twcore.core.util.Tools;
 
 /**
  * TeamDuel bot for TWEL 2v2 scrimmage and league play. Uses a more detailed
@@ -81,6 +85,7 @@ public class duel2bot extends SubspaceBot{
     HashMap<String, DuelChallenge> challs;
     // list of used frequencies
     Vector<Integer>                freqs;
+    TreeMap<String, String>        alias;
     
     public duel2bot(BotAction botAction) {
         super(botAction);
@@ -105,6 +110,7 @@ public class duel2bot extends SubspaceBot{
         laggers = new HashMap<String, DuelPlayer>();
         challs = new HashMap<String, DuelChallenge>();
         freqs = new Vector<Integer>();
+        alias = new TreeMap<String, String>();
         
         DEBUG = true;
         debugger = "WingZero";
@@ -196,6 +202,8 @@ public class duel2bot extends SubspaceBot{
                 && (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE)) {
             if (cmd.startsWith("!die"))
                 ba.die();
+            else if (cmd.startsWith("!alias ") && cmd.length() > 8)
+                cmd_alias(name, msg);
             else if (cmd.startsWith("!signup ") && cmd.length() > 9)
                 cmd_signup(name, msg);
             else if (cmd.startsWith("!debug"))
@@ -315,17 +323,67 @@ public class duel2bot extends SubspaceBot{
         if (players.containsKey(name.toLowerCase()))
             players.get(name.toLowerCase()).handleFSC(event);
     }
+    
+    public void handleEvent(SQLResultEvent event) {
+        ResultSet rs = event.getResultSet();
+        String[] args = event.getIdentifier().split(":");
+        try {
+            if (args[0].equals("info")) {
+                if (rs.next()) {
+                    String msg = "This name is registered";
+                    if (rs.getInt("on") == 1)
+                        msg += " and enabled for play.";
+                    else
+                        msg += " but disabled.";
+                    ba.sendSmartPrivateMessage(args[1], msg);
+                    String ip = rs.getString("ip");
+                    String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
+                    query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + rs.getInt("mid") + ")) OR fnUserID = " + rs.getInt("id");
+                    ba.SQLBackgroundQuery(DB, "alias:" + args[1], query);
+                } else {
+                    if (alias.containsKey(args[2].toLowerCase()))
+                        ba.sendSmartPrivateMessage(args[1], "Someone else is trying to alias check this player as well. Please try again later.");
+                    else {
+                        String msg = "This name is NOT registered.";
+                        ba.sendSmartPrivateMessage(args[1], msg);
+                        Player p = ba.getPlayer(args[2]);
+                        if (p != null) {
+                            alias.put(args[2].toLowerCase(), args[1]);
+                            ba.sendUnfilteredPrivateMessage(args[2], "*info");
+                        }
+                    }
+                }
+            } else if (args[0].equals("alias")) {
+                if (rs.next()) {
+                    String msg = "Registered aliases: " + rs.getString("n");
+                    while (rs.next())
+                        msg += ", " + rs.getString("n");
+                    ba.sendSmartPrivateMessage(args[1], msg);
+                }
+            }
+        } catch (SQLException e) {
+            debug("[SQL_ERROR] Exception handling SQLResultEvent with ID: " + event.getIdentifier());
+            e.printStackTrace();
+        } finally {
+            ba.SQLClose(rs);
+        }
+        
+    }
 
     private void handleInfo(String msg) {
         //Sorts information from *info
         String[] pieces = msg.split("  ");
         String name = pieces[3].substring(10);
-        DuelPlayer p = getPlayer(name);
-        if (p != null) {
-            String ip = pieces[0].substring(3);
-            String mid = pieces[5].substring(10);
-            p.sql_createPlayer(ip, mid);
+        String ip = pieces[0].substring(3);
+        String mid = pieces[5].substring(10);
+        if (alias.containsKey(name.toLowerCase())) {
+            String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
+            query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + "))";
+            ba.SQLBackgroundQuery(DB, "alias:" + alias.remove(name.toLowerCase()), query);
         }
+        DuelPlayer p = getPlayer(name);
+        if (p != null)
+            p.sql_createPlayer(ip, mid);
     }
 
     /** Handles the !help command */
@@ -400,6 +458,11 @@ public class duel2bot extends SubspaceBot{
         }
         if (p != null)
             p.doEnable();
+    }
+    
+    private void cmd_alias(String name, String cmd) {
+        String p = cmd.substring(cmd.indexOf(" ") + 1);
+        sql_getUserInfo(name, p);
     }
     
     private void cmd_teams(String name) {
@@ -665,6 +728,12 @@ public class duel2bot extends SubspaceBot{
             laggers.get(name.toLowerCase()).doLagout();
         else
             ba.sendPrivateMessage(name, "You are not lagged out.");
+    }
+    
+    private void sql_getUserInfo(String staff, String name) {
+        String query = "SELECT fnUserID as id, fnEnabled as on, fcIP as ip, fnMID as mid FROM tblDuel2__player WHERE fnUserID = (SELECT U.fnUserID FROM tblUser U WHERE U.fcUserName = '"
+                                    + Tools.addSlashesToString(name) + "' LIMIT 1) LIMIT 1";
+        ba.SQLBackgroundQuery(DB, "info:" + staff + ":" + name, query);
     }
     
     public DuelPlayer getPlayer(String name) {
