@@ -339,7 +339,7 @@ public class duel2bot extends SubspaceBot{
                     ba.sendSmartPrivateMessage(args[1], msg);
                     String ip = rs.getString("ip");
                     String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
-                    query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + rs.getInt("mid") + ")) OR fnUserID = " + rs.getInt("id");
+                    query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + rs.getInt("mid") + "))";
                     ba.SQLBackgroundQuery(DB, "alias:" + args[1], query);
                 } else {
                     if (alias.containsKey(args[2].toLowerCase()))
@@ -360,7 +360,8 @@ public class duel2bot extends SubspaceBot{
                     while (rs.next())
                         msg += ", " + rs.getString("n");
                     ba.sendSmartPrivateMessage(args[1], msg);
-                }
+                } else
+                    ba.sendSmartPrivateMessage(args[1], "No aliases found.");
             }
         } catch (SQLException e) {
             debug("[SQL_ERROR] Exception handling SQLResultEvent with ID: " + event.getIdentifier());
