@@ -942,7 +942,6 @@ public class elim extends SubspaceBot {
     
     /** Forces a zone message to be sent regardless of how long ago the last zoner was */
     public void cmd_zone(String name) {
-        lastZoner = 0;
         sendZoner();
     }
     
@@ -1322,8 +1321,10 @@ public class elim extends SubspaceBot {
     
     /** Sends periodic zone messages advertising elim and announcing streaks */
     private void sendZoner() {
-        if (lastZoner == -1) return;
-        else if ((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) return;
+        if (lastZoner == -1) 
+            return;
+        else if ((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) 
+            return;
         
         if (winStreak == 1)
             ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena + " to play -" + ba.getBotName());
