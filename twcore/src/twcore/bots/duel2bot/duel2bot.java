@@ -327,11 +327,12 @@ public class duel2bot extends SubspaceBot{
     public void handleEvent(SQLResultEvent event) {
         ResultSet rs = event.getResultSet();
         String[] args = event.getIdentifier().split(":");
+        debug("Got SQL event: " + event.getIdentifier());
         try {
             if (args[0].equals("info")) {
                 if (rs.next()) {
                     String msg = "This name is registered";
-                    if (rs.getInt("on") == 1)
+                    if (rs.getInt("e") == 1)
                         msg += " and enabled for play.";
                     else
                         msg += " but disabled.";
@@ -731,7 +732,7 @@ public class duel2bot extends SubspaceBot{
     }
     
     private void sql_getUserInfo(String staff, String name) {
-        String query = "SELECT fnUserID as id, fnEnabled as on, fcIP as ip, fnMID as mid FROM tblDuel2__player WHERE fnUserID = (SELECT U.fnUserID FROM tblUser U WHERE U.fcUserName = '"
+        String query = "SELECT P.fnUserID as id, P.fnEnabled as e, P.fcIP as ip, P.fnMID as mid FROM tblDuel2__player P WHERE P.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"
                                     + Tools.addSlashesToString(name) + "' LIMIT 1) LIMIT 1";
         ba.SQLBackgroundQuery(DB, "info:" + staff + ":" + name, query);
     }
