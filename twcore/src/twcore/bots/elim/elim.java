@@ -942,7 +942,14 @@ public class elim extends SubspaceBot {
     
     /** Forces a zone message to be sent regardless of how long ago the last zoner was */
     public void cmd_zone(String name) {
-        sendZoner();
+        if ((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) {
+            long dt = (MIN_ZONER * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - lastZoner);
+            int mins = (int) (dt / Tools.TimeInMillis.MINUTE);
+            int secs = (int) ((dt % Tools.TimeInMillis.MINUTE) / 60); 
+            ba.sendSmartPrivateMessage(name, "The next zoner will be available in " + mins + " minutes " + secs + " seconds");
+            return;
+        } else
+            sendZoner();
     }
     
     /** Sets the winner of the last elim event prompting end game routines and stores the finished game information to the database */
