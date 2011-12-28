@@ -297,7 +297,7 @@ public class forumbot extends SubspaceBot {
     private void cmdIP(String name, String ip) {
         try {
             long ip32Bit = make32BitIp(ip);
-            ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP LIKE " + ip32Bit + " ");
+            ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP LIKE '" + ip32Bit + "'");
             if (rs.next()) {
                 m_botAction.sendSmartPrivateMessage(name, "POSITIVE: That IP is assosiated with a player in game.");
                 m_botAction.SQLClose(rs);
