@@ -295,39 +295,32 @@ public class forumbot extends SubspaceBot {
     }
 
     private void cmdIP(String name, String ip) {
-            try {
-                long ip32Bit = make32BitIp(ip);
-                ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP = '" + ip32Bit + "'");
-                if (rs.next()) {
-                    m_botAction.sendSmartPrivateMessage(name, "POSITIVE: That IP is assosiated with a player in game.");
-                    m_botAction.SQLClose(rs);
-                } else {
-                    m_botAction.sendSmartPrivateMessage(name, "NEGATIVE: That IP does NOT belong to a player in game.");
-                    m_botAction.SQLClose(rs);
-                }
-            } catch (SQLException e) {
-                Tools.printStackTrace(e);
+        try {
+            long ip32Bit = make32BitIp(ip);
+            ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP = " + ip32Bit + " ");
+            if (rs.next()) {
+                m_botAction.sendSmartPrivateMessage(name, "POSITIVE: That IP is assosiated with a player in game.");
+                m_botAction.SQLClose(rs);
+            } else {
+                m_botAction.sendSmartPrivateMessage(name, "NEGATIVE: That IP does NOT belong to a player in game.");
+                m_botAction.SQLClose(rs);
             }
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
         }
+    }
 
-    
-    
-    private long make32BitIp(String ipString)
-    {
-        StringTokenizer stringTokens = new StringTokenizer(ipString, ".");
+    private long make32BitIp(String ip) {
+        StringTokenizer stringTokens = new StringTokenizer(ip, ".");
         String ipPart;
         long ip32Bit = 0;
 
-        try
-        {
-            while(stringTokens.hasMoreTokens())
-            {
+        try {
+            while (stringTokens.hasMoreTokens()) {
                 ipPart = stringTokens.nextToken();
                 ip32Bit = ip32Bit * 256 + Integer.parseInt(ipPart);
             }
-        }
-        catch(NumberFormatException e)
-        {
+        } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Error: Malformed IP Address.");
         }
 
