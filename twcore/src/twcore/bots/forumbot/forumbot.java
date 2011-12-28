@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.StringTokenizer;
 import java.util.TimerTask;
 
 import twcore.core.BotAction;
@@ -293,10 +294,8 @@ public class forumbot extends SubspaceBot {
     }
 
     private void cmdIP(String name, String ip) {
-        if (!Tools.isAllDigits(ip)) {
-            m_botAction.sendSmartPrivateMessage(name, "Malformed IP Address.");
-        } else {
             try {
+                long ip32Bit = make32BitIp(ip);
                 ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP = '" + Tools.addSlashesToString(ip) + "'");
                 if (rs.next()) {
                     m_botAction.sendSmartPrivateMessage(name, "The IP you gave me returned results that there is a player present in Trench Wars with that IP.");
@@ -310,6 +309,28 @@ public class forumbot extends SubspaceBot {
             }
         }
 
+    
+    
+    private long make32BitIp(String ipString)
+    {
+        StringTokenizer stringTokens = new StringTokenizer(ipString, ".");
+        String ipPart;
+        long ip32Bit = 0;
+
+        try
+        {
+            while(stringTokens.hasMoreTokens())
+            {
+                ipPart = stringTokens.nextToken();
+                ip32Bit = ip32Bit * 256 + Integer.parseInt(ipPart);
+            }
+        }
+        catch(NumberFormatException e)
+        {
+            throw new IllegalArgumentException("Error: Malformed IP Address.");
+        }
+
+        return ip32Bit;
     }
 
     private void cmdForceActivate(String name, String message) {
