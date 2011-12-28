@@ -542,6 +542,7 @@ public class DuelPlayer {
         ba.shipReset(name);
         ba.warpTo(name, 512, 502);
         out = -1;
+        team = null;
     }
 
     /** Decrements a death and sets status accordingly */
@@ -662,6 +663,7 @@ public class DuelPlayer {
         // TODO: add other fields (streaks)
         query += "fnLagouts = fnLagouts + " + stats.getStat(StatType.LAGOUTS) + " ";
         query += "WHERE fnSeason = " + d_season + " AND fnUserID = " + userID + " AND fnDivision = " + div;
+        bot.debug(query);
         try {
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {
