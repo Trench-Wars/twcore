@@ -98,7 +98,7 @@ public class forumbot extends SubspaceBot {
                 cmdForceActivate(name, message);
             } else if (message.startsWith("!info") && (isModerator || isForumAdmin)) {
                 cmdInfo(name, message);
-            } else if (message.startsWith("!ipuser") && (isForumAdmin)) {
+            } else if (message.startsWith("!ipuser") && (isForumAdmin || isSMod)) {
                 cmdIP(name, message.substring(8));
             } else if (message.startsWith("!go") && isSMod) {
                 cmdGo(name, message);
@@ -142,6 +142,7 @@ public class forumbot extends SubspaceBot {
                 "| !forceactivate <name>       - Activates the given <name>. This command should |",
                 "|                               be used with caution and only in rare situations|",
                 "| !ipuser xx.xx.xx.x          - Checks IP to see if a player is known in game.  |",
+                "| (^ Admin Only)                                                                |",
                 "| !info <name>                - Displays information about forum user           |", };
         String[] smodCommands = { "|-------------------------------   SMOD+   -------------------------------------|",
                 "| !go <arena>                 - Moves ForumBot to <arena>                       |",
@@ -296,12 +297,12 @@ public class forumbot extends SubspaceBot {
     private void cmdIP(String name, String ip) {
             try {
                 long ip32Bit = make32BitIp(ip);
-                ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP = '" + Tools.addSlashesToString(ip) + "'");
+                ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP = '" + ip32Bit + "'");
                 if (rs.next()) {
-                    m_botAction.sendSmartPrivateMessage(name, "The IP you gave me returned results that there is a player present in Trench Wars with that IP.");
+                    m_botAction.sendSmartPrivateMessage(name, "POSITIVE: That IP is assosiated with a player in game.");
                     m_botAction.SQLClose(rs);
                 } else {
-                    m_botAction.sendSmartPrivateMessage(name, "The IP you gave me returned no results that there is a player present with that IP.");
+                    m_botAction.sendSmartPrivateMessage(name, "NEGATIVE: That IP does NOT belong to a player in game.");
                     m_botAction.SQLClose(rs);
                 }
             } catch (SQLException e) {
