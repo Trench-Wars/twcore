@@ -619,8 +619,10 @@ public class DuelPlayer {
     }
 
     /** Prepares the player for a duel in the given ship and coordinates. */
-    public void starting(int shipNum, int x, int y) {
+    public void starting(int div, int shipNum, int x, int y) {
         if (status == LAGGED) return;
+        if (div != -1)
+            sql_checkDivision(div);
         setStatus(WARPING);
         if (shipNum > -1)
             ba.setShip(name, ship);
@@ -647,6 +649,11 @@ public class DuelPlayer {
             return;
         } else
             team.game.cancelGame(name);
+    }
+    
+    public void sql_checkDivision(int div) {
+        String query = "SELECT fnUserID FROM tblDuel2__league WHERE fnSeason = " + d_season + " AND fnDivision = " + div + " AND fnUserID = " + userID + " LIMIT 1";
+        ba.SQLBackgroundQuery(db, "league:" + userID + ":" + div, query);
     }
 
     public void sql_updateDivision(int div, boolean won) {

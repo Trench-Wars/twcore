@@ -40,7 +40,7 @@ import twcore.core.util.Tools;
  */
 public class duel2bot extends SubspaceBot{
 
-    public static final String DB = "website";
+    public static final String db = "website";
     final int MSG_LIMIT = 8;
     
     BotSettings settings;
@@ -279,7 +279,7 @@ public class duel2bot extends SubspaceBot{
                     String ip = rs.getString("ip");
                     String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
                     query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + rs.getInt("mid") + "))";
-                    ba.SQLBackgroundQuery(DB, "alias:" + args[1], query);
+                    ba.SQLBackgroundQuery(db, "alias:" + args[1], query);
                 } else {
                     if (alias.containsKey(args[2].toLowerCase()))
                         ba.sendSmartPrivateMessage(args[1], "Someone else is trying to alias check this player as well. Please try again later.");
@@ -301,6 +301,9 @@ public class duel2bot extends SubspaceBot{
                     ba.sendSmartPrivateMessage(args[1], msg);
                 } else
                     ba.sendSmartPrivateMessage(args[1], "No aliases found.");
+            } else if (args[0].equals("league")) {
+                if (!rs.next())
+                    ba.SQLQueryAndClose(db, "INSERT INTO tblDuel2__league (fnUserID, fnSeason, fnDivision) VALUES(" + args[1] + ", " + d_season + ", " + args[2] + ")");
             }
         } catch (SQLException e) {
             debug("[SQL_ERROR] Exception handling SQLResultEvent with ID: " + event.getIdentifier());
@@ -380,7 +383,7 @@ public class duel2bot extends SubspaceBot{
         if (alias.containsKey(name.toLowerCase())) {
             String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
             query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + "))";
-            ba.SQLBackgroundQuery(DB, "alias:" + alias.remove(name.toLowerCase()), query);
+            ba.SQLBackgroundQuery(db, "alias:" + alias.remove(name.toLowerCase()), query);
         }
         DuelPlayer p = getPlayer(name);
         if (p != null)
@@ -742,7 +745,7 @@ public class duel2bot extends SubspaceBot{
     private void sql_getUserInfo(String staff, String name) {
         String query = "SELECT P.fnUserID as id, P.fnEnabled as e, P.fcIP as ip, P.fnMID as mid FROM tblDuel2__player P WHERE P.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"
                                     + Tools.addSlashesToString(name) + "' LIMIT 1) LIMIT 1";
-        ba.SQLBackgroundQuery(DB, "info:" + staff + ":" + name, query);
+        ba.SQLBackgroundQuery(db, "info:" + staff + ":" + name, query);
     }
     
     public DuelPlayer getPlayer(String name) {

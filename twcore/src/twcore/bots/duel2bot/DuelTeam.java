@@ -194,8 +194,11 @@ public class DuelTeam {
 
     public void startGame(boolean mixed, String[] nme) {
         status = GAME;
-        player[0].starting(ship, safe1[0], safe1[1]);
-        player[1].starting(ship, safe2[0], safe2[1]);
+        int divis = div;
+        if (!ranked)
+            divis = -1;
+        player[0].starting(divis, ship, safe1[0], safe1[1]);
+        player[1].starting(divis, ship, safe2[0], safe2[1]);
         go = new TimerTask() {
             @Override
             public void run() {
@@ -289,6 +292,7 @@ public class DuelTeam {
         try {
             ba.SQLQueryAndClose(db, query);
             ResultSet rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
+            rs.next();
             int id = rs.getInt(1);
             ba.SQLClose(rs);
             player[0].sql_storeStats(id, won);
