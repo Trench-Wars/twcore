@@ -677,12 +677,11 @@ public class DuelPlayer {
      */
     public void sql_storeStats(int teamID, boolean won) {
         String query = "INSERT INTO tblDuel2__stats (fnTeamID, fnUserID, fnShip, fnKills, fnDeaths, fnShots, fnKillJoys, " + 
-                "fnKnockOuts, fnKillStreak, fnDeathStreak, fnLagouts) VALUES(";
-        query += "" + teamID + ", " + ship + ", " + stats.getStat(StatType.KILLS) + ", " + stats.getStat(StatType.DEATHS) + ", ";
-        query += stats.getStat(StatType.SHOTS) + ", " + stats.getStat(StatType.KILL_JOYS) + ", "; 
-        query += stats.getStat(StatType.KNOCK_OUTS) + ", ";
-        query += stats.getStat(StatType.BEST_KILL_STREAK) + ", " + stats.getStat(StatType.WORST_DEATH_STREAK) + ", ";
-        query += stats.getStat(StatType.LAGOUTS) + ")";
+                "fnKnockOuts, fnKillStreak, fnDeathStreak, fnLagouts) VALUES(" + teamID + ", " + userID + ", " + ship + ", " + stats.getStat(StatType.KILLS) + ", " + stats.getStat(StatType.DEATHS) + ", " +
+                stats.getStat(StatType.SHOTS) + ", " + stats.getStat(StatType.KILL_JOYS) + ", " + 
+                stats.getStat(StatType.KNOCK_OUTS) + ", " + 
+                stats.getStat(StatType.BEST_KILL_STREAK) + ", " + stats.getStat(StatType.WORST_DEATH_STREAK) + ", " +
+                stats.getStat(StatType.LAGOUTS) + ")";
         try {
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {
