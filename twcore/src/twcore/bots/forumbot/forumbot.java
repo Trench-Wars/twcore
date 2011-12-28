@@ -98,8 +98,8 @@ public class forumbot extends SubspaceBot {
                 cmdForceActivate(name, message);
             } else if (message.startsWith("!info") && (isModerator || isForumAdmin)) {
                 cmdInfo(name, message);
-            } else if (message.startsWith("!ipuser") && (isForumAdmin || isSMod)) {
-                cmdIP(name, message.substring(8));
+            } else if (message.startsWith("!ipuser ") && (isForumAdmin || isSMod)) {
+                cmdIP(name, message.substring(8).trim());
             } else if (message.startsWith("!go") && isSMod) {
                 cmdGo(name, message);
             } else if (message.startsWith("!die") && isSMod) {
