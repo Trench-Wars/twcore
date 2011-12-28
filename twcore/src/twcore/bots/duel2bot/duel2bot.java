@@ -356,6 +356,10 @@ public class duel2bot extends SubspaceBot{
                 && (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE)) {
             if (cmd.startsWith("!die"))
                 ba.die();
+            else if (cmd.startsWith("!ban ") && cmd.length() > 5)
+                cmd_ban(name, msg);
+            else if (cmd.startsWith("!unban ") && cmd.length() > 6)
+                cmd_unban(name, msg);
             else if (cmd.startsWith("!alias ") && cmd.length() > 8)
                 cmd_alias(name, msg);
             else if (cmd.startsWith("!signup ") && cmd.length() > 9)
@@ -370,7 +374,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_games();
             else if (cmd.startsWith("!freqs"))
                 cmd_freqs();
-            else if (cmd.startsWith("!challs")) cmd_challs();
+            else if (cmd.startsWith("!challs")) 
+                cmd_challs();
         }
     }
 
@@ -393,33 +398,37 @@ public class duel2bot extends SubspaceBot{
     /** Handles the !help command */
     private void cmd_help(String name) {
         String[] help = {
-                "+-ABOUT-------------------------------------------------------------------------------------------------------+  ",
-                "| This is a 2v2 TWEL duel arena, however, casual or scrimmage duels are also available. To play a casual duel ",
-                "| enter a ship with one other player on the same freq. Challenge another freq of two players using the !ch",
-                "| command. For ranked (league) duels all participants must be registered with !signup. Ranked challenges are",
-                "| sent using the !ch+ command.",
+                "+-ABOUT-------------------------------------------------------------------------------------------------------.",
+                "| This is a 2v2 TWEL duel arena, however, casual or scrimmage duels are also available. To play a casual duel |",
+                "| enter a ship with one other player on the same freq. Challenge another freq of two players using the !ch    |",
+                "| command. For ranked (league) duels all participants must be registered with !signup. Ranked challenges are  |",
+                "| sent using the !ch+ command.                                                                                |",
                 "+-COMMANDS----------------------------------------------------------------------------------------------------+",
-                "| !signup                                 - Registers you for 2v2 TWEL league duels",
-                "| !ch <player>:<division>                 - Challenges the freq with <player> to a CASUAL duel in <division#>",
-                "| !ch+ <player>:<division>                - Challenges the freq with <player> to a RANKED duel in <division>",
-                "|                                           * You must have exactly 2 players per freq",
-                "|                                           * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
-                "| !a <player>                             - Accepts a challenge from <player>",
-                "| !teams                                  - Lists current teams eligible for ranked league play", 
-                "| !score <player>                         - Displays the score of <player>'s duel, if dueling",
-                "| !disable                                - Disables name to allow for the enabling of another name",
-                "| !enable                                 - Enables name if already registered but disabled" 
+                "| !signup                                 - Registers you for 2v2 TWEL league duels                           |",
+                "| !ch <player>:<division>                 - Challenges the freq with <player> to a CASUAL duel in <division#> |",
+                "| !ch+ <player>:<division>                - Challenges the freq with <player> to a RANKED duel in <division>  |",
+                "|                                           * You must have exactly 2 players per freq                        |",
+                "|                                           * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed |",
+                "| !a <player>                             - Accepts a challenge from <player>                                 |",
+                "| !teams                                  - Lists current teams eligible for ranked league play               |", 
+                "| !score <player>                         - Displays the score of <player>'s duel, if dueling                 |",
+                "| !disable                                - Disables name to allow for the enabling of another name           |",
+                "| !enable                                 - Enables name if already registered but disabled                   |" 
                 };
         ba.privateMessageSpam(name, help);
         if (!oplist.isModerator(name)) return;
         help = new String[] {
-                "+-STAFF COMMANDS-----------------------------------------------------------------------------------------------+",
-                "| !alias <name>                           - Lists enabled aliases of <name>",
-                "| !signup <name>                          - Force registers name regardless of aliases",
-                "| !cancel <name>                          - Force cancels a duel involving <name>",
-                "| !die                                    - Kills the bot"        
+                "+-STAFF COMMANDS----------------------------------------------------------------------------------------------+",
+                "| !alias <name>                           - Lists enabled aliases of <name>                                   |",
+                "| !signup <name>                          - Force registers name regardless of aliases                        |",
+                "| !cancel <name>                          - Force cancels a duel involving <name>                             |",
+                //"| !ban <name>                             - Bans <name> from playing in 2v2 TWEL (effective after duel)       |",
+                //"| !unban <name>                           - Unbans <name> if banned                                           |",
+                "| !die                                    - Kills the bot                                                     |"        
         };
         ba.privateMessageSpam(name, help);
+        ba.sendPrivateMessage(name, 
+                "`-------------------------------------------------------------------------------------------------------------'");
     }
     
     private void cmd_signup(String name) {
@@ -477,6 +486,14 @@ public class duel2bot extends SubspaceBot{
     private void cmd_alias(String name, String cmd) {
         String p = cmd.substring(cmd.indexOf(" ") + 1);
         sql_getUserInfo(name, p);
+    }
+    
+    private void cmd_ban(String name, String cmd) {
+        
+    }
+    
+    private void cmd_unban(String name, String cmd) {
+        
     }
     
     private void cmd_teams(String name) {
