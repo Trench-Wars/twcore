@@ -159,66 +159,6 @@ public class duel2bot extends SubspaceBot{
             players.put(p.getPlayerName().toLowerCase(), new DuelPlayer(p, this));
         }
     }
-
-    @Override
-    public void handleEvent(Message event) {
-        String msg = event.getMessage();
-        String cmd = msg.toLowerCase();
-        int type = event.getMessageType();
-
-        if (type == Message.ARENA_MESSAGE) {
-            if (msg.startsWith("IP:")) {
-                handleInfo(msg);
-            }
-        }
-        
-        String name = ba.getPlayerName(event.getPlayerID());
-        if (oplist.isBotExact(name)) return;
-
-        if (type == Message.PRIVATE_MESSAGE || type == Message.PUBLIC_MESSAGE) {
-            if (cmd.equals("!signup"))
-                cmd_signup(name);
-            else if (cmd.equals("!disable"))
-                cmd_disable(name);
-            else if (cmd.equals("!enable"))
-                cmd_enable(name);
-            else if (cmd.startsWith("!chr ") || cmd.startsWith("!challenge "))
-                cmd_challenge(name, splitArgs(msg), true);
-            else if (cmd.startsWith("!ch ") || cmd.startsWith("!challenge "))
-                cmd_challenge(name, splitArgs(msg), false);
-            else if (cmd.startsWith("!a ") || cmd.startsWith("!accept "))
-                cmd_accept(name, splitArgs(msg));
-            else if (cmd.startsWith("!lagout"))
-                cmd_lagout(name);
-            else if (cmd.startsWith("!help") || (cmd.startsWith("!h")))
-                cmd_help(name);
-            else if (cmd.startsWith("!score")) 
-                cmd_score(name, msg);
-            else if (cmd.equals("!teams"))
-                cmd_teams(name);
-        }
-
-        if (oplist.isModerator(name)
-                && (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE)) {
-            if (cmd.startsWith("!die"))
-                ba.die();
-            else if (cmd.startsWith("!alias ") && cmd.length() > 8)
-                cmd_alias(name, msg);
-            else if (cmd.startsWith("!signup ") && cmd.length() > 9)
-                cmd_signup(name, msg);
-            else if (cmd.startsWith("!debug"))
-                cmd_debug(name);
-            else if (cmd.startsWith("!cancel"))
-                cmd_cancel(name, msg);
-            else if (cmd.startsWith("!players"))
-                cmd_players();
-            else if (cmd.startsWith("!games"))
-                cmd_games();
-            else if (cmd.startsWith("!freqs"))
-                cmd_freqs();
-            else if (cmd.startsWith("!challs")) cmd_challs();
-        }
-    }
     
     @Override
     public void handleEvent(PlayerEntered event) {
@@ -327,7 +267,6 @@ public class duel2bot extends SubspaceBot{
     public void handleEvent(SQLResultEvent event) {
         ResultSet rs = event.getResultSet();
         String[] args = event.getIdentifier().split(":");
-        debug("Got SQL event: " + event.getIdentifier());
         try {
             if (args[0].equals("info")) {
                 if (rs.next()) {
@@ -372,6 +311,66 @@ public class duel2bot extends SubspaceBot{
         
     }
 
+    @Override
+    public void handleEvent(Message event) {
+        String msg = event.getMessage();
+        String cmd = msg.toLowerCase();
+        int type = event.getMessageType();
+
+        if (type == Message.ARENA_MESSAGE) {
+            if (msg.startsWith("IP:")) {
+                handleInfo(msg);
+            }
+        }
+        
+        String name = ba.getPlayerName(event.getPlayerID());
+        if (oplist.isBotExact(name)) return;
+
+        if (type == Message.PRIVATE_MESSAGE || type == Message.PUBLIC_MESSAGE) {
+            if (cmd.equals("!signup"))
+                cmd_signup(name);
+            else if (cmd.equals("!disable"))
+                cmd_disable(name);
+            else if (cmd.equals("!enable"))
+                cmd_enable(name);
+            else if (cmd.startsWith("!ch+ ") || cmd.startsWith("!chr ") || cmd.startsWith("!challenge+ "))
+                cmd_challenge(name, splitArgs(msg), true);
+            else if (cmd.startsWith("!ch ") || cmd.startsWith("!challenge "))
+                cmd_challenge(name, splitArgs(msg), false);
+            else if (cmd.startsWith("!a ") || cmd.startsWith("!accept "))
+                cmd_accept(name, splitArgs(msg));
+            else if (cmd.startsWith("!lagout"))
+                cmd_lagout(name);
+            else if (cmd.startsWith("!help") || (cmd.startsWith("!h")))
+                cmd_help(name);
+            else if (cmd.startsWith("!score")) 
+                cmd_score(name, msg);
+            else if (cmd.equals("!teams"))
+                cmd_teams(name);
+        }
+
+        if (oplist.isModerator(name)
+                && (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE)) {
+            if (cmd.startsWith("!die"))
+                ba.die();
+            else if (cmd.startsWith("!alias ") && cmd.length() > 8)
+                cmd_alias(name, msg);
+            else if (cmd.startsWith("!signup ") && cmd.length() > 9)
+                cmd_signup(name, msg);
+            else if (cmd.startsWith("!debug"))
+                cmd_debug(name);
+            else if (cmd.startsWith("!cancel"))
+                cmd_cancel(name, msg);
+            else if (cmd.startsWith("!players"))
+                cmd_players();
+            else if (cmd.startsWith("!games"))
+                cmd_games();
+            else if (cmd.startsWith("!freqs"))
+                cmd_freqs();
+            else if (cmd.startsWith("!challs")) cmd_challs();
+        }
+    }
+
     private void handleInfo(String msg) {
         //Sorts information from *info
         String[] pieces = msg.split("  ");
@@ -392,21 +391,31 @@ public class duel2bot extends SubspaceBot{
     private void cmd_help(String name) {
         String[] help = {
                 "+-ABOUT-------------------------------------------------------------------------------------------------------+  ",
-                "   2v2 scrimmage dueling (non-league) is currently being developed for TWEL. No signup necessary for now, so ",
-                "   try it out and let us know what you think! Please message WingZero if there are any bugs/problems, thanks.",
-                "   When complete you'll be able to play 2v2 league duels or 2v2 scrim duels (like how it is now but together).",
+                "| This is a 2v2 TWEL duel arena, however, casual or scrimmage duels are also available. To play a casual duel ",
+                "| enter a ship with one other player on the same freq. Challenge another freq of two players using the !ch",
+                "| command. For ranked (league) duels all participants must be registered with !signup. Ranked challenges are",
+                "| sent using the !ch+ command.",
                 "+-COMMANDS----------------------------------------------------------------------------------------------------+",
-                "  !ch <player>:<division number>          - Challenges the freq with <player> to a duel in <division num>",
-                "                                            * You must have exactly 2 players per freq",
-                "                                            * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
-                "  !a <player>                             - Accepts a challenge from <player>",
-                "  !teams                                  - Lists current teams eligible for ranked league play", 
-                "  !score <player>                         - Displays the score of <player>'s duel, if dueling",
-                "  !signup                                 - Registers for TWEL 2v2 league play",
-                "  !disable                                - Disables name to allow for the enabling of another name",
-                "  !enable                                 - Enables name if already registered but disabled" 
+                "| !signup                                 - Registers you for 2v2 TWEL league duels",
+                "| !ch <player>:<division>                 - Challenges the freq with <player> to a CASUAL duel in <division#>",
+                "| !ch+ <player>:<division>                - Challenges the freq with <player> to a RANKED duel in <division>",
+                "|                                           * You must have exactly 2 players per freq",
+                "|                                           * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed",
+                "| !a <player>                             - Accepts a challenge from <player>",
+                "| !teams                                  - Lists current teams eligible for ranked league play", 
+                "| !score <player>                         - Displays the score of <player>'s duel, if dueling",
+                "| !disable                                - Disables name to allow for the enabling of another name",
+                "| !enable                                 - Enables name if already registered but disabled" 
                 };
-
+        ba.privateMessageSpam(name, help);
+        if (!oplist.isModerator(name)) return;
+        help = new String[] {
+                "+-STAFF COMMANDS-----------------------------------------------------------------------------------------------+",
+                "| !alias <name>                           - Lists enabled aliases of <name>",
+                "| !signup <name>                          - Force registers name regardless of aliases",
+                "| !cancel <name>                          - Force cancels a duel involving <name>",
+                "| !die                                    - Kills the bot"        
+        };
         ba.privateMessageSpam(name, help);
     }
     
@@ -557,8 +566,6 @@ public class duel2bot extends SubspaceBot{
      * @param args */
     private void cmd_challenge(String name, String[] args, boolean ranked) {
         if (args.length != 2) return;
-        // TODO: remove when not debugging
-        ranked = false;
         int div = -1;
         try {
             div = Integer.valueOf(args[1]);
