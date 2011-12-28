@@ -176,6 +176,9 @@ public class DuelGame {
         ba.sendTeamMessage(ranked ? "[RANKED] " : "[CASUAL] " + "'" + winner[0] + " and '"
                 + winner[1] + "' defeat '" + loser[0] + "' and '" + loser[1] + "' in "
                 + getDivision() + " score: (" + winnerScore + "-" + loserScore + ")", 21);
+
+        if (ranked)
+            sql_storeGame();
         
         t1 = team1.getTeamID();
         t2 = team2.getTeamID();
@@ -194,9 +197,6 @@ public class DuelGame {
         names = team2.getNames();
         bot.playing.remove(names[0].toLowerCase());
         bot.playing.remove(names[1].toLowerCase());
-        
-        if (ranked)
-            sql_storeGame();
     }
 
     /** Cancels the duel and notifies the name given */

@@ -536,7 +536,6 @@ public class DuelPlayer {
             status = SPEC;
         else
             status = IN;
-        team = null;
         ba.cancelTask(lagout);
         ba.cancelTask(spawner);
         ba.cancelTask(dying);
