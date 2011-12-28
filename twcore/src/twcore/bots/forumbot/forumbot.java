@@ -296,8 +296,7 @@ public class forumbot extends SubspaceBot {
 
     private void cmdIP(String name, String ip) {
         try {
-            long ip32Bit = make32BitIp(ip);
-            ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP LIKE '" + ip32Bit + "'");
+            ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP LIKE '" + Tools.addSlashesToString(ip) + "'");
             if (rs.next()) {
                 m_botAction.sendSmartPrivateMessage(name, "POSITIVE: That IP is assosiated with a player in game.");
                 m_botAction.SQLClose(rs);
@@ -308,23 +307,6 @@ public class forumbot extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
-    }
-
-    private long make32BitIp(String ip) {
-        StringTokenizer stringTokens = new StringTokenizer(ip, ".");
-        String ipPart;
-        long ip32Bit = 0;
-
-        try {
-            while (stringTokens.hasMoreTokens()) {
-                ipPart = stringTokens.nextToken();
-                ip32Bit = ip32Bit * 256 + Integer.parseInt(ipPart);
-            }
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Error: Malformed IP Address.");
-        }
-
-        return ip32Bit;
     }
 
     private void cmdForceActivate(String name, String message) {
