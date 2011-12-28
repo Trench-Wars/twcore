@@ -658,10 +658,10 @@ public class DuelPlayer {
 
     public void sql_updateDivision(int div, boolean won) {
         String query = "UPDATE tblDuel2__league SET ";
-        query += (won ? ("fnWins += 1") : ("fnLosses += 1"));
-        query += "fnKills += " + stats.getStat(StatType.KILLS) + ", fnDeaths += " + stats.getStat(StatType.DEATHS) + " ";
+        query += (won ? ("fnWins = fnWins + 1") : ("fnLosses = fnLosses + 1"));
+        query += "fnKills = fnKills + " + stats.getStat(StatType.KILLS) + ", fnDeaths = fnDeaths + " + stats.getStat(StatType.DEATHS) + " ";
         // TODO: add other fields (streaks)
-        query += "fnLagouts += " + stats.getStat(StatType.LAGOUTS) + " ";
+        query += "fnLagouts = fnLagouts + " + stats.getStat(StatType.LAGOUTS) + " ";
         query += "WHERE fnSeason = " + d_season + " AND fnUserID = " + userID + " AND fnDivision = " + div;
         try {
             ba.SQLQueryAndClose(db, query);
