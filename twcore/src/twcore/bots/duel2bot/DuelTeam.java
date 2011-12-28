@@ -83,8 +83,7 @@ public class DuelTeam {
         player[1] = bot.players.get(names[1].toLowerCase());
         player[0].setTeam(this);
         player[1].setTeam(this);
-        userID[0] = player[0].userID;
-        userID[1] = player[1].userID;
+        userID = new int[] { player[0].userID, player[1].userID };
     }
 
     public void setScore(int s) {
