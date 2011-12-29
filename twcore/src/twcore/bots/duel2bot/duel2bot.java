@@ -358,6 +358,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_score(name, msg);
             else if (cmd.equals("!teams"))
                 cmd_teams(name);
+            else if (cmd.equals("!rating"))
+                cmd_rating(name);
         }
 
         if (oplist.isModerator(name)
@@ -489,6 +491,18 @@ public class duel2bot extends SubspaceBot{
         }
         if (p != null)
             p.doEnable();
+    }
+    
+    private void cmd_rating(String name) {
+        DuelPlayer p = getPlayer(name);
+        if (p == null) {
+            Player info = ba.getPlayer(name);
+            if (info == null) return;
+            p = new DuelPlayer(info, this);
+            players.put(name.toLowerCase(), p);
+        }
+        if (p != null)
+            p.doRating();
     }
     
     private void cmd_alias(String name, String cmd) {

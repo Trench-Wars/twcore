@@ -449,6 +449,10 @@ public class DuelPlayer {
         else
             ba.sendSmartPrivateMessage(name, "A name can only be enabled if not banned and already registered but disabled");
     }
+    
+    public void doRating() {
+        ba.sendPrivateMessage(name, "Current rating: " + rating);
+    }
 
     /**
      * Sets the player as part of a team.
