@@ -453,6 +453,10 @@ public class DuelPlayer {
     public void doRating() {
         ba.sendPrivateMessage(name, "Current rating: " + rating);
     }
+    
+    public void doRec() {
+        ba.sendPrivateMessage(name, "" + getKills() + ":" + getDeaths());
+    }
 
     /**
      * Sets the player as part of a team.
@@ -678,7 +682,7 @@ public class DuelPlayer {
         // TODO: add other fields (streaks)
         query += "fnLagouts = fnLagouts + " + stats.getStat(StatType.LAGOUTS) + " ";
         query += "WHERE fnSeason = " + d_season + " AND fnUserID = " + userID + " AND fnDivision = " + div;
-        bot.debug(query);
+
         try {
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {

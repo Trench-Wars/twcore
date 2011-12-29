@@ -190,7 +190,7 @@ public class DuelGame {
         
         int drLoser1 = (int) (drLoss * ratio[0]);
         int drLoser2 = (int) (drLoss * ratio[1]);
-        ba.sendPublicMessage("[RATING] (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
+        //ba.sendPublicMessage("[RATING] (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
         loss[0].setRating(loss[0].getRating() + drLoser1);
         loss[1].setRating(loss[1].getRating() + drLoser2);
         
@@ -205,7 +205,7 @@ public class DuelGame {
         
         int drWinner1 = (int) (drWin * ratio[0]);
         int drWinner2 = (int) (drWin * ratio[1]);
-        ba.sendPublicMessage("[RATING] (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
+        //ba.sendPublicMessage("[RATING] (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
         win[0].setRating(win[0].getRating() + drWinner1);
         win[1].setRating(win[1].getRating() + drWinner2);
         
@@ -291,19 +291,19 @@ public class DuelGame {
                     + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
         } else if (why == DuelPlayer.WARPS) {
             ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "'" + player.getName()
-                    + "' is out due to warp abuse", 26);
+                    + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
             ba.sendOpposingTeamMessageByFrequency(team2.getFreq(), "'" + player.getName()
-                    + "' is out due to warp abuse", 26);
+                    + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         } else if (why == DuelPlayer.LAGOUTS) {
             ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "'" + player.getName()
-                    + "' is out due to lagouts", 26);
+                    + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
             ba.sendOpposingTeamMessageByFrequency(team2.getFreq(), "'" + player.getName()
-                    + "' is out due to lagouts", 26);
+                    + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         } else if (why == DuelPlayer.SPAWNS) {
             ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "'" + player.getName()
-                    + "' is out due to spawn kill abuse", 26);
+                    + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
             ba.sendOpposingTeamMessageByFrequency(team2.getFreq(), "'" + player.getName()
-                    + "' is out due to spawn kill abuse", 26);
+                    + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         }
         updateScore();
     }

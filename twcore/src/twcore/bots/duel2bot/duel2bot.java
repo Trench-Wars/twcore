@@ -360,6 +360,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_teams(name);
             else if (cmd.equals("!rating"))
                 cmd_rating(name);
+            else if (cmd.equals("!rec"))
+                cmd_rec(name);
         }
 
         if (oplist.isModerator(name)
@@ -423,7 +425,8 @@ public class duel2bot extends SubspaceBot{
                 "| !teams                                  - Lists current teams eligible for ranked league play               |", 
                 "| !score <player>                         - Displays the score of <player>'s duel, if dueling                 |",
                 "| !disable                                - Disables name to allow for the enabling of another name           |",
-                "| !enable                                 - Enables name if already registered but disabled                   |" 
+                "| !enable                                 - Enables name if already registered but disabled                   |",
+                "| !rec                                    - Shows your current record if dueling                              |",  
                 };
         ba.privateMessageSpam(name, help);
         if (!oplist.isModerator(name)) return;
@@ -495,14 +498,15 @@ public class duel2bot extends SubspaceBot{
     
     private void cmd_rating(String name) {
         DuelPlayer p = getPlayer(name);
-        if (p == null) {
-            Player info = ba.getPlayer(name);
-            if (info == null) return;
-            p = new DuelPlayer(info, this);
-            players.put(name.toLowerCase(), p);
-        }
         if (p != null)
             p.doRating();
+    }
+    
+    private void cmd_rec(String name) {
+        if (playing.containsKey(name.toLowerCase()))
+            getPlayer(name).doRec();
+        else
+            ba.sendPrivateMessage(name, "You are not dueling.");
     }
     
     private void cmd_alias(String name, String cmd) {
