@@ -190,9 +190,9 @@ public class DuelGame {
         
         int drLoser1 = (int) (drLoss * ratio[0]);
         int drLoser2 = (int) (drLoss * ratio[1]);
-        bot.debug("[RATING] drLoser1=" + drLoser1 + " drLoser2=" + drLoser2);
-        loss[0].setRating(loss[0].getRating() - drLoser1);
-        loss[1].setRating(loss[1].getRating() - drLoser2);
+        ba.sendPublicMessage("[RATING] (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
+        loss[0].setRating(loss[0].getRating() + drLoser1);
+        loss[1].setRating(loss[1].getRating() + drLoser2);
         
         // winners
         kills = new int[] { win[0].getKills() + 1, win[1].getKills() + 1 };
@@ -205,7 +205,7 @@ public class DuelGame {
         
         int drWinner1 = (int) (drWin * ratio[0]);
         int drWinner2 = (int) (drWin * ratio[1]);
-        bot.debug("[RATING] drWinner1=" + drWinner1 + " drWinner2=" + drWinner2);
+        ba.sendPublicMessage("[RATING] (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
         win[0].setRating(win[0].getRating() + drWinner1);
         win[1].setRating(win[1].getRating() + drWinner2);
         
