@@ -35,6 +35,7 @@ public class DuelPlayer {
     int status = 0;
     int out = -1;
 
+    int rating;
     int userID;
     int userMID;
     String userIP;
@@ -95,6 +96,7 @@ public class DuelPlayer {
         rules = null;
         freq = p.getFrequency();
         ship = p.getShipType();
+        rating = 1000;
         if (ship > 0)
             status = IN;
         else
@@ -476,6 +478,10 @@ public class DuelPlayer {
         duelFreq = freq;
     }
     
+    public void setRating(int r) {
+        rating = r;
+    }
+    
     /** Resets partner and duel freq (-1). */
     public void cancelDuel() {
         partner = null;
@@ -580,6 +586,10 @@ public class DuelPlayer {
     public void setStatus(int s) {
         status = s;
     }
+    
+    public int getRating() {
+        return rating;
+    }
 
     /**
      * Removes the player from the duel and reports the reason for it.
@@ -652,13 +662,14 @@ public class DuelPlayer {
     }
     
     public void sql_checkDivision(int div) {
-        String query = "SELECT fnUserID FROM tblDuel2__league WHERE fnSeason = " + d_season + " AND fnDivision = " + div + " AND fnUserID = " + userID + " LIMIT 1";
-        ba.SQLBackgroundQuery(db, "league:" + userID + ":" + div, query);
+        String query = "SELECT fnUserID, fnRating FROM tblDuel2__league WHERE fnSeason = " + d_season + " AND fnDivision = " + div + " AND fnUserID = " + userID + " LIMIT 1";
+        ba.SQLBackgroundQuery(db, "league:" + userID + ":" + div + ":" + name, query);
     }
 
     public void sql_updateDivision(int div, boolean won) {
         String query = "UPDATE tblDuel2__league SET ";
         query += (won ? ("fnWins = fnWins + 1, ") : ("fnLosses = fnLosses + 1, "));
+        query += "fnRating = " + rating + ", ";
         query += "fnKills = fnKills + " + stats.getStat(StatType.KILLS) + ", fnDeaths = fnDeaths + " + stats.getStat(StatType.DEATHS) + ", ";
         // TODO: add other fields (streaks)
         query += "fnLagouts = fnLagouts + " + stats.getStat(StatType.LAGOUTS) + " ";
@@ -829,5 +840,17 @@ public class DuelPlayer {
         }
     }
 
-
+    public void sql_getRating(String div) {
+        String query = "SELECT fnRating FROM tblDuel2__league WHERE fnUserID = " + userID + " AND fnDivision = " + div + " LIMIT 1";
+        ResultSet rs = null;
+        try {
+            rs = ba.SQLQuery(db, query);
+            if (rs.next())
+                rating = rs.getInt("fnRating");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            ba.SQLClose(rs);
+        }
+    }
 }

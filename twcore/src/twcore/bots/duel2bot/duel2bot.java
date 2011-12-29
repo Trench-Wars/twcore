@@ -302,8 +302,16 @@ public class duel2bot extends SubspaceBot{
                 } else
                     ba.sendSmartPrivateMessage(args[1], "No aliases found.");
             } else if (args[0].equals("league")) {
+                DuelPlayer p = getPlayer(args[3]);
+                int r = 1000;
                 if (!rs.next())
                     ba.SQLQueryAndClose(db, "INSERT INTO tblDuel2__league (fnUserID, fnSeason, fnDivision) VALUES(" + args[1] + ", " + d_season + ", " + args[2] + ")");
+                else
+                    r = rs.getInt("fnRating");
+                if (p != null)
+                    p.setRating(r);
+                else
+                    debug("[SQLrating] p was null");
             }
         } catch (SQLException e) {
             debug("[SQL_ERROR] Exception handling SQLResultEvent with ID: " + event.getIdentifier());

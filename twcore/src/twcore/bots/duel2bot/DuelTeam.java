@@ -105,6 +105,10 @@ public class DuelTeam {
     public String[] getNames() {
         return pname;
     }
+    
+    public DuelPlayer[] getPlayers() {
+        return player;
+    }
 
     public int getShip(String name) {
         if (pname[0].equalsIgnoreCase(name))

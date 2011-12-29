@@ -150,32 +150,72 @@ public class DuelGame {
         score[0] = t1;
         score[1] = t2;
         String[] winner, loser;
+        DuelPlayer[] win = null;
+        DuelPlayer[] loss = null;
         int winnerScore, loserScore;
         if (t1 > t2) {
             winner = team1.getNames();
             loser = team2.getNames();
+            win = team1.getPlayers();
+            loss = team2.getPlayers();
             winnerScore = t1;
             loserScore = t2;
         } else {
             winner = team2.getNames();
             loser = team1.getNames();
+            win = team2.getPlayers();
+            loss = team1.getPlayers();
             winnerScore = t2;
             loserScore = t1;
         }
+        
+        int winRatings = win[0].getRating() + win[1].getRating();
+        int lossRatings = loss[0].getRating() + loss[1].getRating();
+        int diff = lossRatings - winRatings;
+        
+        double p1 = 1.0 / (1 + Math.pow(10, (-diff / 400.0)));
+        double p2 = 1.0 - p1;
+        
+        // losers
+        int drLoss = (int) (10 * 5 * (0 - p1));
+        int drWin = (int) (10 * 5 * (1 - p2));
+        int kills[] = new int[] { loss[0].getKills() + 1, loss[1].getKills() + 1 };
+        int deaths[] = new int[] { loss[0].getDeaths() + 1, loss[1].getDeaths() + 1 };
+        double ratio[] = new double[3];
+        ratio[0] = (deaths[0] / kills[0]);
+        ratio[1] = (deaths[1] / kills[1]);
+        ratio[2] = ratio[0] + ratio[1];
+        ratio[0] = ratio[0] / ratio[2];
+        ratio[1] = ratio[1] / ratio[2];
+        
+        int drLoser1 = (int) (drLoss * ratio[0]);
+        int drLoser2 = (int) (drLoss * ratio[1]);
+        bot.debug("[RATING] drLoser1=" + drLoser1 + " drLoser2=" + drLoser2);
+        loss[0].setRating(loss[0].getRating() - drLoser1);
+        loss[1].setRating(loss[1].getRating() - drLoser2);
+        
+        // winners
+        kills = new int[] { win[0].getKills() + 1, win[1].getKills() + 1 };
+        deaths = new int[] { win[0].getDeaths() + 1, win[1].getDeaths() + 1 };
+        ratio[0] = (kills[0] / deaths[0]);
+        ratio[1] = (kills[1] / deaths[1]);
+        ratio[2] = ratio[0] + ratio[1];
+        ratio[0] = ratio[0] / ratio[2];
+        ratio[1] = ratio[1] / ratio[2];
+        
+        int drWinner1 = (int) (drWin * ratio[0]);
+        int drWinner2 = (int) (drWin * ratio[1]);
+        bot.debug("[RATING] drWinner1=" + drWinner1 + " drWinner2=" + drWinner2);
+        win[0].setRating(win[0].getRating() + drWinner1);
+        win[1].setRating(win[1].getRating() + drWinner2);
+        
+        
 
-        ba.sendPrivateMessage(winner[0], "You and '" + winner[1] + "' have defeated '" + loser[0]
-                + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
-        ba.sendPrivateMessage(winner[1], "You and '" + winner[0] + "' have defeated '" + loser[0]
-                + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
-        ba.sendPrivateMessage(loser[0], "You and '" + loser[1] + "' have been defeated by '"
-                + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore
-                + ")");
-        ba.sendPrivateMessage(loser[1], "You and '" + loser[0] + "' have been defeated by '"
-                + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore
-                + ")");
-        ba.sendTeamMessage(ranked ? "[RANKED] " : "[CASUAL] " + "'" + winner[0] + " and '"
-                + winner[1] + "' defeat '" + loser[0] + "' and '" + loser[1] + "' in "
-                + getDivision() + " score: (" + winnerScore + "-" + loserScore + ")", 21);
+        ba.sendPrivateMessage(winner[0], "You and '" + winner[1] + "' have defeated '" + loser[0] + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
+        ba.sendPrivateMessage(winner[1], "You and '" + winner[0] + "' have defeated '" + loser[0] + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
+        ba.sendPrivateMessage(loser[0], "You and '" + loser[1] + "' have been defeated by '" + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore + ")");
+        ba.sendPrivateMessage(loser[1], "You and '" + loser[0] + "' have been defeated by '" + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore + ")");
+        ba.sendTeamMessage(ranked ? "[RANKED] " : "[CASUAL] " + "'" + winner[0] + " and '" + winner[1] + "' defeat '" + loser[0] + "' and '" + loser[1] + "' in " + getDivision() + " score: (" + winnerScore + "-" + loserScore + ")", 21);
 
         if (ranked)
             sql_storeGame();
