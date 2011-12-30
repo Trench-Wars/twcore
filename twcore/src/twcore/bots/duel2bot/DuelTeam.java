@@ -35,6 +35,7 @@ public class DuelTeam {
     int                     status;
     boolean                 out;
     boolean                 ranked;
+    boolean                 cancel;
 
     TimerTask               go;
     String[]                pname;
@@ -93,6 +94,14 @@ public class DuelTeam {
     public int getDeaths() {
         return player[0].getDeaths() + player[1].getDeaths();
     }
+    
+    public int getKills() {
+        return player[0].getKills() + player[1].getKills();
+    }
+    
+    public int getLagouts() {
+        return player[0].getLagouts() + player[1].getLagouts();
+    }
 
     public int getTeamID() {
         return teamID;
@@ -110,6 +119,36 @@ public class DuelTeam {
         return player;
     }
 
+    /**
+     * Returns the name of the player's partner given the player's name.
+     *
+     * @param name
+     *      name String of the known player
+     * @return
+     *      name String of the unknown partner
+     */
+    public String getPartner(String name) {
+        if (name.equalsIgnoreCase(pname[0]))
+            return pname[1];
+        else
+            return pname[0];
+    }
+
+    /**
+     * Returns the DuelPlayer object for the specified name if name is on team.
+     *
+     * @param name
+     * @return
+     */
+    public DuelPlayer getPlayer(String name) {
+        if (name.equalsIgnoreCase(pname[0]))
+            return player[0];
+        else if (name.equalsIgnoreCase(pname[1]))
+            return player[1];
+        else
+            return null;
+    }
+
     public int getShip(String name) {
         if (pname[0].equalsIgnoreCase(name))
             return player[0].ship;
@@ -117,6 +156,17 @@ public class DuelTeam {
             return player[1].ship;
         else
             return -1;
+    }
+    
+    public boolean getCancel() {
+        return cancel;
+    }
+    
+    public String[] getStatString(boolean ranked) {
+        String[] str = new String[2];
+        str[0] = "| " + padString(pname[0], 20) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[0].getDeaths(), 3) + " |" + game.padNum(player[0].getLagouts(), 3) + " | " + (ranked ? "" + game.padNum(player[0].getRating(), 6) + " |" : "");
+        str[1] = "| " + padString(pname[1], 20) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[1].getDeaths(), 3) + " |" + game.padNum(player[1].getLagouts(), 3) + " | " + (ranked ? "" + game.padNum(player[1].getRating(), 6) + " |" : "");
+        return str;
     }
 
     public boolean checkTeamKill(String killee, String killer) {
@@ -164,36 +214,6 @@ public class DuelTeam {
     public void opponentReturned() {
         ba.sendPrivateMessage(pname[0], "Your opponent has returned from being lagged out.");
         ba.sendPrivateMessage(pname[1], "Your opponent has returned from being lagged out.");
-    }
-
-    /**
-     * Returns the name of the player's partner given the player's name.
-     *
-     * @param name
-     *      name String of the known player
-     * @return
-     *      name String of the unknown partner
-     */
-    public String getPartner(String name) {
-        if (name.equalsIgnoreCase(pname[0]))
-            return pname[1];
-        else
-            return pname[0];
-    }
-
-    /**
-     * Returns the DuelPlayer object for the specified name if name is on team.
-     *
-     * @param name
-     * @return
-     */
-    public DuelPlayer getPlayer(String name) {
-        if (name.equalsIgnoreCase(pname[0]))
-            return player[0];
-        else if (name.equalsIgnoreCase(pname[1]))
-            return player[1];
-        else
-            return null;
     }
 
     public void startGame(boolean mixed, String[] nme) {
@@ -252,6 +272,16 @@ public class DuelTeam {
         player[0].endGame();
         player[1].endGame();
     }
+    
+    public void sendStats(String[] stats) {
+        for (String s : stats)
+            ba.sendOpposingTeamMessage(freq, s, 0);
+    }
+    
+    public boolean setCancel() {
+        cancel = !cancel;
+        return cancel;
+    }
 
     public void warpToSpawn(DuelPlayer player) {
         String name = player.getName();
@@ -306,5 +336,12 @@ public class DuelTeam {
             e.printStackTrace();
         }
         return -1;
+    }
+    
+    /** Helper method adds spaces to a string to meet a certain length **/
+    private String padString(String str, int length) {
+        for (int i = str.length(); i < length; i++)
+            str += " ";
+        return str.substring(0, length);
     }
 }

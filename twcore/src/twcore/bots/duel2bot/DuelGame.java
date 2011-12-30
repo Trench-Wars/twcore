@@ -1,6 +1,7 @@
 package twcore.bots.duel2bot;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import twcore.bots.duel2bot.DuelPlayer;
 import twcore.bots.duel2bot.DuelTeam;
@@ -78,6 +79,16 @@ public class DuelGame {
 
         bot.games.put(id, this);
     }
+    
+    public DuelTeam[] getTeams(String name) {
+        DuelPlayer p = team1.getPlayer(name);
+        if (p != null)
+            return new DuelTeam[] { team1, team2 };
+        p = team2.getPlayer(name);
+        if (p != null)
+            return new DuelTeam[] { team2, team1 };
+        return null;
+    }
 
     /** Reports the current scores to each team freq */
     public void updateScore() {
@@ -109,6 +120,65 @@ public class DuelGame {
         String[] t2 = team2.getNames();
         return "" + score[0] + "-" + score[1] + " : " + t1[0] + " and " + t1[1] + " vs " + t2[0]
                 + " and " + t2[1];
+    }
+
+    /** Converts the division ID into a String */
+    public String getDivision() {
+        if (div == 1)
+            return "Warbird";
+        else if (div == 2)
+            return "Javelin";
+        else if (div == 3)
+            return "Spider";
+        else if (div == 4 || div == 7)
+            return "Lancaster";
+        else if (div == 5)
+            return "Mixed";
+        else
+            return "Unknown";
+    }
+    
+    public String[] getStats() {
+        ArrayList<String> statArray = new ArrayList<String>();
+        if (ranked) {
+            statArray.add(",------------------------+----+----+--------.");
+            statArray.add("|                      K |  D | LO | Rating |");
+            statArray.add("|                   ,----+----+----+--------+");
+            statArray.add("| Challengers      /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + "  |" + padNum(team2.getLagouts(), 3) + " |        |");
+            statArray.add("+-----------------'      |    |    |        |");
+            String[] stats = team1.getStatString(ranked);
+            statArray.add(stats[0]);
+            statArray.add(stats[1]);
+
+            statArray.add("+------------------------+----+----+--------.");
+            statArray.add("|                   ,----+----+----+--------+");
+            statArray.add("| Accepters        /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + "  |" + padNum(team2.getLagouts(), 3) + " |        |");
+            statArray.add("+-----------------'      |    |    |        |");
+            stats = team2.getStatString(ranked);
+            statArray.add(stats[0]);
+            statArray.add(stats[1]);
+            statArray.add("`------------------------+----+----+--------'");
+        } else {
+            statArray.add(",------------------------+----+----.");
+            statArray.add("|                      K |  D | LO |");
+            statArray.add("|                   ,----+----+----+");
+            statArray.add("| Challengers      /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + "  |" + padNum(team2.getLagouts(), 3) + "|");
+            statArray.add("+-----------------'      |    |    |");
+            String[] stats = team1.getStatString(ranked);
+            statArray.add(stats[0]);
+            statArray.add(stats[1]);
+
+            statArray.add("+------------------------+----+----.");
+            statArray.add("|                   ,----+----+----+");
+            statArray.add("| Accepters        /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + "  |" + padNum(team2.getLagouts(), 3) + "|");
+            statArray.add("+-----------------'      |    |    |");
+            stats = team2.getStatString(ranked);
+            statArray.add(stats[0]);
+            statArray.add(stats[1]);
+            statArray.add("`------------------------+----+----'");
+            
+        }
+        return statArray.toArray(new String[statArray.size()]);
     }
 
     /** Starts the duel, updates the bot collections and sends announcements */
@@ -209,7 +279,6 @@ public class DuelGame {
         win[0].setRating(win[0].getRating() + drWinner1);
         win[1].setRating(win[1].getRating() + drWinner2);
         
-        
 
         ba.sendPrivateMessage(winner[0], "You and '" + winner[1] + "' have defeated '" + loser[0] + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
         ba.sendPrivateMessage(winner[1], "You and '" + winner[0] + "' have defeated '" + loser[0] + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
@@ -223,6 +292,10 @@ public class DuelGame {
         t1 = team1.getTeamID();
         t2 = team2.getTeamID();
 
+        String[] stats = getStats();
+        team1.sendStats(stats);
+        team2.sendStats(stats);
+        
         team1.endGame();
         team2.endGame();
 
@@ -240,11 +313,34 @@ public class DuelGame {
     }
 
     /** Cancels the duel and notifies the name given */
-    public void cancelGame(String name) {
+    public void cancelDuel(String name) {
+        String msg = "Duel canceled " + (name != null ? "by " + name : "") + " and is declared void.";
+        String[] names;
+        names = team2.getNames();
+        ba.sendSmartPrivateMessage(names[0], msg);
+        ba.sendSmartPrivateMessage(names[1], msg);
+        names = team1.getNames();
+        ba.sendSmartPrivateMessage(names[0], msg);
+        ba.sendSmartPrivateMessage(names[1], msg);
+        
+        String[] stats = getStats();
+        team1.sendStats(stats);
+        team2.sendStats(stats);
+        
         team1.endGame();
         team2.endGame();
+
+        // BACKTRACK
         bot.games.remove(id);
-        ba.sendPrivateMessage(name, "Game cancelled.");
+
+        bot.playing.remove(names[0].toLowerCase());
+        bot.playing.remove(names[1].toLowerCase());
+
+        names = team2.getNames();
+        bot.playing.remove(names[0].toLowerCase());
+        bot.playing.remove(names[1].toLowerCase());
+        if (name != null)
+            ba.sendPrivateMessage(name, "Duel cancelled.");
     }
 
     /** Reports the lagout of a player to the opposing team */
@@ -261,22 +357,6 @@ public class DuelGame {
             team2.opponentReturned();
         else
             team1.opponentReturned();
-    }
-
-    /** Converts the division ID into a String */
-    public String getDivision() {
-        if (div == 1)
-            return "Warbird";
-        else if (div == 2)
-            return "Javelin";
-        else if (div == 3)
-            return "Spider";
-        else if (div == 4 || div == 7)
-            return "Lancaster";
-        else if (div == 5)
-            return "Mixed";
-        else
-            return "Unknown";
     }
 
     // handle player position
@@ -306,6 +386,20 @@ public class DuelGame {
                     + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         }
         updateScore();
+    }
+    
+    /**
+     * Helper method adds spaces in front of a number to fit a certain length
+     * @param n
+     * @param length
+     * @return String of length with spaces preceeding a number
+     */
+    public String padNum(int n, int length) {
+        String str = "";
+        String x = "" + n;
+        for (int i = 0; i + x.length() < length; i++)
+            str += " ";
+        return str + x;
     }
     
     /** Records the duel results in the database */

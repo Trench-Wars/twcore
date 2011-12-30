@@ -584,6 +584,10 @@ public class DuelPlayer {
     public int getDeaths() {
         return stats.getStat(StatType.DEATHS);
     }
+    
+    public int getLagouts() {
+        return stats.getStat(StatType.LAGOUTS);
+    }
 
     /** Returns player status */
     public int getStatus() {
@@ -666,7 +670,7 @@ public class DuelPlayer {
             ba.sendPrivateMessage(name, "No game found.");
             return;
         } else
-            team.game.cancelGame(name);
+            team.game.cancelDuel(name);
     }
     
     public void sql_checkDivision(int div) {

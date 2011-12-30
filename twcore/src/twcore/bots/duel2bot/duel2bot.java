@@ -268,7 +268,19 @@ public class duel2bot extends SubspaceBot{
         ResultSet rs = event.getResultSet();
         String[] args = event.getIdentifier().split(":");
         try {
-            if (args[0].equals("info")) {
+            if (args[0].equals("rating")) {
+                if (args.length == 1) {
+                    if (rs.next())
+                        ba.sendSmartPrivateMessage(args[1], "Current " + getDivision(rs.getInt("fnDivision")) + " rating: " + rs.getInt(1));
+                    else
+                        ba.sendSmartPrivateMessage(args[1], "No rating found.");
+                } else if (args.length == 2) {
+                    if (rs.next())
+                        ba.sendSmartPrivateMessage(args[1], "Rating of " + args[2] + " in " + getDivision(rs.getInt("fnDivision")) + ": " + rs.getInt(1));
+                    else
+                        ba.sendSmartPrivateMessage(args[1], "No rating found for: " + args[2]);
+                }
+            } else if (args[0].equals("info")) {
                 if (rs.next()) {
                     String msg = "This name is registered";
                     if (rs.getInt("e") == 1)
@@ -319,7 +331,6 @@ public class duel2bot extends SubspaceBot{
         } finally {
             ba.SQLClose(rs);
         }
-        
     }
 
     @Override
@@ -350,6 +361,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_challenge(name, splitArgs(msg), false);
             else if (cmd.startsWith("!a ") || cmd.startsWith("!accept "))
                 cmd_accept(name, splitArgs(msg));
+            else if (cmd.equals("!cancel"))
+                cmd_cancel(name);
             else if (cmd.startsWith("!lagout"))
                 cmd_lagout(name);
             else if (cmd.startsWith("!help") || (cmd.startsWith("!h")))
@@ -358,10 +371,12 @@ public class duel2bot extends SubspaceBot{
                 cmd_score(name, msg);
             else if (cmd.equals("!teams"))
                 cmd_teams(name);
-            else if (cmd.equals("!rating"))
-                cmd_rating(name);
+            else if (cmd.startsWith("!rating"))
+                cmd_rating(name, msg);
             else if (cmd.equals("!rec"))
                 cmd_rec(name);
+            else if (cmd.startsWith("!stats"))
+                cmd_stats(name, msg);
         }
 
         if (oplist.isModerator(name)
@@ -378,7 +393,7 @@ public class duel2bot extends SubspaceBot{
                 cmd_signup(name, msg);
             else if (cmd.startsWith("!debug"))
                 cmd_debug(name);
-            else if (cmd.startsWith("!cancel"))
+            else if (cmd.startsWith("!cancel "))
                 cmd_cancel(name, msg);
             else if (cmd.startsWith("!players"))
                 cmd_players();
@@ -426,7 +441,12 @@ public class duel2bot extends SubspaceBot{
                 "| !score <player>                         - Displays the score of <player>'s duel, if dueling                 |",
                 "| !disable                                - Disables name to allow for the enabling of another name           |",
                 "| !enable                                 - Enables name if already registered but disabled                   |",
-                "| !rec                                    - Shows your current record if dueling                              |",  
+                "| !rec                                    - Shows your current record if dueling                              |",
+                "| !stats                                  - Shows stats of your current duel if dueling                       |",
+                "| !stats <player>                         - Shows stats of <player>'s current duel if dueling                 |",
+                "| !rating                                 - Shows your rating for your current duel's division                |",
+                "| !rating <division>                      - Shows your rating for <division>                                  |",
+                "| !rating <name>:<division>               - Shows the <division> rating of <name>                             |",
                 };
         ba.privateMessageSpam(name, help);
         if (!oplist.isModerator(name)) return;
@@ -496,12 +516,41 @@ public class duel2bot extends SubspaceBot{
             p.doEnable();
     }
     
-    private void cmd_rating(String name) {
-        DuelPlayer p = getPlayer(name);
-        if (p != null)
-            p.doRating();
+    private void cmd_rating(String name, String cmd) {
+        String[] args = splitArgs(cmd);
+        try {
+            if (args != null) {
+                if (args.length == 2) {
+                    UserData u = new UserData(ba, db, args[0]);
+                    int div = Integer.valueOf(args[1]);
+                    if (div < 1 || div > 5)
+                        throw new NumberFormatException();
+                    int id = u.getUserID();
+                    if (id > 0) {
+                        String query = "SELECT fnRating, fnDivision FROM tblDuel2__league WHERE fnUserID = " + id + " AND fnDivision = " + div + " LIMIT 1";
+                        ba.SQLBackgroundQuery(db, "rating:" + name + ":" + args[0], query);
+                    } else
+                        ba.sendSmartPrivateMessage(name, "Error retreiving user information for: " + args[0]);
+                } else if (args.length == 1) {
+                    UserData u = new UserData(ba, db, name);
+                    int div = Integer.valueOf(args[0]);
+                    if (div < 1 || div > 5)
+                        throw new NumberFormatException();
+                    String query = "SELECT fnRating, fnDivision FROM tblDuel2__league WHERE fnUserID = " + u.getUserID() + " AND fnDivision = " + div + " LIMIT 1";
+                    ba.SQLBackgroundQuery(db, "rating:" + name, query);
+                } else
+                    ba.sendSmartPrivateMessage(name, "Error parsing rating command.");
+            } else if (playing.containsKey(name)) {
+                DuelPlayer p = getPlayer(name);
+                if (p != null)
+                    p.doRating();
+            } else 
+                ba.sendSmartPrivateMessage(name, "You are not currently in a duel.");
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Error recognizing division identification number.");
+        }
     }
-    
+
     private void cmd_rec(String name) {
         if (playing.containsKey(name.toLowerCase()))
             getPlayer(name).doRec();
@@ -776,6 +825,29 @@ public class duel2bot extends SubspaceBot{
                 ba.sendPrivateMessage(name, "Player or duel not found");
         }
     }
+    
+    private void cmd_stats(String name, String msg) {
+        if (msg.contains(" ") && msg.length() > 7) {
+            String p = ba.getFuzzyPlayerName(msg.substring(msg.indexOf(" ") + 1));
+            if (p != null && playing.containsKey(p.toLowerCase())) {
+                String[] stats = games.get(playing.get(p.toLowerCase())).getStats();
+                if (stats != null)
+                    ba.smartPrivateMessageSpam(name, stats);
+                else
+                    ba.sendSmartPrivateMessage(name, "Error getting duel stats.");
+            } else
+                ba.sendSmartPrivateMessage(name, "Error finding player duel.");
+        } else {
+            if (playing.containsKey(name.toLowerCase())) {
+                String[] stats = games.get(playing.get(name.toLowerCase())).getStats();
+                if (stats != null)
+                    ba.smartPrivateMessageSpam(name, stats);
+                else
+                    ba.sendSmartPrivateMessage(name, "Error getting duel stats.");
+            } else
+                ba.sendSmartPrivateMessage(name, "You are not currently in a duel.");
+        }
+    }
 
     /** Handles the !lagout command */
     private void cmd_lagout(String name) {
@@ -783,6 +855,29 @@ public class duel2bot extends SubspaceBot{
             laggers.get(name.toLowerCase()).doLagout();
         else
             ba.sendPrivateMessage(name, "You are not lagged out.");
+    }
+    
+    private void cmd_cancel(String name) {
+        String orig = name;
+        name = name.toLowerCase();
+        if (playing.containsKey(name)) {
+            DuelGame game = games.get(playing.get(name));
+            DuelTeam[] team = game.getTeams(name);
+            if (game.getState() == DuelGame.ENDING) {
+                ba.sendPrivateMessage(name, "You cannot cancel the duel at this time.");
+                return;
+            }
+            if (team[0].setCancel()) {
+                if (team[1].getCancel())
+                    game.cancelDuel(null);
+                else {
+                    ba.sendOpposingTeamMessage(team[0].getFreq(), orig + " has sent a request to cancel this duel.", 26);
+                    ba.sendOpposingTeamMessage(team[1].getFreq(), orig + " wishes to cancel this duel. Private message !cancel to " + ba.getBotName() + ", to accept.", 26);
+                }
+            } else
+                ba.sendOpposingTeamMessage(team[0].getFreq(), "", 26);
+        } else
+            ba.sendPrivateMessage(name, "You are not currently dueling.");
     }
     
     private void sql_getUserInfo(String staff, String name) {
@@ -915,11 +1010,12 @@ public class duel2bot extends SubspaceBot{
      * @return String array of the results args */
     private String[] splitArgs(String cmd) {
         String[] result = null;
-        if (cmd.contains(" ")) if (!cmd.contains(":")) {
-            result = new String[1];
-            result[0] = cmd.substring(cmd.indexOf(" ") + 1);
-        } else
-            result = cmd.substring(cmd.indexOf(" ") + 1).split(":");
+        if (cmd.contains(" ") && ((cmd.indexOf(" ") + 1) != cmd.length())) 
+            if (!cmd.contains(":")) {
+                result = new String[1];
+                result[0] = cmd.substring(cmd.indexOf(" ") + 1);
+            } else
+                result = cmd.substring(cmd.indexOf(" ") + 1).split(":");
         return result;
     }
 
