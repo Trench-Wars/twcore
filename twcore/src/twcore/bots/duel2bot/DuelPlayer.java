@@ -883,7 +883,6 @@ public class DuelPlayer {
     private void sql_setupUser() {
         userID = user.getUserID();
         name = user.getUserName();
-        bot.debug("SetupUser: " + userID + " " + name + "");
         // check if registered
         String query = "SELECT fnEnabled, fcIP, fnMID FROM tblDuel2__player WHERE fnUserID = " + userID + " LIMIT 1";
         ResultSet rs = null;
