@@ -269,12 +269,12 @@ public class duel2bot extends SubspaceBot{
         String[] args = event.getIdentifier().split(":");
         try {
             if (args[0].equals("rating")) {
-                if (args.length == 1) {
+                if (args.length == 2) {
                     if (rs.next())
                         ba.sendSmartPrivateMessage(args[1], "Current " + getDivision(rs.getInt("fnDivision")) + " rating: " + rs.getInt(1));
                     else
                         ba.sendSmartPrivateMessage(args[1], "No rating found.");
-                } else if (args.length == 2) {
+                } else if (args.length == 3) {
                     if (rs.next())
                         ba.sendSmartPrivateMessage(args[1], "Rating of " + args[2] + " in " + getDivision(rs.getInt("fnDivision")) + ": " + rs.getInt(1));
                     else
