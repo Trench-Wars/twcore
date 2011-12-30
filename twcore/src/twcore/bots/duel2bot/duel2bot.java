@@ -350,11 +350,11 @@ public class duel2bot extends SubspaceBot{
 
         if (type == Message.PRIVATE_MESSAGE || type == Message.PUBLIC_MESSAGE) {
             if (cmd.equals("!signup"))
-                cmd_signup(name);
+                cmd_signup(name, msg);
             else if (cmd.equals("!disable"))
-                cmd_disable(name);
+                cmd_disable(name, msg);
             else if (cmd.equals("!enable"))
-                cmd_enable(name);
+                cmd_enable(name, msg);
             else if (cmd.startsWith("!ch+ ") || cmd.startsWith("!chr ") || cmd.startsWith("!challenge+ "))
                 cmd_challenge(name, splitArgs(msg), true);
             else if (cmd.startsWith("!ch ") || cmd.startsWith("!challenge "))
@@ -391,6 +391,10 @@ public class duel2bot extends SubspaceBot{
                 cmd_alias(name, msg);
             else if (cmd.startsWith("!signup ") && cmd.length() > 9)
                 cmd_signup(name, msg);
+            else if (cmd.startsWith("!enable "))
+                cmd_enable(name, msg);
+            else if (cmd.startsWith("!disable "))
+                cmd_disable(name, msg);
             else if (cmd.startsWith("!debug"))
                 cmd_debug(name);
             else if (cmd.startsWith("!cancel "))
@@ -406,83 +410,64 @@ public class duel2bot extends SubspaceBot{
         }
     }
 
-    private void handleInfo(String msg) {
-        //Sorts information from *info
-        String[] pieces = msg.split("  ");
-        String name = pieces[3].substring(10);
-        String ip = pieces[0].substring(3);
-        String mid = pieces[5].substring(10);
-        if (alias.containsKey(name.toLowerCase())) {
-            String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
-            query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + "))";
-            ba.SQLBackgroundQuery(db, "alias:" + alias.remove(name.toLowerCase()), query);
-        }
-        DuelPlayer p = getPlayer(name);
-        if (p != null)
-            p.sql_createPlayer(ip, mid);
-    }
-
     /** Handles the !help command */
     private void cmd_help(String name) {
         String[] help = {
-                "+-ABOUT-------------------------------------------------------------------------------------------------------.",
-                "| This is a 2v2 TWEL duel arena, however, casual or scrimmage duels are also available. To play a casual duel |",
-                "| enter a ship with one other player on the same freq. Challenge another freq of two players using the !ch    |",
-                "| command. For ranked (league) duels all participants must be registered with !signup. Ranked challenges are  |",
-                "| sent using the !ch+ command.                                                                                |",
-                "+-COMMANDS----------------------------------------------------------------------------------------------------+",
-                "| !signup                                 - Registers you for 2v2 TWEL league duels                           |",
-                "| !ch <player>:<division>                 - Challenges the freq with <player> to a CASUAL duel in <division#> |",
-                "| !ch+ <player>:<division>                - Challenges the freq with <player> to a RANKED duel in <division>  |",
-                "|                                           * You must have exactly 2 players per freq                        |",
-                "|                                           * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed |",
-                "| !a <player>                             - Accepts a challenge from <player>                                 |",
-                "| !teams                                  - Lists current teams eligible for ranked league play               |", 
-                "| !score <player>                         - Displays the score of <player>'s duel, if dueling                 |",
-                "| !disable                                - Disables name to allow for the enabling of another name           |",
-                "| !enable                                 - Enables name if already registered but disabled                   |",
-                "| !rec                                    - Shows your current record if dueling                              |",
-                "| !stats                                  - Shows stats of your current duel if dueling                       |",
-                "| !stats <player>                         - Shows stats of <player>'s current duel if dueling                 |",
-                "| !rating                                 - Shows your rating for your current duel's division                |",
-                "| !rating <division>                      - Shows your rating for <division>                                  |",
-                "| !rating <name>:<division>               - Shows the <division> rating of <name>                             |",
+                "+-ABOUT-------------------------------------------------------------------------------------------.",
+                "| This is a 2v2 TWEL duel arena, however, casual or scrimmage duels are also available. To play   |",
+                "| a casual duel enter a ship with one other player on the same freq. Challenge another freq of    |",
+                "| two players using the !ch command. For ranked (league) duels all participants must be registered|",
+                "| with !signup. Ranked challenges are sent using the !ch+ command.                                |",
+                "+-COMMANDS----------------------------------------------------------------------------------------+",
+                "| !signup                     - Registers you for 2v2 TWEL league duels                           |",
+                "| !ch <player>:<division>     - Challenges the freq with <player> to a CASUAL duel in <division#> |",
+                "| !ch+ <player>:<division>    - Challenges the freq with <player> to a RANKED duel in <division>  |",
+                "|                               * You must have exactly 2 players per freq                        |",
+                "|                               * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed |",
+                "| !a <player>                 - Accepts a challenge from <player>                                 |",
+                "| !cancel                     - Requests or accepts a duel cancelation if playing                 |", 
+                "| !teams                      - Lists current teams eligible for ranked league play               |", 
+                "| !score <player>             - Displays the score of <player>'s duel, if dueling                 |",
+                "| !disable                    - Disables name to allow for the enabling of another name           |",
+                "| !enable                     - Enables name if already registered but disabled                   |",
+                "| !rec                        - Shows your current record if dueling                              |",
+                "| !stats                      - Shows stats of your current duel if dueling                       |",
+                "| !stats <player>             - Shows stats of <player>'s current duel if dueling                 |",
+                "| !rating                     - Shows your rating for your current duel's division                |",
+                "| !rating <division>          - Shows your rating for <division>                                  |",
+                "| !rating <name>:<division>   - Shows the <division> rating of <name>                             |",
                 };
         ba.privateMessageSpam(name, help);
         if (!oplist.isModerator(name)) return;
         help = new String[] {
-                "+-STAFF COMMANDS----------------------------------------------------------------------------------------------+",
-                "| !alias <name>                           - Lists enabled aliases of <name>                                   |",
-                "| !signup <name>                          - Force registers name regardless of aliases                        |",
-                "| !cancel <name>                          - Force cancels a duel involving <name>                             |",
+                "+-STAFF COMMANDS----------------------------------------------------------------------------------+",
+                "| !alias <name>               - Lists enabled aliases of <name>                                   |",
+                "| !signup <name>              - Force registers <name> regardless of aliases                      |",
+                "| !enable <name>              - Force enables a registered but disabled <name> despite any aliases|",
+                "| !disable <name>             - Disables a registered but enabled <name>                          |",
+                "| !cancel <name>              - Force cancels a duel involving <name>                             |",
                 //"| !ban <name>                             - Bans <name> from playing in 2v2 TWEL (effective after duel)       |",
                 //"| !unban <name>                           - Unbans <name> if banned                                           |",
-                "| !die                                    - Kills the bot                                                     |"        
+                "| !die                        - Kills the bot                                                     |"        
         };
         ba.privateMessageSpam(name, help);
         ba.sendPrivateMessage(name, 
-                "`-------------------------------------------------------------------------------------------------------------'");
-    }
-    
-    private void cmd_signup(String name) {
-        DuelPlayer p = getPlayer(name);
-        if (p == null) {
-            Player info = ba.getPlayer(name);
-            if (info == null) return;
-            p = new DuelPlayer(info, this);
-            players.put(name.toLowerCase(), p);
-        }
-        if (p != null)
-            p.doSignup();
+                "`-------------------------------------------------------------------------------------------------'");
     }
     
     private void cmd_signup(String name, String cmd) {
-        String pname = cmd.substring(cmd.indexOf(" ") + 1);
-        DuelPlayer p = getPlayer(pname);
+        DuelPlayer p = null;
+        String[] args = splitArgs(cmd);
+        if (args != null && args.length == 1)
+            p = getPlayer(args[0]);
+        else
+            p = getPlayer(name);
+        
         if (p == null) {
             Player info = ba.getPlayer(name);
             if (info == null) {
-                ba.sendSmartPrivateMessage(name, "Player '" + pname + "' must be in the arena to be registered.");
+                if (args != null)
+                    ba.sendSmartPrivateMessage(name, "Player '" + args[0] + "' must be in the arena to be registered.");
                 return;
             }
             p = new DuelPlayer(info, this);
@@ -492,28 +477,44 @@ public class duel2bot extends SubspaceBot{
             p.doSignup(name);
     }
     
-    private void cmd_disable(String name) {
-        DuelPlayer p = getPlayer(name);
+    private void cmd_disable(String name, String cmd) {
+        DuelPlayer p = null;
+        String[] args = splitArgs(cmd);
+        if (args != null && args.length == 1)
+            p = getPlayer(args[0]);
+        else
+            p = getPlayer(name);
         if (p == null) {
-            Player info = ba.getPlayer(name);
-            if (info == null) return;
-            p = new DuelPlayer(info, this);
+            if (args != null)
+                p = new DuelPlayer(args[0], this);
+            else
+                p = new DuelPlayer(name, this);
             players.put(name.toLowerCase(), p);
         }
+        if (args == null)
+            name = null;
         if (p != null)
-            p.doDisable();
+            p.doDisable(name);
     }
     
-    private void cmd_enable(String name) {
-        DuelPlayer p = getPlayer(name);
+    private void cmd_enable(String name, String cmd) {
+        DuelPlayer p = null;
+        String[] args = splitArgs(cmd);
+        if (args != null && args.length == 1)
+            p = getPlayer(args[0]);
+        else
+            p = getPlayer(name);
         if (p == null) {
-            Player info = ba.getPlayer(name);
-            if (info == null) return;
-            p = new DuelPlayer(info, this);
+            if (args != null)
+                p = new DuelPlayer(args[0], this);
+            else
+                p = new DuelPlayer(name, this);
             players.put(name.toLowerCase(), p);
         }
+        if (args == null)
+            name = null;
         if (p != null)
-            p.doEnable();
+            p.doEnable(name);
     }
     
     private void cmd_rating(String name, String cmd) {
@@ -672,11 +673,11 @@ public class duel2bot extends SubspaceBot{
         if (div < 1 || div > 5) {
             ba.sendPrivateMessage(name, "Invalid division number (1><5).");
             return;
-        } else if (div == 2 && !boxOpen(2)) {
+        } else if (div == 2 && !getBoxOpen(2)) {
             ba.sendPrivateMessage(name,
                     "All duel boxes for that division are in use. Please try again later.");
             return;
-        } else if (!boxOpen(1)) {
+        } else if (!getBoxOpen(1)) {
             ba.sendPrivateMessage(name,
                     "All duel boxes for that division are in use. Please try again later.");
             return;
@@ -788,11 +789,11 @@ public class duel2bot extends SubspaceBot{
 
         DuelChallenge chall = challs.remove(key);
         ba.cancelTask(chall);
-        if (chall.getDiv() == 2 && boxOpen(2)) {
+        if (chall.getDiv() == 2 && getBoxOpen(2)) {
             DuelGame game = new DuelGame(getDuelBox(2), chall, ba, this);
             game.startGame();
             removeChalls(nme.getFrequency(), p.getFrequency());
-        } else if (chall.getDiv() != 2 && boxOpen(1)) {
+        } else if (chall.getDiv() != 2 && getBoxOpen(1)) {
             DuelGame game = new DuelGame(getDuelBox(1), chall, ba, this);
             game.startGame();
             removeChalls(nme.getFrequency(), p.getFrequency());
@@ -836,7 +837,7 @@ public class duel2bot extends SubspaceBot{
                 else
                     ba.sendSmartPrivateMessage(name, "Error getting duel stats.");
             } else
-                ba.sendSmartPrivateMessage(name, "Error finding player duel.");
+                ba.sendSmartPrivateMessage(name, "Player not dueling.");
         } else {
             if (playing.containsKey(name.toLowerCase())) {
                 String[] stats = games.get(playing.get(name.toLowerCase())).getStats();
@@ -879,16 +880,6 @@ public class duel2bot extends SubspaceBot{
         } else
             ba.sendPrivateMessage(name, "You are not currently dueling.");
     }
-    
-    private void sql_getUserInfo(String staff, String name) {
-        String query = "SELECT P.fnUserID as id, P.fnEnabled as e, P.fcIP as ip, P.fnMID as mid FROM tblDuel2__player P WHERE P.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"
-                                    + Tools.addSlashesToString(name) + "' LIMIT 1) LIMIT 1";
-        ba.SQLBackgroundQuery(db, "info:" + staff + ":" + name, query);
-    }
-    
-    public DuelPlayer getPlayer(String name) {
-        return players.get(name.toLowerCase());
-    }
 
     /** Removes all challenges involving two specific freqs
      * 
@@ -918,6 +909,10 @@ public class duel2bot extends SubspaceBot{
             ba.cancelTask(challs.remove(k));
         }
     }
+    
+    public DuelPlayer getPlayer(String name) {
+        return players.get(name.toLowerCase());
+    }
 
     /** Returns the division name for a given id
      * 
@@ -939,18 +934,6 @@ public class duel2bot extends SubspaceBot{
             return "Unknown";
     }
 
-    /** @return current non-league game id */
-    public int getScrimID() {
-        scrimID--;
-        return scrimID;
-    }
-
-    /** @return current league game id */
-    public int getGameID() {
-        gameID++;
-        return gameID;
-    }
-
     /** @return current game id */
     public int getID(boolean ranked) {
         if (ranked) {
@@ -968,7 +951,7 @@ public class duel2bot extends SubspaceBot{
      *            the division id number
      * @return true if an open box exists 
      */
-    private boolean boxOpen(int division) {
+    private boolean getBoxOpen(int division) {
         int i = 0;
         Iterator<String> it = boxes.keySet().iterator();
         while (it.hasNext()) {
@@ -1003,6 +986,22 @@ public class duel2bot extends SubspaceBot{
         }
     }
 
+    private void handleInfo(String msg) {
+        //Sorts information from *info
+        String[] pieces = msg.split("  ");
+        String name = pieces[3].substring(10);
+        String ip = pieces[0].substring(3);
+        String mid = pieces[5].substring(10);
+        if (alias.containsKey(name.toLowerCase())) {
+            String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
+            query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + "))";
+            ba.SQLBackgroundQuery(db, "alias:" + alias.remove(name.toLowerCase()), query);
+        }
+        DuelPlayer p = getPlayer(name);
+        if (p != null)
+            p.sql_createPlayer(ip, mid);
+    }
+
     /** Splits the arguments of a given command separated by colons
      * 
      * @param cmd
@@ -1019,9 +1018,14 @@ public class duel2bot extends SubspaceBot{
         return result;
     }
 
+    private void sql_getUserInfo(String staff, String name) {
+        String query = "SELECT P.fnUserID as id, P.fnEnabled as e, P.fcIP as ip, P.fnMID as mid FROM tblDuel2__player P WHERE P.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"
+                                    + Tools.addSlashesToString(name) + "' LIMIT 1) LIMIT 1";
+        ba.SQLBackgroundQuery(db, "info:" + staff + ":" + name, query);
+    }
+
     /** Debug message handler */
     public void debug(String msg) {
         if (DEBUG) ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
     }
-
 }

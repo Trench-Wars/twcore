@@ -107,8 +107,38 @@ public class DuelPlayer {
         enabled = false;
         userMID = -1;
         userIP = "";
+        user = new UserData(ba, db, name, true);
         getRules();
         sql_setupUser();
+    }
+
+    public DuelPlayer(String p, duel2bot bot) {
+        staffer = null;
+        name = p;
+        this.bot = bot;
+        team = null;
+        teams = new int[6];
+        ba = bot.ba;
+        rules = null;
+        freq = -1;
+        ship = -1;
+        rating = -1;
+        if (ship > 0)
+            status = IN;
+        else
+            status = SPEC;
+        create = false;
+        registered = false;
+        banned = false;
+        enabled = false;
+        userMID = -1;
+        userIP = "";
+        getRules();
+        user = new UserData(ba, db, name);
+        if (user == null || user.getUserID() < 1)
+            user = null;
+        else
+            sql_setupUser();
     }
 
     private void getRules() {
@@ -435,19 +465,39 @@ public class DuelPlayer {
     }
     
     /** Handles a player !disable command */
-    public void doDisable() {
+    public void doDisable(String staff) {
+        if (staff != null && staffer != null) {
+            ba.sendSmartPrivateMessage(staff, "A separate command is currently in process, try again later.");
+            return;
+        } else if (staff != null)
+            staffer = staff;
+        
         if (registered && enabled && !banned)
             sql_disablePlayer();
-        else 
+        else if (staff == null)  
             ba.sendSmartPrivateMessage(name, "Could not disable because name is not registered/enabled or is banned.");
+        else {
+            staffer = null;
+            ba.sendSmartPrivateMessage(staff, "Could not disable because name is not registered/enabled or is banned.");
+        }
     }
 
     /** Handles a player !enable command */
-    public void doEnable() {
+    public void doEnable(String staff) {
+        if (staff != null && staffer != null) {
+            ba.sendSmartPrivateMessage(staff, "A separate command is currently in process, try again later.");
+            return;
+        } else if (staff != null)
+            staffer = staff;
+        
         if (registered && !enabled && !banned)
             sql_enablePlayer();
-        else
+        else if (staff == null)  
             ba.sendSmartPrivateMessage(name, "A name can only be enabled if not banned and already registered but disabled");
+        else {
+            staffer = null;
+            ba.sendSmartPrivateMessage(staff, "A name can only be enabled if not banned and already registered but disabled");
+        }
     }
     
     public void doRating() {
@@ -764,6 +814,10 @@ public class DuelPlayer {
             enabled = false;
             create = false;
             ba.sendSmartPrivateMessage(name, "Successfully disabled name from use in 2v2 TWEL duels. ");
+            if (staffer != null) {
+                ba.sendSmartPrivateMessage(staffer, "Successfully disabled '" + name + "' from use in 2v2 TWEL duels. ");
+                staffer = null;
+            }
         } catch (SQLException e) {
             bot.debug("[sql_disablePlayer] Could not disable: " + name);
             e.printStackTrace();
@@ -776,7 +830,7 @@ public class DuelPlayer {
         ResultSet rs = null;
         try {
             rs = ba.SQLQuery(db, query);
-            if (rs.next()) {
+            if (staffer == null && rs.next()) {
                 String ids = "" + rs.getInt(1);
                 while (rs.next())
                     ids += ", " + rs.getInt(1);
@@ -786,6 +840,10 @@ public class DuelPlayer {
                 ba.SQLQueryAndClose(db, query);
                 enabled = true;
                 ba.sendSmartPrivateMessage(name, "You have been successfully registered to play ranked team duels!");
+                if (staffer != null) {
+                    ba.sendSmartPrivateMessage(staffer, "Successfully enabled '" + name + "' for use in 2v2 TWEL duels. ");
+                    staffer = null;
+                }
             }
         } catch (SQLException e) {
             bot.debug("[sql_enablePlayer] Could not enable: " + name);
@@ -823,7 +881,6 @@ public class DuelPlayer {
     
     /** Prepares player information collected from the database */
     private void sql_setupUser() {
-        user = new UserData(ba, db, name, true);
         userID = user.getUserID();
         name = user.getUserName();
         bot.debug("SetupUser: " + userID + " " + name + "");
