@@ -244,23 +244,23 @@ public class DuelGame {
         int lossRatings = loss[0].getRating() + loss[1].getRating();
         int diff = lossRatings - winRatings;
         
-        double p1 = 1.0 / (1 + Math.pow(10, (-diff / 400.0)));
+        double p1 = 1.0 / (1.0 + Math.pow(10, (-diff / 400.0)));
         double p2 = 1.0 - p1;
         
         // losers
-        int drLoss = (int) (10 * 5 * (0 - p1));
-        int drWin = (int) (10 * 5 * (1 - p2));
+        int drLoss = (int) Math.round(10 * 5 * (0 - p1));
+        int drWin =  (int) Math.round(10 * 5 * (1 - p2));
         int kills[] = new int[] { loss[0].getKills() + 1, loss[1].getKills() + 1 };
         int deaths[] = new int[] { loss[0].getDeaths() + 1, loss[1].getDeaths() + 1 };
         double ratio[] = new double[3];
-        ratio[0] = (kills[0] / deaths[0]);
-        ratio[1] = (kills[1] / deaths[1]);
+        ratio[0] = (kills[0]);
+        ratio[1] = (kills[1]);
         ratio[2] = ratio[0] + ratio[1];
         ratio[0] = ratio[0] / ratio[2];
         ratio[1] = ratio[1] / ratio[2];
         
-        int drLoser1 = (int) (drLoss * ratio[1]);
-        int drLoser2 = (int) (drLoss * ratio[0]);
+        int drLoser1 = (int) Math.round(drLoss * ratio[1]);
+        int drLoser2 = (int) Math.round(drLoss * ratio[0]);
         bot.debug("[RATING] (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
         loss[0].setRating(loss[0].getRating() + drLoser1);
         loss[1].setRating(loss[1].getRating() + drLoser2);

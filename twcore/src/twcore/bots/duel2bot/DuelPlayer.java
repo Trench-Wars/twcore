@@ -612,7 +612,7 @@ public class DuelPlayer {
     }
     
     public void endTimePlayed() {
-        if (!isSpecced() && lastSpec > 0) {
+        if (out == -1 && lastSpec > 0) {
             int secs = (int) (System.currentTimeMillis() - lastSpec) / 1000;
             stats.handleTimePlayed(secs);
         }
@@ -690,7 +690,7 @@ public class DuelPlayer {
     public void remove(int reason) {
         ba.specWithoutLock(name);
         ba.setFreq(name, freq);
-        doPlaytime();
+        endTimePlayed();
         if (status == REOUT) {
             setStatus(OUT);
             return;
@@ -703,7 +703,8 @@ public class DuelPlayer {
     }
     
     private void doPlaytime() {
-        if (team.game.state != DuelGame.IN_PROGRESS) return; 
+        if (team.game.state != DuelGame.IN_PROGRESS) 
+            return; 
         long now = System.currentTimeMillis();
         if (lastSpec > 0) {
             int secs = (int) (now - lastSpec) / 1000;
