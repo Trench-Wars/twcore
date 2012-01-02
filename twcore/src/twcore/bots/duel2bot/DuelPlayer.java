@@ -440,7 +440,7 @@ public class DuelPlayer {
         ba.setShip(name, ship);
         ba.setFreq(name, freq);
         if (team.game.state == DuelGame.IN_PROGRESS) {
-            lastSpec = System.currentTimeMillis();
+            lastSpec = lastFoul;
             team.warpPlayer(this);
         } else if (team.game.state == DuelGame.SETUP) 
             team.warpToSafe(this);
@@ -610,14 +610,17 @@ public class DuelPlayer {
         }
         lastSpec = System.currentTimeMillis();
     }
+    
+    public void endTimePlayed() {
+        if (!isSpecced() && lastSpec > 0) {
+            int secs = (int) (System.currentTimeMillis() - lastSpec) / 1000;
+            stats.handleTimePlayed(secs);
+        }
+        lastSpec = 0;
+    }
 
     /** Resets the player tasks and warps to middle */
     public void endGame() {
-        if (!isSpecced()) {
-            int secs = (int) (System.currentTimeMillis() - lastSpec) / 1000;
-            stats.handleTimePlayed(secs);
-            lastSpec = 0;
-        }
         if (ship > 0)
             status = SPEC;
         else

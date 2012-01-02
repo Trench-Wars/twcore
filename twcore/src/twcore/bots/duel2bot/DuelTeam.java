@@ -277,8 +277,8 @@ public class DuelTeam {
     }
     
     public void sendStats(String[] stats) {
-        for (String s : stats)
-            ba.sendOpposingTeamMessage(freq, s, 0);
+        ba.smartPrivateMessageSpam(pname[0], stats);
+        ba.smartPrivateMessageSpam(pname[1], stats);
     }
     
     public boolean setCancel() {

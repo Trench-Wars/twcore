@@ -98,15 +98,13 @@ public class DuelGame {
         team2.setScore(t2);
         score = new int[] { t1, t2 };
 
-        if (team1.out() || team2.out()) {
-            endGame(t1, t2);
-            return;
-        }
-
         ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "Score: " + score[0] + "-"
                 + score[1], 26);
         ba.sendOpposingTeamMessageByFrequency(team2.getFreq(), "Score: " + score[0] + "-"
                 + score[1], 26);
+
+        if (team1.out() || team2.out())
+            endGame(t1, t2);
     }
 
     /** Returns game state */
@@ -238,7 +236,10 @@ public class DuelGame {
             winnerScore = t2;
             loserScore = t1;
         }
-        
+        win[0].endTimePlayed();
+        win[1].endTimePlayed();
+        loss[0].endTimePlayed();
+        loss[1].endTimePlayed();
         int winRatings = win[0].getRating() + win[1].getRating();
         int lossRatings = loss[0].getRating() + loss[1].getRating();
         int diff = lossRatings - winRatings;
@@ -252,14 +253,14 @@ public class DuelGame {
         int kills[] = new int[] { loss[0].getKills() + 1, loss[1].getKills() + 1 };
         int deaths[] = new int[] { loss[0].getDeaths() + 1, loss[1].getDeaths() + 1 };
         double ratio[] = new double[3];
-        ratio[0] = (kills[0]);
-        ratio[1] = (kills[1]);
+        ratio[0] = (kills[0] / deaths[0]);
+        ratio[1] = (kills[1] / deaths[1]);
         ratio[2] = ratio[0] + ratio[1];
         ratio[0] = ratio[0] / ratio[2];
         ratio[1] = ratio[1] / ratio[2];
         
-        int drLoser1 = (int) (drLoss * ratio[0]);
-        int drLoser2 = (int) (drLoss * ratio[1]);
+        int drLoser1 = (int) (drLoss * ratio[1]);
+        int drLoser2 = (int) (drLoss * ratio[0]);
         bot.debug("[RATING] (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
         loss[0].setRating(loss[0].getRating() + drLoser1);
         loss[1].setRating(loss[1].getRating() + drLoser2);
@@ -278,7 +279,6 @@ public class DuelGame {
         bot.debug("[RATING] (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
         win[0].setRating(win[0].getRating() + drWinner1);
         win[1].setRating(win[1].getRating() + drWinner2);
-        
 
         ba.sendPrivateMessage(winner[0], "You and '" + winner[1] + "' have defeated '" + loser[0] + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
         ba.sendPrivateMessage(winner[1], "You and '" + winner[0] + "' have defeated '" + loser[0] + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
@@ -286,15 +286,15 @@ public class DuelGame {
         ba.sendPrivateMessage(loser[1], "You and '" + loser[0] + "' have been defeated by '" + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore + ")");
         ba.sendTeamMessage((ranked ? "[RANKED] " : "[CASUAL] ") + "'" + winner[0] + " and '" + winner[1] + "' defeat '" + loser[0] + "' and '" + loser[1] + "' in " + getDivision() + " score: (" + winnerScore + "-" + loserScore + ")", 21);
 
+        String[] stats = getStats();
+        team1.sendStats(stats);
+        team2.sendStats(stats);
+        
         if (ranked)
             sql_storeGame();
         
         t1 = team1.getTeamID();
         t2 = team2.getTeamID();
-
-        String[] stats = getStats();
-        team1.sendStats(stats);
-        team2.sendStats(stats);
         
         team1.endGame();
         team2.endGame();

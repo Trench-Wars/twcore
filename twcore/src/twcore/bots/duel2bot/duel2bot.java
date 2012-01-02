@@ -752,7 +752,10 @@ public class duel2bot extends SubspaceBot{
             return;
         }
         
-        if (teams.containsKey(o.getFrequency())) {
+        if (p.getFrequency() == o.getFrequency()) {
+            ba.sendPrivateMessage(name, "You cannot challenge your own team.");
+            return;
+        } else if (teams.containsKey(o.getFrequency())) {
             ba.sendPrivateMessage(name, "The opposing team is currently in a duel and cannot be challenged.");
             return;
         } else if (teams.containsKey(p.getFrequency())) {
