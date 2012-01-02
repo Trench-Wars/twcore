@@ -687,6 +687,7 @@ public class DuelPlayer {
     public void remove(int reason) {
         ba.specWithoutLock(name);
         ba.setFreq(name, freq);
+        doPlaytime();
         if (status == REOUT) {
             setStatus(OUT);
             return;
@@ -694,7 +695,6 @@ public class DuelPlayer {
         out = reason;
         if (stats.getStat(StatType.DEATHS) != specAt) 
             stats.setStat(StatType.DEATHS, specAt);
-        doPlaytime();
         setStatus(OUT);
         team.playerOut(this);
     }

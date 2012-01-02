@@ -72,10 +72,10 @@ public class DuelGame {
 
         // since team wasn't given, add to main collection
         team1 = new DuelTeam(bot, chall.freq1(), chall.freq1(), chall.team1(), coords1, this);
-        bot.teams.put(team1.getTeamID(), team1);
+        bot.teams.put(chall.freq1, team1);
 
         team2 = new DuelTeam(bot, chall.freq2(), chall.freq2(), chall.team2(), coords2, this);
-        bot.teams.put(team2.getTeamID(), team2);
+        bot.teams.put(chall.freq2, team2);
 
         bot.games.put(id, this);
     }
@@ -144,15 +144,15 @@ public class DuelGame {
             statArray.add(",------------------------+----+----+----------+--------.");
             statArray.add("|                      K |  D | LO | PlayTime | Rating |");
             statArray.add("|                   ,----+----+----+----------+--------+");
-            statArray.add("| Challengers      /  " + padNum(team1.getKills(), 3) + " |" + padNum(team1.getDeaths(), 3) + " |" + padNum(team1.getLagouts(), 3) + " |" + padNum(team1.getTime(), 9) + " |        |");
-            statArray.add("+-----------------'      |    |    |        |");
+            statArray.add("| Challengers      / " + padNum(team1.getKills(), 3) + " |" + padNum(team1.getDeaths(), 3) + " |" + padNum(team1.getLagouts(), 3) + " |" + padNum(team1.getTime(), 9) + " |        |");
+            statArray.add("+-----------------'      |    |    |          |        |");
             String[] stats = team1.getStatString(ranked);
             statArray.add(stats[0]);
             statArray.add(stats[1]);
 
             statArray.add("+------------------------+----+----+----------+--------+");
             statArray.add("|                   ,----+----+----+----------+--------+");
-            statArray.add("| Accepters        /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + " |" + padNum(team2.getLagouts(), 3) + " |" + padNum(team2.getTime(), 9) + " |        |");
+            statArray.add("| Accepters        / " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + " |" + padNum(team2.getLagouts(), 3) + " |" + padNum(team2.getTime(), 9) + " |        |");
             statArray.add("+-----------------'      |    |    |          |        |");
             stats = team2.getStatString(ranked);
             statArray.add(stats[0]);
@@ -162,7 +162,7 @@ public class DuelGame {
             statArray.add(",------------------------+----+----+----------.");
             statArray.add("|                      K |  D | LO | PlayTime |");
             statArray.add("|                   ,----+----+----+----------+");
-            statArray.add("| Challengers      /  " + padNum(team1.getKills(), 3) + " |" + padNum(team1.getDeaths(), 3) + " |" + padNum(team1.getLagouts(), 3) + " |" + padNum(team1.getTime(), 9) + " |");
+            statArray.add("| Challengers      / " + padNum(team1.getKills(), 3) + " |" + padNum(team1.getDeaths(), 3) + " |" + padNum(team1.getLagouts(), 3) + " |" + padNum(team1.getTime(), 9) + " |");
             statArray.add("+-----------------'      |    |    |          |");
             String[] stats = team1.getStatString(ranked);
             statArray.add(stats[0]);
@@ -170,7 +170,7 @@ public class DuelGame {
 
             statArray.add("+------------------------+----+----+----------+");
             statArray.add("|                   ,----+----+----+----------+");
-            statArray.add("| Accepters        /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + " |" + padNum(team2.getLagouts(), 3) + " |" + padNum(team2.getTime(), 9) + " |");
+            statArray.add("| Accepters        / " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + " |" + padNum(team2.getLagouts(), 3) + " |" + padNum(team2.getTime(), 9) + " |");
             statArray.add("+-----------------'      |    |    |          |");
             stats = team2.getStatString(ranked);
             statArray.add(stats[0]);
@@ -252,15 +252,15 @@ public class DuelGame {
         int kills[] = new int[] { loss[0].getKills() + 1, loss[1].getKills() + 1 };
         int deaths[] = new int[] { loss[0].getDeaths() + 1, loss[1].getDeaths() + 1 };
         double ratio[] = new double[3];
-        ratio[0] = (deaths[0] / kills[0]);
-        ratio[1] = (deaths[1] / kills[1]);
+        ratio[0] = (kills[0]);
+        ratio[1] = (kills[1]);
         ratio[2] = ratio[0] + ratio[1];
         ratio[0] = ratio[0] / ratio[2];
         ratio[1] = ratio[1] / ratio[2];
         
         int drLoser1 = (int) (drLoss * ratio[0]);
         int drLoser2 = (int) (drLoss * ratio[1]);
-        //ba.sendPublicMessage("[RATING] (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
+        bot.debug("[RATING] (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
         loss[0].setRating(loss[0].getRating() + drLoser1);
         loss[1].setRating(loss[1].getRating() + drLoser2);
         
@@ -275,7 +275,7 @@ public class DuelGame {
         
         int drWinner1 = (int) (drWin * ratio[0]);
         int drWinner2 = (int) (drWin * ratio[1]);
-        //ba.sendPublicMessage("[RATING] (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
+        bot.debug("[RATING] (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
         win[0].setRating(win[0].getRating() + drWinner1);
         win[1].setRating(win[1].getRating() + drWinner2);
         
@@ -284,7 +284,7 @@ public class DuelGame {
         ba.sendPrivateMessage(winner[1], "You and '" + winner[0] + "' have defeated '" + loser[0] + "' and '" + loser[1] + "' score: (" + winnerScore + "-" + loserScore + ")");
         ba.sendPrivateMessage(loser[0], "You and '" + loser[1] + "' have been defeated by '" + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore + ")");
         ba.sendPrivateMessage(loser[1], "You and '" + loser[0] + "' have been defeated by '" + winner[0] + "' and '" + winner[1] + "' score: (" + loserScore + "-" + winnerScore + ")");
-        ba.sendTeamMessage(ranked ? "[RANKED] " : "[CASUAL] " + "'" + winner[0] + " and '" + winner[1] + "' defeat '" + loser[0] + "' and '" + loser[1] + "' in " + getDivision() + " score: (" + winnerScore + "-" + loserScore + ")", 21);
+        ba.sendTeamMessage((ranked ? "[RANKED] " : "[CASUAL] ") + "'" + winner[0] + " and '" + winner[1] + "' defeat '" + loser[0] + "' and '" + loser[1] + "' in " + getDivision() + " score: (" + winnerScore + "-" + loserScore + ")", 21);
 
         if (ranked)
             sql_storeGame();

@@ -90,6 +90,10 @@ public class DuelTeam {
     public void setScore(int s) {
         score = s;
     }
+    
+    public int getStatus() {
+        return status;
+    }
 
     public int getDeaths() {
         return player[0].getDeaths() + player[1].getDeaths();
@@ -168,8 +172,8 @@ public class DuelTeam {
     
     public String[] getStatString(boolean ranked) {
         String[] str = new String[2];
-        str[0] = "| " + padString(pname[0], 20) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[0].getDeaths(), 3) + " |" + game.padNum(player[0].getLagouts(), 3) + " |" + game.padNum(player[0].getTime(), 9) + " | " + (ranked ? "" + game.padNum(player[0].getRating(), 6) + " |" : "");
-        str[1] = "| " + padString(pname[1], 20) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[1].getDeaths(), 3) + " |" + game.padNum(player[1].getLagouts(), 3) + " |" + game.padNum(player[1].getTime(), 9) + " | " + (ranked ? "" + game.padNum(player[1].getRating(), 6) + " |" : "");
+        str[0] = "| " + padString(pname[0], 19) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[0].getDeaths(), 3) + " |" + game.padNum(player[0].getLagouts(), 3) + " |" + game.padNum(player[0].getTime(), 9) + " | " + (ranked ? "" + game.padNum(player[0].getRating(), 6) + " |" : "");
+        str[1] = "| " + padString(pname[1], 19) + game.padNum(player[1].getKills(), 3) + " |" + game.padNum(player[1].getDeaths(), 3) + " |" + game.padNum(player[1].getLagouts(), 3) + " |" + game.padNum(player[1].getTime(), 9) + " | " + (ranked ? "" + game.padNum(player[1].getRating(), 6) + " |" : "");
         return str;
     }
 
@@ -258,6 +262,7 @@ public class DuelTeam {
     public void endGame() {
         ba.cancelTask(go);
         // BACKTRACK
+        bot.teams.remove(freq);
         bot.freqs.removeElement(freq);
         bot.playing.remove(pname[0].toLowerCase());
         bot.playing.remove(pname[1].toLowerCase());

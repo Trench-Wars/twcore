@@ -571,8 +571,12 @@ public class duel2bot extends SubspaceBot{
     
     private void cmd_rating(String name, String cmd) {
         String[] args = splitArgs(cmd);
+        
         try {
             if (args != null) {
+                Player partial = ba.getFuzzyPlayer(args[0]);
+                if (partial != null)
+                    args[0] = partial.getPlayerName();
                 if (args.length == 2) {
                     UserData u = new UserData(ba, db, args[0]);
                     int div = Integer.valueOf(args[1]);
@@ -606,7 +610,7 @@ public class duel2bot extends SubspaceBot{
 
     private void cmd_rec(String name) {
         if (playing.containsKey(name.toLowerCase()))
-            getPlayer(name).doRec();
+            getPlayer(name.toLowerCase()).doRec();
         else
             ba.sendPrivateMessage(name, "You are not dueling.");
     }
@@ -747,6 +751,14 @@ public class duel2bot extends SubspaceBot{
                     "The enemy freq size must be 2 players exactly to challenge for a 2v2 duel.");
             return;
         }
+        
+        if (teams.containsKey(o.getFrequency())) {
+            ba.sendPrivateMessage(name, "The opposing team is currently in a duel and cannot be challenged.");
+            return;
+        } else if (teams.containsKey(p.getFrequency())) {
+            ba.sendPrivateMessage(name, "You are currently in a duel.");
+            return;
+        }
 
         String[] names1 = { "", "" };
         String[] names2 = { "", "" };
@@ -790,11 +802,6 @@ public class duel2bot extends SubspaceBot{
             if (!clear)
                 return;
         }
-        
-        tests[0].setDuel(names1[1], freq1);
-        tests[1].setDuel(names1[0], freq1);
-        tests[2].setDuel(names2[1], freq2);
-        tests[3].setDuel(names2[0], freq2);
 
         final String key = "" + freq1 + " " + freq2 + "";
         if (challs.containsKey(key)) {
@@ -808,6 +815,11 @@ public class duel2bot extends SubspaceBot{
                 return;
             }
         }
+        
+        tests[0].setDuel(names1[1], freq1);
+        tests[1].setDuel(names1[0], freq1);
+        tests[2].setDuel(names2[1], freq2);
+        tests[3].setDuel(names2[0], freq2);
 
         DuelChallenge chall = new DuelChallenge(this, ba, ranked, freq1, freq2, names1, names2, div);
         challs.put(key, chall);
@@ -833,6 +845,11 @@ public class duel2bot extends SubspaceBot{
         }
 
         Player p = ba.getPlayer(name);
+        if (teams.containsKey(p.getFrequency())) {
+            ba.sendPrivateMessage(name, "You are already dueling.");
+            return;
+        } else if (teams.containsKey(nme.getFrequency())) return;
+        
         String key = "" + nme.getFrequency() + " " + p.getFrequency() + "";
         if (!challs.containsKey(key)) {
             ba.sendPrivateMessage(name, "Challenge not found.");
