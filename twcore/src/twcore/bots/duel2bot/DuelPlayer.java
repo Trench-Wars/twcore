@@ -2,6 +2,8 @@ package twcore.bots.duel2bot;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.TimerTask;
 
 import twcore.core.BotAction;
@@ -78,6 +80,7 @@ public class DuelPlayer {
 
     private long lastFoul = 0;
     private long lastDeath = 0;
+    private long lastSpec = 0;
     private String lastKiller = "";
 
     String partner = null;
@@ -107,6 +110,7 @@ public class DuelPlayer {
         enabled = false;
         userMID = -1;
         userIP = "";
+        bot.lagChecks.add(name.toLowerCase());
         user = new UserData(ba, db, name, true);
         getRules();
         sql_setupUser();
@@ -183,8 +187,7 @@ public class DuelPlayer {
                     setStatus(PLAYING);
                     handleWarp(false);
                 } else if (status == OUT) {
-                    ba.sendPrivateMessage(name,
-                            "Please stay on your freq until your duel is finished.");
+                    ba.sendPrivateMessage(name, "Please stay on your freq until your duel is finished.");
                     ba.setFreq(name, freq);
                     setStatus(OUT);
                 }
@@ -209,8 +212,7 @@ public class DuelPlayer {
         int statusID = status;
         setStatus(WARPING);
         if (statusID == OUT) {
-            ba.sendPrivateMessage(name,
-                    "Please stay in spec and on your freq until your duel is finished.");
+            ba.sendPrivateMessage(name, "Please stay in spec and on your freq until your duel is finished.");
             ba.specWithoutLock(name);
             if (freq != f) ba.setFreq(name, freq);
             setStatus(OUT);
@@ -395,7 +397,8 @@ public class DuelPlayer {
 
         setStatus(LAGGED);
 
-        if (team.game.state == DuelGame.IN_PROGRESS) stats.handleLagout();
+        if (team.game.state == DuelGame.IN_PROGRESS) 
+            stats.handleLagout();
 
         if (stats.getStat(StatType.LAGOUTS) <= d_maxLagouts) {
             ba.sendSmartPrivateMessage(name,
@@ -565,6 +568,10 @@ public class DuelPlayer {
     
     public boolean isBanned() {
         return banned;
+    }
+    
+    public boolean isSpecced() {
+        return status != SPEC && status != OUT && status != REOUT && status != LAGGED;
     }
 
     /** UNUSED */
@@ -750,6 +757,7 @@ public class DuelPlayer {
      * @param teamID
      */
     public void sql_storeStats(int teamID, boolean won) {
+        String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
         String query = "INSERT INTO tblDuel2__stats (fnTeamID, fnUserID, fnShip, fnKills, fnDeaths, fnShots, fnKillJoys, " + 
                 "fnKnockOuts, fnKillStreak, fnDeathStreak, fnLagouts) VALUES(" + teamID + ", " + userID + ", " + ship + ", " + stats.getStat(StatType.KILLS) + ", " + stats.getStat(StatType.DEATHS) + ", " +
                 stats.getStat(StatType.SHOTS) + ", " + stats.getStat(StatType.KILL_JOYS) + ", " + 
@@ -758,6 +766,8 @@ public class DuelPlayer {
                 stats.getStat(StatType.LAGOUTS) + ")";
         try {
             ba.SQLQueryAndClose(db, query);
+            query = "UPDATE tblDuel2__player SET fdLastPlayed = '" + date + "' WHERE fnUserID = " + userID;
+            ba.SQLBackgroundQuery(db, null, query);
         } catch (SQLException e) {
             e.printStackTrace();
         }

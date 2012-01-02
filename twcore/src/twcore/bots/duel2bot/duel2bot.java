@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -28,6 +29,8 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.game.Player;
+import twcore.core.lag.LagHandler;
+import twcore.core.lag.LagReport;
 import twcore.core.util.Tools;
 
 /**
@@ -56,6 +59,10 @@ public class duel2bot extends SubspaceBot{
     int d_challengeTime;
     int d_duelLimit;
     int d_duelDays;
+    
+    LagHandler                     lagHandler;
+    Vector<String>                 lagChecks;
+    TimerTask                      lagCheck;
     
     // current non-league duel id number
     private int                    scrimID;
@@ -153,11 +160,25 @@ public class duel2bot extends SubspaceBot{
         if (!arena.equalsIgnoreCase("duel2")) return;
         ba.shipResetAll();
         ba.warpAllToLocation(512, 502);
+        
+        lagChecks = new Vector<String>();
+        lagCheck = null;
+        lagHandler = new LagHandler(ba, settings, this, "handleLagReport");
+        
         Iterator<Player> i = ba.getPlayerIterator();
         while (i.hasNext()) {
             Player p = i.next();
             players.put(p.getPlayerName().toLowerCase(), new DuelPlayer(p, this));
         }
+        
+        lagCheck = new TimerTask() {
+            public void run() {
+                String name = lagChecks.remove(0);
+                lagChecks.add(name);
+                lagHandler.requestLag(name);
+            }
+        };
+        ba.scheduleTask(lagCheck, 4000);
     }
     
     @Override
@@ -264,6 +285,23 @@ public class duel2bot extends SubspaceBot{
             players.get(name.toLowerCase()).handleFSC(event);
     }
     
+    /** Handles a lag report received from the lag handler */
+    public void handleLagReport(LagReport report) {
+        if (!report.isBotRequest())
+            ba.privateMessageSpam(report.getRequester(), report.getLagStats());
+        if (report.isOverLimits()) {
+            if (!report.isBotRequest())
+                ba.sendPrivateMessage(report.getRequester(), report.getLagReport());
+            DuelPlayer p = getPlayer(report.getName());
+            if (p != null && ba.getPlayer(report.getName()).getShipType() != 0 && !p.isSpecced()) {
+                ba.sendPrivateMessage(report.getName(), report.getLagReport());
+                p.handleLagout();
+                ba.spec(report.getName());
+                ba.spec(report.getName());
+            }
+        }
+    }
+    
     public void handleEvent(SQLResultEvent event) {
         ResultSet rs = event.getResultSet();
         String[] args = event.getIdentifier().split(":");
@@ -340,9 +378,9 @@ public class duel2bot extends SubspaceBot{
         int type = event.getMessageType();
 
         if (type == Message.ARENA_MESSAGE) {
-            if (msg.startsWith("IP:")) {
+            if (msg.startsWith("IP:"))
                 handleInfo(msg);
-            }
+            lagHandler.handleLagMessage(msg);
         }
         
         String name = ba.getPlayerName(event.getPlayerID());
@@ -367,6 +405,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_lagout(name);
             else if (cmd.startsWith("!help") || (cmd.startsWith("!h")))
                 cmd_help(name);
+            else if (cmd.startsWith("!ab"))
+                cmd_about(name);
             else if (cmd.startsWith("!score")) 
                 cmd_score(name, msg);
             else if (cmd.equals("!teams"))
@@ -377,12 +417,14 @@ public class duel2bot extends SubspaceBot{
                 cmd_rec(name);
             else if (cmd.startsWith("!stats"))
                 cmd_stats(name, msg);
+            else if (!cmd.startsWith("!lagout") && cmd.startsWith("!lag"))
+                cmd_lag(name, msg);
         }
 
         if (oplist.isModerator(name)
                 && (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE)) {
             if (cmd.startsWith("!die"))
-                ba.die();
+                cmd_die(name);
             else if (cmd.startsWith("!ban ") && cmd.length() > 5)
                 cmd_ban(name, msg);
             else if (cmd.startsWith("!unban ") && cmd.length() > 6)
@@ -413,12 +455,8 @@ public class duel2bot extends SubspaceBot{
     /** Handles the !help command */
     private void cmd_help(String name) {
         String[] help = {
-                "+-ABOUT-------------------------------------------------------------------------------------------.",
-                "| This is a 2v2 TWEL duel arena, however, casual or scrimmage duels are also available. To play   |",
-                "| a casual duel enter a ship with one other player on the same freq. Challenge another freq of    |",
-                "| two players using the !ch command. For ranked (league) duels all participants must be registered|",
-                "| with !signup. Ranked challenges are sent using the !ch+ command.                                |",
-                "+-COMMANDS----------------------------------------------------------------------------------------+",
+                "+-COMMANDS----------------------------------------------------------------------------------------.",
+                "| !about                      - Information about 2v2 TWEL                                        |",
                 "| !signup                     - Registers you for 2v2 TWEL league duels                           |",
                 "| !ch <player>:<division>     - Challenges the freq with <player> to a CASUAL duel in <division#> |",
                 "| !ch+ <player>:<division>    - Challenges the freq with <player> to a RANKED duel in <division>  |",
@@ -436,6 +474,7 @@ public class duel2bot extends SubspaceBot{
                 "| !rating                     - Shows your rating for your current duel's division                |",
                 "| !rating <division>          - Shows your rating for <division>                                  |",
                 "| !rating <name>:<division>   - Shows the <division> rating of <name>                             |",
+                "| !lag <name>                 - Requests the lag information for <name> (leave blank for self)    |",
                 };
         ba.privateMessageSpam(name, help);
         if (!oplist.isModerator(name)) return;
@@ -453,6 +492,18 @@ public class duel2bot extends SubspaceBot{
         ba.privateMessageSpam(name, help);
         ba.sendPrivateMessage(name, 
                 "`-------------------------------------------------------------------------------------------------'");
+    }
+    
+    private void cmd_about(String name) {
+        String[] about = new String[] {
+                "+-ABOUT-------------------------------------------------------------------------------------------.",
+                "| This is a 2v2 TWEL duel arena, however, casual or scrimmage duels are also available. To play   |",
+                "| a casual duel enter a ship with one other player on the same freq. Challenge another freq of    |",
+                "| two players using the !ch command. For ranked (league) duels all participants must be registered|",
+                "| with !signup. Ranked challenges are sent using the !ch+ command.                                |",
+                "`-------------------------------------------------------------------------------------------------'"
+        };
+        ba.privateMessageSpam(name, about);
     }
     
     private void cmd_signup(String name, String cmd) {
@@ -849,6 +900,17 @@ public class duel2bot extends SubspaceBot{
                 ba.sendSmartPrivateMessage(name, "You are not currently in a duel.");
         }
     }
+    
+    private void cmd_lag(String name, String cmd) {
+        String[] args = splitArgs(cmd);
+        if (args != null) {
+            if (players.containsKey(args[0].toLowerCase()))
+                lagHandler.requestLag(args[0], name);
+            else
+                ba.sendSmartPrivateMessage(name, "Could not process lag request on missing player '" + args[0] + "'");
+        } else
+            lagHandler.requestLag(name, name);
+    }
 
     /** Handles the !lagout command */
     private void cmd_lagout(String name) {
@@ -880,7 +942,22 @@ public class duel2bot extends SubspaceBot{
         } else
             ba.sendPrivateMessage(name, "You are not currently dueling.");
     }
-
+    
+    private void cmd_die(String name) {
+        ba.sendSmartPrivateMessage(name, "Disconnecting...");
+        this.handleDisconnect();
+    }
+    
+    @Override
+    public void handleDisconnect() {
+        ba.cancelTasks();
+        ba.scheduleTask((new TimerTask() {
+            public void run() {
+                ba.die();
+            }
+        }), 2000);
+    }
+    
     /** Removes all challenges involving two specific freqs
      * 
      * @param freq1
