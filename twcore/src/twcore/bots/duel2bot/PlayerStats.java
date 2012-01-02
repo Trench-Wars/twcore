@@ -289,6 +289,10 @@ public class PlayerStats {
             setStat(StatType.BEST_MULTI_KILL, kills);
     }
     
+    public void handleTimePlayed(int secs) {
+        stats.get(StatType.PLAYTIME).add(secs);
+    }
+    
     /** Updates the local database stats with the recent game stats to prepare for saving */
     private void unload() {
         crunchAim(true);

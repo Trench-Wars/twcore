@@ -199,7 +199,7 @@ public class duel2bot extends SubspaceBot{
         if (laggers.containsKey(name.toLowerCase())) {
             players.put(name.toLowerCase(), laggers.get(name.toLowerCase()));
             players.get(name.toLowerCase()).handleReturn();
-
+            lagChecks.add(name.toLowerCase());
         } else {
             players.put(name.toLowerCase(), new DuelPlayer(ptest, this));
             ba.sendPrivateMessage(name, greet);
@@ -213,6 +213,7 @@ public class duel2bot extends SubspaceBot{
         String name = ptest.getPlayerName();
         // remove from player lists
         // refresh teams list
+        lagChecks.remove(name.toLowerCase());
         if (players.containsKey(name.toLowerCase()))
             if (!laggers.containsKey(name.toLowerCase()))
                 players.remove(name.toLowerCase()).handleLagout();

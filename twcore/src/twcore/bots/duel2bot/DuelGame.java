@@ -141,41 +141,41 @@ public class DuelGame {
     public String[] getStats() {
         ArrayList<String> statArray = new ArrayList<String>();
         if (ranked) {
-            statArray.add(",------------------------+----+----+--------.");
-            statArray.add("|                      K |  D | LO | Rating |");
-            statArray.add("|                   ,----+----+----+--------+");
-            statArray.add("| Challengers      /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + "  |" + padNum(team2.getLagouts(), 3) + " |        |");
+            statArray.add(",------------------------+----+----+----------+--------.");
+            statArray.add("|                      K |  D | LO | PlayTime | Rating |");
+            statArray.add("|                   ,----+----+----+----------+--------+");
+            statArray.add("| Challengers      /  " + padNum(team1.getKills(), 3) + " |" + padNum(team1.getDeaths(), 3) + " |" + padNum(team1.getLagouts(), 3) + " |" + padNum(team1.getTime(), 9) + " |        |");
             statArray.add("+-----------------'      |    |    |        |");
             String[] stats = team1.getStatString(ranked);
             statArray.add(stats[0]);
             statArray.add(stats[1]);
 
-            statArray.add("+------------------------+----+----+--------.");
-            statArray.add("|                   ,----+----+----+--------+");
-            statArray.add("| Accepters        /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + "  |" + padNum(team2.getLagouts(), 3) + " |        |");
-            statArray.add("+-----------------'      |    |    |        |");
+            statArray.add("+------------------------+----+----+----------+--------+");
+            statArray.add("|                   ,----+----+----+----------+--------+");
+            statArray.add("| Accepters        /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + " |" + padNum(team2.getLagouts(), 3) + " |" + padNum(team2.getTime(), 9) + " |        |");
+            statArray.add("+-----------------'      |    |    |          |        |");
             stats = team2.getStatString(ranked);
             statArray.add(stats[0]);
             statArray.add(stats[1]);
-            statArray.add("`------------------------+----+----+--------'");
+            statArray.add("`------------------------+----+----+----------+--------'");
         } else {
-            statArray.add(",------------------------+----+----.");
-            statArray.add("|                      K |  D | LO |");
-            statArray.add("|                   ,----+----+----+");
-            statArray.add("| Challengers      /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + "  |" + padNum(team2.getLagouts(), 3) + "|");
-            statArray.add("+-----------------'      |    |    |");
+            statArray.add(",------------------------+----+----+----------.");
+            statArray.add("|                      K |  D | LO | PlayTime |");
+            statArray.add("|                   ,----+----+----+----------+");
+            statArray.add("| Challengers      /  " + padNum(team1.getKills(), 3) + " |" + padNum(team1.getDeaths(), 3) + " |" + padNum(team1.getLagouts(), 3) + " |" + padNum(team1.getTime(), 9) + " |");
+            statArray.add("+-----------------'      |    |    |          |");
             String[] stats = team1.getStatString(ranked);
             statArray.add(stats[0]);
             statArray.add(stats[1]);
 
-            statArray.add("+------------------------+----+----.");
-            statArray.add("|                   ,----+----+----+");
-            statArray.add("| Accepters        /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + "  |" + padNum(team2.getLagouts(), 3) + "|");
-            statArray.add("+-----------------'      |    |    |");
+            statArray.add("+------------------------+----+----+----------+");
+            statArray.add("|                   ,----+----+----+----------+");
+            statArray.add("| Accepters        /  " + padNum(team2.getKills(), 3) + " |" + padNum(team2.getDeaths(), 3) + " |" + padNum(team2.getLagouts(), 3) + " |" + padNum(team2.getTime(), 9) + " |");
+            statArray.add("+-----------------'      |    |    |          |");
             stats = team2.getStatString(ranked);
             statArray.add(stats[0]);
             statArray.add(stats[1]);
-            statArray.add("`------------------------+----+----'");
+            statArray.add("`------------------------+----+----+----------'");
             
         }
         return statArray.toArray(new String[statArray.size()]);

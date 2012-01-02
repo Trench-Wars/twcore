@@ -102,6 +102,10 @@ public class DuelTeam {
     public int getLagouts() {
         return player[0].getLagouts() + player[1].getLagouts();
     }
+    
+    public int getTime() {
+        return player[0].getTime() + player[1].getTime();
+    }
 
     public int getTeamID() {
         return teamID;
@@ -164,8 +168,8 @@ public class DuelTeam {
     
     public String[] getStatString(boolean ranked) {
         String[] str = new String[2];
-        str[0] = "| " + padString(pname[0], 20) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[0].getDeaths(), 3) + " |" + game.padNum(player[0].getLagouts(), 3) + " | " + (ranked ? "" + game.padNum(player[0].getRating(), 6) + " |" : "");
-        str[1] = "| " + padString(pname[1], 20) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[1].getDeaths(), 3) + " |" + game.padNum(player[1].getLagouts(), 3) + " | " + (ranked ? "" + game.padNum(player[1].getRating(), 6) + " |" : "");
+        str[0] = "| " + padString(pname[0], 20) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[0].getDeaths(), 3) + " |" + game.padNum(player[0].getLagouts(), 3) + " |" + game.padNum(player[0].getTime(), 9) + " | " + (ranked ? "" + game.padNum(player[0].getRating(), 6) + " |" : "");
+        str[1] = "| " + padString(pname[1], 20) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[1].getDeaths(), 3) + " |" + game.padNum(player[1].getLagouts(), 3) + " |" + game.padNum(player[1].getTime(), 9) + " | " + (ranked ? "" + game.padNum(player[1].getRating(), 6) + " |" : "");
         return str;
     }
 
@@ -227,14 +231,8 @@ public class DuelTeam {
             @Override
             public void run() {
                 game.state = DuelGame.IN_PROGRESS;
-                if (!bot.laggers.containsKey(pname[0].toLowerCase())) {
-                    player[0].warp(spawn1[0], spawn1[1]);
-                    ba.sendPrivateMessage(pname[0], "GO GO GO!!!", 104);
-                }
-                if (!bot.laggers.containsKey(pname[1].toLowerCase())) {
-                    player[1].warp(spawn2[0], spawn2[1]);
-                    ba.sendPrivateMessage(pname[1], "GO GO GO!!!", 104);
-                }
+                player[0].startGame(spawn1);
+                player[1].startGame(spawn2);
             }
         };
         String r = ranked ? "[RANKED] " : "[CASUAL] ";

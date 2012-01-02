@@ -11,6 +11,7 @@ public enum StatType {
     SPAWNS("fnSpawnKills", false),
     WARPS("fnWarps", false),
     LAGOUTS("fnLagouts", false),
+    PLAYTIME("fnTimePlayed", false),
     
     KILLS("fnKills", false), 
     DEATHS("fnDeaths", false), 

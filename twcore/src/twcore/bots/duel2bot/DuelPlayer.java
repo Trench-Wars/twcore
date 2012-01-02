@@ -270,13 +270,13 @@ public class DuelPlayer {
                     && (team.game.state == DuelGame.SETUP)) ba.setShip(name, ship);
 
             if (foul || team.game.state == DuelGame.IN_PROGRESS) {
-                status = statusID;
+                setStatus(statusID);
                 handleWarp(false);
                 return;
             } else
                 team.warpToSafe(this);
         }
-        status = statusID;
+        setStatus(statusID);
     }
 
     
@@ -399,7 +399,7 @@ public class DuelPlayer {
 
         if (team.game.state == DuelGame.IN_PROGRESS) 
             stats.handleLagout();
-
+        doPlaytime();
         if (stats.getStat(StatType.LAGOUTS) <= d_maxLagouts) {
             ba.sendSmartPrivateMessage(name,
                     "You have 1 minute to return (!lagout) to your duel or you will forfeit! (!lagout)");
@@ -439,9 +439,11 @@ public class DuelPlayer {
         lastFoul = System.currentTimeMillis();
         ba.setShip(name, ship);
         ba.setFreq(name, freq);
-        if (team.game.state == DuelGame.IN_PROGRESS)
+        if (team.game.state == DuelGame.IN_PROGRESS) {
+            lastSpec = System.currentTimeMillis();
             team.warpPlayer(this);
-        else if (team.game.state == DuelGame.SETUP) team.warpToSafe(this);
+        } else if (team.game.state == DuelGame.SETUP) 
+            team.warpToSafe(this);
     }
     
     /** Handles a player !signup command */
@@ -600,9 +602,22 @@ public class DuelPlayer {
     public String getLastKiller() {
         return lastKiller;
     }
+    
+    public void startGame(int[] spawn) {
+        if (!bot.laggers.containsKey(name.toLowerCase())) {
+            warp(spawn[0], spawn[1]);
+            ba.sendPrivateMessage(name, "GO GO GO!!!", 104);
+        }
+        lastSpec = System.currentTimeMillis();
+    }
 
     /** Resets the player tasks and warps to middle */
     public void endGame() {
+        if (!isSpecced()) {
+            int secs = (int) (System.currentTimeMillis() - lastSpec) / 1000;
+            stats.handleTimePlayed(secs);
+            lastSpec = 0;
+        }
         if (ship > 0)
             status = SPEC;
         else
@@ -650,14 +665,18 @@ public class DuelPlayer {
     public int getStatus() {
         return status;
     }
+    
+    public int getRating() {
+        return rating;
+    }
+    
+    public int getTime() {
+        return stats.getStat(StatType.PLAYTIME);
+    }
 
     /** Sets the player status */
     public void setStatus(int s) {
         status = s;
-    }
-    
-    public int getRating() {
-        return rating;
     }
 
     /**
@@ -673,9 +692,21 @@ public class DuelPlayer {
             return;
         }
         out = reason;
-        if (stats.getStat(StatType.DEATHS) != specAt) stats.setStat(StatType.DEATHS, specAt);
+        if (stats.getStat(StatType.DEATHS) != specAt) 
+            stats.setStat(StatType.DEATHS, specAt);
+        doPlaytime();
         setStatus(OUT);
         team.playerOut(this);
+    }
+    
+    private void doPlaytime() {
+        if (team.game.state != DuelGame.IN_PROGRESS) return; 
+        long now = System.currentTimeMillis();
+        if (lastSpec > 0) {
+            int secs = (int) (now - lastSpec) / 1000;
+            stats.handleTimePlayed(secs);
+            lastSpec = now;
+        }
     }
 
     /** Warps the player to the specified coordinates (in tiles) */
@@ -759,11 +790,11 @@ public class DuelPlayer {
     public void sql_storeStats(int teamID, boolean won) {
         String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
         String query = "INSERT INTO tblDuel2__stats (fnTeamID, fnUserID, fnShip, fnKills, fnDeaths, fnShots, fnKillJoys, " + 
-                "fnKnockOuts, fnKillStreak, fnDeathStreak, fnLagouts) VALUES(" + teamID + ", " + userID + ", " + ship + ", " + stats.getStat(StatType.KILLS) + ", " + stats.getStat(StatType.DEATHS) + ", " +
+                "fnKnockOuts, fnKillStreak, fnDeathStreak, fnLagouts, fnTimePlayed) VALUES(" + teamID + ", " + userID + ", " + ship + ", " + stats.getStat(StatType.KILLS) + ", " + stats.getStat(StatType.DEATHS) + ", " +
                 stats.getStat(StatType.SHOTS) + ", " + stats.getStat(StatType.KILL_JOYS) + ", " + 
                 stats.getStat(StatType.KNOCK_OUTS) + ", " + 
                 stats.getStat(StatType.BEST_KILL_STREAK) + ", " + stats.getStat(StatType.WORST_DEATH_STREAK) + ", " +
-                stats.getStat(StatType.LAGOUTS) + ")";
+                stats.getStat(StatType.LAGOUTS) + ", " + stats.getStat(StatType.PLAYTIME) + ")";
         try {
             ba.SQLQueryAndClose(db, query);
             query = "UPDATE tblDuel2__player SET fdLastPlayed = '" + date + "' WHERE fnUserID = " + userID;
