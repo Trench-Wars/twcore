@@ -128,6 +128,10 @@ public class duel2bot extends SubspaceBot{
         settings = ba.getBotSettings();
         oplist = ba.getOperatorList();
         ba.joinArena(settings.getString("Arena"));
+        
+        lagChecks = new Vector<String>();
+        lagCheck = null;
+        lagHandler = new LagHandler(ba, settings, this, "handleLagReport");
 
         // Create new box Objects
         int boxCount = settings.getInt("BoxCount");
@@ -160,10 +164,6 @@ public class duel2bot extends SubspaceBot{
         if (!arena.equalsIgnoreCase("duel2")) return;
         ba.shipResetAll();
         ba.warpAllToLocation(512, 502);
-        
-        lagChecks = new Vector<String>();
-        lagCheck = null;
-        lagHandler = new LagHandler(ba, settings, this, "handleLagReport");
         
         Iterator<Player> i = ba.getPlayerIterator();
         while (i.hasNext()) {
