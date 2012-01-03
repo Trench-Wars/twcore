@@ -250,8 +250,8 @@ public class DuelGame {
         // losers
         int drLoss = (int) Math.round((10 * 5 * (0.0 - p1)));
         int drWin =  (int) Math.round((10 * 5 * (1.0 - p2)));
-        int kills[] = new int[] { loss[0].getKills() + 1, loss[1].getKills() + 1 };
-        int deaths[] = new int[] { loss[0].getDeaths() + 1, loss[1].getDeaths() + 1 };
+        double kills[] = new double[] { loss[0].getKills() + 1, loss[1].getKills() + 1 };
+        double deaths[] = new double[] { loss[0].getDeaths() + 1, loss[1].getDeaths() + 1 };
         double ratio[] = new double[3];
         ratio[0] = (kills[0]);
         ratio[1] = (kills[1]);
@@ -266,8 +266,8 @@ public class DuelGame {
         loss[1].setRating(loss[1].getRating() + drLoser2);
         
         // winners
-        kills = new int[] { win[0].getKills() + 1, win[1].getKills() + 1 };
-        deaths = new int[] { win[0].getDeaths() + 1, win[1].getDeaths() + 1 };
+        kills = new double[] { win[0].getKills() + 1, win[1].getKills() + 1 };
+        deaths = new double[] { win[0].getDeaths() + 1, win[1].getDeaths() + 1 };
         ratio[0] = (kills[0] / deaths[0]);
         ratio[1] = (kills[1] / deaths[1]);
         ratio[2] = ratio[0] + ratio[1];
