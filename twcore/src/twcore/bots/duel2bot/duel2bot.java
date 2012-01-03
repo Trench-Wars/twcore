@@ -844,10 +844,10 @@ public class duel2bot extends SubspaceBot{
         }
 
         Player p = ba.getPlayer(name);
-        if (teams.containsKey(p.getFrequency())) {
+        if (teams.containsKey(Integer.valueOf(p.getFrequency()))) {
             ba.sendPrivateMessage(name, "You are already dueling.");
             return;
-        } else if (teams.containsKey(nme.getFrequency())) return;
+        } else if (teams.containsKey(Integer.valueOf(nme.getFrequency()))) return;
         
         String key = "" + nme.getFrequency() + " " + p.getFrequency() + "";
         if (!challs.containsKey(key)) {
