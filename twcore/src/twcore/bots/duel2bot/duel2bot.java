@@ -810,14 +810,9 @@ public class duel2bot extends SubspaceBot{
         final String key = "" + freq1 + " " + freq2 + "";
         if (challs.containsKey(key)) {
             DuelChallenge ch = challs.get(key);
-            if (ch.getDiv() != div) {
-                ba.cancelTask(ch);
-                challs.remove(key);
-            } else {
-                ba.sendPrivateMessage(name,
-                        "This challenge already exists, but you may try it again after it expires.");
-                return;
-            }
+            ba.cancelTask(ch);
+            challs.remove(key);
+            ba.sendOpposingTeamMessageByFrequency(freq1, "Previous challenge is being replaced...");
         }
         
         tests[0].setDuel(names1[1], freq1);
