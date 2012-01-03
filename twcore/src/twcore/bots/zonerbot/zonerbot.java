@@ -162,6 +162,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_autoZone(name);
                 else if (msg.toLowerCase().equals("!reload"))
                     cmd_reload(name);
+                else if (msg.toLowerCase().startsWith("!cred"))
+                    cmd_credit(name, msg);
             }
             if (oplist.isOwner(name)) {
                 if (msg.toLowerCase().startsWith("!zone "))
@@ -275,6 +277,7 @@ public class zonerbot extends SubspaceBot {
                     "| !add <name>            - Adds <name> to the trainer list (allows zh advert granting)          |",
                     "| !remove <name>         - Removes <name> from the trainer list                                 |",
                     "| !autozone              - Toggle periodic zoners to instant-zone when loaded from database     |",
+                    "| !cred <name>:#:<arena> - Gives # weekend event hosting credits to <name> for <arena>          |",
                     "| !reload                - Reloads all the periodic messages from the database                  |", };
             ba.smartPrivateMessageSpam(name, msg);
         }
@@ -835,6 +838,30 @@ public class zonerbot extends SubspaceBot {
         } else
             ba.sendSmartPrivateMessage(name, "No periodic zoner listed at index: " + index);
     }
+    
+    private void cmd_credit(String name, String cmd) {
+        if (!cmd.contains(" ")) return;
+        try {
+            String[] args = splitArgs(cmd);
+            if (args != null && args.length == 3) {
+                //!cred name:#:arena
+                int n = Integer.valueOf(args[1]);
+                if (oplist.isZH(args[0])) {
+                    if (n > 0 && n < 7) {
+                        String query = "INSERT INTO tblAdvert (fcUserName, fcGranter, fcEventName, fcAdvert, fdTime) VALUES('" + Tools.addSlashesToString(args[0]) + "', '" + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(args[2]) + "', 'WEEKEND EVENT BONUS', NOW())";
+                        for (; n > 0; n--)
+                            ba.SQLBackgroundQuery(db, null, query);
+                        ba.sendSmartPrivateMessage(name, args[0] + " has successfully been given " + n + " weekend event credits for " + args[2] + ".");
+                    } else
+                        ba.sendSmartPrivateMessage(name, "Credit amount must be between 0 and 7");
+                } else
+                    ba.sendSmartPrivateMessage(name, args[0] + " is not a staff member.");
+            } else
+                throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Invalid command syntax, please use !cred staffer:amount:arena");
+        }
+    }
 
     /** Handles the !die command **/
     private void cmd_die(String name) {
@@ -1014,6 +1041,22 @@ public class zonerbot extends SubspaceBot {
             else
                 result[i] = msg.substring(i * length);
         }
+        return result;
+    }
+
+    /** Splits the arguments of a given command separated by colons
+     * 
+     * @param cmd
+     *            command String
+     * @return String array of the results args */
+    private String[] splitArgs(String cmd) {
+        String[] result = null;
+        if (cmd.contains(" ") && ((cmd.indexOf(" ") + 1) != cmd.length())) 
+            if (!cmd.contains(":")) {
+                result = new String[1];
+                result[0] = cmd.substring(cmd.indexOf(" ") + 1);
+            } else
+                result = cmd.substring(cmd.indexOf(" ") + 1).split(":");
         return result;
     }
 
