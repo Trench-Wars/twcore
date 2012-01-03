@@ -248,8 +248,8 @@ public class DuelGame {
         double p2 = 1.0 - p1;
         
         // losers
-        int drLoss = (int) Math.round(10 * 5 * (0 - p1));
-        int drWin =  (int) Math.round(10 * 5 * (1 - p2));
+        int drLoss = (int) Math.round((10 * 5 * (0.0 - p1)));
+        int drWin =  (int) Math.round((10 * 5 * (1.0 - p2)));
         int kills[] = new int[] { loss[0].getKills() + 1, loss[1].getKills() + 1 };
         int deaths[] = new int[] { loss[0].getDeaths() + 1, loss[1].getDeaths() + 1 };
         double ratio[] = new double[3];
@@ -261,7 +261,7 @@ public class DuelGame {
         
         int drLoser1 = (int) Math.round(drLoss * ratio[1]);
         int drLoser2 = (int) Math.round(drLoss * ratio[0]);
-        bot.debug("[RATING] (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
+        bot.debug("[RATING] drLoss=" + drLoss + " (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
         loss[0].setRating(loss[0].getRating() + drLoser1);
         loss[1].setRating(loss[1].getRating() + drLoser2);
         
@@ -274,9 +274,9 @@ public class DuelGame {
         ratio[0] = ratio[0] / ratio[2];
         ratio[1] = ratio[1] / ratio[2];
         
-        int drWinner1 = (int) (drWin * ratio[0]);
-        int drWinner2 = (int) (drWin * ratio[1]);
-        bot.debug("[RATING] (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
+        int drWinner1 = (int) Math.round(drWin * ratio[0]);
+        int drWinner2 = (int) Math.round(drWin * ratio[1]);
+        bot.debug("[RATING] drWin=" + drWin + " (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
         win[0].setRating(win[0].getRating() + drWinner1);
         win[1].setRating(win[1].getRating() + drWinner2);
 
