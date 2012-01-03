@@ -851,7 +851,7 @@ public class zonerbot extends SubspaceBot {
                         String query = "INSERT INTO tblAdvert (fcUserName, fcGranter, fcEventName, fcAdvert, fdTime) VALUES('" + Tools.addSlashesToString(args[0]) + "', '" + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(args[2]) + "', 'WEEKEND EVENT BONUS', NOW())";
                         for (; n > 0; n--)
                             ba.SQLBackgroundQuery(db, null, query);
-                        ba.sendSmartPrivateMessage(name, args[0] + " has successfully been given " + n + " weekend event credits for " + args[2] + ".");
+                        ba.sendSmartPrivateMessage(name, args[0] + " has successfully been given " + args[1] + " weekend event credits for " + args[2] + ".");
                     } else
                         ba.sendSmartPrivateMessage(name, "Credit amount must be between 0 and 7");
                 } else
