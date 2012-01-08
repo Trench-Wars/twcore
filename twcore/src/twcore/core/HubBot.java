@@ -1064,7 +1064,10 @@ public class HubBot extends SubspaceBot {
                         "TW-GuardHub - [pubhub]",
                         "Banner Boy - [bannerboy]",
                         "TWDOpBot - [twdop]",
-                        "ForumBot - [forumbot]"
+                        "ForumBot - [forumbot]",
+                        "WhoBot - [whobot]",
+                        "TwChat - [twchat]"
+                        
                 };
                 m_botAction.remotePrivateMessageSpam(name, twcore);
                 }
