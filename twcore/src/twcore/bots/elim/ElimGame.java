@@ -266,7 +266,7 @@ public class ElimGame {
             ElimPlayer p = getPlayer(report.getName());
             if (p != null && ba.getPlayer(report.getName()).getShipType() != 0 && p.getStatus() == Status.IN) {
                 ba.sendPrivateMessage(report.getName(), report.getLagReport());
-                p.handleLagout();
+                handleLagout(report.getName());
                 ba.spec(report.getName());
                 ba.spec(report.getName());
             }
