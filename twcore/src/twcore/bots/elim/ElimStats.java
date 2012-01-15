@@ -314,7 +314,7 @@ public class ElimStats {
             loadStat(StatType.WORST_DEATH_STREAK, getStat(StatType.WORST_DEATH_STREAK)); 
         if (getStat(StatType.BEST_WIN_STREAK) > getDB(StatType.BEST_WIN_STREAK))
             loadStat(StatType.BEST_WIN_STREAK, getStat(StatType.BEST_WIN_STREAK)); 
-        if (getStat(StatType.BEST_KILL_STREAK) > getDB(StatType.BEST_KILL_STREAK))
+        if (getStat(StatType.BEST_MULTI_KILL) > getDB(StatType.BEST_MULTI_KILL))
             loadStat(StatType.BEST_MULTI_KILL, getStat(StatType.BEST_MULTI_KILL));
     }
     
