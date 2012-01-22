@@ -160,11 +160,10 @@ public class ctf extends MultiModule {
     }
     
     public void handleEvent(PlayerPosition event) {
-        if (movingFlag) return;
         String name = ba.getPlayerName(event.getPlayerID());
         if (isBot(name)) return;
         FlagPlayer p = getPlayer(name);
-        if (p != null && p.flag != null) {
+        if (!movingFlag && p != null && p.flag != null) {
             if (p.flag.id != p.freq) {
                 Team t = team[p.freq];
                 if (t.hasFlag() && t.hasClaimed(event)) {
@@ -379,7 +378,12 @@ public class ctf extends MultiModule {
             //debug("" + f + ") Flag [" + flag.getFlagID() + "] @ (" + flag.getXLocation() + ", " + flag.getYLocation() + ") Me(" + ba.getShip().getX()/16 + ", " + ba.getShip().getY()/16 + ")");
             debug("Reset flag for freq " + freq);
             s.setShip(8);
-            movingFlag = false;
+            TimerTask wait = new TimerTask() {
+                public void run() {
+                    movingFlag = false;
+                }
+            };
+            ba.scheduleTask(wait, 2000);
         }
         
         public boolean hasFlag() {
