@@ -35,7 +35,7 @@ public class ctf extends MultiModule {
     Random rand = new Random();
 
     BotAction ba;
-    boolean ready;
+    boolean movingFlag;
     boolean DEBUG;
     String debugger;
     SpecTask spec;
@@ -47,7 +47,7 @@ public class ctf extends MultiModule {
     @Override
     public void init() {
         ba = m_botAction;
-        ready = false;
+        movingFlag = false;
         DEBUG = true;
         debugger = "WingZero";
         ba.setPlayerPositionUpdating(300);
@@ -159,6 +159,7 @@ public class ctf extends MultiModule {
     }
     
     public void handleEvent(PlayerPosition event) {
+        if (movingFlag) return;
         String name = ba.getPlayerName(event.getPlayerID());
         if (isBot(name)) return;
         FlagPlayer p = getPlayer(name);
@@ -170,10 +171,6 @@ public class ctf extends MultiModule {
                     t.score++;
                     ba.sendArenaMessage("Freq " + p.flag.id + "'s flag has been CAPTURED by " + p.name, 104);
                     ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
-                    if (p.freq == 0)
-                        ba.warpTo(name, GOALS[0] + 8, GOALS[1]);
-                    else
-                        ba.warpTo(name, GOALS[0] - 8, GOALS[1]);
                     team[p.flag.id].resetFlag();
                 }
             }
@@ -376,7 +373,7 @@ public class ctf extends MultiModule {
             //debug("" + f + ") Flag [" + flag.getFlagID() + "] @ (" + flag.getXLocation() + ", " + flag.getYLocation() + ") Me(" + ba.getShip().getX()/16 + ", " + ba.getShip().getY()/16 + ")");
             debug("Reset flag for freq " + freq);
             s.setShip(8);
-            ba.setPlayerPositionUpdating(300);
+            movingFlag = false;
         }
         
         public boolean hasFlag() {
