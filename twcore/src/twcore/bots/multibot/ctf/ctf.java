@@ -104,7 +104,7 @@ public class ctf extends MultiModule {
     public void handleEvent(PlayerEntered event) {
         Player p = ba.getPlayer(event.getPlayerID());
         if (!players.containsKey(low(p.getPlayerName()))) {
-            players.put(low(p.getPlayerName()), new FlagPlayer(p.getPlayerName(), p.getFrequency(), p.getShipType()));
+            players.put(low(p.getPlayerName()), new FlagPlayer(p.getPlayerName(), p.getShipType()));
         } else {
             FlagPlayer f = getPlayer(p.getPlayerName());
             f.freq = p.getFrequency();
@@ -136,8 +136,7 @@ public class ctf extends MultiModule {
         if (p != null) {
             if (freq < 9999 && freq > 1)
                 ba.setFreq(name, p.freq);
-            else
-                p.freq = freq;
+            p.getFreq();
             p.flagReset();
         } else
             debug("FP error on " + name);
@@ -161,11 +160,11 @@ public class ctf extends MultiModule {
         if (isBot(name)) return;
         FlagPlayer p = getPlayer(name);
         if (!movingFlag && p != null && p.flag != null) {
-            if (p.flag.id != p.freq && p.freq == 0 || p.freq == 1) {
-                Team t = team[p.freq];
+            if (p.flag.id != p.getFreq() && p.getFreq() == 0 || p.getFreq() == 1) {
+                Team t = team[p.getFreq()];
                 if (t.hasFlag() && t.hasClaimed(event)) {
                     movingFlag = true;
-                    if (p.freq == 0)
+                    if (p.getFreq() == 0)
                         ba.warpTo(name, WARPS[0], WARPS[1]);
                     else
                         ba.warpTo(name, WARPS[2], WARPS[3]);
@@ -270,7 +269,7 @@ public class ctf extends MultiModule {
         FlagPlayer p = getPlayer(target);
         if (p != null) {
             String[] msg = {
-                    "Name:" + p.name + " Freq:" + p.freq + " Ship:" + p.ship,
+                    "Name:" + p.name + " Freq:" + p.getFreq() + " Ship:" + p.ship,
                     "Kills:" + p.kills + " Deaths:" + p.deaths,
                     "Captures:" + p.captures + " Steals:" + p.steals + " Returns:" + p.returns
             };
@@ -316,10 +315,11 @@ public class ctf extends MultiModule {
     }
     
     class FlagPlayer {
+        Player player;
         String name;
         FlagTask flag;
-        int freq;
         int ship;
+        int freq;
         
         int kills;
         int deaths;
@@ -327,9 +327,8 @@ public class ctf extends MultiModule {
         int steals;
         int returns;
         
-        public FlagPlayer(String name, int freq, int ship) {
+        public FlagPlayer(String name, int ship) {
             this.name = name;
-            this.freq = freq;
             this.ship = ship;
             flag = null;
             kills = 0;
@@ -337,12 +336,14 @@ public class ctf extends MultiModule {
             captures = 0;
             steals = 0;
             returns = 0;
+            player = ba.getPlayer(name);
+            freq = player.getFrequency();
         }
         
         public FlagPlayer(Player p) {
             this.name = p.getPlayerName();
-            this.freq = p.getFrequency();
             this.ship = p.getShipType();
+            freq = p.getFrequency();
             flag = null;
             kills = 0;
             deaths = 0;
@@ -350,6 +351,7 @@ public class ctf extends MultiModule {
             steals = 0;
             returns = 0;
             players.put(low(name), this);
+            player = p;
         }
         
         public void flagReset() {
@@ -359,6 +361,12 @@ public class ctf extends MultiModule {
                 flag = null;
             }
         }
+        
+        public int getFreq() {
+            freq = player.getFrequency();
+            return freq;
+        }
+        
     }
 
     class Team {
