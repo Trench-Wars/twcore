@@ -51,7 +51,6 @@ public class ctf extends MultiModule {
         movingFlag = false;
         DEBUG = true;
         debugger = "WingZero";
-        ba.setPlayerPositionUpdating(300);
         
         players = new HashMap<String, FlagPlayer>();
         Iterator<Player> j = ba.getPlayerIterator();
@@ -164,7 +163,7 @@ public class ctf extends MultiModule {
         if (isBot(name)) return;
         FlagPlayer p = getPlayer(name);
         if (!movingFlag && p != null && p.flag != null) {
-            if (p.flag.id != p.freq) {
+            if (p.flag.id != p.freq && p.freq == 0 || p.freq == 1) {
                 Team t = team[p.freq];
                 if (t.hasFlag() && t.hasClaimed(event)) {
                     movingFlag = true;
@@ -234,7 +233,20 @@ public class ctf extends MultiModule {
                     flag[0].print();
                 if (msg.equals("!p2"))
                     flag[1].print();
+                if (msg.equals("!debug"))
+                    cmd_debug(name);
             }
+        }
+    }
+    
+    private void cmd_debug(String name) {
+        DEBUG = !DEBUG;
+        if (DEBUG) {
+            debugger = name;
+            ba.sendSmartPrivateMessage(name, "Debugging messages ENABLED.");
+        } else {
+            debugger = "";
+            ba.sendSmartPrivateMessage(name, "Debugging messages DISABLED.");
         }
     }
     
