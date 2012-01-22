@@ -394,6 +394,11 @@ public class ctf extends MultiModule {
                 s += "" + freq;
                 debug(s);
             }
+            
+            if (!carried && !team[id].hasFlag()) {
+                debug("Displaced flag detected...");
+                team[id].resetFlag();
+            }
         }
         
         public void print() {
