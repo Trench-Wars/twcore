@@ -170,9 +170,12 @@ public class ctf extends MultiModule {
                 if (t.hasFlag() && t.hasClaimed(event)) {
                     p.captures++;
                     t.score++;
+                    if (p.freq == 0)
+                        ba.warpTo(name, WARPS[0], WARPS[1]);
+                    else
+                        ba.warpTo(name, WARPS[2], WARPS[3]);
                     ba.sendArenaMessage("Freq " + p.flag.id + "'s flag has been CAPTURED by " + p.name, 104);
                     ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
-                    movingFlag = true;
                     team[p.flag.id].resetFlag();
                 }
             }
