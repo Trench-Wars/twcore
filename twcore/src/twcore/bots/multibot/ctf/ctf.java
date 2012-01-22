@@ -38,6 +38,7 @@ public class ctf extends MultiModule {
     boolean ready;
     boolean DEBUG;
     String debugger;
+    SpecTask spec;
     FlagTask[] flag;
     Team[] team;
     
@@ -77,6 +78,7 @@ public class ctf extends MultiModule {
         ba.scheduleTask(flag[1], 1000, 1000);
         team = new Team[] { new Team(0, flag1, GOALS[0], GOALS[1]), new Team(1, flag2, GOALS[2], GOALS[3]) };
         resetFlags();
+        spec = new SpecTask();
     }
 
     @Override
@@ -119,27 +121,9 @@ public class ctf extends MultiModule {
     }
     
     public void handleEvent(FlagClaimed event) {
-        if (!ready) return;
-        debug("FlagClaim by " + ba.getPlayerName(event.getPlayerID()) + " ID:" + event.getFlagID());
-        Team t = getTeam(event.getFlagID());
-        Player p = ba.getPlayer(event.getPlayerID());
-        if (p.getPlayerName().equals(ba.getBotName())) return;
-        if (p.getFrequency() == t.freq) {
-            // return flag to home
-            t.resetFlag();
-            ba.sendArenaMessage("Freq " + t.freq + "'s flag has been RETURNED by " + p.getPlayerName(), 19);
-        } else
-            ba.sendArenaMessage("Freq " + t.freq + "'s flag has been STOLEN by " + p.getPlayerName(), 19);
     }
     
     public void handleEvent(FlagPosition event) {
-        if (!ready) return;
-        debug("FlagPos: (" + event.getXLocation() + ", " + event.getYLocation() + ") ID:" + event.getFlagID() + " Team:" + event.getTeam());
-        Team t = getTeam(event.getFlagID());
-        if (!t.flag.carried() && !t.hasFlag()) {
-            t.resetFlag();
-            ba.sendArenaMessage("Freq " + t.freq + "'s flag has been returned", 19);
-        }
     }
     
     public void handleEvent(FlagDropped event) {
@@ -149,10 +133,13 @@ public class ctf extends MultiModule {
         String name = ba.getPlayerName(event.getPlayerID());
         if (isBot(name)) return;
         int freq = event.getFrequency();
-        debug("FreqChange: " + name + " to " + freq);
+        //debug("FreqChange: " + name + " to " + freq);
         FlagPlayer p = players.get(low(name));
         if (p != null) {
-            p.freq = freq;
+            if (freq < 9999 && freq > 1)
+                ba.setFreq(name, p.freq);
+            else
+                p.freq = freq;
             p.flagReset();
         } else
             debug("FP error on " + name);
@@ -162,7 +149,7 @@ public class ctf extends MultiModule {
         String name = ba.getPlayerName(event.getPlayerID());
         if (isBot(name)) return;
         int ship = event.getShipType();
-        debug("ShipChange: " + name + " to " + ship);
+        //debug("ShipChange: " + name + " to " + ship);
         FlagPlayer p = players.get(low(name));
         if (p != null) {
             p.ship = ship;
@@ -172,7 +159,9 @@ public class ctf extends MultiModule {
     }
     
     public void handleEvent(PlayerPosition event) {
-        FlagPlayer p = getPlayer(ba.getPlayerName(event.getPlayerID()));
+        String name = ba.getPlayerName(event.getPlayerID());
+        if (isBot(name)) return;
+        FlagPlayer p = getPlayer(name);
         if (p != null && p.flag != null) {
             if (p.flag.id != p.freq) {
                 Team t = team[p.freq];
@@ -181,6 +170,7 @@ public class ctf extends MultiModule {
                     t.score++;
                     ba.sendArenaMessage("Freq " + p.flag.id + "'s flag has been CAPTURED by " + p.name, 104);
                     ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
+                    team[p.flag.id].resetFlag();
                 }
             }
         }
@@ -189,6 +179,7 @@ public class ctf extends MultiModule {
     public void handleEvent(PlayerDeath event) {
         if (event.getFlagCount() > 0) {
             String name = ba.getPlayerName(event.getKilleeID());
+            String killer = ba.getPlayerName(event.getKillerID());
             int freq = ba.getPlayer(event.getKillerID()).getFrequency();
             if (flag[0].carried && name.equalsIgnoreCase(flag[0].carrier)) {
                 flag[0].flag.setPlayerID(event.getKillerID());
@@ -198,7 +189,15 @@ public class ctf extends MultiModule {
                 flag[1].flag.setTeam(freq);
             } else
                 debug("Error finding player/flag match on death.");
-            
+            FlagPlayer f;
+            f = getPlayer(name);
+            if (f != null)
+                f.deaths++;
+            f = getPlayer(killer);
+            if (f != null) {
+                f.kills++;
+                f.returns++;
+            }
         }
     }
     
@@ -211,58 +210,48 @@ public class ctf extends MultiModule {
             if (name == null)
                 name = event.getMessager();
             
-            if (!opList.isSmod(name)) return;
+            if (msg.startsWith("!stats"))
+                cmd_stats(name, msg);
+            if (msg.equals("!score"))
+                cmd_score(name);
             
-            if (msg.startsWith("!reset"))
-                resetFlags();
-            if (msg.equals("!ready"))
-                ready = true;
-            if (msg.equals("!has"))
-                cmd_has(name);
-            if (msg.equals("!f1"))
-                team[0].resetFlag();
-            if (msg.equals("!f2"))
-                team[1].resetFlag();
-            if (msg.equals("!p1"))
-                flag[0].print();
-            if (msg.equals("!p2"))
-                flag[1].print();
-            if (msg.startsWith("!watch "))
-                cmd_watch(name, msg);
-            if (msg.startsWith("!spec "))
-                cmd_spec(name, msg);
-            if (msg.equals("!pon"))
-                cmd_posOn(name);
-            if (msg.equals("!poff"))
-                cmd_posOff(name);
+            if (opList.isER(name)) {
+                if (msg.startsWith("!reset"))
+                    cmd_reset(name);
+                if (msg.equals("!has"))
+                    cmd_has(name);
+                if (msg.equals("!f1"))
+                    team[0].resetFlag();
+                if (msg.equals("!f2"))
+                    team[1].resetFlag();
+                if (msg.equals("!p1"))
+                    flag[0].print();
+                if (msg.equals("!p2"))
+                    flag[1].print();
+            }
         }
     }
     
-    private void cmd_posOn(String name) {
-        ba.setPlayerPositionUpdating(300);
-        ba.sendPrivateMessage(name, "Position updates on");
+    private void cmd_score(String name) {
+        ba.sendPrivateMessage(name, "Score: " + team[0].score + " - " + team[1].score);
     }
     
-    private void cmd_posOff(String name) {
-        ba.setPlayerPositionUpdating(0);
-        ba.sendPrivateMessage(name, "Position updates off");
-    }
-    
-    private void cmd_spec(String name, String msg) {
-        String p = msg.substring(msg.indexOf(" ") + 1);
-        ba.spectatePlayerImmediately(p);
-        ba.sendPrivateMessage(name, "Spectating " + p);
-    }
-    
-    private void cmd_watch(String name, String cmd) {
-        String[] arg = cmd.split(" ");
-        if (arg.length == 3) {
-            int x = Integer.valueOf(arg[1]);
-            int y = Integer.valueOf(arg[2]);
-            ba.sendPrivateMessage(name, "Moving to " + x + " " + y);
-            ba.stopSpectatingPlayer();
-            ba.moveToTile(x, y);
-        }
+    private void cmd_stats(String name, String cmd) {
+        String target;
+        if (cmd.contains(" ")) 
+            target = cmd.substring(cmd.indexOf(" ") + 1);
+        else
+            target = name;
+        FlagPlayer p = getPlayer(target);
+        if (p != null) {
+            String[] msg = {
+                    "Name:" + p.name + " Freq:" + p.freq + " Ship:" + p.ship,
+                    "Kills:" + p.kills + " Deaths:" + p.deaths,
+                    "Captures:" + p.captures + " Steals:" + p.steals + " Returns:" + p.returns
+            };
+            ba.privateMessageSpam(name, msg);
+        } else
+            ba.sendPrivateMessage(name, "Player '" + target + "' was not found.");
     }
     
     private void cmd_has(String name) {
@@ -276,11 +265,15 @@ public class ctf extends MultiModule {
             ba.sendPublicMessage("Freq 1 is missing their flag.");
     }
     
-    private Team getTeam(int flag) {
-        if (team[0].flag.getFlagID() == flag)
-            return team[0];
-        else
-            return team[1];
+    private void cmd_reset(String name) {
+        ba.sendPrivateMessage(name, "Flag game being reset...");
+        team[0].score = 0;
+        team[1].score = 0;
+        players.clear();
+        Iterator<Player> i = ba.getPlayerIterator();
+        while (i.hasNext())
+            new FlagPlayer(i.next());
+        resetFlags();
     }
 
     
@@ -428,6 +421,7 @@ public class ctf extends MultiModule {
                     //debug(carrier + " grabbed flag.");
                     FlagPlayer p = getPlayer(carrier);
                     p.flag = this;
+                    p.steals++;
                     ba.sendArenaMessage("Freq " + id + "'s flag has been stolen by " + carrier);
                 } else if (carrier != null) {
                     //debug(carrier + " dropped flag.");
@@ -435,14 +429,6 @@ public class ctf extends MultiModule {
                     ba.sendArenaMessage("Freq " + id + "'s flag has been returned to its base");
                 }
             }
-            
-            //test
-            if (carried) {
-                int pid = flag.getPlayerID();
-                if (carrier != null && !carrier.equals(ba.getPlayerName(pid)))
-                    debug("Carrier name discrepency detected...");
-            } else if (carrier != null)
-                debug("Carrier name not null while flag not carried");
             
             if (carried && carrier != null && !carrier.equals(ba.getPlayerName(flag.getPlayerID()))) {
                 String lost = carrier;
@@ -487,13 +473,64 @@ public class ctf extends MultiModule {
         
     }
     
+    class SpecTask extends TimerTask {
+        
+        boolean on;
+        int goal;
+        
+        public SpecTask() {
+            ba.stopReliablePositionUpdating();
+            ba.stopSpectatingPlayer();
+            goal = 0;
+            on = true;
+            ba.scheduleTask(spec, 2000);
+        }
+        
+        public void pause() {
+            on = false;
+        }
+        
+        public void resume() {
+            on = true;
+        }
+        
+        @Override
+        public void run() {
+            if (on && ba.getShip().getShip() == 8) {
+                if (goal == 0) {
+                    ba.moveToTile(GOALS[0], GOALS[1]);
+                    goal = 1;
+                } else {
+                    ba.moveToTile(GOALS[2], GOALS[3]);
+                    goal = 0;
+                }
+            }
+        }
+        
+        @Override
+        public boolean cancel() {
+            on = false;
+            ba.setPlayerPositionUpdating(300);
+            return true;
+        }
+        
+    }
+    
     boolean isBot(String name) {
         return ba.getBotName().equals(name);
     }
     
     @Override
     public String[] getModHelpMessage() {
-        return null;
+        return new String[] {
+                "Halo CTF Commands: ",
+                " !score           - Display current score",
+                " !stats <name>    - Displays your current stats or stats of <name>",
+                " !reset           - Completely resets the flag game",
+                " !f1              - Returns freq 0's flag to its base",
+                " !f2              - Returns freq 1's flag to its base",
+                " !debug           - Enables/disables debug messages"
+        };
     }
 
     @Override
