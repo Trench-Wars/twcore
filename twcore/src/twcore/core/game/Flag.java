@@ -66,6 +66,18 @@ public class Flag {
         m_playerID = -1;
         m_flagClaimed = false;
     }
+    
+    public void setTeam(int freq) {
+        m_team = freq;
+    }
+    
+    public void setPlayerID(int id) {
+        m_playerID = id;
+        if (id < 0)
+            m_flagClaimed = false;
+        else
+            m_flagClaimed = true;
+    }
 
     public int getFlagID() { return m_flagID; }
     public int getXLocation() { return m_xLocation; }
