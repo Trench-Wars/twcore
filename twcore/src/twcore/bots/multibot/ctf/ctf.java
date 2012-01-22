@@ -32,6 +32,7 @@ public class ctf extends MultiModule {
 
     //Goal0=251,514 - Goal1=772,514
     static final int[] GOALS = { 251, 514, 772, 514 };
+    static final int[] WARPS = { 300, 520, 720, 500 };
     Random rand = new Random();
 
     BotAction ba;
@@ -171,6 +172,7 @@ public class ctf extends MultiModule {
                     t.score++;
                     ba.sendArenaMessage("Freq " + p.flag.id + "'s flag has been CAPTURED by " + p.name, 104);
                     ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
+                    movingFlag = true;
                     team[p.flag.id].resetFlag();
                 }
             }
