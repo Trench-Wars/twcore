@@ -50,6 +50,9 @@ public class ctf extends MultiModule {
         debugger = "WingZero";
         
         players = new HashMap<String, FlagPlayer>();
+        Iterator<Player> j = ba.getPlayerIterator();
+        while (j.hasNext())
+            new FlagPlayer(j.next());
         
         ba.shipResetAll();
         try {
@@ -102,7 +105,7 @@ public class ctf extends MultiModule {
     public void handleEvent(PlayerLeft event) {
         FlagPlayer p = getPlayer(ba.getPlayerName(event.getPlayerID()));
         if (p != null)
-            p.warp();
+            p.flagReset();
     }
     
     private FlagPlayer getPlayer(String name) {
@@ -143,7 +146,7 @@ public class ctf extends MultiModule {
         FlagPlayer p = players.get(low(name));
         if (p != null) {
             p.freq = freq;
-            p.warp();
+            p.flagReset();
         } else
             debug("FP error on " + name);
     }
@@ -155,7 +158,7 @@ public class ctf extends MultiModule {
         FlagPlayer p = players.get(low(name));
         if (p != null) {
             p.ship = ship;
-            p.warp();
+            p.flagReset();
         } else
             debug("FP error on " + name);
     }
@@ -253,9 +256,24 @@ public class ctf extends MultiModule {
             returns = 0;
         }
         
-        public void warp() {
+        public FlagPlayer(Player p) {
+            this.name = p.getPlayerName();
+            this.freq = p.getFrequency();
+            this.ship = p.getShipType();
+            flag = null;
+            kills = 0;
+            deaths = 0;
+            captures = 0;
+            steals = 0;
+            returns = 0;
+            players.put(low(name), this);
+        }
+        
+        public void flagReset() {
             if (flag != null) {
                 team[flag.id].resetFlag();
+                flag.flag.setPlayerID(-1);
+                flag.flag.setTeam(flag.id);
                 flag = null;
             }
         }
@@ -346,17 +364,22 @@ public class ctf extends MultiModule {
                 if (carried) {
                     carrier = ba.getPlayerName(flag.getPlayerID());
                     debug(carrier + " grabbed flag.");
+                    ba.sendArenaMessage("Freq " + id + "'s flag has been stolen by " + carrier);
                 } else if (carrier != null) {
                     debug(carrier + " dropped flag.");
                     carrier = null;
+                    ba.sendArenaMessage("Freq " + id + "'s flag has been returned to base");
                 }
             }
             
             if (carried && carrier != null && !carrier.equals(ba.getPlayerName(flag.getPlayerID()))) {
+                String lost = carrier;
                 String s = "" + carrier + " -> ";
                 carrier = ba.getPlayerName(flag.getPlayerID());
                 s += carrier;
                 debug(s);
+                if (!isBot(carrier) && !isBot(lost))
+                    ba.sendArenaMessage("Freq " + id + "'s flag has been rescued from " + lost + " by " + carrier);
             }
             
             if (flag.getXLocation() != x || flag.getYLocation() != y) {
@@ -383,6 +406,9 @@ public class ctf extends MultiModule {
         
     }
     
+    boolean isBot(String name) {
+        return ba.getBotName().equals(name);
+    }
     
     @Override
     public String[] getModHelpMessage() {
