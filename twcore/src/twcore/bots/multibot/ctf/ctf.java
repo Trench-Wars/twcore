@@ -407,6 +407,9 @@ public class ctf extends MultiModule {
             if (!carried && !team[id].hasFlag()) {
                 debug("Displaced flag detected...");
                 team[id].resetFlag();
+            } else if (freq == -1 && carried && !team[id].hasFlag()) {
+                debug("Displaced flag detected...");
+                team[id].resetFlag();
             }
         }
         
