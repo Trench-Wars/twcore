@@ -227,6 +227,41 @@ public class ctf extends MultiModule {
                 flag[0].print();
             if (msg.equals("!p2"))
                 flag[1].print();
+            if (msg.startsWith("!watch "))
+                cmd_watch(name, msg);
+            if (msg.startsWith("!spec "))
+                cmd_spec(name, msg);
+            if (msg.equals("!pon"))
+                cmd_posOn(name);
+            if (msg.equals("!poff"))
+                cmd_posOff(name);
+        }
+    }
+    
+    private void cmd_posOn(String name) {
+        ba.setPlayerPositionUpdating(300);
+        ba.sendPrivateMessage(name, "Position updates on");
+    }
+    
+    private void cmd_posOff(String name) {
+        ba.setPlayerPositionUpdating(0);
+        ba.sendPrivateMessage(name, "Position updates off");
+    }
+    
+    private void cmd_spec(String name, String msg) {
+        String p = msg.substring(msg.indexOf(" ") + 1);
+        ba.spectatePlayerImmediately(p);
+        ba.sendPrivateMessage(name, "Spectating " + p);
+    }
+    
+    private void cmd_watch(String name, String cmd) {
+        String[] arg = cmd.split(" ");
+        if (arg.length == 3) {
+            int x = Integer.valueOf(arg[1]);
+            int y = Integer.valueOf(arg[2]);
+            ba.sendPrivateMessage(name, "Moving to " + x + " " + y);
+            ba.stopSpectatingPlayer();
+            ba.moveToTile(x, y);
         }
     }
     
@@ -431,7 +466,7 @@ public class ctf extends MultiModule {
                 //s += "" + freq;
                 //debug(s);
             }
-            
+            /*
             if (!carried && !team[id].hasFlag()) {
                 debug("Displaced flag detected...");
                 team[id].resetFlag();
@@ -439,6 +474,7 @@ public class ctf extends MultiModule {
                 debug("Displaced flag detected...");
                 team[id].resetFlag();
             }
+            */
         }
         
         public void print() {
