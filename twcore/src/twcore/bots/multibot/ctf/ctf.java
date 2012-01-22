@@ -17,6 +17,7 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerPosition;
 import twcore.core.game.Flag;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
@@ -163,6 +164,21 @@ public class ctf extends MultiModule {
             p.flagReset();
         } else
             debug("FP error on " + name);
+    }
+    
+    public void handleEvent(PlayerPosition event) {
+        FlagPlayer p = getPlayer(ba.getPlayerName(event.getPlayerID()));
+        if (p != null && p.flag != null) {
+            if (p.flag.id != p.freq) {
+                Team t = team[p.freq];
+                if (t.hasFlag() && t.hasClaimed(event)) {
+                    p.captures++;
+                    t.score++;
+                    ba.sendArenaMessage("Freq " + p.flag.id + "'s flag has been CAPTURED by " + p.name, 104);
+                    ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
+                }
+            }
+        }
     }
     
     public void handleEvent(PlayerDeath event) {
@@ -330,6 +346,11 @@ public class ctf extends MultiModule {
             int[] pos = { flag.getXLocation(), flag.getYLocation() };
             return (pos[0] > ((goalX/16) - 5) && pos[0] < ((goalX/16) + 5) && pos[1] > ((goalY/16) - 5) && pos[1] < ((goalY/16) + 5));
         }
+        
+        public boolean hasClaimed(PlayerPosition event) {
+            int[] pos = { event.getXLocation()/16, event.getYLocation()/16 };
+            return (pos[0] > ((goalX/16) - 5) && pos[0] < ((goalX/16) + 5) && pos[1] > ((goalY/16) - 5) && pos[1] < ((goalY/16) + 5));
+        }
     }
     
     
@@ -365,6 +386,8 @@ public class ctf extends MultiModule {
                 if (carried) {
                     carrier = ba.getPlayerName(flag.getPlayerID());
                     debug(carrier + " grabbed flag.");
+                    FlagPlayer p = getPlayer(carrier);
+                    p.flag = this;
                     ba.sendArenaMessage("Freq " + id + "'s flag has been stolen by " + carrier);
                 } else if (carrier != null) {
                     debug(carrier + " dropped flag.");
