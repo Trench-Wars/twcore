@@ -6,6 +6,6 @@ package twcore.core.util.ipc;
  */
 public enum Command {
 
-    ECHO, EXPIRED, CHECKIN, STAY, DIE
+    ECHO, CHALL, EXPIRED, CHECKIN, STAY, DIE
     
 }
