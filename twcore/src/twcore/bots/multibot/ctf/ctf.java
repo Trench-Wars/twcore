@@ -294,11 +294,16 @@ public class ctf extends MultiModule {
         ba.sendPrivateMessage(name, "Flag game being reset...");
         team[0].score = 0;
         team[1].score = 0;
+        ba.scoreResetAll();
+        ba.shipResetAll();
         players.clear();
         Iterator<Player> i = ba.getPlayerIterator();
         while (i.hasNext())
             new FlagPlayer(i.next());
         resetFlags();
+        ba.cancelTask(spec);
+        spec = new SpecTask();
+        ba.scheduleTask(spec, 1000, 2000);
     }
     
     private FlagPlayer getPlayer(String name) {
