@@ -483,7 +483,7 @@ public class ctf extends MultiModule {
             ba.stopSpectatingPlayer();
             goal = 0;
             on = true;
-            ba.scheduleTask(spec, 2000);
+            ba.scheduleTask(this, 2000);
         }
         
         public void pause() {
