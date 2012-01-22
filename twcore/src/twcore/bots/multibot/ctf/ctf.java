@@ -51,6 +51,7 @@ public class ctf extends MultiModule {
         movingFlag = false;
         DEBUG = true;
         debugger = "WingZero";
+        ba.setLowPriorityPacketCap(8);
         
         players = new HashMap<String, FlagPlayer>();
         Iterator<Player> j = ba.getPlayerIterator();
