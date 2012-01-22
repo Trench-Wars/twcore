@@ -49,24 +49,29 @@ public class ctf extends MultiModule {
         ready = false;
         DEBUG = true;
         debugger = "WingZero";
+        ba.setPlayerPositionUpdating(300);
         
         players = new HashMap<String, FlagPlayer>();
         Iterator<Player> j = ba.getPlayerIterator();
         while (j.hasNext())
             new FlagPlayer(j.next());
         
-        ba.shipResetAll();
-        try {
-            Thread.sleep(250);
-        } catch (InterruptedException e) {}
-        
         Flag flag1 = null, flag2 = null;
         Iterator<Flag> i = ba.getFlagIterator();
         if (i.hasNext()) flag1 = i.next();
-        else throw new NullPointerException();
+        else {
+            ba.sendPublicMessage("CTF module failed to detect flags...");
+            throw new NullPointerException();
+        }
         if (i.hasNext()) flag2 = i.next();
-        else throw new NullPointerException();
-        if (i.hasNext()) throw new NullPointerException();
+        else {
+            ba.sendPublicMessage("CTF module failed to detect flags...");
+            throw new NullPointerException();
+        }
+        if (i.hasNext()) {
+            ba.sendPublicMessage("CTF module failed to detect flags...");
+            throw new NullPointerException();
+        }
         flag = new FlagTask[] { new FlagTask(flag1, 0), new FlagTask(flag2, 1) };
         ba.scheduleTask(flag[0], 1000, 1000);
         ba.scheduleTask(flag[1], 1000, 1000);
@@ -336,10 +341,10 @@ public class ctf extends MultiModule {
             try {
                 Thread.sleep(250);
             } catch (InterruptedException e) {}
-            debug("" + f + ") Flag [" + flag.getFlagID() + "] @ (" + flag.getXLocation() + ", " + flag.getYLocation() + ") Me(" + ba.getShip().getX()/16 + ", " + ba.getShip().getY()/16 + ")");
+            //debug("" + f + ") Flag [" + flag.getFlagID() + "] @ (" + flag.getXLocation() + ", " + flag.getYLocation() + ") Me(" + ba.getShip().getX()/16 + ", " + ba.getShip().getY()/16 + ")");
             debug("Reset flag for freq " + freq);
             s.setShip(8);
-            ba.resetReliablePositionUpdating();
+            ba.setPlayerPositionUpdating(300);
         }
         
         public boolean hasFlag() {
@@ -385,14 +390,14 @@ public class ctf extends MultiModule {
                 carried = !carried;
                 if (carried) {
                     carrier = ba.getPlayerName(flag.getPlayerID());
-                    debug(carrier + " grabbed flag.");
+                    //debug(carrier + " grabbed flag.");
                     FlagPlayer p = getPlayer(carrier);
                     p.flag = this;
                     ba.sendArenaMessage("Freq " + id + "'s flag has been stolen by " + carrier);
                 } else if (carrier != null) {
-                    debug(carrier + " dropped flag.");
+                    //debug(carrier + " dropped flag.");
                     carrier = null;
-                    ba.sendArenaMessage("Freq " + id + "'s flag has been returned to base");
+                    ba.sendArenaMessage("Freq " + id + "'s flag has been returned to its base");
                 }
             }
             
@@ -406,10 +411,10 @@ public class ctf extends MultiModule {
             
             if (carried && carrier != null && !carrier.equals(ba.getPlayerName(flag.getPlayerID()))) {
                 String lost = carrier;
-                String s = "" + carrier + " -> ";
+                //String s = "" + carrier + " -> ";
                 carrier = ba.getPlayerName(flag.getPlayerID());
-                s += carrier;
-                debug(s);
+                //s += carrier;
+                //debug(s);
                 if (!isBot(carrier) && !isBot(lost))
                     ba.sendArenaMessage("Freq " + id + "'s flag has been rescued from " + lost + " by " + carrier);
             }
@@ -417,14 +422,14 @@ public class ctf extends MultiModule {
             if (flag.getXLocation() != x || flag.getYLocation() != y) {
                 x = flag.getXLocation();
                 y = flag.getYLocation();
-                debug("(" + x + ", " + y + ")");
+                //debug("(" + x + ", " + y + ")");
             }
             
             if (flag.getTeam() != freq) {
-                String s = "Freqs: " + freq + " -> ";
+                //String s = "Freqs: " + freq + " -> ";
                 freq = flag.getTeam();
-                s += "" + freq;
-                debug(s);
+                //s += "" + freq;
+                //debug(s);
             }
             
             if (!carried && !team[id].hasFlag()) {
