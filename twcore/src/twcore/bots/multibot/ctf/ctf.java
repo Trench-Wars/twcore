@@ -232,8 +232,16 @@ public class ctf extends MultiModule {
                     flag[1].print();
                 if (msg.equals("!debug"))
                     cmd_debug(name);
+                if (msg.equals("!respec"))
+                    cmd_respec(name);
             }
         }
+    }
+    
+    private void cmd_respec(String name) {
+        ba.cancelTask(spec);
+        spec = new SpecTask();
+        ba.sendPrivateMessage(name, "SpecTask restarted.");
     }
     
     private void cmd_debug(String name) {
