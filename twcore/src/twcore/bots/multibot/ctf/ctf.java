@@ -80,6 +80,7 @@ public class ctf extends MultiModule {
         team = new Team[] { new Team(0, flag1, GOALS[0], GOALS[1]), new Team(1, flag2, GOALS[2], GOALS[3]) };
         resetFlags();
         spec = new SpecTask();
+        ba.scheduleTask(spec, 1000, 2000);
     }
 
     @Override
@@ -241,6 +242,7 @@ public class ctf extends MultiModule {
     private void cmd_respec(String name) {
         ba.cancelTask(spec);
         spec = new SpecTask();
+        ba.scheduleTask(spec, 1000, 2000);
         ba.sendPrivateMessage(name, "SpecTask restarted.");
     }
     
@@ -516,7 +518,6 @@ public class ctf extends MultiModule {
             ba.stopSpectatingPlayer();
             goal = 0;
             on = true;
-            ba.scheduleTask(this, 2000);
         }
         
         public void pause() {
@@ -530,6 +531,8 @@ public class ctf extends MultiModule {
         @Override
         public void run() {
             if (on && ba.getShip().getShip() == 8) {
+                ba.stopReliablePositionUpdating();
+                ba.stopSpectatingPlayer();
                 if (goal == 0) {
                     ba.moveToTile(GOALS[0], GOALS[1]);
                     goal = 1;
