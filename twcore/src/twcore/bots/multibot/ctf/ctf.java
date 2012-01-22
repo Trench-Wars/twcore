@@ -449,8 +449,10 @@ public class ctf extends MultiModule {
                 carrier = ba.getPlayerName(flag.getPlayerID());
                 //s += carrier;
                 //debug(s);
-                if (!isBot(carrier) && !isBot(lost))
+                if (!isBot(carrier) && !isBot(lost)) {
                     ba.sendArenaMessage("Freq " + id + "'s flag has been rescued from " + lost + " by " + carrier);
+                    team[id].resetFlag();
+                }
             }
             
             if (flag.getXLocation() != x || flag.getYLocation() != y) {
