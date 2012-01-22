@@ -141,6 +141,7 @@ public class ctf extends MultiModule {
     
     public void handleEvent(FrequencyChange event) {
         String name = ba.getPlayerName(event.getPlayerID());
+        if (isBot(name)) return;
         int freq = event.getFrequency();
         debug("FreqChange: " + name + " to " + freq);
         FlagPlayer p = players.get(low(name));
@@ -153,6 +154,7 @@ public class ctf extends MultiModule {
     
     public void handleEvent(FrequencyShipChange event) {
         String name = ba.getPlayerName(event.getPlayerID());
+        if (isBot(name)) return;
         int ship = event.getShipType();
         debug("ShipChange: " + name + " to " + ship);
         FlagPlayer p = players.get(low(name));
