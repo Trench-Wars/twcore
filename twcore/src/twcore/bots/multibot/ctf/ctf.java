@@ -57,7 +57,7 @@ public class ctf extends MultiModule {
         Iterator<Player> j = ba.getPlayerIterator();
         while (j.hasNext())
             new FlagPlayer(j.next());
-        
+        ba.shipResetAll();
         Flag flag1 = null, flag2 = null;
         Iterator<Flag> i = ba.getFlagIterator();
         if (i.hasNext()) flag1 = i.next();
