@@ -274,8 +274,7 @@ public class ctf extends MultiModule {
         public void flagReset() {
             if (flag != null) {
                 team[flag.id].resetFlag();
-                flag.flag.setPlayerID(-1);
-                flag.flag.setTeam(flag.id);
+                flag.flag.dropped();
                 flag = null;
             }
         }
@@ -373,6 +372,14 @@ public class ctf extends MultiModule {
                     ba.sendArenaMessage("Freq " + id + "'s flag has been returned to base");
                 }
             }
+            
+            //test
+            if (carried) {
+                int pid = flag.getPlayerID();
+                if (carrier != null && !carrier.equals(ba.getPlayerName(pid)))
+                    debug("Carrier name discrepency detected...");
+            } else if (carrier != null)
+                debug("Carrier name not null while flag not carried");
             
             if (carried && carrier != null && !carrier.equals(ba.getPlayerName(flag.getPlayerID()))) {
                 String lost = carrier;
