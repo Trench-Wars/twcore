@@ -77,7 +77,7 @@ public class ctf extends MultiModule {
         flag = new FlagTask[] { new FlagTask(flag1, 0), new FlagTask(flag2, 1) };
         ba.scheduleTask(flag[0], 1000, 1000);
         ba.scheduleTask(flag[1], 1000, 1000);
-        team = new Team[] { new Team(0, flag1, GOALS[0], GOALS[1]), new Team(1, flag2, GOALS[2], GOALS[3]) };
+        team = new Team[] { new Team(0, flag[0], GOALS[0], GOALS[1]), new Team(1, flag[1], GOALS[2], GOALS[3]) };
         resetFlags();
         spec = new SpecTask();
         ba.scheduleTask(spec, 1000, 2000);
@@ -366,9 +366,9 @@ public class ctf extends MultiModule {
         int goalX;
         int goalY;
         int score;
-        Flag flag;
+        FlagTask flag;
 
-        public Team(int freq, Flag flag, int x, int y) {
+        public Team(int freq, FlagTask flag, int x, int y) {
             this.freq = freq;
             this.flag = flag;
             this.goalX = x * 16;
@@ -380,8 +380,8 @@ public class ctf extends MultiModule {
             int f = rand.nextInt(9998);
             while (f > -1 && f < 2) 
                 f = rand.nextInt(9998);
-            if (flag.carried()) {
-                ba.shipReset(flag.getPlayerID());
+            if (flag.carried) {
+                ba.shipReset(flag.flag.getPlayerID());
                 try {
                     Thread.sleep(250);
                 } catch (InterruptedException e) {}
@@ -389,12 +389,12 @@ public class ctf extends MultiModule {
             Ship s = ba.getShip();
             s.setShip(0);
             s.setFreq(f);
-            s.move(flag.getXLocation() * 16, flag.getYLocation() * 16);
-            ba.grabFlag(flag.getFlagID());
+            s.move(flag.flag.getXLocation() * 16, flag.flag.getYLocation() * 16);
+            ba.grabFlag(flag.id);
             s.move(goalX, goalY);
             ba.dropFlags();
             s.setFreq(freq);
-            ba.grabFlag(flag.getFlagID());
+            ba.grabFlag(flag.id);
             s.move(goalX, goalY);
             s.sendPositionPacket();
             ba.dropFlags();
@@ -413,7 +413,9 @@ public class ctf extends MultiModule {
         }
         
         public boolean hasFlag() {
-            int[] pos = { flag.getXLocation(), flag.getYLocation() };
+            if (flag.carried) 
+                return false;
+            int[] pos = { flag.x, flag.y };
             return (pos[0] > ((goalX/16) - 5) && pos[0] < ((goalX/16) + 5) && pos[1] > ((goalY/16) - 5) && pos[1] < ((goalY/16) + 5));
         }
         
