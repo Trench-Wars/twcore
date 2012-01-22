@@ -116,10 +116,6 @@ public class ctf extends MultiModule {
             p.flagReset();
     }
     
-    private FlagPlayer getPlayer(String name) {
-        return players.get(low(name));
-    }
-    
     public void handleEvent(FlagClaimed event) {
     }
     
@@ -293,10 +289,12 @@ public class ctf extends MultiModule {
             new FlagPlayer(i.next());
         resetFlags();
     }
-
     
-    public void resetFlags() {
-        debug("Resetting flags...");
+    private FlagPlayer getPlayer(String name) {
+        return players.get(low(name));
+    }
+    
+    private void resetFlags() {
         team[0].resetFlag();
         team[1].resetFlag();
     }
