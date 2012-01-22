@@ -417,17 +417,19 @@ public class ctf extends MultiModule {
         public void run() {
             if (flag.carried() != carried) {
                 carried = !carried;
-                if (carried) {
-                    carrier = ba.getPlayerName(flag.getPlayerID());
-                    //debug(carrier + " grabbed flag.");
-                    FlagPlayer p = getPlayer(carrier);
-                    p.flag = this;
-                    p.steals++;
-                    ba.sendArenaMessage("Freq " + id + "'s flag has been stolen by " + carrier);
-                } else if (carrier != null) {
-                    //debug(carrier + " dropped flag.");
-                    carrier = null;
-                    ba.sendArenaMessage("Freq " + id + "'s flag has been returned to its base");
+                if (!movingFlag) {
+                    if (carried) {
+                        carrier = ba.getPlayerName(flag.getPlayerID());
+                        //debug(carrier + " grabbed flag.");
+                        FlagPlayer p = getPlayer(carrier);
+                        p.flag = this;
+                        p.steals++;
+                        ba.sendArenaMessage("Freq " + id + "'s flag has been stolen by " + carrier);
+                    } else if (carrier != null) {
+                        //debug(carrier + " dropped flag.");
+                        carrier = null;
+                        ba.sendArenaMessage("Freq " + id + "'s flag has been returned to its base");
+                    }
                 }
             }
             
