@@ -119,6 +119,7 @@ public class ctf extends MultiModule {
     }
     
     public void handleEvent(FlagClaimed event) {
+        debug(ba.getPlayerName(event.getPlayerID()) + " claimed flag " + event.getFlagID());
     }
     
     public void handleEvent(FlagPosition event) {
