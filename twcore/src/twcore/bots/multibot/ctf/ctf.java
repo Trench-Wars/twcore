@@ -389,6 +389,9 @@ public class ctf extends MultiModule {
             while (f > -1 && f < 2) 
                 f = rand.nextInt(9998);
             if (flag.carried) {
+                FlagPlayer p = getPlayer(ba.getPlayerName(flag.flag.getPlayerID()));
+                if (p != null)
+                    p.flag = null;
                 ba.shipReset(flag.flag.getPlayerID());
                 try {
                     Thread.sleep(250);
@@ -473,6 +476,8 @@ public class ctf extends MultiModule {
                         ba.sendArenaMessage("Freq " + id + "'s flag has been STOLEN by " + carrier);
                     } else if (carrier != null) {
                         //debug(carrier + " dropped flag.");
+                        FlagPlayer p = getPlayer(carrier);
+                        p.flag = null;
                         carrier = null;
                         ba.sendArenaMessage("Freq " + id + "'s flag has been returned to its base");
                     }
@@ -481,6 +486,8 @@ public class ctf extends MultiModule {
             
             if (carried && carrier != null && !carrier.equals(ba.getPlayerName(flag.getPlayerID()))) {
                 String lost = carrier;
+                FlagPlayer p = getPlayer(lost);
+                p.flag = null;
                 //String s = "" + carrier + " -> ";
                 carrier = ba.getPlayerName(flag.getPlayerID());
                 //s += carrier;
