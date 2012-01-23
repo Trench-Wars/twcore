@@ -179,9 +179,9 @@ public class ctf extends MultiModule {
     }
     
     public void handleEvent(PlayerDeath event) {
+        String name = ba.getPlayerName(event.getKilleeID());
+        String killer = ba.getPlayerName(event.getKillerID());
         if (event.getFlagCount() > 0) {
-            String name = ba.getPlayerName(event.getKilleeID());
-            String killer = ba.getPlayerName(event.getKillerID());
             int freq = ba.getPlayer(event.getKillerID()).getFrequency();
             if (flag[0].carried && name.equalsIgnoreCase(flag[0].carrier)) {
                 flag[0].flag.setPlayerID(event.getKillerID());
@@ -191,15 +191,15 @@ public class ctf extends MultiModule {
                 flag[1].flag.setTeam(freq);
             } else
                 debug("Error finding player/flag match on death.");
-            FlagPlayer f;
-            f = getPlayer(name);
-            if (f != null)
-                f.deaths++;
-            f = getPlayer(killer);
-            if (f != null) {
-                f.kills++;
-                f.returns++;
-            }
+        }
+        FlagPlayer f;
+        f = getPlayer(name);
+        if (f != null)
+            f.deaths++;
+        f = getPlayer(killer);
+        if (f != null) {
+            f.kills++;
+            f.returns++;
         }
     }
     
@@ -470,7 +470,7 @@ public class ctf extends MultiModule {
                         FlagPlayer p = getPlayer(carrier);
                         p.flag = this;
                         p.steals++;
-                        ba.sendArenaMessage("Freq " + id + "'s flag has been stolen by " + carrier);
+                        ba.sendArenaMessage("Freq " + id + "'s flag has been STOLEN by " + carrier);
                     } else if (carrier != null) {
                         //debug(carrier + " dropped flag.");
                         carrier = null;
@@ -486,7 +486,7 @@ public class ctf extends MultiModule {
                 //s += carrier;
                 //debug(s);
                 if (!isBot(carrier) && !isBot(lost)) {
-                    ba.sendArenaMessage("Freq " + id + "'s flag has been rescued from " + lost + " by " + carrier);
+                    ba.sendArenaMessage("Freq " + id + "'s flag has been RESCUED from " + lost + " by " + carrier);
                     team[id].resetFlag();
                 }
             }
