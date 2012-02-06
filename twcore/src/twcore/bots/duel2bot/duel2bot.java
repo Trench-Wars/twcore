@@ -200,6 +200,8 @@ public class duel2bot extends SubspaceBot{
         // add to player list
         // retrieve/create player profile
         // refresh teams list
+        ba.spec(name);
+        ba.spec(name);
         if (laggers.containsKey(name.toLowerCase())) {
             players.put(name.toLowerCase(), laggers.get(name.toLowerCase()));
             players.get(name.toLowerCase()).handleReturn();
@@ -786,8 +788,13 @@ public class duel2bot extends SubspaceBot{
                     "All duel boxes for that division are in use. Please try again later.");
             return;
         }
-
+        
         Player p = ba.getPlayer(name);
+        if (p.getFrequency() < 100) {
+            ba.sendPrivateMessage(name, "You must be on a private freq in order to duel. Use =# where # is greater than 99.");
+            return;
+        }
+        
         if (ba.getFrequencySize(p.getFrequency()) != 2) {
             ba.sendPrivateMessage(name,
                     "Your freq size must be 2 players exactly to challenge for a 2v2 duel.");
@@ -797,6 +804,12 @@ public class duel2bot extends SubspaceBot{
         if (o == null || ba.getFrequencySize(o.getFrequency()) != 2) {
             ba.sendPrivateMessage(name,
                     "The enemy freq size must be 2 players exactly to challenge for a 2v2 duel.");
+            return;
+        }
+        
+        if (o.getFrequency() < 100) {
+            ba.sendOpposingTeamMessage(o.getFrequency(), "You must be on a private freq in order to duel. Use =# where # is greater than 99 to change freqs.", 9);
+            ba.sendPrivateMessage(name, "The enemy must be on a private freq in order to duel. They have been notified.");
             return;
         }
         

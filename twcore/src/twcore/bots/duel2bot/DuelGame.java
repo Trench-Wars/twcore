@@ -261,7 +261,7 @@ public class DuelGame {
         ratio[1] = ratio[1] / ratio[2];
         
         int drLoser1 = (int) Math.round(drLoss * ratio[1]);
-        int drLoser2 = (int) (drLoss - drLoser1) * -1;
+        int drLoser2 = (int) (drLoser1 - drLoss) * -1;
         bot.debug("[RATING] drLoss=" + drLoss + " (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
         loss[0].setRating(loss[0].getRating() + drLoser1);
         loss[1].setRating(loss[1].getRating() + drLoser2);

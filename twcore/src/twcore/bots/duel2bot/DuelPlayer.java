@@ -746,7 +746,6 @@ public class DuelPlayer {
         if (div != -1)
             sql_checkDivision(div);
         setStatus(WARPING);
-        int actualShip = ba.getPlayer(name).getShipType();
         if (shipNum > -1)
             ba.setShip(name, ship);
         else if (ship == 0) {
@@ -754,6 +753,7 @@ public class DuelPlayer {
             ship = shipNum;
         }
         ba.setFreq(name, freq);
+        int actualShip = ba.getPlayer(name).getShipType();
         if (actualShip != shipNum || actualShip != ship)
             bot.debug(name + " has wrong ship - Actual:" + actualShip + " ShipNum:" + shipNum + " Ship:" + ship);
         stats = new PlayerStats(ship);
