@@ -539,23 +539,6 @@ public class duel2bot extends SubspaceBot{
         }
     }
     
-    private String getPartner(String name) {
-        String partner = null;
-        Player p = ba.getPlayer(name);
-        if (p != null) {
-            int freq = p.getFrequency();
-            if (ba.getFrequencySize(freq) == 2) {
-                Iterator<Player> i = ba.getFreqPlayerIterator(freq);
-                while (i.hasNext()) {
-                    partner = i.next().getPlayerName();
-                    if (!name.equalsIgnoreCase(partner))
-                        return partner;
-                }
-            }
-        }
-        return partner;
-    }
-    
     private void cmd_signup(String name, String cmd) {
         DuelPlayer p = null;
         String[] args = splitArgs(cmd);
@@ -725,8 +708,10 @@ public class duel2bot extends SubspaceBot{
 
     /** Handles the !games debugging command */
     private void cmd_games() {
-        for (Integer s : games.keySet())
-            debug("" + s);
+        for (Integer s : games.keySet()) {
+            DuelGame g = games.get(s);
+            debug("" + s + "> " + g.getScore());
+        }
     }
 
     /** Handles the !challs debugging command */
@@ -1066,6 +1051,23 @@ public class duel2bot extends SubspaceBot{
     
     public DuelPlayer getPlayer(String name) {
         return players.get(name.toLowerCase());
+    }
+    
+    private String getPartner(String name) {
+        String partner = null;
+        Player p = ba.getPlayer(name);
+        if (p != null) {
+            int freq = p.getFrequency();
+            if (ba.getFrequencySize(freq) == 2) {
+                Iterator<Player> i = ba.getFreqPlayerIterator(freq);
+                while (i.hasNext()) {
+                    partner = i.next().getPlayerName();
+                    if (!name.equalsIgnoreCase(partner))
+                        return partner;
+                }
+            }
+        }
+        return partner;
     }
 
     /** Returns the division name for a given id
