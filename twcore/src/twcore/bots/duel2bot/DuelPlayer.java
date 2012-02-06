@@ -393,8 +393,8 @@ public class DuelPlayer {
      * Called when a player lags out of a game.
      */
     public void handleLagout() {
-        if (team == null) return;
-
+        if (team == null || status != PLAYING) return;
+        
         setStatus(LAGGED);
 
         if (team.game.state == DuelGame.IN_PROGRESS) 
@@ -604,6 +604,8 @@ public class DuelPlayer {
     }
     
     public void startGame(int[] spawn) {
+        stats = new PlayerStats(ship);
+        ba.scoreReset(name);
         if (!bot.laggers.containsKey(name.toLowerCase())) {
             warp(spawn[0], spawn[1]);
             ba.sendPrivateMessage(name, "GO GO GO!!!", 104);
@@ -738,14 +740,16 @@ public class DuelPlayer {
         if (div != -1)
             sql_checkDivision(div);
         setStatus(WARPING);
+        int actualShip = ba.getPlayer(name).getShipType();
         if (shipNum > -1)
             ba.setShip(name, ship);
         else if (ship == 0) {
-            ba.setShip(name, 1);
-            ship = 1;
+            ba.setShip(name, shipNum);
+            ship = shipNum;
         }
         ba.setFreq(name, freq);
-
+        if (actualShip != shipNum || actualShip != ship)
+            bot.debug(name + " has wrong ship - Actual:" + actualShip + " ShipNum:" + shipNum + " Ship:" + ship);
         stats = new PlayerStats(ship);
 
         warp(x, y);

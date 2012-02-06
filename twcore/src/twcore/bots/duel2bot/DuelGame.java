@@ -364,6 +364,7 @@ public class DuelGame {
     // call Player to warp
     /** Reports a player removal and then updates scores */
     public void playerOut(DuelPlayer player) {
+        bot.laggers.remove(player.getName().toLowerCase());
         int why = player.getReason();
         if (why == DuelPlayer.NORMAL) {
             ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "'" + player.getName()
