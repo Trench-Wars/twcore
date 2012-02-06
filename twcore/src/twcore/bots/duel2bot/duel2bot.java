@@ -65,6 +65,7 @@ public class duel2bot extends SubspaceBot{
     Vector<String>                 lagChecks;
     TimerTask                      lagCheck;
     
+    //private boolean                dying;
     private long                   lastZoner;
     
     // current non-league duel id number
@@ -73,7 +74,7 @@ public class duel2bot extends SubspaceBot{
     // current league duel id number
     private int                    gameID;
 
-    private String greet = "Welcome! To play, get in a ship and on a freq with a friend. Then, challenge another freq that also has 2 players. Use !help";
+    private String greet = "Welcome! To play, get in a ship and on a PRIVATE FREQ with a friend. Then, challenge another freq that also has 2 players. Use !help";
     
     private String                 debugger  = "";
     private boolean                DEBUG;
@@ -300,7 +301,7 @@ public class duel2bot extends SubspaceBot{
             if (!report.isBotRequest())
                 ba.sendPrivateMessage(report.getRequester(), report.getLagReport());
             DuelPlayer p = getPlayer(report.getName());
-            if (p != null && ba.getPlayer(report.getName()).getShipType() != 0 && !p.isSpecced()) {
+            if (p != null && !p.isSpecced()) { //ba.getPlayer(report.getName()).getShipType() != 0 
                 ba.sendPrivateMessage(report.getName(), report.getLagReport());
                 p.handleLagout();
                 ba.spec(report.getName());
@@ -527,9 +528,9 @@ public class duel2bot extends SubspaceBot{
             String zone = "";
             String partner = getPartner(name);
             if (partner != null)
-                zone = name + " and " + partner + " are looking for worthy 2v2 opponents! Type ?go duel2 to accept their challenge. -" + ba.getBotName();
+                zone = name + " and " + partner + " are looking for worthy 2v2 opponents! Type ?go duel2 to accept their challenge -" + ba.getBotName();
             else
-                zone = name + " is looking for worthy 2v2 players! Type ?go duel2 to accept the challenge. -" + ba.getBotName();
+                zone = name + " is looking for worthy 2v2 players! Type ?go duel2 to accept the challenge -" + ba.getBotName();
             ba.sendZoneMessage(zone, 1);
         } else {
             long dt = ZONER * Tools.TimeInMillis.MINUTE - (now - lastZoner);
