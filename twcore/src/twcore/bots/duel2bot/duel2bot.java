@@ -794,7 +794,7 @@ public class duel2bot extends SubspaceBot{
         }
         
         if (o.getFrequency() < 100) {
-            ba.sendOpposingTeamMessage(o.getFrequency(), "You must be on a private freq in order to duel. Use =# where # is greater than 99 to change freqs.", 9);
+            ba.sendOpposingTeamMessage(o.getPlayerID(), "You must be on a private freq in order to duel. Use =# where # is greater than 99 to change freqs.", 9);
             ba.sendPrivateMessage(name, "The enemy must be on a private freq in order to duel. They have been notified.");
             return;
         }
