@@ -430,6 +430,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_lag(name, msg);
             else if (cmd.equals("!zone") || cmd.equals("!spam"))
                 cmd_zone(name);
+            else if (cmd.startsWith("!games"))
+                cmd_games(name);
         }
 
         if (oplist.isModerator(name)
@@ -454,8 +456,6 @@ public class duel2bot extends SubspaceBot{
                 cmd_cancel(name, msg);
             else if (cmd.startsWith("!players"))
                 cmd_players();
-            else if (cmd.startsWith("!games"))
-                cmd_games();
             else if (cmd.startsWith("!freqs"))
                 cmd_freqs();
             else if (cmd.startsWith("!challs")) 
@@ -477,6 +477,7 @@ public class duel2bot extends SubspaceBot{
                 "| !zone                       - Sends a zone message requesting opponents and players to play     |",
                 "| !cancel                     - Requests or accepts a duel cancelation if playing                 |", 
                 "| !teams                      - Lists current teams eligible for ranked league play               |", 
+                "| !games                      - Lists current games being played                                  |", 
                 "| !score <player>             - Displays the score of <player>'s duel, if dueling                 |",
                 "| !disable                    - Disables name to allow for the enabling of another name           |",
                 "| !enable                     - Enables name if already registered but disabled                   |",
@@ -709,10 +710,10 @@ public class duel2bot extends SubspaceBot{
     }
 
     /** Handles the !games debugging command */
-    private void cmd_games() {
+    private void cmd_games(String name) {
         for (Integer s : games.keySet()) {
             DuelGame g = games.get(s);
-            debug("" + s + "> " + g.getScore());
+            ba.sendSmartPrivateMessage(name, "" + s + "> " + g.getScore());
         }
     }
 
