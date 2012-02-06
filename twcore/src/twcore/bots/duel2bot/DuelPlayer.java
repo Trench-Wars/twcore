@@ -304,6 +304,7 @@ public class DuelPlayer {
             ba.sendSmartPrivateMessage(name, "Double kill, doesn't count.");
             ba.sendSmartPrivateMessage(killerName, "Double kill, doesn't count.");
             killer.removeDeath();
+            killer.sendDeaths();
             stats.decrementStat(StatType.KILLS);
         } else if (!team.checkTeamKill(name, killerName)) {
             if ((now - lastDeath) < ((d_spawnTime + d_deathTime) * 1000)) {
@@ -312,6 +313,7 @@ public class DuelPlayer {
             } else {
                 stats.handleDeath();
                 killer.addKill();
+                sendDeaths();
             }
         } else if (team.checkTeamKill(name, killerName)) stats.handleDeath();
 
@@ -421,6 +423,10 @@ public class DuelPlayer {
                     "You have exceeded the lagout limit and forfeit your duel.");
             remove(LAGOUTS);
         }
+    }
+    
+    public void sendDeaths() {
+        ba.sendSmartPrivateMessage(name, "You have " + (specAt - getDeaths()) + " deaths remaining.");
     }
 
     /**
