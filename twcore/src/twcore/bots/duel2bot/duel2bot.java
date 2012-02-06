@@ -301,7 +301,7 @@ public class duel2bot extends SubspaceBot{
             if (!report.isBotRequest())
                 ba.sendPrivateMessage(report.getRequester(), report.getLagReport());
             DuelPlayer p = getPlayer(report.getName());
-            if (p != null && !p.isSpecced()) { //ba.getPlayer(report.getName()).getShipType() != 0 
+            if (p != null && ba.getPlayer(report.getName()).getShipType() != 0 && !p.isSpecced()) {  
                 ba.sendPrivateMessage(report.getName(), report.getLagReport());
                 p.handleLagout();
                 ba.spec(report.getName());

@@ -579,7 +579,7 @@ public class DuelPlayer {
     }
     
     public boolean isSpecced() {
-        return status != SPEC && status != OUT && status != REOUT && status != LAGGED;
+        return status == SPEC && status == OUT && status == REOUT && status == LAGGED;
     }
 
     /** UNUSED */
