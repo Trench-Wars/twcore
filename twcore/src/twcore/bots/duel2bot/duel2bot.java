@@ -44,6 +44,7 @@ import twcore.core.util.Tools;
 public class duel2bot extends SubspaceBot{
 
     public static final String db = "website";
+    public static final int ZONER = 5;
     final int MSG_LIMIT = 8;
     
     BotSettings settings;
@@ -63,6 +64,8 @@ public class duel2bot extends SubspaceBot{
     LagHandler                     lagHandler;
     Vector<String>                 lagChecks;
     TimerTask                      lagCheck;
+    
+    private long                   lastZoner;
     
     // current non-league duel id number
     private int                    scrimID;
@@ -121,6 +124,7 @@ public class duel2bot extends SubspaceBot{
         
         DEBUG = true;
         debugger = "WingZero";
+        lastZoner = 0;
     }
 
     @Override
@@ -420,6 +424,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_stats(name, msg);
             else if (!cmd.startsWith("!lagout") && cmd.startsWith("!lag"))
                 cmd_lag(name, msg);
+            else if (cmd.equals("!zone") || cmd.equals("!spam"))
+                cmd_zone(name);
         }
 
         if (oplist.isModerator(name)
@@ -464,6 +470,7 @@ public class duel2bot extends SubspaceBot{
                 "|                               * You must have exactly 2 players per freq                        |",
                 "|                               * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed |",
                 "| !a <player>                 - Accepts a challenge from <player>                                 |",
+                "| !zone                       - Sends a zone message requesting opponents and players to play     |",
                 "| !cancel                     - Requests or accepts a duel cancelation if playing                 |", 
                 "| !teams                      - Lists current teams eligible for ranked league play               |", 
                 "| !score <player>             - Displays the score of <player>'s duel, if dueling                 |",
@@ -505,6 +512,46 @@ public class duel2bot extends SubspaceBot{
                 "`-------------------------------------------------------------------------------------------------'"
         };
         ba.privateMessageSpam(name, about);
+    }
+    
+    private void cmd_zone(String name) {
+        long now = System.currentTimeMillis();
+        if (now - lastZoner > ZONER * Tools.TimeInMillis.MINUTE) {
+            if (playing.containsKey(name.toLowerCase())) {
+                ba.sendPrivateMessage(name, "You must not be playing in order to use this command.");
+                return;
+            }
+            lastZoner = now;
+            String zone = "";
+            String partner = getPartner(name);
+            if (partner != null)
+                zone = name + " and " + partner + " are looking for worthy 2v2 opponents! Type ?go duel2 to accept their challenge. -" + ba.getBotName();
+            else
+                zone = name + " is looking for worthy 2v2 players! Type ?go duel2 to accept the challenge. -" + ba.getBotName();
+            ba.sendZoneMessage(zone, 1);
+        } else {
+            long dt = ZONER * Tools.TimeInMillis.MINUTE - (now - lastZoner);
+            int mins = (int) dt / Tools.TimeInMillis.MINUTE;
+            int secs = (int) (dt - mins * Tools.TimeInMillis.MINUTE) / Tools.TimeInMillis.SECOND;
+            ba.sendSmartPrivateMessage(name, "The next zoner will be available in " + mins + " minutes " + secs + " seconds");
+        }
+    }
+    
+    private String getPartner(String name) {
+        String partner = null;
+        Player p = ba.getPlayer(name);
+        if (p != null) {
+            int freq = p.getFrequency();
+            if (ba.getFrequencySize(freq) == 2) {
+                Iterator<Player> i = ba.getFreqPlayerIterator(freq);
+                while (i.hasNext()) {
+                    partner = i.next().getPlayerName();
+                    if (!name.equalsIgnoreCase(partner))
+                        return partner;
+                }
+            }
+        }
+        return partner;
     }
     
     private void cmd_signup(String name, String cmd) {

@@ -70,6 +70,7 @@ public class DuelGame {
         int[] coords2 = new int[] { box.getBX1(), box.getBY1(), box.getSafeBX1(), box.getSafeBY1(),
                 box.getBX2(), box.getBY2(), box.getSafeBX2(), box.getSafeBY2() };
 
+        box.toggleUse();
         // since team wasn't given, add to main collection
         team1 = new DuelTeam(bot, chall.freq1(), chall.freq1(), chall.team1(), coords1, this);
         bot.teams.put(chall.freq1, team1);
@@ -260,7 +261,7 @@ public class DuelGame {
         ratio[1] = ratio[1] / ratio[2];
         
         int drLoser1 = (int) Math.round(drLoss * ratio[1]);
-        int drLoser2 = (int) Math.round(drLoss * ratio[0]);
+        int drLoser2 = (int) (drLoss - drLoser1) * -1;
         bot.debug("[RATING] drLoss=" + drLoss + " (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
         loss[0].setRating(loss[0].getRating() + drLoser1);
         loss[1].setRating(loss[1].getRating() + drLoser2);
@@ -275,7 +276,7 @@ public class DuelGame {
         ratio[1] = ratio[1] / ratio[2];
         
         int drWinner1 = (int) Math.round(drWin * ratio[0]);
-        int drWinner2 = (int) Math.round(drWin * ratio[1]);
+        int drWinner2 = (int) drWin - drWinner1;
         bot.debug("[RATING] drWin=" + drWin + " (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
         win[0].setRating(win[0].getRating() + drWinner1);
         win[1].setRating(win[1].getRating() + drWinner2);
