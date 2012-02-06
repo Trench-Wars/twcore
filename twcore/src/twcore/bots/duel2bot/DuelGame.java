@@ -311,6 +311,7 @@ public class DuelGame {
         names = team2.getNames();
         bot.playing.remove(names[0].toLowerCase());
         bot.playing.remove(names[1].toLowerCase());
+        box.toggleUse();
     }
 
     /** Cancels the duel and notifies the name given */
@@ -342,6 +343,7 @@ public class DuelGame {
         bot.playing.remove(names[1].toLowerCase());
         if (name != null)
             ba.sendPrivateMessage(name, "Duel cancelled.");
+        box.toggleUse();
     }
 
     /** Reports the lagout of a player to the opposing team */
