@@ -1941,8 +1941,8 @@ class Channel
         List<String> owners = new LinkedList<String>();
         List<String> ops = new LinkedList<String>();
         List<String> mems = new LinkedList<String>();
-        /*
-		for(int k = 0;it.hasNext();)
+        
+		for(;it.hasNext();)
 		{
 			String pName = (String)it.next();
 
@@ -1954,7 +1954,8 @@ class Channel
                 ops.add(pName);
 			else if(level > 0)
                 mems.add(pName);
-			k++;
+			//k++;
+			/*
 			if(k % 10 == 0 || !it.hasNext())
 			{
                 if( message.length() > 2 ) {
@@ -1962,8 +1963,9 @@ class Channel
                     message = "";
                 }
 			}
+			*/
 		}
-		*/
+		
 		Collections.sort(owners);
         Collections.sort(ops);
         Collections.sort(mems);
