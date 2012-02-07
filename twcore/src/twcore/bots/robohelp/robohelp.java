@@ -1148,8 +1148,8 @@ public class robohelp extends SubspaceBot {
                                 + "abuse of the alert commands.  I am sorry this had to happen.  Your ban "
                                 + "will likely expire in 2 hours.  Goodbye!");
                         //m_botAction.sendUnfilteredPublicMessage("?ban -e1 " + name);
-                        m_botAction.sendSmartPrivateMessage("StaffBot", "!silence " + name + ":120");
-                        m_botAction.sendChatMessage("Player \"" + name + "\" has been " + "banned.");
+                        m_botAction.sendPrivateMessage("StaffBot", "!silence " + name + ":120:Silenced for abusing help by " + playerName);
+                        m_botAction.sendChatMessage("Player \"" + name + "\" has been " + "silenced.");
                         m_playerList.remove(name);
                     }
                 }
