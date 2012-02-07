@@ -74,7 +74,7 @@ public class duel2bot extends SubspaceBot{
     // current league duel id number
     private int                    gameID;
 
-    private String greet = "Welcome! To play, get in a ship and on a PRIVATE FREQ with a friend. Then, challenge another freq that also has 2 players. Use !help";
+    private String greet = "Welcome! All 2v2 league stats have been reset due to the initial bugs causing unfair stat discrepencies. This is the last time stats will be irregularly reset. Use !h";
     
     private String                 debugger  = "";
     private boolean                DEBUG;
@@ -464,6 +464,11 @@ public class duel2bot extends SubspaceBot{
             else if (cmd.startsWith("!challs")) 
                 cmd_challs();
         }
+        
+        if (oplist.isSmod(name)) {
+            if (cmd.startsWith("!greet"))
+                cmd_greet(name, msg);
+        }
     }
 
     /** Handles the !help command */
@@ -503,7 +508,8 @@ public class duel2bot extends SubspaceBot{
                 "| !cancel <name>              - Force cancels a duel involving <name>                             |",
                 //"| !ban <name>                             - Bans <name> from playing in 2v2 TWEL (effective after duel)       |",
                 //"| !unban <name>                           - Unbans <name> if banned                                           |",
-                "| !die                        - Kills the bot                                                     |"        
+                "| !die                        - Kills the bot                                                     |",
+                "| !greet <message>            - Changes the greet message the bot PMs each player upon entering   |"      
         };
         ba.privateMessageSpam(name, help);
         ba.sendPrivateMessage(name, 
@@ -520,6 +526,12 @@ public class duel2bot extends SubspaceBot{
                 "`-------------------------------------------------------------------------------------------------'"
         };
         ba.privateMessageSpam(name, about);
+    }
+    
+    private void cmd_greet(String name, String cmd) {
+        String msg = cmd.substring(cmd.indexOf(" ") + 1);
+        greet = msg;
+        ba.sendSmartPrivateMessage(name, "Greeting set to: " + msg);
     }
     
     private void cmd_zone(String name) {
