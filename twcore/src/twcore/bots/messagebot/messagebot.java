@@ -1988,6 +1988,7 @@ class Channel
         }
         ownerList.add(temp);
 
+        o = ops.iterator();
         count = 0;
         temp = "Operators: ";
         while (o.hasNext()) {
@@ -2005,6 +2006,7 @@ class Channel
         }
         opList.add(temp);
 
+        o = mems.iterator();
         count = 0;
         temp = "Members: ";
         while (o.hasNext()) {
