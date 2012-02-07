@@ -74,7 +74,8 @@ public class duel2bot extends SubspaceBot{
     // current league duel id number
     private int                    gameID;
 
-    private String greet = "Welcome! All 2v2 league stats have been reset due to the initial bugs causing unfair stat discrepencies. This is the last time stats will be irregularly reset. Use !h";
+    private String greet = "Welcome! All 2v2 league stats have been reset due to the initial bugs causing unfair stat discrepencies. " +
+    		"This is the last time stats will be irregularly reset. Use !h and !about for help";
     
     private String                 debugger  = "";
     private boolean                DEBUG;
@@ -520,9 +521,9 @@ public class duel2bot extends SubspaceBot{
         String[] about = new String[] {
                 "+-ABOUT-------------------------------------------------------------------------------------------.",
                 "| This is a 2v2 TWEL duel arena, however, casual or scrimmage duels are also available. To play   |",
-                "| a casual duel enter a ship with one other player on the same freq. Challenge another freq of    |",
-                "| two players using the !ch command. For ranked (league) duels all participants must be registered|",
-                "| with !signup. Ranked challenges are sent using the !ch+ command.                                |",
+                "| a casual duel enter a ship with one other player on the same PRIVATE freq. Challenge another    |",
+                "| freq of two players using the !ch command. For ranked (league) duels all participants must be   |",
+                "| registered with !signup. Ranked challenges are sent using the !ch+ command.                     |",
                 "`-------------------------------------------------------------------------------------------------'"
         };
         ba.privateMessageSpam(name, about);
