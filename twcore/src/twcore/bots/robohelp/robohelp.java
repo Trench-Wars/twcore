@@ -1144,10 +1144,11 @@ public class robohelp extends SubspaceBot {
                     } else {
                         m_lastBanner = playerName;
                         m_banPending = true;
-                        m_botAction.sendRemotePrivateMessage(name, "You have been banned for "
+                        m_botAction.sendRemotePrivateMessage(name, "You have been silence for "
                                 + "abuse of the alert commands.  I am sorry this had to happen.  Your ban "
-                                + "will likely expire in 24 hours.  Goodbye!");
-                        m_botAction.sendUnfilteredPublicMessage("?ban -e1 " + name);
+                                + "will likely expire in 2 hours.  Goodbye!");
+                        //m_botAction.sendUnfilteredPublicMessage("?ban -e1 " + name);
+                        m_botAction.sendSmartPrivateMessage("StaffBot", "!silence " + name + ":120");
                         m_botAction.sendChatMessage("Player \"" + name + "\" has been " + "banned.");
                         m_playerList.remove(name);
                     }
