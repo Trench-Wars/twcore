@@ -201,8 +201,6 @@ public class duel2bot extends SubspaceBot{
         // add to player list
         // retrieve/create player profile
         // refresh teams list
-        ba.spec(name);
-        ba.spec(name);
         if (laggers.containsKey(name.toLowerCase())) {
             players.put(name.toLowerCase(), laggers.get(name.toLowerCase()));
             players.get(name.toLowerCase()).handleReturn();
