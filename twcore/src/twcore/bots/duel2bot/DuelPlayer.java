@@ -403,7 +403,7 @@ public class DuelPlayer {
         if (team.game.state == DuelGame.IN_PROGRESS) 
             stats.handleLagout();
         doPlaytime();
-        if (stats.getStat(StatType.LAGOUTS) <= d_maxLagouts) {
+        if (stats.getStat(StatType.LAGOUTS) < d_maxLagouts) {
             ba.sendSmartPrivateMessage(name,
                     "You have 1 minute to return (!lagout) to your duel or you will forfeit! (!lagout)");
             lagout = new TimerTask() {
@@ -442,8 +442,7 @@ public class DuelPlayer {
         setStatus(RETURN);
         ba.cancelTask(lagout);
         bot.laggers.remove(name.toLowerCase());
-        ba.sendPrivateMessage(name, "You have " + (d_maxLagouts - stats.getStat(StatType.LAGOUTS))
-                + " lagouts remaining.");
+        ba.sendPrivateMessage(name, "You have " + (d_maxLagouts - stats.getStat(StatType.LAGOUTS)) + " lagouts remaining.");
         lastFoul = System.currentTimeMillis();
         ba.setShip(name, ship);
         ba.setFreq(name, freq);
