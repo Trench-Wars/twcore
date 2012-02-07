@@ -183,7 +183,7 @@ public class DuelPlayer {
                 } else if (status == PLAYING) {
                     setStatus(WARPING);
                     ba.setFreq(name, freq);
-                    ba.specificPrize(name, -13);
+                    //ba.specificPrize(name, -13);
                     setStatus(PLAYING);
                     handleWarp(false);
                 } else if (status == OUT) {
@@ -192,7 +192,8 @@ public class DuelPlayer {
                     setStatus(OUT);
                 }
         } else if (bot.freqs.contains(f)) {
-            if (freq == 9999) ba.specWithoutLock(name);
+            if (freq == 9999) 
+                ba.specWithoutLock(name);
             ba.setFreq(name, freq);
         } else {
             if (f != duelFreq) {
@@ -217,9 +218,10 @@ public class DuelPlayer {
             if (freq != f) ba.setFreq(name, freq);
             setStatus(OUT);
             return;
-        } else if (statusID == LAGGED) {
+        } else if (statusID == PLAYING) {
             ba.specWithoutLock(name);
-            if (freq != f) ba.setFreq(name, freq);
+            if (freq != f) 
+                ba.setFreq(name, freq);
             ba.sendPrivateMessage(name, "Please use !lagout to return to your duel.");
             setStatus(LAGGED);
             return;
@@ -266,8 +268,8 @@ public class DuelPlayer {
                     ba.setShip(name, ship);
                 else
                     ship = shipNum;
-            } else if ((shipNum != ship) && (team.game.div != 5)
-                    && (team.game.state == DuelGame.SETUP)) ba.setShip(name, ship);
+            } else if ((shipNum != ship) && (team.game.div != 5) && (team.game.state == DuelGame.SETUP)) 
+                ba.setShip(name, ship);
 
             if (foul || team.game.state == DuelGame.IN_PROGRESS) {
                 setStatus(statusID);
