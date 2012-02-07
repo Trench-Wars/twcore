@@ -734,6 +734,7 @@ public class DuelPlayer {
         ba.warpTo(name, x, y);
         p1.updatePlayerPositionManuallyAfterWarp(x, y);
         setStatus(PLAYING);
+        ba.specificPrize(name, 15);
     }
 
     /** Warps the player after the player just warped */
