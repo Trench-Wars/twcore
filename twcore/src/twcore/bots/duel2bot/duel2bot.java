@@ -125,7 +125,7 @@ public class duel2bot extends SubspaceBot{
         
         DEBUG = true;
         debugger = "WingZero";
-        lastZoner = System.currentTimeMillis();
+        lastZoner = 0;
     }
 
     @Override
