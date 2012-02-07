@@ -1977,7 +1977,7 @@ class Channel
         String temp = "Owners: ";
         while (o.hasNext()) {
             String n = o.next();
-            if (count == 10) {
+            if (count == 5) {
                 count++;
                 ownerList.add(temp);
                 temp = "      ";
@@ -1995,7 +1995,7 @@ class Channel
         temp = "Operators: ";
         while (o.hasNext()) {
             String n = o.next();
-            if (count == 10) {
+            if (count == 5) {
                 count++;
                 opList.add(temp);
                 temp = "        ";
@@ -2013,7 +2013,7 @@ class Channel
         temp = "Members: ";
         while (o.hasNext()) {
             String n = o.next();
-            if (count == 10) {
+            if (count == 5) {
                 count++;
                 memList.add(temp);
                 temp = "       ";
