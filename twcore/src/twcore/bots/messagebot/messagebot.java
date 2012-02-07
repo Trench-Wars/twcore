@@ -6,10 +6,13 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.Date;
@@ -1929,13 +1932,16 @@ class Channel
 	public void listMembers(String name)
 	{
 		Iterator<String> it = members.keySet().iterator();
-		String message = "";
+		//String message = "";
 		m_bA.sendSmartPrivateMessage(name, "List of players on " + channelName + ": ");
         if( !it.hasNext() ) {
             m_bA.sendSmartPrivateMessage(name, "Error: no members found.  Please use ?help to report this problem." );
             return;
         }
-
+        List<String> owners = new LinkedList<String>();
+        List<String> ops = new LinkedList<String>();
+        List<String> mems = new LinkedList<String>();
+        /*
 		for(int k = 0;it.hasNext();)
 		{
 			String pName = (String)it.next();
@@ -1943,11 +1949,11 @@ class Channel
 			int level = members.get(pName.toLowerCase());
 
 			if(isOwner(pName))
-				message += pName + " (Owner), ";
+				owners.add(pName);
 			else if(isOp(pName))
-				message += pName + " (Op), ";
+                ops.add(pName);
 			else if(level > 0)
-				message += pName + ", ";
+                mems.add(pName);
 			k++;
 			if(k % 10 == 0 || !it.hasNext())
 			{
@@ -1957,6 +1963,67 @@ class Channel
                 }
 			}
 		}
+		*/
+		Collections.sort(owners);
+        Collections.sort(ops);
+        Collections.sort(mems);
+        Iterator<String> o = owners.iterator();
+        ArrayList<String> ownerList = new ArrayList<String>();
+        ArrayList<String> opList = new ArrayList<String>();
+        ArrayList<String> memList = new ArrayList<String>();
+        int count = 0;
+        String temp = "Owners: ";
+        while (o.hasNext()) {
+            String n = o.next();
+            if (count == 10) {
+                count++;
+                ownerList.add(temp);
+                temp = "      ";
+                count = 0;
+            }
+            if (count > 0)
+                temp += ", ";
+            temp += n;
+            count++;
+        }
+        ownerList.add(temp);
+
+        count = 0;
+        temp = "Operators: ";
+        while (o.hasNext()) {
+            String n = o.next();
+            if (count == 10) {
+                count++;
+                opList.add(temp);
+                temp = "        ";
+                count = 0;
+            }
+            if (count > 0)
+                temp += ", ";
+            temp += n;
+            count++;
+        }
+        opList.add(temp);
+
+        count = 0;
+        temp = "Members: ";
+        while (o.hasNext()) {
+            String n = o.next();
+            if (count == 10) {
+                count++;
+                memList.add(temp);
+                temp = "       ";
+                count = 0;
+            }
+            if (count > 0)
+                temp += ", ";
+            temp += n;
+            count++;
+        }
+        memList.add(temp);
+        m_bA.smartPrivateMessageSpam(name, ownerList.toArray(new String[ownerList.size()]));
+        m_bA.smartPrivateMessageSpam(name, opList.toArray(new String[opList.size()]));
+        m_bA.smartPrivateMessageSpam(name, memList.toArray(new String[memList.size()]));
 	}
 
 	/** Lists all players banned from channel.
