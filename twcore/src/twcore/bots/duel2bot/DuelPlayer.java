@@ -218,7 +218,7 @@ public class DuelPlayer {
             if (freq != f) ba.setFreq(name, freq);
             setStatus(OUT);
             return;
-        } else if (statusID == PLAYING) {
+        } else if (statusID == LAGGED) {
             ba.specWithoutLock(name);
             if (freq != f) 
                 ba.setFreq(name, freq);
