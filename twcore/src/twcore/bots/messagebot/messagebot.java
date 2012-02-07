@@ -1980,7 +1980,7 @@ class Channel
             if (count == 5) {
                 count++;
                 ownerList.add(temp);
-                temp = "      ";
+                temp = "        ";
                 count = 0;
             }
             if (count > 0)
@@ -1998,7 +1998,7 @@ class Channel
             if (count == 5) {
                 count++;
                 opList.add(temp);
-                temp = "        ";
+                temp = "           ";
                 count = 0;
             }
             if (count > 0)
@@ -2016,7 +2016,7 @@ class Channel
             if (count == 5) {
                 count++;
                 memList.add(temp);
-                temp = "       ";
+                temp = "         ";
                 count = 0;
             }
             if (count > 0)
