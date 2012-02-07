@@ -44,7 +44,7 @@ import twcore.core.util.Tools;
 public class duel2bot extends SubspaceBot{
 
     public static final String db = "website";
-    public static final int ZONER = 5;
+    public static final int ZONER = 10;
     final int MSG_LIMIT = 8;
     
     BotSettings settings;
