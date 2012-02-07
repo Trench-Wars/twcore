@@ -397,10 +397,9 @@ public class DuelPlayer {
      * Called when a player lags out of a game.
      */
     public void handleLagout() {
-        if (team == null || status != PLAYING) return;
+        if (team == null) return;
         
         setStatus(LAGGED);
-
         if (team.game.state == DuelGame.IN_PROGRESS) 
             stats.handleLagout();
         doPlaytime();
@@ -414,6 +413,7 @@ public class DuelPlayer {
                     ba.sendSmartPrivateMessage(name,
                             "You have forfeited since you have been lagged out for over a minute.");
                     remove(LAGOUTS);
+                    lagout = null;
                 }
             };
             ba.scheduleTask(lagout, 60000);
@@ -701,6 +701,10 @@ public class DuelPlayer {
         ba.specWithoutLock(name);
         ba.setFreq(name, freq);
         endTimePlayed();
+        if (lagout != null) {
+            ba.cancelTask(lagout);
+            bot.laggers.remove(name.toLowerCase());
+        }
         if (status == REOUT) {
             setStatus(OUT);
             return;
@@ -755,9 +759,6 @@ public class DuelPlayer {
             ship = shipNum;
         }
         ba.setFreq(name, freq);
-        int actualShip = ba.getPlayer(name).getShipType();
-        if (actualShip != shipNum || actualShip != ship)
-            bot.debug(name + " has wrong ship - Actual:" + actualShip + " ShipNum:" + shipNum + " Ship:" + ship);
         stats = new PlayerStats(ship);
 
         warp(x, y);

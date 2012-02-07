@@ -125,7 +125,7 @@ public class duel2bot extends SubspaceBot{
         
         DEBUG = true;
         debugger = "WingZero";
-        lastZoner = 0;
+        lastZoner = System.currentTimeMillis();
     }
 
     @Override
@@ -221,10 +221,14 @@ public class duel2bot extends SubspaceBot{
         // remove from player lists
         // refresh teams list
         lagChecks.remove(name.toLowerCase());
-        if (players.containsKey(name.toLowerCase()))
-            if (!laggers.containsKey(name.toLowerCase()))
+        DuelPlayer p = getPlayer(name);
+        if (p != null) {
+            if (!laggers.containsKey(name.toLowerCase()) && playing.containsKey(name.toLowerCase()) 
+                    && (p.getStatus() == DuelPlayer.PLAYING || p.getStatus() == DuelPlayer.IN))
                 players.remove(name.toLowerCase()).handleLagout();
-
+            else if (!playing.containsKey(name.toLowerCase()))
+                players.remove(name.toLowerCase());
+        }
     }
 
     @Override
