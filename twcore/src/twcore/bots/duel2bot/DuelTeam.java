@@ -324,14 +324,24 @@ public class DuelTeam {
 
     /** Creates a new team in the database and returns the insert row (team id) */
     public int sql_storeTeam(boolean won) {
-        // TODO: add in functionality for prior team ups
-        String query = "INSERT INTO tblDuel2__team (fnUser1, fnUser2) VALUES(" + userID[0] + ", " + userID[1] + ")";
+        String query1 = "SELECT * FROM tblDuel2__team WHERE fnDivision = " + div + " AND  (fnUser1 = " + userID[0] + " AND fnUser2 = " + userID[1] + ") OR (fnUser1 = " + userID[1] + " AND fnUser2 = " + userID[0] + ") LIMIT 1";
+        String query2 = "INSERT INTO tblDuel2__team (fnDivision, fnUser1, fnUser2, " + (won ? "fnWins" : "fnLosses") + ") VALUES(" + div + ", " + userID[0] + ", " + userID[1] + ", 1)";
+        int id = -1;
         try {
-            ba.SQLQueryAndClose(db, query);
-            ResultSet rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
-            rs.next();
-            int id = rs.getInt(1);
+            ResultSet rs = ba.SQLQuery(db, query1);
+            if (rs.next()) {
+                id = rs.getInt(1);
+                query1 = "UPDATE tblDuel2__team SET " + (won ? "fnWins = fnWins + 1" : "fnLosses = fnLosses + 1") + " WHERE fnTeamID = " + id + " AND fnDivision = " + div;
+                ba.SQLQueryAndClose(db, query1);
+            }
             ba.SQLClose(rs);
+            if (id < 0) {
+                ba.SQLQueryAndClose(db, query2);
+                rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
+                rs.next();
+                id = rs.getInt(1);
+                ba.SQLClose(rs);
+            }
             player[0].sql_storeStats(id, won);
             player[1].sql_storeStats(id, won);
             return id;
