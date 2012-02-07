@@ -306,6 +306,7 @@ public class duel2bot extends SubspaceBot{
                 p.handleLagout();
                 ba.spec(report.getName());
                 ba.spec(report.getName());
+                debug("Speccing player for lag: " + p.getName());
             } else
                 debug("p==null:" + (p==null) + (p!=null ? " status:" + p.getStatus() : ""));
         }

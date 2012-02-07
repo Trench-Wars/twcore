@@ -206,8 +206,8 @@ public class DuelPlayer {
 
     public void handleFSC(FrequencyShipChange event) {
         int shipNum = event.getShipType();
-        if (status == WARPING || ((status == LAGGED || status == OUT) && shipNum == 0)
-                || status == RETURN) return;
+        if (status == WARPING || ((status == LAGGED || status == OUT) && shipNum == 0) || status == RETURN) 
+            return;
         int f = event.getFrequency();
         int statusID = status;
         setStatus(WARPING);
