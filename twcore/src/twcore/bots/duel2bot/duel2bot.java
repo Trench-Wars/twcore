@@ -595,6 +595,10 @@ public class duel2bot extends SubspaceBot{
     }
     
     private void cmd_zone(String name) {
+        if (!zoners) {
+            ba.sendPrivateMessage(name, "The !zone command is not currently enabled.");
+            return;
+        }
         if (zonerBanned.contains(name.toLowerCase())) {
             ba.sendPrivateMessage(name, "You are not allowed to use this command.");
             return;
