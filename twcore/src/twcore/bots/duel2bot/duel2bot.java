@@ -385,7 +385,6 @@ public class duel2bot extends SubspaceBot{
                     debug("[SQLrating] p was null");
             } else if (args[0].equals("topteams")) {
                 String name = args[1];
-                debug("Got topteams ResultSet for: " + name);
                 if (!rs.next()) {
                     ba.sendSmartPrivateMessage(name, "No teams found in that division.");
                     return;
@@ -457,8 +456,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_lag(name, msg);
             else if (cmd.equals("!zone") || cmd.equals("!spam"))
                 cmd_zone(name);
-            else if (cmd.startsWith("!games"))
-                cmd_games(name);
+            else if (cmd.startsWith("!duels") || cmd.startsWith("!games"))
+                cmd_duels(name);
             else if (cmd.startsWith("!top"))
                 cmd_topTeams(name, msg);
         }
@@ -518,7 +517,7 @@ public class duel2bot extends SubspaceBot{
                 "| !zone                       - Sends a zone message requesting opponents and players to play     |",
                 "| !cancel                     - Requests or accepts a duel cancelation if playing                 |", 
                 "| !teams                      - Lists current teams eligible for ranked league play               |", 
-                "| !games                      - Lists current games being played                                  |", 
+                "| !duels                      - Lists duels currently in progress                                 |", 
                 "| !score <player>             - Displays the score of <player>'s duel, if dueling                 |",
                 "| !disable                    - Disables name to allow for the enabling of another name           |",
                 "| !enable                     - Enables name if already registered but disabled                   |",
@@ -576,7 +575,6 @@ public class duel2bot extends SubspaceBot{
             ba.sendSmartPrivateMessage(name, "Invalid division number.");
             return;
         }
-        debug("Sending topteams request for: " + name + " " + div);
         String query = "SELECT t.fnDivision as divis, u1.fcUserName as name1, u2.fcUserName as name2, t.fnWins as wins, t.fnLosses as losses FROM tblDuel2__team t LEFT JOIN tblUser u1 ON u1.fnUserID = t.fnUser1 LEFT JOIN tblUser u2 ON u2.fnUserID = t.fnUser2 WHERE t.fnDivision = " + div + " ORDER BY t.fnWins DESC LIMIT 3";
         ba.SQLBackgroundQuery(db, "topteams:" + name, query);
     }
@@ -840,11 +838,11 @@ public class duel2bot extends SubspaceBot{
             debug("" + s);
     }
 
-    /** Handles the !games debugging command */
-    private void cmd_games(String name) {
+    /** Handles the !duels command */
+    private void cmd_duels(String name) {
         for (Integer s : games.keySet()) {
             DuelGame g = games.get(s);
-            ba.sendSmartPrivateMessage(name, "" + s + "> " + g.getScore());
+            ba.sendSmartPrivateMessage(name, (s < 0 ? "[CASUAL] " : "[RANKED] ") + g.getScore());
         }
     }
 
@@ -909,26 +907,17 @@ public class duel2bot extends SubspaceBot{
         }
         
         Player p = ba.getPlayer(name);
-        if (p.getFrequency() < 100) {
-            ba.sendPrivateMessage(name, "You must be on a private freq in order to duel. Use =# where # is greater than 99.");
-            return;
-        }
         
         if (ba.getFrequencySize(p.getFrequency()) != 2) {
             ba.sendPrivateMessage(name,
                     "Your freq size must be 2 players exactly to challenge for a 2v2 duel.");
             return;
         }
+        
         Player o = ba.getFuzzyPlayer(args[0]);
         if (o == null || ba.getFrequencySize(o.getFrequency()) != 2) {
             ba.sendPrivateMessage(name,
                     "The enemy freq size must be 2 players exactly to challenge for a 2v2 duel.");
-            return;
-        }
-        
-        if (o.getFrequency() < 100) {
-            ba.sendOpposingTeamMessage(o.getPlayerID(), "You must be on a private freq in order to duel. Use =# where # is greater than 99 to change freqs.", 9);
-            ba.sendPrivateMessage(name, "The enemy must be on a private freq in order to duel. They have been notified.");
             return;
         }
         

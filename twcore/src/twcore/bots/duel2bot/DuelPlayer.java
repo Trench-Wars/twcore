@@ -315,7 +315,6 @@ public class DuelPlayer {
             } else {
                 stats.handleDeath();
                 killer.addKill();
-                sendDeaths();
             }
         } else if (team.checkTeamKill(name, killerName)) stats.handleDeath();
 
@@ -346,6 +345,7 @@ public class DuelPlayer {
             }
         };
         ba.scheduleTask(spawner, d_deathTime * 1000);
+        sendDeaths();
         // BACKTRACK
         team.game.updateScore();
     }
