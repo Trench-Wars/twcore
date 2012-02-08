@@ -390,7 +390,7 @@ public class duel2bot extends SubspaceBot{
                     ba.sendSmartPrivateMessage(name, "No teams found in that division.");
                     return;
                 }
-                ba.sendSmartPrivateMessage(name, "Top 3 " + getDivision(rs.getInt("div")) + " Teams:");
+                ba.sendSmartPrivateMessage(name, "Top 3 " + getDivision(rs.getInt("divis")) + " Teams:");
                 int i = 1;
                 do {
                     String msg = " " + i + ") " + rs.getString("name1") + " and " + rs.getString("name2");
@@ -577,7 +577,7 @@ public class duel2bot extends SubspaceBot{
             return;
         }
         debug("Sending topteams request for: " + name + " " + div);
-        String query = "SELECT t.fnDivision as div, u1.fcUserName as name1, u2.fcUserName as name2, t.fnWins as wins, t.fnLosses as losses FROM tblDuel2__team t LEFT JOIN tblUser u1 ON u1.fnUserID = t.fnUser1 LEFT JOIN tblUser u2 ON u2.fnUserID = t.fnUser2 WHERE t.fnDivision = " + div + " ORDER BY t.fnWins DESC LIMIT 3";
+        String query = "SELECT t.fnDivision as divis, u1.fcUserName as name1, u2.fcUserName as name2, t.fnWins as wins, t.fnLosses as losses FROM tblDuel2__team t LEFT JOIN tblUser u1 ON u1.fnUserID = t.fnUser1 LEFT JOIN tblUser u2 ON u2.fnUserID = t.fnUser2 WHERE t.fnDivision = " + div + " ORDER BY t.fnWins DESC LIMIT 3";
         ba.SQLBackgroundQuery(db, "topteams:" + name, query);
     }
     
