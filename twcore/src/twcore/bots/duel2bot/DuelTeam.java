@@ -6,6 +6,7 @@ import java.util.TimerTask;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
+import twcore.core.util.Tools;
 
 /**
  * Manages and represents a team of two duel partners.
@@ -80,8 +81,15 @@ public class DuelTeam {
         spawn2 = new int[] { coords[4], coords[5] };
 
         // BACKTRACK
-        player[0] = bot.players.get(names[0].toLowerCase());
-        player[1] = bot.players.get(names[1].toLowerCase());
+        player[0] = bot.getPlayer(names[0]);
+        player[1] = bot.getPlayer(names[1]);
+        if (player[0] == null || player[1] == null) {
+            ba.sendChatMessage("[NULL POINTER] Error creating team for " + names[0] + " and " + names[1] + ", getPlayer was null.");
+            Tools.printLog("[duel2bot] (NULL POINTER) Error creating team for " + names[0] + " and " + names[1] + ", getPlayer was null.");
+            System.out.println("[duel2bot] (NULL POINTER) Error creating team for " + names[0] + " and " + names[1] + ", getPlayer was null.");
+            bot.debug("(NULL POINTER) Error creating team for " + names[0] + " and " + names[1] + ", getPlayer was null.");
+            game.cancelDuel(null);
+        }
         player[0].setTeam(this);
         player[1].setTeam(this);
         userID = new int[] { player[0].userID, player[1].userID };
