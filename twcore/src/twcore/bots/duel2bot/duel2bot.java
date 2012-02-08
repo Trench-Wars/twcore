@@ -79,7 +79,7 @@ public class duel2bot extends SubspaceBot{
     private int                    gameID;
 
     private String greet = "Welcome! All 2v2 league stats have been reset due to the initial bugs causing unfair stat discrepencies. " +
-    		"This is the last time stats will be irregularly reset. Use !h and !about for help";
+            "This is the last time stats will be irregularly reset. Use !h and !about for help";
     
     private String                 debugger  = "";
     private boolean                DEBUG;
@@ -383,6 +383,20 @@ public class duel2bot extends SubspaceBot{
                     p.setRating(r);
                 else
                     debug("[SQLrating] p was null");
+            } else if (args[0].equals("topteams")) {
+                String name = args[1];
+                if (!rs.next()) {
+                    ba.sendSmartPrivateMessage(name, "No teams found in that division.");
+                    return;
+                }
+                ba.sendSmartPrivateMessage(name, "Top 3 " + getDivision(rs.getInt("div")) + " Teams:");
+                int i = 1;
+                do {
+                    String msg = " " + i + ") " + rs.getString("name1") + " and " + rs.getString("name2");
+                    msg += ": " + rs.getInt("wins") + "-" + rs.getInt("losses");
+                    ba.sendSmartPrivateMessage(name, msg);
+                    i++;
+                } while (rs.next());
             }
         } catch (SQLException e) {
             debug("[SQL_ERROR] Exception handling SQLResultEvent with ID: " + event.getIdentifier());
@@ -444,6 +458,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_zone(name);
             else if (cmd.startsWith("!games"))
                 cmd_games(name);
+            else if (cmd.startsWith("!top"))
+                cmd_topTeams(name, msg);
         }
 
         if (oplist.isModerator(name)
@@ -497,6 +513,7 @@ public class duel2bot extends SubspaceBot{
                 "|                               * You must have exactly 2 players per freq                        |",
                 "|                               * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed |",
                 "| !a <player>                 - Accepts a challenge from <player>                                 |",
+                "| !topteams <division>        - (or !top) Shows the top 3 teams (in wins) in <division>           |",
                 "| !zone                       - Sends a zone message requesting opponents and players to play     |",
                 "| !cancel                     - Requests or accepts a duel cancelation if playing                 |", 
                 "| !teams                      - Lists current teams eligible for ranked league play               |", 
@@ -544,6 +561,23 @@ public class duel2bot extends SubspaceBot{
                 "`-------------------------------------------------------------------------------------------------'"
         };
         ba.privateMessageSpam(name, about);
+    }
+    
+    private void cmd_topTeams(String name, String cmd) {
+        int div = -1;
+        try {
+            div = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+        } catch (Exception e) {
+            ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !top <division>");
+            return;
+        }
+        if (div > 0 && div < 6) {
+            ba.sendSmartPrivateMessage(name, "Invalid division number.");
+            return;
+        }
+        String query = "SELECT t.fnDivision as div, u1.fcUserName as name1, u2.fcUserName as name2, t.fnWins as wins, t.fnLosses as losses ";
+        query += "LEFT JOIN tblUser u1 ON u1.fnUserID = t.fnUser1 LEFT JOIN tblUser u2 ON u2.fnUserID = t.fnUser2 WHERE t.fnDivision = " + div + " ORDER BY t.fnWins DESC LIMIT 3";
+        ba.SQLBackgroundQuery(db, "topteams:" + name, query);
     }
     
     private void cmd_greet(String name, String cmd) {
