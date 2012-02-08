@@ -576,7 +576,7 @@ public class duel2bot extends SubspaceBot{
             return;
         }
         String query = "SELECT t.fnDivision as div, u1.fcUserName as name1, u2.fcUserName as name2, t.fnWins as wins, t.fnLosses as losses ";
-        query += "LEFT JOIN tblUser u1 ON u1.fnUserID = t.fnUser1 LEFT JOIN tblUser u2 ON u2.fnUserID = t.fnUser2 WHERE t.fnDivision = " + div + " ORDER BY t.fnWins DESC LIMIT 3";
+        query += "FROM tblDuel2__team t LEFT JOIN tblUser u1 ON u1.fnUserID = t.fnUser1 LEFT JOIN tblUser u2 ON u2.fnUserID = t.fnUser2 WHERE t.fnDivision = " + div + " ORDER BY t.fnWins DESC LIMIT 3";
         ba.SQLBackgroundQuery(db, "topteams:" + name, query);
     }
     
