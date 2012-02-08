@@ -571,7 +571,7 @@ public class duel2bot extends SubspaceBot{
             ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !top <division>");
             return;
         }
-        if (div > 0 && div < 6) {
+        if (div < 1 || div > 5) {
             ba.sendSmartPrivateMessage(name, "Invalid division number.");
             return;
         }
