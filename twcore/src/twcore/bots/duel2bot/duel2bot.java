@@ -3,6 +3,7 @@ package twcore.bots.duel2bot;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.TimerTask;
@@ -61,6 +62,9 @@ public class duel2bot extends SubspaceBot{
     int d_duelLimit;
     int d_duelDays;
     
+    HashSet<String>                zonerBanned;
+    boolean zoners;
+    
     LagHandler                     lagHandler;
     Vector<String>                 lagChecks;
     TimerTask                      lagCheck;
@@ -113,7 +117,7 @@ public class duel2bot extends SubspaceBot{
         events.request(EventRequester.FREQUENCY_CHANGE);
         events.request(EventRequester.PLAYER_LEFT);
         events.request(EventRequester.PLAYER_ENTERED);
-
+        zonerBanned = new HashSet<String>();
         boxes = new HashMap<String, DuelBox>();
         games = new HashMap<Integer, DuelGame>();
         teams = new HashMap<Integer, DuelTeam>();
@@ -123,7 +127,8 @@ public class duel2bot extends SubspaceBot{
         challs = new HashMap<String, DuelChallenge>();
         freqs = new Vector<Integer>();
         alias = new TreeMap<String, String>();
-        
+
+        zoners = true;
         DEBUG = true;
         debugger = "WingZero";
         lastZoner = 0;
@@ -134,7 +139,6 @@ public class duel2bot extends SubspaceBot{
         settings = ba.getBotSettings();
         oplist = ba.getOperatorList();
         ba.joinArena(settings.getString("Arena"));
-        
         lagChecks = new Vector<String>();
         lagCheck = null;
         lagHandler = new LagHandler(ba, settings, this, "handleLagReport");
@@ -147,6 +151,10 @@ public class duel2bot extends SubspaceBot{
             String area[] = settings.getString("Area" + i).split(",");
             if (boxset.length == 17) boxes.put("" + i, new DuelBox(boxset, warps, area, i));
         }
+        
+        String[] zonebans = settings.getString("ZonerBanned").split(",");
+        for (String zban : zonebans)
+            zonerBanned.add(zban.toLowerCase());
 
         // Reads in general settings for dueling
         d_season = settings.getInt("Season");
@@ -469,6 +477,12 @@ public class duel2bot extends SubspaceBot{
         if (oplist.isSmod(name)) {
             if (cmd.startsWith("!greet"))
                 cmd_greet(name, msg);
+            else if (cmd.startsWith("!zoneban"))
+                cmd_zoneBan(name, msg);
+            else if (cmd.startsWith("!zoneunban"))
+                cmd_zoneUnban(name, msg);
+            else if (cmd.equals("!zoners"))
+                cmd_zoners(name);
         }
     }
 
@@ -502,6 +516,9 @@ public class duel2bot extends SubspaceBot{
         if (!oplist.isModerator(name)) return;
         help = new String[] {
                 "+-STAFF COMMANDS----------------------------------------------------------------------------------+",
+                "| !zoners                     - Enables/Disables the !zone command                                |",
+                "| !zoneban <name>             - Prevents <name> from using !zone                                  |",
+                "| !zoneunban <name>           - Unbans <name> from using !zone                                    |",
                 "| !alias <name>               - Lists enabled aliases of <name>                                   |",
                 "| !signup <name>              - Force registers <name> regardless of aliases                      |",
                 "| !enable <name>              - Force enables a registered but disabled <name> despite any aliases|",
@@ -535,21 +552,80 @@ public class duel2bot extends SubspaceBot{
         ba.sendSmartPrivateMessage(name, "Greeting set to: " + msg);
     }
     
+    private void cmd_zoners(String name) {
+        zoners = !zoners;
+        if (zoners)
+            ba.sendPrivateMessage(name, "The !zone command has been ENABLED.");
+        else
+            ba.sendPrivateMessage(name, "The !zone command has been DISABLED.");
+    }
+    
+    private void cmd_zoneBan(String name, String cmd) {
+        String p = cmd.substring(cmd.indexOf(" ") + 1);
+        String plc = p.toLowerCase();
+        if (zonerBanned.contains(plc)) {
+            ba.sendSmartPrivateMessage(name, p + " is already zoner banned.");
+            return;
+        }
+        zonerBanned.add(plc);
+        String str = "";
+        for (String n : zonerBanned)
+            str += n + ",";
+        str = str.substring(0, str.length() - 1);
+        settings.put("ZonerBanned", str);
+        settings.save();
+        ba.sendPrivateMessage(name, p + " has been banned from the zone command.");
+    }
+    
+    private void cmd_zoneUnban(String name, String cmd) {
+        String p = cmd.substring(cmd.indexOf(" ") + 1);
+        String plc = p.toLowerCase();
+        if (!zonerBanned.contains(plc)) {
+            ba.sendSmartPrivateMessage(name, p + " is not zoner banned.");
+            return;
+        }
+        zonerBanned.remove(plc);
+        String str = "";
+        for (String n : zonerBanned)
+            str += n + ",";
+        str = str.substring(0, str.length() - 1);
+        settings.put("ZonerBanned", str);
+        settings.save();
+        ba.sendPrivateMessage(name, p + " is unbanned and can use the zone command again.");
+    }
+    
     private void cmd_zone(String name) {
+        if (zonerBanned.contains(name.toLowerCase())) {
+            ba.sendPrivateMessage(name, "You are not allowed to use this command.");
+            return;
+        }
+        DuelPlayer p = getPlayer(name);
+        if (p != null && (!p.isRegistered() || !p.isEnabled())) {
+            ba.sendPrivateMessage(name, "That command is only available to registered players.");
+            return;
+        } else if (p == null)
+            return;
+            
         long now = System.currentTimeMillis();
         if (now - lastZoner > ZONER * Tools.TimeInMillis.MINUTE) {
             if (playing.containsKey(name.toLowerCase())) {
                 ba.sendPrivateMessage(name, "You must not be playing in order to use this command.");
                 return;
             }
-            lastZoner = now;
             String zone = "";
             String partner = getPartner(name);
-            if (partner != null)
+            if (partner != null) {
+                DuelPlayer pp = getPlayer(partner);
+                if (pp != null && (!pp.isRegistered() || !pp.isEnabled())) {
+                    ba.sendPrivateMessage(name, "That command is only available to registered teams.");
+                    return;
+                } else if (pp == null)
+                    return;
                 zone = name + " and " + partner + " are looking for worthy 2v2 opponents! Type ?go duel2 to accept their challenge -" + ba.getBotName();
-            else
+            } else
                 zone = name + " is looking for worthy 2v2 players! Type ?go duel2 to accept the challenge -" + ba.getBotName();
             ba.sendZoneMessage(zone, 1);
+            lastZoner = now;
         } else {
             long dt = ZONER * Tools.TimeInMillis.MINUTE - (now - lastZoner);
             int mins = (int) dt / Tools.TimeInMillis.MINUTE;
