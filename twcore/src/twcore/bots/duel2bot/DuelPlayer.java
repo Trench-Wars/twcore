@@ -78,6 +78,7 @@ public class DuelPlayer {
     static final int LAGOUTS = 2;
     static final int SPAWNS = 3;
 
+    
     private long lastFoul = 0;
     private long lastDeath = 0;
     private long lastSpec = 0;

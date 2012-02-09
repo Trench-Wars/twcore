@@ -89,6 +89,8 @@ public class DuelTeam {
             System.out.println("[duel2bot] (NULL POINTER) Error creating team for " + names[0] + " and " + names[1] + ", getPlayer was null.");
             bot.debug("(NULL POINTER) Error creating team for " + names[0] + " and " + names[1] + ", getPlayer was null.");
             game.cancelDuel(null);
+            bot.players.put(names[0].toLowerCase(), new DuelPlayer(ba.getPlayer(names[0]), bot));
+            bot.players.put(names[1].toLowerCase(), new DuelPlayer(ba.getPlayer(names[1]), bot));
         }
         player[0].setTeam(this);
         player[1].setTeam(this);
