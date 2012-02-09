@@ -1173,7 +1173,9 @@ public class duel2bot extends SubspaceBot{
     }
     
     public DuelPlayer getPlayer(String name) {
-        return players.get(name.toLowerCase());
+        if (players.containsKey(name.toLowerCase()))
+                return players.get(name.toLowerCase());
+        return laggers.get(name.toLowerCase());
     }
     
     private String getPartner(String name) {
