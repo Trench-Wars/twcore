@@ -78,8 +78,7 @@ public class duel2bot extends SubspaceBot{
     // current league duel id number
     private int                    gameID;
 
-    private String greet = "Welcome! All 2v2 league stats have been reset due to the initial bugs causing unfair stat discrepencies. " +
-            "This is the last time stats will be irregularly reset. Use !h and !about for help";
+    private String                 greet;
     
     private String                 debugger  = "";
     private boolean                DEBUG;
@@ -127,7 +126,6 @@ public class duel2bot extends SubspaceBot{
         challs = new HashMap<String, DuelChallenge>();
         freqs = new Vector<Integer>();
         alias = new TreeMap<String, String>();
-
         zoners = true;
         DEBUG = true;
         debugger = "WingZero";
@@ -138,6 +136,7 @@ public class duel2bot extends SubspaceBot{
     public void handleEvent(LoggedOn event) {
         settings = ba.getBotSettings();
         oplist = ba.getOperatorList();
+        greet = settings.getString("Greeting");
         ba.joinArena(settings.getString("Arena"));
         lagChecks = new Vector<String>();
         lagCheck = null;
@@ -582,6 +581,8 @@ public class duel2bot extends SubspaceBot{
     private void cmd_greet(String name, String cmd) {
         String msg = cmd.substring(cmd.indexOf(" ") + 1);
         greet = msg;
+        settings.put("Greeting", msg);
+        settings.save();
         ba.sendSmartPrivateMessage(name, "Greeting set to: " + msg);
     }
     
