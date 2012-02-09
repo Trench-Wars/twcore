@@ -1120,12 +1120,12 @@ public class duel2bot extends SubspaceBot{
                 if (team[1].getCancel())
                     game.cancelDuel(null);
                 else {
-                    ba.sendOpposingTeamMessage(team[0].getFreq(), orig + " has sent a request to cancel this duel.", 26);
-                    ba.sendOpposingTeamMessage(team[1].getFreq(), orig + " wishes to cancel this duel. Private message !cancel to " + ba.getBotName() + ", to accept.", 26);
+                    ba.sendOpposingTeamMessageByFrequency(team[0].getFreq(), orig + " has sent a request to cancel this duel.", 26);
+                    ba.sendOpposingTeamMessageByFrequency(team[1].getFreq(), orig + " wishes to cancel this duel. Private message !cancel to " + ba.getBotName() + ", to accept.", 26);
                 }
             } else {
-                ba.sendOpposingTeamMessage(team[0].getFreq(), orig + " has removed the request to cancel this duel.", 26);
-                ba.sendOpposingTeamMessage(team[1].getFreq(), orig + " has removed the request to cancel this duel.", 26);
+                ba.sendOpposingTeamMessageByFrequency(team[0].getFreq(), orig + " has removed the request to cancel this duel.", 26);
+                ba.sendOpposingTeamMessageByFrequency(team[1].getFreq(), orig + " has removed the request to cancel this duel.", 26);
             }
         } else
             ba.sendPrivateMessage(name, "You are not currently dueling.");
