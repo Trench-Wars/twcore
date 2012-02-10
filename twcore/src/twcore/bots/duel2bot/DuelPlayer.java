@@ -890,7 +890,7 @@ public class DuelPlayer {
     
     /** Enables the player and updates it in the database */
     private void sql_enablePlayer() {
-        String query = "SELECT fnUserID FROM tblDuel2__player WHERE fnEnabled = 1 AND (fcIP = '" + userIP + "' OR (fcIP = '" + userIP + "' AND fnMID = " + userMID + ")) OR fnUserID = " + userID;
+        String query = "SELECT fnUserID FROM tblDuel2__player WHERE fnEnabled = 1 AND (fcIP = '" + userIP + "' OR (fcIP = '" + userIP + "' AND fnMID = " + userMID + ") OR fnUserID = " + userID + ")";
         ResultSet rs = null;
         try {
             rs = ba.SQLQuery(db, query);
