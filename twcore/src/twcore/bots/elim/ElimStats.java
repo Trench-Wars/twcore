@@ -6,7 +6,7 @@ import java.text.DecimalFormat;
 import java.util.EnumMap;
 
 
-import twcore.bots.elim.elim.ShipType;
+import twcore.bots.elim.ShipType;
 import twcore.core.util.Tools;
 
 /**

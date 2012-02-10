@@ -16,7 +16,7 @@ import java.util.TreeSet;
 import java.util.Vector;
 
 import twcore.bots.elim.ElimPlayer.Status;
-import twcore.bots.elim.elim.ShipType;
+import twcore.bots.elim.ShipType;
 import twcore.bots.elim.elim.State;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -667,6 +667,31 @@ public class ElimGame {
             ba.setShip(name, ship.getNum());
             ba.setFreq(name, freq);
             freq += 2;
+        }
+        
+        Iterator<Player> i = ba.getPlayingPlayerIterator();
+        while (i.hasNext()) {
+            Player p = i.next();
+            ElimPlayer ep = getPlayer(p.getPlayerName());
+            if (ba.getFrequencySize(p.getFrequency()) != 1) {
+                freq += 2;
+                while (ba.getFrequencySize(freq) != 0)
+                    freq += 2;
+                ba.setFreq(p.getPlayerID(), freq);
+                if (ep == null)
+                    ep = new ElimPlayer(ba, this, p.getPlayerName(), ship.getNum(), goal);
+                winners.add(low(p.getPlayerName()));
+                ep.setFreq(freq);
+                players.put(low(p.getPlayerName()), ep);
+                freq += 2;
+                ba.sendSmartPrivateMessage("WingZero", "Fixed elim freq with more than 1 player: " + p.getPlayerName());
+            } else if (ep != null)
+                ep.setFreq(p.getFrequency());
+            else {
+                ep = new ElimPlayer(ba, this, p.getPlayerName(), ship.getNum(), goal);
+                ep.setFreq(p.getFrequency());
+                players.put(low(p.getPlayerName()), ep);
+            }
         }
     }
     
