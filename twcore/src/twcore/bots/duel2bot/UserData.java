@@ -75,7 +75,7 @@ public class UserData {
         try {
             ResultSet qryPlayerInfo = ba.SQLQuery(connName,
                             "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"
-                                    + Tools.addSlashesToString(fcUserName) + "'");
+                                    + Tools.addSlashesToString(fcUserName) + "' ORDER BY U.fnUserID DESC");
             lastQuery = System.currentTimeMillis();
             if (qryPlayerInfo.next()) {
                 playerLoaded = true;

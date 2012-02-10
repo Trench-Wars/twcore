@@ -878,6 +878,11 @@ public class DuelPlayer {
                 staffer = null;
             }
         } catch (SQLException e) {
+            if (staffer != null) {
+                staffer = null;
+                ba.sendSmartPrivateMessage(staffer, "Error encounterd disabling '" + name + "' for use in 2v2 TWEL duels! ");
+            } else
+                ba.sendSmartPrivateMessage(name, "Error encounterd disabling '" + name + "' for use in 2v2 TWEL duels! ");
             bot.debug("[sql_disablePlayer] Could not disable: " + name);
             e.printStackTrace();
         }
@@ -905,6 +910,11 @@ public class DuelPlayer {
                 }
             }
         } catch (SQLException e) {
+            if (staffer != null) {
+                staffer = null;
+                ba.sendSmartPrivateMessage(staffer, "Error encounterd enabling '" + name + "' for use in 2v2 TWEL duels! ");
+            } else
+                ba.sendSmartPrivateMessage(name, "Error encounterd enabling '" + name + "' for use in 2v2 TWEL duels! ");
             bot.debug("[sql_enablePlayer] Could not enable: " + name);
             e.printStackTrace();
         } finally {

@@ -3,7 +3,6 @@ package twcore.bots.duel2bot;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.TimerTask;
@@ -45,7 +44,6 @@ import twcore.core.util.Tools;
 public class duel2bot extends SubspaceBot{
 
     public static final String db = "website";
-    public static final int ZONER = 10;
     final int MSG_LIMIT = 8;
     
     BotSettings settings;
@@ -61,51 +59,39 @@ public class duel2bot extends SubspaceBot{
     int d_challengeTime;
     int d_duelLimit;
     int d_duelDays;
-    
-    HashSet<String>                zonerBanned;
-    boolean zoners;
+
+    CinSet                         banned;      // HashSet of banned players *needs to be updated in sync with db
+    CinSet                         zonerBanned; // List of players banned from using !zone *stored in cfg file
     
     LagHandler                     lagHandler;
     Vector<String>                 lagChecks;
     TimerTask                      lagCheck;
     
     //private boolean                dying;
+    private int                    zonerDelay = 10;
+    private boolean                zoners;
     private long                   lastZoner;
-    
-    // current non-league duel id number
-    private int                    scrimID;
-
-    // current league duel id number
-    private int                    gameID;
-
-    private String                 greet;
-    
-    private String                 debugger  = "";
+    private int                    scrimID;     // current non-league duel id number
+    private int                    gameID;      // current league duel id number
+    private String                 greeting;
+    private String                 debugger;
     private boolean                DEBUG;
-    // non-league teams will be identified by negative numbers :: i may not use
-    // this at all and just go by player names
-    HashMap<Integer, DuelGame>     games;
-    // list of players who are playing tied to their duel id
-    HashMap<String, Integer>       playing;
-    // list of DuelBoxes
-    HashMap<String, DuelBox>       boxes;
-    // list of players and associated profile
-    HashMap<String, DuelPlayer>    players;
-
-    // ?????????
-    HashMap<Integer, DuelTeam>     teams;
-    // list of players currently lagged out
-    HashMap<String, DuelPlayer>    laggers;
-    // list of scrimmage challenges
-    HashMap<String, DuelChallenge> challs;
-    // list of used frequencies
-    Vector<Integer>                freqs;
-    TreeMap<String, String>        alias;
+    
+    HashMap<Integer, DuelGame>     games;       // non-league teams will be identified by negative numbers
+    HashMap<String, Integer>       playing;     // list of players who are playing tied to their duel id
+    HashMap<String, DuelBox>       boxes;       // list of DuelBoxes
+    HashMap<String, DuelPlayer>    players;     // list of players and associated DuelPlayer profile objects 
+    HashMap<Integer, DuelTeam>     teams;       // list of teams by freq
+    HashMap<String, DuelPlayer>    laggers;     // list of players currently lagged out
+    HashMap<String, DuelChallenge> challs;      // list of challenges by String type key containing freqs
+    Vector<Integer>                freqs;       // list of used frequencies
+    
+    TreeMap<String, String>        alias;       /* not really used technically */
     
     public duel2bot(BotAction botAction) {
         super(botAction);
         ba = botAction;
-
+        greeting = "";
         EventRequester events = ba.getEventRequester();
         events.request(EventRequester.MESSAGE);
         events.request(EventRequester.LOGGED_ON);
@@ -116,7 +102,8 @@ public class duel2bot extends SubspaceBot{
         events.request(EventRequester.FREQUENCY_CHANGE);
         events.request(EventRequester.PLAYER_LEFT);
         events.request(EventRequester.PLAYER_ENTERED);
-        zonerBanned = new HashSet<String>();
+        banned = new CinSet();
+        zonerBanned = new CinSet();
         boxes = new HashMap<String, DuelBox>();
         games = new HashMap<Integer, DuelGame>();
         teams = new HashMap<Integer, DuelTeam>();
@@ -136,8 +123,9 @@ public class duel2bot extends SubspaceBot{
     public void handleEvent(LoggedOn event) {
         settings = ba.getBotSettings();
         oplist = ba.getOperatorList();
-        greet = settings.getString("Greeting");
         ba.joinArena(settings.getString("Arena"));
+        greeting = settings.getString("Greeting");
+        zonerDelay = settings.getInt("ZonerDelay");
         lagChecks = new Vector<String>();
         lagCheck = null;
         lagHandler = new LagHandler(ba, settings, this, "handleLagReport");
@@ -154,7 +142,7 @@ public class duel2bot extends SubspaceBot{
         String[] zonebans = settings.getString("ZonerBanned").split(",");
         for (String zban : zonebans)
             zonerBanned.add(zban.toLowerCase());
-
+        sql_loadBans();
         // Reads in general settings for dueling
         d_season = settings.getInt("Season");
         d_spawnTime = settings.getInt("SpawnAfter");
@@ -215,7 +203,7 @@ public class duel2bot extends SubspaceBot{
             lagChecks.add(name.toLowerCase());
         } else {
             players.put(name.toLowerCase(), new DuelPlayer(ptest, this));
-            ba.sendPrivateMessage(name, greet);
+            ba.sendPrivateMessage(name, greeting);
         }
     }
 
@@ -232,8 +220,10 @@ public class duel2bot extends SubspaceBot{
             if (!laggers.containsKey(name.toLowerCase()) && playing.containsKey(name.toLowerCase()) 
                     && (p.getStatus() == DuelPlayer.PLAYING || p.getStatus() == DuelPlayer.IN))
                 players.remove(name.toLowerCase()).handleLagout();
-            else if (!playing.containsKey(name.toLowerCase()))
+            else if (!playing.containsKey(name.toLowerCase())) {
                 players.remove(name.toLowerCase());
+                removeChalls(p.freq);
+            }
         }
     }
 
@@ -498,6 +488,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_zoneUnban(name, msg);
             else if (cmd.equals("!zoners"))
                 cmd_zoners(name);
+            else if (cmd.equals("!reload"))
+                cmd_reload(name);
         }
     }
 
@@ -540,10 +532,11 @@ public class duel2bot extends SubspaceBot{
                 "| !enable <name>              - Force enables a registered but disabled <name> despite any aliases|",
                 "| !disable <name>             - Disables a registered but enabled <name>                          |",
                 "| !cancel <name>              - Force cancels a duel involving <name>                             |",
-                //"| !ban <name>                             - Bans <name> from playing in 2v2 TWEL (effective after duel)       |",
-                //"| !unban <name>                           - Unbans <name> if banned                                           |",
+                "| !ban <name>                 - Bans <name> from playing in 2v2 TWEL (effective after duel)       |",
+                "| !unban <name>               - Unbans <name> if banned                                           |",
+                "| !reload                     - Reloads ban list and zoner delay time setting                     |",
                 "| !die                        - Kills the bot                                                     |",
-                "| !greet <message>            - Changes the greet message the bot PMs each player upon entering   |"      
+                "| !greet <message>            - Changes the greet message the bot PMs each player upon entering   |",
         };
         ba.privateMessageSpam(name, help);
         ba.sendPrivateMessage(name, 
@@ -560,6 +553,12 @@ public class duel2bot extends SubspaceBot{
                 "`-------------------------------------------------------------------------------------------------'"
         };
         ba.privateMessageSpam(name, about);
+    }
+    
+    private void cmd_reload(String name) {
+        sql_loadBans();
+        zonerDelay = settings.getInt("ZonerDelay");
+        ba.sendSmartPrivateMessage(name, "Ban list and zoner time delay setting have been reloaded.");
     }
     
     private void cmd_topTeams(String name, String cmd) {
@@ -580,7 +579,7 @@ public class duel2bot extends SubspaceBot{
     
     private void cmd_greet(String name, String cmd) {
         String msg = cmd.substring(cmd.indexOf(" ") + 1);
-        greet = msg;
+        greeting = msg;
         settings.put("Greeting", msg);
         settings.save();
         ba.sendSmartPrivateMessage(name, "Greeting set to: " + msg);
@@ -645,7 +644,7 @@ public class duel2bot extends SubspaceBot{
             return;
             
         long now = System.currentTimeMillis();
-        if (now - lastZoner > ZONER * Tools.TimeInMillis.MINUTE) {
+        if (now - lastZoner > zonerDelay * Tools.TimeInMillis.MINUTE) {
             if (playing.containsKey(name.toLowerCase())) {
                 ba.sendPrivateMessage(name, "You must not be playing in order to use this command.");
                 return;
@@ -665,7 +664,7 @@ public class duel2bot extends SubspaceBot{
             ba.sendZoneMessage(zone, 1);
             lastZoner = now;
         } else {
-            long dt = ZONER * Tools.TimeInMillis.MINUTE - (now - lastZoner);
+            long dt = zonerDelay * Tools.TimeInMillis.MINUTE - (now - lastZoner);
             int mins = (int) dt / Tools.TimeInMillis.MINUTE;
             int secs = (int) (dt - mins * Tools.TimeInMillis.MINUTE) / Tools.TimeInMillis.SECOND;
             ba.sendSmartPrivateMessage(name, "The next zoner will be available in " + mins + " minutes " + secs + " seconds");
@@ -786,11 +785,17 @@ public class duel2bot extends SubspaceBot{
     }
     
     private void cmd_ban(String name, String cmd) {
-        
+        String[] args = splitArgs(cmd);
+        if (args == null) return;
+        if (args.length == 2)
+            sql_banPlayer(name, args[0], args[1]);
+        else 
+            ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !ban <player>:<comment>");
     }
     
     private void cmd_unban(String name, String cmd) {
-        
+        String p = cmd.substring(cmd.indexOf(" ") + 1);
+        sql_unbanPlayer(name, p);
     }
     
     private void cmd_teams(String name) {
@@ -895,7 +900,7 @@ public class duel2bot extends SubspaceBot{
         }
 
         if (div < 1 || div > 5) {
-            ba.sendPrivateMessage(name, "Invalid division number (1><5).");
+            ba.sendPrivateMessage(name, "Invalid division number (1-5).");
             return;
         } else if (div == 2 && !getBoxOpen(2)) {
             ba.sendPrivateMessage(name,
@@ -969,7 +974,7 @@ public class duel2bot extends SubspaceBot{
             for (DuelPlayer dp : tests) {
                 if (!dp.canPlay()) {
                     clear = false;
-                    ba.sendOpposingTeamMessageByFrequency(freq1, "[ERROR] Player not registered for ranked play: " + dp.getName());
+                    ba.sendOpposingTeamMessageByFrequency(freq1, "[ERROR] Player has been disabled or is not registered for ranked play: " + dp.getName());
                 }
             }
             if (!clear)
@@ -1106,6 +1111,7 @@ public class duel2bot extends SubspaceBot{
             ba.sendPrivateMessage(name, "You are not lagged out.");
     }
     
+    
     private void cmd_cancel(String name) {
         String orig = name;
         name = name.toLowerCase();
@@ -1174,29 +1180,6 @@ public class duel2bot extends SubspaceBot{
             ba.cancelTask(challs.remove(k));
         }
     }
-    
-    public DuelPlayer getPlayer(String name) {
-        if (players.containsKey(name.toLowerCase()))
-                return players.get(name.toLowerCase());
-        return laggers.get(name.toLowerCase());
-    }
-    
-    private String getPartner(String name) {
-        String partner = null;
-        Player p = ba.getPlayer(name);
-        if (p != null) {
-            int freq = p.getFrequency();
-            if (ba.getFrequencySize(freq) == 2) {
-                Iterator<Player> i = ba.getFreqPlayerIterator(freq);
-                while (i.hasNext()) {
-                    partner = i.next().getPlayerName();
-                    if (!name.equalsIgnoreCase(partner))
-                        return partner;
-                }
-            }
-        }
-        return partner;
-    }
 
     /** Returns the division name for a given id
      * 
@@ -1227,6 +1210,29 @@ public class duel2bot extends SubspaceBot{
             scrimID--;
             return scrimID;
         }
+    }
+    
+    public DuelPlayer getPlayer(String name) {
+        if (players.containsKey(name.toLowerCase()))
+                return players.get(name.toLowerCase());
+        return laggers.get(name.toLowerCase());
+    }
+    
+    private String getPartner(String name) {
+        String partner = null;
+        Player p = ba.getPlayer(name);
+        if (p != null) {
+            int freq = p.getFrequency();
+            if (ba.getFrequencySize(freq) == 2) {
+                Iterator<Player> i = ba.getFreqPlayerIterator(freq);
+                while (i.hasNext()) {
+                    partner = i.next().getPlayerName();
+                    if (!name.equalsIgnoreCase(partner))
+                        return partner;
+                }
+            }
+        }
+        return partner;
     }
 
     /** Checks to see if a DuelBox is open for a given division
@@ -1285,6 +1291,76 @@ public class duel2bot extends SubspaceBot{
         if (p != null)
             p.sql_createPlayer(ip, mid);
     }
+    
+    private void sql_loadBans() {
+        banned = new CinSet();
+        String query = "SELECT u.fcUserName FROM tblDuel2__ban b LEFT JOIN tblUser u ON u.fnUserID = b.fnUserID WHERE b.fnActive = 1";
+        ResultSet rs = null;
+        try {
+            rs = ba.SQLQuery(db, query);
+            while (rs.next())
+                banned.add(rs.getString(1));
+        } catch (SQLException e) {
+            debug("Error loading bans.");
+            Tools.printStackTrace(e);
+        } finally {
+            ba.SQLClose(rs);
+        }
+    }
+    
+    private void sql_banPlayer(String name, String player, String comment) {
+        if (banned.contains(player))
+            ba.sendSmartPrivateMessage(name, player + " is already banned.");
+        else {
+            int id = -1;
+            DuelPlayer p = getPlayer(player);
+            if (p != null) {
+                id = p.userID;
+                p.banned = true;
+            } else {
+                UserData d = new UserData(ba, player);
+                id = d.getUserID();
+            }
+            if (id < 0) {
+                ba.sendSmartPrivateMessage(name, "Error getting user ID for " + player + ".");
+                return;
+            }
+            banned.add(player);
+            String query = "INSERT INTO tblDuel2__ban (fnUserID, fcComment, fcStaffer) VALUES(" + id + ", '" + Tools.addSlashesToString(comment) + "', '" + Tools.addSlashesToString(name) + "')";
+            ba.SQLBackgroundQuery(db, null, query);
+            ba.sendSmartPrivateMessage(name, player + " has been banned from 2v2 league dueling.");
+        }
+    }
+    
+    private void sql_unbanPlayer(String name, String player) {
+        if (!banned.contains(player))
+            ba.sendSmartPrivateMessage(name, player + " is not banned.");
+        else {
+            int id = -1;
+            DuelPlayer p = getPlayer(player);
+            if (p != null) {
+                id = p.userID;
+                p.banned = false;
+            } else {
+                UserData d = new UserData(ba, player);
+                id = d.getUserID();
+            }
+            if (id < 0) {
+                ba.sendSmartPrivateMessage(name, "Error getting user ID for " + player + ".");
+                return;
+            }
+            banned.remove(player);
+            String query = "UPDATE tblDuel2__ban SET fnActive = 0 WHERE fnUserID = " + id;
+            ba.SQLBackgroundQuery(db, null, query);
+            ba.sendSmartPrivateMessage(name, player + " is allowed to play in 2v2 league duels again.");
+        }
+    }
+
+    private void sql_getUserInfo(String staff, String name) {
+        String query = "SELECT P.fnUserID as id, P.fnEnabled as e, P.fcIP as ip, P.fnMID as mid FROM tblDuel2__player P WHERE P.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"
+                                    + Tools.addSlashesToString(name) + "' LIMIT 1) LIMIT 1";
+        ba.SQLBackgroundQuery(db, "info:" + staff + ":" + name, query);
+    }
 
     /** Splits the arguments of a given command separated by colons
      * 
@@ -1300,12 +1376,6 @@ public class duel2bot extends SubspaceBot{
             } else
                 result = cmd.substring(cmd.indexOf(" ") + 1).split(":");
         return result;
-    }
-
-    private void sql_getUserInfo(String staff, String name) {
-        String query = "SELECT P.fnUserID as id, P.fnEnabled as e, P.fcIP as ip, P.fnMID as mid FROM tblDuel2__player P WHERE P.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"
-                                    + Tools.addSlashesToString(name) + "' LIMIT 1) LIMIT 1";
-        ba.SQLBackgroundQuery(db, "info:" + staff + ":" + name, query);
     }
 
     /** Debug message handler */
