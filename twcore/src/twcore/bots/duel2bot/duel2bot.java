@@ -307,7 +307,7 @@ public class duel2bot extends SubspaceBot{
                 ba.spec(report.getName());
                 ba.spec(report.getName());
                 debug("Speccing player for lag: " + p.getName());
-            } else
+            } else if (p == null)
                 debug("p==null:" + (p==null) + (p!=null ? " status:" + p.getStatus() : ""));
         }
     }
@@ -695,7 +695,9 @@ public class duel2bot extends SubspaceBot{
     
     private void cmd_disable(String name, String cmd) {
         DuelPlayer p = null;
-        String[] args = splitArgs(cmd);
+        String[] args = null;
+        if (cmd.contains(" "))
+            args = splitArgs(cmd);
         if (args != null && args.length == 1)
             p = getPlayer(args[0]);
         else
@@ -715,7 +717,9 @@ public class duel2bot extends SubspaceBot{
     
     private void cmd_enable(String name, String cmd) {
         DuelPlayer p = null;
-        String[] args = splitArgs(cmd);
+        String[] args = null;
+        if (cmd.contains(" "))
+            args = splitArgs(cmd);
         if (args != null && args.length == 1)
             p = getPlayer(args[0]);
         else

@@ -139,7 +139,7 @@ public class DuelPlayer {
         userMID = -1;
         userIP = "";
         getRules();
-        user = new UserData(ba, db, name);
+        user = new UserData(ba, db, name, true);
         if (user == null || user.getUserID() < 1)
             user = null;
         else
