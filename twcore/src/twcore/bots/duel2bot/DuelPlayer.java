@@ -329,7 +329,7 @@ public class DuelPlayer {
                 public void run() {
                     if (status == OUT) {
                         remove(NORMAL);
-                        ba.cancelTask(spawner);
+                        cancelTask(spawner);
                     }
                 }
             };
@@ -441,7 +441,7 @@ public class DuelPlayer {
             return;
         }
         setStatus(RETURN);
-        ba.cancelTask(lagout);
+        cancelTask(lagout);
         bot.laggers.remove(name.toLowerCase());
         ba.sendPrivateMessage(name, "You have " + (d_maxLagouts - stats.getStat(StatType.LAGOUTS)) + " lagouts remaining.");
         lastFoul = System.currentTimeMillis();
@@ -635,9 +635,9 @@ public class DuelPlayer {
             status = SPEC;
         else
             status = IN;
-        ba.cancelTask(lagout);
-        ba.cancelTask(spawner);
-        ba.cancelTask(dying);
+        cancelTask(lagout);
+        cancelTask(spawner);
+        cancelTask(dying);
         ba.shipReset(name);
         ba.warpTo(name, 512, 502);
         out = -1;
@@ -702,7 +702,7 @@ public class DuelPlayer {
         ba.setFreq(name, freq);
         endTimePlayed();
         if (lagout != null) {
-            ba.cancelTask(lagout);
+            cancelTask(lagout);
             bot.laggers.remove(name.toLowerCase());
         }
         if (status == REOUT) {
@@ -777,6 +777,13 @@ public class DuelPlayer {
             return;
         } else
             team.game.cancelDuel(name);
+    }
+    
+    private void cancelTask(TimerTask task) {
+        if (task != null) {
+            ba.cancelTask(task);
+            task = null;
+        }
     }
     
     public void sql_checkDivision(int div) {
