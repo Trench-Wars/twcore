@@ -412,7 +412,7 @@ public class duel2bot extends SubspaceBot{
 
         if (type == Message.PRIVATE_MESSAGE || type == Message.PUBLIC_MESSAGE) {
             if (cmd.equals("!signup"))
-                cmd_signup(name, msg);
+                cmd_signup(name);
             else if (cmd.equals("!disable"))
                 cmd_disable(name, msg);
             else if (cmd.equals("!enable"))
@@ -671,28 +671,41 @@ public class duel2bot extends SubspaceBot{
         }
     }
     
-    private void cmd_signup(String name, String cmd) {
+    private void cmd_signup(String name) {
         DuelPlayer p = null;
-        String staff = null;
-        String[] args = splitArgs(cmd);
-        if (oplist.isSmod(name) && args != null && args.length == 1) {
-            p = getPlayer(args[0]);
-            staff = name;
-        } else
-            p = getPlayer(name);
+        p = getPlayer(name);
         
         if (p == null) {
             Player info = ba.getPlayer(name);
-            if (info == null) {
-                if (args != null)
-                    ba.sendSmartPrivateMessage(name, "Player '" + args[0] + "' must be in the arena to be registered.");
+            if (info == null)
                 return;
-            }
             p = new DuelPlayer(info, this);
             players.put(name.toLowerCase(), p);
         }
         if (p != null)
-            p.doSignup(staff);
+            p.doSignup(null);
+    }
+    
+    private void cmd_signup(String name, String cmd) {
+        DuelPlayer p = null;
+        String player = null;
+        String[] args = splitArgs(cmd);
+        if (oplist.isSmod(name) && args != null && args.length == 1)
+            player = args[0];
+        else
+            return;
+        p = getPlayer(player);
+        if (p == null) {
+            Player info = ba.getPlayer(player);
+            if (info == null) {
+                ba.sendSmartPrivateMessage(name, "Player '" + args[0] + "' must be in the arena to be registered.");
+                return;
+            }
+            p = new DuelPlayer(info, this);
+            players.put(player.toLowerCase(), p);
+        }
+        if (p != null)
+            p.doSignup(name);
     }
     
     private void cmd_disable(String name, String cmd) {
