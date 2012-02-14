@@ -843,7 +843,7 @@ public class DuelPlayer {
     public void sql_createPlayer(String ip, String mid) {
         if (!create) return;
         create = false;
-        String query = "SELECT fnUserID FROM tblDuel2__player WHERE fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + ")) OR fnUserID = " + userID;
+        String query = "SELECT fnUserID FROM tblDuel2__player WHERE fnEnabled = 1 AND ((fcIP = '" + Tools.addSlashesToString(ip) + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + ")) OR fnUserID = " + userID + ")";
         ResultSet rs = null;
         try {
             rs = ba.SQLQuery(db, query);
