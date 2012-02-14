@@ -673,10 +673,12 @@ public class duel2bot extends SubspaceBot{
     
     private void cmd_signup(String name, String cmd) {
         DuelPlayer p = null;
+        String staff = null;
         String[] args = splitArgs(cmd);
-        if (args != null && args.length == 1)
+        if (oplist.isSmod(name) && args != null && args.length == 1) {
             p = getPlayer(args[0]);
-        else
+            staff = name;
+        } else
             p = getPlayer(name);
         
         if (p == null) {
@@ -690,7 +692,7 @@ public class duel2bot extends SubspaceBot{
             players.put(name.toLowerCase(), p);
         }
         if (p != null)
-            p.doSignup(name);
+            p.doSignup(staff);
     }
     
     private void cmd_disable(String name, String cmd) {
