@@ -380,7 +380,7 @@ public class acro2 extends MultiModule{
             int intAcroNum = 0;
             try {vote = Integer.parseInt( message );} catch (Exception e) {}
             if (vote > 0 && vote <= intAcroCount) {
-            	if (playerIdeas.containsKey(name)) {
+            	//if (playerIdeas.containsKey(name)) {
             		intAcroNum = acroDisplay.get(name);
             		if (intAcroNum != vote) {
             			votes[vote-1]++;
@@ -394,7 +394,7 @@ public class acro2 extends MultiModule{
             			}
             			playerVotes.put(name,vote);
             		} else {m_botAction.sendPrivateMessage(name,"You cannot vote for your own.");}
-            	} else {m_botAction.sendPrivateMessage(name,"Only players who submitted an entry may vote this round.");}
+            	//} else {m_botAction.sendPrivateMessage(name,"Only players who submitted an entry may vote this round.");}
             } else {m_botAction.sendPrivateMessage(name,"Please enter a valid vote.");}
         }
     }
