@@ -298,7 +298,7 @@ public class multibot extends SubspaceBot {
         if (currentArena.equalsIgnoreCase(targetArena))
             throw new IllegalArgumentException("Bot is already in that arena.");
         
-        if (isPublicArena(targetArena) && m_accessLevel < OperatorList.SYSOP_LEVEL)
+        if (isPublicArena(targetArena) || m_accessLevel < OperatorList.SYSOP_LEVEL)
             throw new IllegalArgumentException("Bot can not go into public arenas.");
         
         if(!targetArena.isEmpty()) {
