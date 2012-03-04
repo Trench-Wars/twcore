@@ -382,7 +382,7 @@ public class acro2 extends MultiModule{
             if (vote > 0 && vote <= intAcroCount) {
             	//if (playerIdeas.containsKey(name)) {
             		intAcroNum = acroDisplay.get(name);
-            		if (intAcroNum != vote) {
+            		if (!acroDisplay.containsKey(name) || intAcroNum != vote) {
             			votes[vote-1]++;
             			if (playerVotes.containsKey(name)) {
             				int lastVote = playerVotes.get(name);
