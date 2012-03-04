@@ -381,8 +381,8 @@ public class acro2 extends MultiModule{
             try {vote = Integer.parseInt( message );} catch (Exception e) {}
             if (vote > 0 && vote <= intAcroCount) {
             	//if (playerIdeas.containsKey(name)) {
-            		intAcroNum = acroDisplay.get(name);
-            		if (!acroDisplay.containsKey(name) || intAcroNum != vote) {
+                boolean valid = acroDisplay.containsKey(name) ? acroDisplay.get(name) != vote : true;
+            		if (valid) {
             			votes[vote-1]++;
             			if (playerVotes.containsKey(name)) {
             				int lastVote = playerVotes.get(name);
