@@ -8,6 +8,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Racism spy.  Extremely similar to PubBot's spy module.  When instantiated, a bot
@@ -38,6 +40,10 @@ import java.util.ArrayList;
 public class Spy {
     public ArrayList<String> keywords = new ArrayList<String>(); // our banned words
     public ArrayList<String> fragments = new ArrayList<String>(); // our banned fragments
+    
+    private static List<String> ignored = 
+            Collections.synchronizedList(new ArrayList<String>());
+    
     private BotAction   m_botAction;   // BotAction reference
 
     public Spy( BotAction botAction ) {
@@ -155,6 +161,9 @@ public class Spy {
     	  if(word.length() == 0)
     	      continue;
     	  
+          if (ignored.contains(word.trim()))
+              continue;
+          
     	  for (String i : keywords){ 
     		  if (word.trim().equals(i.trim())) {
     			  return true;
@@ -187,5 +196,43 @@ public class Spy {
 	      int senderID = event.getPlayerID();
 	      return m_botAction.getPlayerName(senderID);
 	    }
+        
+        /*
+         * This static method adds string to ignore for all spies
+         * 
+         * @param ignore the word to ignore
+         */
+        public static void addIgnore(String ignore) {
+            if (!ignored.contains(ignore.toLowerCase())) {
+                ignored.add(ignore.toLowerCase());
+            }
+        }
+        
+        /*
+         * This static method removes string from ignore for all spies
+         * 
+         * @param ignore the word to remove from ignored list
+         */
+        public static void removeIgnore(String ignore) {
+            if (ignored.contains(ignore.toLowerCase())) {
+                ignored.remove(ignore.toLowerCase());
+            }
+        }
 	    
+        /*
+         * This static method removes all entries from ignored list
+         */
+        public static void clearIgnored() {
+            ignored.clear();
+        }
+        
+        /*
+         * This static methods returns list of currently ignored words for spies.
+         * 
+         * @return array string array of words currently ignored
+         */
+        public static String[] getIgnored() {
+            return (String[]) ignored.toArray();
+        }
+        
 	}
