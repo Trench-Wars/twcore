@@ -100,6 +100,18 @@ public class prez extends MultiModule{
         }
     }
     
+    public void doSetFreqs(String name, String message) {
+        if(m_botAction.getOperatorList().isER(name)) {
+            try {
+                numOfFreqs = Integer.parseInt(message);
+                m_botAction.sendPrivateMessage(name, "Number of frequencies set to "
+                        + "[" + numOfFreqs + "].");
+            } catch (NumberFormatException e) {
+                m_botAction.sendPrivateMessage(name, "Unable to parse num of freqs!");
+            }
+        }
+    }
+    
     /*
      * Command handler for !setcitzship
      */
@@ -107,6 +119,8 @@ public class prez extends MultiModule{
         if(m_botAction.getOperatorList().isER( name )) {
             try {
                 citzShip = Integer.parseInt(message);
+                m_botAction.sendPrivateMessage(name, "Citizen ship set to ["
+                        + citzShip + "].");
             } catch (NumberFormatException e) {
                 m_botAction.sendPrivateMessage(name, "Unable to parse Citz ship!");
             }
@@ -120,6 +134,8 @@ public class prez extends MultiModule{
         if(m_botAction.getOperatorList().isER( name )) {
             try {
                 prezShip = Integer.parseInt(message);
+                m_botAction.sendPrivateMessage(name, "President ship set to ["
+                        + prezShip + "].");
             } catch (NumberFormatException e) {
                 m_botAction.sendPrivateMessage(name, "Unable to parse Prez ship!");
             }
@@ -146,6 +162,8 @@ public class prez extends MultiModule{
             
                 //add new point under freq
                 freqWarpPoints.put(freq, new Point(x, y));
+                m_botAction.sendPrivateMessage(name, "Freq [" + freq + "] warp "
+                        + "point set at [" + x + ", " + y + "].");
             } catch (NumberFormatException e) {
                 m_botAction.sendPrivateMessage(name, "Unable to parse set freq warp!");
             }
@@ -162,7 +180,7 @@ public class prez extends MultiModule{
         //verify number of freqs
         if (numOfFreqs < 2) {
             valid  = false;
-            m_botAction.sendPrivateMessage(name, "Number of freqs not set!");
+            m_botAction.sendPrivateMessage(name, "Number of frequencies not set!");
         }
         
         //verify warps set for each freq
@@ -176,13 +194,13 @@ public class prez extends MultiModule{
         //verify citz ship set
         if (citzShip < 1 || citzShip > 8) {
             valid = false;
-            m_botAction.sendPrivateMessage(name, "Citz Ship not set!");
+            m_botAction.sendPrivateMessage(name, "Citizen ship not set!");
         }
         
         //verify prez ship set
         if (prezShip < 1 || prezShip > 8) {
             valid = false;
-            m_botAction.sendPrivateMessage(name, "Prez Ship not set!");
+            m_botAction.sendPrivateMessage(name, "President ship not set!");
         }
         return valid;
     }
@@ -234,13 +252,27 @@ public class prez extends MultiModule{
         gamereset();
     }
 
+    /*m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "doStartGame" );
+        m_commandInterpreter.registerCommand( "!setfreqs", acceptedMessages, this, "doSetFreqs" );
+        m_commandInterpreter.registerCommand( "!setcitzship", acceptedMessages, this, "doSetCitzShip" );
+        m_commandInterpreter.registerCommand( "!setprezship", acceptedMessages, this, "doSetPrezShip" );
+        m_commandInterpreter.registerCommand( "!setfreqwarp", acceptedMessages, this, "doSetFreqWarp" );
+        m_commandInterpreter.registerCommand( "!stop", acceptedMessages, this, "doStopGame" );
+        m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
+        m_commandInterpreter.registerCommand( "!rules", acceptedMessages, this, "doShowRules" );*/
+    
     @Override
     public String[] getModHelpMessage() {
         String[] help = {
                 "PREZ (President) BOT COMMANDS",
-                "!start       - Starts a game of Prez.",
-                "!stop        - Stops a game currently in progress."
-                //TODO fill in reset
+                "!start         - Starts a game of Prez.",
+                "!stop          - Stops a game currently in progress.",
+                "!setfreqs      - Sets number of frequencies to use.",
+                "!setcitzship   - Sets citizen ship type.",
+                "!setprezship   - Sets president ship type.",
+                "!setfreqwarp   - Sets warp point for frequency (!setfreqwarp 0:512,100)",
+                "!help          - Displays help message.",
+                "!rules         - Displays rules of Prez (President) Game Module."
         };
         return help;
     }
@@ -248,8 +280,13 @@ public class prez extends MultiModule{
     public void doShowRules(String name,String message) {
         String[] help = {
                 "PREZ (President) RULES:",
-                "Each team has one president..."
-                //TODO fill in rest
+                "All players entered are randomly set to a number of frequencies,",
+                " and one player from each frequency is choosen to act as president. ",
+                "This player is given one life, while all the other players on freq ",
+                " (citizens) are given infinite. Once the president for that freq has ",
+                "been defeated, all players on that freq are given a last death.",
+                " Once there is only one president remaining, that freq is declared ",
+                "winner."
         };
         m_botAction.privateMessageSpam(name,help);
     }
