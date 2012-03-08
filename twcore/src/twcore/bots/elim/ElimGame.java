@@ -685,11 +685,20 @@ public class ElimGame {
                 players.put(low(p.getPlayerName()), ep);
                 freq += 2;
                 ba.sendSmartPrivateMessage("WingZero", "Fixed elim freq with more than 1 player: " + p.getPlayerName());
-            } else if (ep != null)
+            } else if (ep != null) {
+                if (p.getShipType() != ship.getNum() && p.getShipType() != 0)
+                    ba.setShip(p.getPlayerName(), ship.getNum());
+                if (p.getFrequency() % 2 == 1 && !ship.inBase())
+                    ba.setFreq(p.getPlayerName(), freq);
                 ep.setFreq(p.getFrequency());
-            else {
+                freq += 2;
+            } else {
                 ep = new ElimPlayer(ba, this, p.getPlayerName(), ship.getNum(), goal);
-                ep.setFreq(p.getFrequency());
+                freq += 2;
+                ba.setFreq(p.getPlayerName(), freq);
+                ep.setFreq(freq);
+                ba.setShip(p.getPlayerName(), ship.getNum());
+                freq += 2;
                 players.put(low(p.getPlayerName()), ep);
             }
         }
