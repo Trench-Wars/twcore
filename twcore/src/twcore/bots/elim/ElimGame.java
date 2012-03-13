@@ -425,10 +425,10 @@ public class ElimGame {
                 if (ep.getFreq() % 2 == ship.getFreq())
                     ba.setFreq(name, ep.getFreq());
                 else {
+                    ba.sendSmartPrivateMessage("WingZero", "[ELIM] on !lagout " + name + " had invalid freq " + ep.getFreq());
                     ba.setFreq(name, freq);
                     ep.setFreq(freq);
                     freq += 2;
-                    ba.sendSmartPrivateMessage("WingZero", "[ELIM] on !lagout " + name + " had invalid freq " + ep.getFreq());
                 }
                 ba.sendPrivateMessage(name, "You have " + ep.getLagouts() + " lagouts remaining.");
                 handleSpawn(ep, true);
@@ -701,10 +701,9 @@ public class ElimGame {
                 freq += 2;
             } else {
                 ep = new ElimPlayer(ba, this, p.getPlayerName(), ship.getNum(), goal);
-                freq += 2;
+                ba.setShip(p.getPlayerName(), ship.getNum());
                 ba.setFreq(p.getPlayerName(), freq);
                 ep.setFreq(freq);
-                ba.setShip(p.getPlayerName(), ship.getNum());
                 freq += 2;
                 players.put(low(p.getPlayerName()), ep);
             }
