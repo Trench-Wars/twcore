@@ -698,10 +698,11 @@ public class ElimGame {
             } else if (ep != null) {
                 if (p.getShipType() != ship.getNum() && p.getShipType() != 0)
                     ba.setShip(p.getPlayerName(), ship.getNum());
-                if (p.getFrequency() % 2 == 1 && !ship.inBase())
+                if (p.getFrequency() % 2 == ship.getFreq()) {
                     ba.setFreq(p.getPlayerName(), freq);
-                ep.setFreq((int)p.getFrequency());
-                freq += 2;
+                    ep.setFreq((int)p.getFrequency());
+                    freq += 2;
+                }
             } else {
                 ep = new ElimPlayer(ba, this, p.getPlayerName(), ship.getNum(), goal);
                 ba.setShip(p.getPlayerName(), ship.getNum());
