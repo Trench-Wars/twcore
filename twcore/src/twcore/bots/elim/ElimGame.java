@@ -407,6 +407,9 @@ public class ElimGame {
                 starter = null;
                 if (playerCount > 9)
                     ba.sendArenaMessage("The winner of this game gets pubbux!");
+                for (ElimPlayer ep : players.values()) {
+                    ba.sendPrivateMessage("WingZero", "[FREQ] " + ep.name + "  " + ep.getFreq());
+                }
             }
         };
         ba.scheduleTask(starter, 10 * Tools.TimeInMillis.SECOND);
@@ -422,7 +425,7 @@ public class ElimGame {
                 ba.sendPrivateMessage(name, msg);
             else if (ep != null) {
                 ba.setShip(name, ship.getNum());
-                if (ep.getFreq() % 2 == ship.getFreq())
+                if (ep.getFreq() > 1 && ep.getFreq() % 2 == ship.getFreq())
                     ba.setFreq(name, ep.getFreq());
                 else {
                     ba.sendSmartPrivateMessage("WingZero", "[ELIM] on !lagout " + name + " had invalid freq " + ep.getFreq());
