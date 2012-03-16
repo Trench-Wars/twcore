@@ -181,15 +181,19 @@ public class bwjsbot extends SubspaceBot {
      * - Set antispam measurements
      */
     public void handleEvent(LoggedOn event) {
+        GotoArena(cfg.getArena());
+    }
+    
+    private void GotoArena(String arena) {
         short resolution;   //Screen resolution of the bot
         
         resolution = 3392;  //Set the maximum allowed resolution
         
         /* Join Arena */
         try {
-            m_botAction.joinArena(cfg.getArena(), resolution, resolution);
+            m_botAction.joinArena(arena, resolution, resolution);
         } catch (Exception e) {
-            m_botAction.joinArena(cfg.getArena());
+            m_botAction.joinArena(arena);
         }
         
         m_botAction.setMessageLimit(10);    //Set antispam measurements
@@ -491,8 +495,22 @@ public class bwjsbot extends SubspaceBot {
         
         /* Staff commands SMOD+ */
         if (m_botAction.getOperatorList().isSmod(name)) {
-            if (cmd.equals("!allowzoner"))
+            if (cmd.equals("!allowzoner")) {
                 cmd_allowZoner(name);
+            } else if (cmd.startsWith(("!go "))){
+                cmd_go(name, cmd);
+            }
+        }
+    }
+    
+    private void cmd_go(String name, String cmd) {
+        if (state.getCurrentState() == BWJSState.OFF
+                || state.getCurrentState() == BWJSState.WAITING_FOR_CAPS) {
+            String[] parts = cmd.split(" ");
+            if (!parts[1].isEmpty()) {
+                m_botAction.sendPrivateMessage(name, "Sending bot to " + parts[1]);
+                GotoArena(parts[1]);
+            }
         }
     }
     
