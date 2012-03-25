@@ -18,6 +18,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerPosition;
+import twcore.core.events.TurretEvent;
 import twcore.core.game.Flag;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
@@ -94,6 +95,7 @@ public class ctf extends MultiModule {
         req.request(this, EventRequester.PLAYER_LEFT);
         req.request(this, EventRequester.PLAYER_DEATH);
         req.request(this, EventRequester.PLAYER_POSITION);
+        req.request(this, EventRequester.TURRET_EVENT);
         req.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
         req.request(this, EventRequester.FREQUENCY_CHANGE);
         req.request(this, EventRequester.FLAG_CLAIMED);
@@ -126,6 +128,14 @@ public class ctf extends MultiModule {
     }
     
     public void handleEvent(FlagDropped event) {
+    }
+    
+    public void handleEvent(TurretEvent event) {
+        String name = ba.getPlayerName(event.getAttacherID());
+        if (name == null) return;
+        FlagPlayer p = getPlayer(name);
+        if (p != null)
+            p.flagReset();
     }
     
     public void handleEvent(FrequencyChange event) {
