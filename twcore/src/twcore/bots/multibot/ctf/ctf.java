@@ -134,7 +134,7 @@ public class ctf extends MultiModule {
         String name = ba.getPlayerName(event.getAttacherID());
         if (name == null) return;
         FlagPlayer p = getPlayer(name);
-        if (p != null)
+        if (p != null && p.flag != null)
             p.flagReset();
     }
     
