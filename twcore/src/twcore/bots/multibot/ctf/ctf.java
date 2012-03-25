@@ -368,7 +368,7 @@ public class ctf extends MultiModule {
         public void flagReset() {
             if (flag != null) {
                 team[flag.id].resetFlag();
-                if (flag.flag != null)
+                if (flag != null && flag.flag != null)
                     flag.flag.dropped();
                 flag = null;
             }
