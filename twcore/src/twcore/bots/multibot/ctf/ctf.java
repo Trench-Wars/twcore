@@ -56,8 +56,8 @@ public class ctf extends MultiModule {
     public void init() {
         ba = m_botAction;
         movingFlag = false;
-        DEBUG = true;
-        debugger = "WingZero";
+        DEBUG = false;
+        debugger = "";
         toWin = 5;
         ba.setLowPriorityPacketCap(8);
         
