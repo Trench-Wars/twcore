@@ -324,6 +324,7 @@ public class ctf extends MultiModule {
             } catch (NumberFormatException e) { }
         }
         cmd_reset(name);
+        ba.prizeAll(7);
         ba.sendArenaMessage("Game to " + toWin + " goals.");
         ba.sendArenaMessage("GO GO GO!!!", 104);
         starter = name;
