@@ -357,26 +357,40 @@ public class ctf extends MultiModule {
     private void displayStats() {
         ArrayList<String> statArray = new ArrayList<String>();
         statArray.add("Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score);
-
+        int[] totals = getTotals(team[0].freq);
         statArray.add(",-------------------------------+------+------+---------+--------+----.");
         statArray.add("|                             S |    K |    D | Returns | Steals |  G |");
         statArray.add("|                          ,----+------+------+---------+--------+----+");
-        statArray.add("| Freq " + team[0].freq + "                  /     |" + padNumber(0, 5) + " |" + padNumber(0, 5) + " |" + padNumber(0, 8) + " |"+ padNumber(0, 7) + " |" + padNumber(team[0].score, 3) + " |");
+        statArray.add("| Freq " + team[0].freq + "                  /     |" + padNumber(totals[0], 5) + " |" + padNumber(totals[1], 5) + " |" + padNumber(totals[2], 8) + " |"+ padNumber(totals[3], 7) + " |" + padNumber(team[0].score, 3) + " |");
         statArray.add("+------------------------'      |      |      |         |        |    |");
         for (FlagPlayer p : players.values()) {
             if (p.freq == team[0].freq)
-                statArray.add("|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 7) + " |");
+                statArray.add("|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 3) + " |");
         }
+        totals = getTotals(team[1].freq);
         statArray.add("+-------------------------------+------+------+---------+--------+----+");
         statArray.add("|                          ,----+------+------+---------+--------+----+");
-        statArray.add("| Freq " + team[1].freq + "                  /     |" + padNumber(0, 5) + " |" + padNumber(0, 5) + " |" + padNumber(0, 8) + " |"+ padNumber(0, 7) + " |" + padNumber(team[1].score, 3) + " |");
+        statArray.add("| Freq " + team[1].freq + "                  /     |" + padNumber(totals[0], 5) + " |" + padNumber(totals[1], 5) + " |" + padNumber(totals[2], 8) + " |"+ padNumber(totals[3], 7) + " |" + padNumber(team[1].score, 3) + " |");
         statArray.add("+------------------------'      |      |      |         |        |    |");
         for (FlagPlayer p : players.values()) {
             if (p.freq == team[1].freq)
-                statArray.add("|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 7) + " |");
+                statArray.add("|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 3) + " |");
         }
         statArray.add("`-------------------------------+------+------+---------+--------+----'");
         ba.arenaMessageSpam(statArray.toArray(new String[statArray.size()]));
+    }
+    
+    private int[] getTotals(int freq) {
+        int[] stats = new int[] { 0, 0, 0, 0 };
+        for (FlagPlayer p : players.values()) {
+            if (p.freq == freq) {
+                stats[0] += p.kills;
+                stats[1] += p.deaths;
+                stats[2] += p.returns;
+                stats[3] += p.steals;
+            }
+        }
+        return stats;
     }
     
     /**
