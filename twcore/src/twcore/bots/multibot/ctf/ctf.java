@@ -182,10 +182,13 @@ public class ctf extends MultiModule {
                 Team t = team[p.getFreq()];
                 if (t.hasFlag() && t.hasClaimed(event)) {
                     movingFlag = true;
+                    /*
                     if (p.getFreq() == 0)
                         ba.warpTo(name, WARPS[0], WARPS[1]);
                     else
                         ba.warpTo(name, WARPS[2], WARPS[3]);
+                        */
+                    ba.specificPrize(name, 7);
                     p.captures++;
                     t.score++;
                     ba.sendArenaMessage("Freq " + p.flag.id + "'s flag has been CAPTURED by " + p.name, 104);
@@ -332,8 +335,7 @@ public class ctf extends MultiModule {
     
     private void cmd_reset(String name) {
         ba.sendPrivateMessage(name, "Flag game being reset...");
-        team[0].score = 0;
-        team[1].score = 0;
+        team = new Team[] { new Team(0, flag[0], GOALS[0], GOALS[1]), new Team(1, flag[1], GOALS[2], GOALS[3]) };
         ba.scoreResetAll();
         ba.shipResetAll();
         players.clear();
