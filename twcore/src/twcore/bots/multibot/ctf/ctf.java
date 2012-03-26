@@ -1,5 +1,6 @@
 package twcore.bots.multibot.ctf;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
@@ -37,12 +38,17 @@ public class ctf extends MultiModule {
     Random rand = new Random();
 
     BotAction ba;
+    
     boolean movingFlag;
     boolean DEBUG;
     String debugger;
+    String starter;
+    
     SpecTask spec;
     FlagTask[] flag;
     Team[] team;
+    
+    int toWin;
     
     HashMap<String, FlagPlayer> players;
 
@@ -52,6 +58,7 @@ public class ctf extends MultiModule {
         movingFlag = false;
         DEBUG = true;
         debugger = "WingZero";
+        toWin = 5;
         ba.setLowPriorityPacketCap(8);
         
         players = new HashMap<String, FlagPlayer>();
@@ -184,6 +191,12 @@ public class ctf extends MultiModule {
                     ba.sendArenaMessage("Freq " + p.flag.id + "'s flag has been CAPTURED by " + p.name, 104);
                     ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
                     team[p.flag.id].resetFlag();
+                    if (team[p.flag.id].score == toWin) {
+                        displayStats();
+                        ba.sendArenaMessage("GAME OVER! Freq " + p.flag.id + " wins!", 5);
+                        if (starter != null)
+                            cmd_reset(starter);
+                    }
                 }
             }
         }
@@ -229,6 +242,8 @@ public class ctf extends MultiModule {
                 cmd_score(name);
             
             if (opList.isER(name)) {
+                if (msg.startsWith("!start"))
+                    cmd_start(name, msg);
                 if (msg.startsWith("!reset"))
                     cmd_reset(name);
                 if (msg.equals("!has"))
@@ -300,6 +315,20 @@ public class ctf extends MultiModule {
             ba.sendPublicMessage("Freq 1 is missing their flag.");
     }
     
+    private void cmd_start(String name, String cmd) {
+        if (cmd.contains(" ") && cmd.length() > 7) {
+            try {
+                int g = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+                if (g > 0 && g < 11)
+                    toWin = g;
+            } catch (NumberFormatException e) { }
+        }
+        cmd_reset(name);
+        ba.sendArenaMessage("Game to " + toWin + " goals.");
+        ba.sendArenaMessage("GO GO GO!!!", 104);
+        starter = name;
+    }
+    
     private void cmd_reset(String name) {
         ba.sendPrivateMessage(name, "Flag game being reset...");
         team[0].score = 0;
@@ -323,6 +352,50 @@ public class ctf extends MultiModule {
     private void resetFlags() {
         team[0].resetFlag();
         team[1].resetFlag();
+    }
+    
+    private void displayStats() {
+        ArrayList<String> statArray = new ArrayList<String>();
+        statArray.add("Result of Freq " + team[0].freq + " vs. Freq " + team[1].freq + ": " + team[0].score + " - " + team[1].score);
+
+        statArray.add(",-------------------------------+------+------+---------+--------+----.");
+        statArray.add("|                             S |    K |    D | Returns | Steals |  G |");
+        statArray.add("|                          ,----+------+------+---------+--------+----+");
+        statArray.add("| Freq " + team[0].freq + "                  /     |" + padNumber(0, 5) + " |" + padNumber(0, 5) + " |" + padNumber(0, 8) + " |"+ padNumber(0, 7) + " |" + padNumber(team[0].score, 3) + " |");
+        for (FlagPlayer p : players.values()) {
+            if (p.freq == team[0].freq)
+                statArray.add("| " + padString(p.name, 25) + " " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 7) + " |");
+        }
+        statArray.add("+-------------------------------+------+------+---------+--------+----+");
+        statArray.add("|                          ,----+------+------+---------+--------+----+");
+        statArray.add("| Freq " + team[1].freq + "                  /     |" + padNumber(0, 5) + " |" + padNumber(0, 5) + " |" + padNumber(0, 8) + " |"+ padNumber(0, 7) + " |" + padNumber(team[1].score, 3) + " |");
+        for (FlagPlayer p : players.values()) {
+            if (p.freq == team[1].freq)
+                statArray.add("| " + padString(p.name, 25) + " " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 7) + " |");
+        }
+        statArray.add("`-------------------------------+------+------+---------+--------+----'");
+        ba.arenaMessageSpam(statArray.toArray(new String[statArray.size()]));
+    }
+    
+    /**
+     * Helper method adds spaces in front of a number to fit a certain length
+     * @param n
+     * @param length
+     * @return String of length with spaces preceeding a number
+     */
+    private String padNumber(int n, int length) {
+        String str = "";
+        String x = "" + n;
+        for (int i = 0; i + x.length() < length; i++)
+            str += " ";
+        return str + x;
+    }
+    
+    /** Helper method adds spaces to a string to meet a certain length **/
+    private String padString(String str, int length) {
+        for (int i = str.length(); i < length; i++)
+            str += " ";
+        return str.substring(0, length);
     }
     
     class FlagPlayer {
@@ -506,6 +579,7 @@ public class ctf extends MultiModule {
                 //debug(s);
                 if (!isBot(carrier) && !isBot(lost)) {
                     ba.sendArenaMessage("Freq " + id + "'s flag has been RESCUED from " + lost + " by " + carrier);
+                    getPlayer(carrier).returns++;
                     team[id].resetFlag();
                 }
             }
@@ -594,6 +668,7 @@ public class ctf extends MultiModule {
     public String[] getModHelpMessage() {
         return new String[] {
                 "Halo CTF Commands: ",
+                " !start <#>       - Start a new game to # goals, or default is 5",
                 " !score           - Display current score",
                 " !stats <name>    - Displays your current stats or stats of <name>",
                 " !reset           - Completely resets the flag game",
