@@ -190,13 +190,13 @@ public class ctf extends MultiModule {
                     t.score++;
                     ba.sendArenaMessage("Freq " + p.flag.id + "'s flag has been CAPTURED by " + p.name, 104);
                     ba.sendArenaMessage("Score: " + team[0].score + " - " + team[1].score);
-                    team[p.flag.id].resetFlag();
                     if (team[p.flag.id].score == toWin) {
                         displayStats();
                         ba.sendArenaMessage("GAME OVER! Freq " + p.flag.id + " wins!", 5);
                         if (starter != null)
                             cmd_reset(starter);
                     }
+                    team[p.flag.id].resetFlag();
                 }
             }
         }
