@@ -193,7 +193,7 @@ public class ctf extends MultiModule {
                     team[p.flag.id].resetFlag();
                     if (starter != null && t.score >= toWin) {
                         displayStats();
-                        ba.sendArenaMessage("GAME OVER! Freq " + p.flag.id + " wins!", 5);
+                        ba.sendArenaMessage("GAME OVER! Freq " + t.freq + " wins!", 5);
                         if (starter != null)
                             cmd_reset(starter);
                     }
@@ -362,16 +362,18 @@ public class ctf extends MultiModule {
         statArray.add("|                             S |    K |    D | Returns | Steals |  G |");
         statArray.add("|                          ,----+------+------+---------+--------+----+");
         statArray.add("| Freq " + team[0].freq + "                  /     |" + padNumber(0, 5) + " |" + padNumber(0, 5) + " |" + padNumber(0, 8) + " |"+ padNumber(0, 7) + " |" + padNumber(team[0].score, 3) + " |");
+        statArray.add("+------------------------'      |      |      |         |        |    |");
         for (FlagPlayer p : players.values()) {
             if (p.freq == team[0].freq)
-                statArray.add("| " + padString(p.name, 25) + " " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 7) + " |");
+                statArray.add("|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 7) + " |");
         }
         statArray.add("+-------------------------------+------+------+---------+--------+----+");
         statArray.add("|                          ,----+------+------+---------+--------+----+");
         statArray.add("| Freq " + team[1].freq + "                  /     |" + padNumber(0, 5) + " |" + padNumber(0, 5) + " |" + padNumber(0, 8) + " |"+ padNumber(0, 7) + " |" + padNumber(team[1].score, 3) + " |");
+        statArray.add("+------------------------'      |      |      |         |        |    |");
         for (FlagPlayer p : players.values()) {
             if (p.freq == team[1].freq)
-                statArray.add("| " + padString(p.name, 25) + " " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 7) + " |");
+                statArray.add("|  " + padString(p.name, 25) + "  " + p.ship + " |" + padNumber(p.kills, 5) + " |" + padNumber(p.deaths, 5) + " |" + padNumber(p.returns, 8) + " |" + padNumber(p.steals, 7) + " |" + padNumber(p.captures, 7) + " |");
         }
         statArray.add("`-------------------------------+------+------+---------+--------+----'");
         ba.arenaMessageSpam(statArray.toArray(new String[statArray.size()]));
