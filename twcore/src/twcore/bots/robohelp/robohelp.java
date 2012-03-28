@@ -45,6 +45,7 @@ public class robohelp extends SubspaceBot {
     public static final int LINE_SIZE = 100;
     public static final int CALL_EXPIRATION_TIME = 3 * Tools.TimeInMillis.MINUTE; // Time after which a call can't
                                                                                   // can't be claimed (onit/gotit)
+    public static final int NEWB_EXPIRATION_TIME = 7 * Tools.TimeInMillis.MINUTE; // Time after which a call can't
     public static final String ZONE_CHANNEL = "Zone Channel";
 
     boolean m_banPending = false;
@@ -733,11 +734,11 @@ public class robohelp extends SubspaceBot {
         Iterator<NewPlayer> i = newbs.iterator();
         while (i.hasNext()) {
             NewPlayer np = i.next();
-            if (!record && now.getTime() < np.getTime() + CALL_EXPIRATION_TIME) {
+            if (!record && now.getTime() < np.getTime() + NEWB_EXPIRATION_TIME) {
                 record = true;
                 player = np.getName();
                 i.remove();
-            } else if (now.getTime() >= np.getTime() + CALL_EXPIRATION_TIME) {
+            } else if (now.getTime() >= np.getTime() + NEWB_EXPIRATION_TIME) {
                 i.remove();
             }
         }
