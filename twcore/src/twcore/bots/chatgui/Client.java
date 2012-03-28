@@ -98,9 +98,9 @@ public class Client extends SubspaceBot {
 		JMenuItem item2 = new JMenuItem("Session Terminate");
 		item2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-	            Session.m_group.interrupt();
+	            /* Session.m_group.interrupt();
 	            Session.m_socket.disconnect();
-	            Session.m_socket.close();
+	            Session.m_socket.close(); */
 				frame.dispose();
 			}});
 			view.add(item1);
