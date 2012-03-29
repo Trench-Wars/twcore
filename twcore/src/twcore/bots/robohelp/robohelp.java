@@ -2085,7 +2085,7 @@ public class robohelp extends SubspaceBot {
                     np.claimer = rs.getString("staff");
                     np.taken = NewPlayer.TAKEN;
                 }
-                temp.add(np);
+                temp.add(0, np);
             }
             for (int i = 0; i < temp.size(); i++) {
                 NewPlayer np = temp.get(i);
