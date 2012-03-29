@@ -7,9 +7,11 @@ List of bots that can be spawned:
  
 ------- NickName / typebot ---------
  
-DuelBot - [duelbot]
+TW-Duel1 - [duelbot]
+TW-Duel2 - [duelbot2]
 MatchBot* - [matchbot]
 TWDBot - [twdbot]
+TWDHub - [twdhub]
 Tournybot - [tournybot]
 TWDBot - [twdbot]
 TWLBot* - [twl]
