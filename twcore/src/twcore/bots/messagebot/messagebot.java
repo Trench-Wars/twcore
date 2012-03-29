@@ -193,6 +193,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!ignored",	 acceptedMessages, this, "whoIsIgnored");
         m_CI.registerCommand( "!lmessage",	 acceptedMessages, this, "leaveMessage");
         m_CI.registerCommand( "!regall",	 acceptedMessages, this, "registerAll");
+        m_CI.registerCommand( "!memberof",   acceptedMessages, this, "memberOfChannels");
 
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing");
 
@@ -700,6 +701,42 @@ public class messagebot extends SubspaceBot
     	} catch(Exception e) { Tools.printStackTrace(e); }
     }
 
+    /** Tells the player all the channels the specified player is on.
+     *  @param Name of player
+     *  @param contains the nick of the player to search for.
+     */
+
+    public void memberOfChannels(String name, String message)
+    {
+        //ignore the command request as incorrect level of access
+        if (!m_botAction.getOperatorList().isBot(name)) return;
+        
+        if (message.trim() == "") {
+            m_botAction.sendSmartPrivateMessage(name, "Incorrect command format. You must specify an exact player name after !memberof.");
+            return;
+        }
+        message = message.trim().toLowerCase();
+        String query = "SELECT fcChannel FROM tblChannelUser WHERE fcName = '"+Tools.addSlashesToString(message)+"'";
+        try {
+            ResultSet results = m_botAction.SQLQuery(database, query);
+            while(results.next())
+            {
+                String channel = results.getString("fcChannel");
+                channel = channel.toLowerCase();
+                Channel c = channels.get(channel);
+                if( c == null)
+                    return;
+                if(c.isOwner(name.toLowerCase()))
+                    channel += ": Owner.";
+                else if(c.isOp(name.toLowerCase()))
+                    channel += ": Operator.";
+                else
+                    channel += ": Member.";
+                m_botAction.sendSmartPrivateMessage(name, channel);
+            }
+            m_botAction.SQLClose(results);
+        } catch(Exception e) { Tools.printStackTrace(e); }
+    }
 
     /** Sends help messages
      *  @param Name of player.
@@ -725,6 +762,7 @@ public class messagebot extends SubspaceBot
 	        m_botAction.sendSmartPrivateMessage(name, "    !lmessage <name>:<message>    - Leaves <message> for <name>.");
 	    } else if(message.toLowerCase().startsWith("c")) {
 	        m_botAction.sendSmartPrivateMessage(name, "    !me                           - Tells you what channels you have joined.");
+	        if(m_botAction.getOperatorList().isBot(name)) m_botAction.sendSmartPrivateMessage(name, "    !memberof <name>              - Lists all the channels on which <name> is a member.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !join <channel>               - Puts in request to join <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !quit <channel>               - Removes you from <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !owner <channel>              - Tells you who owns <channel>.");
@@ -745,7 +783,7 @@ public class messagebot extends SubspaceBot
 	        m_botAction.sendSmartPrivateMessage(name, "    !decline <channel>:<name>     - Declines <name>'s request to join <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !add <channel>:<name>         - Add <name> to <channel>.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !remove <channel>:<name>      - Remove <name> from <channel>.");
-		    if(m_botAction.getOperatorList().isBot(name))   m_botAction.sendSmartPrivateMessage(name, "    !create <channel>             - Creates a channel with the name <channel>.");
+		    if(m_botAction.getOperatorList().isBot(name)) m_botAction.sendSmartPrivateMessage(name, "    !create <channel>             - Creates a channel with the name <channel>.");
 	    } else if((m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) && message.toLowerCase().startsWith("smod")) {
 	    	m_botAction.sendSmartPrivateMessage(name, "Smod+ commands:");
 	        m_botAction.sendSmartPrivateMessage(name, "    !go <arena>                   - Sends messagebot to <arena>.");
