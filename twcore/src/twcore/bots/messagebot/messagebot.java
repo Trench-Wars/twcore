@@ -711,7 +711,7 @@ public class messagebot extends SubspaceBot
         //ignore the command request as incorrect level of access
         if (!m_botAction.getOperatorList().isBot(name)) return;
         
-        if (message.trim() == "") {
+        if (message.trim().isEmpty()) {
             m_botAction.sendSmartPrivateMessage(name, "Incorrect command format. You must specify an exact player name after !memberof.");
             return;
         }
@@ -719,6 +719,9 @@ public class messagebot extends SubspaceBot
         String query = "SELECT fcChannel FROM tblChannelUser WHERE fcName = '"+Tools.addSlashesToString(message)+"'";
         try {
             ResultSet results = m_botAction.SQLQuery(database, query);
+            if (!results.isBeforeFirst()) {
+                m_botAction.sendSmartPrivateMessage(name, "Player " + message + " is not a member of any channels.");
+            }
             while(results.next())
             {
                 String channel = results.getString("fcChannel");
