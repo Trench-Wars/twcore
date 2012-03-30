@@ -148,18 +148,19 @@ public final class radiobot extends SubspaceBot {
 		if (message.startsWith("!help")) {
 			m_botAction.sendPrivateMessage(id, m_someoneHosting ? "The current host is " + m_currentHost : NO_HOST);
             m_botAction.privateMessageSpam(id, pubHelp);
-			if (hosts.containsKey(name.toLowerCase()) || operators.containsKey(name.toLowerCase()) || m_opList.isSmod(name)) { 
+			if (hosts.containsKey(name.toLowerCase()) || operators.containsKey(name.toLowerCase())) { 
             	m_botAction.privateMessageSpam(id, staffHelp);
 
             	if (m_someoneHosting && m_currentHost.equals(name))
             	    m_botAction.privateMessageSpam(id, currentRadioHostHelp);
-
-            	if (operators.containsKey(name.toLowerCase()) || m_opList.isSmod(name))
-            	    m_botAction.privateMessageSpam(id, operatorHelp);
-            	
-            	if (m_opList.isSmod(name))
-            	    m_botAction.privateMessageSpam(id, smodHelp);
 			}
+			
+            if (operators.containsKey(name.toLowerCase()) || m_opList.isSmod(name))
+                m_botAction.privateMessageSpam(id, operatorHelp);
+            	
+            if (m_opList.isSmod(name))
+                m_botAction.privateMessageSpam(id, smodHelp);
+
 			if(isER)
 				m_botAction.privateMessageSpam(id, erHelp);
 			
