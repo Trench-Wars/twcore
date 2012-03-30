@@ -95,10 +95,10 @@ public final class radiobot extends SubspaceBot {
     }
 
     public void handleEvent(LoggedOn event) {
-        BotSettings config = m_botAction.getBotSettings();
-        String chat = config.getString( "chat" );
+        m_botSettings = m_botAction.getBotSettings();
+        String chat = m_botSettings.getString( "chat" );
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + chat );
-        m_botAction.joinArena("radio");
+        m_botAction.joinArena(m_botSettings.getString("initialarena"));
         m_botAction.setMessageLimit(10);
         load_authorize();
     }
@@ -128,7 +128,7 @@ public final class radiobot extends SubspaceBot {
             return;
             
         String message = event.getMessage();
-        load_authorize();
+        //load_authorize();
 		//boolean isHost = hosts.containsKey(name);
 		//boolean isOp = operators.containsKey(name);
 		//boolean isCurrentHost = m_someoneHosting && hosts.containsKey(name.toLowerCase()) && m_currentHost.equals(name);
@@ -370,7 +370,7 @@ public final class radiobot extends SubspaceBot {
 		        }
 		        
             } else if (message.startsWith("!grantzone")) {
-                commandGrantZone(name, id, false);
+                commandGrantZone(name, id, m_opList.isSmod(name));
 		        
 		    } else if (message.startsWith("!setwelcome ")) {
 		        m_welcome = message.substring(12);
@@ -425,10 +425,7 @@ public final class radiobot extends SubspaceBot {
             } else if (message.equals("!die")) {
                 m_botAction.sendChatMessage(name + " Just killed me!");
                 m_botAction.die();
-                
-            } else if (message.startsWith("!grantzone")) {
-                commandGrantZone(name, id, true);
-                
+                               
             } else if (message.startsWith("!dbcon")) {
                 if (!m_botAction.SQLisOperational()) {
                     m_botAction.sendChatMessage( "WARNING: The Radio Database is offline, I can't connect!" );
@@ -663,7 +660,7 @@ public final class radiobot extends SubspaceBot {
     */
     private void load_authorize() {
         try {
-            BotSettings m_botSettings = m_botAction.getBotSettings();
+            m_botSettings = m_botAction.getBotSettings();
             hosts.clear();
             operators.clear();
 
@@ -728,15 +725,13 @@ public final class radiobot extends SubspaceBot {
      */
     private void commandAddHost(String name, String newHost, boolean asOp) {
             
-        BotSettings m_botSettings = m_botAction.getBotSettings();
-
         String hostType = "Hosts";
         if (asOp)
             hostType = "Operators";
             
         String host = m_botSettings.getString(hostType);
 
-        if (host.contains(newHost)) {
+        if ((asOp && operators.containsKey(newHost.toLowerCase())) || (!asOp && hosts.containsKey(newHost.toLowerCase()))) {
             m_botAction.sendSmartPrivateMessage(name, newHost + " is already listed as one of the " + hostType + ".");
             return;
         }
@@ -761,9 +756,6 @@ public final class radiobot extends SubspaceBot {
      */
     private void commandRemoveHost(String name, String host, boolean asOp) {
         
-        load_authorize();
-        BotSettings m_botSettings = m_botAction.getBotSettings();
-        
         String hostType = "Hosts";
         String hostTypeDisp = "Host";
         if (asOp) {
@@ -771,30 +763,32 @@ public final class radiobot extends SubspaceBot {
             hostTypeDisp = "Operator";
         }
         
-        String ops = m_botSettings.getString(hostType);
-    
-        int spot = ops.indexOf(host);
-        if (spot == 0 && ops.length() == host.length()) {
-            ops = "";
-            m_botAction.sendSmartPrivateMessage(name, "Delete " + hostTypeDisp + ": " + host + " successful");
-            
-        } else if (spot == 0 && ops.length() > host.length()) {
-            ops = ops.substring(host.length() + 1);
-            m_botAction.sendSmartPrivateMessage(name, "Delete " + hostTypeDisp + ": " + host + " successful");
-            
-        } else if (spot > 0 && spot + host.length() < ops.length()) {
-            ops = ops.substring(0, spot) + ops.substring(spot + host.length() + 1);
-            m_botAction.sendSmartPrivateMessage(name, "Delete " + hostTypeDisp + ": " + host + " successful");
-            
-        } else if (spot > 0 && spot == ops.length() - host.length()) {
-            ops = ops.substring(0, spot - 1);
-            m_botAction.sendSmartPrivateMessage(name, "Delete " + hostTypeDisp + ": " + host + " successful");
-        } else {
-            m_botAction.sendSmartPrivateMessage(name, host + " was not found in the " + hostType + " list. Delete unsuccessful");
+        HashMap <String,String> hostTypeMap;
+        if (asOp)
+            hostTypeMap = operators;
+        else
+            hostTypeMap = hosts;
+        
+        if (!hostTypeMap.containsKey(host.toLowerCase())) {
+            m_botAction.sendPrivateMessage(name, host + " is not on the list of " + hostType + ".");
+            return;
         }
-            
-        m_botSettings.put(hostType, ops);
-        m_botSettings.save();
+        
+        hostTypeMap.remove(host.toLowerCase());
+
+        String newList = "";
+        Iterator<String> it1 = hostTypeMap.values().iterator();
+        while( it1.hasNext() ) {
+            if( it1.hasNext() )
+                newList += (String)it1.next() + ",";
+            else
+                newList += (String)it1.next();
+        }
+
+        m_botSettings.put(hostType, newList);
+        m_botSettings.save();        
+        m_botAction.sendSmartPrivateMessage(name, "Delete " + hostTypeDisp + ": " + host + " successful");
+
         load_authorize();
     }
     
@@ -805,7 +799,7 @@ public final class radiobot extends SubspaceBot {
      */
     public void showHosts (String name){
             
-        load_authorize();
+        //load_authorize();
         String hops = "Radio Operators: ";
         Iterator<String> it1 = operators.values().iterator();
         while( it1.hasNext() ) {
@@ -890,13 +884,17 @@ public final class radiobot extends SubspaceBot {
 
         long now = System.currentTimeMillis();
         if (m_alreadyZoned.contains(m_currentHost)) {
-            if (now < m_timeOfLastZone + THIRTY_MINUTES || isSmod) {
+            if (now < m_timeOfLastZone + THIRTY_MINUTES && !isSmod) {
                 m_botAction.sendPrivateMessage(id, "Sorry, you may only grantzone 30 minutes from the last zone which was "
                         + ((now - m_timeOfLastZone) / 1000 / 60) + " minutes ago.");
             } else {
                 m_alreadyZoned.remove(m_currentHost);
                 m_botAction.sendPrivateMessage(id, "Zoner granted to " + m_currentHost);
                 m_botAction.sendPrivateMessage(m_currentHost, name + " has granted you another zone message.");
+                if (isSmod) {
+                    m_timeOfLastZone = 0;
+                    m_botAction.sendPrivateMessage(m_currentHost, "As it was a smod+ that granted you the zoner, you may use it as soon as you wish.");
+                }
             }
         } else {
             m_botAction.sendPrivateMessage(id, "No current host or host is already granted a zone.");
@@ -1106,7 +1104,8 @@ public final class radiobot extends SubspaceBot {
 
     private final static String[] erHelp = {
         "+-------------------------ER Commands---------------------------------------------+",
-        "|!grantzone            - Grants the radio host another zoner.                     |",        
+        "|!grantzone            - Grants the radio host another zoner.                     |",
+        "|                        If granted by smod+, it can be used immediately.         |",
         "|!unhost               - Removes the current host.                                |",
         "|!seturl <url>         - Sets the URL that appears in the announcements.          |",
         "|!setwelcome           - Use this if the host has put an inappropiate welcome msg |",
@@ -1117,7 +1116,6 @@ public final class radiobot extends SubspaceBot {
     	"+-------------------------Smod Commands-------------------------------------------+",
     	"|!go <arena>           - Moves bot to <arena>.                                    |",
     	"|!die                  - Disconnects bot.                                         |",
-        "|!grantzone            - Force Grants the radio host another zoner. Ignores timer.|",
     	"|!dbcon                - Checks for a database connection                         |",  
     };
 
