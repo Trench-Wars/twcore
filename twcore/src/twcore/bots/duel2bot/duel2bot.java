@@ -711,7 +711,7 @@ public class duel2bot extends SubspaceBot{
         DuelPlayer p = null;
         String player = null;
         String[] args = splitArgs(cmd);
-        if (oplist.isSmod(name) && args != null && args.length == 1)
+        if (args != null && args.length == 1)
             player = args[0];
         else
             return;
