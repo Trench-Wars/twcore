@@ -2750,6 +2750,8 @@ public class bwjsbot extends SubspaceBot {
             //Max Ships
             maxShips = new int[9];
             maxShipsString = botSettings.getString("MaxShips" + gameType).split(",");
+            if (m_botAction.getArenaName().equalsIgnoreCase("base2"))
+                maxShipsString[5] = "2";
             tmpAnnounceShipCounter = 0; //Counter for Announce Ship Type
             for (int i = Tools.Ship.WARBIRD; i <= maxShipsString.length; i++) {
                 maxShips[i] = Integer.parseInt(maxShipsString[i - 1]);
@@ -4328,10 +4330,13 @@ public class bwjsbot extends SubspaceBot {
             int shipCount;
             
             shipCount = 0;
-            
+            boolean wzls = m_botAction.getArenaName().equalsIgnoreCase("base2") && (shiptype == 6 || shiptype == 8);
             for (BWJSPlayer i : players.values()) {
-                if (i.p_state < BWJSPlayer.SUBBED && i.p_currentShip == shiptype) {
-                    shipCount++;
+                if (i.p_state < BWJSPlayer.SUBBED) {
+                    if (wzls && i.p_currentShip == 8 || i.p_currentShip == 6)
+                            shipCount++;
+                    else if (i.p_currentShip == shiptype)
+                        shipCount++;
                 }
             }
             
