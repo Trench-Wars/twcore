@@ -558,7 +558,7 @@ public class elim extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Error processing specified ship number! Please use !stats <#> or !stats <name>:<#>");
                 return;
             }
-        } else if (cmd.indexOf(":") < cmd.length()) {
+        } else if (cmd.contains(" ") && cmd.indexOf(":") < cmd.length()) {
             target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
