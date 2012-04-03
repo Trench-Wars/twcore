@@ -579,10 +579,13 @@ public class GamePacketInterpreter {
 			{
 				if(event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE)
 				{
+				    String name = event.getMessager();
+				    if (name == null)
+				        name = m_session.getBotAction().getPlayerName(event.getPlayerID());
 					PrintWriter out = m_session.getChatLog();
 					out.print(Tools.getTimeStamp() + " (");
 					out.print(m_session.getBotAction().getBotName() + ") : ");
-					out.print(m_session.getBotAction().getPlayerName(event.getPlayerID()));
+					out.print(name);
 					out.println(" > "+ event.getMessage());
 					out.flush();
 				}
