@@ -77,6 +77,9 @@ public class duel2bot extends SubspaceBot{
     private String                 debugger;
     private boolean                DEBUG;
     
+    CinSet                         ops;
+    CinSet                         heads;
+    
     HashMap<Integer, DuelGame>     games;       // non-league teams will be identified by negative numbers
     HashMap<String, Integer>       playing;     // list of players who are playing tied to their duel id
     HashMap<String, DuelBox>       boxes;       // list of DuelBoxes
@@ -104,6 +107,8 @@ public class duel2bot extends SubspaceBot{
         events.request(EventRequester.PLAYER_ENTERED);
         banned = new CinSet();
         zonerBanned = new CinSet();
+        ops = new CinSet();
+        heads = new CinSet();
         boxes = new HashMap<String, DuelBox>();
         games = new HashMap<Integer, DuelGame>();
         teams = new HashMap<Integer, DuelTeam>();
@@ -156,6 +161,7 @@ public class duel2bot extends SubspaceBot{
         ba.setReliableKills(1);
         gameID = 0;
         scrimID = 0;
+        getLeagueOps();
     }
 
     @Override
@@ -417,6 +423,8 @@ public class duel2bot extends SubspaceBot{
                 cmd_disable(name, msg);
             else if (cmd.equals("!enable"))
                 cmd_enable(name, msg);
+            else if (cmd.equals("!ops"))
+                cmd_ops(name);
             else if (cmd.startsWith("!ch+ ") || cmd.startsWith("!chr ") || cmd.startsWith("!challenge+ "))
                 cmd_challenge(name, splitArgs(msg), true);
             else if (cmd.startsWith("!ch ") || cmd.startsWith("!challenge "))
@@ -451,7 +459,7 @@ public class duel2bot extends SubspaceBot{
                 cmd_topTeams(name, msg);
         }
 
-        if (oplist.isModerator(name)
+        if (isOp(name)
                 && (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE)) {
             if (cmd.startsWith("!die"))
                 cmd_die(name);
@@ -498,6 +506,7 @@ public class duel2bot extends SubspaceBot{
         String[] help = {
                 "+-COMMANDS----------------------------------------------------------------------------------------.",
                 "| !about                      - Information about 2v2 TWEL                                        |",
+                "| !ops                        - Displays current league operators                                 |",
                 "| !signup                     - Registers you for 2v2 TWEL league duels                           |",
                 "| !ch <player>:<division>     - Challenges the freq with <player> to a CASUAL duel in <division#> |",
                 "| !ch+ <player>:<division>    - Challenges the freq with <player> to a RANKED duel in <division>  |",
@@ -554,6 +563,18 @@ public class duel2bot extends SubspaceBot{
         };
         ba.privateMessageSpam(name, about);
     }
+    
+    private void cmd_ops(String name) {
+        String str = "Head Operators: ";
+        for (String n : heads)
+            str += n + ", ";
+        ba.sendSmartPrivateMessage(name, str.substring(0, str.length() - 2));
+        str = "League Operators: ";
+        for (String n : ops)
+            str += n + ", ";
+        ba.sendSmartPrivateMessage(name, str.substring(0, str.length() - 2));
+    }
+    
     
     private void cmd_reload(String name) {
         sql_loadBans();
@@ -1294,6 +1315,15 @@ public class duel2bot extends SubspaceBot{
             return v.elementAt(generator.nextInt(v.size()));
         }
     }
+    
+    private void getLeagueOps() {
+        String[] args = settings.getString("HeadOps").split(",");
+        for (String n : args)
+            heads.add(n);
+        args = settings.getString("LeagueOps").split(",");
+        for (String n : args)
+            ops.add(n);
+    }
 
     private void handleInfo(String msg) {
         //Sorts information from *info
@@ -1379,6 +1409,10 @@ public class duel2bot extends SubspaceBot{
         String query = "SELECT P.fnUserID as id, P.fnEnabled as e, P.fcIP as ip, P.fnMID as mid FROM tblDuel2__player P WHERE P.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"
                                     + Tools.addSlashesToString(name) + "' LIMIT 1) LIMIT 1";
         ba.SQLBackgroundQuery(db, "info:" + staff + ":" + name, query);
+    }
+    
+    private boolean isOp(String name) {
+        return oplist.isSmod(name) || ops.contains(name) || heads.contains(name);
     }
 
     /** Splits the arguments of a given command separated by colons
