@@ -459,7 +459,7 @@ public class duel2bot extends SubspaceBot{
                 cmd_topTeams(name, msg);
         }
 
-        if (isOp(name)
+        if (name != null && isOp(name)
                 && (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE)) {
             if (cmd.startsWith("!die"))
                 cmd_die(name);
