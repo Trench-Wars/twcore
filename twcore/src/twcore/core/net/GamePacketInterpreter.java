@@ -577,7 +577,7 @@ public class GamePacketInterpreter {
 		{
 			synchronized(m_session.getChatLog())
 			{
-				if(event.getMessageType() == Message.PRIVATE_MESSAGE)
+				if(event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE)
 				{
 					PrintWriter out = m_session.getChatLog();
 					out.print(Tools.getTimeStamp() + " (");
