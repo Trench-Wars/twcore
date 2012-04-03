@@ -582,6 +582,8 @@ public class GamePacketInterpreter {
 				    String name = event.getMessager();
 				    if (name == null)
 				        name = m_session.getBotAction().getPlayerName(event.getPlayerID());
+				    if (event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE)
+				        name = "(" + name + ")>";
 					PrintWriter out = m_session.getChatLog();
 					out.print(Tools.getTimeStamp() + " (");
 					out.print(m_session.getBotAction().getBotName() + ") : ");
