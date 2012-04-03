@@ -559,11 +559,11 @@ public class elim extends SubspaceBot {
                 return;
             }
         } else if (cmd.contains(" ") && cmd.indexOf(":") < cmd.length()) {
-            target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
             try {
+                target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
-            } catch (NumberFormatException e) {
-                ba.sendPrivateMessage(name, "Error parsing ship number!");
+            } catch (Exception e) {
+                ba.sendPrivateMessage(name, "Error parsing command!");
                 return;
             }
             if (ship != -1 && (ship < 1 || ship > 8)) {
