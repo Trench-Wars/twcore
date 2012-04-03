@@ -97,6 +97,7 @@ public class bwjsbot extends SubspaceBot {
     public void handleEvent(ArenaJoined event) {
         m_botAction.setReliableKills(1);  //Reliable kills so the bot receives every packet
         m_botAction.sendUnfilteredPublicMessage("?chat=" + cfg.getChats());  //Join all the chats
+        initializeVariables();
         start();    //Autostart the bot
     }
     
