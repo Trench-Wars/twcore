@@ -4334,7 +4334,7 @@ public class bwjsbot extends SubspaceBot {
             boolean wzls = m_botAction.getArenaName().equalsIgnoreCase("base2") && (shiptype == 6 || shiptype == 8);
             for (BWJSPlayer i : players.values()) {
                 if (i.p_state < BWJSPlayer.SUBBED) {
-                    if (wzls && i.p_currentShip == 8 || i.p_currentShip == 6)
+                    if (wzls && (i.p_currentShip == 8 || i.p_currentShip == 6))
                             shipCount++;
                     else if (i.p_currentShip == shiptype)
                         shipCount++;
