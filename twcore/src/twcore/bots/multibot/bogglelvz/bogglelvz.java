@@ -180,8 +180,8 @@ public class bogglelvz extends MultiModule {
                 numSeconds--;
                 lastTick = numSeconds;
                 if (numSeconds == -1) {
-                    this.cancel();
                     doRoundStats();
+                    m_botAction.cancelTask(this);
                 } else
                     setTimerObjs(numSeconds, true);
             }
@@ -780,7 +780,7 @@ public class bogglelvz extends MultiModule {
         private int CG = 0;
         private int NoB = 0;
         private int NaW = 0;
-        private int rating = 0;
+        //private int rating = 0;
         private int points = 0;
         private boolean wonRound = false;
         private ArrayList<String> answers;
@@ -856,7 +856,7 @@ public class bogglelvz extends MultiModule {
             CG = 0;
             NoB = 0;
             NaW = 0;
-            rating = 0;
+            //rating = 0;
             points = 0;
             wonRound = false;
         }
