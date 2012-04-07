@@ -527,7 +527,7 @@ public class robohelp extends SubspaceBot {
 
             while (newbNames.size() > 20)
                 newbHistory.remove(newbNames.remove(20).toLowerCase());
-            m_botAction.sendChatMessage(2, message + "   [Use 'on that' to claim]");
+            m_botAction.sendChatMessage(message + "   [Use 'on that' to claim]");
             for (String n : alert)
                 m_botAction.sendSmartPrivateMessage(n, message + " ");
         }
