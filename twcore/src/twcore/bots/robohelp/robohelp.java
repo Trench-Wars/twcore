@@ -1216,6 +1216,7 @@ public class robohelp extends SubspaceBot {
                     return;
                 }
                 newb.taken = NewPlayer.TAKEN;
+                newb.claimer = name;
             }
             updateStatRecordsONTHAT(name, player, false);
             m_botAction.sendSmartPrivateMessage(name, "New Player alert for '" + player + "' has been claimed for you but not counted.");
