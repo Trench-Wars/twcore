@@ -815,7 +815,7 @@ public class DuelPlayer {
                     ids += ", " + rs.getInt(1);
                 sql_reportAlias(ids);
             } else {
-                query = "INSERT INTO tblDuel1__player (fnUserID, fcIP, fnMID) VALUES(" + userID + ", '" + Tools.addSlashesToString(ip) + "', " + mid + ")";
+                query = "INSERT INTO tblDuel1__player (fnUserID, fcUserName, fcIP, fnMID) VALUES(" + userID + ", '" + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(ip) + "', " + mid + ")";
                 ba.SQLQueryAndClose(db, query);
                 registered = true;
                 enabled = true;
