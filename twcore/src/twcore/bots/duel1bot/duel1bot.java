@@ -128,7 +128,8 @@ public class duel1bot extends SubspaceBot {
             String boxset[] = settings.getString("Box" + i).split(",");
             String warps[] = settings.getString("Warp" + i).split(",");
             String area[] = settings.getString("Area" + i).split(",");
-            boxes.put("" + i, new DuelBox(boxset, warps, area, i));
+            if (boxset.length == 9) 
+                boxes.put("" + i, new DuelBox(boxset, warps, area, i));
         }
 
         // Reads in general settings for dueling
