@@ -446,15 +446,14 @@ public class duel1bot extends SubspaceBot {
     private void cmd_help(String name) {
         String[] help = {
                 "+-COMMANDS----------------------------------------------------------------------------------------.",
-                "| !about                      - Information about 2v2 TWEL                                        |",
-                "| !signup                     - Registers you for 2v2 TWEL league duels                           |",
+                "| !about                      - Information about 1v1 TWEL                                        |",
+                "| !signup                     - Registers you for 1v1 TWEL league duels                           |",
                 "| !ch <player>:<division>     - Challenges the freq with <player> to a CASUAL duel in <division#> |",
                 "| !ch+ <player>:<division>    - Challenges the freq with <player> to a RANKED duel in <division>  |",
                 "|                               * You must have exactly 1 player per freq                         |",
                 "|                               * Divisions: 1-Warbird, 2-Javelin, 3-Spider, 4-Lancaster, 5-Mixed |",
                 "| !a <player>                 - Accepts a challenge from <player>                                 |",
                 "| !cancel                     - Requests or accepts a duel cancelation if playing                 |", 
-                "| !teams                      - Lists current teams eligible for ranked league play               |", 
                 "| !score <player>             - Displays the score of <player>'s duel, if dueling                 |",
                 "| !disable                    - Disables name to allow for the enabling of another name           |",
                 "| !enable                     - Enables name if already registered but disabled                   |",
@@ -790,7 +789,7 @@ public class duel1bot extends SubspaceBot {
                 + " duel. This challenge will expire in 1 minute.", 26);
         ba.sendOpposingTeamMessageByFrequency(freq2, (ranked ? "[RANKED] " : "[SCRIM] ")
                 + "You are being challenged to a " + (ranked ? "RANKED " : "CASUAL ")
-                + getDivision(div) + " duel by " + names[1]
+                + getDivision(div) + " duel by " + names[0]
                 + ". Use !a <name> (<name> is your opponenent) to accept.", 26);
     	
     }

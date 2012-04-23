@@ -54,6 +54,7 @@ public class DuelGame {
         d_season = bot.d_season;
         d_noCount = bot.d_noCount;
         d_deathWarp = 1;
+        d_toWin = 10;
         d_deathTime = bot.d_deathTime;
         d_spawnTime = bot.d_spawnTime;
         d_spawnLimit = bot.d_spawnLimit;
@@ -78,9 +79,11 @@ public class DuelGame {
             player1 = new DuelPlayer(ba.getPlayer(chall.name1), bot);
         if (player2 == null)
             player2 = new DuelPlayer(ba.getPlayer(chall.name2), bot);
-        d_noCount = player1.d_noCount;
-        d_deathWarp = player1.d_deathWarp;
-        d_toWin = player1.d_toWin;
+        if (ranked) {
+            d_noCount = player1.d_noCount;
+            d_deathWarp = player1.d_deathWarp;
+            d_toWin = player1.d_toWin;
+        }
         player1.setDuel(this, chall.freq1, coords1);
         player2.setDuel(this, chall.freq2, coords2);
         bot.games.put(id, this);

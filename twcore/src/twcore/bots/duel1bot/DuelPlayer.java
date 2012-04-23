@@ -272,11 +272,10 @@ public class DuelPlayer {
     }
 
     public void handleDeath(String killerName) {
-        setStatus(WARPING);
         long now = System.currentTimeMillis();
         DuelPlayer killer = bot.players.get(killerName.toLowerCase());
-
-        warpToSafe();
+        if (game.getDeathWarp())
+            warpToSafe();
         // DoubleKill check - remember to add a timer in case its the last death
         if (game.getNoCount() && (killer != null) && (killer.getTimeFromLastDeath() < 2001) && (name.equalsIgnoreCase(killer.getLastKiller()))) {
             ba.sendSmartPrivateMessage(name, "Double kill, doesn't count.");
@@ -484,7 +483,7 @@ public class DuelPlayer {
         try {
             ResultSet result = ba.SQLQuery(db, "SELECT * FROM tblDuel1__player WHERE fcUserName = '" + Tools.addSlashesToString(name) + "'");
             if (result.next()) {
-                ba.SQLQuery(db, "UPDATE tblDuel1__player     SET fnGameKills = " + kills + ", fnWinBy2 = " + winby2 + ", fnNoCount = " + nc + ", fnDeathWarp = " + warp
+                ba.SQLQuery(db, "UPDATE tblDuel1__player  SET fnGameKills = " + kills + ", fnWinBy2 = " + winby2 + ", fnNoCount = " + nc + ", fnDeathWarp = " + warp
                         + " WHERE fcUserName = '" + Tools.addSlashesToString(name) + "'");
                 String rules = "Rules: First to " + kills;
                 /*
