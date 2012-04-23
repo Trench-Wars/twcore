@@ -161,7 +161,6 @@ public class DuelPlayer {
     public void handleFreq(FrequencyChange event) {
         if (status == WARPING || status == RETURN) return;
         int f = event.getFrequency();
-
         if (game != null) {
             if (f != freq)
                 if (status == LAGGED) {
@@ -172,8 +171,8 @@ public class DuelPlayer {
                     setStatus(WARPING);
                     ba.setFreq(name, freq);
                     //ba.specificPrize(name, -13);
-                    setStatus(PLAYING);
                     handleWarp(false);
+                    setStatus(PLAYING);
                 } else if (status == OUT) {
                     ba.sendPrivateMessage(name, "Please stay on your freq until your duel is finished.");
                     ba.setFreq(name, freq);
@@ -611,6 +610,8 @@ public class DuelPlayer {
         ba.shipReset(name);
         ba.warpTo(name, 512, 502);
         out = -1;
+        duelFreq = -1;
+        game = null;
     }
 
     /** Decrements a death and sets status accordingly */
