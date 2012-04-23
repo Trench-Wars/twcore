@@ -281,6 +281,14 @@ public class DuelPlayer {
             ba.sendSmartPrivateMessage(killerName, "Double kill, doesn't count.");
             killer.removeDeath();
             stats.decrementStat(StatType.KILLS);
+        } else {
+            if ((now - lastDeath) < ((d_spawnTime + d_deathTime) * 1000)) {
+                ba.sendPrivateMessage(name, "Spawn Kill, doesn't count.");
+                killer.handleSpawnKill();
+            } else {
+                stats.handleDeath();
+                killer.addKill();
+            }
         }
 
         lastDeath = now;
