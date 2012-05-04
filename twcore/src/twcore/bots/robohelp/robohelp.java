@@ -156,7 +156,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!warn", acceptedMessages, this, "handleWarn", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!tell", acceptedMessages, this, "handleTell", OperatorList.ER_LEVEL);
         m_commandInterpreter.registerCommand("!ban", acceptedMessages, this, "handleBan", OperatorList.ER_LEVEL);
-        //m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle", OperatorList.ER_LEVEL );
+        m_commandInterpreter.registerCommand( "!google", acceptedMessages, this, "handleGoogle", OperatorList.ER_LEVEL );
         m_commandInterpreter.registerCommand("!wiki", acceptedMessages, this, "handleWikipedia", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!status", acceptedMessages, this, "handleStatus", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!dictionary", acceptedMessages, this, "handleDictionary", OperatorList.ZH_LEVEL);
@@ -219,7 +219,7 @@ public class robohelp extends SubspaceBot {
      * @param message Query
      */
     public void handleGoogle(String name, String message) {
-        m_botAction.sendChatMessage("Google search: http://www.google.com/search?q=" + message.replaceAll("\\s", "%20"));
+        m_botAction.sendChatMessage("Google search: http://lmgtfy.com/?q=" + message.replaceAll("\\s", "+"));
     }
 
     /*public void handleGoogle( String name, String message ){
