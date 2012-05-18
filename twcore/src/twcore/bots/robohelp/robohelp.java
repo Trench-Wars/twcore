@@ -128,6 +128,8 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!summon", acceptedMessages, this, "handleSummon");
 
         // ZH+ commands
+        m_commandInterpreter.registerCommand("!alias", acceptedMessages, this, "handleTrainer", OperatorList.MODERATOR_LEVEL);
+        m_commandInterpreter.registerCommand("!trainer", acceptedMessages, this, "handleTrainer", OperatorList.MODERATOR_LEVEL);
         m_commandInterpreter.registerCommand("!lookup", acceptedMessages, this, "handleLookup", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!last", acceptedMessages, this, "handleLast", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL);
@@ -319,6 +321,19 @@ public class robohelp extends SubspaceBot {
      * @param event IPC event to handle
      */
     public void handleEvent(InterProcessEvent event) {
+        if (event.getChannel().equals(ZONE_CHANNEL) && event.getObject() instanceof String) {
+            if (event.getSenderName().equalsIgnoreCase("ZonerBot")) {
+                String[] args = ((String) event.getObject()).split(",");
+                if (args.length == 1)
+                    m_botAction.sendSmartPrivateMessage(args[0], "You must be a staff trainer to use this command.");
+                else
+                    m_botAction.ipcTransmit(ZONE_CHANNEL, new String("newb:" + args[0] + "," + args[1]));
+            } else if (event.getSenderName().startsWith("TW-Guard")) {
+                String[] args = ((String) event.getObject()).split(":");
+                m_botAction.sendSmartPrivateMessage(args[0], args[1]);
+            }
+            return;
+        }
         IPCMessage ipcMessage = (IPCMessage) event.getObject();
 
         String message = ipcMessage.getMessage();
@@ -329,6 +344,14 @@ public class robohelp extends SubspaceBot {
         } catch (Exception e) {
             Tools.printStackTrace(e);
         }
+    }
+    
+    public void handleTrainer(String name, String msg) {
+        if (name.equalsIgnoreCase(msg) || opList.isZH(msg)) {
+            m_botAction.sendSmartPrivateMessage(name, "Alias cannot be a staff member.");
+            return;
+        }
+        m_botAction.ipcTransmit(ZONE_CHANNEL, new String(name + "," + msg));
     }
 
     // This is to catch any backgroundqueries even though none of them need to be catched to do something with the results

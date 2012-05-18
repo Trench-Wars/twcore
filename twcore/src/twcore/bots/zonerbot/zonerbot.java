@@ -16,6 +16,7 @@ import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
+import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.SQLResultEvent;
@@ -33,6 +34,7 @@ public class zonerbot extends SubspaceBot {
     public OperatorList oplist;
 
     public static final String db = "website";
+    public static final String ZONE_CHANNEL = "Zone Channel";
     public static final int ADVERT_DELAY = 10;
     public static final int READVERT_MAX = 2;
     public static final int EXPIRE_TIME = 5;
@@ -80,6 +82,17 @@ public class zonerbot extends SubspaceBot {
     public void handleEvent(LoggedOn event) {
         ba.joinArena(ba.getBotSettings().getString("InitialArena"));
         ba.sendUnfilteredPublicMessage("?chat=robodev");
+        ba.ipcSubscribe(ZONE_CHANNEL);
+    }
+    
+    public void handleEvent(InterProcessEvent event) {
+        if (event.getChannel().equals(ZONE_CHANNEL) && event.getSenderName().equalsIgnoreCase("RoboHelp") && event.getObject() instanceof String) {
+            String[] args = ((String) event.getObject()).split(",");
+            if (trainers.contains(args[0].toLowerCase()))
+                ba.ipcTransmit(ZONE_CHANNEL, new String(args[0] + "," + args[1]));
+            else
+                ba.ipcTransmit(ZONE_CHANNEL, new String(args[0]));
+        }
     }
 
     /** Handles the Message event **/
