@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -82,6 +83,9 @@ public class robohelp extends SubspaceBot {
     boolean timeFormat = false;
 
     String lastStafferClaimedCall;
+    
+    Random random;
+    String[] mag8;
 
     public robohelp(BotAction botAction) {
         super(botAction);
@@ -97,6 +101,29 @@ public class robohelp extends SubspaceBot {
         registerCommands();
         m_botAction.getEventRequester().request(EventRequester.MESSAGE);
         loadBanned();
+        random = new Random();
+        mag8 = new String[] {
+                "It is certain.",
+                "It is decidedly so.",
+                "Without a doubt.",
+                "Yes, definitely.",
+                "You may rely on it.",
+                "As I see it, yes.",
+                "Most likely.",
+                "Outlook good.",
+                "Yes.",
+                "All signs point to yes.",
+                "Reply hazy, try again.",
+                "Ask again later.",
+                "Better not tell you now.",
+                "Cannot predict now.",
+                "Concentrate and ask again.",
+                "Don't count on it.",
+                "My reply is no.",
+                "My sources say no.",
+                "Outlook not so good.",
+                "Very doubtful."
+        };
     }
 
     private void loadBanned() {
@@ -128,9 +155,9 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!summon", acceptedMessages, this, "handleSummon");
 
         // ZH+ commands
-        m_commandInterpreter.registerCommand("!alias", acceptedMessages, this, "handleTrainer", OperatorList.MODERATOR_LEVEL);
         m_commandInterpreter.registerCommand("!trainer", acceptedMessages, this, "handleTrainer", OperatorList.MODERATOR_LEVEL);
         m_commandInterpreter.registerCommand("!lookup", acceptedMessages, this, "handleLookup", OperatorList.ZH_LEVEL);
+        m_commandInterpreter.registerCommand("!8ball", acceptedMessages, this, "handle8Ball", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!last", acceptedMessages, this, "handleLast", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
@@ -351,7 +378,7 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Alias cannot be a staff member.");
             return;
         }
-        m_botAction.ipcTransmit(ZONE_CHANNEL, new String(name + "," + msg));
+        m_botAction.ipcTransmit(ZONE_CHANNEL, new String("check:" + name + "," + msg));
     }
 
     // This is to catch any backgroundqueries even though none of them need to be catched to do something with the results
@@ -1586,6 +1613,13 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "No alerts found.");
     }
 
+    public void handle8Ball(String name, String msg) {
+        if (msg.endsWith("?"))
+            m_botAction.sendChatMessage(mag8[random.nextInt(mag8.length)]);
+        else
+            m_botAction.sendChatMessage("Please rephrase in the form of a question.");
+    }
+    
     private String stringHelper(String str, int length) {
         if (length == -1) {
             // -1 for defaults dynamic
