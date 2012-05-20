@@ -157,7 +157,6 @@ public class robohelp extends SubspaceBot {
         // ZH+ commands
         m_commandInterpreter.registerCommand("!trainer", acceptedMessages, this, "handleTrainer", OperatorList.MODERATOR_LEVEL);
         m_commandInterpreter.registerCommand("!lookup", acceptedMessages, this, "handleLookup", OperatorList.ZH_LEVEL);
-        m_commandInterpreter.registerCommand("!8ball", acceptedMessages, this, "handle8Ball", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!last", acceptedMessages, this, "handleLast", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
@@ -181,6 +180,7 @@ public class robohelp extends SubspaceBot {
         acceptedMessages = Message.CHAT_MESSAGE;
 
         // ER+
+        m_commandInterpreter.registerCommand("!8ball", acceptedMessages, this, "handle8Ball", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!repeat", acceptedMessages, this, "handleRepeat", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!warn", acceptedMessages, this, "handleWarn", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!tell", acceptedMessages, this, "handleTell", OperatorList.ER_LEVEL);
