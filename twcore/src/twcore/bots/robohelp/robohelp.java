@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
@@ -87,7 +88,7 @@ public class robohelp extends SubspaceBot {
     Random random;
     String[] mag8;
     
-    Vector<String> triggers;
+    HashSet<String> triggers;
 
     public robohelp(BotAction botAction) {
         super(botAction);
@@ -126,7 +127,7 @@ public class robohelp extends SubspaceBot {
                 "Outlook not so good.",
                 "Very doubtful."
         };
-        triggers = new Vector<String>();
+        triggers = new HashSet<String>();
     }
 
     private void loadBanned() {
@@ -362,6 +363,8 @@ public class robohelp extends SubspaceBot {
             } else if (event.getSenderName().startsWith("TW-Guard")) {
                 String[] args = ((String) event.getObject()).split(":");
                 m_botAction.sendSmartPrivateMessage(args[0], args[1]);
+                if (args.length == 3)
+                    triggers.add(args[2].toLowerCase());
             }
             return;
         }
