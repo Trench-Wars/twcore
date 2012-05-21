@@ -87,11 +87,13 @@ public class zonerbot extends SubspaceBot {
     
     public void handleEvent(InterProcessEvent event) {
         if (event.getChannel().equals(ZONE_CHANNEL) && event.getSenderName().equalsIgnoreCase("RoboHelp") && event.getObject() instanceof String) {
-            String[] args = ((String) event.getObject()).split(",");
-            if (trainers.contains(args[0].toLowerCase()))
-                ba.ipcTransmit(ZONE_CHANNEL, new String(args[0] + "," + args[1]));
-            else
-                ba.ipcTransmit(ZONE_CHANNEL, new String(args[0]));
+            if (((String) event.getObject()).startsWith("check:")) {
+                String[] args = ((String) event.getObject()).substring(6).split(",");
+                if (trainers.contains(args[0].toLowerCase()))
+                    ba.ipcTransmit(ZONE_CHANNEL, new String(args[0] + "," + args[1]));
+                else
+                    ba.ipcTransmit(ZONE_CHANNEL, new String(args[0]));
+            }
         }
     }
 
