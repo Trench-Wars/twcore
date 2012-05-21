@@ -86,6 +86,8 @@ public class robohelp extends SubspaceBot {
     
     Random random;
     String[] mag8;
+    
+    Vector<String> triggers;
 
     public robohelp(BotAction botAction) {
         super(botAction);
@@ -124,6 +126,7 @@ public class robohelp extends SubspaceBot {
                 "Outlook not so good.",
                 "Very doubtful."
         };
+        triggers = new Vector<String>();
     }
 
     private void loadBanned() {
@@ -353,8 +356,9 @@ public class robohelp extends SubspaceBot {
                 String[] args = ((String) event.getObject()).split(",");
                 if (args.length == 1)
                     m_botAction.sendSmartPrivateMessage(args[0], "You must be a staff trainer to use this command.");
-                else
+                else {
                     m_botAction.ipcTransmit(ZONE_CHANNEL, new String("newb:" + args[0] + "," + args[1]));
+                }
             } else if (event.getSenderName().startsWith("TW-Guard")) {
                 String[] args = ((String) event.getObject()).split(":");
                 m_botAction.sendSmartPrivateMessage(args[0], args[1]);
@@ -803,6 +807,8 @@ public class robohelp extends SubspaceBot {
                 newb.claimer = name;
                 newb.taken = NewPlayer.TAKEN;
             }
+            if (triggers.remove(player.toLowerCase()))
+                m_botAction.sendSmartPrivateMessage(player, "Alert has been claimed by: " + name);
             m_botAction.sendRemotePrivateMessage(name, "Call claim of the new player '" + player + "' recorded.");
             updateStatRecordsONTHAT(name, player, true);
         } else
@@ -1268,6 +1274,8 @@ public class robohelp extends SubspaceBot {
                 newb.taken = NewPlayer.TAKEN;
                 newb.claimer = name;
             }
+            if (triggers.remove(player.toLowerCase()))
+                m_botAction.sendSmartPrivateMessage(player, "Alert has been have'd by: " + name);
             updateStatRecordsONTHAT(name, player, false);
             m_botAction.sendSmartPrivateMessage(name, "New Player alert for '" + player + "' has been claimed for you but not counted.");
         }
