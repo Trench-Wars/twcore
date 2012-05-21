@@ -159,7 +159,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!summon", acceptedMessages, this, "handleSummon");
 
         // ZH+ commands
-        m_commandInterpreter.registerCommand("!trainer", acceptedMessages, this, "handleTrainer", OperatorList.MODERATOR_LEVEL);
+        m_commandInterpreter.registerCommand("!trigger", acceptedMessages, this, "handleTrigger", OperatorList.MODERATOR_LEVEL);
         m_commandInterpreter.registerCommand("!lookup", acceptedMessages, this, "handleLookup", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!last", acceptedMessages, this, "handleLast", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL);
@@ -380,7 +380,7 @@ public class robohelp extends SubspaceBot {
         }
     }
     
-    public void handleTrainer(String name, String msg) {
+    public void handleTrigger(String name, String msg) {
         if (name.equalsIgnoreCase(msg) || opList.isZH(msg)) {
             m_botAction.sendSmartPrivateMessage(name, "Alias cannot be a staff member.");
             return;
