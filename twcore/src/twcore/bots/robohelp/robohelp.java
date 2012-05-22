@@ -354,6 +354,7 @@ public class robohelp extends SubspaceBot {
     public void handleEvent(InterProcessEvent event) {
         if (event.getChannel().equals(ZONE_CHANNEL) && event.getObject() instanceof String) {
             if (event.getSenderName().equalsIgnoreCase("ZonerBot")) {
+                m_botAction.sendSmartPrivateMessage("WingZero", "Got IPC: " + ((String) event.getObject()));
                 String[] args = ((String) event.getObject()).split(",");
                 if (args.length == 1)
                     m_botAction.sendSmartPrivateMessage(args[0], "You must be a staff trainer to use this command.");
