@@ -361,7 +361,6 @@ public class robohelp extends SubspaceBot {
                     m_botAction.ipcTransmit(ZONE_CHANNEL, new String("newb:" + args[0] + "," + args[1]));
                 }
             } else if (event.getSenderName().startsWith("TW-Guard")) {
-                m_botAction.sendSmartPrivateMessage("WingZero", "Got IPC: " + ((String) event.getObject()));
                 String[] args = ((String) event.getObject()).split(":");
                 m_botAction.sendSmartPrivateMessage(args[0], args[1]);
                 if (args.length == 3)
