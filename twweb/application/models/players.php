@@ -19,7 +19,7 @@
             $res = $this->db->query('
                 SELECT 
                     u.fnUserID          AS id,
-                    u.fcUserName        AS user_name,
+                    u.fcUserName        AS player_name,
                     u.fdSignedUp        AS signup,
                     u.fdDeleted         AS is_deleted,
                     u.ftUpdated         AS last_update,
@@ -34,12 +34,12 @@
 
 		public function checkPassword($playerName, $password) {
 			$res = $this->db->query('
-				SELECT	u.fnUserID AS user_id
+				SELECT	u.fnUserID AS player_id
 				FROM tblUser u 
 				LEFT JOIN tblUserAccount ua ON ua.fnUserID=u.fnUserID 
 				WHERE ua.fcPassword = PASSWORD(?) AND u.fcUserName = ?', array($password, $playerName));
 
-			if($row = $res->row_array()) return $this->findById($row['user_id']);
+			if($row = $res->row_array()) return $this->findById($row['player_id']);
 			else return false;
 		}
 	}

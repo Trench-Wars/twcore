@@ -13,8 +13,8 @@
 		public function login($playerData) {
 			$this->ci->session->set_userdata(array(
 				'logged_in'   => 'true', 
-				'player_name' => $playerData['fcUserName'],
-				'player_id'   => $playerData['fnUserID']
+				'player_name' => $playerData['player_name'],
+				'player_id'   => $playerData['id']
 			));
 		}
 
