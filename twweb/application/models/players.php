@@ -7,6 +7,12 @@
 			parent::__construct();
 		}
 
+		public function getIdByName($name) {
+			$res = $this->db->query('SELECT fnUserID AS id FROM tblUser WHERE fcUserName = ?', array($name));
+			if($row = $res->row_array()) return $row['id'];
+			else return false;
+		}
+
         public function findByName($playerId) {
 			// TODO: This should use Sphinx or something similar to translate text names to IDs, then
 			// the ID should be passed to the findById function.. 
