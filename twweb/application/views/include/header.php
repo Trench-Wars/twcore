@@ -26,5 +26,10 @@
 		<?if($this->session->flashdata('message') != '') {?>
 			<span style="font-weight: bold;"><?=$this->session->flashdata('message');?></span>
 		<?}?>
+
+        <?if($this->session->flashdata('error_message') != '') {?>
+            <span style="font-weight: bold; color: #FF0000;"><?=$this->session->flashdata('error_message');?></span>
+        <?}?>
+
 	
   	
