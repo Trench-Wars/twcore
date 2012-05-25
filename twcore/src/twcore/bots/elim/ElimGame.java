@@ -422,10 +422,13 @@ public class ElimGame {
                 ba.sendPrivateMessage(name, msg);
             else if (ep != null) {
                 ba.setShip(name, ship.getNum());
-                if (ep.getFreq() % 2 == ship.getFreq())
+                if (ep.getFreq() % 2 == ship.getFreq()) {
                     ba.setFreq(name, ep.getFreq());
-                else {
-                    ba.sendSmartPrivateMessage("WingZero", "[ELIM] on !lagout " + name + " had invalid freq " + ep.getFreq());
+                } else {
+                    ba.sendSmartPrivateMessage(bot.debugger, "[ELIM] on !lagout " + name + " had invalid freq " + ep.getFreq());
+                    while (ba.getFrequencySize(freq) != 0) {
+                        freq += 2;
+                    }
                     ba.setFreq(name, freq);
                     ep.setFreq(freq);
                     freq += 2;
