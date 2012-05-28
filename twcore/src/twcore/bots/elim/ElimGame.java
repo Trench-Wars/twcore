@@ -422,8 +422,10 @@ public class ElimGame {
                 ba.sendPrivateMessage(name, msg);
             else if (ep != null) {
                 ba.setShip(name, ship.getNum());
-                if (ep.getFreq() % 2 == ship.getFreq()) {
+                if (freq % 2 == ship.getFreq()) {
                     ba.setFreq(name, ep.getFreq());
+                    ep.setFreq(freq);
+                    freq += 2;
                 } else {
                     ba.sendSmartPrivateMessage(bot.debugger, "[ELIM] on !lagout " + name + " had invalid freq " + ep.getFreq());
                     while (ba.getFrequencySize(freq) != 0) {
