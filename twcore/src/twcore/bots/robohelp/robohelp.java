@@ -1581,6 +1581,8 @@ public class robohelp extends SubspaceBot {
                 return;
             }
             newb.falsePos();
+            if (triggers.remove(player.toLowerCase()))
+                m_botAction.sendSmartPrivateMessage(player, "Alert has been false'd by: " + name);
         }
 
         if (!m_botAction.SQLisOperational()) {
