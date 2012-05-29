@@ -916,11 +916,24 @@ public class robohelp extends SubspaceBot {
         String[] responses;
         HelpRequest helpRequest;
         PlayerInfo info;
+        
+        String lastName = lastHelpRequestName;
+        
+        if (Tools.isAllDigits(message)) {
+            try {
+                int id = Integer.valueOf(message);
+                if (helpList.containsKey(id))
+                    lastName = helpList.get(id).m_playerName;
+            } catch (NumberFormatException e) {
+                m_botAction.sendSmartPrivateMessage(playerName, "Invalid call number.");
+                return;
+            }
+        }
 
-        if (lastHelpRequestName == null)
+        if (lastName == null)
             m_botAction.sendRemotePrivateMessage(playerName, "No one has done a help call yet!");
 
-        info = m_playerList.get(lastHelpRequestName.toLowerCase());
+        info = m_playerList.get(lastName.toLowerCase());
         if (info == null || info.getLastCall() == -1)
             m_botAction.sendRemotePrivateMessage(playerName, "No response was given.");
         else {
@@ -929,7 +942,7 @@ public class robohelp extends SubspaceBot {
             if (responses == null)
                 m_botAction.sendRemotePrivateMessage(playerName, "No response was given.");
             else {
-                m_botAction.sendRemotePrivateMessage(playerName, "The responses available to " + lastHelpRequestName + " are:");
+                m_botAction.sendRemotePrivateMessage(playerName, "The responses available to " + lastName + " are:");
                 displayResponses(playerName, responses);
             }
         }
