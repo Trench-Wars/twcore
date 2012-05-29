@@ -478,8 +478,8 @@ public class trivia extends MultiModule {
         timedMessages = new TimerTask() {
             public void run() {
                 if(gameProgress != -1) {
-                    m_botAction.sendArenaMessage("Please PM your answers to TriviaBot.");
-                    spamChatMessage("Please PM your answers to TriviaBot. Hint: use !pm");
+                    m_botAction.sendArenaMessage("Please PM your answers to " + m_botAction.getBotName() + ".");
+                    spamChatMessage("Please PM your answers to " + m_botAction.getBotName() + ". Hint: use !pm");
                     doTimedArena();
                 }
             }
