@@ -924,6 +924,7 @@ public class robohelp extends SubspaceBot {
                 int id = Integer.valueOf(message);
                 if (helpList.containsKey(id))
                     lastName = helpList.get(id).m_playerName;
+                else throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 m_botAction.sendSmartPrivateMessage(playerName, "Invalid call number.");
                 return;
@@ -2097,18 +2098,33 @@ public class robohelp extends SubspaceBot {
                 "                                        bans the last person. (ER+)",
                 " !status                              - Gives back status from systems.",
                 //            " !google search - Returns first page found by Googling the search term.",
-                " !dictionary word                     - Returns a link for a definition of the word.", " !thesaurus word                      - Returns a link for a thesaurus entry for the word.",
-                " !javadocs term                       - Returns a link for a javadocs lookup of the term.", " !google word                         - Returns a link for a google search of the word.",
-                " !wiki word                           - Returns a link for a wikipedia search of the word.", " !calls                               - Displays the last 5 help and cheater calls",
-                " !calls <num>                         - Displays the last <num> help and cheater calls", " ", "PM commands:",
-                " !calls                               - Displays the last 5 help and cheater calls", " !calls <num>                         - Displays the last <num> help and cheater calls",
-                " !stats                               - Returns call answer stats for this month", " !stats <month>-<year>                - Returns call answer stats for the month specified",
-                "                                        ex. !stats 01-2011", " !lookup <keyword>                    - Tells you the response when the specified key word",
-                "                                        is given", " !last <optional name>                - Tells you what the response to the specified",
-                "                                        player was. If no name is specified, the last", "                                        response is given.",
-                " !mystats                             - Returns the top 5 call count and your call stats", " !mystats mod/er/zh [#]               - Returns the top # of moderators / ERs / ZHs.",
-                "                                        If # is not specified, shows top 5.", " !mystats <name>                      - Returns the call count of <name>",
-                " !mystats <month>-<year> [above args] - Returns the top/call count from specified", "                                        month-year. F.ex: !mystats 08-2007 mod 50" };
+                " !dictionary word                     - Returns a link for a definition of the word.", 
+                " !thesaurus word                      - Returns a link for a thesaurus entry for the word.",
+                " !javadocs term                       - Returns a link for a javadocs lookup of the term.", 
+                " !google word                         - Returns a link for a google search of the word.",
+                " !wiki word                           - Returns a link for a wikipedia search of the word.", 
+                " !calls                               - Displays the last 5 help and cheater calls",
+                " !calls <num>                         - Displays the last <num> help and cheater calls", 
+                " ", 
+                "PM commands:",
+                " !calls                               - Displays the last 5 help and cheater calls", 
+                " !calls <num>                         - Displays the last <num> help and cheater calls",
+                " !stats                               - Returns call answer stats for this month", 
+                " !stats <month>-<year>                - Returns call answer stats for the month specified",
+                "                                        ex. !stats 01-2011", 
+                " !lookup <keyword>                    - Tells you the response when the specified key word",
+                "                                        is given", 
+                " !last <optional name>                - Tells you what the response to the specified",
+                "                                        player was. If no name is specified, the last", 
+                "                                        response is given.",
+                " !last <call id>                      - Tells you the last response given to the player",
+                "                                        associated with the specified call id.",
+                " !mystats                             - Returns the top 5 call count and your call stats", 
+                " !mystats mod/er/zh [#]               - Returns the top # of moderators / ERs / ZHs.",
+                "                                        If # is not specified, shows top 5.", 
+                " !mystats <name>                      - Returns the call count of <name>",
+                " !mystats <month>-<year> [above args] - Returns the top/call count from specified", 
+                "                                        month-year. F.ex: !mystats 08-2007 mod 50" };
         if (m_botAction.getOperatorList().isZH(playerName))
             m_botAction.remotePrivateMessageSpam(playerName, helpText);
 
