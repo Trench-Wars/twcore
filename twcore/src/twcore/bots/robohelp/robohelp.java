@@ -929,7 +929,8 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(playerName, "Invalid call number.");
                 return;
             }
-        }
+        } else if (message.length() > 1)
+            lastName = message;
 
         if (lastName == null)
             m_botAction.sendRemotePrivateMessage(playerName, "No one has done a help call yet!");
