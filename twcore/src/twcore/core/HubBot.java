@@ -1104,7 +1104,7 @@ public class HubBot extends SubspaceBot {
                         "------- NickName / typebot ---------",
                         "",
                         "TW-Duel1 -  [duelbot]",
-                        "TW-Duel2 -  [duelbot2]",
+                        "TW-Duel2 -  [duel2bot]",
                         "MatchBot* - [matchbot]",
                         "TWDBot -    [twdbot]",
                         "TWDHub -    [twdhub]",
