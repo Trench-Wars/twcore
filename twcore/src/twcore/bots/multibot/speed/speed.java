@@ -81,7 +81,7 @@ public class speed extends MultiModule {
 		m_commandInterpreter.registerCommand("!setfixedspeedlimit", acceptedMessages, this, "do_setFixedSpeedLimit");
 		m_commandInterpreter.registerCommand("!setinterval", acceptedMessages, this, "do_setInterval");
 		m_commandInterpreter.registerCommand("!toggledisarmable", acceptedMessages, this, "do_toggleDisarmable");
-		m_commandInterpreter.registerCommand("!toggle1team", acceptedMessages, this, "do_toggleOneTeam");
+		m_commandInterpreter.registerCommand("!toggleteam", acceptedMessages, this, "do_toggleOneTeam");
 		m_commandInterpreter.registerCommand("!togglereversed", acceptedMessages, this, "do_toggleReversed");
 		m_commandInterpreter.registerCommand("!toggledoors", acceptedMessages, this, "do_toggleDoors");
 		m_commandInterpreter.registerCommand("!spamrules", acceptedMessages, this, "do_spamRules");
