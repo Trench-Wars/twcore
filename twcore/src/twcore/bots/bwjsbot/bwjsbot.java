@@ -42,7 +42,7 @@ import twcore.core.util.Spy;
  * @author fantus
  */
 public class bwjsbot extends SubspaceBot {
-    private boolean hasDatabase = false;
+    private boolean hasDatabase = true;
     
     private boolean lockArena;
     private boolean lockLastGame;
