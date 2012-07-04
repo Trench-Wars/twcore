@@ -119,8 +119,8 @@ public class duel2bot extends SubspaceBot{
         freqs = new Vector<Integer>();
         alias = new TreeMap<String, String>();
         zoners = true;
-        DEBUG = true;
-        debugger = "WingZero";
+        DEBUG = false;
+        debugger = "";
         lastZoner = 0;
     }
 
@@ -928,7 +928,8 @@ public class duel2bot extends SubspaceBot{
     /** Handles the !ch command
      * 
      * @param name
-     * @param args */
+     * @param args !ch p:div
+     */
     private void cmd_challenge(String name, String[] args, boolean ranked) {
         if (args.length != 2) return;
         int div = -1;
@@ -942,28 +943,21 @@ public class duel2bot extends SubspaceBot{
         if (div < 1 || div > 5) {
             ba.sendPrivateMessage(name, "Invalid division number (1-5).");
             return;
-        } else if (div == 2 && !getBoxOpen(2)) {
-            ba.sendPrivateMessage(name,
-                    "All duel boxes for that division are in use. Please try again later.");
-            return;
-        } else if (!getBoxOpen(1)) {
-            ba.sendPrivateMessage(name,
-                    "All duel boxes for that division are in use. Please try again later.");
+        } else if ((div == 2 && !getBoxOpen(2)) || !getBoxOpen(1)) {
+            ba.sendPrivateMessage(name, "All duel boxes for that division are in use. Please try again later.");
             return;
         }
         
         Player p = ba.getPlayer(name);
         
         if (ba.getFrequencySize(p.getFrequency()) != 2) {
-            ba.sendPrivateMessage(name,
-                    "Your freq size must be 2 players exactly to challenge for a 2v2 duel.");
+            ba.sendPrivateMessage(name, "Your freq size must be 2 players exactly to challenge for a 2v2 duel.");
             return;
         }
         
         Player o = ba.getFuzzyPlayer(args[0]);
         if (o == null || ba.getFrequencySize(o.getFrequency()) != 2) {
-            ba.sendPrivateMessage(name,
-                    "The enemy freq size must be 2 players exactly to challenge for a 2v2 duel.");
+            ba.sendPrivateMessage(name, "The enemy freq size must be 2 players exactly to challenge for a 2v2 duel.");
             return;
         }
         
@@ -988,8 +982,7 @@ public class duel2bot extends SubspaceBot{
             Player p1 = i.next();
             Player p2 = j.next();
 
-            if (!players.containsKey(p1.getPlayerName().toLowerCase())
-                    || !players.containsKey(p2.getPlayerName().toLowerCase())) return;
+            if (!players.containsKey(p1.getPlayerName().toLowerCase()) || !players.containsKey(p2.getPlayerName().toLowerCase())) return;
 
             if (names1[0].length() > 0)
                 names1[1] = p1.getPlayerName();
