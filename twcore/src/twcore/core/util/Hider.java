@@ -21,7 +21,6 @@ public class Hider {
     
     public Hider(BotAction botAction) {
         ba = botAction;
-        ba.getEventRequester().request(EventRequester.FILE_ARRIVED);
         load();
     }
     
@@ -48,13 +47,14 @@ public class Hider {
             }
             
         } catch (Exception e) {
+            ba.sendSmartPrivateMessage("WingZero", "Exception reading file...");
         } finally {
             try {
                 if (reader != null)
                     reader.close();
                 if (buf != null)
                     buf.close();
-                file.delete();
+                //file.delete();
             } catch (IOException e) {};
         }
     }

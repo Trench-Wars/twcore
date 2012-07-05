@@ -232,6 +232,8 @@ public class HubBot extends SubspaceBot {
                 event.getFileName().equals( "sysop.txt" )) {
             m_botAction.getOperatorList().autoAssignFile( m_botAction.getDataFile( event.getFileName() ) );
             
+        } else {
+            hider.handleEvent(event);
         }
     }
     
