@@ -1,0 +1,97 @@
+package twcore.core.util;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import twcore.core.BotAction;
+import twcore.core.EventRequester;
+import twcore.core.events.FileArrived;
+
+public class Hider {
+
+    private static List<String> hiders = Collections.synchronizedList(new ArrayList<String>());
+    private static final String FILE = "hiders.txt";
+    
+    private BotAction ba;
+    
+    public Hider(BotAction botAction) {
+        ba = botAction;
+        ba.getEventRequester().request(EventRequester.FILE_ARRIVED);
+        load();
+    }
+    
+    public void handleEvent(FileArrived event) {
+        if (!event.getFileName().equalsIgnoreCase(FILE)) 
+            return;
+
+        File file = new File(ba.getGeneralSettings().getString("Core Location") + "/data/" + FILE);
+        FileReader reader = null;
+        BufferedReader buf = null;
+        String line;
+        
+        try {
+            reader = new FileReader(file);
+            buf = new BufferedReader(reader);
+            
+            clear();
+            
+            while ((line = buf.readLine()) != null)
+                if (!line.startsWith("#") && !line.startsWith("["))
+                    add(low(line.trim()));
+            
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (reader != null)
+                    reader.close();
+                if (buf != null)
+                    buf.close();
+                file.delete();
+            } catch (IOException e) {};
+        }
+    }
+    
+    public boolean isHidden(String str) {
+        str = low(str);
+        for (String hider : hiders)
+            if (str.contains(hider))
+                return true;
+        return false;
+    }
+    
+    public void cmd_list(String name) {
+        String msg = "Hidden: ";
+        for (String hider : hiders)
+            msg += hider + ", ";
+        msg = msg.substring(0, msg.length()-2);
+        ba.sendSmartPrivateMessage(name, msg);
+    }
+    
+    public void cmd_reload(String name) {
+        load();
+        ba.sendSmartPrivateMessage(name, "Hiders have been reloaded from file.");
+    }
+    
+    public static void clear() {
+        hiders.clear();
+    }
+    
+    public static void add(String hider) {
+        if (!hiders.contains(hider))
+            hiders.add(hider);
+    }
+    
+    private void load() {
+        ba.getServerFile("hiders.txt");
+    }
+    
+    private String low(String s) {
+        return s.toLowerCase();
+    }
+
+}
