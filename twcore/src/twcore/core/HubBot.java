@@ -1141,7 +1141,9 @@ public class HubBot extends SubspaceBot {
                         "TWDHub -    [twdhub]",
                         "Tournybot - [tournybot]",
                         "HockeyBot - [hockeybot]",
-                        "TWLBot* -   [twl]"
+                        "TWLBot* -   [twl]",
+                        "TWDTBot -   [twdtbot]",
+                        "MatchBot* - [twdt]"
                 };
                 m_botAction.remotePrivateMessageSpam(name, twcoreLeague);
             }
