@@ -58,7 +58,6 @@ public class HubBot extends SubspaceBot {
         events.request( EventRequester.LOGGED_ON );
         events.request( EventRequester.ARENA_JOINED );
         events.request( EventRequester.FILE_ARRIVED );
-        hider = new Hider(m_botAction);
         try {
             Thread.sleep( 5000 );
         } catch( InterruptedException ie ){
@@ -66,6 +65,7 @@ public class HubBot extends SubspaceBot {
         }
         m_botQueue = new BotQueue( m_kingGroup, botAction );
         m_botQueue.start();
+        hider = new Hider(m_botAction);
     }
 
     /**
