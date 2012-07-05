@@ -65,6 +65,16 @@ public class HubBot extends SubspaceBot {
         }
         m_botQueue = new BotQueue( m_kingGroup, botAction );
         m_botQueue.start();
+        
+        TimerTask delay = new TimerTask() {
+            public void run() {
+                hider();
+            }
+        };
+        m_botAction.scheduleTask(delay, 10000);
+    }
+    
+    private void hider() {
         hider = new Hider(m_botAction);
     }
 
