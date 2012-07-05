@@ -6,7 +6,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.TimerTask;
@@ -194,7 +193,7 @@ public class zonerbot extends SubspaceBot {
         if (args.length == 2) {
             String name = args[0];
             String hours = args[1];
-            HashMap<String, Integer> events = new HashMap<String, Integer>();
+            Vectoid<String, Integer> events = new Vectoid<String, Integer>();
             ResultSet rs = event.getResultSet();
             try {
                 while (rs.next()) {
@@ -210,8 +209,8 @@ public class zonerbot extends SubspaceBot {
             ba.SQLClose(rs);
             if (events.size() > 0) {
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: ");
-                for (String str : events.keySet())
-                    ba.sendSmartPrivateMessage(name, " " + padString(str, 15) + " " + events.get(str));
+                for (int i = 0; i < events.size(); i++)
+                    ba.sendSmartPrivateMessage(name, " " + padString(events.getKey(i), 15) + " " + events.get(i));
             } else
                 ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: none");
         } else if (args.length == 1) {
