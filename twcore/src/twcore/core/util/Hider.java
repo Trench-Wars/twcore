@@ -11,6 +11,11 @@ import java.util.List;
 import twcore.core.BotAction;
 import twcore.core.events.FileArrived;
 
+/**
+ * Hider hides.
+ *
+ * @author WingZero
+ */
 public class Hider {
 
     private static List<String> hiders = Collections.synchronizedList(new ArrayList<String>());
@@ -23,6 +28,11 @@ public class Hider {
         load();
     }
     
+    /**
+     * Handle FileArrived event to check if hiders.txt was received.
+     * 
+     * @param event
+     */
     public void handleEvent(FileArrived event) {
         if (!event.getFileName().equalsIgnoreCase(FILE)) 
             return;
@@ -55,6 +65,12 @@ public class Hider {
         }
     }
     
+    /**
+     * Check to see if any hidden names are found in the given string.
+     * 
+     * @param str
+     * @return
+     */
     public boolean isHidden(String str) {
         str = low(str);
         for (String hider : hiders)
@@ -63,6 +79,11 @@ public class Hider {
         return false;
     }
     
+    /**
+     * Handles !hiders command which lists current hiders.
+     * 
+     * @param name
+     */
     public void cmd_list(String name) {
         String msg = "Hidden: ";
         for (String hider : hiders)
@@ -71,20 +92,37 @@ public class Hider {
         ba.sendSmartPrivateMessage(name, msg);
     }
     
+    /**
+     * Reloads hiders from hiders.txt server file.
+     * Updates all instances of Hider.
+     * 
+     * @param name
+     */
     public void cmd_reload(String name) {
         load();
         ba.sendSmartPrivateMessage(name, "Hiders have been reloaded from file.");
     }
     
+    /**
+     * Clears list of hiders.
+     */
     public static void clear() {
         hiders.clear();
     }
     
+    /**
+     * Adds hider to list.
+     * 
+     * @param hider
+     */
     public static void add(String hider) {
         if (!hiders.contains(hider))
             hiders.add(hider);
     }
     
+    /**
+     * Requests hiders file from game server.
+     */
     private void load() {
         ba.getServerFile("hiders.txt");
     }
