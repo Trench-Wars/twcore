@@ -75,6 +75,7 @@ public class HubBot extends SubspaceBot {
     }
     
     private void hider() {
+        m_botAction.sendSmartPrivateMessage("WingZero", "Hider called.");
         hider = new Hider(m_botAction);
     }
 

@@ -41,9 +41,11 @@ public class Hider {
             
             clear();
             
-            while ((line = buf.readLine()) != null)
+            while ((line = buf.readLine()) != null) {
+                ba.sendSmartPrivateMessage("WingZero", "line: " + line);
                 if (!line.startsWith("#") && !line.startsWith("["))
                     add(low(line.trim()));
+            }
             
         } catch (Exception e) {
         } finally {
