@@ -474,7 +474,7 @@ public class zonerbot extends SubspaceBot {
         } catch (NumberFormatException e) {
             hours = 24;
         }
-        ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT fcEventName, fdTime FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours
+        ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT * FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours
                 + " HOUR) ORDER BY fdTime DESC LIMIT " + (hours * 6));
     }
 
