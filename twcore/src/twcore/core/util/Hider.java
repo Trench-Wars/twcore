@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 
 import twcore.core.BotAction;
-import twcore.core.EventRequester;
 import twcore.core.events.FileArrived;
 
 public class Hider {
@@ -51,7 +50,7 @@ public class Hider {
                     reader.close();
                 if (buf != null)
                     buf.close();
-                //file.delete();
+                file.delete();
             } catch (IOException e) {};
         }
     }
