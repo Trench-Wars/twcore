@@ -9,9 +9,12 @@ List of bots that can be spawned:
  
 TW-Duel1 - [duelbot]
 TW-Duel2 - [duelbot2]
+WingDuel - [teamduel]
 MatchBot* - [matchbot]
 TWDBot - [twdbot]
 TWDHub - [twdhub]
 Tournybot - [tournybot]
 TWDBot - [twdbot]
 TWLBot* - [twl]
+TWDTBot - [twdtbot]
+MatchBot* - [twdt]
