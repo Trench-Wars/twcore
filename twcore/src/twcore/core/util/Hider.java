@@ -26,6 +26,7 @@ public class Hider {
     }
     
     public void handleEvent(FileArrived event) {
+        ba.sendSmartPrivateMessage("WingZero", "Got file: " + event.getFileName());
         if (!event.getFileName().equalsIgnoreCase(FILE)) 
             return;
 
