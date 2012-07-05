@@ -68,15 +68,10 @@ public class HubBot extends SubspaceBot {
         
         TimerTask delay = new TimerTask() {
             public void run() {
-                hider();
+                hider = new Hider(m_botAction);
             }
         };
         m_botAction.scheduleTask(delay, 10000);
-    }
-    
-    private void hider() {
-        m_botAction.sendSmartPrivateMessage("WingZero", "Hider called.");
-        hider = new Hider(m_botAction);
     }
 
     /**
@@ -232,9 +227,8 @@ public class HubBot extends SubspaceBot {
                 event.getFileName().equals( "sysop.txt" )) {
             m_botAction.getOperatorList().autoAssignFile( m_botAction.getDataFile( event.getFileName() ) );
             
-        } else {
+        } else
             hider.handleEvent(event);
-        }
     }
     
     /**

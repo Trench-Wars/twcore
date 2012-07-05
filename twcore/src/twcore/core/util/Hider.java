@@ -25,7 +25,6 @@ public class Hider {
     }
     
     public void handleEvent(FileArrived event) {
-        ba.sendSmartPrivateMessage("WingZero", "Got file: " + event.getFileName());
         if (!event.getFileName().equalsIgnoreCase(FILE)) 
             return;
 
@@ -40,11 +39,9 @@ public class Hider {
             
             clear();
             
-            while ((line = buf.readLine()) != null) {
-                ba.sendSmartPrivateMessage("WingZero", "line: " + line);
+            while ((line = buf.readLine()) != null)
                 if (!line.startsWith("#") && !line.startsWith("["))
                     add(low(line.trim()));
-            }
             
         } catch (Exception e) {
             ba.sendSmartPrivateMessage("WingZero", "Exception reading file...");
