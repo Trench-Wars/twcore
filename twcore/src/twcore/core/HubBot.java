@@ -14,6 +14,7 @@ import twcore.core.events.FileArrived;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.SocketMessageEvent;
+import twcore.core.util.Hider;
 import twcore.core.util.Tools;
 
 /**
@@ -38,6 +39,7 @@ public class HubBot extends SubspaceBot {
     private int                 m_billerDownRate = 5 * 60 * 1000;   // How often to display biller down msg, in ms
 
     private long 				spawnutime;				// Stores the unix timestamp when the bot gets spawned for !uptime use
+    private Hider               hider;
 
     /**
      * Creates the hub bot's thread grouping, registers commands, sets up
@@ -56,7 +58,7 @@ public class HubBot extends SubspaceBot {
         events.request( EventRequester.LOGGED_ON );
         events.request( EventRequester.ARENA_JOINED );
         events.request( EventRequester.FILE_ARRIVED );
-
+        hider = new Hider(m_botAction);
         try {
             Thread.sleep( 5000 );
         } catch( InterruptedException ie ){
@@ -106,6 +108,8 @@ public class HubBot extends SubspaceBot {
         // Sysop+
         accessRequired = OperatorList.SYSOP_LEVEL;
         m_commandInterpreter.registerCommand( "!forcespawn", acceptedMessages, this, "handleForceSpawnMessage", accessRequired );
+        m_commandInterpreter.registerCommand( "!hiders", acceptedMessages, this, "handleHiders", accessRequired );
+        m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReloadHiders", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdowncore", acceptedMessages, this, "handleShutdownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!sdc", acceptedMessages, this, "handleShutdownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!smartshutdown", acceptedMessages, this, "handleSmartShutdownCommand", accessRequired );
@@ -253,6 +257,26 @@ public class HubBot extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage( "*getfile moderate.txt" );
         
         
+    }
+    
+    /**
+     * Lists current hidden SysOp aliases.
+     * 
+     * @param messager
+     * @param message
+     */
+    public void handleHiders(String messager, String message) {
+        hider.cmd_list(messager);
+    }
+    
+    /**
+     * Reloads hiders.txt list.
+     * 
+     * @param messager
+     * @param message
+     */
+    public void handleReloadHiders(String messager, String message) {
+        hider.cmd_reload(messager);
     }
 
     /**
