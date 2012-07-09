@@ -63,6 +63,7 @@ public class tictactoe extends SubspaceBot {
         board = null;
         players = null;
         challenge = null;
+        greeting = null;
     }
 
     //What to do when the bot logs on
@@ -71,15 +72,15 @@ public class tictactoe extends SubspaceBot {
         BotSettings config = ba.getBotSettings();
         //Get the initial arena from config and enter it
         ba.joinArena(config.getString("InitialArena"));
-        greeting = config.getString("Greeting");
     }
     
     public void handleEvent(ArenaJoined event) {
-        
+        greeting = ba.getBotSettings().getString("Greeting");
     }
 
     //What to do when a player enters the arena
     public void handleEvent(PlayerEntered event) {
+        if (greeting == null) return;
         //Get the name of player that just entered
         String name = event.getPlayerName();
         //Greet them
@@ -101,7 +102,7 @@ public class tictactoe extends SubspaceBot {
                 cmd_help(name);
             else if (cmd.startsWith("!ch "))
                 cmd_challenge(name, msg);
-            else if (cmd.startsWith("!a "))
+            else if (cmd.startsWith("!a"))
                 cmd_accept(name);
             else if (cmd.startsWith("!p "))
                 cmd_play(name, msg);
@@ -169,9 +170,12 @@ public class tictactoe extends SubspaceBot {
         else {
             String challed = msg.substring(msg.indexOf(" ") + 1);
             challed = ba.getFuzzyPlayerName(challed);
-            if (challed != null)
-                challenge = new Challenge(name, challed);
-            else
+            if (challed != null) {
+                if (challed.equalsIgnoreCase(name))
+                    ba.sendPrivateMessage(name, "You cannot challenge yourself.");
+                else
+                    challenge = new Challenge(name, challed);
+            } else
                 ba.sendPrivateMessage(name, "Player not found in this arena.");
         }
     }
@@ -250,6 +254,7 @@ public class tictactoe extends SubspaceBot {
                 { Token._, Token._, Token._ }, 
         };
         players = new String[] { challenge.challer, challenge.challed };
+        ba.cancelTask(challenge);
         challenge = null;
         playerTurn = 1;
         getTurn();
@@ -356,6 +361,7 @@ public class tictactoe extends SubspaceBot {
         }
         
         public void run() {
+            ba.cancelTasks();
             ba.die();
         }
     }
