@@ -276,7 +276,7 @@ public class tictactoe extends SubspaceBot {
     private Token getWinner() {
         Token result = null;
         if (board[0][0] != Token._) {
-            if (board[0][0] == board[0][1] && board[0][1] == board[0][1])
+            if (board[0][0] == board[0][1] && board[0][1] == board[0][2])
                 result = board[0][0];
             else if (board[0][0] == board[1][0] && board[1][0] == board[2][0])
                 result = board[0][0];
