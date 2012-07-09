@@ -1,2043 +1,363 @@
 package twcore.bots.tictactoe;
+
 //Import all of the TWCore classes so you can use them 
+
+import java.util.TimerTask;
+
 import twcore.core.*;
-import twcore.core.command.CommandInterpreter;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
+import twcore.core.util.Tools;
 
-public class tictactoe extends SubspaceBot
-{
+public class tictactoe extends SubspaceBot {
     //Creates a new mybot 
-	
-	String x1=" ", x2=" ", x3=" ",x4=" ",x5=" ",x6=" ",x7=" ",x8=" ", x9=" ";
-	String turn = "No Turns :)";
-	String namex = "No Player X!";
-	String nameo = "No Player O!";
-	String game_status = "false";
-	String games_acpt = "false";
-	String[] tic = new String[9];
-	
-	private EventRequester events;
-    //Handles all commands sent to bot by players
-    private CommandInterpreter cmds;
+    
+    enum Token {
+        X(0), O(1), _(2);
+        
+        int player;
+        Token(int p) {
+            player = p;
+        }
+        
+        static Token get(int p) {
+            switch (p) {
+                case 0: return X; 
+                case 1: return O; 
+                default: return _;
+            }
+        }
+    }
+    
+    private BotAction ba;
+
     //Stores Staff Access Levels
     private OperatorList oplist;
-	private String message;
+    private String greeting;
     
-    public tictactoe(BotAction botAction)
-    {
+    private Token[][] board;
+    private String[] players;
+    private Challenge challenge;
+    private int playerTurn;
+
+    public tictactoe(BotAction botAction) {
         //This instantiates your BotAction
         super(botAction);
+        
+        ba = botAction;
+        
         //Instantiate your EventRequester
-        events = m_botAction.getEventRequester();
+        EventRequester events = ba.getEventRequester();
         //Request PlayerEntered events
         events.request(EventRequester.PLAYER_ENTERED);
         //Request chat message events
         events.request(EventRequester.MESSAGE);
-        //Instantiate your CommandInterpreter
-        cmds = new CommandInterpreter(m_botAction);
+        events.request(EventRequester.LOGGED_ON);
+        events.request(EventRequester.ARENA_JOINED);
+        
         //Instantiate your Operator List
-        oplist = m_botAction.getOperatorList();
-        //Set up your interpreter
-        addCommands();
+        oplist = ba.getOperatorList();
+        playerTurn = -1;
+        board = null;
+        players = null;
+        challenge = null;
     }
 
     //What to do when the bot logs on
-    public void handleEvent(LoggedOn event)
-    {
+    public void handleEvent(LoggedOn event) {
         //Get the data from mybot.cfg
-        BotSettings config = m_botAction.getBotSettings();
+        BotSettings config = ba.getBotSettings();
         //Get the initial arena from config and enter it
-        String initial = config.getString("InitialArena");
-        m_botAction.joinArena(initial);
-        this.message = config.getString("WelcomeMessage");
-
-        //NOTE: m_botAction is inherited from SubspaceBot
+        ba.joinArena(config.getString("InitialArena"));
+        greeting = config.getString("Greeting");
     }
+    
+    public void handleEvent(ArenaJoined event) {
+        
+    }
+
     //What to do when a player enters the arena
-    public void handleEvent(PlayerEntered event)
-    {
+    public void handleEvent(PlayerEntered event) {
         //Get the name of player that just entered
         String name = event.getPlayerName();
         //Greet them
-        m_botAction.sendPrivateMessage(name,message);
+        ba.sendPrivateMessage(name, greeting);
     }
 
     //What to do when somebody says something
-    public void handleEvent(Message event)
-    {
-        //Pass it to the interpreter
-        cmds.handleEvent(event);
+    public void handleEvent(Message event) {
+        String name = event.getMessager();
+        if (name == null)
+            name = ba.getPlayerName(event.getPlayerID());
+        String msg = event.getMessage();
+        int type = event.getMessageType();
+        String cmd = msg.toLowerCase();
+        
+        if (type == Message.PUBLIC_MESSAGE || type == Message.PRIVATE_MESSAGE || type == Message.TEAM_MESSAGE) {
+            
+            if (cmd.startsWith("!help"))
+                cmd_help(name);
+            else if (cmd.startsWith("!ch "))
+                cmd_challenge(name, msg);
+            else if (cmd.startsWith("!a "))
+                cmd_accept(name);
+            else if (cmd.startsWith("!p "))
+                cmd_play(name, msg);
+            else if (cmd.startsWith("!cancel"))
+                cmd_cancel(name);
+            
+            if (oplist.isER(name)) {
+                if (cmd.startsWith("!stop"))
+                    cmd_stop(name);
+            }
+        }
+        if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
+            if (oplist.isER(name)) {
+                if (cmd.startsWith("!go "))
+                    cmd_go(name, msg);
+                else if (cmd.startsWith("!die"))
+                    new Die(name);
+            }
+        }
+    }
+    
+    private void cmd_go(String name, String msg) {
+        String arena = msg.substring(msg.indexOf(" ") + 1);
+        if (arena.length() > 0 && !arena.toLowerCase().contains("public") && !arena.contains("(") && !Tools.isAllDigits(arena))
+            ba.changeArena(arena);
+        else
+            ba.sendSmartPrivateMessage(name, "Invalid arena.");
     }
 
-    //Set up commands
-    public void addCommands()
-    {
-        //Allowed message types for commands
-        int ok = Message.PRIVATE_MESSAGE | Message.PUBLIC_MESSAGE;
-        //Add any commands as you see fit
-        cmds.registerCommand("!help",ok,this,"help");
-        cmds.registerCommand("!die",ok,this,"die");
-        cmds.registerCommand("!go",ok,this,"go");
-        cmds.registerCommand("!zone",ok,this,"zone");
-        cmds.registerCommand("!arena", ok, this,"arena");
-        cmds.registerCommand("!rules", ok, this,"rules");
-        cmds.registerCommand("!chngwelcome", ok, this, "welcome");
-        cmds.registerCommand("!draw1:1", ok, this, "d11");
-        cmds.registerCommand("!draw1:2", ok, this, "d12");
-        cmds.registerCommand("!draw1:3", ok, this, "d13");
-        cmds.registerCommand("!draw2:1", ok, this, "d21");
-        cmds.registerCommand("!draw2:2", ok, this, "d22");
-        cmds.registerCommand("!draw2:3", ok, this, "d23");
-        cmds.registerCommand("!draw3:1", ok, this, "d31");
-        cmds.registerCommand("!draw3:2", ok, this, "d32");
-        cmds.registerCommand("!draw3:3", ok, this, "d33");
-        cmds.registerCommand("!ticstatus", ok, this, "tics");
-        cmds.registerCommand("!challenge", ok, this, "chlg");
-        cmds.registerCommand("!accept", ok, this, "apt");
-        cmds.registerCommand("!resetdraws", ok, this, "reset");
-        cmds.registerCommand("!withdraw",ok,this,"wt");
-        cmds.registerCommand("!pickx", ok, this, "pickx");
-        cmds.registerCommand("!picko", ok, this, "picko");
-        cmds.registerCommand("!endgame", ok, this, "endgame");
-        cmds.registerCommand("!drawhelp", ok, this, "drawhelp");
-        cmds.registerCommand("!say", ok, this, "say");
+    private void cmd_help(String name) {
+        String[] strs = {
+                "+-- TicTacToe Commands ---------------------------------------------.",
+                "| !ch <name>             - Challenges <name> if possible            |",
+                "| !a                     - Accepts challenge if challenged          |",
+                "| !cancel                - Cancels challenge if challenger          |",
+                "! !p <row>,<col>         - Puts an X or O in the box at <row>,<col> |",
+                "|                          as shown below                           |",
+                "|                           cols   1   2   3                        |",
+                "|                                +---+---+---.                      |",
+                "|                           row 1|1,1|1,2|1,3|                      |",
+                "|                                +---+---+---+                      |",
+                "|                           row 2|2,1|2,2|2,3|                      |",
+                "|                                +---+---+---+                      |",
+                "|                           row 3|3,1|3,2|3,3|                      |",
+                "|                                `---+---+---'                      |",
+        };
+        String end = "`-------------------------------------------------------------------'";
+        String[] staff = {
+                "+-- Staff Commands -------------------------------------------------+",
+                "| !stop                  - Ends game or cancels a current challenge |",
+                "| !go <arena>            - Sends the bot to <arena>                 |",
+                "| !die                   - Kills bot                                |",
+        };
+        ba.privateMessageSpam(name, strs);
+        if (oplist.isER(name))
+            ba.privateMessageSpam(name, staff);
+        ba.sendPrivateMessage(name, end);
     }
-    public void drawhelp(String name, String msg)
-    {
-    	m_botAction.sendSmartPrivateMessage(name, "   1   2   3");
-    	m_botAction.sendSmartPrivateMessage(name, " +---+---+---+");
-    	m_botAction.sendSmartPrivateMessage(name, "1|1:1|1:2|1:3|");
-    	m_botAction.sendSmartPrivateMessage(name, " +---+---+---+");
-    	m_botAction.sendSmartPrivateMessage(name, "2|2:1|2:2|2:3|");
-    	m_botAction.sendSmartPrivateMessage(name, " +---+---+---+");
-    	m_botAction.sendSmartPrivateMessage(name, "3|3:1|3:2|3:3|");
-    	m_botAction.sendSmartPrivateMessage(name, " +---+---+---+");
-    	m_botAction.sendSmartPrivateMessage(name, "!draw-:|");
-    }
-    public void wt(String name, String msg)
-    {
-    	if(name.equalsIgnoreCase(nameo) != true)
-    		return;
-    	if (games_acpt == "true")
-    	{
-    	     m_botAction.sendSmartPrivateMessage(namex,"You have Withdraw that challenge!");
-    	     m_botAction.sendSmartPrivateMessage(name, nameo + " withdraw your challenge!");
-    	     namex = "No Player X";
-    	     nameo = "No Player O";
-    	     games_acpt = "false";
-    	     game_status = "false";
-                 
-    	}
-        	else if (games_acpt == "false")
-        	{
-        		m_botAction.sendPrivateMessage(name, "Game is started with [X]" + namex + " Vs [O]" + nameo + "");
-        	}
-    }
-    public void reset(String name, String msg)
-    {
-       if(x1 != " ")if(x2 != " ")if(x3 != " ")if(x4 != " ")if(x5 != " ")if(x6 != " ")if(x7 != " ")if(x8 != " ")if(x9 != " ")
-       {
-    	   x1=" "; x2=" "; x3=" ";x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-   		tic[0] = "+---+---+---+";
-   		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-   		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-   		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-   		tic[4] = "| "+x7+" | "+x8+" | "+x9+" |";
-   		m_botAction.sendArenaMessage(tic[0]);
-   		m_botAction.sendArenaMessage(tic[1]);
-   		m_botAction.sendArenaMessage(tic[0]);
-   		m_botAction.sendArenaMessage(tic[2]);
-   		m_botAction.sendArenaMessage(tic[0]);
-   		m_botAction.sendArenaMessage(tic[3]);
-   		m_botAction.sendArenaMessage(tic[0]);
-   		m_botAction.sendArenaMessage("Turn : " + turn);
-       }
-       m_botAction.sendSmartPrivateMessage(name, "There Are Many Draws is Empty!");
-    }
-    public void chlg(String name, String msg)
-    {
-    	if (game_status == "false")
-    	{
-    		nameo = msg;
-    		namex = name;
-    	     m_botAction.sendSmartPrivateMessage(nameo, name + " Challenge you type !accept to accept challenge him!");
-    	     m_botAction.sendSmartPrivateMessage(name, "You have send it to " + name +" wait him to accept that challenge!");
-            games_acpt = "true";
-    	}
-    	else if (game_status == "true")
-    	{
-    		m_botAction.sendPrivateMessage(name, "Game is started with [X]" + namex + " Vs [O]" + nameo + "");
-    	}
-    }
-    public void apt(String name, String msg)
-    {
-    	if(name.equalsIgnoreCase(nameo) != true)
-    		return;
-    	if (games_acpt == "true")
-    	{
-    	     m_botAction.sendSmartPrivateMessage(nameo,"You have accept that challenge!");
-    	     m_botAction.sendSmartPrivateMessage(namex, nameo + " Accept your challenge!");
-    		tic[0] = "+---+---+---+";
-    		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-    		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-    		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-    		tic[4] = "| "+x7+" | "+x8+" | "+x9+" |";
-    		m_botAction.sendArenaMessage(tic[0]);
-    		m_botAction.sendArenaMessage(tic[1]);
-    		m_botAction.sendArenaMessage(tic[0]);
-    		m_botAction.sendArenaMessage(tic[2]);
-    		m_botAction.sendArenaMessage(tic[0]);
-    		m_botAction.sendArenaMessage(tic[3]);
-    		m_botAction.sendArenaMessage(tic[0]);
-    		turn = namex;
-    		m_botAction.sendArenaMessage("Turn : " + turn);
-    		game_status = "true";
-    		games_acpt = "false";
-    	}
-        	else if (games_acpt == "false")
-        	{
-        		m_botAction.sendPrivateMessage(name, "Game is started with [X]" + namex + " Vs [O]" + nameo + "");
-        	}
-    }
-    //Got command: !help
-    public void rules(String name, String msg)
-    {
-        //Help Message
-		if(oplist.isER(name))
-		{
-        String[] rule =
-        {
-        ".----------------------,",
-        "|      Rules           |",
-        "|----------------------+------,",
-        "| Don't Cheat,Don't Hack      |",
-        "| Don't Abuse,Don't Swearing  |",
-        "`-----------------------------'"};   
-        m_botAction.sendArenaMessage(rule[0]);
-        m_botAction.sendArenaMessage(rule[1]);
-        m_botAction.sendArenaMessage(rule[2]);
-        m_botAction.sendArenaMessage(rule[3]);
-        m_botAction.sendArenaMessage(rule[4]);
-        m_botAction.sendArenaMessage(rule[5]);
-       // m_botAction.sendArenaMessage(rule[6]);
-        }
-        //Send player the help message
-    }
-    public void help(String name, String msg)
-    {
-        //Help Message
-    	
-    		
-        String[] help = 
-        	{
-        ".----------------------.",
-        "| Help Commands        |",
-        "+----------------------+-----------------.",
-        "| !draw(-:|) - Draw X or O Example:      |",
-        "| !draw2:2 in the mid                    |",
-        "| !ticstatus - Game Status!              |",
-        "| !drawhelp - Show you how to draw!      |",
-        "| !challenge <Player> - Challenge for    |",
-        "| player                                 |",
-        "| !resetdraws - Reset Draws!             |",
-        "`----------------------------------------'"};
-        m_botAction.privateMessageSpam(name, help);
-        if(oplist.isER(name))
-        {
-        String[] shelp =
-        {
-        "+----------------------+",
-        "| Staff Commands   []  |",
-        "+----------------------+--------------------.",
-        "| !help            - this message           |",
-        "| !die             - kills bot              |",
-        "| !go (arena)      - sends bot to arena     |",
-        "| !say (Message)   - Send Public Message    |",
-        "| !zone (Message)  - Sends Zone Message     |",
-        "| !arena (Message) - sends arena message    |",
-        "| !rules           - show players rules     |",
-        "| !chngwelcome     - Change Welcome Message |",
-        "| !endgame         - End Tic-Tac-Toe Game   |",
-        "| !pickx <player>  - Pick A Player [X]      |",
-        "| !picko <player>  - Pick A player [O]      |",
-        "+-------------------------------------------+",
-        "| This Module Made By Red Desert=Ahmad~     |",
-        "| Thanks to : Dral <ER>, SpookedOne!        |",
-        "`-------------------------------------------'"};
-        //Send player the help message
-        m_botAction.privateMessageSpam(name,shelp);
+    
+    private void cmd_challenge(String name, String msg) {
+        if (board != null)
+            ba.sendPrivateMessage(name, "There is already a game being played at the moment.");
+        else if (challenge != null)
+            ba.sendPrivateMessage(name, "Another player has a challenge active. It will expire in less than a minute if not accepted.");
+        else {
+            String challed = msg.substring(msg.indexOf(" ") + 1);
+            challed = ba.getFuzzyPlayerName(challed);
+            if (challed != null)
+                challenge = new Challenge(name, challed);
+            else
+                ba.sendPrivateMessage(name, "Player not found in this arena.");
         }
     }
-    public void endgame(String name, String msg)
-    {
-    	if(oplist.isER(name))
-    	{
-    		x1=" "; x2=" "; x3=" ";x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-    		turn = "No Turns :)";
-    		namex = "No Player X!";
-    		nameo = "No Player O!";
-    		game_status = "false";
-    		games_acpt = "false";
-    		tic[0] = "+---+---+---+";
-    		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-    		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-    		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-    		m_botAction.sendArenaMessage("Ended Game By " + name,1);
-    	}
+    
+    private void cmd_accept(String name) {
+        if (board != null)
+            ba.sendPrivateMessage(name, "There is a game in progress so no challenge can be active.");
+        else if (challenge != null)
+            challenge.accept(name);
+        else
+            ba.sendPrivateMessage(name, "No one has challenged you.");
     }
-    public void pickx(String name, String msg)
-    {
-    	if(oplist.isER(name))
-    	{
-    		String removed = namex;
-    		namex = msg;
-    		m_botAction.sendArenaMessage("[Moderator] removed [X][" + removed + "] and add to [X][" + namex + "]");
-    	}
+    
+    private void cmd_cancel(String name) {
+        if (challenge != null) {
+            challenge.cancel(name);
+        }
     }
-    public void picko(String name, String msg)
-    {
-    	if(oplist.isER(name))
-    	{
-    		String removed = nameo;
-    		nameo = msg;
-    		m_botAction.sendArenaMessage("[Moderator] removed [O][" + removed + "] and add to [O][" + nameo + "]");
-    	}
+    
+    private void cmd_stop(String name) {
+        if (board != null) {
+            players = null;
+            board = null;
+            playerTurn = -1;
+            ba.sendArenaMessage("This game has been killed by " + name + ".");
+        } else if (challenge != null) {
+            challenge.cancel(name);
+        }
     }
-    public void arena(String name, String msg)
-    {
-    	if(oplist.isER(name))
-    		m_botAction.sendArenaMessage(msg + " -" + name, 2);
+    
+    private void cmd_play(String name, String msg) {
+        if (getPlayer(name) != playerTurn) {
+            ba.sendSmartPrivateMessage(name, "It is not your turn.");
+            return;
+        }
+        msg = msg.substring(msg.indexOf(" ") + 1).trim();
+        int x ,y;
+        try {
+            if (msg.length() == 3 && msg.indexOf(",") == 1) {
+                String[] vals = msg.split(",");
+                x = Integer.valueOf(vals[0]);
+                y = Integer.valueOf(vals[1]);
+                if (x < 1 || y < 1 || x > 3 || y > 3) 
+                    throw new NumberFormatException();
+            } else 
+                throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Invalid syntax, please specify the box using !p <row>,<col>");
+            return;
+        }
+        x--;
+        y--;
+        if (board[x][y] != Token._) {
+            ba.sendSmartPrivateMessage(name, "You must choose an empty box.");
+        } else {
+            board[x][y] = Token.get(playerTurn);
+            Token winner = getWinner();
+            if (winner != null) {
+                if (winner == Token._)
+                    ba.sendArenaMessage("GAME OVER: Draw!", 5);
+                else
+                    ba.sendArenaMessage("GAME OVER: " + players[winner.player] + " wins as " + winner.toString() + "'s!" , 5);
+                players = null;
+                board = null;
+                playerTurn = -1;
+            } else 
+                getTurn();
+        }
     }
-    public void welcome(String name, String msg)
-    {
-    	if(oplist.isER(name))
-    		message = msg;
-    		m_botAction.sendSmartPrivateMessage(name, "Welcome Msg: " + message);
+    
+    private void newGame() {
+        ba.sendArenaMessage("A game of TicTacToe is starting between " + challenge.challer + " and " + challenge.challed + "!", 19);
+        board = new Token[][] {
+                { Token._, Token._, Token._ }, 
+                { Token._, Token._, Token._ }, 
+                { Token._, Token._, Token._ }, 
+        };
+        players = new String[] { challenge.challer, challenge.challed };
+        challenge = null;
+        playerTurn = 1;
+        getTurn();
     }
-    //Got command: !die
-    public void die(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(oplist.isER(name))
-            //Destroy bot, allows another to be spawned
-            m_botAction.die();
+    
+    private void getTurn() {
+       String[] msg = new String[] {
+                "+---+---+---+",
+                "| " + board[0][0].toString() + " | " + board[0][1].toString() + " | " + board[0][2].toString() + " |",
+                "| " + board[1][0].toString() + " | " + board[1][1].toString() + " | " + board[1][2].toString() + " |",
+                "| " + board[2][0].toString() + " | " + board[2][1].toString() + " | " + board[2][2].toString() + " |",
+                "+---+---+---+",
+        };
+       ba.arenaMessageSpam(msg);
+       playerTurn = (playerTurn + 1) % 2;
+       ba.sendArenaMessage("" + players[playerTurn] + " (" + Token.get(playerTurn).toString() + "), pick a box! (!p <row>,<col>)", 1);
+    }
+    
+    private Token getWinner() {
+        Token result = null;
+        if (board[0][0] != Token._) {
+            if (board[0][0] == board[0][1] && board[0][1] == board[0][1])
+                result = board[0][0];
+            else if (board[0][0] == board[1][0] && board[1][0] == board[2][0])
+                result = board[0][0];
+            else if (board[0][0] == board[1][1] && board[1][1] == board[2][2])
+                result = board[0][0];
+        } else if (board[0][2] != Token._) {
+            if (board[0][2] == board[1][2] && board[1][2] == board[2][2])
+                result = board[0][2];
+            else if (board[0][2] == board[1][1] && board[1][1] == board[2][0])
+                result = board[0][2];
+        } else if (board[2][2] != Token._) {
+            if (board[2][2] == board[2][1] && board[2][1] == board[2][0])
+                result = board[2][2];
+        } else if (board[1][1] != Token._) {
+            if (board[1][1] == board[1][0] && board[1][0] == board[1][2])
+                result = board[1][1];
+            else if (board[1][1] == board[0][1] && board[1][1] == board[2][1])
+                result = board[1][1];
+        }
+        if (result != null)
+            return result;
+        else {
+            for (int x = 0; x < 3; x++)
+                for (int y = 0; y < 3; y++)
+                    if (board[x][y] == Token._)
+                        return null;
+            return Token._;
+        }
+    }
+    
+    private int getPlayer(String name) {
+        if (name.equalsIgnoreCase(players[0]))
+            return 0;
+        else if (name.equalsIgnoreCase(players[1]))
+            return 1;
+        else
+            return -1;
+    }
+    
+    private class Challenge extends TimerTask {
+        
+        String challer;
+        String challed;
+        
+        public Challenge(String challenger, String challenged) {
+            challer = challenger;
+            challed = challenged;
+            challenge = this;
+            ba.scheduleTask(challenge, Tools.TimeInMillis.MINUTE);
+            ba.sendPrivateMessage(challenger, "You have challenged '" + challenged + "' to TicTacToe. Challenge will expire in 1 minute.");
+            ba.sendPrivateMessage(challenged, "You have been challenged by '" + challenger + "' to TicTacToe. You have 1 minute to accept.");
+        }
+        
+        public void run() {
+            ba.sendSmartPrivateMessage(challer, "Your challenge has expired.");
+            ba.sendSmartPrivateMessage(challed, "The challenge has expired.");
+            challenge = null;
+            ba.sendArenaMessage("Challenge request now available...");
+        }
+        
+        public void accept(String name) {
+            if (!name.equalsIgnoreCase(challed))
+                ba.sendPrivateMessage(name, "You have not been challenged.");
+            else
+                newGame();
+        }
+        
+        public void cancel(String name) {
+            if (name.equalsIgnoreCase(challer) || oplist.isER(name)) {
+                ba.cancelTask(challenge);
+                challenge = null;
+                ba.sendPrivateMessage(name, "Challenge canceled.");
+                ba.sendArenaMessage("Challenge request now available...");
+            }
+        }
+    }
+    
+    private class Die extends TimerTask {
+        public Die(String name) {
+            ba.sendSmartPrivateMessage(name, "Logging off...");
+            ba.scheduleTask(this, 3000);
+        }
+        
+        public void run() {
+            ba.die();
+        }
     }
 
-    //Got command: !go
-    public void go(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(oplist.isER(name))
-            m_botAction.changeArena(msg);
-            m_botAction.sendRemotePrivateMessage(name, "You have send me to " + msg);
-    }
-    public void tics(String name, String msg)
-    {
-    	m_botAction.sendPrivateMessage(name, "Game: [X]" + namex + " Vs [O]" + nameo + "!");
-            m_botAction.sendPrivateMessage(name, tic[0]);
-            m_botAction.sendPrivateMessage(name, tic[1]);
-            m_botAction.sendPrivateMessage(name, tic[0]);
-            m_botAction.sendPrivateMessage(name, tic[2]);
-            m_botAction.sendPrivateMessage(name, tic[0]);
-            m_botAction.sendPrivateMessage(name, tic[3]);
-            m_botAction.sendPrivateMessage(name, tic[0]);
-            m_botAction.sendPrivateMessage(name, "Turn : " + turn);
-    }
-    public void d12(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(name.equalsIgnoreCase(turn) != true)
-        	return;
-        if (namex == turn)
-        {
-        	if (x2 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x2 == " ")
-        	{
-        		x2 = "X";
-        		
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = nameo;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        				
-        		}
-        	}
-        if (nameo == turn)
-        {
-        	if (x2 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x2 == " ")
-        	{
-        		x2 = "O";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = namex;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        		}
-        	}
-        if (x1 == "X")if (x2 == "X")if (x3 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x2 == "O")if (x3 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "X")if (x5 == "X")if (x6 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "O")if (x5 == "O")if (x6 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x5 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "O")if (x8 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "X")if (x8 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x5 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x4 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";game_status = "false";
-     	   nameo = "No Player O";
-        }
-        if (x1 == "O")if (x4 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=""; x2=""; x3=""; x4="";x5="";x6="";x7="";x8=""; x9="";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x6 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x6 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "X")if (x5 == "X")if (x8 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";game_status = "false";
-     	   nameo = "No Player O";
-        }
-        if (x2 == "O")if (x5 == "O")if (x8 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x5 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x5 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-    }
-    public void d13(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(name.equalsIgnoreCase(turn) != true)
-        	return;
-        if (namex == turn)
-        {
-        	if (x3 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x3 == " ")
-        	{
-        		x3 = "X";
-        		
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = nameo;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        				
-        		}
-        	}
-        if (nameo == turn)
-        {
-        	if (x3 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x3 == " ")
-        	{
-        		x3 = "O";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = namex;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        		}
-        	}
-        if (x1 == "X")if (x2 == "X")if (x3 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x2 == "O")if (x3 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "X")if (x5 == "X")if (x6 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "O")if (x5 == "O")if (x6 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x5 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "O")if (x8 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "X")if (x8 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x5 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x4 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x4 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=""; x2=""; x3=""; x4="";x5="";x6="";x7="";x8=""; x9="";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x6 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x6 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "X")if (x5 == "X")if (x8 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "O")if (x5 == "O")if (x8 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x5 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x5 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-    }
-    public void d22(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(name.equalsIgnoreCase(turn) != true)
-        	return;
-        if (namex == turn)
-        {
-        	if (x5 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x5 == " ")
-        	{
-        		x5 = "X";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = nameo;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        				
-        		}
-        	}
-        if (nameo == turn)
-        {
-        	if (x5 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x5 == " ")
-        	{
-        		x5 = "O";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = namex;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        		}
-        	}
-        if (x1 == "X")if (x2 == "X")if (x3 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x2 == "O")if (x3 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "X")if (x5 == "X")if (x6 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "O")if (x5 == "O")if (x6 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x5 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "O")if (x8 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "X")if (x8 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x5 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x4 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x4 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=""; x2=""; x3=""; x4="";x5="";x6="";x7="";x8=""; x9="";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x6 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x6 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "X")if (x5 == "X")if (x8 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "O")if (x5 == "O")if (x8 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x5 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x5 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-    }
-    public void d31(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(name.equalsIgnoreCase(turn) != true)
-        	return;
-        if (namex == turn)
-        {
-        	if (x7 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x7 == " ")
-        	{
-        		x7 = "X";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = nameo;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        				
-        		}
-        	}
-        if (nameo == turn)
-        {
-        	if (x7 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x7 == " ")
-        	{
-        		x7 = "O";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = namex;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        		}
-        	}
-        if (x1 == "X")if (x2 == "X")if (x3 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x2 == "O")if (x3 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "X")if (x5 == "X")if (x6 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "O")if (x5 == "O")if (x6 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x5 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "O")if (x8 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "X")if (x8 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x5 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x4 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x4 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=""; x2=""; x3=""; x4="";x5="";x6="";x7="";x8=""; x9="";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x6 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x6 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "X")if (x5 == "X")if (x8 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-        }
-        if (x2 == "O")if (x5 == "O")if (x8 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x5 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x5 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-    }
-    public void d32(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(name.equalsIgnoreCase(turn) != true)
-        	return;
-        if (namex == turn)
-        {
-        	if (x8 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x8 == " ")
-        	{
-        		x8 = "X";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = nameo;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        				
-        		}
-        	}
-        if (nameo == turn)
-        { 
-        	if (x8 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x8 == " ")
-        	{
-        		x8 = "O";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = namex;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        		}
-        	}
-        if (x1 == "X")if (x2 == "X")if (x3 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x2 == "O")if (x3 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "X")if (x5 == "X")if (x6 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "O")if (x5 == "O")if (x6 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x5 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "O")if (x8 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "X")if (x8 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x5 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-        }
-        if (x1 == "X")if (x4 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x4 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=""; x2=""; x3=""; x4="";x5="";x6="";x7="";x8=""; x9="";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x6 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x6 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "X")if (x5 == "X")if (x8 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "O")if (x5 == "O")if (x8 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x5 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x5 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-    }
-    public void d33(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(name.equalsIgnoreCase(turn) != true)
-        	return;
-        if (namex == turn)
-        {
-        	if (x9 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x9 == " ")
-        	{
-        		x9 = "X";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = nameo;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        				
-        		}
-        	}
-        if (nameo == turn)
-        {
-        	if (x9 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x9 == " ")
-        	{
-        		x9 = "O";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = namex;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        		}
-        	}
-        if (x1 == "X")if (x2 == "X")if (x3 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x2 == "O")if (x3 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "X")if (x5 == "X")if (x6 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "O")if (x5 == "O")if (x6 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x5 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "O")if (x8 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "X")if (x8 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x5 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x4 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x4 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=""; x2=""; x3=""; x4="";x5="";x6="";x7="";x8=""; x9="";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x6 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x6 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "X")if (x5 == "X")if (x8 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "O")if (x5 == "O")if (x8 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x5 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-        }
-        if (x1 == "O")if (x5 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-    }
-    public void d23(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(name.equalsIgnoreCase(turn) != true)
-        	return;
-        if (namex == turn)
-        {
-        	if (x6 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x6 == " ")
-        	{
-        		x6 = "X";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = nameo;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        				
-        		}
-        	}
-        if (nameo == turn)
-        {
-        	if (x6 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x6 == " ")
-        	{
-        		x6 = "O";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = namex;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        		}
-        	}
-        if (x1 == "X")if (x2 == "X")if (x3 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x2 == "O")if (x3 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "X")if (x5 == "X")if (x6 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "O")if (x5 == "O")if (x6 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x5 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "O")if (x8 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "X")if (x8 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x5 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x4 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x4 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=""; x2=""; x3=""; x4="";x5="";x6="";x7="";x8=""; x9="";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x6 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x6 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "X")if (x5 == "X")if (x8 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "O")if (x5 == "O")if (x8 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x5 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x5 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-    }
-    public void d21(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(name.equalsIgnoreCase(turn) != true)
-        	return;
-        if (namex == turn)
-        {
-        	if (x4 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x4 == " ")
-        	{
-        		x4 = "X";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = nameo;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        				
-        		}
-        	}
-        if (nameo == turn)
-        {
-        	if (x4 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x4 == " ")
-        	{
-        		x4 = "O";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = namex;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        		}
-        	}
-        if (x1 == "X")if (x2 == "X")if (x3 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x2 == "O")if (x3 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "X")if (x5 == "X")if (x6 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x4 == "O")if (x5 == "O")if (x6 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x5 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "O")if (x8 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x7 == "X")if (x8 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x5 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x4 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x4 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=""; x2=""; x3=""; x4="";x5="";x6="";x7="";x8=""; x9="";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "X")if (x6 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x3 == "O")if (x6 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "X")if (x5 == "X")if (x8 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x2 == "O")if (x5 == "O")if (x8 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "X")if (x5 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x5 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-    }
-    public void d11(String name, String msg)
-    {
-        //Make sure player has clearance
-        if(name.equalsIgnoreCase(turn) != true)
-        	return;
-        if (namex == turn)
-        {
-        	if (x1 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x1 == " ")
-        	{
-        		x1 = "X";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = nameo;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        				
-        		}
-        	}
-        if (nameo == turn)
-        {
-        	if (x1 != " ")
-        	{
-        		m_botAction.sendSmartPrivateMessage(name, "This draw already taken!");
-        	}
-        	else if (x1 == " ")
-        	{
-        		x1 = "O";
-        		tic[0] = "+---+---+---+";
-        		tic[1] = "| "+x1+" | "+x2+" | "+x3+" |";
-        		tic[2] = "| "+x4+" | "+x5+" | "+x6+" |";
-        		tic[3] = "| "+x7+" | "+x8+" | "+x9+" |";
-        		m_botAction.sendArenaMessage("Game: [X]" + namex + " Vs [O]" + nameo + "!");
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[1]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[2]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		m_botAction.sendArenaMessage(tic[3]);
-        		m_botAction.sendArenaMessage(tic[0]);
-        		turn = namex;
-        		m_botAction.sendArenaMessage("Turn : " + turn);
-        		}
-        	}
-        if (x1 == "X")if (x2 == "X")if (x3 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";game_status = "false";
-        }
-        if (x1 == "O")if (x2 == "O")if (x3 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x4 == "X")if (x5 == "X")if (x6 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-        }
-        if (x4 == "O")if (x5 == "O")if (x6 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x3 == "X")if (x5 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x7 == "O")if (x8 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x7 == "X")if (x8 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x3 == "O")if (x5 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x1 == "X")if (x4 == "X")if (x7 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x1 == "O")if (x4 == "O")if (x7 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=""; x2=""; x3=""; x4="";x5="";x6="";x7="";x8=""; x9="";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x3 == "X")if (x6 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x3 == "O")if (x6 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x2 == "X")if (x5 == "X")if (x8 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x2 == "O")if (x5 == "O")if (x8 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x1 == "X")if (x5 == "X")if (x9 == "X")
-        {
-     	   m_botAction.sendArenaMessage("[X]" + namex + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	  game_status = "false";
-        }
-        if (x1 == "O")if (x5 == "O")if (x9 == "O")
-        {
-     	   m_botAction.sendArenaMessage("[O]" + nameo + ": Has Won!");
-     	   x1=" "; x2=" "; x3=" "; x4=" ";x5=" ";x6=" ";x7=" ";x8=" "; x9=" ";
-     	   turn = "No Turn";
-     	   namex = "No Player X";
-     	   nameo = "No Player O";
-     	   game_status = "false";
-        }
-    }
-    public void zone(String name, String msg)
-    {
-    	if(oplist.isER(name))
-    	{
-    	m_botAction.sendZoneMessage(msg + " -" + name, 2);
-    	}
-    }
-    public void say(String name, String msg)
-    {
-    	if(oplist.isER(name))
-    	{
-    	m_botAction.sendPublicMessage(msg);
-    	}
-    }
 }
