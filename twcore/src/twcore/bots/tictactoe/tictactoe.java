@@ -138,7 +138,7 @@ public class tictactoe extends SubspaceBot {
                 "| !ch <name>             - Challenges <name> if possible            |",
                 "| !a                     - Accepts challenge if challenged          |",
                 "| !cancel                - Cancels challenge if challenger          |",
-                "! !p <row>,<col>         - Puts an X or O in the box at <row>,<col> |",
+                "| !p <row>,<col>         - Puts an X or O in the box at <row>,<col> |",
                 "|                          as shown below                           |",
                 "|                           cols   1   2   3                        |",
                 "|                                +---+---+---.                      |",
@@ -278,23 +278,71 @@ public class tictactoe extends SubspaceBot {
         if (board[0][0] != Token._) {
             if (board[0][0] == board[0][1] && board[0][1] == board[0][2])
                 result = board[0][0];
+            // +---+---+---+
+            // | x | x | x |
+            // |   |   |   |
+            // |   |   |   |
+            // +---+---+---+
             else if (board[0][0] == board[1][0] && board[1][0] == board[2][0])
                 result = board[0][0];
+            // +---+---+---+
+            // | x |   |   |
+            // | x |   |   |
+            // | x |   |   |
+            // +---+---+---+
             else if (board[0][0] == board[1][1] && board[1][1] == board[2][2])
                 result = board[0][0];
-        } else if (board[0][2] != Token._) {
+            // +---+---+---+
+            // | x |   |   |
+            // |   | x |   |
+            // |   |   | x |
+            // +---+---+---+
+            
+        }
+        if (board[0][2] != Token._) {
+        	
             if (board[0][2] == board[1][2] && board[1][2] == board[2][2])
                 result = board[0][2];
+            // +---+---+---+
+            // |   |   | x |
+            // |   |   | x |
+            // |   |   | x |
+            // +---+---+---+
             else if (board[0][2] == board[1][1] && board[1][1] == board[2][0])
                 result = board[0][2];
-        } else if (board[2][2] != Token._) {
+            // +---+---+---+
+            // |   |   | x |
+            // |   | x |   |
+            // | x |   |   |
+            // +---+---+---+
+            
+        } 
+        if (board[2][2] != Token._) {
             if (board[2][2] == board[2][1] && board[2][1] == board[2][0])
                 result = board[2][2];
-        } else if (board[1][1] != Token._) {
+            // +---+---+---+
+            // |   |   |   |
+            // |   |   |   |
+            // | x | x | x |
+            // +---+---+---+
+            
+        } 
+        if (board[1][1] != Token._) {
+        	
             if (board[1][1] == board[1][0] && board[1][0] == board[1][2])
                 result = board[1][1];
-            else if (board[1][1] == board[0][1] && board[1][1] == board[2][1])
+            // +---+---+---+
+            // |   |   |   |
+            // | x | x | x |
+            // |   |   |   |
+            // +---+---+---+
+            else if (board[1][1] == board[0][1] && board[0][1] == board[2][1])
                 result = board[1][1];
+            // +---+---+---+
+            // |   | x |   |
+            // |   | x |   |
+            // |   | x |   |
+            // +---+---+---+
         }
         if (result != null)
             return result;
