@@ -207,6 +207,7 @@ public class tictactoe extends SubspaceBot {
     }
     
     private void cmd_play(String name, String msg) {
+        if (board == null) return;
         if (getPlayer(name) != playerTurn) {
             ba.sendSmartPrivateMessage(name, "It is not your turn.");
             return;
