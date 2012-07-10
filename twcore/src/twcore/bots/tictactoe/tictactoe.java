@@ -173,6 +173,8 @@ public class tictactoe extends SubspaceBot {
             if (challed != null) {
                 if (challed.equalsIgnoreCase(name))
                     ba.sendPrivateMessage(name, "You cannot challenge yourself.");
+                else if (challed.equalsIgnoreCase(ba.getBotName()))
+                	 ba.sendPrivateMessage(name, "You cannot challenge bot");
                 else
                     challenge = new Challenge(name, challed);
             } else
@@ -212,6 +214,7 @@ public class tictactoe extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "It is not your turn.");
             return;
         }
+        else if (getPlayer(name) == playerTurn) {
         msg = msg.substring(msg.indexOf(" ") + 1).trim();
         int x ,y;
         try {
@@ -231,6 +234,7 @@ public class tictactoe extends SubspaceBot {
         y--;
         if (board[x][y] != Token._) {
             ba.sendSmartPrivateMessage(name, "You must choose an empty box.");
+            ba.setObjects(ba.getPlayerID(name));
         } else {
             board[x][y] = Token.get(playerTurn);
             Token winner = getWinner();
@@ -244,6 +248,7 @@ public class tictactoe extends SubspaceBot {
                 playerTurn = -1;
             } else 
                 getTurn();
+        }
         }
     }
     
@@ -377,7 +382,7 @@ public class tictactoe extends SubspaceBot {
             challed = challenged;
             challenge = this;
             ba.scheduleTask(challenge, Tools.TimeInMillis.MINUTE);
-            ba.sendPrivateMessage(challenger, "You have challenged '" + challenged + "' to TicTacToe. Challenge will expire in 1 minute.");
+            ba.sendPrivateMessage(challenger, "You have challenged '" + challenged + "' to TicTacToe. Challenge will expire in 1 minute");
             ba.sendPrivateMessage(challenged, "You have been challenged by '" + challenger + "' to TicTacToe. You have 1 minute to accept.");
         }
         
