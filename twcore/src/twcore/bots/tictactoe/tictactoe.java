@@ -356,7 +356,9 @@ public class tictactoe extends SubspaceBot {
     }
     
     private int getPlayer(String name) {
-        if (name.equalsIgnoreCase(players[0]))
+        if (players == null)
+            return -1;
+        else if (name.equalsIgnoreCase(players[0]))
             return 0;
         else if (name.equalsIgnoreCase(players[1]))
             return 1;
