@@ -201,6 +201,26 @@ public class tictactoe extends SubspaceBot {
             players = null;
             board = null;
             playerTurn = -1;
+            // O // 
+            ba.setupObject(1, false);
+            ba.setupObject(2, false);
+            ba.setupObject(3, false);
+            ba.setupObject(4, false);
+            ba.setupObject(5, false);
+            ba.setupObject(6, false);
+            ba.setupObject(7, false);
+            ba.setupObject(8, false);
+            ba.setupObject(9, false);
+            // X //
+            ba.setupObject(10, false);
+            ba.setupObject(11, false);
+            ba.setupObject(12, false);
+            ba.setupObject(13, false);
+            ba.setupObject(14, false);
+            ba.setupObject(15, false);
+            ba.setupObject(16, false);
+            ba.setupObject(17, false);
+            ba.setupObject(18, false);
             ba.sendArenaMessage("This game has been killed by " + name + ".");
         } else if (challenge != null) {
             challenge.cancel(name);
@@ -234,6 +254,174 @@ public class tictactoe extends SubspaceBot {
         if (board[x][y] != Token._) {
             ba.sendSmartPrivateMessage(name, "You must choose an empty box.");
         } else {
+            // X Player //
+            if (name == players[1])
+            {
+            // +---+---+---+
+            // | X | X | X |
+            // |   |   |   |
+            // |   |   |   |
+            // +---+---+---+
+            if (x == 0)if(y == 0)
+            {
+                // O // 
+            	
+            	ba.showObject(1);
+            	ba.setObjects();
+               // ba.sendPublicMessage("1");
+            }
+            if (x == 0)if(y == 1)
+            {
+                // O // 
+            	ba.showObject(4);
+            	ba.setObjects();
+              //  ba.sendPublicMessage("4");
+            }
+            if (x == 0)if(y == 2)
+            {
+                // O // 
+            	ba.showObject(7);
+            	ba.setObjects();
+              //  ba.sendPublicMessage("7");
+            }
+            
+            // +---+---+---+
+            // |   |   |   |
+            // | x | x | x |
+            // |   |   |   |
+            // +---+---+---+
+            if (x == 1)if(y == 0)
+            {
+                // O // 
+            	ba.showObject(2);
+            	ba.setObjects();
+               // ba.sendPublicMessage("2");
+            }
+            if (x == 1)if(y == 1)
+            {
+                // O // 
+            	ba.showObject(5);
+            	ba.setObjects();
+               // ba.sendPublicMessage("5");
+            }
+            if (x == 1)if(y == 2)
+            {
+                // O // 
+            	ba.showObject(8);
+            	ba.setObjects();
+              //  ba.sendPublicMessage("8");
+            }
+            // +---+---+---+
+            // |   |   |   |
+            // |   |   |   |
+            // | x | x | x |
+            // +---+---+---+
+            if (x == 2)if(y == 0)
+            {
+                // O // 
+            	ba.showObject(3);
+            	ba.setObjects();
+               // ba.sendPublicMessage("3");
+            }
+            if (x == 2)if(y == 1)
+            {
+                // O // 
+            	ba.showObject(6);
+            	ba.setObjects();
+              //  ba.sendPublicMessage("6");
+            }
+            if (x == 2)if(y == 2)
+            {
+                // O // 
+            	ba.showObject(9);
+            	ba.setObjects();
+               // ba.sendPublicMessage("9");
+            }
+            }
+            
+            // O Player //
+            else if (name == players[0])
+            {
+            // +---+---+---+
+            // | X | X | X |
+            // |   |   |   |
+            // |   |   |   |
+            // +---+---+---+
+            if (x == 0)if(y == 0)
+            {
+                // O // 
+            	ba.showObject(10);
+            	ba.setObjects();
+               // ba.sendPublicMessage("10");
+            }
+            if (x == 0)if(y == 1)
+            {
+                // O // 
+            	ba.showObject(13);
+            	ba.setObjects();
+               // ba.sendPublicMessage("13");
+            }
+            if (x == 0)if(y == 2)
+            {
+                // O // 
+            	ba.showObject(16);
+            	ba.setObjects();
+               // ba.sendPublicMessage("16");
+            }
+            
+            // +---+---+---+
+            // |   |   |   |
+            // | x | x | x |
+            // |   |   |   |
+            // +---+---+---+
+            if (x == 1)if(y == 0)
+            {
+                // O // 
+            	ba.showObject(11);
+            	ba.setObjects();
+              //  ba.sendPublicMessage("11");
+            }
+            if (x == 1)if(y == 1)
+            {
+                // O // 
+            	ba.showObject(14);
+            	ba.setObjects();
+              //  ba.sendPublicMessage("14");
+            }
+            if (x == 1)if(y == 2)
+            {
+                // O // 
+            	ba.showObject(17);
+            	ba.setObjects();
+              //  ba.sendPublicMessage("17");
+            }
+            // +---+---+---+
+            // |   |   |   |
+            // |   |   |   |
+            // | x | x | x |
+            // +---+---+---+
+            if (x == 2)if(y == 0)
+            {
+                // O // 
+            	ba.showObject(12);
+            	ba.setObjects();
+              //  ba.sendPublicMessage("12");
+            }
+            if (x == 2)if(y == 1)
+            {
+                // O // 
+            	ba.showObject(15);
+            	ba.setObjects();
+             //   ba.sendPublicMessage("15");
+            }
+            if (x == 2)if(y == 2)
+            {
+                // O // 
+            	ba.showObject(18);
+            	ba.setObjects();
+             //   ba.sendPublicMessage("18");
+            }
+            }
             board[x][y] = Token.get(playerTurn);
             Token winner = getWinner();
             if (winner != null) {
@@ -241,6 +429,19 @@ public class tictactoe extends SubspaceBot {
                     ba.sendArenaMessage("GAME OVER: Draw!", 5);
                 else
                     ba.sendArenaMessage("GAME OVER: " + players[winner.player] + " wins as " + winner.toString() + "'s!" , 5);
+                if (winner.player == 1)
+                {
+                	ba.setObjects(21);
+                	ba.sendPublicMessage("21");
+                	ba.getObjectSet();
+                }
+                if (winner.player == 0)
+                {
+                	ba.setupObject(20, true);
+                	ba.setObjects(20);
+                	ba.sendPublicMessage("20");
+                	ba.getObjectSet();
+                }
                 players = null;
                 board = null;
                 playerTurn = -1;
@@ -257,28 +458,24 @@ public class tictactoe extends SubspaceBot {
                 { Token._, Token._, Token._ }, 
                 { Token._, Token._, Token._ }, 
         };
-        // O Lvzs //
-        ba.sendPublicMacro("?objoff 1");
-        ba.sendPublicMacro("?objoff 2");
-        ba.sendPublicMacro("?objoff 3");
-        ba.sendPublicMacro("?objoff 4");
-        ba.sendPublicMacro("?objoff 5");
-        ba.sendPublicMacro("?objoff 6");
-        ba.sendPublicMacro("?objoff 7");
-        ba.sendPublicMacro("?objoff 8");
-        ba.sendPublicMacro("?objoff 9");
-        // X Lvzs //
-        ba.sendPublicMacro("?objoff 10");
-        ba.sendPublicMacro("?objoff 11");
-        ba.sendPublicMacro("?objoff 12");
-        ba.sendPublicMacro("?objoff 13");
-        ba.sendPublicMacro("?objoff 14");
-        ba.sendPublicMacro("?objoff 15");
-        ba.sendPublicMacro("?objoff 16");
-        ba.sendPublicMacro("?objoff 17");
-        ba.sendPublicMacro("?objoff 18");
-        // Objects X Won! Code:20
-        // Objects O Won! Code:21
+    	ba.hideObject(1);
+    	ba.hideObject(2);
+    	ba.hideObject(3);
+    	ba.hideObject(4);
+    	ba.hideObject(5);
+    	ba.hideObject(6);
+    	ba.hideObject(7);
+    	ba.hideObject(8);
+    	ba.hideObject(9);
+    	ba.hideObject(10);
+    	ba.hideObject(11);
+    	ba.hideObject(12);
+    	ba.hideObject(13);
+    	ba.hideObject(14);
+    	ba.hideObject(15);
+    	ba.hideObject(16);
+    	ba.hideObject(17);
+    	ba.hideObject(18);
         players = new String[] { challenge.challer, challenge.challed };
         ba.cancelTask(challenge);
         challenge = null;
