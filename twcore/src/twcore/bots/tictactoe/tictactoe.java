@@ -131,7 +131,6 @@ public class tictactoe extends SubspaceBot {
         else
             ba.sendSmartPrivateMessage(name, "Invalid arena.");
     }
-
     private void cmd_help(String name) {
         String[] strs = {
                 "+-- TicTacToe Commands ---------------------------------------------.",
@@ -234,7 +233,6 @@ public class tictactoe extends SubspaceBot {
         y--;
         if (board[x][y] != Token._) {
             ba.sendSmartPrivateMessage(name, "You must choose an empty box.");
-            ba.setObjects(ba.getPlayerID(name));
         } else {
             board[x][y] = Token.get(playerTurn);
             Token winner = getWinner();
@@ -259,6 +257,28 @@ public class tictactoe extends SubspaceBot {
                 { Token._, Token._, Token._ }, 
                 { Token._, Token._, Token._ }, 
         };
+        // O Lvzs //
+        ba.sendPublicMacro("?objoff 1");
+        ba.sendPublicMacro("?objoff 2");
+        ba.sendPublicMacro("?objoff 3");
+        ba.sendPublicMacro("?objoff 4");
+        ba.sendPublicMacro("?objoff 5");
+        ba.sendPublicMacro("?objoff 6");
+        ba.sendPublicMacro("?objoff 7");
+        ba.sendPublicMacro("?objoff 8");
+        ba.sendPublicMacro("?objoff 9");
+        // X Lvzs //
+        ba.sendPublicMacro("?objoff 10");
+        ba.sendPublicMacro("?objoff 11");
+        ba.sendPublicMacro("?objoff 12");
+        ba.sendPublicMacro("?objoff 13");
+        ba.sendPublicMacro("?objoff 14");
+        ba.sendPublicMacro("?objoff 15");
+        ba.sendPublicMacro("?objoff 16");
+        ba.sendPublicMacro("?objoff 17");
+        ba.sendPublicMacro("?objoff 18");
+        // Objects X Won! Code:20
+        // Objects O Won! Code:21
         players = new String[] { challenge.challer, challenge.challed };
         ba.cancelTask(challenge);
         challenge = null;
