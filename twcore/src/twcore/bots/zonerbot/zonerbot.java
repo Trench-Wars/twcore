@@ -9,6 +9,7 @@ import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.TimerTask;
+import java.util.Vector;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -43,6 +44,8 @@ public class zonerbot extends SubspaceBot {
     public static final int MAX_LENGTH = 400;
     public static final int NATURAL_LINE = 200;
     public static final int LINE_LENGTH = 120;
+    
+    public static final int PER_DELAY = 3;
 
     private boolean ZONE_ON_LOAD;
 
@@ -56,6 +59,10 @@ public class zonerbot extends SubspaceBot {
     private ArrayList<Periodic> periodic;
     private LinkedList<Advert> usedAdverts;
     private LinkedList<String> trainers;
+    
+    private PeriodicTimer periodicTimer;
+    private Vector<Periodic> periodicQueue;
+    private long lastPeriodic;
 
     private String currentUser;
 
@@ -67,14 +74,13 @@ public class zonerbot extends SubspaceBot {
         periodic = new ArrayList<Periodic>();
         trainers = new LinkedList<String>();
         usedAdverts = new LinkedList<Advert>();
+        periodicQueue = new Vector<Periodic>();
         currentUser = null;
         ba.getEventRequester().request(EventRequester.LOGGED_ON);
         ba.getEventRequester().request(EventRequester.MESSAGE);
         loadTrainers();
         DEBUG = false;
         debugger = "";
-        ZONE_ON_LOAD = false;
-        loadPeriodics();
     }
 
     /** Handles the LoggedOn event **/
@@ -82,6 +88,10 @@ public class zonerbot extends SubspaceBot {
         ba.joinArena(ba.getBotSettings().getString("InitialArena"));
         ba.sendUnfilteredPublicMessage("?chat=robodev");
         ba.ipcSubscribe(ZONE_CHANNEL);
+        lastPeriodic = System.currentTimeMillis() - (PER_DELAY * Tools.TimeInMillis.MINUTE);
+        ZONE_ON_LOAD = true;
+        new PeriodicTimer();
+        loadPeriodics();
     }
     
     public void handleEvent(InterProcessEvent event) {
@@ -1537,19 +1547,22 @@ public class zonerbot extends SubspaceBot {
             long now = System.currentTimeMillis();
             if ((created + (duration * Tools.TimeInMillis.HOUR)) < now)
                 end();
-            else {
-                try {
-                    if (advert.length() > NATURAL_LINE)
-                        zoneMessageSpam(splitString(advert, LINE_LENGTH), sound);
-                    else if (sound > -1)
-                        ba.sendZoneMessage(advert, sound);
-                    else
-                        ba.sendZoneMessage(advert);
-                } catch (Exception e) {
-                    ba.cancelTask(this);
-                    periodic.remove(this);
-                    updateIndices();
-                }
+            else
+                periodicQueue.add(this);
+        }
+        
+        public void zone() {
+            try {
+                if (advert.length() > NATURAL_LINE)
+                    zoneMessageSpam(splitString(advert, LINE_LENGTH), sound);
+                else if (sound > -1)
+                    ba.sendZoneMessage(advert, sound);
+                else
+                    ba.sendZoneMessage(advert);
+            } catch (Exception e) {
+                ba.cancelTask(this);
+                periodic.remove(this);
+                updateIndices();
             }
         }
 
@@ -1575,11 +1588,35 @@ public class zonerbot extends SubspaceBot {
                 return "Set by: " + name + ", repeats every " + delay + " minute(s), for " + duration + " hour(s). \"" + advert + "\"";
         }
     }
+    
+    private class PeriodicTimer extends TimerTask {
+        
+        public PeriodicTimer() {
+            if (periodicTimer != null)
+                ba.cancelTask(periodicTimer);
+            periodicTimer = this;
+            ba.scheduleTask(periodicTimer, 3000, Tools.TimeInMillis.MINUTE);
+        }
+        
+        public void run() {
+            if (periodicQueue.isEmpty())
+                return;
+            long now = System.currentTimeMillis();
+            if (now - lastPeriodic > (PER_DELAY * Tools.TimeInMillis.MINUTE)) {
+                lastPeriodic = now;
+                debug("Zoning periodic...");
+                periodicQueue.remove(0).zone();
+            } else
+                debug("Too early for periodic, so continue waiting...");
+        }
+    }
 
     /** Die TimerTask allows for bot to close shop before killing **/
     private class Die extends TimerTask {
         @Override
         public void run() {
+            if (periodicTimer != null)
+                ba.cancelTask(periodicTimer);
             ba.die();
         }
     }
