@@ -45,7 +45,7 @@ public class zonerbot extends SubspaceBot {
     public static final int NATURAL_LINE = 200;
     public static final int LINE_LENGTH = 120;
     
-    public static final int PER_DELAY = 3;
+    public static final int PER_DELAY = 5;
 
     private boolean ZONE_ON_LOAD;
 
