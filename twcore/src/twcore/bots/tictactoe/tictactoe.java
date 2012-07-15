@@ -268,7 +268,7 @@ public class tictactoe extends SubspaceBot {
             	
             	ba.showObject(1);
             	ba.setObjects();
-               // ba.sendPublicMessage("1");
+               // ba.sendPublicMessage("1"); obj id Fix me
             }
             if (x == 0)if(y == 1)
             {
@@ -364,7 +364,7 @@ public class tictactoe extends SubspaceBot {
             if (x == 0)if(y == 2)
             {
                 // O // 
-            	ba.showObject(16);
+            //	ba.showObject(16);
             	ba.setObjects();
                // ba.sendPublicMessage("16");
             }
@@ -377,21 +377,21 @@ public class tictactoe extends SubspaceBot {
             if (x == 1)if(y == 0)
             {
                 // O // 
-            	ba.showObject(11);
+            //	ba.showObject(11);
             	ba.setObjects();
               //  ba.sendPublicMessage("11");
             }
             if (x == 1)if(y == 1)
             {
                 // O // 
-            	ba.showObject(14);
+           // 	ba.showObject(14);
             	ba.setObjects();
               //  ba.sendPublicMessage("14");
             }
             if (x == 1)if(y == 2)
             {
                 // O // 
-            	ba.showObject(17);
+            //	ba.showObject(17);
             	ba.setObjects();
               //  ba.sendPublicMessage("17");
             }
@@ -403,21 +403,21 @@ public class tictactoe extends SubspaceBot {
             if (x == 2)if(y == 0)
             {
                 // O // 
-            	ba.showObject(12);
+            //	ba.showObject(12);
             	ba.setObjects();
               //  ba.sendPublicMessage("12");
             }
             if (x == 2)if(y == 1)
             {
                 // O // 
-            	ba.showObject(15);
+            	//ba.showObject(15);
             	ba.setObjects();
              //   ba.sendPublicMessage("15");
             }
             if (x == 2)if(y == 2)
             {
                 // O // 
-            	ba.showObject(18);
+            	//ba.showObject(18);
             	ba.setObjects();
              //   ba.sendPublicMessage("18");
             }
@@ -432,14 +432,14 @@ public class tictactoe extends SubspaceBot {
                 if (winner.player == 1)
                 {
                 	ba.setObjects(21);
-                	ba.sendPublicMessage("21");
+                //	ba.sendPublicMessage("21");
                 	ba.getObjectSet();
                 }
                 if (winner.player == 0)
                 {
                 	ba.setupObject(20, true);
                 	ba.setObjects(20);
-                	ba.sendPublicMessage("20");
+                //	ba.sendPublicMessage("20");
                 	ba.getObjectSet();
                 }
                 players = null;
@@ -501,6 +501,7 @@ public class tictactoe extends SubspaceBot {
         if (board[0][0] != Token._) {
             if (board[0][0] == board[0][1] && board[0][1] == board[0][2])
                 result = board[0][0];
+            // Object id [90]
             // +---+---+---+
             // | x | x | x |
             // |   |   |   |
@@ -508,6 +509,7 @@ public class tictactoe extends SubspaceBot {
             // +---+---+---+
             else if (board[0][0] == board[1][0] && board[1][0] == board[2][0])
                 result = board[0][0];
+         // Object id [91]
             // +---+---+---+
             // | x |   |   |
             // | x |   |   |
@@ -515,6 +517,7 @@ public class tictactoe extends SubspaceBot {
             // +---+---+---+
             else if (board[0][0] == board[1][1] && board[1][1] == board[2][2])
                 result = board[0][0];
+         // Object id [92]
             // +---+---+---+
             // | x |   |   |
             // |   | x |   |
@@ -526,6 +529,7 @@ public class tictactoe extends SubspaceBot {
         	
             if (board[0][2] == board[1][2] && board[1][2] == board[2][2])
                 result = board[0][2];
+         // Object id [94]
             // +---+---+---+
             // |   |   | x |
             // |   |   | x |
@@ -533,6 +537,7 @@ public class tictactoe extends SubspaceBot {
             // +---+---+---+
             else if (board[0][2] == board[1][1] && board[1][1] == board[2][0])
                 result = board[0][2];
+         // Object id [95]
             // +---+---+---+
             // |   |   | x |
             // |   | x |   |
@@ -543,6 +548,7 @@ public class tictactoe extends SubspaceBot {
         if (board[2][2] != Token._) {
             if (board[2][2] == board[2][1] && board[2][1] == board[2][0])
                 result = board[2][2];
+         // Object id [97]
             // +---+---+---+
             // |   |   |   |
             // |   |   |   |
@@ -554,6 +560,7 @@ public class tictactoe extends SubspaceBot {
         	
             if (board[1][1] == board[1][0] && board[1][0] == board[1][2])
                 result = board[1][1];
+         // Object id [96]
             // +---+---+---+
             // |   |   |   |
             // | x | x | x |
@@ -561,6 +568,7 @@ public class tictactoe extends SubspaceBot {
             // +---+---+---+
             else if (board[1][1] == board[0][1] && board[0][1] == board[2][1])
                 result = board[1][1];
+         // Object id [93]
             // +---+---+---+
             // |   | x |   |
             // |   | x |   |
