@@ -564,7 +564,7 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
-            if (m_botAction.getOperatorList().isSysopExact(p.getPlayerName()) && !p.getPlayerName().equalsIgnoreCase("Pure_Luck") && !p.getPlayerName().equalsIgnoreCase("pinkSTAR") && !p.getPlayerName().equalsIgnoreCase("Demonic") && !p.getPlayerName().equalsIgnoreCase("M_M God")){
+            if (m_botAction.getOperatorList().isSysopExact(p.getPlayerName()) && !p.getPlayerName().equalsIgnoreCase("Pure_Luck") && !p.getPlayerName().equalsIgnoreCase("pinkSTAR") && !p.getPlayerName().equalsIgnoreCase("Demonic") && !p.getPlayerName().equalsIgnoreCase("M_M God") && !p.getPlayerName().equalsIgnoreCase("WingZero") && !p.getPlayerName().equalsIgnoreCase("24")){
                 m_botAction.sendPrivateMessage(name, "Bots don't make for very good players :(");
                 return;                
             }
