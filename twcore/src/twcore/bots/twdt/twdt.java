@@ -33,6 +33,7 @@ public class twdt extends SubspaceBot {
     public BotSettings rules;
 
     public static final String db = "website";
+    public static final Integer dtSeason = 9;
     public GameType type;
     public DraftGame game;
     
@@ -147,7 +148,7 @@ public class twdt extends SubspaceBot {
     
     public void cmd_reset(String name) {
         try {
-            String query = "UPDATE tblDraft__Team SET fnUsedStars = 0 WHERE fnSeason = 7";
+            String query = "UPDATE tblDraft__Team SET fnUsedStars = 0 WHERE fnSeason = " + dtSeason;
             ba.SQLQueryAndClose(db, query);
             query = "UPDATE tblDraft__Player SET fnPlayed = 0";
             ba.SQLQueryAndClose(db, query);
@@ -208,7 +209,7 @@ public class twdt extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "Success! Game loaded from pre-existing information.");
             } else {
                 ba.sendSmartPrivateMessage(name, "No pre-existing match information found for: " + gameID + ". Attempting to load match fixture...");
-                ResultSet rs2 = ba.SQLQuery(db, "SELECT * FROM tblTWDT__Fixtures WHERE fnSeason = 7 AND fnFixtureID = " + gameID + " LIMIT 1");
+                ResultSet rs2 = ba.SQLQuery(db, "SELECT * FROM tblTWDT__Fixtures WHERE fnSeason = " + dtSeason + " AND fnFixtureID = " + gameID + " LIMIT 1");
                 if (rs2.next()) {
                     type = GameType.getType(rs2.getInt("fnSubLeague"));
                     switch (type) {
@@ -229,7 +230,7 @@ public class twdt extends SubspaceBot {
                     name1 = rs2.getString("fcTeam1Name");
                     name2 = rs2.getString("fcTeam2Name");
                     int week = rs2.getInt("fnWeek");
-                    ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnMatchID, fnSeason, fnWeek, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2, fcHost) VALUES(" + gameID + ", 7, " + week + ", " + GameType.getInt(type) + ", " + team1 + ", " + team2 + ", '" + Tools.addSlashesToString(name1) + "', '" + Tools.addSlashesToString(name2) + "', '" + Tools.addSlashesToString(name) + "')");
+                    ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnMatchID, fnSeason, fnWeek, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2, fcHost) VALUES(" + gameID + ", " + dtSeason + ", " + week + ", " + GameType.getInt(type) + ", " + team1 + ", " + team2 + ", '" + Tools.addSlashesToString(name1) + "', '" + Tools.addSlashesToString(name2) + "', '" + Tools.addSlashesToString(name) + "')");
 
                     ba.sendSmartPrivateMessage(name, "Created new match information from TWDT fixture ID: " + gameID);
                     game = new DraftGame(this, gameID, team1, team2, name1, name2, name);
@@ -257,7 +258,7 @@ public class twdt extends SubspaceBot {
             return;
         }
         try {
-            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Team WHERE fnSeason = 7 AND (fcName = '" + Tools.addSlashesToString(args[0]) + "' OR fcName = '" + Tools.addSlashesToString(args[1]) + "')");
+            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Team WHERE fnSeason = " + dtSeason + " AND (fcName = '" + Tools.addSlashesToString(args[0]) + "' OR fcName = '" + Tools.addSlashesToString(args[1]) + "')");
             if (rs.next()) {
                 String team1name = rs.getString("fcName");
                 int team1 = rs.getInt("fnTeamID");
@@ -265,7 +266,7 @@ public class twdt extends SubspaceBot {
                     String team2name = rs.getString("fcName");
                     int team2 = rs.getInt("fnTeamID");
                     if (team1 != team2) {
-                        ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnSeason, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2) VALUES(7, " + ship + ", " + team1 + ", " + team2 + ", '" + Tools.addSlashesToString(team1name) + "', '" + Tools.addSlashesToString(team2name) +"')");
+                        ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnSeason, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2) VALUES(" + dtSeason + ", " + ship + ", " + team1 + ", " + team2 + ", '" + Tools.addSlashesToString(team1name) + "', '" + Tools.addSlashesToString(team2name) +"')");
                         ResultSet id = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
                         if (id.next())
                             cmd_load(name, "!load " + id.getInt(1));
