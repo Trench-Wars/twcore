@@ -29,6 +29,8 @@ public class DraftTeam {
     public static final String db = "website";
     public static final int MAXRES_X = 1440;
     public static final int MAXRES_Y = 1024;
+    public int MAX_STARS = 60;
+    public int season = 9;
     
     BotAction       ba;
     OperatorList    oplist;
@@ -39,7 +41,7 @@ public class DraftTeam {
     String          teamName;
     boolean         ready, flag, resChecks;
     int[]           shipMax, ships;
-    int             score, freq, teamID, deaths, usedStars, subs, changes, switches;
+    int             score, freq, teamID, deaths, /*usedStars,*/ subs, changes, switches;
 
     HashMap<String, DraftPlayer>    players;
     HashMap<String, ResCheck>       checks;
@@ -60,11 +62,13 @@ public class DraftTeam {
         teamName = name;
         teamID = id;
         freq = freqNum;
-        usedStars = -1;
+        //usedStars = -1;
         subs = rules.getInt("Subs");
         deaths = rules.getInt("Deaths");
         changes = rules.getInt("Changes");
         switches = rules.getInt("Switches");
+        MAX_STARS = ba.getBotSettings().getInt("MaxStars");
+        season = ba.getBotSettings().getInt("Season");
         score = 0;
         ready = false;
         flag = false;
@@ -163,7 +167,7 @@ public class DraftTeam {
     }
     
     public void cmd_stars(String name) {
-        ba.sendPrivateMessage(name, "" + teamName + " star count: " + usedStars);
+        //ba.sendPrivateMessage(name, "" + teamName + " star count: " + usedStars);
     }
     
     /** Handles the list command which prints a list of each teams captains and current line ups */
@@ -285,11 +289,13 @@ public class DraftTeam {
             ships[p.getShip() - 1]--;
             ships[8]--;
             p.getOut();
+            /*
             if (p.getStars() > 0) {
                 // If player's stars were greater than 0 then it was player's first time added for the week so reset played
                 setPlayed(p.getName(), false);
                 usedStars -= p.getStars();
             }
+            */
             players.remove(low(name));
         }
     }
@@ -405,7 +411,10 @@ public class DraftTeam {
             int stars = getStars(name);
             // If stars are less than 0 then the player was found on the team's roster
             if (stars > -1) {
-                if (usedStars + stars <= 50) {
+
+                p = new DraftPlayer(ba, this, name, freq, ship, stars);
+                /*
+                if (usedStars + stars <= MAX_STARS) {
                     // Add player unless teams star max would be exceeded
                     if (stars > 0) // stars will be 0 if this player's stars were already added in a previous game
                         setPlayed(name, true);
@@ -415,6 +424,7 @@ public class DraftTeam {
                     ba.sendSmartPrivateMessage(cap, "There are not enough stars remaining to add '" + name + "'. Used stars: " + usedStars);
                     return;
                 }
+                */
             } else {
                 ba.sendSmartPrivateMessage(cap, name + " was not found on the team roster.");
                 return;
@@ -432,7 +442,7 @@ public class DraftTeam {
             ba.sendArenaMessage(name + " has been added");
         if (round.getState() == RoundState.LINEUPS)
             round.sendLagRequest(name, "!" + teamID);
-        msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
+        //msgCaptains("You have " + (MAX_STARS - usedStars) + " stars remaining this week.");
     }
     
     /** Executes the substitution of one player for another */ 
@@ -447,8 +457,9 @@ public class DraftTeam {
             // If player IN has more stars, then count the IN player's stars and disregard OUT's; if OUT has more then nothing
             int stars = getStars(in);
             if (stars > -1) {
+                /*
                 if (stars > out.getStars()) {
-                    if (usedStars + (stars - out.getStars()) > 50) {
+                    if (usedStars + (stars - out.getStars()) > MAX_STARS) {
                         ba.sendSmartPrivateMessage(cap, "There are not enough stars remaining to sub in '" + in + "'. Used stars: " + usedStars);
                         return;
                     }
@@ -457,6 +468,7 @@ public class DraftTeam {
                     usedStars = usedStars - out.getStars() + stars;
                 } else
                     stars = out.getStars();
+                */
                 p = new DraftPlayer(ba, this, in, freq, out.getShip(), stars);
             } else {
                 ba.sendSmartPrivateMessage(cap, in + " was not found on the team roster.");
@@ -474,7 +486,7 @@ public class DraftTeam {
         if (subs != -1)
             subs--;
         ba.sendArenaMessage(out.getName() + " has been substituted by " + p.getName());
-        msgCaptains("You have " + (50 - usedStars) + " stars remaining this week.");
+        //msgCaptains("You have " + (MAX_STARS - usedStars) + " stars remaining this week.");
     }
     
     /** Helper sets a player's "played" status in the database */
@@ -493,7 +505,7 @@ public class DraftTeam {
     private int getStars(String name) {
         int stars = -1;
         try {
-            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + 7 + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + season + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
             if (rs.next()) {
                 int team = rs.getInt("fnTeamID");
                 if (team == teamID) {
@@ -534,7 +546,7 @@ public class DraftTeam {
     public void reportEnd() {
         for (DraftPlayer p : players.values())
             p.saveStats();
-        ba.SQLBackgroundQuery(db, null, "UPDATE tblDraft__Team SET fnUsedStars = " + usedStars + " WHERE fnTeamID = " + teamID + "");
+        //ba.SQLBackgroundQuery(db, null, "UPDATE tblDraft__Team SET fnUsedStars = " + usedStars + " WHERE fnTeamID = " + teamID + "");
     }
     
     /** Returns ArrayList of formatted end game stats report for whole team and individual players */
@@ -759,7 +771,7 @@ public class DraftTeam {
                 caps[0] = rs.getString("fcCap");
                 caps[1] = rs.getString("fcAss1");
                 caps[2] = rs.getString("fcAss2");
-                usedStars = rs.getInt("fnUsedStars");
+                //usedStars = rs.getInt("fnUsedStars");
             }
             ba.SQLClose(rs);
         } catch (SQLException e) {
