@@ -1047,7 +1047,7 @@ public class messagebot extends SubspaceBot
                 message = results.getString("fcMessage");
                 String time = dateFormat.format( new Date( results.getTimestamp("fdTimeStamp").getTime() ) );
                 String channel = results.getString("fcSender");
-                m_botAction.sendSmartPrivateMessage(name, time + " " + (!channel.equals("") ? " (" + channel + ") " : " " ) + message);
+                m_botAction.sendSmartPrivateMessage(name, time + " " + (!channel.equals("") ? " (" + channel + ") " : " " ) + Tools.removeSlashes(message));
                 if( results.getInt("fnRead") == 0 ) {
                     query = "UPDATE tblMessageSystem SET fnRead='1' WHERE fnID='" + messageNumber +"'";
                     m_botAction.SQLQueryAndClose(database, query);
@@ -1529,7 +1529,7 @@ public class messagebot extends SubspaceBot
              } else {
                  String msg = remainingMsgs.remove();
                  if( msg != null )
-                     m_botAction.sendRemotePrivateMessage( nameToSpam, msg );
+                     m_botAction.sendRemotePrivateMessage( nameToSpam, Tools.removeSlashes(msg) );
              }
          }
      }

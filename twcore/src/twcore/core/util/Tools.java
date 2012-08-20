@@ -427,7 +427,20 @@ public final class Tools {
     	return sb.toString();
     }
 
-
+    /**
+     * Removes backslashes from a String where inserted 
+     * before these chars: ' " \
+     * @param msg String to process
+     * @return String without slashes
+     */
+    public static String removeSlashes(String msg) {
+        if (msg.contains("\\")) {
+            msg = msg.replace("\\\"", "\"");
+            msg = msg.replace("\\\'", "\'");
+            msg = msg.replace("\\\\", "\\");
+        }
+        return msg;
+    }
 
     /**
      * Recursively searches for a file in directory.  Null if the file can't be found.
