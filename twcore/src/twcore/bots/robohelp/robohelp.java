@@ -554,11 +554,11 @@ public class robohelp extends SubspaceBot {
                 info = new PlayerInfo(sender);
                 m_playerList.put(sender.toLowerCase(), info);
             }
-            if (info.AdvertTell() == true)
+            if (info.NewplayerTell() == true)
                 m_botAction.sendChatMessage("NOTICE: " + sender + " has used ?newplayer before. Please use !warn if needed.");
             else {
                 m_botAction.sendRemotePrivateMessage(sender, "Please do not use ?newplayer. " + "It is for staff bot use only.");
-                info.setAdvertTell(true);
+                info.setNewplayerTell(true);
                 m_botAction.sendChatMessage(sender + " has been notified that ?newplayer is not to be used.");
             }
             return;
@@ -2369,6 +2369,7 @@ public class robohelp extends SubspaceBot {
         String m_playerName;
         boolean m_beenWarned;
         boolean m_advertTell;
+        boolean m_newplayerTell;
         int m_lastCall;
         Vector<Integer> m_calls;
 
@@ -2376,6 +2377,7 @@ public class robohelp extends SubspaceBot {
             m_playerName = name;
             m_beenWarned = false;
             m_advertTell = false;
+            m_newplayerTell = false;
             m_lastCall = -1;
             m_calls = new Vector<Integer>();
         }
@@ -2407,6 +2409,14 @@ public class robohelp extends SubspaceBot {
 
         public boolean AdvertTell() {
             return m_advertTell;
+        }
+
+        public void setNewplayerTell(boolean newplayerTell) {
+            m_newplayerTell = newplayerTell;
+        }
+        
+        public boolean NewplayerTell() {
+            return m_newplayerTell;
         }
     }
 }
