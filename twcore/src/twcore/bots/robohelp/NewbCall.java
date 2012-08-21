@@ -23,6 +23,10 @@ public class NewbCall extends Call {
     public String getName() {
         return playerName;
     }
+    
+    public void setID(int id) {
+        this.id = id;
+    }
 
     public void falsePos() {
         taken = FALSE;

@@ -66,12 +66,12 @@ public class robohelp extends SubspaceBot {
 
     final String mySQLHost = "website";
     Vector<EventData> callEvents = new Vector<EventData>();
-    Vector<NewPlayer> newbs = new Vector<NewPlayer>();
+    Vector<NewbCall> newbs = new Vector<NewbCall>();
     HashMap<String, String> banned = new HashMap<String, String>();
     LinkedList<String> alert = new LinkedList<String>(); // new player alert pms
     Vector<String> newbNames = new Vector<String>(); // holds last 20 new
                                                      // players
-    TreeMap<String, NewPlayer> newbHistory = new TreeMap<String, NewPlayer>();
+    TreeMap<String, NewbCall> newbHistory = new TreeMap<String, NewbCall>();
 
     /** Wing's way */
     TreeMap<Integer, Call> callList = new TreeMap<Integer, Call>();
@@ -546,6 +546,40 @@ public class robohelp extends SubspaceBot {
         }
     }
 
+    public void handleNewplayerAlert(String sender, String name) {
+        if (!opList.isSysop(sender)) {
+            callEvents.addElement(new EventData(new java.util.Date().getTime())); //For Records
+            PlayerInfo info = m_playerList.get(sender.toLowerCase());
+            if (info == null) {
+                info = new PlayerInfo(sender);
+                m_playerList.put(sender.toLowerCase(), info);
+            }
+            if (info.AdvertTell() == true)
+                m_botAction.sendChatMessage("NOTICE: " + sender + " has used ?newplayer before. Please use !warn if needed.");
+            else {
+                m_botAction.sendRemotePrivateMessage(sender, "Please do not use ?newplayer. " + "It is for staff bot use only.");
+                info.setAdvertTell(true);
+                m_botAction.sendChatMessage(sender + " has been notified that ?newplayer is not to be used.");
+            }
+            return;
+        }
+        
+        NewbCall newb = newbHistory.get(name.toLowerCase());
+        newb.setID(getNextCallID());
+        calls.add(newb.getID());
+        long now = System.currentTimeMillis();
+        callsUntilAd--;
+        String msg = "";
+        if (callsUntilAd == 0) {
+            callsUntilAd = CALL_INTERVAL;
+            msg += "Call #" + newb.getID() + CALL_AD;
+        } else if (now - lastAlert < CALL_EXPIRATION_TIME)
+            msg += "Call #" + newb.getID();
+        if (msg.length() > 0)
+            m_botAction.sendChatMessage(msg);
+        lastAlert = now;
+    }
+
     public void handleNewPlayer(String message) {
         String player = message.substring(message.indexOf("): ") + 3);
         boolean send = false;
@@ -565,7 +599,7 @@ public class robohelp extends SubspaceBot {
             Tools.printLog("Could not insert new player alert record.");
         }
         if (send && !lastNewPlayerName.equalsIgnoreCase(player)) {
-            NewPlayer newb = new NewPlayer(player);
+            NewbCall newb = new NewbCall(player);
             lastNewPlayerName = player;
             newbs.add(newb);
             newbHistory.put(player.toLowerCase(), newb);
@@ -573,9 +607,12 @@ public class robohelp extends SubspaceBot {
 
             while (newbNames.size() > 20)
                 newbHistory.remove(newbNames.remove(20).toLowerCase());
-            m_botAction.sendChatMessage(message + "   [Use 'on that' to claim]");
+            //m_botAction.sendChatMessage(message + "   [Use 'on that' to claim]");
+            /*
             for (String n : alert)
                 m_botAction.sendSmartPrivateMessage(n, message + " ");
+            */
+            m_botAction.sendAlertMessage("newplayer", player);
         }
 
     }
@@ -772,9 +809,9 @@ public class robohelp extends SubspaceBot {
         boolean record = false;
         Date now = new Date();
         String player = "";
-        Iterator<NewPlayer> i = newbs.iterator();
+        Iterator<NewbCall> i = newbs.iterator();
         while (i.hasNext()) {
-            NewPlayer np = i.next();
+            NewbCall np = i.next();
             if (!record && now.getTime() < np.getTime() + NEWB_EXPIRATION_TIME) {
                 record = true;
                 player = np.getName();
@@ -785,13 +822,13 @@ public class robohelp extends SubspaceBot {
 
         if (record) {
             if (newbHistory.containsKey(player.toLowerCase())) {
-                NewPlayer newb = newbHistory.get(player.toLowerCase());
-                if (newb.taken != NewPlayer.FREE) {
+                NewbCall newb = newbHistory.get(player.toLowerCase());
+                if (newb.taken != NewbCall.FREE) {
                     m_botAction.sendSmartPrivateMessage(name, "The new player alert was already claimed or falsified.");
                     return;
                 }
                 newb.claimer = name;
-                newb.taken = NewPlayer.TAKEN;
+                newb.taken = NewbCall.TAKEN;
             }
             if (triggers.remove(player.toLowerCase()))
                 m_botAction.sendSmartPrivateMessage(player, "Alert has been claimed by: " + name);
@@ -1212,12 +1249,12 @@ public class robohelp extends SubspaceBot {
 
         if (player.length() > 1) {
             if (newbHistory.containsKey(player.toLowerCase())) {
-                NewPlayer newb = newbHistory.get(player.toLowerCase());
-                if (newb.taken != NewPlayer.FREE) {
+                NewbCall newb = newbHistory.get(player.toLowerCase());
+                if (newb.taken != NewbCall.FREE) {
                     m_botAction.sendSmartPrivateMessage(name, "That new player alert has already been claimed as " + newb.claimer);
                     return;
                 }
-                newb.taken = NewPlayer.TAKEN;
+                newb.taken = NewbCall.TAKEN;
                 newb.claimer = name;
             }
             if (triggers.remove(player.toLowerCase()))
@@ -1512,8 +1549,8 @@ public class robohelp extends SubspaceBot {
             return;
 
         if (newbHistory.containsKey(player.toLowerCase())) {
-            NewPlayer newb = newbHistory.get(player.toLowerCase());
-            if (newb.taken == NewPlayer.TAKEN && !name.equalsIgnoreCase(newb.claimer)) {
+            NewbCall newb = newbHistory.get(player.toLowerCase());
+            if (newb.taken == NewbCall.TAKEN && !name.equalsIgnoreCase(newb.claimer)) {
                 m_botAction.sendSmartPrivateMessage(name, "The new player alert has already been claimed and only the claimer may falsify it.");
                 return;
             }
@@ -1546,12 +1583,12 @@ public class robohelp extends SubspaceBot {
 
             m_botAction.sendSmartPrivateMessage(name, "Last " + num + " new player alerts:");
             for (int i = 0; i < num; i++) {
-                NewPlayer newb = newbHistory.get(newbNames.get(i).toLowerCase());
+                NewbCall newb = newbHistory.get(newbNames.get(i).toLowerCase());
                 String m = "" + t.format(newb.getTime()) + " ";
-                m += stringHelper("" + newb.name, 23);
-                if (newb.taken == NewPlayer.FREE)
+                m += stringHelper("" + newb.playerName, 23);
+                if (newb.taken == NewbCall.FREE)
                     m += "[MISSED]";
-                else if (newb.taken == NewPlayer.TAKEN)
+                else if (newb.taken == NewbCall.TAKEN)
                     m += "(" + newb.claimer + ")";
                 else
                     m += newb.claimer;
@@ -1647,28 +1684,43 @@ public class robohelp extends SubspaceBot {
             do {
                 Call call = callList.get(id);
                 String msg = "#" + call.getID() + " " + getTimeString(call) + " ";
-                if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
-                    int ct = call.getClaimType();
-                    String taker = call.getTaker();
-                    if (ct == HelpRequest.TAKEN)
-                        msg += "- (" + taker + ") -";
-                    else if (ct == HelpRequest.MINE || call.getTaker().equals("RoboHelp"))
-                        msg += "- [" + taker + "] -";
-                    else if (ct == HelpRequest.FORGOT)
-                        msg += "- " + taker + " -";
-                    else if (ct == HelpRequest.CLEAN)
-                        msg += "- " + taker + " -";
-                } else if (call.getClaimType() == HelpRequest.FREE)
-                    msg += "*";
+                if (call instanceof NewbCall) {
+                    if (call.isTaken()) {
+                        int type = call.getClaimType();
+                        String taker = call.getTaker();
+                        if (type != NewbCall.FALSE)
+                            msg += "- (" + taker + ") -";
+                        else
+                            msg += "- " + taker + " -";
+                    } else if (call.getClaimType() == NewbCall.FREE)
+                        msg += "*";
+                } else {
+                    if (call.isTaken() || call.getTaker().equals("RoboHelp")) {
+                        int ct = call.getClaimType();
+                        String taker = call.getTaker();
+                        if (ct == HelpCall.TAKEN)
+                            msg += "- (" + taker + ") -";
+                        else if (ct == HelpCall.MINE || call.getTaker().equals("RoboHelp"))
+                            msg += "- [" + taker + "] -";
+                        else if (ct == HelpCall.FORGOT)
+                            msg += "- " + taker + " -";
+                        else if (ct == HelpCall.CLEAN)
+                            msg += "- " + taker + " -";
+                    } else if (call.getClaimType() == HelpCall.FREE)
+                        msg += "*";
+                }
 
                 if (call instanceof HelpCall)
                     msg += " help: (";
                 else if (call instanceof CheaterCall)
                     msg += " cheater: (";
+                else if (call instanceof NewbCall)
+                    msg += " newplayer: (" + ((NewbCall) call).getName() + ")";
                 else
                     msg += " ERROR: (";
-
-                msg += call.getPlayername() + ") " + call.getMessage();
+                
+                if (!(call instanceof NewbCall))
+                    msg += call.getPlayername() + ") " + call.getMessage();
                 m_botAction.sendSmartPrivateMessage(name, msg);
                 count--;
                 id = id - 1;
@@ -2043,25 +2095,25 @@ public class robohelp extends SubspaceBot {
     public void loadLastNewbs(String sender, String msg) {
         String query = "SELECT fcUserName as newb, fcTakerName as staff, fdCreated as time, fnTaken as taken FROM tblCallNewb ORDER BY fdCreated DESC LIMIT 5";
         try {
-            Vector<NewPlayer> temp = new Vector<NewPlayer>();
+            Vector<NewbCall> temp = new Vector<NewbCall>();
             ResultSet rs = m_botAction.SQLQuery(mySQLHost, query);
             while (rs.next()) {
                 String newb = rs.getString("newb");
                 int taken = rs.getInt("taken");
                 long time = rs.getTimestamp("time").getTime();
-                NewPlayer np = new NewPlayer(newb);
-                np.time = time;
+                NewbCall np = new NewbCall(newb);
+                np.timeSent = time;
                 np.taken = taken;
                 if (taken == 3)
                     np.falsePos();
                 else if (taken == 1 || taken == 2) {
                     np.claimer = rs.getString("staff");
-                    np.taken = NewPlayer.TAKEN;
+                    np.taken = NewbCall.TAKEN;
                 }
                 temp.add(0, np);
             }
             for (int i = 0; i < temp.size(); i++) {
-                NewPlayer np = temp.get(i);
+                NewbCall np = temp.get(i);
                 lastNewPlayerName = np.getName();
                 newbs.add(np);
                 newbHistory.put(lastNewPlayerName.toLowerCase(), np);
@@ -2233,6 +2285,8 @@ public class robohelp extends SubspaceBot {
                 handleCheater(event.getMessager(), msg);
             else if (command.equals("advert"))
                 handleAdvert(event.getMessager(), msg);
+            else if (command.equals("newplayer"))
+                handleNewplayerAlert(event.getMessager(), msg);
         } else if (event.getMessageType() == Message.CHAT_MESSAGE) {
             String name = event.getMessager();
             if (!opList.isZH(name))
@@ -2310,36 +2364,6 @@ public class robohelp extends SubspaceBot {
         }
     }
 
-    class NewPlayer {
-        static final int FREE = 0;
-        static final int TAKEN = 1;
-        static final int FALSE = 2;
-        long time;
-        String name;
-        String claimer;
-        int taken = 0;
-
-        public NewPlayer(String p) {
-            this.name = p;
-            this.time = System.currentTimeMillis();
-            this.claimer = "";
-            this.taken = FREE;
-        }
-
-        public long getTime() {
-            return time;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void falsePos() {
-            taken = FALSE;
-            claimer = "[FALSE-POSITIVE]";
-        }
-    }
-
     class PlayerInfo {
         String m_playerName;
         boolean m_beenWarned;
@@ -2382,204 +2406,6 @@ public class robohelp extends SubspaceBot {
 
         public boolean AdvertTell() {
             return m_advertTell;
-        }
-    }
-
-    class HelpRequest {
-
-        static final int FREE = 0;
-        static final int TAKEN = 1;
-        static final int MINE = 2;
-        static final int FORGOT = 3;
-        static final int CLEAN = 4;
-
-        long m_time;
-        long m_claim;
-        String m_question;
-        String[] m_responses;
-        String m_playerName;
-        int m_nextResponse;
-        boolean m_allowSummons;
-        int m_callID; // id used in the database
-        int m_id; // id used locally
-        int m_type;
-        boolean m_claimed;
-        String m_claimer;
-        int m_claimType;
-
-        public HelpRequest(String playerName, String question, String[] responses, int type) {
-
-            m_callID = -1;
-            m_id = -1;
-            m_nextResponse = 0;
-            m_question = question;
-            m_allowSummons = false;
-            m_responses = responses;
-            m_playerName = playerName;
-            m_time = System.currentTimeMillis();
-            m_type = type;
-            m_claimed = false;
-            m_claimer = "";
-            m_claimType = FREE;
-        }
-
-        public void reset() {
-            m_claimer = "";
-            m_claimed = false;
-            m_claimType = FREE;
-        }
-
-        public void claim(String name) {
-            m_claimer = name;
-            m_claimed = true;
-            m_claimType = TAKEN;
-            m_claim = System.currentTimeMillis();
-        }
-
-        public void mine(String name) {
-            m_claimer = name;
-            m_claimed = true;
-            m_claimType = MINE;
-            m_claim = System.currentTimeMillis();
-        }
-
-        public void forget() {
-            m_claimer = "[forgot]";
-            m_claimed = true;
-            m_claimType = FORGOT;
-            m_claim = System.currentTimeMillis();
-        }
-
-        public void clean() {
-            m_claimer = "[clean]";
-            m_claimed = true;
-            m_claimType = CLEAN;
-            m_claim = System.currentTimeMillis();
-        }
-
-        public int getClaimType() {
-            return m_claimType;
-        }
-
-        public String getTaker() {
-            return m_claimer;
-        }
-
-        public void setTaker(String name) {
-            m_claimer = name;
-        }
-
-        public boolean isTaken() {
-            return m_claimed;
-        }
-
-        public void setType(int type) {
-            m_type = type;
-        }
-
-        public int getType() {
-            return m_type;
-        }
-
-        public int getID() {
-            return m_id;
-        }
-
-        public int getCallID() {
-            return m_callID;
-        }
-
-        public void setID(int id) {
-            m_callID = id;
-            m_id = currentID;
-            currentID++;
-        }
-
-        public void setQuestion(String question, String[] responses) {
-
-            m_nextResponse = 0;
-            m_question = question;
-            m_responses = responses;
-            m_time = System.currentTimeMillis();
-        }
-
-        public void setAllowSummons(boolean allowSummons) {
-
-            m_allowSummons = allowSummons;
-        }
-
-        public boolean getAllowSummons() {
-
-            return m_allowSummons;
-        }
-
-        public boolean isValidHelpRequest() {
-
-            if (m_question != null)
-                return true;
-            else
-                return false;
-        }
-
-        public String[] getAllResponses() {
-
-            return m_responses;
-        }
-
-        public String[] getFirstResponse() {
-
-            if (m_responses == null)
-                return null;
-            else if (m_responses.length != 0)
-                return formatResponse(m_responses[0]);
-            else
-                return null;
-        }
-
-        public String[] getLastResponse() {
-
-            if (m_nextResponse <= 0 || m_responses == null)
-                return null;
-            else
-                return formatResponse(m_responses[m_nextResponse - 1]);
-        }
-
-        public String[] getNextResponse() {
-
-            if (m_responses == null)
-                return null;
-
-            if (m_nextResponse >= m_responses.length)
-                return null;
-            else
-                return formatResponse(m_responses[m_nextResponse++]);
-        }
-
-        public boolean hasMoreResponses() {
-
-            if (m_responses == null)
-                return false;
-
-            if (m_nextResponse >= m_responses.length)
-                return false;
-            else
-                return true;
-        }
-
-        public String getPlayername() {
-            return this.m_playerName;
-        }
-
-        public long getTime() {
-            return this.m_time;
-        }
-
-        public long getClaim() {
-            return this.m_claim;
-        }
-
-        public String getQuestion() {
-            return this.m_question;
         }
     }
 }
