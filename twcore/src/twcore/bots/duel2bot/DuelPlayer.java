@@ -447,10 +447,10 @@ public class DuelPlayer {
         lastFoul = System.currentTimeMillis();
         ba.setShip(name, ship);
         ba.setFreq(name, freq);
-        if (team.game.state == DuelGame.IN_PROGRESS) {
+        if (team != null && team.game != null && team.game.state == DuelGame.IN_PROGRESS) {
             lastSpec = lastFoul;
             team.warpPlayer(this);
-        } else if (team.game.state == DuelGame.SETUP) 
+        } else if (team != null && team.game != null && team.game.state == DuelGame.SETUP) 
             team.warpToSafe(this);
     }
     
