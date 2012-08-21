@@ -60,6 +60,13 @@ public class Message extends SubspaceEvent {
 
         if (m_messageType == Message.ARENA_MESSAGE && m_message.startsWith("misc:alertcommand:")) {
             alertCommands = m_message.substring(18).split(",");
+            for (int i = 0; i < alertCommands.length; i++) {
+                if (m_message.startsWith(alertCommands[i] + ':')) {
+                    m_messageType = ALERT_MESSAGE;
+                    m_alertCommandType = alertCommands[i];
+                    break;
+                }
+            }
         } else {
             // The parsing of the name from the remote private message, private message, and chat message
             // could possibly inaccurate.  The message isn't meant to have the name parsed out of it.
