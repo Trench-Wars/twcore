@@ -547,7 +547,7 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleNewplayerAlert(String sender, String name) {
-        if (!opList.isSysop(sender)) {
+        if (!opList.isSysop(sender) || (opList.isSysop(sender) && !sender.equals("RoboHelp"))) {
             callEvents.addElement(new EventData(new java.util.Date().getTime())); //For Records
             PlayerInfo info = m_playerList.get(sender.toLowerCase());
             if (info == null) {
@@ -562,7 +562,8 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendChatMessage(sender + " has been notified that ?newplayer is not to be used.");
             }
             return;
-        }
+        } else if (!newbHistory.containsKey(name.toLowerCase()))
+            return;
         
         NewbCall newb = newbHistory.get(name.toLowerCase());
         newb.setID(getNextCallID());
