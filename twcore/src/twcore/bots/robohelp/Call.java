@@ -19,6 +19,7 @@ public abstract class Call {
         this.timeSent = System.currentTimeMillis();
         this.timeClaim = -1;
         this.claimType = -1;
+        this.claimer = "";
     }
 
     public String getMessage() {

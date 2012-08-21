@@ -22,7 +22,6 @@ public class HelpCall extends Call {
         this.message = question;
         this.claimType = type;
         this.claimed = false;
-        this.claimer = "";
         this.taken = FREE;
         this.nextResponse = 0;
         this.allowSummons = false;
