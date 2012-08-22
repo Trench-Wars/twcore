@@ -22,6 +22,7 @@ public class HelpCall extends Call {
         this.message = question;
         this.callType = type;
         this.nextResponse = 0;
+        this.responses = responses;
         this.allowSummons = false;
     }
 
