@@ -568,6 +568,7 @@ public class robohelp extends SubspaceBot {
         NewbCall newb = newbHistory.get(name.toLowerCase());
         newb.setID(getNextCallID());
         calls.add(newb.getID());
+        callList.put(newb.getID(), newb);
         long now = System.currentTimeMillis();
         callsUntilAd--;
         String msg = "";
