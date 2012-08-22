@@ -12,12 +12,12 @@ public class NewbCall extends Call {
         this.playerName = player;
         this.message = "";
         this.claimer = "";
-        this.taken = FREE;
+        this.claimType = FREE;
     }
     
     public void claim(String name) {
         claimer = name;
-        taken = TAKEN;
+        claimType = TAKEN;
     }
     
     public String getName() {
@@ -29,7 +29,7 @@ public class NewbCall extends Call {
     }
 
     public void falsePos() {
-        taken = FALSE;
+        claimType = FALSE;
         claimer = "[FALSE-POSITIVE]";
     }
 

@@ -20,9 +20,7 @@ public class HelpCall extends Call {
         super();
         this.playerName = playerName;
         this.message = question;
-        this.claimType = type;
-        this.claimed = false;
-        this.taken = FREE;
+        this.callType = type;
         this.nextResponse = 0;
         this.allowSummons = false;
     }
@@ -30,39 +28,35 @@ public class HelpCall extends Call {
     public void reset() {
         claimer = "";
         claimed = false;
-        taken = FREE;
+        claimType = FREE;
     }
 
     public void claim(String name) {
         claimer = name;
         claimed = true;
-        taken = TAKEN;
+        claimType = TAKEN;
         timeClaim = System.currentTimeMillis();
     }
 
     public void mine(String name) {
         claimer = name;
         claimed = true;
-        taken = MINE;
+        claimType = MINE;
         timeClaim = System.currentTimeMillis();
     }
 
     public void forget() {
         claimer = "[forgot]";
         claimed = true;
-        taken = FORGOT;
+        claimType = FORGOT;
         timeClaim = System.currentTimeMillis();
     }
 
     public void clean() {
         claimer = "[clean]";
         claimed = true;
-        taken = CLEAN;
+        claimType = CLEAN;
         timeClaim = System.currentTimeMillis();
-    }
-
-    public int gettaken() {
-        return taken;
     }
 
     public void setQuestion(String question, String[] responses) {

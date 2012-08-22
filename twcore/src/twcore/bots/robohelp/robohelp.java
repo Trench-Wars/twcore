@@ -634,7 +634,7 @@ public class robohelp extends SubspaceBot {
 
         // removed the message (question) recording
         try {
-            m_botAction.SQLQueryAndClose(mySQLHost, "INSERT INTO tblCallHelp (fcUserName, fdCreated, fnType) VALUES('" + Tools.addSlashesToString(player) + "', NOW(), " + help.getClaimType() + ")");
+            m_botAction.SQLQueryAndClose(mySQLHost, "INSERT INTO tblCallHelp (fcUserName, fdCreated, fnType) VALUES('" + Tools.addSlashesToString(player) + "', NOW(), " + help.getCallType() + ")");
             ResultSet callid = m_botAction.SQLQuery(mySQLHost, "SELECT LAST_INSERT_ID()");
             if (callid.next())
                 help.setID(callid.getInt(1), getNextCallID());
@@ -659,7 +659,7 @@ public class robohelp extends SubspaceBot {
             return;
 
         String time = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime()) + "-01";
-        if (help.getClaimType() == 0 || help.getClaimType() == 2)
+        if (help.getCallType() == 0 || help.getCallType() == 2)
             try {
                 ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '" + Tools.addSlashesToString(help.getTaker()) + "' AND fnType = 0 AND fdDate = '" + time
                         + "'");
@@ -676,7 +676,7 @@ public class robohelp extends SubspaceBot {
             } catch (Exception e) {
                 Tools.printStackTrace(e);
             }
-        else if (help.getClaimType() == 1 || help.getClaimType() == 4)
+        else if (help.getCallType() == 1 || help.getCallType() == 4)
             try {
                 ResultSet result = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCall WHERE fcUserName = '" + Tools.addSlashesToString(help.getTaker()) + "' AND fnType = 1 AND fdDate = '" + time
                         + "'");
@@ -735,19 +735,19 @@ public class robohelp extends SubspaceBot {
             if (!message.startsWith("got") && help instanceof NewbCall)
                 handleThat(name, ((NewbCall) help).getName());
             else {
-            help.claim(name);
-            if (help instanceof HelpCall && message.startsWith("got")) {
-                if (help.getClaimType() == 2)
-                    help.setType(4);
-                else if (help.getClaimType() == 0)
-                    help.setType(1);
-                else
-                    help.setType(5);
-            } else if (message.startsWith("on") && help.getClaimType() == -1)
-                help.setType(0);
-            lastStafferClaimedCall = name;
-            m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " claimed.");
-            recordHelp(help);
+                help.claim(name);
+                if (help instanceof HelpCall && message.startsWith("got")) {
+                    if (help.getCallType() == 2)
+                        help.setCallType(4);
+                    else if (help.getClaimType() == 0)
+                        help.setCallType(1);
+                    else
+                        help.setCallType(5);
+                } else if (message.startsWith("on") && help.getCallType() == -1)
+                    help.setCallType(0);
+                lastStafferClaimedCall = name;
+                m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " claimed.");
+                recordHelp(help);
             }
         }
     }
@@ -832,7 +832,7 @@ public class robohelp extends SubspaceBot {
         if (record) {
             if (newbHistory.containsKey(player.toLowerCase())) {
                 NewbCall newb = newbHistory.get(player.toLowerCase());
-                if (newb.taken != NewbCall.FREE) {
+                if (newb.getClaimType() != NewbCall.FREE) {
                     m_botAction.sendSmartPrivateMessage(name, "The new player alert was already claimed or falsified.");
                     return;
                 }
@@ -1259,7 +1259,7 @@ public class robohelp extends SubspaceBot {
         if (player.length() > 1) {
             if (newbHistory.containsKey(player.toLowerCase())) {
                 NewbCall newb = newbHistory.get(player.toLowerCase());
-                if (newb.taken != NewbCall.FREE) {
+                if (newb.claimType != NewbCall.FREE) {
                     m_botAction.sendSmartPrivateMessage(name, "That new player alert has already been claimed as " + newb.claimer);
                     return;
                 }
@@ -1442,7 +1442,7 @@ public class robohelp extends SubspaceBot {
             if (!last.isTaken()) {
                 if (last instanceof HelpCall)
                     ((HelpCall) last).forget();
-                if (last instanceof CheaterCall)
+                else if (last instanceof CheaterCall)
                     ((CheaterCall) last).forget();
                 calls.removeElement(last.getID());
                 m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " forgotten.");
@@ -1558,7 +1558,7 @@ public class robohelp extends SubspaceBot {
 
         if (newbHistory.containsKey(player.toLowerCase())) {
             NewbCall newb = newbHistory.get(player.toLowerCase());
-            if (newb.taken == NewbCall.TAKEN && !name.equalsIgnoreCase(newb.claimer)) {
+            if (newb.claimType == NewbCall.TAKEN && !name.equalsIgnoreCase(newb.claimer)) {
                 m_botAction.sendSmartPrivateMessage(name, "The new player alert has already been claimed and only the claimer may falsify it.");
                 return;
             }
@@ -1594,9 +1594,9 @@ public class robohelp extends SubspaceBot {
                 NewbCall newb = newbHistory.get(newbNames.get(i).toLowerCase());
                 String m = "" + t.format(newb.getTime()) + " ";
                 m += stringHelper("" + newb.playerName, 23);
-                if (newb.taken == NewbCall.FREE)
+                if (newb.claimType == NewbCall.FREE)
                     m += "[MISSED]";
-                else if (newb.taken == NewbCall.TAKEN)
+                else if (newb.claimType == NewbCall.TAKEN)
                     m += "(" + newb.claimer + ")";
                 else
                     m += newb.claimer;
@@ -2111,12 +2111,12 @@ public class robohelp extends SubspaceBot {
                 long time = rs.getTimestamp("time").getTime();
                 NewbCall np = new NewbCall(newb);
                 np.timeSent = time;
-                np.taken = taken;
+                np.claimType = taken;
                 if (taken == 3)
                     np.falsePos();
                 else if (taken == 1 || taken == 2) {
                     np.claimer = rs.getString("staff");
-                    np.taken = NewbCall.TAKEN;
+                    np.claimType = NewbCall.TAKEN;
                 }
                 temp.add(0, np);
             }

@@ -12,27 +12,27 @@ public class CheaterCall extends Call {
         super();
         this.playerName = player;
         this.message = msg;
-        this.claimType = type;
+        this.callType = type;
     }
 
     public void claim(String name) {
         claimer = name;
         claimed = true;
-        taken = TAKEN;
+        claimType = TAKEN;
         timeClaim = System.currentTimeMillis();
     }
 
     public void mine(String name) {
         claimer = name;
         claimed = true;
-        taken = MINE;
+        claimType = MINE;
         timeClaim = System.currentTimeMillis();
     }
 
     public void forget() {
         claimer = "[forgot]";
         claimed = true;
-        taken = FORGOT;
+        claimType = FORGOT;
         timeClaim = System.currentTimeMillis();
     }
 }

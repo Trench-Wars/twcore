@@ -8,8 +8,8 @@ public abstract class Call {
     String playerName;
     int id;
     int dataID;
-    int taken;
     int claimType;
+    int callType;
     boolean claimed;
     String claimer;
     
@@ -18,8 +18,9 @@ public abstract class Call {
         this.dataID = -1;
         this.timeSent = System.currentTimeMillis();
         this.timeClaim = -1;
-        this.claimType = -1;
         this.claimer = "";
+        this.claimed = false;
+        this.claimType = 0;
     }
 
     public String getMessage() {
@@ -55,6 +56,14 @@ public abstract class Call {
     public void setTaker(String name) {
         claimer = name;
     }
+    
+    public int getClaimType() {
+        return claimType;
+    }
+    
+    public void setClaimType(int type) {
+        this.claimType = type;
+    }
 
     public boolean isTaken() {
         return claimed;
@@ -65,11 +74,11 @@ public abstract class Call {
         this.id = id;
     }
 
-    public void setType(int type) {
-        this.claimType = type;
+    public void setCallType(int type) {
+        this.callType = type;
     }
 
-    public int getClaimType() {
-        return claimType;
+    public int getCallType() {
+        return callType;
     }
 }
