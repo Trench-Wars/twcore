@@ -18,6 +18,7 @@ public class NewbCall extends Call {
     public void claim(String name) {
         claimer = name;
         claimType = TAKEN;
+        claimed = true;
     }
     
     public String getName() {
@@ -31,6 +32,7 @@ public class NewbCall extends Call {
     public void falsePos() {
         claimType = FALSE;
         claimer = "[FALSE-POSITIVE]";
+        claimed = true;
     }
 
 }

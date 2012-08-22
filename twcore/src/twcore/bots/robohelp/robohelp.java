@@ -562,13 +562,17 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendChatMessage(sender + " has been notified that ?newplayer is not to be used.");
             }
             return;
-        } else if (!newbHistory.containsKey(name.toLowerCase()))
-            return;
-        
+        }
+
+        PlayerInfo info;
+        info = m_playerList.get(sender.toLowerCase());
+        if (info == null)
+            info = new PlayerInfo(sender.toLowerCase());
         NewbCall newb = newbHistory.get(name.toLowerCase());
         newb.setID(getNextCallID());
         calls.add(newb.getID());
         callList.put(newb.getID(), newb);
+        info.addCall(newb.getID());
         long now = System.currentTimeMillis();
         callsUntilAd--;
         String msg = "";
@@ -730,7 +734,9 @@ public class robohelp extends SubspaceBot {
             return;
         } else if (help.isTaken())
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has already been claimed by " + help.getTaker() + ".");
-        else if (now - help.getTime() > CALL_EXPIRATION_TIME)
+        else if (help instanceof NewbCall && help.isExpired(now, NEWB_EXPIRATION_TIME))
+            m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has expired.");
+        else if (!(help instanceof NewbCall) && help.isExpired(now, CALL_EXPIRATION_TIME))
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has expired.");
         else {
             if (!message.startsWith("got") && help instanceof NewbCall)
@@ -772,12 +778,15 @@ public class robohelp extends SubspaceBot {
         while (i.hasNext()) {
             id = i.next();
             Call call = callList.get(id);
-            if (now - call.getTime() > CALL_EXPIRATION_TIME)
+            if (!(call instanceof NewbCall)) {
+                if (now - call.getTime() > CALL_EXPIRATION_TIME)
+                    i.remove();
+            } else if (now - call.getTime() > NEWB_EXPIRATION_TIME)
                 i.remove();
             else if (!call.isTaken()) {
                 if (message.startsWith("on")) {
                     message = "on";
-                    if (m_botAction.getOperatorList().isBotExact(player) && m_playerList.containsKey(lastHelpRequestName.toLowerCase())) {
+                    if (!(call instanceof NewbCall) && m_botAction.getOperatorList().isBotExact(player) && m_playerList.containsKey(lastHelpRequestName.toLowerCase())) {
                         info = m_playerList.get(lastHelpRequestName.toLowerCase());
                         String lastHelpMessage = null;
                         if (info != null && info.getLastCall() > -1)

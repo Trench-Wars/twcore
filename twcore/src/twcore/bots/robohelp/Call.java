@@ -27,6 +27,10 @@ public abstract class Call {
         return this.message;
     }
     
+    public boolean isExpired(long now, int expire) {
+        return now - getTime() > expire;
+    }
+    
     public abstract void claim(String name);
 
     public String getPlayername() {
