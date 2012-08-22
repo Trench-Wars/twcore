@@ -547,6 +547,7 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleNewplayerAlert(String sender, String name) {
+        m_botAction.sendChatMessage(2, name);
         if (!sender.equals("RoboHelp")) {
             callEvents.addElement(new EventData(new java.util.Date().getTime())); //For Records
             PlayerInfo info = m_playerList.get(sender.toLowerCase());
