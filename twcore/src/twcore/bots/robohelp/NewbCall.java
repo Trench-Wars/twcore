@@ -19,6 +19,7 @@ public class NewbCall extends Call {
         claimer = name;
         claimType = TAKEN;
         claimed = true;
+        timeClaim = System.currentTimeMillis();
     }
     
     public String getName() {
@@ -33,6 +34,7 @@ public class NewbCall extends Call {
         claimType = FALSE;
         claimer = "[FALSE-POSITIVE]";
         claimed = true;
+        timeClaim = System.currentTimeMillis();
     }
 
 }
