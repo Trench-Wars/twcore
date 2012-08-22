@@ -28,7 +28,7 @@ public abstract class Call {
     }
     
     public boolean isExpired(long now, int expire) {
-        return now - getTime() > expire;
+        return ((now - getTime()) > expire);
     }
     
     public abstract void claim(String name);
