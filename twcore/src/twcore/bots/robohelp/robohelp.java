@@ -547,7 +547,7 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleNewplayerAlert(String sender, String name) {
-        name = name.substring(12);
+        name = name.substring(13);
         if (!sender.equals("RoboHelp")) {
             callEvents.addElement(new EventData(new java.util.Date().getTime())); //For Records
             PlayerInfo info = m_playerList.get(sender.toLowerCase());
@@ -605,7 +605,7 @@ public class robohelp extends SubspaceBot {
         } catch (Exception e) {
             Tools.printLog("Could not insert new player alert record.");
         }
-        if (send && !lastNewPlayerName.equalsIgnoreCase(player)) {
+        if ((triggers.contains(player)) || (send && !lastNewPlayerName.equalsIgnoreCase(player))) {
             NewbCall newb = new NewbCall(player);
             lastNewPlayerName = player;
             newbs.add(newb);
