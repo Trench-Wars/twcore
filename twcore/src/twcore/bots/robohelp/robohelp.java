@@ -732,6 +732,9 @@ public class robohelp extends SubspaceBot {
         else if (now - help.getTime() > CALL_EXPIRATION_TIME)
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has expired.");
         else {
+            if (!message.startsWith("got") && help instanceof NewbCall)
+                handleThat(name, ((NewbCall) help).getName());
+            else {
             help.claim(name);
             if (help instanceof HelpCall && message.startsWith("got")) {
                 if (help.getClaimType() == 2)
@@ -745,6 +748,7 @@ public class robohelp extends SubspaceBot {
             lastStafferClaimedCall = name;
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " claimed.");
             recordHelp(help);
+            }
         }
     }
 
@@ -806,20 +810,24 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendRemotePrivateMessage(name, "The call expired or no call was found to match your claim.");
     }
 
-    public void handleThat(String name) {
+    public void handleThat(String name, String player) {
         boolean record = false;
         Date now = new Date();
-        String player = "";
-        Iterator<NewbCall> i = newbs.iterator();
-        while (i.hasNext()) {
-            NewbCall np = i.next();
-            if (!record && now.getTime() < np.getTime() + NEWB_EXPIRATION_TIME) {
-                record = true;
-                player = np.getName();
-                i.remove();
-            } else if (now.getTime() >= np.getTime() + NEWB_EXPIRATION_TIME)
-                i.remove();
-        }
+        if (player != null && !newbHistory.containsKey(player.toLowerCase()))
+            return;
+        else if (player == null) {
+            Iterator<NewbCall> i = newbs.iterator();
+            while (i.hasNext()) {
+                NewbCall np = i.next();
+                if (!record && now.getTime() < np.getTime() + NEWB_EXPIRATION_TIME) {
+                    record = true;
+                    player = np.getName();
+                    i.remove();
+                } else if (now.getTime() >= np.getTime() + NEWB_EXPIRATION_TIME)
+                    i.remove();
+            }
+        } else
+            record = true;
 
         if (record) {
             if (newbHistory.containsKey(player.toLowerCase())) {
@@ -828,15 +836,15 @@ public class robohelp extends SubspaceBot {
                     m_botAction.sendSmartPrivateMessage(name, "The new player alert was already claimed or falsified.");
                     return;
                 }
-                newb.claimer = name;
-                newb.taken = NewbCall.TAKEN;
+                newb.claim(name);
             }
             if (triggers.remove(player.toLowerCase()))
                 m_botAction.sendSmartPrivateMessage(player, "Alert has been claimed by: " + name);
             m_botAction.sendRemotePrivateMessage(name, "Call claim of the new player '" + player + "' recorded.");
             updateStatRecordsONTHAT(name, player, true);
+            lastStafferClaimedCall = name;
         } else
-            m_botAction.sendRemotePrivateMessage(name, "The call expired or no call found to match your claim.");
+            m_botAction.sendRemotePrivateMessage(name, "The call expired or no call was found to match your claim.");
     }
 
     public void handleNext(String playerName, String message) {
@@ -1255,8 +1263,7 @@ public class robohelp extends SubspaceBot {
                     m_botAction.sendSmartPrivateMessage(name, "That new player alert has already been claimed as " + newb.claimer);
                     return;
                 }
-                newb.taken = NewbCall.TAKEN;
-                newb.claimer = name;
+                newb.claim(name);
             }
             if (triggers.remove(player.toLowerCase()))
                 m_botAction.sendSmartPrivateMessage(player, "Alert has been have'd by: " + name);
@@ -2306,7 +2313,7 @@ public class robohelp extends SubspaceBot {
             else if ((message.startsWith("on it") || message.startsWith("got it")) && opList.isZH(name))
                 handleClaims(name, message);
             else if (message.startsWith("on that") || message.startsWith("got that"))
-                handleThat(name);
+                handleThat(name, null);
             else if (message.startsWith("ihave"))
                 handleHave(name, message);
             else if (message.startsWith("clean"))
