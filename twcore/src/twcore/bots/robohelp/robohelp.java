@@ -779,9 +779,7 @@ public class robohelp extends SubspaceBot {
         while (i.hasNext()) {
             id = i.next();
             Call call = callList.get(id);
-            if (!(call instanceof NewbCall) && call.isExpired(now, CALL_EXPIRATION_TIME))
-                i.remove();
-            else if (call instanceof NewbCall && call.isExpired(now, NEWB_EXPIRATION_TIME))
+            if (call.isExpired(now, CALL_EXPIRATION_TIME))
                 i.remove();
             else if (!call.isTaken()) {
                 if (message.startsWith("on")) {
@@ -794,16 +792,16 @@ public class robohelp extends SubspaceBot {
 
                         if (lastHelpMessage != null && lastHelpMessage.contains("TK Report: ")) {
                             String namep = lastHelpMessage.substring(lastHelpMessage.indexOf("TK Report: ") + 11, lastHelpMessage.indexOf(" is reporting"));
-                            m_botAction.sendSmartPrivateMessage(namep, "Hello " + namep + ", we have recieved your TK Report. Staffer " + name + " will be handling your call. Please use :" + name
+                            m_botAction.sendSmartPrivateMessage(namep, "Hello " + namep + ", we have received your TK Report. Staffer " + name + " will be handling your call. Please use :" + name
                                     + ": to further contact this staffer.");
                         } else
-                            m_botAction.sendSmartPrivateMessage(player, "Hello " + player + ", we have recieved your ?help/?cheater call. Staffer " + name
+                            m_botAction.sendSmartPrivateMessage(player, "Hello " + player + ", we have received your ?help/?cheater call. Staffer " + name
                                     + " will be handling your call. Please use :" + name + ": to further contact this staffer.");
                     }
                 } else if (message.startsWith("got"))
                     message = "got";
                 if (!opList.isBotExact(player))
-                    m_botAction.sendSmartPrivateMessage(player, "Hello " + player + ", we have recieved your ?help/?cheater call. Staffer " + name + " will be handling your call. Please use :" + name
+                    m_botAction.sendSmartPrivateMessage(player, "Hello " + player + ", we have received your ?help/?cheater call. Staffer " + name + " will be handling your call. Please use :" + name
                             + ": to further contact this staffer.");
 
                 handleClaims(name, message + " #" + id);
