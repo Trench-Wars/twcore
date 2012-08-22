@@ -1,6 +1,7 @@
 package twcore.core.events;
 
 import twcore.core.util.ByteArray;
+import twcore.core.util.Tools;
 
 /**
  * (S2C 0x07) Event fired when a chat message is received. <code><pre>
@@ -50,60 +51,75 @@ public class Message extends SubspaceEvent {
     public Message(ByteArray array) {
         int nameEnding;
         int nameBeginning;
+        String stop = "0";
+        try {
+            m_chatNumber = 0;
+            m_messager = null;
+            m_messageType = (1 << (int) array.readByte(1));
+            m_soundCode = array.readByte(2);
+            m_playerID = array.readLittleEndianShort(3);
+            m_message = array.readString(5, array.size() - 6);
 
-        m_chatNumber = 0;
-        m_messager = null;
-        m_messageType = (1 << (int) array.readByte(1));
-        m_soundCode = array.readByte(2);
-        m_playerID = array.readLittleEndianShort(3);
-        m_message = array.readString(5, array.size() - 6);
-
-        if (m_messageType == Message.ARENA_MESSAGE && m_message.startsWith("misc:alertcommand:")) {
-            alertCommands = m_message.substring(18).split(",");
-            for (int i = 0; i < alertCommands.length; i++) {
-                if (m_message.startsWith(alertCommands[i] + ':')) {
-                    m_messageType = ALERT_MESSAGE;
-                    m_alertCommandType = alertCommands[i];
-                    break;
-                }
-            }
-        } else {
-            // The parsing of the name from the remote private message, private message, and chat message
-            // could possibly inaccurate.  The message isn't meant to have the name parsed out of it.
-            if (m_messageType == REMOTE_PRIVATE_MESSAGE) {
-                if (alertCommands != null) {
-                    for (int i = 0; i < alertCommands.length; i++) {
-                        if (m_message.startsWith(alertCommands[i] + ':')) {
-                            m_messageType = ALERT_MESSAGE;
-                            m_alertCommandType = alertCommands[i];
-                            break;
-                        }
+            if (m_messageType == Message.ARENA_MESSAGE && m_message.startsWith("misc:alertcommand:")) {
+                alertCommands = m_message.substring(18).split(",");
+                for (int i = 0; i < alertCommands.length; i++) {
+                    if (m_message.startsWith(alertCommands[i] + ':')) {
+                        m_messageType = ALERT_MESSAGE;
+                        m_alertCommandType = alertCommands[i];
+                        stop += "1";
+                        break;
                     }
                 }
-
+                stop += "2";
+            } else {
+                // The parsing of the name from the remote private message, private message, and chat message
+                // could possibly inaccurate.  The message isn't meant to have the name parsed out of it.
                 if (m_messageType == REMOTE_PRIVATE_MESSAGE) {
-                    nameBeginning = m_message.indexOf('(');
-                    nameEnding = m_message.indexOf(")>");
-                    m_messager = m_message.substring(nameBeginning + 1, nameEnding);
-                    m_message = m_message.substring(nameEnding + 2);
-                } else {
-                    nameBeginning = m_message.indexOf('(');
-                    nameEnding = m_message.indexOf(") (");
-                    m_messager = m_message.substring(nameBeginning + 1, nameEnding);
-                    m_message = m_message.substring(nameEnding + 2);
-                }
-            } else if (m_messageType == CHAT_MESSAGE) {
-                m_chatNumber = Integer.valueOf(m_message.substring(0, 1)).intValue();
-                nameBeginning = 2;
-                nameEnding = m_message.indexOf("> ");
-                if (nameEnding == -1) {
-                    m_messager = m_message.substring(nameBeginning);
-                    m_message = "";
-                } else {
-                    m_messager = m_message.substring(nameBeginning, nameEnding);
-                    m_message = m_message.substring(nameEnding + 2);
+                    if (alertCommands != null) {
+                        for (int i = 0; i < alertCommands.length; i++) {
+                            if (m_message.startsWith(alertCommands[i] + ':')) {
+                                m_messageType = ALERT_MESSAGE;
+                                m_alertCommandType = alertCommands[i];
+                                stop += "3";
+                                break;
+                            }
+                        }
+                    }
+
+                    stop += "4";
+                    if (m_messageType == REMOTE_PRIVATE_MESSAGE) {
+                        nameBeginning = m_message.indexOf('(');
+                        nameEnding = m_message.indexOf(")>");
+                        m_messager = m_message.substring(nameBeginning + 1, nameEnding);
+                        m_message = m_message.substring(nameEnding + 2);
+                        stop += "5";
+                    } else {
+                        nameBeginning = m_message.indexOf('(');
+                        nameEnding = m_message.indexOf(") (");
+                        m_messager = m_message.substring(nameBeginning + 1, nameEnding);
+                        m_message = m_message.substring(nameEnding + 2);
+                        stop += "6";
+                    }
+                } else if (m_messageType == CHAT_MESSAGE) {
+                    stop += "7";
+                    m_chatNumber = Integer.valueOf(m_message.substring(0, 1)).intValue();
+                    nameBeginning = 2;
+                    nameEnding = m_message.indexOf("> ");
+                    if (nameEnding == -1) {
+                        m_messager = m_message.substring(nameBeginning);
+                        m_message = "";
+                        stop += "8";
+                    } else {
+                        m_messager = m_message.substring(nameBeginning, nameEnding);
+                        m_message = m_message.substring(nameEnding + 2);
+                        stop += "9";
+                    }
                 }
             }
+        } catch (StringIndexOutOfBoundsException e) {
+            System.out.println("OutOfBounds: " + stop);
+            Tools.printLog("OutOfBounds: " + stop);
+            Tools.printStackTrace("OutOfBounds: " + stop, e);
         }
     }
 
