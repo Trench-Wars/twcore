@@ -53,13 +53,6 @@ public class HelpCall extends Call {
         timeClaim = System.currentTimeMillis();
     }
 
-    public void clean() {
-        claimer = "[clean]";
-        claimed = true;
-        claimType = CLEAN;
-        timeClaim = System.currentTimeMillis();
-    }
-
     public void setQuestion(String question, String[] responses) {
 
         nextResponse = 0;

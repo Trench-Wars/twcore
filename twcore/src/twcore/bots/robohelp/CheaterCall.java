@@ -35,4 +35,11 @@ public class CheaterCall extends Call {
         claimType = FORGOT;
         timeClaim = System.currentTimeMillis();
     }
+
+    public void clean() {
+        claimer = "[clean]";
+        claimed = true;
+        claimType = CLEAN;
+        timeClaim = System.currentTimeMillis();
+    }
 }

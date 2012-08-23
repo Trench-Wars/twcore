@@ -1360,7 +1360,7 @@ public class robohelp extends SubspaceBot {
             return;
         }
         if (!last.isTaken()) {
-            ((HelpCall) last).clean();
+            ((CheaterCall) last).clean();
             calls.removeElement(last.getID());
             m_botAction.sendSmartPrivateMessage(name, "Call #" + last.getID() + " cleaned.");
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fnTaken = 3, fcTakerName = 'clean' WHERE fnCallID = " + last.getCallID());
