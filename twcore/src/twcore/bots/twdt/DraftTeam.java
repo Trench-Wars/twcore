@@ -387,7 +387,7 @@ public class DraftTeam {
             ba.setFreq(name, freq);
         else {
             try {
-                ResultSet rs = ba.SQLQuery(db, "SELECT fcName FROM tblDraft__Player WHERE fnTeamID = " + teamID + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+                ResultSet rs = ba.SQLQuery(db, "SELECT fcUserName FROM tblDraft__Player WHERE fnTeamID = " + teamID + " AND fcUserName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
                 if (rs.next()) 
                     ba.setFreq(name, freq);
                 ba.SQLClose(rs);
@@ -426,8 +426,7 @@ public class DraftTeam {
                     return;
                 }
                 */
-            } 
-            if (p==null) {
+            } else {
                 ba.sendSmartPrivateMessage(cap, name + " was not found on the team roster.");
                 return;
             }
@@ -495,9 +494,9 @@ public class DraftTeam {
     private void setPlayed(String name, boolean played) {
         try {
             if (played)
-                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 1 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
+                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 1 WHERE fcUserName = '" + Tools.addSlashesToString(name) + "'");
             else
-                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 0 WHERE fcName = '" + Tools.addSlashesToString(name) + "'");
+                ba.SQLQueryAndClose(db, "UPDATE tblDraft__Player SET fnPlayed = 0 WHERE fcUserName = '" + Tools.addSlashesToString(name) + "'");
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
@@ -507,7 +506,7 @@ public class DraftTeam {
     private int getStars(String name) {
         int stars = -1;
         try {
-            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + season + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+            ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + season + " AND fcUserName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
             if (rs.next()) {
                 int team = rs.getInt("fnTeamID");
                 if (team == teamID) {
