@@ -401,6 +401,7 @@ public class DraftTeam {
     private void do_add(String cap, String name, int ship) {
         DraftPlayer p = null;
         p = getPlayer(name, false);
+        
         if (p != null && p.getStatus() != Status.NONE) {
             ba.sendSmartPrivateMessage(cap, p.getName() + " is already playing.");
             return;
@@ -425,7 +426,8 @@ public class DraftTeam {
                     return;
                 }
                 */
-            } else {
+            } 
+            if (p==null) {
                 ba.sendSmartPrivateMessage(cap, name + " was not found on the team roster.");
                 return;
             }
