@@ -800,7 +800,7 @@ public class robohelp extends SubspaceBot {
                     }
                 } else if (message.startsWith("got"))
                     message = "got";
-                if (!opList.isBotExact(player))
+                if (!(call instanceof NewbCall) && !opList.isBotExact(player))
                     m_botAction.sendSmartPrivateMessage(player, "Hello " + player + ", we have received your ?help/?cheater call. Staffer " + name + " will be handling your call. Please use :" + name
                             + ": to further contact this staffer.");
 
