@@ -77,10 +77,9 @@ public class heli extends MultiModule {
     }
 
     public void startThing() {
-        
         Ship ship = m_botAction.getShip();
-        m_botAction.setShip(m_botAction.getBotName(), 8);
         ship.setShip(7);
+        ship.move(260, 512);
         y = ship.getY();
         x = ship.getX();
         yDiff = 0;
@@ -114,7 +113,7 @@ public class heli extends MultiModule {
             x += move;
             y -= slope;
             yDiff += slope / 16;
-            if (x > (1024 * 16)) {
+            if (x >= (1024 * 16)) {
                 m_botAction.cancelTasks();
             }
         }
