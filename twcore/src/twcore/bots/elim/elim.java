@@ -413,52 +413,52 @@ public class elim extends SubspaceBot {
     /** Handles the !help command */
     public void cmd_help(String name) {
         String[] msg = new String[] {
-                ",-- Robo Ref Commands -------------------------------------------------------------------.",
-                "|!lag <name>       - Checks the lag of player <name>                                     |",
-                "|!ladder <ship>    - (!lad) Prints the top 5 ranking players for <ship>                  |",
-                "|!lad <ship>:<#>   - Prints the 3 players surrounding rank <#> in <ship>                 |",
-                "|!votes            - Warbird and Javelin vote analysis                                   |",
-                "|!alert            - Toggles new game private message alerts on or off                   |",
-                "|!lagout           - Return to game after lagging out                                    |",
-                "|!status           - Displays current game status                                        |",
-                "|!rank <#>         - Shows your current rank in ship <#>                                 |",
-                "|!rank <name>:<#>  - Shows the rank of <name> in ship <#>                                |",
-                "|!rec <#>          - Gets your own record in ship <#>                                    |",
-                "|!rec <name>:<#>   - Gets the record of <name> in ship <#>                               |",
-                "|                     NOTE: Use -1 as <#> for all ships                                  |",
-                "|!who              - Lists the remaining players and their records                       |",
-                "|!stats <#>        - Spams all of your ship <#> statistics if available                  |",
-                "|!stats <name>:<#> - Spams all statistic information for <name> in ship <#> if available |",
-                "|                     NOTE: Use -1 as <#> for all ships                                  |",
-                "|!streak           - Displays your current streak information                            |",
-                "|!streak <name>    - Displays streak information for <name>                              |",
-                "|!mvp              - Lists current game best/worst player record information             |",
-                "|!deaths           - Lists current game most/least player death information              |",
-                "|!scorereset <#>   - Resets all scores and statistics for the ship <#> specified (!sr)   |",
+                "+-- Robo Ref Commands --------------------------------------------------------------------.",
+                "| !lag <name>       - Checks the lag of player <name>                                     |",
+                "| !ladder <ship>    - (!lad) Prints the top 5 ranking players for <ship>                  |",
+                "| !lad <ship>:<#>   - Prints the 3 players surrounding rank <#> in <ship>                 |",
+                "| !votes            - Warbird and Javelin vote analysis                                   |",
+                "| !alert            - Toggles new game private message alerts on or off                   |",
+                "| !lagout           - Return to game after lagging out                                    |",
+                "| !status           - Displays current game status                                        |",
+                "| !rank <#>         - Shows your current rank in ship <#>                                 |",
+                "| !rank <name>:<#>  - Shows the rank of <name> in ship <#>                                |",
+                "| !rec <#>          - Gets your own record in ship <#>                                    |",
+                "| !rec <name>:<#>   - Gets the record of <name> in ship <#>                               |",
+                "|                      NOTE: Use -1 as <#> for all ships                                  |",
+                "| !who              - Lists the remaining players and their records                       |",
+                "| !stats <#>        - Spams all of your ship <#> statistics if available                  |",
+                "| !stats <name>:<#> - Spams all statistic information for <name> in ship <#> if available |",
+                "|                      NOTE: Use -1 as <#> for all ships                                  |",
+                "| !streak           - Displays your current streak information                            |",
+                "| !streak <name>    - Displays streak information for <name>                              |",
+                "| !mvp              - Lists current game best/worst player record information             |",
+                "| !deaths           - Lists current game most/least player death information              |",
+                "| !scorereset <#>   - Resets all scores and statistics for the ship <#> specified (!sr)   |",
         };
         ba.privateMessageSpam(name, msg);
         if (oplist.isZH(name)) {
             msg = new String[] {
-                    ":-- Staff Commands ----------------------------------------------------------------------+",
-                    "|!die              - Forces the bot to shutdown and log off                              |",
-                    "|!stop             - Kills current game and prevents any future games (!off)             |",
-                    "|!start            - Begins game and enables games to continue running (!on)             |",
-                    "|!zone             - Forces the bot to send a default zone message                       |",
-                    "|!remove <name>    - Removes <name> from the current game (!rm or !rem)                  |",
-                    "|!killrace         - Enables and disables killrace availability                          |",
+                    "+-- Staff Commands -----------------------------------------------------------------------+",
+                    "| !die              - Forces the bot to shutdown and log off                              |",
+                    "| !stop             - Kills current game and prevents any future games (!off)             |",
+                    "| !start            - Begins game and enables games to continue running (!on)             |",
+                    "| !zone             - Forces the bot to send a default zone message                       |",
+                    "| !remove <name>    - Removes <name> from the current game (!rm or !rem)                  |",
+                    "| !killrace         - Enables and disables killrace availability                          |",
             };
             ba.privateMessageSpam(name, msg);
         }
         if (oplist.isSmod(name)) {
             msg = new String[] {
-                    ":-- Smod Commands -----------------------------------------------------------------------+",
-                    "|!hider            - Disables the hiding player checker/reporter (only during games)     |",
-                    "|!debug            - Toggles the debugger which sends debug messages to you when enabled |",
-                    "|!greet <msg>      - Changes the greeting message for the arena                          |",
+                    "+-- Smod Commands ------------------------------------------------------------------------+",
+                    "| !hider            - Disables the hiding player checker/reporter (only during games)     |",
+                    "| !debug            - Toggles the debugger which sends debug messages to you when enabled |",
+                    "| !greet <msg>      - Changes the greeting message for the arena                          |",
             };
             ba.privateMessageSpam(name, msg);
         }
-        ba.sendPrivateMessage(name, "`----------------------------------------------------------------------------------------'");
+        ba.sendPrivateMessage(name, "`-----------------------------------------------------------------------------------------'");
     }
     
     public void cmd_votes(String name) {
