@@ -740,15 +740,14 @@ public class robohelp extends SubspaceBot {
         else if (!(help instanceof NewbCall) && help.isExpired(now, CALL_EXPIRATION_TIME))
             m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " has expired.");
         else {
-            if (!message.startsWith("got")) {
-                if ((help instanceof NewbCall))
-                    handleThat(name, help.getPlayername());
-            } else {
+            if (!message.startsWith("got") && (help instanceof NewbCall))
+                handleThat(name, help.getPlayername());
+            else {
                 help.claim(name);
-                if (message.startsWith("got")) {
+                if (help instanceof HelpCall && message.startsWith("got")) {
                     if (help.getCallType() == 2)
                         help.setCallType(4);
-                    else if (help.getCallType() == 0)
+                    else if (help.getClaimType() == 0)
                         help.setCallType(1);
                     else
                         help.setCallType(5);
