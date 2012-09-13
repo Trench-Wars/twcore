@@ -49,30 +49,37 @@ public class heli extends MultiModule {
     }
 
     public void handleCommand(String name, String message) {
-        if (message.toLowerCase().startsWith("!start"))
+        if (message.toLowerCase().startsWith("!start")) {
+            m_botAction.sendPrivateMessage(name, "Starting...");
             startThing();
-        else if (message.toLowerCase().startsWith("!specbot")) {
+        } else if (message.toLowerCase().startsWith("!specbot")) {
             m_botAction.spec(m_botAction.getBotName());
             m_botAction.spec(m_botAction.getBotName());
         } else if (message.toLowerCase().startsWith("!setmove ")) {
             try {
                 move = Integer.parseInt(message.substring(9));
+                m_botAction.sendPrivateMessage(name, "Set move to: " + move);
             } catch (Exception e) {}
         } else if (message.toLowerCase().startsWith("!setspeed ")) {
             try {
                 speed = Integer.parseInt(message.substring(10));
+                m_botAction.sendPrivateMessage(name, "Set speed to: " + speed);
             } catch (Exception e) {}
         } else if (message.toLowerCase().startsWith("!setslope ")) {
             try {
                 Slope = Integer.parseInt(message.substring(10));
+                m_botAction.sendPrivateMessage(name, "Set slope to: " + Slope);
             } catch (Exception e) {}
         } else if (message.toLowerCase().startsWith("!stop")) {
+            m_botAction.sendPrivateMessage(name, "Stopping...");
             m_botAction.cancelTasks();
         }
     }
 
     public void startThing() {
+        
         Ship ship = m_botAction.getShip();
+        ship.setShip(8);
         y = ship.getY();
         x = ship.getX();
         yDiff = 0;
