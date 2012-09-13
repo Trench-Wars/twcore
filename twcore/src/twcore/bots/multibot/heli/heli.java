@@ -4,6 +4,7 @@ import java.util.Random;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
@@ -151,6 +152,7 @@ public class heli extends MultiModule {
     }
 
     public void requestEvents(ModuleEventRequester req) {
+        req.request(this, EventRequester.MESSAGE);
     }
 
     public void cancel() {
