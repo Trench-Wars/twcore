@@ -325,6 +325,11 @@ public class ElimPlayer {
     /** Lagout command execution */
     public void lagin() {
         status = Status.SPAWN;
+        game.handleSpawn(this, false);
+        if (game.ship.inBase() && ship != 6) {
+            spawn = new Spawn(false);
+            ba.scheduleTask(spawn, ((SPAWN_TIME + 2 * SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
+        }
         lagouts--;
     }
     
