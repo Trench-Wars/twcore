@@ -79,7 +79,8 @@ public class heli extends MultiModule {
     public void startThing() {
         
         Ship ship = m_botAction.getShip();
-        ship.setShip(8);
+        m_botAction.setShip(m_botAction.getBotName(), 8);
+        ship.setShip(7);
         y = ship.getY();
         x = ship.getX();
         yDiff = 0;
