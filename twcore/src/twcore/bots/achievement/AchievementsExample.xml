@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : Achievements.xml
+    Created on : May 30, 2011, 4:48 AM
+    Author     : spookedone
+    Description:
+        Defines the achievements available in pub.
+-->
+
+<achievements debug="true">
+    <achievement id="0" name="Pew Pew">
+        <description>Get a kill.</description>
+        <kill minimum="1" />
+    </achievement>
+    <achievement id="1" name="I Bleed!">
+        <description>Get killed.</description>
+        <death minimum="1" />
+    </achievement>
+    <achievement id="2" name="What's this orb?">
+        <description>Go to flag room in top of base.</description>
+        <location x="485" y="254" width="54" height="36" />
+    </achievement>
+    <achievement id="3" name="Minute Man">
+        <description>Don't die for 1 minute.</description>
+		<time minimum="60" >
+			<death maximum="0" />
+		</time>
+    </achievement>
+    <achievement id="4" name="The Great White">
+        <description>Get a kill in Shark.</description>
+		<ship type="8">
+			<kill minimum="1" />
+		</ship>
+    </achievement>
+    <achievement id="5" name="Double kill!">
+        <description>Kill Two People within 3 seconds.</description>
+        <time maximum="3">
+			<kill minimum="2" />
+		</time>
+    </achievement>
+    <achievement id="6" name="Artillery Hunter">
+        <description>Kill a Leviathan.</description>
+        <kill minimum="1">
+			<ship type="4" />
+		</kill>
+    </achievement>
+    <achievement id="7" name="Home Run">
+        <description>Visit roof and all three safes in under 2 minutes.</description>
+        <time maximum="120">
+			<location x="512" y="237" maximumRange="9" />
+			<location x="258" y="485" maximumRange="9" />
+			<location x="512" y="743" maximumRange="9" />
+			<location x="767" y="484" maximumRange="9" />
+		</time>
+    </achievement>
+    <achievement id="8" name="Rubber Neck">
+        <description>Kill a player in main tube from either side of mid base.</description>
+        <location x="482" y="346" width="23" height="28">
+        <kill minimum="1">
+            <location x="507" y="344" width="10" height="33" />
+        </kill>
+		</location>
+    </achievement>
+    <achievement id="8" name="Rubber Neck">
+        <description>Kill a players in main tube from either side of mid base.</description>
+        <location x="519" y="346" width="23" height="28">
+        <kill minimum="1">
+            <location x="507" y="344" width="10" height="33" />
+        </kill>
+		</location>
+    </achievement>
+    <achievement id="9" name="Sniper!">
+		<description>Get a long distance kill in Warbird.</description>
+		<ship type="1">
+			<kill minimum="1">
+				<range minimum="60" />
+			</kill>
+		</ship>
+    </achievement>
+    <achievement id="10" name="Free Parking">
+        <description>Sit near safe for 5 seconds.</description>
+        <location x="258" y="485" maximumRange="26">
+			<time minimum="5" />
+		</location>
+    </achievement>
+    <achievement id="10" name="Free Parking">
+        <description>Sit near safe for 5 seconds.</description>
+        <location x="512" y="743" maximumRange="26">
+			<time minimum="5" />
+		</location>
+    </achievement>
+    <achievement id="10" name="Free Parking">
+        <description>Sit near safe for 5 seconds.</description>
+        <location x="767" y="484" maximumRange="26">
+			<time minimum="5" />
+		</location>
+    </achievement>
+	<achievement id="11" name="Space Surfer">
+		<description>Surf one of the wormholes for 5 seconds.</description>
+		<location x="381" y="610" maximumRange="16">
+			<time minimum="5" />
+		</location>
+	</achievement>
+	<achievement id="11" name="Space Surfer">
+		<description>Surf one of the wormholes for 5 seconds.</description>
+			<location x="642" y="610" maximumRange="16">
+				<time minimum="5" />
+			</location>
+	</achievement>
+	<achievement id="12" name="Too Spooked">
+		<description>...?</description>
+		<ship type="5">
+			<death maximum="0">
+				<kill minimum="5" />
+			</death>
+		</ship>
+	</achievement>
+</achievements>
