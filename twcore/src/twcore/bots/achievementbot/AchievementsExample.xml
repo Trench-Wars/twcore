@@ -8,7 +8,7 @@
         Defines the achievements available in pub.
 -->
 
-<achievements debug="true">
+<achievements debug="false">
     <achievement id="0" name="Pew Pew">
         <description>Get a kill.</description>
         <kill minimum="1" />

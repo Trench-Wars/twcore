@@ -30,9 +30,9 @@ import twcore.core.game.Player;
  */
 public final class achievementbot extends SubspaceBot {
 
-    private static final String XML_FILE_NAME = "C:/subspace/twcore/src/twcore/"
-            + "bots/pubsystem/module/achievements/AchievementsExample.xml";
     private static final boolean XML_VALIDATION = false;
+    private String xmlFileName = "C:/subspace/twcore/bin/twcore/bots/"
+            + "achievementbot/AchievementsExample.xml";
     private final List<Achievement> achievements;
     private final Map<Short, List<Achievement>> players;
     private boolean running = false;
@@ -50,12 +50,12 @@ public final class achievementbot extends SubspaceBot {
         botAction = m_botAction;
         achievements = new LinkedList<Achievement>();
         players = Collections.synchronizedMap(new HashMap<Short, List<Achievement>>());
-
+        
         synchronized (achievements) {
             reloadConfig();
         }
 
-        m_botAction.setPlayerPositionUpdating(1000);
+        //m_botAction.setPlayerPositionUpdating(1000);
     }
 
     @Override
@@ -82,8 +82,8 @@ public final class achievementbot extends SubspaceBot {
         try {
             SAXParser parser = factory.newSAXParser();
 
-            InputSource input = new InputSource(new FileReader(XML_FILE_NAME));
-            input.setSystemId("file://" + new File(XML_FILE_NAME).getAbsolutePath());
+            InputSource input = new InputSource(new FileReader(xmlFileName));
+            input.setSystemId("file://" + new File(xmlFileName).getAbsolutePath());
 
             AchievementHandler handler = new AchievementHandler();
 
