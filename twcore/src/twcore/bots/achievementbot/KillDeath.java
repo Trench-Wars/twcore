@@ -1,4 +1,4 @@
-package twcore.bots.achievement;
+package twcore.bots.achievementbot;
 
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.SubspaceEvent;

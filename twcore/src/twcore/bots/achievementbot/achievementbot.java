@@ -1,4 +1,4 @@
-package twcore.bots.achievement;
+package twcore.bots.achievementbot;
 
 import java.io.File;
 import java.io.FileReader;
@@ -14,7 +14,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
-import twcore.bots.achievement.Requirement.Type;
+import twcore.bots.achievementbot.Requirement.Type;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.SubspaceBot;
@@ -28,7 +28,7 @@ import twcore.core.game.Player;
  * @see http://www.twcore.org/ticket/735
  * @author spookedone
  */
-public final class AchievementsBot extends SubspaceBot {
+public final class achievementbot extends SubspaceBot {
 
     private static final String XML_FILE_NAME = "C:/subspace/twcore/src/twcore/"
             + "bots/pubsystem/module/achievements/AchievementsExample.xml";
@@ -44,7 +44,7 @@ public final class AchievementsBot extends SubspaceBot {
      * @param m_botAction
      * @param context 
      */
-    public AchievementsBot(BotAction m_botAction) {
+    public achievementbot(BotAction m_botAction) {
         super(m_botAction);
 
         botAction = m_botAction;
@@ -62,7 +62,7 @@ public final class AchievementsBot extends SubspaceBot {
     public void handleEvent(LoggedOn event) {
         BotSettings botSettings = m_botAction.getBotSettings();
         
-        String arena = botSettings.getString("Arena");
+        String arena = botSettings.getString("arena");
         if (arena != null && !arena.isEmpty()) {
             m_botAction.changeArena(arena);
         }
@@ -89,11 +89,11 @@ public final class AchievementsBot extends SubspaceBot {
 
             parser.parse(input, handler);
         } catch (IOException ex) {
-            Logger.getLogger(AchievementsBot.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(achievementbot.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(AchievementsBot.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(achievementbot.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SAXException ex) {
-            Logger.getLogger(AchievementsBot.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(achievementbot.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

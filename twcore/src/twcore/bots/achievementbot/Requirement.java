@@ -1,4 +1,4 @@
-package twcore.bots.achievement;
+package twcore.bots.achievementbot;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -1,8 +1,8 @@
-package twcore.bots.achievement;
+package twcore.bots.achievementbot;
 
 import java.util.LinkedList;
 import java.util.List;
-import twcore.bots.achievement.Requirement.Type;
+import twcore.bots.achievementbot.Requirement.Type;
 import twcore.core.events.SubspaceEvent;
 
 /**

@@ -1,6 +1,6 @@
-package twcore.bots.achievement;
+package twcore.bots.achievementbot;
 
-import static twcore.bots.achievement.AchievementsBot.botAction;
+import static twcore.bots.achievementbot.achievementbot.botAction;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerPosition;
 import twcore.core.events.SubspaceEvent;
