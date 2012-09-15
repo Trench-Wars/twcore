@@ -32,7 +32,7 @@ public final class achievementbot extends SubspaceBot {
 
     private static final boolean XML_VALIDATION = false;
     private String xmlFileName = "C:/subspace/twcore/bin/twcore/bots/"
-            + "achievementbot/AchievementsExample.xml";
+            + "achievementbot/Achievements.xml";
     private final List<Achievement> achievements;
     private final Map<Short, List<Achievement>> players;
     private boolean running = false;
