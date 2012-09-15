@@ -747,7 +747,7 @@ public class robohelp extends SubspaceBot {
                 if (help instanceof HelpCall && message.startsWith("got")) {
                     if (help.getCallType() == 2)
                         help.setCallType(4);
-                    else if (help.getClaimType() == 0)
+                    else if (help.getCallType() == 0)
                         help.setCallType(1);
                     else
                         help.setCallType(5);
