@@ -55,6 +55,7 @@
     	<copy todir="bin" overwrite="no">
     		<fileset dir="src">
 		        <include name="**/**.cfg"/>
+				<include name="**/**.xml"/>
 		    </fileset>
     	</copy>
 	</target>	
