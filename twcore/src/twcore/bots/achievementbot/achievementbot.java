@@ -30,7 +30,7 @@ import twcore.core.game.Player;
 public final class achievementbot extends SubspaceBot {
 
     private static final boolean XML_VALIDATION = false;
-    private static final String XML_FILE_NAME = "Achievements.xml";
+    private String xmlFileName = "Achievements.xml";
     private final List<Achievement> achievements;
     private final Map<Short, List<Achievement>> players;
     private boolean running = false;
@@ -38,6 +38,7 @@ public final class achievementbot extends SubspaceBot {
     private CommandInterpreter cmds;
     private OperatorList oplist;
     public static BotAction botAction;
+    private String xmlPath; 
 
     /**
      * Standard constructor for AchievementBot of type SubspaceBot
@@ -64,11 +65,6 @@ public final class achievementbot extends SubspaceBot {
         cmds = new CommandInterpreter(m_botAction);
         oplist = m_botAction.getOperatorList();
         registerCommands();
-
-        synchronized (achievements) {
-            reloadConfig(XML_FILE_NAME);
-        }
-
     }
 
     @Override
@@ -78,6 +74,13 @@ public final class achievementbot extends SubspaceBot {
         String arena = config.getString("arena");
         if (arena != null && !arena.isEmpty()) {
             m_botAction.changeArena(arena);
+        }
+        
+        xmlPath = m_botAction.getGeneralSettings().getString("Core Location");
+        xmlPath += "/twcore/bots/achievementbot/";
+        
+        synchronized (achievements) {
+            reloadConfig(xmlPath + xmlFileName);
         }
     }
 
@@ -193,14 +196,6 @@ public final class achievementbot extends SubspaceBot {
     }
 
     @Override
-    public void handleEvent(PlayerPosition event) {
-        if (running) {
-            short id = event.getPlayerID();
-            handleAchievement(id, Type.location, event);
-        }
-    }
-
-    @Override
     public void handleEvent(PlayerLeft event) {
         if (running) {
             if (players.containsKey(event.getPlayerID())) {
@@ -269,7 +264,7 @@ public final class achievementbot extends SubspaceBot {
      * timer, and sets its running flag for event callbacks.
      */
     public void start() {
-        m_botAction.setPlayerPositionUpdating(1000);
+        m_botAction.setPlayerPositionUpdating(0);
 
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while (i.hasNext()) {
@@ -391,10 +386,10 @@ public final class achievementbot extends SubspaceBot {
 
         if (running) {
             stop();
-            reloadConfig(XML_FILE_NAME);
+            reloadConfig(xmlPath + xmlFileName);
             start();
         } else {
-            reloadConfig(XML_FILE_NAME);
+            reloadConfig(xmlPath + xmlFileName);
         }
 
     }
