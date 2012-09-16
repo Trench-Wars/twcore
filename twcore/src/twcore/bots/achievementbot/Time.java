@@ -30,9 +30,6 @@ public class Time extends Requirement {
 
     public static void increment() {
         current++;
-        if (debug) {
-            System.out.println("[DEBUG] Time incremented. [CURRENT:] " + current);
-        }
     }
 
     @Override

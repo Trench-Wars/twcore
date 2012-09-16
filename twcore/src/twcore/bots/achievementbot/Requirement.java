@@ -14,8 +14,6 @@ public abstract class Requirement {
     protected boolean exclusive = false;    //flag for exclusive requirement
     protected Type type;                    //type of requirement
     protected List<Requirement> requirements;
-
-    public static boolean debug = false;
     
     /**
      * Requirement Types

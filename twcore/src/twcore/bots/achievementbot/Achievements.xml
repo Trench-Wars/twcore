@@ -8,7 +8,7 @@
         Defines the achievements available in pub.
 -->
 
-<achievements debug="false">
+<achievements>
     <achievement id="0" name="Pew Pew">
         <description>Get a kill.</description>
         <kill minimum="1" />
@@ -17,10 +17,10 @@
         <description>Get killed.</description>
         <death minimum="1" />
     </achievement>
-    <achievement id="2" name="What's this orb?">
+    <!--<achievement id="2" name="What's this orb?">
         <description>Go to flag room in top of base.</description>
         <location x="485" y="254" width="54" height="36" />
-    </achievement>
+    </achievement>-->
     <achievement id="3" name="Minute Man">
         <description>Don't die for 1 minute.</description>
 		<time minimum="60" >
@@ -45,7 +45,7 @@
 			<ship type="4" />
 		</kill>
     </achievement>
-    <achievement id="7" name="Home Run">
+    <!--<achievement id="7" name="Home Run">
         <description>Visit roof and all three safes in under 2 minutes.</description>
         <time maximum="120">
 			<location x="512" y="237" maximumRange="9" />
@@ -53,7 +53,7 @@
 			<location x="512" y="743" maximumRange="9" />
 			<location x="767" y="484" maximumRange="9" />
 		</time>
-    </achievement>
+    </achievement>-->
     <achievement id="8" name="Rubber Neck">
         <description>Kill a player in main tube from either side of mid base.</description>
         <location x="482" y="346" width="23" height="28">
@@ -78,34 +78,34 @@
 			</kill>
 		</ship>
     </achievement>
-    <achievement id="10" name="Free Parking">
+    <achievement id="10" name="No Free Parking">
         <description>Sit near safe for 5 seconds.</description>
         <location x="258" y="485" maximumRange="26">
-			<time minimum="5" />
+			<kill minimum="1" />
 		</location>
     </achievement>
     <achievement id="10" name="Free Parking">
         <description>Sit near safe for 5 seconds.</description>
         <location x="512" y="743" maximumRange="26">
-			<time minimum="5" />
+			<kill minimum="1" />
 		</location>
     </achievement>
     <achievement id="10" name="Free Parking">
         <description>Sit near safe for 5 seconds.</description>
         <location x="767" y="484" maximumRange="26">
-			<time minimum="5" />
+			<kill minimum="1" />
 		</location>
     </achievement>
 	<achievement id="11" name="Space Surfer">
-		<description>Surf one of the wormholes for 5 seconds.</description>
+		<description>Kill a player while surfing one of the wormholes.</description>
 		<location x="381" y="610" maximumRange="16">
-			<time minimum="5" />
+			<kill minimum="1" />
 		</location>
 	</achievement>
 	<achievement id="11" name="Space Surfer">
-		<description>Surf one of the wormholes for 5 seconds.</description>
+		<description>Kill a player while surfing one of the wormholes.</description>
 			<location x="642" y="610" maximumRange="16">
-				<time minimum="5" />
+				<kill minimum="1" />
 			</location>
 	</achievement>
 	<achievement id="12" name="Too Spooked">

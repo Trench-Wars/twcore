@@ -62,11 +62,6 @@ public class Location extends Requirement {
      */
     private boolean validLocation() {
         boolean valid = false;
-
-        if (debug) {
-            System.out.println("[DEBUG] Location validation. " + "[pX:] " + pX +
-                    "\t[pY:] " + pY); 
-        }
         
         //player is on coordinate
         if (x != -1 && y != -1) {

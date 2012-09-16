@@ -15,49 +15,44 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 import twcore.bots.achievementbot.Requirement.Type;
-import twcore.core.BotAction;
-import twcore.core.BotSettings;
-import twcore.core.EventRequester;
-import twcore.core.SubspaceBot;
+import twcore.core.*;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.*;
 import twcore.core.game.Player;
 
 /**
- * The PubAchievementsModule allows pubsystem to award player achievements 
- * based on their actions in pub. 
- * 
+ * The PubAchievementsModule allows pubsystem to award player achievements based
+ * on their actions in pub.
+ *
  * @see http://www.twcore.org/ticket/735
  * @author spookedone
  */
 public final class achievementbot extends SubspaceBot {
 
     private static final boolean XML_VALIDATION = false;
-    private static final String XML_FILE_NAME = "C:/subspace/twcore/bin/twcore/bots/"
-            + "achievementbot/Achievements.xml";
+    private static final String XML_FILE_NAME = "Achievements.xml";
     private final List<Achievement> achievements;
     private final Map<Short, List<Achievement>> players;
     private boolean running = false;
-    public static BotAction botAction;
-    private boolean debug = false;
     private EventRequester events;
     private CommandInterpreter cmds;
-    
+    private OperatorList oplist;
+    public static BotAction botAction;
+
     /**
      * Standard constructor for AchievementBot of type SubspaceBot
+     *
      * @param m_botAction
-     * @param context 
+     * @param context
      */
     public achievementbot(BotAction m_botAction) {
         super(m_botAction);
-
         botAction = m_botAction;
+
         achievements = new LinkedList<Achievement>();
         players = Collections.synchronizedMap(new HashMap<Short, List<Achievement>>());
-        
+
         events = m_botAction.getEventRequester();
-        events.request(EventRequester.PLAYER_POSITION);
-        events.request(EventRequester.ARENA_JOINED);
         events.request(EventRequester.FREQUENCY_CHANGE);
         events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
         events.request(EventRequester.LOGGED_ON);
@@ -65,28 +60,27 @@ public final class achievementbot extends SubspaceBot {
         events.request(EventRequester.PLAYER_LEFT);
         events.request(EventRequester.PLAYER_DEATH);
         events.request(EventRequester.PLAYER_ENTERED);
-        
+
         cmds = new CommandInterpreter(m_botAction);
-        addCommands();
-        
+        oplist = m_botAction.getOperatorList();
+        registerCommands();
+
         synchronized (achievements) {
             reloadConfig(XML_FILE_NAME);
         }
 
-        m_botAction.setPlayerPositionUpdating(1000);
     }
-    
+
     @Override
     public void handleEvent(LoggedOn event) {
-        BotSettings botSettings = m_botAction.getBotSettings();
-        
-        String arena = botSettings.getString("arena");
+        BotSettings config = m_botAction.getBotSettings();
+
+        String arena = config.getString("arena");
         if (arena != null && !arena.isEmpty()) {
             m_botAction.changeArena(arena);
         }
-        
     }
-    
+
     /**
      * Clear the current achievements and reloads the xml file containing the
      * achievements list.
@@ -118,10 +112,10 @@ public final class achievementbot extends SubspaceBot {
     /**
      * Load a player into the list of players having achievements. Required to
      * have a player's achievements tracked and should be called upon player
-     * entry into arena. 
-     * 
+     * entry into arena.
+     *
      * TODO needs to load saved achievement from database
-     * 
+     *
      * @param id id of the player
      */
     public void loadPlayer(short id) {
@@ -133,7 +127,7 @@ public final class achievementbot extends SubspaceBot {
                     playerAchievements.add(new Achievement(a));
                 }
 
-                Player p = botAction.getPlayer(id);
+                Player p = m_botAction.getPlayer(id);
                 for (Achievement a : playerAchievements) {
                     a.reset();  //forces time to update
                     if ((a.getTypeMask() & Type.ship.value()) == Type.ship.value()) {
@@ -153,13 +147,13 @@ public final class achievementbot extends SubspaceBot {
     /**
      * The handleAchievement method tolls a players achievements, based on type
      * of requirement being set on whichever callback fires this method. It will
-     * pass along the event and type for further review to see if something was 
+     * pass along the event and type for further review to see if something was
      * progressed to or achieved.
-     * 
+     *
      * @param id id of player
      * @param type type of requirement update
      * @param event the event itself
-     * 
+     *
      * @see twcore.bots.pubsystem.module.achievements.Requirement
      */
     public void handleAchievement(short id, Type type, SubspaceEvent event) {
@@ -168,7 +162,7 @@ public final class achievementbot extends SubspaceBot {
             for (Achievement a : players.get(id)) {
                 boolean complete = a.update(type, event);
                 if (complete) {
-                    botAction.sendPrivateMessage(id, "[Achievement Completed] "
+                    m_botAction.sendPrivateMessage(id, "[Achievement Completed] "
                             + a.getName() + " - " + a.getDescription());
 
                     //must set all achievements of same id to complete
@@ -275,6 +269,8 @@ public final class achievementbot extends SubspaceBot {
      * timer, and sets its running flag for event callbacks.
      */
     public void start() {
+        m_botAction.setPlayerPositionUpdating(1000);
+
         Iterator<Player> i = m_botAction.getPlayerIterator();
         while (i.hasNext()) {
             Player player = i.next();
@@ -301,8 +297,8 @@ public final class achievementbot extends SubspaceBot {
     }
 
     /**
-     * Stops the PubAchievementsModule. Clears current players, cancels the timer,
-     * and sets its running flag to false for ignoring callbacks.
+     * Stops the PubAchievementsModule. Clears current players, cancels the
+     * timer, and sets its running flag to false for ignoring callbacks.
      */
     public void stop() {
         players.clear();
@@ -316,24 +312,36 @@ public final class achievementbot extends SubspaceBot {
     }
 
     // <editor-fold defaultstate="collapsed" desc="Command support methods for handleEvent(Message event)">
-    
     /**
      * Add commands to the command interpreter for handleEvent(Message event)
      */
-    public void addCommands() {
-        int type = Message.PRIVATE_MESSAGE | Message.PUBLIC_MESSAGE;
+    public void registerCommands() {
+        int type = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
+        int access = OperatorList.SMOD_LEVEL;
         cmds.registerCommand("!help", type, this, "handleHelpMessage");
-        cmds.registerCommand("!die", type, this, "die");
-        cmds.registerCommand("!start", type, this, "handleStart");
-        cmds.registerCommand("!stop", type, this, "handleStop");
-        cmds.registerCommand("!reload", type, this, "handleReload");
+        cmds.registerCommand("!die", type, this, "handleDie", access);
+        cmds.registerCommand("!start", type, this, "handleStart", access);
+        cmds.registerCommand("!stop", type, this, "handleStop", access);
+        cmds.registerCommand("!reload", type, this, "handleReload", access);
+        cmds.registerCommand("!go", type, this, "handleGo", access);
         cmds.registerCommand("!list", type, this, "handleList");
+        cmds.registerDefaultCommand(type, this, "handleInvalidMessage");
     }
-    
+
     /**
-     * Handles listing of Achievements for a defined player. If the second 
+     * Handles any invalid commands sent.
+     *
+     * @param name
+     * @param msg
+     */
+    public void handleInvalidMessage(String name, String msg) {
+        m_botAction.sendSmartPrivateMessage(name, "Invalid command, please use !help.");
+    }
+
+    /**
+     * Handles listing of Achievements for a defined player. If the second
      * parameter is left null or empty, will default to the requestor (name).
-     * 
+     *
      * @param name requestor of achievement info
      * @param msg name of player's achievements to view
      */
@@ -341,7 +349,7 @@ public final class achievementbot extends SubspaceBot {
         if (msg == null || msg.isEmpty()) {
             msg = name;
         }
-        
+
         if (running) {
             Stack<Integer> ids = new Stack<Integer>();
             Player p = m_botAction.getFuzzyPlayer(msg);
@@ -365,96 +373,110 @@ public final class achievementbot extends SubspaceBot {
         }
     }
 
+    public void handleGo(String name, String msg) {
+        if (running) {
+            stop();
+        }
+        m_botAction.changeArena(msg);
+    }
+
     /**
-     * Handles request to reload the Achievements XML file.
-     * TODO may want to have optional file giving in parameter msg
-     * 
+     * Handles request to reload the Achievements XML file. TODO may want to
+     * have optional file giving in parameter msg
+     *
      * @param name player that requests reload
      * @param msg ignored
      */
     public void handleReload(String name, String msg) {
-        if (m_botAction.getOperatorList().isModerator(name)) {
-            if (running) {
-                stop();
-                reloadConfig(XML_FILE_NAME);
-                start();
-            } else {
-                reloadConfig(XML_FILE_NAME);
-            }
+
+        if (running) {
+            stop();
+            reloadConfig(XML_FILE_NAME);
+            start();
+        } else {
+            reloadConfig(XML_FILE_NAME);
         }
+
     }
-    
+
     /**
      * Handles stopping of AchievementBot
+     *
      * @param name
-     * @param msg 
+     * @param msg
      */
     public void handleStop(String name, String msg) {
-        if (m_botAction.getOperatorList().isModerator(name)) {
-            if (running) {
-                stop();
-                m_botAction.sendSmartPrivateMessage(name, "AchievementBot stopped.");
-            } else {
-                m_botAction.sendSmartPrivateMessage(name, "AchievementBot already stopped.");
-            }
+
+        if (running) {
+            stop();
+            m_botAction.sendSmartPrivateMessage(name, "AchievementBot stopped.");
+        } else {
+            m_botAction.sendSmartPrivateMessage(name, "AchievementBot already stopped.");
         }
+
     }
-    
+
     /**
      * Handles starting of AchievementBot
+     *
      * @param name
-     * @param msg 
+     * @param msg
      */
     public void handleStart(String name, String msg) {
-        if (m_botAction.getOperatorList().isModerator(name)) {
-            if (running) {
-                m_botAction.sendSmartPrivateMessage(name, "AchievementBot already started.");
-            }else {
-                start();
-                m_botAction.sendSmartPrivateMessage(name, "AchievementBot started.");
-            }
-            
+
+        if (running) {
+            m_botAction.sendSmartPrivateMessage(name, "AchievementBot already started.");
+        } else {
+            start();
+            m_botAction.sendSmartPrivateMessage(name, "AchievementBot started.");
         }
+
+
     }
-    
+
     /**
      * Handles death requests, only to be used by Mod+
+     *
      * @param name
-     * @param msg 
+     * @param msg
      */
     public void handleDie(String name, String msg) {
-        if (m_botAction.getOperatorList().isModerator(name)) {
-            if (running) {
-                stop();
-            }
-            m_botAction.die(name + " requested AchievementBot to die.");
+
+        if (running) {
+            stop();
         }
+        m_botAction.die();
+
     }
-    
+
     /**
      * Handles which help response to send player depending on access level.
+     *
      * @param name
-     * @param msg 
+     * @param msg
      */
     public void handleHelpMessage(String name, String msg) {
-        if (m_botAction.getOperatorList().isModerator(name)) {
+        if (oplist.isModerator(name)) {
             sendModHelpMessage(name);
         }
         sendHelpMessage(name);
     }
-    
+
     /**
      * Send player help message.
-     * @param sender 
+     *
+     * @param sender
      */
     public void sendHelpMessage(String sender) {
         m_botAction.sendSmartPrivateMessage(sender, "!list          -- Lists achievements.");
         m_botAction.sendSmartPrivateMessage(sender, "!list <name>   -- Lists player's achievements");
+        m_botAction.sendSmartPrivateMessage(sender, "");
     }
 
     /**
      * Send Mod+ help message.
-     * @param sender 
+     *
+     * @param sender
      */
     public void sendModHelpMessage(String sender) {
         m_botAction.sendSmartPrivateMessage(sender, "!start         -- Toggles achievements.");
@@ -462,9 +484,8 @@ public final class achievementbot extends SubspaceBot {
         m_botAction.sendSmartPrivateMessage(sender, "!reload        -- Reload the achievements.");
         m_botAction.sendSmartPrivateMessage(sender, "!die           -- Reload the achievements.");
     }
-    
+
     // </editor-fold>
-    
     /**
      * Handles loading Achievements from XML
      */
@@ -483,16 +504,9 @@ public final class achievementbot extends SubspaceBot {
         public void startElement(String namespace, String name, String fullName, Attributes attributes) {
             buffer.setLength(0);
             if (fullName.equals("achievements")) {
-                debug = attributes.getValue("debug").equalsIgnoreCase("true");
-                Requirement.debug = debug;                
             } else if (fullName.equals("achievement")) {
                 achievement = new Achievement(Integer.parseInt(attributes.getValue("id")));
                 achievement.setName(attributes.getValue("name"));
-                if (debug) {
-                    System.out.println("[DEBUG] Achievement created. [ID:] " + 
-                            achievement.getId() + "\t[NAME:] " + 
-                            achievement.getName());
-                }
             } else if (fullName.equals("description")) {
             } else if (achievement != null) {
                 int typeMask = achievement.getTypeMask();
@@ -694,9 +708,6 @@ public final class achievementbot extends SubspaceBot {
         public void endElement(String namespace, String name, String fullName) {
             if (fullName.equals("description")) {
                 achievement.setDescription(buffer.toString().trim());
-                if (debug) {
-                    System.out.println("[DEBUG]\t\t" + achievement.getDescription());
-                }
             } else if (fullName.equals("achievement")) {
                 achievements.add(achievement);
             } else if (fullName.equals("achievements")) {
@@ -704,16 +715,8 @@ public final class achievementbot extends SubspaceBot {
                 Requirement requirement = requirements.pop();
                 if (requirements.isEmpty()) {
                     achievement.addRequirement(requirement);
-                    if (debug) {
-                        System.out.println("[DEBUG]\t\tRequirement added. " +
-                                "[TYPE:] " + requirement.getType().toString());
-                    }
                 } else {
                     requirements.peek().addRequirement(requirement);
-                    if (debug) {
-                        System.out.println("[DEBUG]\t\tRequirement added. " +
-                                "[TYPE:] " + requirement.getType().toString());
-                    }
                 }
             }
         }

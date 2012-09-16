@@ -30,9 +30,6 @@ public class KillDeath extends ValueRequirement {
 
             if (valid && this.type == type) {
                 current++;
-                if (debug) {
-                    System.out.println("[DEBUG] KillDeath value increased.");
-                }
             }
         }
 
