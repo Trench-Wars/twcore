@@ -392,6 +392,8 @@ public final class achievementbot extends SubspaceBot {
             reloadConfig(xmlPath + xmlFileName);
         }
 
+        m_botAction.sendSmartPrivateMessage(name, "Config reloaded from: " +
+                xmlPath + xmlFileName);
     }
 
     /**
