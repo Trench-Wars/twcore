@@ -17,7 +17,9 @@ import org.xml.sax.helpers.DefaultHandler;
 import twcore.bots.achievementbot.Requirement.Type;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
+import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
+import twcore.core.command.CommandInterpreter;
 import twcore.core.events.*;
 import twcore.core.game.Player;
 
@@ -31,16 +33,18 @@ import twcore.core.game.Player;
 public final class achievementbot extends SubspaceBot {
 
     private static final boolean XML_VALIDATION = false;
-    private String xmlFileName = "C:/subspace/twcore/bin/twcore/bots/"
+    private static final String XML_FILE_NAME = "C:/subspace/twcore/bin/twcore/bots/"
             + "achievementbot/Achievements.xml";
     private final List<Achievement> achievements;
     private final Map<Short, List<Achievement>> players;
     private boolean running = false;
     public static BotAction botAction;
     private boolean debug = false;
+    private EventRequester events;
+    private CommandInterpreter cmds;
     
     /**
-     * Standard constructor for pubsystem module
+     * Standard constructor for AchievementBot of type SubspaceBot
      * @param m_botAction
      * @param context 
      */
@@ -51,13 +55,27 @@ public final class achievementbot extends SubspaceBot {
         achievements = new LinkedList<Achievement>();
         players = Collections.synchronizedMap(new HashMap<Short, List<Achievement>>());
         
+        events = m_botAction.getEventRequester();
+        events.request(EventRequester.PLAYER_POSITION);
+        events.request(EventRequester.ARENA_JOINED);
+        events.request(EventRequester.FREQUENCY_CHANGE);
+        events.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+        events.request(EventRequester.LOGGED_ON);
+        events.request(EventRequester.MESSAGE);
+        events.request(EventRequester.PLAYER_LEFT);
+        events.request(EventRequester.PLAYER_DEATH);
+        events.request(EventRequester.PLAYER_ENTERED);
+        
+        cmds = new CommandInterpreter(m_botAction);
+        addCommands();
+        
         synchronized (achievements) {
-            reloadConfig();
+            reloadConfig(XML_FILE_NAME);
         }
 
-        //m_botAction.setPlayerPositionUpdating(1000);
+        m_botAction.setPlayerPositionUpdating(1000);
     }
-
+    
     @Override
     public void handleEvent(LoggedOn event) {
         BotSettings botSettings = m_botAction.getBotSettings();
@@ -73,7 +91,7 @@ public final class achievementbot extends SubspaceBot {
      * Clear the current achievements and reloads the xml file containing the
      * achievements list.
      */
-    public void reloadConfig() {
+    public void reloadConfig(String configPath) {
         achievements.clear();
 
         SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -82,8 +100,8 @@ public final class achievementbot extends SubspaceBot {
         try {
             SAXParser parser = factory.newSAXParser();
 
-            InputSource input = new InputSource(new FileReader(xmlFileName));
-            input.setSystemId("file://" + new File(xmlFileName).getAbsolutePath());
+            InputSource input = new InputSource(new FileReader(configPath));
+            input.setSystemId("file://" + new File(configPath).getAbsolutePath());
 
             AchievementHandler handler = new AchievementHandler();
 
@@ -292,94 +310,161 @@ public final class achievementbot extends SubspaceBot {
         running = false;
     }
 
-    /*public void requestEvents(EventRequester eventRequester) {
-        eventRequester.request(EventRequester.PLAYER_DEATH);
-        eventRequester.request(EventRequester.PLAYER_ENTERED);
-        eventRequester.request(EventRequester.PLAYER_LEFT);
-        eventRequester.request(EventRequester.PLAYER_POSITION);
-        eventRequester.request(EventRequester.FREQUENCY_CHANGE);
-        eventRequester.request(EventRequester.FREQUENCY_SHIP_CHANGE);
-        eventRequester.request(EventRequester.FLAG_CLAIMED);
-        eventRequester.request(EventRequester.PRIZE);
-    }*/
-
     @Override
     public void handleEvent(Message event) {
-        handleCommand(event.getMessager(), event.getMessage());
+        cmds.handleEvent(event);
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="Command support methods for handleEvent(Message event)">
+    
+    /**
+     * Add commands to the command interpreter for handleEvent(Message event)
+     */
+    public void addCommands() {
+        int type = Message.PRIVATE_MESSAGE | Message.PUBLIC_MESSAGE;
+        cmds.registerCommand("!help", type, this, "handleHelpMessage");
+        cmds.registerCommand("!die", type, this, "die");
+        cmds.registerCommand("!start", type, this, "handleStart");
+        cmds.registerCommand("!stop", type, this, "handleStop");
+        cmds.registerCommand("!reload", type, this, "handleReload");
+        cmds.registerCommand("!list", type, this, "handleList");
     }
     
-    public void handleCommand(String sender, String command) {
-        if (command.equals("!list")) {
-            sendAchievementList(sender, sender);
-        } else if (command.startsWith("!list ") && command.length() - 6 > 0) {
-            String player = command.substring(6);
-            sendAchievementList(sender, player);
-        } else if (m_botAction.getOperatorList().isModerator(sender)) {
-            handleModCommand(sender, command);
-        } else if (command.equals("!help")) {
-            sendHelpMessage(sender);
-        }
-    }
-
-    public void handleModCommand(String sender, String command) {
-        if (command.startsWith("!achieve")) {
-            if (running) {
-                stop();
-                m_botAction.sendSmartPrivateMessage(sender, "Achievements have been deactivated.");
-            } else {
-                start();
-                m_botAction.sendSmartPrivateMessage(sender, "Achievements have been activated.");
-            }
-        } else if (command.startsWith("!reload")) {
-            if (running) {
-                stop();
-                reloadConfig();
-                start();
-            } else {
-                reloadConfig();
-            }
-        } else if (command.startsWith("!help")) {
-            sendModHelpMessage(sender);
-        }
-    }
-
-    public void sendHelpMessage(String sender) {
-        m_botAction.sendSmartPrivateMessage(sender, "!list          -- Lists achievements.");
-        m_botAction.sendSmartPrivateMessage(sender, "!list <name>   -- Lists player's achievements");
-    }
-
-    public void sendModHelpMessage(String sender) {
-        m_botAction.sendSmartPrivateMessage(sender, "!achieve       -- Toggles achievements.");
-        m_botAction.sendSmartPrivateMessage(sender, "!reload        -- Reload the achievements.");
-    }
-
     /**
-     * Command support methods
+     * Handles listing of Achievements for a defined player. If the second 
+     * parameter is left null or empty, will default to the requestor (name).
+     * 
+     * @param name requestor of achievement info
+     * @param msg name of player's achievements to view
      */
-    public void sendAchievementList(String recipient, String player) {
+    public void handleList(String name, String msg) {
+        if (msg == null || msg.isEmpty()) {
+            msg = name;
+        }
+        
         if (running) {
             Stack<Integer> ids = new Stack<Integer>();
-            Player p = m_botAction.getFuzzyPlayer(player);
+            Player p = m_botAction.getFuzzyPlayer(msg);
             short id = p.getPlayerID();
             if (!players.containsKey(id)) {
                 loadPlayer(id);
             }
-            m_botAction.sendPrivateMessage(recipient, "Achievements for "
+            m_botAction.sendPrivateMessage(name, "Achievements for "
                     + p.getPlayerName());
             for (Achievement a : players.get(id)) {
                 if (!ids.contains(a.getId())) {
                     ids.push(a.getId());
-                    m_botAction.sendPrivateMessage(recipient, "["
+                    m_botAction.sendPrivateMessage(name, "["
                             + (a.isComplete() ? "X] " : " ] ") + a.getName()
                             + " - " + a.getDescription());
                 }
 
             }
         } else {
-            m_botAction.sendPrivateMessage(recipient, "Achievements are not activated.");
+            m_botAction.sendPrivateMessage(name, "Achievements are not activated.");
         }
     }
 
+    /**
+     * Handles request to reload the Achievements XML file.
+     * TODO may want to have optional file giving in parameter msg
+     * 
+     * @param name player that requests reload
+     * @param msg ignored
+     */
+    public void handleReload(String name, String msg) {
+        if (m_botAction.getOperatorList().isModerator(name)) {
+            if (running) {
+                stop();
+                reloadConfig(XML_FILE_NAME);
+                start();
+            } else {
+                reloadConfig(XML_FILE_NAME);
+            }
+        }
+    }
+    
+    /**
+     * Handles stopping of AchievementBot
+     * @param name
+     * @param msg 
+     */
+    public void handleStop(String name, String msg) {
+        if (m_botAction.getOperatorList().isModerator(name)) {
+            if (running) {
+                stop();
+                m_botAction.sendSmartPrivateMessage(name, "AchievementBot stopped.");
+            } else {
+                m_botAction.sendSmartPrivateMessage(name, "AchievementBot already stopped.");
+            }
+        }
+    }
+    
+    /**
+     * Handles starting of AchievementBot
+     * @param name
+     * @param msg 
+     */
+    public void handleStart(String name, String msg) {
+        if (m_botAction.getOperatorList().isModerator(name)) {
+            if (running) {
+                m_botAction.sendSmartPrivateMessage(name, "AchievementBot already started.");
+            }else {
+                start();
+                m_botAction.sendSmartPrivateMessage(name, "AchievementBot started.");
+            }
+            
+        }
+    }
+    
+    /**
+     * Handles death requests, only to be used by Mod+
+     * @param name
+     * @param msg 
+     */
+    public void handleDie(String name, String msg) {
+        if (m_botAction.getOperatorList().isModerator(name)) {
+            if (running) {
+                stop();
+            }
+            m_botAction.die(name + " requested AchievementBot to die.");
+        }
+    }
+    
+    /**
+     * Handles which help response to send player depending on access level.
+     * @param name
+     * @param msg 
+     */
+    public void handleHelpMessage(String name, String msg) {
+        if (m_botAction.getOperatorList().isModerator(name)) {
+            sendModHelpMessage(name);
+        }
+        sendHelpMessage(name);
+    }
+    
+    /**
+     * Send player help message.
+     * @param sender 
+     */
+    public void sendHelpMessage(String sender) {
+        m_botAction.sendSmartPrivateMessage(sender, "!list          -- Lists achievements.");
+        m_botAction.sendSmartPrivateMessage(sender, "!list <name>   -- Lists player's achievements");
+    }
+
+    /**
+     * Send Mod+ help message.
+     * @param sender 
+     */
+    public void sendModHelpMessage(String sender) {
+        m_botAction.sendSmartPrivateMessage(sender, "!start         -- Toggles achievements.");
+        m_botAction.sendSmartPrivateMessage(sender, "!stop          -- Toggles achievements.");
+        m_botAction.sendSmartPrivateMessage(sender, "!reload        -- Reload the achievements.");
+        m_botAction.sendSmartPrivateMessage(sender, "!die           -- Reload the achievements.");
+    }
+    
+    // </editor-fold>
+    
     /**
      * Handles loading Achievements from XML
      */
