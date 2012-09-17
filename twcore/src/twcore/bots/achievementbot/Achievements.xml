@@ -79,19 +79,19 @@
 		</ship>
     </achievement>
     <achievement id="10" name="No Free Parking">
-        <description>Sit near safe for 5 seconds.</description>
+        <description>Kill next to a safe.</description>
         <location x="258" y="485" maximumRange="26">
 			<kill minimum="1" />
 		</location>
     </achievement>
-    <achievement id="10" name="Free Parking">
-        <description>Sit near safe for 5 seconds.</description>
+    <achievement id="10" name="No Free Parking">
+        <description>Kill next to a safe.</description>
         <location x="512" y="743" maximumRange="26">
 			<kill minimum="1" />
 		</location>
     </achievement>
-    <achievement id="10" name="Free Parking">
-        <description>Sit near safe for 5 seconds.</description>
+    <achievement id="10" name="No Free Parking">
+        <description>Kill next to a safe.</description>
         <location x="767" y="484" maximumRange="26">
 			<kill minimum="1" />
 		</location>
