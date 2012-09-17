@@ -52,9 +52,9 @@ public abstract class ValueRequirement extends Requirement {
             }
         }        
         
-        /*if (valid) {
+        if (valid) {
             this.completed = updateRequirements(type, event);
-        }*/
+        }
         
         return this.completed;
     }

@@ -26,9 +26,9 @@ public class KillDeath extends ValueRequirement {
     @Override
     public boolean update(Type type, SubspaceEvent event) {
         if (event instanceof PlayerDeath) {
-            boolean valid = updateRequirements(type, event);
+            //boolean valid = updateRequirements(type, event);
 
-            if (valid && this.type == type) {
+            if (this.type == type) {
                 current++;
             }
         }
