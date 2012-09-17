@@ -36,21 +36,27 @@ public abstract class ValueRequirement extends Requirement {
 
     @Override
     public boolean update(Type type, SubspaceEvent event) {
+        boolean valid = false;
+        
         //test minimum
         if (minimum != -1 && current >= minimum) {
-            this.completed = true;
+            valid = true;
         }
 
         //test maximum (flags calling method if over)
         if (maximum != -1) {
             if (current <= maximum) {
-                this.completed = true;
+                valid = true;
             } else {
                 this.reset();
             }
+        }        
+        
+        if (valid) {
+            this.completed = updateRequirements(type, event);
         }
-
-        return completed;
+        
+        return this.completed;
     }
 
     @Override
