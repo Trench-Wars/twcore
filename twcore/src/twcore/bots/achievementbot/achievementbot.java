@@ -76,6 +76,11 @@ public final class achievementbot extends SubspaceBot {
             m_botAction.changeArena(arena);
         }
         
+        String chat = config.getString("chat");
+        if (chat != null && !chat.isEmpty()) {
+            m_botAction.sendUnfilteredPublicMessage("?chat=" + chat);
+        }
+        
         xmlPath = m_botAction.getGeneralSettings().getString("Core Location");
         xmlPath += "/twcore/bots/achievementbot/";
         

@@ -126,12 +126,12 @@ public class Location extends Requirement {
             if (this.type == Type.kill) {
                 pX = killee.getXLocation();
                 pY = killee.getYLocation();
-                botAction.sendSmartPrivateMessage("SpookedOne", "[Debug] kill at"
+                botAction.sendChatMessage("[Debug] kill at"
                         + " [x:] " + pX + " [y:] " + pY);
             } else if (this.type == Type.death) {
                 pX = killer.getXLocation();
                 pY = killer.getYLocation();
-                botAction.sendSmartPrivateMessage("SpookedOne", "[Debug] death at"
+                botAction.sendChatMessage("[Debug] death at"
                         + " [x:] " + pX + " [y:] " + pY);
             }
             valid = true;
