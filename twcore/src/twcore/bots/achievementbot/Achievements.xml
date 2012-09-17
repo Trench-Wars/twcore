@@ -23,9 +23,9 @@
     </achievement>-->
     <achievement id="3" name="Minute Man">
         <description>Don't die for 1 minute.</description>
-		<time minimum="60" >
-			<death maximum="0" />
-		</time>
+            <death maximum="0" >
+                <time minimum="60" />
+            </death>
     </achievement>
     <achievement id="4" name="The Great White">
         <description>Get a kill in Shark.</description>
@@ -116,4 +116,46 @@
 			</death>
 		</ship>
 	</achievement>
+        
+        <!-- GENERIC KILL ACHIEVEMENTS -->
+        <achievement id="4" name="Fine Warbird">
+        <description>Get 5 kills in Warbird without dying.</description>
+		<ship type="1">
+                    <death maximum="0">
+			<kill minimum="5" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="4" name="Superior Warbird">
+        <description>Get 10 kills in Warbird without dying.</description>
+		<ship type="1">
+                    <death maximum="0">
+			<kill minimum="10" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="4" name="Flawless Warbird">
+        <description>Get 25 kills in Warbird without dying.</description>
+		<ship type="1">
+                    <death maximum="0">
+			<kill minimum="25" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="4" name="Epic Warbird">
+        <description>Get 50 kills in Warbird without dying.</description>
+		<ship type="1">
+                    <death maximum="0">
+			<kill minimum="50" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="4" name="Legendary Warbird">
+        <description>Get 100 kills in Warbird without dying.</description>
+		<ship type="1">
+                    <death maximum="0">
+			<kill minimum="100" />
+                    </death>
+		</ship>
+        </achievement>
 </achievements>
