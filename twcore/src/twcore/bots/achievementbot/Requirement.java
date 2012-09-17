@@ -2,7 +2,6 @@ package twcore.bots.achievementbot;
 
 import java.util.LinkedList;
 import java.util.List;
-import twcore.core.BotAction;
 import twcore.core.events.SubspaceEvent;
 
 /**
@@ -44,6 +43,7 @@ public abstract class Requirement {
      */
     protected Requirement(Type type) {
         this.type = type;
+        requirements = new LinkedList<Requirement>(); 
     }
 
     /**

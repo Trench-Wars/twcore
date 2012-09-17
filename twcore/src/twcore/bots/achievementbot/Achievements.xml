@@ -118,7 +118,7 @@
 	</achievement>
         
         <!-- GENERIC KILL ACHIEVEMENTS -->
-        <achievement id="4" name="Fine Warbird">
+        <achievement id="20" name="Fine Warbird">
         <description>Get 5 kills in Warbird without dying.</description>
 		<ship type="1">
                     <death maximum="0">
@@ -126,7 +126,7 @@
                     </death>
 		</ship>
         </achievement>
-        <achievement id="4" name="Superior Warbird">
+        <achievement id="21" name="Superior Warbird">
         <description>Get 10 kills in Warbird without dying.</description>
 		<ship type="1">
                     <death maximum="0">
@@ -134,7 +134,7 @@
                     </death>
 		</ship>
         </achievement>
-        <achievement id="4" name="Flawless Warbird">
+        <achievement id="22" name="Flawless Warbird">
         <description>Get 25 kills in Warbird without dying.</description>
 		<ship type="1">
                     <death maximum="0">
@@ -142,7 +142,7 @@
                     </death>
 		</ship>
         </achievement>
-        <achievement id="4" name="Epic Warbird">
+        <achievement id="23" name="Epic Warbird">
         <description>Get 50 kills in Warbird without dying.</description>
 		<ship type="1">
                     <death maximum="0">
@@ -150,7 +150,7 @@
                     </death>
 		</ship>
         </achievement>
-        <achievement id="4" name="Legendary Warbird">
+        <achievement id="24" name="Legendary Warbird">
         <description>Get 100 kills in Warbird without dying.</description>
 		<ship type="1">
                     <death maximum="0">
