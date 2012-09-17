@@ -285,9 +285,9 @@ public class elim extends SubspaceBot {
                 cmd_help(name);
             else if (cmd.startsWith("!lag "))
                 cmd_lag(name, msg);
-            else if (cmd.equals("!lagout"))
-                cmd_lagout(name);
-            else if (cmd.startsWith("!rank "))
+            else if (cmd.equals("!lagout")){
+                //cmd_lagout(name);
+            } else if (cmd.startsWith("!rank "))
                 cmd_rank(name, msg);
             else if (cmd.startsWith("!rec "))
                 cmd_rec(name, msg);
