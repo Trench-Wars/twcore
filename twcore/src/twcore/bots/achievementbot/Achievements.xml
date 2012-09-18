@@ -10,6 +10,44 @@
 
 <achievements>
     
+    <achievement id="997" name="test">
+        <description>test kill them (sm)all</description>
+        <kill minimum="1">
+            <ship type="1"/>
+        </kill>
+        <kill minimum="1">
+            <ship type="2"/>
+        </kill>
+    </achievement>
+    
+    <achievement id="998" name="Gotta Kill Them All">
+        <description>Kill every type of ship.</description>
+        <kill minimum="1">
+            <ship type="1"/>
+        </kill>
+        <kill minimum="1">
+            <ship type="2"/>
+        </kill>
+        <kill minimum="1">
+            <ship type="3"/>
+        </kill>
+        <kill minimum="1">
+            <ship type="4"/>
+        </kill>
+        <kill minimum="1">
+            <ship type="5"/>
+        </kill>
+        <kill minimum="1">
+            <ship type="6"/>
+        </kill>
+        <kill minimum="1">
+            <ship type="7"/>
+        </kill>
+        <kill minimum="1">
+            <ship type="8"/>
+        </kill>
+    </achievement>
+    
     <achievement id="999" name="Equal Opportunity Killer">
         <description>Get a kill in every ship.</description>
         <ship type="1">
