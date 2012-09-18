@@ -258,6 +258,10 @@ public final class achievementbot extends SubspaceBot {
 
     @Override
     public void handleEvent(FlagClaimed event) {
+        if (running) {
+            short id = event.getPlayerID();
+            handleAchievement(id, Type.flagclaim, event);
+        }
     }
 
     @Override
@@ -626,24 +630,22 @@ public final class achievementbot extends SubspaceBot {
                             requirements.push(range);
                             break;
                         case flagclaim:
-                        /*
-                         * type |= Type.flagclaim.value();
-                         *
-                         * ValueRequirement flagclaim = new ValueRequirement();
-                         *
-                         * String flagClaimMin = attributes.getValue("minimum");
-                         * String flagClaimMax = attributes.getValue("maximum");
-                         *
-                         * if (flagClaimMin != null) {
-                         * flagclaim.setMinimum(Integer.parseInt(flagClaimMin));
-                         * } if (flagClaimMax != null) {
-                         * flagclaim.setMaximum(Integer.parseInt(flagClaimMax));
-                         * }
-                         *
-                         * achievement.setFlagclaim(flagclaim);
-                         *
-                         * break;
-                         */
+                            typeMask |= Type.flagclaim.value();
+                         
+                            FlagClaim flagclaim = new FlagClaim();
+                         
+                            String flagClaimMin = attributes.getValue("minimum");
+                            String flagClaimMax = attributes.getValue("maximum");
+                         
+                            if (flagClaimMin != null) {
+                                flagclaim.setMinimum(Integer.parseInt(flagClaimMin));
+                            } if (flagClaimMax != null) {
+                                flagclaim.setMaximum(Integer.parseInt(flagClaimMax));
+                            }
+                            
+                            requirements.push(flagclaim);
+                            
+                            break;
                         case flagtime:
                         /*
                          * type |= Type.flagtime.value();

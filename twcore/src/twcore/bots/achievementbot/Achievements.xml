@@ -9,42 +9,78 @@
 -->
 
 <achievements>
+    
+    <achievement id="999" name="Equal Opportunity Killer">
+        <description>Get a kill in every ship.</description>
+        <ship type="1">
+            <kill minimum="1" />
+        </ship>
+        <ship type="2">
+            <kill minimum="1" />
+        </ship>
+        <ship type="3">
+            <kill minimum="1" />
+        </ship>
+        <ship type="4">
+            <kill minimum="1" />
+        </ship>
+        <ship type="5">
+            <kill minimum="1" />
+        </ship>
+        <ship type="6">
+            <kill minimum="1" />
+        </ship>
+        <ship type="7">
+            <kill minimum="1" />
+        </ship>
+        <ship type="8">
+            <kill minimum="1" />
+        </ship>
+    </achievement>
+    
     <achievement id="0" name="Pew Pew">
         <description>Get a kill.</description>
         <kill minimum="1" />
     </achievement>
+    
     <achievement id="1" name="I Bleed!">
         <description>Get killed.</description>
         <death minimum="1" />
     </achievement>
-    <!--<achievement id="2" name="What's this orb?">
+    
+    <achievement id="2" name="What's this orb?">
         <description>Go to flag room in top of base.</description>
-        <location x="485" y="254" width="54" height="36" />
-    </achievement>-->
+        <flagclaim minimum="1" />
+    </achievement>
+    
     <achievement id="3" name="Minute Man">
         <description>Don't die for 1 minute.</description>
             <death maximum="0" >
                 <time minimum="60" />
             </death>
     </achievement>
+    
     <achievement id="4" name="The Great White">
         <description>Get a kill in Shark.</description>
 		<ship type="8">
 			<kill minimum="1" />
 		</ship>
     </achievement>
+    
     <achievement id="5" name="Double kill!">
         <description>Kill Two People within 3 seconds.</description>
         <time maximum="3">
 			<kill minimum="2" />
 		</time>
     </achievement>
+    
     <achievement id="6" name="Artillery Hunter">
         <description>Kill a Leviathan.</description>
         <kill minimum="1">
 			<ship type="4" />
 		</kill>
     </achievement>
+    
     <!--<achievement id="7" name="Home Run">
         <description>Visit roof and all three safes in under 2 minutes.</description>
         <time maximum="120">
@@ -54,6 +90,7 @@
 			<location x="767" y="484" maximumRange="9" />
 		</time>
     </achievement>-->
+    
     <achievement id="8" name="Rubber Neck">
         <description>Kill a player in main tube from either side of mid base.</description>
         <location x="482" y="346" width="23" height="28">
@@ -62,6 +99,7 @@
         </kill>
 		</location>
     </achievement>
+    
     <achievement id="8" name="Rubber Neck">
         <description>Kill a players in main tube from either side of mid base.</description>
         <location x="519" y="346" width="23" height="28">
@@ -70,6 +108,7 @@
         </kill>
 		</location>
     </achievement>
+    
     <achievement id="9" name="Sniper!">
 		<description>Get a long distance kill in Warbird.</description>
 		<ship type="1">
@@ -78,83 +117,374 @@
 			</kill>
 		</ship>
     </achievement>
+    
     <achievement id="10" name="No Free Parking">
         <description>Kill next to a safe.</description>
         <location x="258" y="485" maximumRange="26">
 			<kill minimum="1" />
 		</location>
     </achievement>
+    
     <achievement id="10" name="No Free Parking">
         <description>Kill next to a safe.</description>
         <location x="512" y="743" maximumRange="26">
 			<kill minimum="1" />
 		</location>
     </achievement>
+    
     <achievement id="10" name="No Free Parking">
         <description>Kill next to a safe.</description>
         <location x="767" y="484" maximumRange="26">
 			<kill minimum="1" />
 		</location>
     </achievement>
+    
 	<achievement id="11" name="Space Surfer">
 		<description>Kill a player while surfing one of the wormholes.</description>
 		<location x="381" y="610" maximumRange="16">
 			<kill minimum="1" />
 		</location>
 	</achievement>
+        
 	<achievement id="11" name="Space Surfer">
 		<description>Kill a player while surfing one of the wormholes.</description>
 			<location x="642" y="610" maximumRange="16">
 				<kill minimum="1" />
 			</location>
 	</achievement>
-	<achievement id="12" name="Too Spooked">
-		<description>...?</description>
-		<ship type="5">
-			<death maximum="0">
-				<kill minimum="5" />
-			</death>
-		</ship>
-	</achievement>
         
-        <!-- GENERIC KILL ACHIEVEMENTS -->
-        <achievement id="20" name="Fine Warbird">
+        <!-- WARBIRD ACHIEVEMENTS (ID RANGE 100-199) -->
+        <achievement id="100" name="Fine Warbird">
         <description>Get 5 kills in Warbird without dying.</description>
 		<ship type="1">
                     <death maximum="0">
-			<kill minimum="1" />
+			<kill minimum="5" />
                     </death>
 		</ship>
         </achievement>
-        <achievement id="21" name="Superior Warbird">
+        <achievement id="101" name="Superior Warbird">
         <description>Get 10 kills in Warbird without dying.</description>
 		<ship type="1">
                     <death maximum="0">
-			<kill minimum="2" />
+			<kill minimum="10" />
                     </death>
 		</ship>
         </achievement>
-        <achievement id="22" name="Flawless Warbird">
-        <description>Get 25 kills in Warbird without dying.</description>
+        <achievement id="102" name="Flawless Warbird">
+        <description>Get 25 kills in Warbird with at most 1 death.</description>
 		<ship type="1">
-                    <death maximum="0">
-			<kill minimum="3" />
+                    <death maximum="1">
+			<kill minimum="25" />
                     </death>
 		</ship>
         </achievement>
-        <achievement id="23" name="Epic Warbird">
-        <description>Get 50 kills in Warbird without dying.</description>
+        <achievement id="103" name="Epic Warbird">
+        <description>Get 50 kills in Warbird with at most 2 deaths.</description>
 		<ship type="1">
-                    <death maximum="0">
-			<kill minimum="4" />
+                    <death maximum="2">
+			<kill minimum="50" />
                     </death>
 		</ship>
         </achievement>
-        <achievement id="24" name="Legendary Warbird">
-        <description>Get 100 kills in Warbird without dying.</description>
+        <achievement id="104" name="Legendary Warbird">
+        <description>Get 100 kills in Warbird with at most 3 deaths.</description>
 		<ship type="1">
+                    <death maximum="3">
+			<kill minimum="100" />
+                    </death>
+		</ship>
+        </achievement>
+        
+        <!-- JAVELIN ACHIEVEMENTS (ID RANGE 200-299) -->
+        <achievement id="200" name="Fine Javelin">
+        <description>Get 5 kills in Javelin without dying.</description>
+		<ship type="2">
                     <death maximum="0">
 			<kill minimum="5" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="201" name="Superior Javelin">
+        <description>Get 10 kills in Javelin without dying.</description>
+		<ship type="2">
+                    <death maximum="0">
+			<kill minimum="10" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="202" name="Flawless Javelin">
+        <description>Get 25 kills in Javelin with at most 1 death.</description>
+		<ship type="2">
+                    <death maximum="1">
+			<kill minimum="25" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="203" name="Epic Javelin">
+        <description>Get 50 kills in Javelin with at most 2 deaths.</description>
+		<ship type="2">
+                    <death maximum="2">
+			<kill minimum="50" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="204" name="Legendary Javelin">
+        <description>Get 100 kills in Javelin with at most 3 deaths.</description>
+		<ship type="2">
+                    <death maximum="3">
+			<kill minimum="100" />
+                    </death>
+		</ship>
+        </achievement>
+        
+        <!-- SPIDER ACHIEVEMENTS (ID RANGE 300-399) -->
+        <achievement id="300" name="Fine Spider">
+        <description>Get 5 kills in Spider without dying.</description>
+		<ship type="3">
+                    <death maximum="0">
+			<kill minimum="5" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="301" name="Superior Spider">
+        <description>Get 10 kills in Spider without dying.</description>
+		<ship type="3">
+                    <death maximum="0">
+			<kill minimum="10" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="302" name="Flawless Spider">
+        <description>Get 25 kills in Spider with at most 1 death.</description>
+		<ship type="3">
+                    <death maximum="1">
+			<kill minimum="25" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="303" name="Epic Spider">
+        <description>Get 50 kills in Spider with at most 2 deaths.</description>
+		<ship type="3">
+                    <death maximum="2">
+			<kill minimum="50" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="304" name="Legendary Spider">
+        <description>Get 100 kills in Spider with at most 3 deaths.</description>
+		<ship type="3">
+                    <death maximum="3">
+			<kill minimum="100" />
+                    </death>
+		</ship>
+        </achievement>
+        
+        <!-- LEVIATHAN ACHIEVEMENTS (ID RANGE 400-499) -->
+        <achievement id="400" name="Fine Leviathan">
+        <description>Get 5 kills in Leviathan without dying.</description>
+		<ship type="4">
+                    <death maximum="0">
+			<kill minimum="5" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="401" name="Superior Leviathan">
+        <description>Get 10 kills in Leviathan without dying.</description>
+		<ship type="4">
+                    <death maximum="0">
+			<kill minimum="10" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="402" name="Flawless Leviathan">
+        <description>Get 25 kills in Leviathan with at most 1 death.</description>
+		<ship type="4">
+                    <death maximum="1">
+			<kill minimum="25" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="403" name="Epic Leviathan">
+        <description>Get 50 kills in Leviathan with at most 2 deaths.</description>
+		<ship type="4">
+                    <death maximum="2">
+			<kill minimum="50" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="404" name="Legendary Leviathan">
+        <description>Get 100 kills in Leviathan with at most 3 deaths.</description>
+		<ship type="4">
+                    <death maximum="3">
+			<kill minimum="100" />
+                    </death>
+		</ship>
+        </achievement>
+        
+        <!-- TERRIER ACHIEVEMENTS (ID RANGE 500-599) -->
+        <achievement id="500" name="Fine Terrier">
+        <description>Get 5 kills in Terrier without dying.</description>
+		<ship type="5">
+                    <death maximum="0">
+			<kill minimum="5" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="501" name="Superior Terrier">
+        <description>Get 10 kills in Terrier without dying.</description>
+		<ship type="5">
+                    <death maximum="0">
+			<kill minimum="10" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="502" name="Flawless Terrier">
+        <description>Get 25 kills in Terrier with at most 1 death.</description>
+		<ship type="5">
+                    <death maximum="1">
+			<kill minimum="25" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="503" name="Epic Terrier">
+        <description>Get 50 kills in Terrier with at most 2 deaths.</description>
+		<ship type="5">
+                    <death maximum="2">
+			<kill minimum="50" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="504" name="Legendary Terrier">
+        <description>Get 100 kills in Terrier with at most 3 deaths.</description>
+		<ship type="5">
+                    <death maximum="3">
+			<kill minimum="100" />
+                    </death>
+		</ship>
+        </achievement>
+        
+        <!-- WEASEL ACHIEVEMENTS (ID RANGE 600-699) -->
+        <achievement id="600" name="Fine Weasel">
+        <description>Get 5 kills in Weasel without dying.</description>
+		<ship type="6">
+                    <death maximum="0">
+			<kill minimum="5" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="601" name="Superior Weasel">
+        <description>Get 10 kills in Weasel without dying.</description>
+		<ship type="6">
+                    <death maximum="0">
+			<kill minimum="10" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="602" name="Flawless Weasel">
+        <description>Get 25 kills in Weasel with at most 1 death.</description>
+		<ship type="6">
+                    <death maximum="1">
+			<kill minimum="25" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="603" name="Epic Weasel">
+        <description>Get 50 kills in Weasel with at most 2 deaths.</description>
+		<ship type="6">
+                    <death maximum="2">
+			<kill minimum="50" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="604" name="Legendary Weasel">
+        <description>Get 100 kills in Weasel with at most 3 deaths.</description>
+		<ship type="6">
+                    <death maximum="3">
+			<kill minimum="100" />
+                    </death>
+		</ship>
+        </achievement>
+        
+        <!-- LANCASTER ACHIEVEMENTS (ID RANGE 700-799) -->
+        <achievement id="700" name="Fine Lancaster">
+        <description>Get 5 kills in Lancaster without dying.</description>
+		<ship type="7">
+                    <death maximum="0">
+			<kill minimum="5" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="701" name="Superior Lancaster">
+        <description>Get 10 kills in Lancaster without dying.</description>
+		<ship type="7">
+                    <death maximum="0">
+			<kill minimum="10" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="702" name="Flawless Lancaster">
+        <description>Get 25 kills in Lancaster with at most 1 death.</description>
+		<ship type="7">
+                    <death maximum="1">
+			<kill minimum="25" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="703" name="Epic Lancaster">
+        <description>Get 50 kills in Lancaster with at most 2 deaths.</description>
+		<ship type="7">
+                    <death maximum="2">
+			<kill minimum="50" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="704" name="Legendary Lancaster">
+        <description>Get 100 kills in Lancaster with at most 3 deaths.</description>
+		<ship type="7">
+                    <death maximum="3">
+			<kill minimum="100" />
+                    </death>
+		</ship>
+        </achievement>
+        
+        <!-- SHARK ACHIEVEMENTS (ID RANGE 800-899) -->
+        <achievement id="800" name="Fine Shark">
+        <description>Get 5 kills in Shark without dying.</description>
+		<ship type="8">
+                    <death maximum="0">
+			<kill minimum="5" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="801" name="Superior Shark">
+        <description>Get 10 kills in Shark without dying.</description>
+		<ship type="8">
+                    <death maximum="0">
+			<kill minimum="10" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="802" name="Flawless Shark">
+        <description>Get 25 kills in Shark with at most 1 death.</description>
+		<ship type="8">
+                    <death maximum="1">
+			<kill minimum="25" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="803" name="Epic Shark">
+        <description>Get 50 kills in Shark with at most 2 deaths.</description>
+		<ship type="8">
+                    <death maximum="2">
+			<kill minimum="50" />
+                    </death>
+		</ship>
+        </achievement>
+        <achievement id="804" name="Legendary Shark">
+        <description>Get 100 kills in Shark with at most 3 deaths.</description>
+		<ship type="8">
+                    <death maximum="3">
+			<kill minimum="100" />
                     </death>
 		</ship>
         </achievement>
