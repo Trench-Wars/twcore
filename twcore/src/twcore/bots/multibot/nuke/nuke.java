@@ -153,8 +153,7 @@ public final class nuke extends MultiModule {
 
     @Override
     public boolean isUnloadable() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
 }
