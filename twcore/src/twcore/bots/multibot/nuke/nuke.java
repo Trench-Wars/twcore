@@ -135,21 +135,8 @@ public final class nuke extends MultiModule {
         s.add(new Shot(115, 575, 160));
         s.add(new Shot(80, 472, 150));
         s.add(new Shot(100, 552, 150));
-        s.add(new Shot(90, 492, 147));
+        s.add(new Shot(90, 496, 154));
         s.add(new Shot(90, 531, 147));
-        s.clear();
-        s.add(new Shot(15, 396, 229));
-        s.add(new Shot(165, 628, 229));
-        s.add(new Shot(30, 407, 219));
-        s.add(new Shot(150, 617, 219));
-        s.add(new Shot(47, 425, 200));
-        s.add(new Shot(135, 599, 200));
-        s.add(new Shot(65, 450, 180));
-        s.add(new Shot(115, 575, 180));
-        s.add(new Shot(80, 472, 170));
-        s.add(new Shot(100, 552, 170));
-        s.add(new Shot(90, 492, 167));
-        s.add(new Shot(90, 531, 167));
         return s;
     }
 
