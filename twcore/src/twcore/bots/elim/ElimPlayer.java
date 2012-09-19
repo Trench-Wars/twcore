@@ -323,14 +323,30 @@ public class ElimPlayer {
     }
     
     /** Lagout command execution */
-    public void lagin() {
-        status = Status.SPAWN;
-        game.handleSpawn(this, false);
-        if (game.ship.inBase() && ship != 6) {
-            spawn = new Spawn(false);
-            ba.scheduleTask(spawn, ((SPAWN_TIME + 2 * SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
+    public void lagin(String msg) {
+        if (msg != null)
+            ba.sendPrivateMessage(name, msg);
+        else {
+            status = Status.SPAWN;
+            ba.setShip(name, game.ship.getNum());
+            if (ba.getFrequencySize(getFreq()) == 0)
+                ba.setFreq(name, getFreq());
+            else {
+                ba.sendSmartPrivateMessage(game.bot.debugger, "[ELIM] on !lagout " + name + " had invalid freq " + getFreq());
+                while (ba.getFrequencySize(game.freq) != 0)
+                    game.freq += 2;
+                ba.setFreq(name, game.freq);
+                setFreq(game.freq);
+                game.freq += 2;
+            }
+            lagouts--;
+            ba.sendPrivateMessage(name, "You have " + getLagouts() + " lagouts remaining.");
+            game.handleSpawn(this, true);
+            if (game.ship.inBase() && ship != 6) {
+                spawn = new Spawn(false);
+                ba.scheduleTask(spawn, ((SPAWN_TIME + 2 * SPAWN_BOUND) * Tools.TimeInMillis.SECOND));
+            }
         }
-        lagouts--;
     }
     
     public boolean isPlaying() {

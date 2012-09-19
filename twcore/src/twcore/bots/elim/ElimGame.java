@@ -125,6 +125,7 @@ public class ElimGame {
             winners.add(low);
             lagChecks.add(low);
             ElimPlayer ep = new ElimPlayer(ba, this, name, ship.getNum(), deaths);
+            ep.setFreq(p.getFrequency());
             players.put(low, ep);
         }
     }
@@ -418,26 +419,10 @@ public class ElimGame {
         if (laggers.containsKey(low(name))) {
             String msg = laggers.get(low(name)).lagin();
             ElimPlayer ep = getPlayer(name);
-            if (msg != null)
-                ba.sendPrivateMessage(name, msg);
-            else if (ep != null) {
-                ba.setShip(name, ship.getNum());
-                if (freq % 2 == ship.getFreq()) {
-                    ba.setFreq(name, ep.getFreq());
-                    ep.setFreq(freq);
-                    freq += 2;
-                } else {
-                    ba.sendSmartPrivateMessage(bot.debugger, "[ELIM] on !lagout " + name + " had invalid freq " + ep.getFreq());
-                    while (ba.getFrequencySize(freq) != 0) {
-                        freq += 2;
-                    }
-                    ba.setFreq(name, freq);
-                    ep.setFreq(freq);
-                    freq += 2;
-                }
-                ba.sendPrivateMessage(name, "You have " + ep.getLagouts() + " lagouts remaining.");
-                handleSpawn(ep, true);
-            }
+            if (ep != null)
+                ep.lagin(msg);
+            else
+                ba.sendSmartPrivateMessage(bot.debugger, "ElimGame.do_lagout: ep was null");
         } else
             ba.sendPrivateMessage(name, "You are not lagged out.");
     }
@@ -808,8 +793,6 @@ public class ElimGame {
             else {
                 laggers.remove(low(name));
                 winners.add(low(name));
-                ElimPlayer ep = getPlayer(name);
-                ep.lagin();
                 ba.cancelTask(this);
                 return null;
             }

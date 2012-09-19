@@ -889,7 +889,7 @@ public class elim extends SubspaceBot {
         if ((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) {
             long dt = (MIN_ZONER * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - lastZoner);
             int mins = (int) (dt / Tools.TimeInMillis.MINUTE);
-            int secs = (int) ((dt % Tools.TimeInMillis.MINUTE) / 60); 
+            int secs = (int) (dt - mins * Tools.TimeInMillis.MINUTE)/Tools.TimeInMillis.SECOND; 
             ba.sendSmartPrivateMessage(name, "The next zoner will be available in " + mins + " minutes " + secs + " seconds");
             return;
         } else
