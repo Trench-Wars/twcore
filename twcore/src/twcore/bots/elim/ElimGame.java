@@ -417,12 +417,7 @@ public class ElimGame {
     /** Handles the !lagout player return command */
     public void do_lagout(String name) {
         if (laggers.containsKey(low(name))) {
-            String msg = laggers.get(low(name)).lagin();
-            ElimPlayer ep = getPlayer(name);
-            if (ep != null)
-                ep.lagin(msg);
-            else
-                ba.sendSmartPrivateMessage(bot.debugger, "ElimGame.do_lagout: ep was null");
+            laggers.get(low(name)).lagin();
         } else
             ba.sendPrivateMessage(name, "You are not lagged out.");
     }
@@ -786,15 +781,16 @@ public class ElimGame {
         }
         
         /** Either puts player back in game having done !lagout or reports too early */
-        public String lagin() {
+        public void lagin() {
             long now = System.currentTimeMillis();
             if (now - time < MIN_LAG_TIME * Tools.TimeInMillis.SECOND)
-                return "You must wait " + (MIN_LAG_TIME - ((now - time) / Tools.TimeInMillis.SECOND)) + " seconds to return.";
+                ba.sendPrivateMessage(name, "You must wait " + (MIN_LAG_TIME - ((now - time) / Tools.TimeInMillis.SECOND)) + " seconds to return.");
             else {
                 laggers.remove(low(name));
                 winners.add(low(name));
+                ElimPlayer ep = getPlayer(name);
+                ep.lagin();
                 ba.cancelTask(this);
-                return null;
             }
         }
         
