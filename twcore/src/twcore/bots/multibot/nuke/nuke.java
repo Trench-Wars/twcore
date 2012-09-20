@@ -3,6 +3,7 @@ package twcore.bots.multibot.nuke;
 import java.awt.Point;
 import java.io.FileNotFoundException;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
 
@@ -33,6 +34,7 @@ public final class nuke extends MultiModule {
     private static final int FR_REGION = 1;
     private static final int MID_REGION = 0;
     
+    private Random rand;
     private MapRegions regions;
     private BotAction ba;
     private int currentBase;
@@ -47,6 +49,7 @@ public final class nuke extends MultiModule {
     @Override
     public void init() {
         ba = m_botAction;
+        rand = new Random();
         currentBase = MED_BASE;
         regions = new MapRegions();
         reloadRegions();
@@ -155,18 +158,19 @@ public final class nuke extends MultiModule {
      * @return A point object, or null if the first 10000 points generated were not within the desired region.
      */
     private Point getRandomPoint(int region) {
-        boolean valid = false;
         Point p = null;
 
         int count = 0;
-        while (!valid) {
+        while (p == null) {
             int x = (int) (Math.random() * 1024);
             int y = (int) (Math.random() * 1024);
+            x = rand.nextInt(1024);
             p = new Point(x, y);
-            valid = regions.checkRegion(x, y, region);
+            if (!regions.checkRegion(x, y, region))
+                p = null;
             count++;
             if (count > 1000000)
-                valid = true;
+                p = new Point(512, 280);
         }
 
         return p;
