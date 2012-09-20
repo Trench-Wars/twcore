@@ -166,7 +166,7 @@ public final class nuke extends MultiModule {
                 if (!valid)
                     valid = regions.checkRegion(x, y, r);
             count++;
-            if (count > 10000)
+            if (count > 1000000)
                 valid = true;
         }
 
