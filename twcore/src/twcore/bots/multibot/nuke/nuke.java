@@ -136,10 +136,12 @@ public final class nuke extends MultiModule {
             int reg = regions.getRegion(p);
             if (reg == LARGE_REGION || reg == MED_REGION) {
                 Point coord = getRandomPoint(new int[] {FR_REGION});
+                ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.x + " " + coord.y);
                 ba.warpTo(p.getPlayerID(), coord.x, coord.y);
             } else if (reg == SMALL_REGION) {
                 Point coord = getRandomPoint(new int[] {MID_REGION});
                 ba.warpTo(p.getPlayerID(), coord.x, coord.y);
+                ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.x + " " + coord.y);
             }
         }
     }
