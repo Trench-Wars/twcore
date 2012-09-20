@@ -1,19 +1,43 @@
 package twcore.bots.multibot.nuke;
 
+import java.awt.Point;
+import java.io.FileNotFoundException;
 import java.util.Iterator;
 import java.util.TimerTask;
 import java.util.Vector;
 
 import twcore.bots.MultiModule;
+import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
+import twcore.core.util.MapRegions;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
 public final class nuke extends MultiModule {
 
+    
+    private static final int SMALL_OBJON = 1001;
+    private static final int MED_OBJON = 1002;
+    private static final int LARGE_OBJON = 1003;
+    private static final int SMALL_BASE = 6;
+    private static final int MED_BASE = 9;
+    private static final int LARGE_BASE = 8;
+    private static final String MAP_NAME = "pub";
+
+    private static final int LARGE_REGION = 2;
+    private static final int MED_REGION = 3;
+    private static final int SMALL_REGION = 4;
+    private static final int FR_REGION = 1;
+    private static final int MID_REGION = 0;
+    
+    private MapRegions regions;
+    private BotAction ba;
+    private int currentBase;
+    
+    
     @Override
     public void cancel() {
         // TODO Auto-generated method stub
@@ -22,8 +46,25 @@ public final class nuke extends MultiModule {
 
     @Override
     public void init() {
-        // TODO Auto-generated method stub
-        
+        ba = m_botAction;
+        currentBase = MED_BASE;
+        regions = new MapRegions();
+        reloadRegions();
+    }
+    
+    public void reloadRegions() {
+        try {
+            regions.clearRegions();
+            regions.loadRegionImage(MAP_NAME + ".png");
+            regions.loadRegionCfg(MAP_NAME + ".cfg");
+        } catch (FileNotFoundException fnf) {
+            Tools.printLog("Error: " + MAP_NAME + ".png and " + MAP_NAME + ".cfg must be in the data/maps folder.");
+        } catch (javax.imageio.IIOException iie) {
+            Tools.printLog("Error: couldn't read image");
+        } catch (Exception e) {
+            Tools.printLog("Could not load warps for " + MAP_NAME);
+            Tools.printStackTrace(e);
+        }
     }
     
     public void handleEvent(Message event) {
@@ -33,7 +74,101 @@ public final class nuke extends MultiModule {
         String msg = event.getMessage();
         if (msg.startsWith("!nuke")) {
             itemCommandNukeBase(name, "");
+        } else if (msg.startsWith("!set "))
+            cmd_setBase(name, msg);
+    }
+    
+    private void cmd_setBase(String name, String msg) {
+
+        if (msg.length() <= "!set ".length())
+            return;
+        
+        msg = msg.substring(msg.indexOf(" ") + 1).toLowerCase();
+        if (msg.equals("small"))
+            currentBase = SMALL_BASE;
+        else if (msg.equals("med"))
+            currentBase = MED_BASE;
+        else if (msg.equals("large"))
+            currentBase = LARGE_BASE;
+        else
+            return;
+        
+        ba.sendSmartPrivateMessage(name, "Changing base to " + msg.toUpperCase());
+        
+        ba.setDoors(currentBase);
+        switch (currentBase) {
+            case SMALL_BASE:
+                ba.showObject(SMALL_OBJON);
+                ba.hideObject(MED_OBJON);
+                ba.hideObject(LARGE_OBJON);
+                warpForSmall();
+                break;
+            case MED_BASE:
+                ba.showObject(MED_OBJON);
+                ba.hideObject(SMALL_OBJON);
+                ba.hideObject(LARGE_OBJON);
+                warpForMedium();
+                break;
+            case LARGE_BASE:
+                ba.showObject(LARGE_OBJON);
+                ba.hideObject(SMALL_OBJON);
+                ba.hideObject(MED_OBJON);
+                break;
         }
+    }
+    
+    private void warpForMedium() {
+        Iterator<Player> i = ba.getPlayingPlayerIterator();
+        while (i.hasNext()) {
+            Player p = i.next();
+            int reg = regions.getRegion(p);
+            if (reg == LARGE_REGION) {
+                Point coord = getRandomPoint(new int[] {FR_REGION, MED_REGION});
+                ba.warpTo(p.getPlayerID(), coord.x, coord.y);
+            }
+        }
+    }
+    
+    private void warpForSmall() {
+        Iterator<Player> i = ba.getPlayingPlayerIterator();
+        while (i.hasNext()) {
+            Player p = i.next();
+            int reg = regions.getRegion(p);
+            if (reg == LARGE_REGION || reg == MED_REGION) {
+                Point coord = getRandomPoint(new int[] {FR_REGION});
+                ba.warpTo(p.getPlayerID(), coord.x, coord.y);
+            } else if (reg == SMALL_REGION) {
+                Point coord = getRandomPoint(new int[] {MID_REGION});
+                ba.warpTo(p.getPlayerID(), coord.x, coord.y);
+            }
+        }
+    }
+
+    /**
+     * Generates a random point within the specified region
+     * 
+     * @param region
+     *            the region the point should be in
+     * @return A point object, or null if the first 10000 points generated were not within the desired region.
+     */
+    private Point getRandomPoint(int[] region) {
+        boolean valid = false;
+        Point p = null;
+
+        int count = 0;
+        while (!valid) {
+            int x = (int) (Math.random() * 1024);
+            int y = (int) (Math.random() * 1024);
+            p = new Point(x, y);
+            for (int r : region)
+                if (!valid)
+                    valid = regions.checkRegion(x, y, r);
+            count++;
+            if (count > 10000)
+                valid = true;
+        }
+
+        return p;
     }
 
     private void itemCommandNukeBase(String sender, String params) {
