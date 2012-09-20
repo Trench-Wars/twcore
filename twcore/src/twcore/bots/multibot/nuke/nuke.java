@@ -124,7 +124,8 @@ public final class nuke extends MultiModule {
             int reg = regions.getRegion(p);
             if (reg == LARGE_REGION) {
                 Point coord = getRandomPoint(new int[] {FR_REGION, MED_REGION});
-                ba.warpTo(p.getPlayerID(), coord.x, coord.y);
+                ba.warpTo(p.getPlayerID(), (int) coord.getX(), (int) coord.getY());
+                ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.getX() + " " + coord.getY());
             }
         }
     }
@@ -136,12 +137,12 @@ public final class nuke extends MultiModule {
             int reg = regions.getRegion(p);
             if (reg == LARGE_REGION || reg == MED_REGION) {
                 Point coord = getRandomPoint(new int[] {FR_REGION});
-                ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.x + " " + coord.y);
-                ba.warpTo(p.getPlayerID(), coord.x, coord.y);
+                ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.getX() + " " + coord.getY());
+                ba.warpTo(p.getPlayerID(), (int) coord.getX(), (int) coord.getY());
             } else if (reg == SMALL_REGION) {
                 Point coord = getRandomPoint(new int[] {MID_REGION});
-                ba.warpTo(p.getPlayerID(), coord.x, coord.y);
-                ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.x + " " + coord.y);
+                ba.warpTo(p.getPlayerID(), (int) coord.getX(), (int) coord.getY());
+                ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.getX() + " " + coord.getY());
             }
         }
     }
