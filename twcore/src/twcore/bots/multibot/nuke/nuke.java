@@ -162,14 +162,14 @@ public final class nuke extends MultiModule {
 
         int count = 0;
         while (p == null) {
-            int x = (int) (Math.random() * 1024);
-            int y = (int) (Math.random() * 1024);
-            x = rand.nextInt(1024);
+            int x = rand.nextInt(590-430) + 430;
+            int y = rand.nextInt(340-250) + 250;
+
             p = new Point(x, y);
             if (!regions.checkRegion(x, y, region))
                 p = null;
             count++;
-            if (count > 1000000)
+            if (count > 100000)
                 p = new Point(512, 280);
         }
 
