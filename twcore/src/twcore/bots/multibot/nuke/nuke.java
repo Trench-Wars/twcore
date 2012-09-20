@@ -123,7 +123,7 @@ public final class nuke extends MultiModule {
             Player p = i.next();
             int reg = regions.getRegion(p);
             if (reg == LARGE_REGION) {
-                Point coord = getRandomPoint(new int[] {FR_REGION, MED_REGION});
+                Point coord = getRandomPoint(FR_REGION);
                 ba.warpTo(p.getPlayerID(), (int) coord.getX(), (int) coord.getY());
                 ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.getX() + " " + coord.getY());
             }
@@ -136,11 +136,11 @@ public final class nuke extends MultiModule {
             Player p = i.next();
             int reg = regions.getRegion(p);
             if (reg == LARGE_REGION || reg == MED_REGION) {
-                Point coord = getRandomPoint(new int[] {FR_REGION});
+                Point coord = getRandomPoint(FR_REGION);
                 ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.getX() + " " + coord.getY());
                 ba.warpTo(p.getPlayerID(), (int) coord.getX(), (int) coord.getY());
             } else if (reg == SMALL_REGION) {
-                Point coord = getRandomPoint(new int[] {MID_REGION});
+                Point coord = getRandomPoint(MID_REGION);
                 ba.warpTo(p.getPlayerID(), (int) coord.getX(), (int) coord.getY());
                 ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.getX() + " " + coord.getY());
             }
@@ -154,7 +154,7 @@ public final class nuke extends MultiModule {
      *            the region the point should be in
      * @return A point object, or null if the first 10000 points generated were not within the desired region.
      */
-    private Point getRandomPoint(int[] region) {
+    private Point getRandomPoint(int region) {
         boolean valid = false;
         Point p = null;
 
@@ -163,9 +163,7 @@ public final class nuke extends MultiModule {
             int x = (int) (Math.random() * 1024);
             int y = (int) (Math.random() * 1024);
             p = new Point(x, y);
-            for (int r : region)
-                if (!valid)
-                    valid = regions.checkRegion(x, y, r);
+            valid = regions.checkRegion(x, y, region);
             count++;
             if (count > 1000000)
                 valid = true;
