@@ -186,10 +186,10 @@ public final class nuke extends MultiModule {
         while (i.hasNext()) {
             int id = i.next();
             Player pl = m_botAction.getPlayer(id);
-            int x = pl.getXTileLocation();
-            int y = pl.getYTileLocation();
-            if (x > 475 && x < 549 && y > 248 && y < 300)
-                warps.add(new Warper(id, x, y));
+            // 1 2 3 5
+            int reg = regions.getRegion(pl);
+            if (reg == 1 || reg == 2 || reg == 3 || reg == 5)
+                warps.add(new Warper(id, pl.getXTileLocation(), pl.getYTileLocation()));
         }
 
         m_botAction.getShip().setShip(0);
