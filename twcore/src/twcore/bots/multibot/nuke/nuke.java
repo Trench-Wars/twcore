@@ -245,7 +245,7 @@ public final class nuke extends MultiModule {
         }
 
         public void save() {
-            m_botAction.warpTo(id, 512, 205);
+            m_botAction.warpTo(id, 512, 141);
         }
 
         public void back() {
