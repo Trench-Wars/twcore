@@ -23,6 +23,8 @@ public final class nuke extends MultiModule {
     private static final int SMALL_OBJON = 1001;
     private static final int MED_OBJON = 1002;
     private static final int LARGE_OBJON = 1003;
+    private static final int LEFT_SIDE_DOOR = 1004;
+    private static final int RIGHT_SIDE_DOOR = 1005;
     private static final int SMALL_BASE = 6;
     private static final int MED_BASE = 9;
     private static final int LARGE_BASE = 8;
@@ -102,6 +104,8 @@ public final class nuke extends MultiModule {
         ba.setDoors(currentBase);
         switch (currentBase) {
             case SMALL_BASE:
+                ba.showObject(LEFT_SIDE_DOOR);
+                ba.showObject(RIGHT_SIDE_DOOR);
                 ba.showObject(SMALL_OBJON);
                 ba.hideObject(MED_OBJON);
                 ba.hideObject(LARGE_OBJON);
@@ -111,12 +115,16 @@ public final class nuke extends MultiModule {
                 ba.showObject(MED_OBJON);
                 ba.hideObject(SMALL_OBJON);
                 ba.hideObject(LARGE_OBJON);
+                ba.hideObject(LEFT_SIDE_DOOR);
+                ba.hideObject(RIGHT_SIDE_DOOR);
                 warpForMedium();
                 break;
             case LARGE_BASE:
                 ba.showObject(LARGE_OBJON);
                 ba.hideObject(SMALL_OBJON);
                 ba.hideObject(MED_OBJON);
+                ba.hideObject(LEFT_SIDE_DOOR);
+                ba.hideObject(RIGHT_SIDE_DOOR);
                 break;
         }
     }
