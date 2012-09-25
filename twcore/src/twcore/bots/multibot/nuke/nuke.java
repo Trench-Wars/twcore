@@ -225,7 +225,7 @@ public final class nuke extends MultiModule {
         TimerTask timer = new TimerTask() {
             public void run() {
                 m_botAction.specWithoutLock(m_botAction.getBotName());
-                m_botAction.move(512*16, 350*16);
+                m_botAction.move(512*16, 285*16);
                 m_botAction.getShip().setSpectatorUpdateTime(100);
                 //Iterator<Integer> i = m_botAction.getFreqIDIterator(freq);
                 for (Warper w : warps)
