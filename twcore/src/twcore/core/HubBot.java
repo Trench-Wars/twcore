@@ -837,6 +837,10 @@ public class HubBot extends SubspaceBot {
 	    	if(operatorList.isModerator(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "STATUS:           !uptime !dbstatus !version");
 	    	}
+            if(operatorList.isSysop(messager)) {
+                m_botAction.sendSmartPrivateMessage( messager, "HIDERS:           !reload !hiders");
+                
+            }
 	    		m_botAction.sendSmartPrivateMessage( messager, "-----------------------------------------------");
 	    		m_botAction.sendSmartPrivateMessage( messager, "Message ::!help <command> for more information.");
 	    		
@@ -968,6 +972,18 @@ public class HubBot extends SubspaceBot {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.MODERATOR_LEVEL));
 	    		m_botAction.sendSmartPrivateMessage( messager , " !version");
 	    	}
+            // !reload
+            else if (argument.equalsIgnoreCase("reload")) {
+                m_botAction.sendSmartPrivateMessage( messager , "Reloads hiders from hiders.txt.");
+                m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SYSOP_LEVEL));
+                m_botAction.sendSmartPrivateMessage( messager , " !reload");
+            }
+            // !hiders
+            else if (argument.equalsIgnoreCase("hiders")) {
+                m_botAction.sendSmartPrivateMessage( messager , "Displays current loaded hideres..");
+                m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SYSOP_LEVEL));
+                m_botAction.sendSmartPrivateMessage( messager , " !hiders");
+            }
 	    	else {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Syntax error. Please message !help <command> for more information.");
 	    	}
