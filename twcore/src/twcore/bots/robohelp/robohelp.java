@@ -537,9 +537,13 @@ public class robohelp extends SubspaceBot {
             m_botAction.remotePrivateMessageSpam(playerName, helpRequest.getNextResponse());
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString("RoboHelp") + "', fnTaken = 1 WHERE fnCallID = "
                     + helpRequest.getCallID());
-            m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "INSERT INTO tblCallAuto (fnCallID, fcPlayer, fcQuestion, fcResponse) VALUES(" +
-                    helpRequest.getCallID() + ", " + Tools.addSlashesToString(playerName) + ", " +
-                    Tools.addSlashesToString(helpRequest.getMessage()) + ", " + Tools.addSlashesToString(helpRequest.getLastResponse()[0]) + ")");
+            String m = helpRequest.getMessage();
+            if (m != null && m.lastIndexOf("): ") > 0) {
+                m = m.substring(m.lastIndexOf("): "));
+                m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "INSERT INTO tblCallAuto (fnCallID, fcPlayer, fcQuestion, fcResponse) VALUES(" +
+                        helpRequest.getCallID() + ", " + Tools.addSlashesToString(playerName) + ", " +
+                        Tools.addSlashesToString(m) + ", " + Tools.addSlashesToString(helpRequest.getLastResponse()[0]) + ")");
+            }
             if (helpRequest.hasMoreResponses() == false) {
                 helpRequest.setAllowSummons(true);
                 m_botAction.sendRemotePrivateMessage(playerName, "If this is not helpful, type :" + m_botAction.getBotName() + ":!summon to request live help.");
