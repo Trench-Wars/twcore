@@ -541,8 +541,8 @@ public class robohelp extends SubspaceBot {
             if (m != null && m.lastIndexOf("): ") > 0) {
                 m = m.substring(m.lastIndexOf("): "));
                 m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "INSERT INTO tblCallAuto (fnCallID, fcPlayer, fcQuestion, fcResponse) VALUES(" +
-                        helpRequest.getCallID() + ", " + Tools.addSlashesToString(playerName) + ", " +
-                        Tools.addSlashesToString(m) + ", " + Tools.addSlashesToString(helpRequest.getLastResponse()[0]) + ")");
+                        helpRequest.getCallID() + ", '" + Tools.addSlashesToString(playerName) + "', '" +
+                        Tools.addSlashesToString(m) + "', '" + Tools.addSlashesToString(helpRequest.getLastResponse()[0]) + "')");
             }
             if (helpRequest.hasMoreResponses() == false) {
                 helpRequest.setAllowSummons(true);
