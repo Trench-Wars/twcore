@@ -538,7 +538,7 @@ public class robohelp extends SubspaceBot {
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "UPDATE tblCallHelp SET fcTakerName = '" + Tools.addSlashesToString("RoboHelp") + "', fnTaken = 1 WHERE fnCallID = "
                     + helpRequest.getCallID());
             m_botAction.SQLBackgroundQuery(mySQLHost, "robohelp", "INSERT INTO tblCallAuto (fnCallID, fcPlayer, fcQuestion, fcResponse) VALUES(" +
-                    helpRequest.getCallID() + ", " + Tools.addSlashesToString(playerName) + 
+                    helpRequest.getCallID() + ", " + Tools.addSlashesToString(playerName) + ", " +
                     Tools.addSlashesToString(helpRequest.getMessage()) + ", " + Tools.addSlashesToString(helpRequest.getLastResponse()[0]) + ")");
             if (helpRequest.hasMoreResponses() == false) {
                 helpRequest.setAllowSummons(true);
