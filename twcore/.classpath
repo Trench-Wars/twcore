@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry excluding="data/maps/|data/Rules/examples/|data/Rules/Other/|data/Rules/TWD/|data/Rules/TWL/|data/Rules/unused/" kind="src" path="src"/>
 	<classpathentry kind="lib" path="lib/aim.jar"/>
+	<classpathentry kind="lib" path="lib/gson.jar"/>
 	<classpathentry kind="lib" path="lib/googleapi.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.0.7-bin.jar"/>
