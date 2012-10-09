@@ -238,7 +238,11 @@ public class BotQueue extends Thread {
      * @return String indicating removal status
      */
     String removeBot( String name ) {
-        return removeBot( name, "" );
+        try {
+            return removeBot( name, "" );
+        } catch ( NullPointerException e ) {
+            return "nullbot";
+        }
     }
 
     /**
