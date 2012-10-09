@@ -287,33 +287,32 @@ public class messagebot extends SubspaceBot
      *  @param Name of player.
      *  @param Name of channel they want to join.
      */
-    public void addPlayer(String name, String message)
-    {
+    public void addPlayer(String name, String message) {
     	String channel = getChannel(name, message, false).toLowerCase();
-    	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(channel))
-    	{
+        String pieces[] = message.split(":", 2);
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "To add a player to a channel, specify it this way: !add channel:name");
+            return;         
+        }
+
+        if(!channels.containsKey(channel)) {
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
     	Channel c = channels.get(channel);
-    	if(c.isOwner(name) || c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
-    	{
-	    	if(c.joinRequest(pieces[1], true)) 
-	    	{
+    	if(c.isOwner(name) || c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) {
+	    	if(c.joinRequest(pieces[1], true)) {
 	    		if (c.acceptPlayer(name, pieces[1],true)) {
 	    			m_botAction.sendSmartPrivateMessage(name, pieces[1] + " is now a member of " + c.channelName + ".");
 	    		}
 	    		else {
 	    			m_botAction.sendSmartPrivateMessage(name, "An error has occured.");
 	    		}
-	    	} 
-	    	else {
+	    	} else {
 	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " cannot join this channel for some reason (already member? banned?).");
 	    	}
-    	}
-    	else
+    	} else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
@@ -360,12 +359,15 @@ public class messagebot extends SubspaceBot
      *  @param Name of operator.
      *  @param Name of channel and player beinc accepted.
      */
-    public void acceptPlayer(String name, String message)
-    {
-    	String channel = getChannel(name, message, false).toLowerCase();
+    public void acceptPlayer(String name, String message) {
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(channel))
-    	{
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "To accept a player into a channel, specify it this way: !accept channel:name");
+            return;         
+        }
+
+        String channel = getChannel(name, message, false).toLowerCase();    	
+    	if(!channels.containsKey(channel)) {
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
@@ -381,10 +383,14 @@ public class messagebot extends SubspaceBot
      *  @param Name of operator.
      *  @param Name of channel and player being rejected.
      */
-    public void declinePlayer(String name, String message)
-    {
-    	String channel = getChannel(name, message, false).toLowerCase();
+    public void declinePlayer(String name, String message) {
     	String pieces[] = message.split(":", 2);
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "To decline a player into a channel, specify it this way: !decline channel:name");
+            return;         
+        }
+
+    	String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -402,10 +408,13 @@ public class messagebot extends SubspaceBot
      *  @param Name of operator.
      *  @param Name of channel and message to be sent.
      */
-    public void announceToChannel(String name, String message)
-    {
-    	String channel = getChannel(name, message, false).toLowerCase();
+    public void announceToChannel(String name, String message) {
     	String pieces[] = message.split(":", 2);
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
+            return;         
+        }
+        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -425,8 +434,12 @@ public class messagebot extends SubspaceBot
 	 */
 	public void messageChannel(String name, String message)
     {
-    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
+            return;         
+        }
+        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -469,8 +482,12 @@ public class messagebot extends SubspaceBot
      */
     public void banPlayer(String name, String message)
     {
-    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
+            return;         
+        }
+        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -490,8 +507,12 @@ public class messagebot extends SubspaceBot
      */
     public void unbanPlayer(String name, String message)
     {
-    	String channel = getChannel(name, message, false).toLowerCase();
-    	String pieces[] = message.split(":", 2);
+        String pieces[] = message.split(":", 2);
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
+            return;         
+        }
+        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -551,8 +572,12 @@ public class messagebot extends SubspaceBot
      */
     public void makeOp(String name, String message)
     {
-    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
+            return;
+        }
+        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -572,8 +597,12 @@ public class messagebot extends SubspaceBot
      */
     public void deOp(String name, String message)
     {
-    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
+            return;
+        }
+        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -599,8 +628,12 @@ public class messagebot extends SubspaceBot
      */
     public void grantChannel(String name, String message)
     {
-    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
+        if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
+            return;
+        }
+        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -1471,6 +1504,11 @@ public class messagebot extends SubspaceBot
      		return;
      	try {
     		String pieces[] = message.split(":",2);
+            if( pieces.length < 2 ) {
+                m_botAction.sendSmartPrivateMessage(name, "Usage: !regall channel:http://www.site.com/playerlist.txt");
+                return;         
+            }    		
+    		
     		URL site = new URL(pieces[1]);
     		HashSet <String>nameList = new HashSet<String>();
     		if(site.getFile().toLowerCase().endsWith("txt"))
