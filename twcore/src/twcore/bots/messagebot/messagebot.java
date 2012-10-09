@@ -82,7 +82,7 @@ public class messagebot extends SubspaceBot
 	boolean bug = false;
 	public String database = "website";//If you change this you must also change line ~1426
 
-	private LinkedList<String> playersOnline = new LinkedList();
+	private LinkedList<String> playersOnline = new LinkedList<String>();
 	/** Constructor, requests Message and Login events.
 	 *  Also prepares bot for use.
 	 */
@@ -261,26 +261,25 @@ public class messagebot extends SubspaceBot
      */
     public void removePlayer(String name, String message)
     {
-    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if(!channels.containsKey(channel))
-    	{
+    	if( pieces.length != 2 ) {
+            m_botAction.sendSmartPrivateMessage(name, "To remove a player from a channel, specify it this way: !remove channel:name");
+            return;    	    
+    	}
+        String channel = getChannel(name, message, false).toLowerCase();
+    	if(!channels.containsKey(channel)) {
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
     	Channel c = channels.get(channel);
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || c.isOp(name) || ops.contains(name.toLowerCase()))
-    	{
-	    	if(c.leaveChannel(pieces[1], true)) 
-	    	{
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || c.isOp(name) || ops.contains(name.toLowerCase())) {
+	    	if(c.leaveChannel(pieces[1], true)) {
 	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " removed.");
-	    	} 
-	    	else {
+	    	} else {
 	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " cannot be removed (owner? not a member?).");
 	    	}
-    	}
-    	else
+    	} else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
