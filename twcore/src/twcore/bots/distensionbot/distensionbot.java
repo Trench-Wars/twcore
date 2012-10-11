@@ -7762,9 +7762,12 @@ public class distensionbot extends SubspaceBot {
 
                     // Default Op controls for upper staff
                     opStatus = r.getInt( "fnOperator" );
-                    if( opStatus == 0 && m_botAction.getOperatorList().isSysop(name) )
+                    
+                    if( opStatus < 2 && m_botAction.getOperatorList().isOwner(name) )
+                        opStatus = 3;                    
+                    if( opStatus < 2 && m_botAction.getOperatorList().isSysop(name) )
                         opStatus = 2;
-                    else if( opStatus == 0 && m_botAction.getOperatorList().isSmod(name) )
+                    else if( opStatus < 1 && m_botAction.getOperatorList().isSmod(name) )
                         opStatus = 1;
                     timePlayed = r.getInt( "fnTime" );
                     battlesWon = r.getInt( "fnBattlesWon" );
