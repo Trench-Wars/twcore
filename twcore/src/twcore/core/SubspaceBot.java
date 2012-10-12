@@ -42,6 +42,7 @@ import twcore.core.util.Tools;
 public abstract class SubspaceBot {
 
     public BotAction      m_botAction;              // Held reference to BotAction
+    public BotAction      ba;                       // Held reference to BotAction
 
     /**
      * Create a new instance of SubspaceBot.
@@ -51,6 +52,7 @@ public abstract class SubspaceBot {
      */
     public SubspaceBot( BotAction botAction ){
         m_botAction = botAction;
+        ba = botAction;
     }
 
     /**
