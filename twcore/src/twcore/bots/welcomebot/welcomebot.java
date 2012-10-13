@@ -152,7 +152,6 @@ public class welcomebot extends SubspaceBot {
         ba.joinArena(cfg.getString("InitialArena"));
         ba.ipcSubscribe(IPC_CHANNEL);
         ba.sendUnfilteredPublicMessage("?chat=robodev,staff");
-        ba.changeArena("0");
         ready = ba.getArenaName().startsWith("(Public");
     }
     
@@ -279,9 +278,18 @@ public class welcomebot extends SubspaceBot {
                     cmd_addTrusted(name, msg);
                 else if (cmd.startsWith("!untrust "))
                     cmd_remTrusted(name, msg);
+                else if (cmd.startsWith("!go "))
+                    cmd_go(name, msg);
             }
             
         }
+    }
+    
+    private void cmd_go(String name, String msg) {
+        msg = msg.substring(msg.indexOf(" ") + 1);
+        ba.sendSmartPrivateMessage(name, "Going to " + msg);
+        ba.changeArena(msg);
+        ready = ba.getArenaName().startsWith("(Public");
     }
     
     private void cmd_doMe(String name) {
