@@ -175,7 +175,7 @@ public class welcomebot extends SubspaceBot {
                 psCheckAlerts.setString(1, name);
                 ResultSet rs = psCheckAlerts.executeQuery();
                 if (rs != null && rs.next())
-                    taken = rs.getInt(1);
+                    taken = rs.getInt("fnTaken");
                 // 0 is missed, 1 is taken
                 if (taken < 0) {
                     // no record so move on to detection
