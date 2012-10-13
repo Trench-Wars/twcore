@@ -385,7 +385,7 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Alias cannot be a staff member.");
             return;
         }
-        m_botAction.ipcTransmit(ZONE_CHANNEL, new String("check:" + name + "," + msg));
+        m_botAction.ipcSendMessage(ZONE_CHANNEL, "check:" + name + "," + msg, "ZonerBot", m_botAction.getBotName());
     }
 
     // This is to catch any backgroundqueries even though none of them need to be catched to do something with the results

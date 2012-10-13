@@ -166,10 +166,10 @@ public class welcomebot extends SubspaceBot {
     public void handleEvent(PlayerEntered event) {
         if (!ready) return;
         String name = ba.getPlayerName(event.getPlayerID());
-        if (name == null || vets.contains(name) || ops.isBotExact(name))
-            return;
         if (trainers.remove(name))
             ba.sendAlertMessage("newplayer", name);
+        else if (name == null || vets.contains(name) || ops.isBotExact(name))
+            return;
         else {
             try {
                 int taken = -1;
