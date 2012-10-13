@@ -151,6 +151,7 @@ public class welcomebot extends SubspaceBot {
         
         init();
         ba.joinArena(cfg.getString("InitialArena"));
+        ba.changeArena("0");
         ba.ipcSubscribe(IPC_CHANNEL);
         ba.sendUnfilteredPublicMessage("?chat=robodev,staff");
         ready = ba.getArenaName().startsWith("(Public");
@@ -281,9 +282,19 @@ public class welcomebot extends SubspaceBot {
                     cmd_remTrusted(name, msg);
                 else if (cmd.startsWith("!go "))
                     cmd_go(name, msg);
+                else if (cmd.equals("!list"))
+                    cmd_list(name);
             }
             
         }
+    }
+    
+    private void cmd_list(String name) {
+        String msgs = "Sessions: ";
+        for (String n : sessions.keySet())
+            msgs += n + ", ";
+        msgs = msgs.substring(0, msgs.length() - 2);
+        ba.sendSmartPrivateMessage(name, msgs);
     }
     
     private void cmd_go(String name, String msg) {
@@ -310,6 +321,7 @@ public class welcomebot extends SubspaceBot {
             msgs.add("!next <name>          -- Sends the next helper objon to <name>.");
             msgs.add("!end <name>           -- Removes all objons for <name>.");
         }
+        ba.smartPrivateMessageSpam(name, msgs.toArray(new String[msgs.size()]));
     }
     
     /**
@@ -744,7 +756,7 @@ public class welcomebot extends SubspaceBot {
         } else {
             ba.sendSmartPrivateMessage(name, "Diconnecting without saving...");
             ba.sendChatMessage("Disconnect without save request: " + name);
-            ba.die();
+            ba.scheduleTask(new TimerTask() { public void run() { ba.die(); }}, 3000);
         }
     }
     
