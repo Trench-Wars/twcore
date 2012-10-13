@@ -553,48 +553,7 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendRemotePrivateMessage(playerName, "If this is not helpful, type :" + m_botAction.getBotName() + ":!next to retrieve the next response.");
         }
     }
-
-    public void handleNewplayerAlert(String sender, String name) {
-        name = name.substring(13);
-        if (!opList.isBotExact(sender)) {
-            callEvents.addElement(new EventData(new java.util.Date().getTime())); //For Records
-            PlayerInfo info = m_playerList.get(sender.toLowerCase());
-            if (info == null) {
-                info = new PlayerInfo(sender);
-                m_playerList.put(sender.toLowerCase(), info);
-            }
-            if (info.NewplayerTell() == true)
-                m_botAction.sendChatMessage("NOTICE: " + sender + " has used ?newplayer before. Please use !warn if needed.");
-            else {
-                m_botAction.sendRemotePrivateMessage(sender, "Please do not use ?newplayer. " + "It is for staff bot use only.");
-                info.setNewplayerTell(true);
-                m_botAction.sendChatMessage(sender + " has been notified that ?newplayer is not to be used.");
-            }
-            return;
-        }
-
-        PlayerInfo info;
-        info = m_playerList.get(sender.toLowerCase());
-        if (info == null)
-            info = new PlayerInfo(sender.toLowerCase());
-        NewbCall newb = newbHistory.get(name.toLowerCase());
-        newb.setID(getNextCallID());
-        calls.add(newb.getID());
-        callList.put(newb.getID(), newb);
-        info.addCall(newb.getID());
-        long now = System.currentTimeMillis();
-        callsUntilAd--;
-        String msg = "";
-        if (callsUntilAd == 0) {
-            callsUntilAd = CALL_INTERVAL;
-            msg += "Call #" + newb.getID() + CALL_AD;
-        } else if (now - lastAlert < CALL_EXPIRATION_TIME)
-            msg += "Call #" + newb.getID();
-        if (msg.length() > 0)
-            m_botAction.sendChatMessage(msg);
-        lastAlert = now;
-    }
-
+    
     public void handleNewPlayer(String sender, String message) {
         String name = message.substring(13);
         if (lastNewPlayerName.equalsIgnoreCase(name)) return;
@@ -2360,7 +2319,7 @@ public class robohelp extends SubspaceBot {
             else if (command.equals("advert"))
                 handleAdvert(event.getMessager(), msg);
             else if (command.equals("newplayer"))
-                handleNewplayerAlert(event.getMessager(), msg);
+                handleNewPlayer(event.getMessager(), msg);
         } else if (event.getMessageType() == Message.CHAT_MESSAGE) {
             String name = event.getMessager();
             if (!opList.isZH(name))
