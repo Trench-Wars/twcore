@@ -55,6 +55,7 @@ public class welcomebot extends SubspaceBot {
     private TreeSet<String> vets;                           // Veterans ignore list of previously checked players found not to be new
     private TreeSet<String> trusted;                        // Trusted players and staff for new player login notifications
     private TreeSet<String> trainers;                       // Trainer aliases to waiting to be triggered
+    private TreeSet<String> grantedOps;                     // List of people allowed to control bot when not smod
     private TreeMap<String, Session> sessions;              // All currently tracked playing new players
     
     private TreeMap<String, AliasCheck> aliases;
@@ -102,6 +103,7 @@ public class welcomebot extends SubspaceBot {
         vets = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         trusted = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         trainers = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+        grantedOps = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         sessions = new TreeMap<String, Session>(String.CASE_INSENSITIVE_ORDER);
         aliases = new TreeMap<String, AliasCheck>(String.CASE_INSENSITIVE_ORDER);
         loopCatcher = new TreeMap<String, Integer[]>(String.CASE_INSENSITIVE_ORDER);
@@ -142,20 +144,56 @@ public class welcomebot extends SubspaceBot {
                     msg += n + ", ";
                 msg = msg.substring(0, msg.length() - 2);
                 debug(msg);
+                msg = "GrantedOps(" + grantedOps.size() + "): ";
+                for (String n : grantedOps)
+                    msg += n + ", ";
+                msg = msg.substring(0, msg.length() - 2);
+                debug(msg);
             }
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
+        grantedOps.clear();
+        String[] gops = cfg.getString("GrantedOps").split(",");
+        for (String op : gops)
+            grantedOps.add(op);
+    }
+    
+    private void cmd_addOp(String name, String msg) {
+        if (msg.length() < 8) return;
+        msg = msg.substring(msg.indexOf(" ") + 1);
+        if (grantedOps.add(msg)) {
+            ba.sendSmartPrivateMessage(name, "Added to granted operators list: " + msg);
+            String go = "";
+            for (String n : grantedOps)
+                go += n + ",";
+            go = go.substring(0, go.lastIndexOf(","));
+            cfg.put("GrantedOps", go);
+        } else
+            ba.sendSmartPrivateMessage(name, "Already in granted operators list: " + msg);
+    }
+    
+    private void cmd_remOp(String name, String msg) {
+        if (msg.length() < 8) return;
+        msg = msg.substring(msg.indexOf(" ") + 1);
+        if (grantedOps.remove(msg)) {
+            ba.sendSmartPrivateMessage(name, "Removed from granted operators list: " + msg);
+            String go = "";
+            for (String n : grantedOps)
+                go += n + ",";
+            go = go.substring(0, go.lastIndexOf(","));
+            cfg.put("GrantedOps", go);
+        } else
+            ba.sendSmartPrivateMessage(name, "Not found in granted operators list: " + msg);
     }
     
     public void handleEvent(LoggedOn event) {
-        
         init();
         ba.joinArena(cfg.getString("InitialArena"));
-        ba.changeArena("0");
+        ready = true;
         ba.ipcSubscribe(IPC_CHANNEL);
         ba.sendUnfilteredPublicMessage("?chat=robodev,staff");
-        ready = ba.getArenaName().startsWith("(Public");
+        ba.changeArena("0");
     }
     
     /**
@@ -444,12 +482,8 @@ public class welcomebot extends SubspaceBot {
                 else if (cmd.startsWith("!end "))
                     cmd_end(name, msg);
             }
-            if (ops.isSmod(name)) {
-                if (cmd.equals("!die"))
-                    cmd_die(name, true);
-                else if (cmd.equals("!kill"))
-                    cmd_die(name, false);
-                else if (cmd.equals("!debug"))
+            if (ops.isSmod(name) || grantedOps.contains(name)) {
+                if (cmd.equals("!debug"))
                     cmd_debug(name);
                 else if (cmd.equals("!dome"))
                     cmd_doMe(name);
@@ -457,12 +491,23 @@ public class welcomebot extends SubspaceBot {
                     cmd_addTrusted(name, msg);
                 else if (cmd.startsWith("!untrust "))
                     cmd_remTrusted(name, msg);
-                else if (cmd.startsWith("!go "))
-                    cmd_go(name, msg);
                 else if (cmd.equals("!list"))
                     cmd_list(name);
                 else if (cmd.equals("!trusted"))
                     cmd_trusted(name);
+                
+                if (ops.isSmod(name)) {
+                    if (cmd.equals("!die"))
+                        cmd_die(name, true);
+                    else if (cmd.equals("!kill"))
+                        cmd_die(name, false);
+                    else if (cmd.startsWith("!addop "))
+                        cmd_addOp(name, msg);
+                    else if (cmd.startsWith("!remop "))
+                        cmd_remOp(name, msg);
+                    else if (cmd.startsWith("!go "))
+                        cmd_go(name, msg);
+                }
             }
             
         }
