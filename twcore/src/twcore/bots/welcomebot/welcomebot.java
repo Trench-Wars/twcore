@@ -1,6 +1,5 @@
 package twcore.bots.welcomebot;
 
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -570,7 +569,7 @@ public class welcomebot extends SubspaceBot {
             trusted.add(p);
             try {
                 psAddTrusted.setString(1, name);
-                psAddTrusted.executeQuery();
+                psAddTrusted.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
             }
@@ -587,7 +586,7 @@ public class welcomebot extends SubspaceBot {
             trusted.remove(p);
             try {
                 psRemTrusted.setString(1, name);
-                psRemTrusted.executeQuery();
+                psRemTrusted.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
             }
@@ -1029,7 +1028,7 @@ public class welcomebot extends SubspaceBot {
             if (usage < 15 && aliasCount < 2 && aliasCount >= 0) {
                 try {
                     psInsertNewb.setString(1, name);
-                    psInsertNewb.executeQuery();
+                    psInsertNewb.execute();
                     ba.sendAlertMessage("newplayer", name);
                     System.out.println(":YES");
                 } catch (SQLException e) {
