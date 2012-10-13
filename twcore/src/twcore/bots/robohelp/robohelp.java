@@ -358,10 +358,10 @@ public class robohelp extends SubspaceBot {
             String msg = ipc.getMessage();
             if (ipc.getSender().equalsIgnoreCase("ZonerBot")) {
                 String[] args = msg.split(",");
-                if (args.length == 2 && args[0].equals("noaccess"))
+                if (args[0].equals("noaccess"))
                     m_botAction.sendSmartPrivateMessage(args[1], "You must be a staff trainer to use this command.");
                 else
-                    m_botAction.ipcSendMessage(ZONE_CHANNEL, "newb:" + args[0] + "," + args[1], WBOT, m_botAction.getBotName());
+                    m_botAction.ipcSendMessage(ZONE_CHANNEL, "newb:" + args[1] + "," + args[2], WBOT, m_botAction.getBotName());
             } else if (ipc.getSender().equalsIgnoreCase(WBOT)) {
                 String[] args = msg.split(":");
                 m_botAction.sendSmartPrivateMessage(args[0], args[1]);
