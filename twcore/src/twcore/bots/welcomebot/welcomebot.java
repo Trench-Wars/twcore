@@ -151,6 +151,7 @@ public class welcomebot extends SubspaceBot {
     
     public void handleEvent(LoggedOn event) {
         ba.joinArena(cfg.getString("InitialArena"));
+        ba.sendUnfilteredPublicMessage("?chat=robodev,staff");
         ready = ba.getArenaName().startsWith("(Public");
     }
     
