@@ -222,157 +222,6 @@ public class welcomebot extends SubspaceBot {
             sessions.get(killed).addDeath();
     }
     
-    public void handleEvent(Message event) {
-        String name = ba.getPlayerName(event.getPlayerID());
-        if (name == null)
-            name = event.getMessager();
-        String msg = event.getMessage();
-        String cmd = msg.toLowerCase();
-        int type = event.getMessageType();
-        
-        if (type == Message.ARENA_MESSAGE)
-            handleArenaMessage(msg);
-        if (type == Message.PUBLIC_MESSAGE) {
-            // Player Commands
-            if (cmd.startsWith("!help") && cmd.contains("tutorial"))
-                cmd_helpTutorial(name);
-            else if (cmd.equals("!tutorial")) 
-                cmd_tutorial(name);
-            else if (cmd.equals("!next")) 
-                cmd_next(name, true);
-            else if (cmd.equals("!end")) 
-                cmd_end(name);
-            else if (cmd.equals("!quickhelp")) 
-                cmd_quickHelp(name);
-        }
-        if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) { 
-            // Player Commands
-            if (cmd.equals("!help"))
-                cmd_help(name);
-            else if (cmd.startsWith("!help") && cmd.contains("tutorial"))
-                cmd_helpTutorial(name);
-            else if (cmd.equals("!tutorial")) 
-                cmd_tutorial(name);
-            else if (cmd.equals("!next")) 
-                cmd_next(name, false);
-            else if (cmd.equals("!end")) 
-                cmd_end(name);
-            else if (cmd.equals("!quickhelp")) 
-                cmd_quickHelp(name);
-            
-            // Staff Commands
-            if (ops.isZH(name)) {
-                if (cmd.startsWith("!newplayer "))
-                    cmd_newplayer(name, msg);
-                else if (cmd.startsWith("!next "))
-                    cmd_next(name, msg);
-                else if (cmd.startsWith("!end "))
-                    cmd_end(name, msg);
-            }
-            if (ops.isSmod(name)) {
-                if (cmd.equals("!die"))
-                    cmd_die(name, true);
-                else if (cmd.equals("!kill"))
-                    cmd_die(name, false);
-                else if (cmd.equals("!debug"))
-                    cmd_debug(name);
-                else if (cmd.equals("!dome"))
-                    cmd_doMe(name);
-                else if (cmd.startsWith("!trust "))
-                    cmd_addTrusted(name, msg);
-                else if (cmd.startsWith("!untrust "))
-                    cmd_remTrusted(name, msg);
-                else if (cmd.startsWith("!go "))
-                    cmd_go(name, msg);
-                else if (cmd.equals("!list"))
-                    cmd_list(name);
-                else if (cmd.equals("!trusted"))
-                    cmd_trusted(name);
-            }
-            
-        }
-    }
-    
-    private void cmd_list(String name) {
-        String msgs = "Sessions: ";
-        for (String n : sessions.keySet())
-            msgs += n + ", ";
-        msgs = msgs.substring(0, msgs.length() - 2);
-        ba.sendSmartPrivateMessage(name, msgs);
-    }
-    
-    private void cmd_go(String name, String msg) {
-        msg = msg.substring(msg.indexOf(" ") + 1);
-        ba.sendSmartPrivateMessage(name, "Going to " + msg);
-        ba.changeArena(msg);
-        ready = ba.getArenaName().startsWith("(Public");
-    }
-    
-    private void cmd_doMe(String name) {
-        Player p = ba.getPlayer(name);
-        if (p != null) {
-            ba.sendSmartPrivateMessage(name, "Creating a new session for you!");
-            sessions.put(name, new Session(p));
-        } else
-            ba.sendSmartPrivateMessage(name, "You must be in my arena.");
-    }
-    
-    private void cmd_help(String name) {
-        
-        ArrayList<String> msgs = new ArrayList<String>();
-        if (ops.isZH(name)) {
-            msgs.add("!newplayer <name>     -- Sends new player helper objon to <name>.");
-            msgs.add("!next <name>          -- Sends the next helper objon to <name>.");
-            msgs.add("!end <name>           -- Removes all objons for <name>.");
-        }
-        ba.smartPrivateMessageSpam(name, msgs.toArray(new String[msgs.size()]));
-    }
-    
-    /**
-     * Breaks down the lines of text received after a command has been sent.
-     * Lines are identified and then distributed accordingly.
-     * 
-     * @param message
-     */
-    private void handleArenaMessage(String message) {
-            if (message.contains("TypedName:")) {
-                infoee = message.substring(message.indexOf("TypedName:") + 10);
-                infoee = infoee.substring(0, infoee.indexOf("Demo:")).trim();
-                if (sessions.containsKey(infoee))
-                    sessions.get(infoee).setInfo(message);
-            } else if (message.startsWith("TIME: Session:")) {
-                if (infoee != null && sessions.containsKey(infoee))
-                    sessions.get(infoee).setUsage(message);
-                else {
-                    String time = message.substring(message.indexOf("Total:") + 6);
-                    time = time.substring(0, time.indexOf("Created")).trim();
-                    String[] pieces = time.split(":");
-                    if (pieces.length == 3) {
-                        int hour = Integer.valueOf(pieces[0]);
-                        int min = Integer.valueOf(pieces[1]);
-                        if (pieces[0].equals("0")) { // if usage less than 1 hour
-                            if (aliases.containsKey(infoee)) {
-                                AliasCheck alias = aliases.get(infoee);
-                                alias.setUsage(hour * 60 + min);
-                                System.out.println("[ALIAS] " + alias.getName() + " in array already.");
-                                debug("[ALIAS] " + alias.getName() + " in array already.");
-                                if (alias.getTime() > 900000) {
-                                    alias.resetTime();
-                                    doAliasCheck(alias);
-                                }
-                            } else {
-                                AliasCheck alias = new AliasCheck(infoee, hour * 60 + min);
-                                doAliasCheck(alias);
-                            }
-                        }
-                    }
-                }
-            } else if ((message.startsWith("PING Current") || message.startsWith("Ping:")) && infoee != null && sessions.containsKey(infoee)) {
-                // either from *lag or *info, either way send it to session for possible welcome objon and message
-                sessions.get(infoee).checkPing(message);
-            }
-    }
-    
     /**
      * IPC messages are exchanged with RoboHelp for falsed/un-falsed newb calls
      * and trainer alert triggers.
@@ -547,6 +396,122 @@ public class welcomebot extends SubspaceBot {
             ba.SQLClose(event.getResultSet());
         }
     }
+    
+    public void handleEvent(Message event) {
+        String name = event.getMessager();;
+        if (name == null)
+            name = ba.getPlayerName(event.getPlayerID());
+        String msg = event.getMessage();
+        String cmd = msg.toLowerCase();
+        int type = event.getMessageType();
+        
+        if (type == Message.ARENA_MESSAGE)
+            handleArenaMessage(msg);
+        if (type == Message.PUBLIC_MESSAGE) {
+            // Player Commands
+            if (cmd.startsWith("!help") && cmd.contains("tutorial"))
+                cmd_helpTutorial(name);
+            else if (cmd.equals("!tutorial")) 
+                cmd_tutorial(name);
+            else if (cmd.equals("!next")) 
+                cmd_next(name, true);
+            else if (cmd.equals("!end")) 
+                cmd_end(name);
+            else if (cmd.equals("!quickhelp")) 
+                cmd_quickHelp(name);
+        }
+        if (type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.PRIVATE_MESSAGE) { 
+            // Player Commands
+            if (cmd.equals("!help"))
+                cmd_help(name);
+            else if (cmd.startsWith("!help") && cmd.contains("tutorial"))
+                cmd_helpTutorial(name);
+            else if (cmd.equals("!tutorial")) 
+                cmd_tutorial(name);
+            else if (cmd.equals("!next")) 
+                cmd_next(name, false);
+            else if (cmd.equals("!end")) 
+                cmd_end(name);
+            else if (cmd.equals("!quickhelp")) 
+                cmd_quickHelp(name);
+            
+            // Staff Commands
+            if (ops.isZH(name)) {
+                if (cmd.startsWith("!newplayer "))
+                    cmd_newplayer(name, msg);
+                else if (cmd.startsWith("!next "))
+                    cmd_next(name, msg);
+                else if (cmd.startsWith("!end "))
+                    cmd_end(name, msg);
+            }
+            if (ops.isSmod(name)) {
+                if (cmd.equals("!die"))
+                    cmd_die(name, true);
+                else if (cmd.equals("!kill"))
+                    cmd_die(name, false);
+                else if (cmd.equals("!debug"))
+                    cmd_debug(name);
+                else if (cmd.equals("!dome"))
+                    cmd_doMe(name);
+                else if (cmd.startsWith("!trust "))
+                    cmd_addTrusted(name, msg);
+                else if (cmd.startsWith("!untrust "))
+                    cmd_remTrusted(name, msg);
+                else if (cmd.startsWith("!go "))
+                    cmd_go(name, msg);
+                else if (cmd.equals("!list"))
+                    cmd_list(name);
+                else if (cmd.equals("!trusted"))
+                    cmd_trusted(name);
+            }
+            
+        }
+    }
+    
+    /**
+     * Breaks down the lines of text received after a command has been sent.
+     * Lines are identified and then distributed accordingly.
+     * 
+     * @param message
+     */
+    private void handleArenaMessage(String message) {
+            if (message.contains("TypedName:")) {
+                infoee = message.substring(message.indexOf("TypedName:") + 10);
+                infoee = infoee.substring(0, infoee.indexOf("Demo:")).trim();
+                if (sessions.containsKey(infoee))
+                    sessions.get(infoee).setInfo(message);
+            } else if (message.startsWith("TIME: Session:")) {
+                if (infoee != null && sessions.containsKey(infoee))
+                    sessions.get(infoee).setUsage(message);
+                else {
+                    String time = message.substring(message.indexOf("Total:") + 6);
+                    time = time.substring(0, time.indexOf("Created")).trim();
+                    String[] pieces = time.split(":");
+                    if (pieces.length == 3) {
+                        int hour = Integer.valueOf(pieces[0]);
+                        int min = Integer.valueOf(pieces[1]);
+                        if (pieces[0].equals("0")) { // if usage less than 1 hour
+                            if (aliases.containsKey(infoee)) {
+                                AliasCheck alias = aliases.get(infoee);
+                                alias.setUsage(hour * 60 + min);
+                                System.out.println("[ALIAS] " + alias.getName() + " in array already.");
+                                debug("[ALIAS] " + alias.getName() + " in array already.");
+                                if (alias.getTime() > 900000) {
+                                    alias.resetTime();
+                                    doAliasCheck(alias);
+                                }
+                            } else {
+                                AliasCheck alias = new AliasCheck(infoee, hour * 60 + min);
+                                doAliasCheck(alias);
+                            }
+                        }
+                    }
+                }
+            } else if ((message.startsWith("PING Current") || message.startsWith("Ping:")) && infoee != null && sessions.containsKey(infoee)) {
+                // either from *lag or *info, either way send it to session for possible welcome objon and message
+                sessions.get(infoee).checkPing(message);
+            }
+    }
 
     /**
      * Alias check using background queries.
@@ -561,6 +526,41 @@ public class welcomebot extends SubspaceBot {
                 + "WHERE fcUserName = '" + Tools.addSlashes(alias.getName()) + "'");
         ba.SQLBackgroundQuery(web, "alias:mid:" + alias.getName(), "SELECT DISTINCT(fnMachineID) " + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID "
                 + "WHERE fcUserName = '" + Tools.addSlashes(alias.getName()) + "'");
+    }
+    
+    private void cmd_list(String name) {
+        String msgs = "Sessions: ";
+        for (String n : sessions.keySet())
+            msgs += n + ", ";
+        msgs = msgs.substring(0, msgs.length() - 2);
+        ba.sendSmartPrivateMessage(name, msgs);
+    }
+    
+    private void cmd_go(String name, String msg) {
+        msg = msg.substring(msg.indexOf(" ") + 1);
+        ba.sendSmartPrivateMessage(name, "Going to " + msg);
+        ba.changeArena(msg);
+        ready = ba.getArenaName().startsWith("(Public");
+    }
+    
+    private void cmd_doMe(String name) {
+        Player p = ba.getPlayer(name);
+        if (p != null) {
+            ba.sendSmartPrivateMessage(name, "Creating a new session for you!");
+            sessions.put(name, new Session(p));
+        } else
+            ba.sendSmartPrivateMessage(name, "You must be in my arena.");
+    }
+    
+    private void cmd_help(String name) {
+        
+        ArrayList<String> msgs = new ArrayList<String>();
+        if (ops.isZH(name)) {
+            msgs.add("!newplayer <name>     -- Sends new player helper objon to <name>.");
+            msgs.add("!next <name>          -- Sends the next helper objon to <name>.");
+            msgs.add("!end <name>           -- Removes all objons for <name>.");
+        }
+        ba.smartPrivateMessageSpam(name, msgs.toArray(new String[msgs.size()]));
     }
     
     private void cmd_trusted(String name) {
