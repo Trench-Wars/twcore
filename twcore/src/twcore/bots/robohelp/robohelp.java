@@ -1562,7 +1562,7 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(name, "The new player alert has already been claimed and only the claimer may falsify it.");
                 return;
             }
-            newb.falsePos();
+            newb.falsePos(name);
             if (triggers.remove(player.toLowerCase()))
                 m_botAction.sendSmartPrivateMessage(player, "Alert has been false'd by: " + name);
         }
@@ -1597,7 +1597,7 @@ public class robohelp extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage(name, "Only false positive alerts may be undone!");
                 return;
             }
-            newb.falsePos();
+            newb.undoFalse(name);
             if (triggers.remove(player.toLowerCase()))
                 m_botAction.sendSmartPrivateMessage(player, "Alert has been undone by: " + name);
         }
@@ -1634,6 +1634,8 @@ public class robohelp extends SubspaceBot {
                     m += "[MISSED]";
                 else if (newb.claimType == NewbCall.TAKEN)
                     m += "(" + newb.claimer + ")";
+                else if (newb.claimType == NewbCall.FALSE)
+                    m += "{FALSE - " + newb.claimer + "}";
                 else
                     m += newb.claimer;
                 m_botAction.sendSmartPrivateMessage(name, m);
@@ -2149,7 +2151,7 @@ public class robohelp extends SubspaceBot {
                 np.timeSent = time;
                 np.claimType = taken;
                 if (taken == 3)
-                    np.falsePos();
+                    np.claimType = NewbCall.FALSE;
                 else if (taken == 1 || taken == 2) {
                     np.claimer = rs.getString("staff");
                     np.claimType = NewbCall.TAKEN;

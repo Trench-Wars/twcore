@@ -30,11 +30,16 @@ public class NewbCall extends Call {
         this.id = id;
     }
 
-    public void falsePos() {
+    public void falsePos(String name) {
         claimType = FALSE;
-        claimer = "[FALSE-POSITIVE]";
+        claimer = name;
         claimed = true;
         timeClaim = System.currentTimeMillis();
+    }
+
+    public void undoFalse(String name) {
+        claimType = TAKEN;
+        claimer = name;
     }
 
 }
