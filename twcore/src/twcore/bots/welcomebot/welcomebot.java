@@ -1,5 +1,6 @@
 package twcore.bots.welcomebot;
 
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -7,7 +8,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -853,8 +853,8 @@ public class welcomebot extends SubspaceBot {
             split = args[1].split(":");
             totalUsage = Math.round((Double.valueOf(split[0]) + (Double.valueOf(split[1]) / 60)) * 100) / 100.0;
             try {
-                created = new java.sql.Date(fromInfo.parse(args[2]).getTime());
-                
+                java.util.Date temp = fromInfo.parse(args[2]);
+                created = new Date(temp.getTime());
             } catch (ParseException e) {
                 Tools.printStackTrace(e);
             }
