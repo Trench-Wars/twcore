@@ -763,7 +763,9 @@ public class welcomebot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Saving sessions and diconnecting...");
             ba.sendChatMessage("Disconnect with save request: " + name);
             // its weird but avoids concurrent modifications
-            Set<String> names = sessions.keySet();
+            Set<String> names = new TreeSet<String>();
+            for (String n : sessions.keySet())
+                names.add(n);
             for (String ses : names)
                 sessions.get(ses).endSession();
             ba.scheduleTask(new TimerTask() { public void run() { ba.die(); }}, 3000);
