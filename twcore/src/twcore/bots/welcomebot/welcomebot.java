@@ -88,8 +88,6 @@ public class welcomebot extends SubspaceBot {
         er.request(EventRequester.PLAYER_DEATH);
         er.request(EventRequester.PLAYER_ENTERED);
         er.request(EventRequester.PLAYER_LEFT);
-        
-        init();
     }
     
     private void init() {
@@ -149,6 +147,8 @@ public class welcomebot extends SubspaceBot {
     }
     
     public void handleEvent(LoggedOn event) {
+        
+        init();
         ba.joinArena(cfg.getString("InitialArena"));
         ba.ipcSubscribe(IPC_CHANNEL);
         ba.sendUnfilteredPublicMessage("?chat=robodev,staff");
