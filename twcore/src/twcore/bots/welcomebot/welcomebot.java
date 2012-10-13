@@ -898,7 +898,7 @@ public class welcomebot extends SubspaceBot {
                 psUpdatePlayer.setInt(5, mid);
                 psUpdatePlayer.setString(6, countryCode);
                 psUpdatePlayer.setDate(7, created);
-                psUpdatePlayer.executeQuery();
+                psUpdatePlayer.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
             }
