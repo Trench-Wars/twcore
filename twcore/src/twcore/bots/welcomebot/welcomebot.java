@@ -283,6 +283,8 @@ public class welcomebot extends SubspaceBot {
                     cmd_go(name, msg);
                 else if (cmd.equals("!list"))
                     cmd_list(name);
+                else if (cmd.equals("!trusted"))
+                    cmd_trusted(name);
             }
             
         }
@@ -558,6 +560,15 @@ public class welcomebot extends SubspaceBot {
                 + "WHERE fcUserName = '" + Tools.addSlashes(alias.getName()) + "'");
     }
     
+    private void cmd_trusted(String name) {
+
+        String msg = "Trusted(" + trusted.size() + "): ";
+        for (String n : trusted)
+            msg += n + ", ";
+        msg = msg.substring(0, msg.length() - 2);
+        ba.sendSmartPrivateMessage(name, msg);
+    }
+    
     private void cmd_addTrusted(String name, String msg) {
         if (msg.length() < 8) return;
         String p = msg.substring(msg.indexOf(" ") + 1);
@@ -567,7 +578,8 @@ public class welcomebot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Trusted player added: " + p);
             trusted.add(p);
             try {
-                psAddTrusted.setString(1, name);
+                psAddTrusted.setString(1, p);
+                psAddTrusted.setString(2, name);
                 psAddTrusted.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
@@ -796,6 +808,7 @@ public class welcomebot extends SubspaceBot {
         ba.ipcUnSubscribe(IPC_CHANNEL);
         ba.closePreparedStatement(web, db, psInsertNewb);
         ba.closePreparedStatement(web, db, psCheckAlerts);
+        ba.closePreparedStatement(db, db, psGetTrusted);
         ba.closePreparedStatement(db, db, psAddTrusted);
         ba.closePreparedStatement(db, db, psRemTrusted);
         ba.closePreparedStatement(db, db, psUpdatePlayer);
