@@ -482,6 +482,19 @@ public class welcomebot extends SubspaceBot {
                 else if (cmd.startsWith("!end "))
                     cmd_end(name, msg);
             }
+            
+            if (ops.isSmod(name)) {
+                if (cmd.equals("!die"))
+                    cmd_die(name, true);
+                else if (cmd.equals("!kill"))
+                    cmd_die(name, false);
+                else if (cmd.startsWith("!addop "))
+                    cmd_addOp(name, msg);
+                else if (cmd.startsWith("!remop "))
+                    cmd_remOp(name, msg);
+                else if (cmd.startsWith("!go "))
+                    cmd_go(name, msg);
+            }
             if (ops.isSmod(name) || grantedOps.contains(name)) {
                 if (cmd.equals("!debug"))
                     cmd_debug(name);
@@ -495,19 +508,6 @@ public class welcomebot extends SubspaceBot {
                     cmd_list(name);
                 else if (cmd.equals("!trusted"))
                     cmd_trusted(name);
-                
-                if (ops.isSmod(name)) {
-                    if (cmd.equals("!die"))
-                        cmd_die(name, true);
-                    else if (cmd.equals("!kill"))
-                        cmd_die(name, false);
-                    else if (cmd.startsWith("!addop "))
-                        cmd_addOp(name, msg);
-                    else if (cmd.startsWith("!remop "))
-                        cmd_remOp(name, msg);
-                    else if (cmd.startsWith("!go "))
-                        cmd_go(name, msg);
-                }
             }
             
         }
