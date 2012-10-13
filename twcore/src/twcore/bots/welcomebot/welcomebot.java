@@ -803,7 +803,7 @@ public class welcomebot extends SubspaceBot {
     private class Session {
         
         DateFormat fromInfo = new SimpleDateFormat("M-d-yyyy HH:mm:ss");
-        Date created;
+        java.sql.Date created;
         String name;
         String squad;
         String countryCode;
@@ -853,7 +853,8 @@ public class welcomebot extends SubspaceBot {
             split = args[1].split(":");
             totalUsage = Math.round((Double.valueOf(split[0]) + (Double.valueOf(split[1]) / 60)) * 100) / 100.0;
             try {
-                created = fromInfo.parse(args[2]);
+                created = new java.sql.Date(fromInfo.parse(args[2]).getTime());
+                
             } catch (ParseException e) {
                 Tools.printStackTrace(e);
             }
@@ -896,7 +897,7 @@ public class welcomebot extends SubspaceBot {
                 psUpdatePlayer.setString(4, ip);
                 psUpdatePlayer.setInt(5, mid);
                 psUpdatePlayer.setString(6, countryCode);
-                psUpdatePlayer.setDate(7, (java.sql.Date) created);
+                psUpdatePlayer.setDate(7, created);
                 psUpdatePlayer.executeQuery();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
