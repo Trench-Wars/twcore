@@ -49,6 +49,7 @@ public class robohelp extends SubspaceBot {
                                                                                   // can't be claimed (onit/gotit)
     public static final int NEWB_EXPIRATION_TIME = 7 * Tools.TimeInMillis.MINUTE; // Time after which a call can't
     public static final String ZONE_CHANNEL = "Zone Channel";
+    public static final String WBOT = "TW-WelcomeBot";
 
     boolean m_banPending = false;
     boolean m_strictOnIts = true;
@@ -352,30 +353,31 @@ public class robohelp extends SubspaceBot {
      */
     @Override
     public void handleEvent(InterProcessEvent event) {
-        if (event.getChannel().equals(ZONE_CHANNEL) && event.getObject() instanceof String) {
-            if (event.getSenderName().equalsIgnoreCase("ZonerBot")) {
-                String[] args = ((String) event.getObject()).split(",");
-                if (args.length == 1)
-                    m_botAction.sendSmartPrivateMessage(args[0], "You must be a staff trainer to use this command.");
+        if (event.getChannel().equals(ZONE_CHANNEL) && event.getObject() instanceof IPCMessage) {
+            IPCMessage ipc = (IPCMessage) event.getObject();
+            String msg = ipc.getMessage();
+            if (ipc.getSender().equalsIgnoreCase("ZonerBot")) {
+                String[] args = msg.split(",");
+                if (args.length == 2 && args[0].equals("noaccess"))
+                    m_botAction.sendSmartPrivateMessage(args[1], "You must be a staff trainer to use this command.");
                 else
-                    m_botAction.ipcTransmit(ZONE_CHANNEL, new String("newb:" + args[0] + "," + args[1]));
-            } else if (event.getSenderName().startsWith("TW-Guard")) {
-                String[] args = ((String) event.getObject()).split(":");
+                    m_botAction.ipcSendMessage(ZONE_CHANNEL, "newb:" + args[0] + "," + args[1], WBOT, m_botAction.getBotName());
+            } else if (ipc.getSender().equalsIgnoreCase(WBOT)) {
+                String[] args = msg.split(":");
                 m_botAction.sendSmartPrivateMessage(args[0], args[1]);
                 if (args.length == 3)
                     triggers.add(args[2].toLowerCase());
             }
-            return;
         }
-        IPCMessage ipcMessage = (IPCMessage) event.getObject();
 
-        String message = ipcMessage.getMessage();
+        /* welcomebot will do this from now on
         try {
             if (message.startsWith("alert"))
                 handleNewPlayer(message.substring(6));
         } catch (Exception e) {
             Tools.printStackTrace(e);
         }
+        */
     }
 
     public void handleTrigger(String name, String msg) {
@@ -554,7 +556,7 @@ public class robohelp extends SubspaceBot {
 
     public void handleNewplayerAlert(String sender, String name) {
         name = name.substring(13);
-        if (!sender.equals("RoboHelp")) {
+        if (!opList.isBotExact(sender)) {
             callEvents.addElement(new EventData(new java.util.Date().getTime())); //For Records
             PlayerInfo info = m_playerList.get(sender.toLowerCase());
             if (info == null) {
@@ -595,23 +597,7 @@ public class robohelp extends SubspaceBot {
 
     public void handleNewPlayer(String message) {
         String player = message.substring(message.indexOf("): ") + 3);
-        boolean send = false;
-        try {
-            ResultSet alerts = m_botAction.SQLQuery(mySQLHost, "SELECT * FROM tblCallNewb WHERE fcUserName = '" + Tools.addSlashesToString(player) + "'");
-            if (alerts.next()) {
-                if (alerts.getInt("fnTaken") == 0) {
-                    send = true;
-                    m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fdCreated = NOW() WHERE fnAlertID = " + alerts.getInt("fnAlertID"));
-                }
-            } else {
-                send = true;
-                m_botAction.SQLQueryAndClose(mySQLHost, "INSERT INTO tblCallNewb (fcUserName, fdCreated) VALUES ('" + Tools.addSlashesToString(player) + "', NOW())");
-            }
-            m_botAction.SQLClose(alerts);
-        } catch (Exception e) {
-            Tools.printLog("Could not insert new player alert record.");
-        }
-        if ((triggers.contains(player)) || (send && !lastNewPlayerName.equalsIgnoreCase(player))) {
+        if (triggers.contains(player) || !lastNewPlayerName.equalsIgnoreCase(player)) {
             NewbCall newb = new NewbCall(player);
             lastNewPlayerName = player;
             newbs.add(newb);
@@ -1587,6 +1573,42 @@ public class robohelp extends SubspaceBot {
         }
         m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fnTaken = 3 WHERE fcUserName = '" + Tools.addSlashesToString(player) + "' ORDER BY fnAlertID DESC");
         m_botAction.sendSmartPrivateMessage(name, "All database entries for '" + player + "' have been falsified.");
+        m_botAction.ipcSendMessage(ZONE_CHANNEL, "false: " + player, WBOT, m_botAction.getBotName());
+    }
+    
+    public void handleUndoFalse(String name, String msg) {
+        String player = "";
+        if (msg.trim().equalsIgnoreCase("!undo")) {
+            if (lastNewPlayerName.length() > 0)
+                player = lastNewPlayerName;
+            else {
+                m_botAction.sendSmartPrivateMessage(name, "No new player alerts found. You'll have to be more specific.");
+                return;
+            }
+        } else if (msg.contains(" ") && msg.length() > 7)
+            player = msg.substring(msg.indexOf(" ") + 1);
+
+        if (player.isEmpty())
+            return;
+
+        if (newbHistory.containsKey(player.toLowerCase())) {
+            NewbCall newb = newbHistory.get(player.toLowerCase());
+            if (newb.claimType != NewbCall.FALSE) {
+                m_botAction.sendSmartPrivateMessage(name, "Only false positive alerts may be undone!");
+                return;
+            }
+            newb.falsePos();
+            if (triggers.remove(player.toLowerCase()))
+                m_botAction.sendSmartPrivateMessage(player, "Alert has been undone by: " + name);
+        }
+
+        if (!m_botAction.SQLisOperational()) {
+            m_botAction.sendSmartPrivateMessage(name, "Database offline.");
+            return;
+        }
+        m_botAction.SQLBackgroundQuery(mySQLHost, null, "UPDATE tblCallNewb SET fnTaken = 2 WHERE fcUserName = '" + Tools.addSlashesToString(player) + "' ORDER BY fnAlertID DESC");
+        m_botAction.sendSmartPrivateMessage(name, "All database entries for '" + player + "' have been un-falsified.");
+        m_botAction.ipcSendMessage(ZONE_CHANNEL, "undo: " + player, WBOT, m_botAction.getBotName());
     }
 
     public void handleNewbs(String name, String msg) {
@@ -2244,11 +2266,10 @@ public class robohelp extends SubspaceBot {
                 "  forget #<id>, forget <id>                - Prevents Call #<id> from being counted as unanswered", "Multiple call claim modification (mine/clean/forget)",
                 "  - To claim multiple calls at once, just add the call numbers separated by commas", "     ie mine 6,49,3,#4,1",
                 "  - To claim multiple consecutive calls at once, specify a range using a dash (-)", "     ie forget 5-#32", "New Player commands:",
-                "  on that                                  - Claims the most recent new player call",
-                "  ihave                                    - Claims the most recent new player call but does not affect stats",
-                "  ihave <Player>                           - Claims the <Player> but does not affect stats (doesn't have to be in !newbs)",
                 "  !false                                   - Falsifies the last new player alert so that it won't affect stats",
                 "  !false <Player>                          - Falsifies all new player alerts for <Player> (doesn't have to be in !newbs)",
+                "  !undo                                    - Un-falsifies the last new player alert so that it will affect stats",
+                "  !undo <Player>                           - Un-falsifies all new player alerts for <Player> (doesn't have to be in !newbs)",
                 "  !newbs                                   - Lists recent new player alerts and claimer information",
                 "  !newbs <num>                             - Lists the last <nuM> new player alerts and claimer information" };
         m_botAction.smartPrivateMessageSpam(playerName, helpText);
@@ -2318,6 +2339,8 @@ public class robohelp extends SubspaceBot {
                 toggleAlert(name, "");
             else if (message.startsWith("!false"))
                 handleFalseNewb(name, message);
+            else if (message.startsWith("!undo"))
+                handleUndoFalse(name, message);
             else if (!message.contains("that") && !message.contains("it") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have"))
                     && opList.isZH(name))
                 handleClaims(name, message);

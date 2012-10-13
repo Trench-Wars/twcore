@@ -21,6 +21,7 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.util.Tools;
+import twcore.core.util.ipc.IPCMessage;
 
 /**
  * New ZonerBot
@@ -95,13 +96,15 @@ public class zonerbot extends SubspaceBot {
     }
     
     public void handleEvent(InterProcessEvent event) {
-        if (event.getChannel().equals(ZONE_CHANNEL) && event.getSenderName().equalsIgnoreCase("RoboHelp") && event.getObject() instanceof String) {
-            if (((String) event.getObject()).startsWith("check:")) {
-                String[] args = ((String) event.getObject()).substring(6).split(",");
+        if (event.getChannel().equals(ZONE_CHANNEL) && event.getObject() instanceof IPCMessage) {
+            IPCMessage ipc = (IPCMessage) event.getObject();
+            String msg = ipc.getMessage();
+            if (ipc.getSender().equalsIgnoreCase("RoboHelp") && msg.startsWith("check:")) {
+                String[] args = msg.substring(6).split(",");
                 if (trainers.contains(args[0].toLowerCase()))
-                    ba.ipcTransmit(ZONE_CHANNEL, new String(args[0] + "," + args[1]));
+                    ba.ipcSendMessage(ZONE_CHANNEL, "valid," + args[0] + "," + args[1], "RoboHelp", ba.getBotName());
                 else
-                    ba.ipcTransmit(ZONE_CHANNEL, new String(args[0]));
+                    ba.ipcSendMessage(ZONE_CHANNEL,"noaccess," + args[0], "RoboHelp", ba.getBotName());
             }
         }
     }
