@@ -555,7 +555,7 @@ public class robohelp extends SubspaceBot {
     }
     
     public void handleNewPlayer(String sender, String message) {
-        String name = message.substring(13);
+        String name = message.substring(12);
         if (lastNewPlayerName.equalsIgnoreCase(name)) return;
         if (!opList.isBotExact(sender)) {
             callEvents.addElement(new EventData(new java.util.Date().getTime())); //For Records
