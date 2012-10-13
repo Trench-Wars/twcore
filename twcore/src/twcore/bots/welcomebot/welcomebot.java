@@ -596,7 +596,7 @@ public class welcomebot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Trusted player removed: " + p);
             trusted.remove(p);
             try {
-                psRemTrusted.setString(1, name);
+                psRemTrusted.setString(1, p);
                 psRemTrusted.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
