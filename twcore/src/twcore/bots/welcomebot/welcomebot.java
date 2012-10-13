@@ -98,6 +98,7 @@ public class welcomebot extends SubspaceBot {
         
         vets = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         trusted = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+        trainers = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         sessions = new TreeMap<String, Session>(String.CASE_INSENSITIVE_ORDER);
         aliases = new TreeMap<String, AliasCheck>(String.CASE_INSENSITIVE_ORDER);
         loopCatcher = new TreeMap<String, Integer[]>(String.CASE_INSENSITIVE_ORDER);
