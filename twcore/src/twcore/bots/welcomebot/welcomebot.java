@@ -859,7 +859,6 @@ public class welcomebot extends SubspaceBot {
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
             }
-            doTrustedAlerts(this);
             ba.sendUnfilteredPrivateMessage(name, "*info");
         }
 
@@ -876,6 +875,8 @@ public class welcomebot extends SubspaceBot {
             sessionUsage = Math.round((Double.valueOf(split[0]) + (Double.valueOf(split[1]) / 60)) * 100) / 100.0;
             split = args[1].split(":");
             totalUsage = Math.round((Double.valueOf(split[0]) + (Double.valueOf(split[1]) / 60)) * 100) / 100.0;
+            if (totalUsage < 20)
+                doTrustedAlerts(this);
             try {
                 java.util.Date temp = fromInfo.parse(args[2]);
                 created = new Timestamp(temp.getTime());
@@ -889,7 +890,7 @@ public class welcomebot extends SubspaceBot {
         }
         
         public void checkPing(String message) {
-            if (sessionCount != 1)
+            if (sessionCount != 1 || totalUsage > 1)
                 return;
             debug("Ping check for " + name + ": " + message);
             String pingString = "";
