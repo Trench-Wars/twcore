@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -815,7 +816,7 @@ public class welcomebot extends SubspaceBot {
     private class Session {
         
         DateFormat fromInfo = new SimpleDateFormat("M-d-yyyy HH:mm:ss");
-        java.sql.Date created;
+        java.sql.Timestamp created;
         String name;
         String squad;
         String countryCode;
@@ -866,7 +867,9 @@ public class welcomebot extends SubspaceBot {
             totalUsage = Math.round((Double.valueOf(split[0]) + (Double.valueOf(split[1]) / 60)) * 100) / 100.0;
             try {
                 java.util.Date temp = fromInfo.parse(args[2]);
-                created = new Date(temp.getTime());
+                created = new Timestamp(temp.getTime());
+                //java.sql.Timestamp;
+                
             } catch (ParseException e) {
                 Tools.printStackTrace(e);
             }
@@ -909,7 +912,7 @@ public class welcomebot extends SubspaceBot {
                 psUpdatePlayer.setString(4, ip);
                 psUpdatePlayer.setInt(5, mid);
                 psUpdatePlayer.setString(6, countryCode);
-                psUpdatePlayer.setDate(7, created);
+                psUpdatePlayer.setTimestamp(7, created);
                 psUpdatePlayer.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
@@ -947,7 +950,6 @@ public class welcomebot extends SubspaceBot {
             int hours = (int) (mins / 60);
             mins -= hours * 60;
             sessionUsage = Math.round((hours + mins/60.0) * 100) / 100.0 + sessionUsage;
-            debug("Session ending for " + name + ": SessionUsage:" + sessionUsage + " Kills:" + kills + " Deaths:" + deaths);
             try {
                 psUpdateSession.clearParameters();
                 psUpdateSession.setString(1, name);
@@ -959,7 +961,8 @@ public class welcomebot extends SubspaceBot {
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
             }
-            sessions.remove(name);            
+            sessions.remove(name);         
+            debug("Session ending for " + name + ": SessionUsage:" + sessionUsage + " Kills:" + kills + " Deaths:" + deaths);   
         }
         
         public int getSessionCount() {
