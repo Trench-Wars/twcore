@@ -595,24 +595,53 @@ public class robohelp extends SubspaceBot {
         lastAlert = now;
     }
 
-    public void handleNewPlayer(String message) {
-        String player = message.substring(message.indexOf("): ") + 3);
-        if (triggers.contains(player) || !lastNewPlayerName.equalsIgnoreCase(player)) {
-            NewbCall newb = new NewbCall(player);
-            lastNewPlayerName = player;
-            newbs.add(newb);
-            newbHistory.put(player.toLowerCase(), newb);
-            newbNames.add(0, player.toLowerCase());
-
-            while (newbNames.size() > 20)
-                newbHistory.remove(newbNames.remove(20).toLowerCase());
-            //m_botAction.sendChatMessage(message + "   [Use 'on that' to claim]");
-            /*
-            for (String n : alert)
-                m_botAction.sendSmartPrivateMessage(n, message + " ");
-            */
-            m_botAction.sendAlertMessage("newplayer", player);
+    public void handleNewPlayer(String sender, String message) {
+        String name = message.substring(13);
+        if (lastNewPlayerName.equalsIgnoreCase(name)) return;
+        if (!opList.isBotExact(sender)) {
+            callEvents.addElement(new EventData(new java.util.Date().getTime())); //For Records
+            PlayerInfo info = m_playerList.get(sender.toLowerCase());
+            if (info == null) {
+                info = new PlayerInfo(sender);
+                m_playerList.put(sender.toLowerCase(), info);
+            }
+            if (info.NewplayerTell() == true)
+                m_botAction.sendChatMessage("NOTICE: " + sender + " has used ?newplayer before. Please use !warn if needed.");
+            else {
+                m_botAction.sendRemotePrivateMessage(sender, "Please do not use ?newplayer. " + "It is for staff bot use only.");
+                info.setNewplayerTell(true);
+                m_botAction.sendChatMessage(sender + " has been notified that ?newplayer is not to be used.");
+            }
+            return;
         }
+        NewbCall newb = new NewbCall(name);
+        lastNewPlayerName = name;
+        newbs.add(newb);
+        newbHistory.put(name.toLowerCase(), newb);
+        newbNames.add(0, name.toLowerCase());
+
+        while (newbNames.size() > 20)
+            newbHistory.remove(newbNames.remove(20).toLowerCase());
+
+        PlayerInfo info;
+        info = m_playerList.get(sender.toLowerCase());
+        if (info == null)
+            info = new PlayerInfo(sender.toLowerCase());
+        newb.setID(getNextCallID());
+        calls.add(newb.getID());
+        callList.put(newb.getID(), newb);
+        info.addCall(newb.getID());
+        long now = System.currentTimeMillis();
+        callsUntilAd--;
+        String msg = "";
+        if (callsUntilAd == 0) {
+            callsUntilAd = CALL_INTERVAL;
+            msg += "Call #" + newb.getID() + CALL_AD;
+        } else if (now - lastAlert < CALL_EXPIRATION_TIME)
+            msg += "Call #" + newb.getID();
+        if (msg.length() > 0)
+            m_botAction.sendChatMessage(msg);
+        lastAlert = now;
 
     }
 
