@@ -943,7 +943,7 @@ public class welcomebot extends SubspaceBot {
                 psUpdateSession.setDouble(3, totalUsage);
                 psUpdateSession.setInt(4, kills);
                 psUpdateSession.setInt(5, deaths);
-                psUpdateSession.executeQuery();
+                psUpdateSession.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
             }
