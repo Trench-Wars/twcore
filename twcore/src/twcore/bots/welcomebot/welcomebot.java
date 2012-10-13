@@ -124,7 +124,6 @@ public class welcomebot extends SubspaceBot {
             ba.die("null prepared statement");
             return;
         }
-        ba.ipcSubscribe(IPC_CHANNEL);
         loadTrusted();
     }
     
@@ -151,6 +150,7 @@ public class welcomebot extends SubspaceBot {
     
     public void handleEvent(LoggedOn event) {
         ba.joinArena(cfg.getString("InitialArena"));
+        ba.ipcSubscribe(IPC_CHANNEL);
         ba.sendUnfilteredPublicMessage("?chat=robodev,staff");
         ba.changeArena("0");
         ready = ba.getArenaName().startsWith("(Public");
