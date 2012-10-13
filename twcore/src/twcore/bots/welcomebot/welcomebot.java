@@ -62,6 +62,7 @@ public class welcomebot extends SubspaceBot {
     private TreeMap<String, ObjonTimer> objonTimers;
     private TreeMap<String, Stack<String[]>> tutorials;
 
+    private PreparedStatement psGetTrusted;
     private PreparedStatement psAddTrusted;                 // Add trusted player
     private PreparedStatement psRemTrusted;                 // Remove trusted player
     private PreparedStatement psUpdatePlayer;               // Creates or updates a NewPlayer record
@@ -108,6 +109,7 @@ public class welcomebot extends SubspaceBot {
         psInsertNewb = ba.createPreparedStatement(web, db, "INSERT INTO tblCallNewb (fcUserName, fdCreated) VALUES (?, NOW())");
         psCheckAlerts = ba.createPreparedStatement(web, db, "SELECT * FROM tblCallNewb WHERE fcUserName = ?");
        
+        psGetTrusted = ba.createPreparedStatement(db, db, "SELECT fcPlayerName FROM tblTrustedPlayers");
         psAddTrusted = ba.createPreparedStatement(db, db, "INSERT INTO tblTrustedPlayers (fcPlayerName, fcAddedBy) VALUES(?,?)");
         psRemTrusted = ba.createPreparedStatement(db, db, "DELETE FROM tblTrustedPlayers WHERE fcPlayerName = ?");
         psGetSessionCount = ba.createPreparedStatement(db, db, "SELECT COUNT(*) FROM tblNewPlayerSession WHERE fcName = ?");
@@ -128,10 +130,9 @@ public class welcomebot extends SubspaceBot {
     
     private void loadTrusted() {
         trusted.clear();
-        ResultSet rs = null;
         try {
-            rs = ba.SQLQuery(db, "SELECT fcPlayerName FROM tblTrustedPlayers");
-            while (rs.next())
+            ResultSet rs = psGetTrusted.executeQuery();
+            while (rs != null && rs.next())
                 trusted.add(rs.getString(1));
             if (DEBUG) {
                 String msg = "Trusted(" + trusted.size() + "): ";
@@ -142,8 +143,6 @@ public class welcomebot extends SubspaceBot {
             }
         } catch (SQLException e) {
             Tools.printStackTrace(e);
-        } finally {
-            ba.SQLClose(rs);
         }
     }
     
