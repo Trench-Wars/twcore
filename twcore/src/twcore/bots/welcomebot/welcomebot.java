@@ -73,7 +73,7 @@ public class welcomebot extends SubspaceBot {
     private PreparedStatement psInsertNewb;                 // Creates a new newbcall alert entry
     
     private String infoee;
-    private String debugger;
+    private TreeSet<String> debuggers;
     private boolean DEBUG;
     private boolean ready;                                  // Prevents bot from operating outside of pub
     
@@ -94,9 +94,11 @@ public class welcomebot extends SubspaceBot {
     private void init() {
         ready = false;
         infoee = null;
-        debugger = "WingZero";
         DEBUG = true;
-        
+
+        debuggers = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+        cmd_debug("WingZero");
+        cmd_debug("24");
         vets = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         trusted = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         trainers = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
@@ -114,12 +116,12 @@ public class welcomebot extends SubspaceBot {
         psRemTrusted = ba.createPreparedStatement(db, db, "DELETE FROM tblTrustedPlayers WHERE fcPlayerName = ?");
         psGetSessionCount = ba.createPreparedStatement(db, db, "SELECT COUNT(*) FROM tblNewPlayerSession WHERE fcName = ?");
         psGetCountryCode = ba.createPreparedStatement(db, db, "SELECT country_code3 FROM tblCountryIPs WHERE INET_ATON(?) >= ip_from AND INET_ATON(?) <= ip_to");
-        psUpdateSession = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayerSession (fcName, ffSessionUsage, ffTotalUsage, fnKills, fnDeaths) VALUES(?,?,?,?,?)");
+        psUpdateSession = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayerSession (fcName, ffSessionUsage, fnKills, fnDeaths) VALUES(?,?,?,?)");
         psUpdatePlayer = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayer " 
                 + "(fcName, fcSquad, ffTotalUsage, fcIP, fnMID, fcCountryCode, fdNameCreated) " 
                 + "VALUES(?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE fcSquad=VALUES(fcSquad), ffTotalUsage=VALUES(ffTotalUsage), fcIP=VALUES(fcIP), fnMID=VALUES(fnMID), fcCountryCode=VALUES(fcCountryCode)");
 
-        if (psInsertNewb == null || psGetSessionCount == null || psGetCountryCode == null || psCheckAlerts == null || psUpdateSession == null || psUpdatePlayer == null) {
+        if (psGetTrusted == null || psAddTrusted == null || psRemTrusted == null || psInsertNewb == null || psGetSessionCount == null || psGetCountryCode == null || psCheckAlerts == null || psUpdateSession == null || psUpdatePlayer == null) {
             ba.sendChatMessage("Disconnecting due to null prepared statement(s)...");
             Tools.printLog("WelcomeBot: One or more PreparedStatements are null! Bot disconnecting.");
             ba.die("null prepared statement");
@@ -230,7 +232,7 @@ public class welcomebot extends SubspaceBot {
         
         if (type == Message.ARENA_MESSAGE)
             handleArenaMessage(msg);
-        else if (type == Message.PUBLIC_MESSAGE) {
+        if (type == Message.PUBLIC_MESSAGE) {
             // Player Commands
             if (cmd.startsWith("!help") && cmd.contains("tutorial"))
                 cmd_helpTutorial(name);
@@ -242,7 +244,8 @@ public class welcomebot extends SubspaceBot {
                 cmd_end(name);
             else if (cmd.equals("!quickhelp")) 
                 cmd_quickHelp(name);
-        } else if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) { 
+        }
+        if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) { 
             // Player Commands
             if (cmd.equals("!help"))
                 cmd_help(name);
@@ -784,24 +787,27 @@ public class welcomebot extends SubspaceBot {
     
     private void cmd_debug(String name) {
         if (DEBUG) {
-            if (debugger.equalsIgnoreCase(name)) {
-                DEBUG = false;
-                debugger = "";
-                ba.sendSmartPrivateMessage(name, "Debugger: DISABLED");
+            if (debuggers.remove(name)) {
+                if (debuggers.isEmpty()) {
+                    DEBUG = false;
+                    ba.sendSmartPrivateMessage(name, "Debugger: DISABLED");
+                } else
+                    ba.sendSmartPrivateMessage(name, "Removed you from the debugger list.");
             } else {
-                debugger = name;
-                ba.sendSmartPrivateMessage(name, "You have replaced the previous debugger.");
+                debuggers.add(name);
+                ba.sendSmartPrivateMessage(name, "You have been added to the debugger list.");
             }
         } else {
             DEBUG = true;
-            debugger = name;
+            debuggers.add(name);
             ba.sendSmartPrivateMessage(name, "Debugger: ENABLED");
         }
     }
     
     private void debug(String msg) {
         if (DEBUG)
-            ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
+            for (String debugger : debuggers)
+                ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
     }
     
     public void handleDisconnect() {
@@ -880,8 +886,6 @@ public class welcomebot extends SubspaceBot {
             try {
                 java.util.Date temp = fromInfo.parse(args[2]);
                 created = new Timestamp(temp.getTime());
-                //java.sql.Timestamp;
-                
             } catch (ParseException e) {
                 Tools.printStackTrace(e);
             }
@@ -966,9 +970,8 @@ public class welcomebot extends SubspaceBot {
                 psUpdateSession.clearParameters();
                 psUpdateSession.setString(1, name);
                 psUpdateSession.setDouble(2, sessionUsage);
-                psUpdateSession.setDouble(3, totalUsage);
-                psUpdateSession.setInt(4, kills);
-                psUpdateSession.setInt(5, deaths);
+                psUpdateSession.setInt(3, kills);
+                psUpdateSession.setInt(4, deaths);
                 psUpdateSession.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
