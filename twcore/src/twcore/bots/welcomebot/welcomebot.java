@@ -171,7 +171,7 @@ public class welcomebot extends SubspaceBot {
         ba.joinArena(cfg.getString("InitialArena"));
         ready = true;
         ba.ipcSubscribe(IPC_CHANNEL);
-        ba.sendUnfilteredPublicMessage("?chat=robodev,staff");
+        ba.sendUnfilteredPublicMessage("?chat=newplayer,robodev,staff");
         ba.changeArena("0");
     }
     
@@ -600,8 +600,7 @@ public class welcomebot extends SubspaceBot {
         try {
             int p = Integer.valueOf(msg);
             if (p > 0 && p < 120) {
-                infoer.stop();
-                infoer = new InfoQueue(p);
+                infoer.setPeriod(p);
                 ba.sendSmartPrivateMessage(name, "Set delay between info commands to: " + p + " sec");
             } else
                 throw new Exception();
@@ -897,6 +896,7 @@ public class welcomebot extends SubspaceBot {
         int c = session.getSessionCount();
         for (String n : trusted)
             ba.sendSmartPrivateMessage(n, "New player '" + session.getName() + "' has logged in now " + c + " times.");
+        ba.sendChatMessage("New player '" + session.getName() + "' has logged in now " + c + " times.");
     }
     
     private void cmd_debug(String name) {
@@ -941,10 +941,12 @@ public class welcomebot extends SubspaceBot {
     private class InfoQueue extends TimerTask {
         
         private QueueSet queue;
+        private int period;
         
         public InfoQueue(int period) {
             queue = new QueueSet();
-            ba.scheduleTask(this, period * Tools.TimeInMillis.SECOND);
+            period = -1;
+            ba.scheduleTask(this, period * Tools.TimeInMillis.SECOND, 0);
         }
         
         public void run() {
@@ -952,7 +954,14 @@ public class welcomebot extends SubspaceBot {
             if (name != null) {
                 debug("Sending info command: " + name);
                 ba.sendUnfilteredPrivateMessage(name, "*info");
+            } else if (period > 0){
+                stop();
+                infoer = new InfoQueue(period);
             }
+        }
+        
+        public void setPeriod(int p) {
+            period = p;
         }
 
         public void add(String name) {
