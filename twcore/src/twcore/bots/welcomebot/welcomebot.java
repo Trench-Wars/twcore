@@ -860,6 +860,25 @@ public class welcomebot extends SubspaceBot {
 
     }
     
+    private void cmd_debug(String name) {
+        if (DEBUG) {
+            if (debuggers.remove(name)) {
+                if (debuggers.isEmpty()) {
+                    DEBUG = false;
+                    ba.sendSmartPrivateMessage(name, "Debugger: DISABLED");
+                } else
+                    ba.sendSmartPrivateMessage(name, "Removed you from the debugger list.");
+            } else {
+                debuggers.add(name);
+                ba.sendSmartPrivateMessage(name, "You have been added to the debugger list.");
+            }
+        } else {
+            DEBUG = true;
+            debuggers.add(name);
+            ba.sendSmartPrivateMessage(name, "Debugger: ENABLED");
+        }
+    }
+    
     /**
      * The die and kill commands disconnect the bot with or without first saving
      * all the currently active sessions.
@@ -892,30 +911,11 @@ public class welcomebot extends SubspaceBot {
      * 
      * @param session
      */
-    private void doTrustedAlerts(Session session) {
+    private void sendTrustedAlerts(Session session) {
         int c = session.getSessionCount();
         for (String n : trusted)
             ba.sendSmartPrivateMessage(n, "New player '" + session.getName() + "' has logged in now " + c + " times.");
         ba.sendChatMessage("New player '" + session.getName() + "' has logged in now " + c + " times.");
-    }
-    
-    private void cmd_debug(String name) {
-        if (DEBUG) {
-            if (debuggers.remove(name)) {
-                if (debuggers.isEmpty()) {
-                    DEBUG = false;
-                    ba.sendSmartPrivateMessage(name, "Debugger: DISABLED");
-                } else
-                    ba.sendSmartPrivateMessage(name, "Removed you from the debugger list.");
-            } else {
-                debuggers.add(name);
-                ba.sendSmartPrivateMessage(name, "You have been added to the debugger list.");
-            }
-        } else {
-            DEBUG = true;
-            debuggers.add(name);
-            ba.sendSmartPrivateMessage(name, "Debugger: ENABLED");
-        }
     }
     
     private void debug(String msg) {
@@ -952,7 +952,6 @@ public class welcomebot extends SubspaceBot {
         public void run() {
             String name = queue.pop();
             if (name != null) {
-                debug("Sending info command: " + name);
                 ba.sendUnfilteredPrivateMessage(name, "*info");
             } else if (newPeriod > 0){
                 stop();
@@ -1032,7 +1031,7 @@ public class welcomebot extends SubspaceBot {
             split = args[1].split(":");
             totalUsage = Math.round((Double.valueOf(split[0]) + (Double.valueOf(split[1]) / 60)) * 100) / 100.0;
             if (totalUsage < 20)
-                doTrustedAlerts(this);
+                sendTrustedAlerts(this);
             try {
                 java.util.Date temp = fromInfo.parse(args[2]);
                 created = new Timestamp(temp.getTime());
