@@ -941,11 +941,11 @@ public class welcomebot extends SubspaceBot {
     private class InfoQueue extends TimerTask {
         
         private QueueSet queue;
-        private int period;
+        private int newPeriod;
         
         public InfoQueue(int period) {
             queue = new QueueSet();
-            this.period = -1;
+            this.newPeriod = -1;
             ba.scheduleTask(this, period * Tools.TimeInMillis.SECOND, 0);
         }
         
@@ -954,14 +954,14 @@ public class welcomebot extends SubspaceBot {
             if (name != null) {
                 debug("Sending info command: " + name);
                 ba.sendUnfilteredPrivateMessage(name, "*info");
-            } else if (period > 0){
+            } else if (newPeriod > 0){
                 stop();
-                infoer = new InfoQueue(period);
+                infoer = new InfoQueue(newPeriod);
             }
         }
         
         public void setPeriod(int p) {
-            period = p;
+            newPeriod = p;
         }
 
         public void add(String name) {
