@@ -21,6 +21,7 @@ import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
+import twcore.core.events.ArenaJoined;
 import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.PlayerDeath;
@@ -58,6 +59,8 @@ public class welcomebot extends SubspaceBot {
     private TreeSet<String> grantedOps;                     // List of people allowed to control bot when not smod
     private TreeMap<String, Session> sessions;              // All currently tracked playing new players
     
+    private InfoQueue infoer;
+    
     private TreeMap<String, AliasCheck> aliases;
     private TreeMap<String, Integer[]> loopCatcher;
     private TreeMap<String, ObjonTimer> objonTimers;
@@ -81,6 +84,7 @@ public class welcomebot extends SubspaceBot {
     public welcomebot(BotAction botAction) {
         super(botAction);
         
+        
         cfg = ba.getBotSettings();
         ops = ba.getOperatorList();
         
@@ -90,6 +94,33 @@ public class welcomebot extends SubspaceBot {
         er.request(EventRequester.PLAYER_DEATH);
         er.request(EventRequester.PLAYER_ENTERED);
         er.request(EventRequester.PLAYER_LEFT);
+    }
+    
+    private class InfoQueue extends TimerTask {
+        
+        private QueueSet queue;
+        
+        public InfoQueue(int period) {
+            queue = new QueueSet();
+            ba.scheduleTask(this, period * Tools.TimeInMillis.SECOND);
+        }
+        
+        public void run() {
+            String name = queue.pop();
+            if (name != null) {
+                debug("Sending info command: " + name);
+                ba.sendUnfilteredPrivateMessage(name, "*info");
+            }
+        }
+
+        public void add(String name) {
+            queue.push(name);
+        }
+        
+        public void stop() {
+            ba.cancelTask(this);
+            infoer = null;
+        }
     }
     
     private void init() {
@@ -109,6 +140,8 @@ public class welcomebot extends SubspaceBot {
         loopCatcher = new TreeMap<String, Integer[]>(String.CASE_INSENSITIVE_ORDER);
         objonTimers = new TreeMap<String, ObjonTimer>(String.CASE_INSENSITIVE_ORDER);
         tutorials = new TreeMap<String, Stack<String[]>>(String.CASE_INSENSITIVE_ORDER);
+        
+        infoer = new InfoQueue(3);
         
         psInsertNewb = ba.createPreparedStatement(web, db, "INSERT INTO tblCallNewb (fcUserName, fdCreated) VALUES (?, NOW())");
         psCheckAlerts = ba.createPreparedStatement(web, db, "SELECT * FROM tblCallNewb WHERE fcUserName = ?");
@@ -168,6 +201,27 @@ public class welcomebot extends SubspaceBot {
         ba.changeArena("0");
     }
     
+    public void handleEvent(ArenaJoined event) {
+        debug("ArenaJoined: " + ba.getArenaName());
+        ba.receiveAllPlayerDeaths();
+    }
+    
+    private void cmd_setPeriod(String name, String msg) {
+        if (msg.length() < 9) return;
+        msg = msg.substring(msg.indexOf(" ") + 1);
+        try {
+            int p = Integer.valueOf(msg);
+            if (p > 0 && p < 120) {
+                infoer.stop();
+                infoer = new InfoQueue(p);
+                ba.sendSmartPrivateMessage(name, "Set delay between info commands to: " + p + " sec");
+            } else
+                throw new Exception();
+        } catch (Exception e) {
+            ba.sendSmartPrivateMessage(name, "Failed to set info queue delay. No changes made.");
+        }
+    }
+    
     /**
      * Takes entering players and checks for new player call record. If there is no
      * found record then new player detection commences. Otherwise, if the alert was genuine
@@ -191,7 +245,7 @@ public class welcomebot extends SubspaceBot {
                 // 0 is missed, 1 is taken
                 if (taken < 0) {
                     // no record so move on to detection
-                    ba.sendUnfilteredPrivateMessage(name, "*info");
+                    infoer.add(name);
                 } else if (taken < 3) {
                     debug("Taken for " + name + ": " + taken);
                     if (taken == 0) {
@@ -481,9 +535,42 @@ public class welcomebot extends SubspaceBot {
                     cmd_list(name);
                 else if (cmd.equals("!trusted"))
                     cmd_trusted(name);
+                else if (cmd.startsWith("!period "))
+                    cmd_setPeriod(name, msg);
             }
             
         }
+    }
+    
+    private void cmd_help(String name) {
+        
+        ArrayList<String> msgs = new ArrayList<String>();
+            msgs.add("+-- Welcome Bot Commands ---------------------------------------------");
+        if (ops.isZH(name)) {
+            msgs.add("| !newplayer <name>     -- Sends new player helper objon to <name>.");
+            msgs.add("| !next <name>          -- Sends the next helper objon to <name>.");
+            msgs.add("| !end <name>           -- Removes all objons for <name>.");
+        }
+        
+        if (ops.isSmod(name)) {
+            msgs.add("| !listops              -- Lists granted operators.");
+            msgs.add("| !addop <name>         -- Grants operator priveledge to <name>.");
+            msgs.add("| !remop <name>         -- Removes operator priveledge for <name>.");
+            msgs.add("| !go <arena>           -- Moves bot to <arena>.");
+            msgs.add("| !kill                 -- Disconnects bot WITHOUT saving active sessions.");
+            msgs.add("| !die                  -- Saves active sessions then disconnects.");
+        }
+        
+        if (ops.isSmod(name) || grantedOps.contains(name)) {
+            msgs.add("| !list                 -- Lists currently active sessions.");
+            msgs.add("| !debug                -- Enables or disables debug messages being sent to you.");
+            msgs.add("| !trust <name>         -- Adds <name> to the trusted players list.");
+            msgs.add("| !untrust <name>       -- Removes <name> from the trusted players list.");
+            msgs.add("| !trusted              -- Lists trusted players.");
+            msgs.add("| !period <seconds>     -- Sets the delay between *info commands to <seconds>.");
+        }
+            msgs.add("`---------------------------------------------------------------------");
+        ba.smartPrivateMessageSpam(name, msgs.toArray(new String[msgs.size()]));
     }
     
     /**
@@ -607,17 +694,6 @@ public class welcomebot extends SubspaceBot {
             sessions.put(name, new Session(p));
         } else
             ba.sendSmartPrivateMessage(name, "You must be in my arena.");
-    }
-    
-    private void cmd_help(String name) {
-        
-        ArrayList<String> msgs = new ArrayList<String>();
-        if (ops.isZH(name)) {
-            msgs.add("!newplayer <name>     -- Sends new player helper objon to <name>.");
-            msgs.add("!next <name>          -- Sends the next helper objon to <name>.");
-            msgs.add("!end <name>           -- Removes all objons for <name>.");
-        }
-        ba.smartPrivateMessageSpam(name, msgs.toArray(new String[msgs.size()]));
     }
     
     private void cmd_trusted(String name) {
@@ -825,10 +901,12 @@ public class welcomebot extends SubspaceBot {
                 names.add(n);
             for (String ses : names)
                 sessions.get(ses).endSession();
+            infoer.stop();
             ba.scheduleTask(new TimerTask() { public void run() { ba.die(); }}, 3000);
         } else {
             ba.sendSmartPrivateMessage(name, "Diconnecting without saving...");
             ba.sendChatMessage("Disconnect without save request: " + name);
+            infoer.stop();
             ba.scheduleTask(new TimerTask() { public void run() { ba.die(); }}, 3000);
         }
     }
@@ -924,7 +1002,7 @@ public class welcomebot extends SubspaceBot {
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
             }
-            ba.sendUnfilteredPrivateMessage(name, "*info");
+            infoer.add(name);
         }
 
         public String getName() {
