@@ -154,48 +154,9 @@ public class welcomebot extends SubspaceBot {
             Tools.printStackTrace(e);
         }
         grantedOps.clear();
-        String[] gops = cfg.getString("GrantedOps").split(",");
+        String[] gops = cfg.getString("GrantedOps").trim().split(",");
         for (String op : gops)
             grantedOps.add(op);
-    }
-    
-    private void cmd_listOps(String name) {
-        String go = "";
-        for (String n : grantedOps)
-            go += n + ",";
-        go = go.substring(0, go.lastIndexOf(","));
-        ba.sendSmartPrivateMessage(name, go);
-        
-    }
-    
-    private void cmd_addOp(String name, String msg) {
-        if (msg.length() < 8) return;
-        msg = msg.substring(msg.indexOf(" ") + 1);
-        if (grantedOps.add(msg)) {
-            ba.sendSmartPrivateMessage(name, "Added to granted operators list: " + msg);
-            String go = "";
-            for (String n : grantedOps)
-                go += n + ",";
-            go = go.substring(0, go.lastIndexOf(","));
-            cfg.put("GrantedOps", go);
-            cfg.save();
-        } else
-            ba.sendSmartPrivateMessage(name, "Already in granted operators list: " + msg);
-    }
-    
-    private void cmd_remOp(String name, String msg) {
-        if (msg.length() < 8) return;
-        msg = msg.substring(msg.indexOf(" ") + 1);
-        if (grantedOps.remove(msg)) {
-            ba.sendSmartPrivateMessage(name, "Removed from granted operators list: " + msg);
-            String go = "";
-            for (String n : grantedOps)
-                go += n + ",";
-            go = go.substring(0, go.lastIndexOf(","));
-            cfg.put("GrantedOps", go);
-            cfg.save();
-        } else
-            ba.sendSmartPrivateMessage(name, "Not found in granted operators list: " + msg);
     }
     
     public void handleEvent(LoggedOn event) {
@@ -583,6 +544,45 @@ public class welcomebot extends SubspaceBot {
                 + "WHERE fcUserName = '" + Tools.addSlashes(alias.getName()) + "'");
         ba.SQLBackgroundQuery(web, "alias:mid:" + alias.getName(), "SELECT DISTINCT(fnMachineID) " + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID "
                 + "WHERE fcUserName = '" + Tools.addSlashes(alias.getName()) + "'");
+    }
+    
+    private void cmd_listOps(String name) {
+        String go = "";
+        for (String n : grantedOps)
+            go += n + ",";
+        go = go.substring(0, go.lastIndexOf(","));
+        ba.sendSmartPrivateMessage(name, go);
+        
+    }
+    
+    private void cmd_addOp(String name, String msg) {
+        if (msg.length() < 8) return;
+        msg = msg.substring(msg.indexOf(" ") + 1);
+        if (grantedOps.add(msg)) {
+            ba.sendSmartPrivateMessage(name, "Added to granted operators list: " + msg);
+            String go = "";
+            for (String n : grantedOps)
+                go += n + ",";
+            go = go.substring(0, go.lastIndexOf(","));
+            cfg.put("GrantedOps", go);
+            cfg.save();
+        } else
+            ba.sendSmartPrivateMessage(name, "Already in granted operators list: " + msg);
+    }
+    
+    private void cmd_remOp(String name, String msg) {
+        if (msg.length() < 8) return;
+        msg = msg.substring(msg.indexOf(" ") + 1);
+        if (grantedOps.remove(msg)) {
+            ba.sendSmartPrivateMessage(name, "Removed from granted operators list: " + msg);
+            String go = "";
+            for (String n : grantedOps)
+                go += n + ",";
+            go = go.substring(0, go.lastIndexOf(","));
+            cfg.put("GrantedOps", go);
+            cfg.save();
+        } else
+            ba.sendSmartPrivateMessage(name, "Not found in granted operators list: " + msg);
     }
     
     private void cmd_list(String name) {
