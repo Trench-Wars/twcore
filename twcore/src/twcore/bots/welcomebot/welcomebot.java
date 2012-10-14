@@ -223,7 +223,7 @@ public class welcomebot extends SubspaceBot {
                 } else if (taken < 3) {
                     debug("Taken for " + name + ": " + taken);
                     if (taken == 0) {
-                        ba.SQLBackgroundQuery(web, null, "UPDATE tblCallNewb SET fdCreated = NOW() WHERE fnAlertID = " + rs.getInt("fnAlertID"));
+                        ba.SQLBackgroundQuery(web, null, "UPDATE tblCallNewb SET ftUpdated = NOW() WHERE fnAlertID = " + rs.getInt("fnAlertID"));
                         debug("Sending newplayer alert: " + name);
                         ba.sendAlertMessage("newplayer", name);
                     }
