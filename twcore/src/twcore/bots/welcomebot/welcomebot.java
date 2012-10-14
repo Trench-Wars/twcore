@@ -505,14 +505,14 @@ public class welcomebot extends SubspaceBot {
         ArrayList<String> msgs = new ArrayList<String>();
             msgs.add("+-- Welcome Bot Commands --------------------------------------------------------.");
         if (ops.isZH(name)) {
-            msgs.add("+-- ~ZH~ ------------------------------------------------------------------------+");
+            msgs.add("|  ~ZH~                                                                         -+");
             msgs.add("| !newplayer <name>     -- Sends new player helper objon to <name>.              |");
             msgs.add("| !next <name>          -- Sends the next helper objon to <name>.                |");
             msgs.add("| !end <name>           -- Removes all objons for <name>.                        |");
         }
         
         if (ops.isSmod(name)) {
-            msgs.add("+-- ~SMOD~ ----------------------------------------------------------------------+");
+            msgs.add("+- ~SMOD~                                                                       -+");
             msgs.add("| !listops              -- Lists granted operators.                              |");
             msgs.add("| !addop <name>         -- Grants operator priveledge to <name>.                 |");
             msgs.add("| !remop <name>         -- Removes operator priveledge for <name>.               |");
@@ -522,7 +522,7 @@ public class welcomebot extends SubspaceBot {
         }
         
         if (ops.isSmod(name) || grantedOps.contains(name)) {
-            msgs.add("+-- ~Ops~ -----------------------------------------------------------------------+");
+            msgs.add("+- ~Ops~                                                                        -+");
             msgs.add("| !list                 -- Lists currently active sessions.                      |");
             msgs.add("| !debug                -- Enables or disables debug messages being sent to you. |");
             msgs.add("| !trust <name>         -- Adds <name> to the trusted players list.              |");
@@ -530,7 +530,7 @@ public class welcomebot extends SubspaceBot {
             msgs.add("| !trusted              -- Lists trusted players.                                |");
             msgs.add("| !period <seconds>     -- Sets the delay between *info commands to <seconds>.   |");
         }
-            msgs.add("`---------------------------------------------------------------------");
+            msgs.add("`--------------------------------------------------------------------------------'");
         ba.smartPrivateMessageSpam(name, msgs.toArray(new String[msgs.size()]));
     }
     
