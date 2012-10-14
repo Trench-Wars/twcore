@@ -134,6 +134,10 @@ public class welcomebot extends SubspaceBot {
     
     private void loadTrusted() {
         trusted.clear();
+        grantedOps.clear();
+        String[] gops = cfg.getString("GrantedOps").trim().split(",");
+        for (String op : gops)
+            grantedOps.add(op);
         try {
             ResultSet rs = psGetTrusted.executeQuery();
             while (rs != null && rs.next())
@@ -153,10 +157,6 @@ public class welcomebot extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
-        grantedOps.clear();
-        String[] gops = cfg.getString("GrantedOps").trim().split(",");
-        for (String op : gops)
-            grantedOps.add(op);
     }
     
     public void handleEvent(LoggedOn event) {
