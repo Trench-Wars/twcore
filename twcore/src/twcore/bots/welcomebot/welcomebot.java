@@ -1092,8 +1092,12 @@ public class welcomebot extends SubspaceBot {
                 try {
                     psInsertNewb.setString(1, name);
                     psInsertNewb.execute();
+                    debug("Sending new player from alias check: " + name);
                     ba.sendAlertMessage("newplayer", name);
                     System.out.println(":YES");
+                    Player p = ba.getPlayer(name);
+                    if (p != null && !sessions.containsKey(name))
+                        sessions.put(name, new Session(p));
                 } catch (SQLException e) {
                     Tools.printStackTrace(e);
                 }
