@@ -945,7 +945,7 @@ public class welcomebot extends SubspaceBot {
         
         public InfoQueue(int period) {
             queue = new QueueSet();
-            period = -1;
+            this.period = -1;
             ba.scheduleTask(this, period * Tools.TimeInMillis.SECOND, 0);
         }
         
