@@ -91,36 +91,10 @@ public class welcomebot extends SubspaceBot {
         EventRequester er = ba.getEventRequester();
         er.request(EventRequester.MESSAGE);
         er.request(EventRequester.LOGGED_ON);
+        er.request(EventRequester.ARENA_JOINED);
         er.request(EventRequester.PLAYER_DEATH);
         er.request(EventRequester.PLAYER_ENTERED);
         er.request(EventRequester.PLAYER_LEFT);
-    }
-    
-    private class InfoQueue extends TimerTask {
-        
-        private QueueSet queue;
-        
-        public InfoQueue(int period) {
-            queue = new QueueSet();
-            ba.scheduleTask(this, period * Tools.TimeInMillis.SECOND);
-        }
-        
-        public void run() {
-            String name = queue.pop();
-            if (name != null) {
-                debug("Sending info command: " + name);
-                ba.sendUnfilteredPrivateMessage(name, "*info");
-            }
-        }
-
-        public void add(String name) {
-            queue.push(name);
-        }
-        
-        public void stop() {
-            ba.cancelTask(this);
-            infoer = null;
-        }
     }
     
     private void init() {
@@ -204,22 +178,6 @@ public class welcomebot extends SubspaceBot {
     public void handleEvent(ArenaJoined event) {
         debug("ArenaJoined: " + ba.getArenaName());
         ba.receiveAllPlayerDeaths();
-    }
-    
-    private void cmd_setPeriod(String name, String msg) {
-        if (msg.length() < 9) return;
-        msg = msg.substring(msg.indexOf(" ") + 1);
-        try {
-            int p = Integer.valueOf(msg);
-            if (p > 0 && p < 120) {
-                infoer.stop();
-                infoer = new InfoQueue(p);
-                ba.sendSmartPrivateMessage(name, "Set delay between info commands to: " + p + " sec");
-            } else
-                throw new Exception();
-        } catch (Exception e) {
-            ba.sendSmartPrivateMessage(name, "Failed to set info queue delay. No changes made.");
-        }
     }
     
     /**
@@ -545,29 +503,32 @@ public class welcomebot extends SubspaceBot {
     private void cmd_help(String name) {
         
         ArrayList<String> msgs = new ArrayList<String>();
-            msgs.add("+-- Welcome Bot Commands ---------------------------------------------");
+            msgs.add("+-- Welcome Bot Commands --------------------------------------------------------.");
         if (ops.isZH(name)) {
-            msgs.add("| !newplayer <name>     -- Sends new player helper objon to <name>.");
-            msgs.add("| !next <name>          -- Sends the next helper objon to <name>.");
-            msgs.add("| !end <name>           -- Removes all objons for <name>.");
+            msgs.add("+-- ~ZH~ ------------------------------------------------------------------------+");
+            msgs.add("| !newplayer <name>     -- Sends new player helper objon to <name>.              |");
+            msgs.add("| !next <name>          -- Sends the next helper objon to <name>.                |");
+            msgs.add("| !end <name>           -- Removes all objons for <name>.                        |");
         }
         
         if (ops.isSmod(name)) {
-            msgs.add("| !listops              -- Lists granted operators.");
-            msgs.add("| !addop <name>         -- Grants operator priveledge to <name>.");
-            msgs.add("| !remop <name>         -- Removes operator priveledge for <name>.");
-            msgs.add("| !go <arena>           -- Moves bot to <arena>.");
-            msgs.add("| !kill                 -- Disconnects bot WITHOUT saving active sessions.");
-            msgs.add("| !die                  -- Saves active sessions then disconnects.");
+            msgs.add("+-- ~SMOD~ ----------------------------------------------------------------------+");
+            msgs.add("| !listops              -- Lists granted operators.                              |");
+            msgs.add("| !addop <name>         -- Grants operator priveledge to <name>.                 |");
+            msgs.add("| !remop <name>         -- Removes operator priveledge for <name>.               |");
+            msgs.add("| !go <arena>           -- Moves bot to <arena>.                                 |");
+            msgs.add("| !kill                 -- Disconnects bot WITHOUT saving active sessions.       |");
+            msgs.add("| !die                  -- Saves active sessions then disconnects.               |");
         }
         
         if (ops.isSmod(name) || grantedOps.contains(name)) {
-            msgs.add("| !list                 -- Lists currently active sessions.");
-            msgs.add("| !debug                -- Enables or disables debug messages being sent to you.");
-            msgs.add("| !trust <name>         -- Adds <name> to the trusted players list.");
-            msgs.add("| !untrust <name>       -- Removes <name> from the trusted players list.");
-            msgs.add("| !trusted              -- Lists trusted players.");
-            msgs.add("| !period <seconds>     -- Sets the delay between *info commands to <seconds>.");
+            msgs.add("+-- ~Ops~ -----------------------------------------------------------------------+");
+            msgs.add("| !list                 -- Lists currently active sessions.                      |");
+            msgs.add("| !debug                -- Enables or disables debug messages being sent to you. |");
+            msgs.add("| !trust <name>         -- Adds <name> to the trusted players list.              |");
+            msgs.add("| !untrust <name>       -- Removes <name> from the trusted players list.         |");
+            msgs.add("| !trusted              -- Lists trusted players.                                |");
+            msgs.add("| !period <seconds>     -- Sets the delay between *info commands to <seconds>.   |");
         }
             msgs.add("`---------------------------------------------------------------------");
         ba.smartPrivateMessageSpam(name, msgs.toArray(new String[msgs.size()]));
@@ -631,6 +592,22 @@ public class welcomebot extends SubspaceBot {
                 + "WHERE fcUserName = '" + Tools.addSlashes(alias.getName()) + "'");
         ba.SQLBackgroundQuery(web, "alias:mid:" + alias.getName(), "SELECT DISTINCT(fnMachineID) " + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID "
                 + "WHERE fcUserName = '" + Tools.addSlashes(alias.getName()) + "'");
+    }
+    
+    private void cmd_setPeriod(String name, String msg) {
+        if (msg.length() < 9) return;
+        msg = msg.substring(msg.indexOf(" ") + 1);
+        try {
+            int p = Integer.valueOf(msg);
+            if (p > 0 && p < 120) {
+                infoer.stop();
+                infoer = new InfoQueue(p);
+                ba.sendSmartPrivateMessage(name, "Set delay between info commands to: " + p + " sec");
+            } else
+                throw new Exception();
+        } catch (Exception e) {
+            ba.sendSmartPrivateMessage(name, "Failed to set info queue delay. No changes made.");
+        }
     }
     
     private void cmd_listOps(String name) {
@@ -959,6 +936,33 @@ public class welcomebot extends SubspaceBot {
         ba.closePreparedStatement(db, db, psGetCountryCode);
         ba.closePreparedStatement(db, db, psGetSessionCount);
         ba.cancelTasks();
+    }
+    
+    private class InfoQueue extends TimerTask {
+        
+        private QueueSet queue;
+        
+        public InfoQueue(int period) {
+            queue = new QueueSet();
+            ba.scheduleTask(this, period * Tools.TimeInMillis.SECOND);
+        }
+        
+        public void run() {
+            String name = queue.pop();
+            if (name != null) {
+                debug("Sending info command: " + name);
+                ba.sendUnfilteredPrivateMessage(name, "*info");
+            }
+        }
+
+        public void add(String name) {
+            queue.push(name);
+        }
+        
+        public void stop() {
+            ba.cancelTask(this);
+            infoer = null;
+        }
     }
     
     /**
