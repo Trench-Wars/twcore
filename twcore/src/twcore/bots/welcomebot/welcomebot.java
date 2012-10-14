@@ -327,7 +327,6 @@ public class welcomebot extends SubspaceBot {
                 if (buffer.length() > 2)
                     alias.setIpResults("(" + buffer.toString().substring(2) + ") ");
                 else {
-                    System.out.println("[ALIAS] " + buffer.toString());
                     final String aliasIP = alias.getName();
                     Integer count = 0;
                     if (loopCatcher.containsKey(aliasIP)) {
