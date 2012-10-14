@@ -159,6 +159,15 @@ public class welcomebot extends SubspaceBot {
             grantedOps.add(op);
     }
     
+    private void cmd_listOps(String name) {
+        String go = "";
+        for (String n : grantedOps)
+            go += n + ",";
+        go = go.substring(0, go.lastIndexOf(","));
+        ba.sendSmartPrivateMessage(name, go);
+        
+    }
+    
     private void cmd_addOp(String name, String msg) {
         if (msg.length() < 8) return;
         msg = msg.substring(msg.indexOf(" ") + 1);
@@ -169,6 +178,7 @@ public class welcomebot extends SubspaceBot {
                 go += n + ",";
             go = go.substring(0, go.lastIndexOf(","));
             cfg.put("GrantedOps", go);
+            cfg.save();
         } else
             ba.sendSmartPrivateMessage(name, "Already in granted operators list: " + msg);
     }
@@ -183,6 +193,7 @@ public class welcomebot extends SubspaceBot {
                 go += n + ",";
             go = go.substring(0, go.lastIndexOf(","));
             cfg.put("GrantedOps", go);
+            cfg.save();
         } else
             ba.sendSmartPrivateMessage(name, "Not found in granted operators list: " + msg);
     }
@@ -493,6 +504,8 @@ public class welcomebot extends SubspaceBot {
                     cmd_remOp(name, msg);
                 else if (cmd.startsWith("!go "))
                     cmd_go(name, msg);
+                else if (cmd.startsWith("!listo"))
+                    cmd_listOps(name);
             }
             if (ops.isSmod(name) || grantedOps.contains(name)) {
                 if (cmd.equals("!debug"))
