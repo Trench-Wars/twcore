@@ -329,7 +329,6 @@ public class ElimPlayer {
         if (ba.getFrequencySize(getFreq()) == 0)
             ba.setFreq(name, getFreq());
         else {
-            ba.sendSmartPrivateMessage(game.bot.debugger, "[ELIM] on !lagout " + name + " had invalid freq " + getFreq());
             while (ba.getFrequencySize(game.freq) != 0)
                 game.freq += 2;
             ba.setFreq(name, game.freq);
