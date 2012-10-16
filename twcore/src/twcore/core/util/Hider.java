@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Vector;
 
 import twcore.core.BotAction;
 import twcore.core.events.FileArrived;
@@ -20,8 +21,10 @@ public class Hider {
 
     private static List<String> hiders = Collections.synchronizedList(new ArrayList<String>());
     private static final String FILE = "hiders.txt";
-    
+    private static final String db = "website";
     private BotAction ba;
+    
+    private static Vector<String> update = new Vector<String>();
     
     public Hider(BotAction botAction) {
         ba = botAction;
@@ -74,7 +77,7 @@ public class Hider {
     public boolean isHidden(String str) {
         str = low(str);
         for (String hider : hiders)
-            if (str.contains(hider))
+            if (str.equalsIgnoreCase(hider))
                 return true;
         return false;
     }
@@ -116,8 +119,17 @@ public class Hider {
      * @param hider
      */
     public static void add(String hider) {
-        if (!hiders.contains(hider))
+        if (!hiders.contains(hider)) {
             hiders.add(hider);
+            update.add(hider);
+        }
+    }
+    
+    public void updateDB() {
+        while (!update.isEmpty()) {
+            String n = update.remove(0);
+            ba.SQLBackgroundQuery(db, null, "INSERT INTO tblAlias (fnUserID, ");
+        }
     }
     
     /**
