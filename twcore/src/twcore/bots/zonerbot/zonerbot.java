@@ -101,7 +101,7 @@ public class zonerbot extends SubspaceBot {
             String msg = ipc.getMessage();
             if (ipc.getSender().equalsIgnoreCase("RoboHelp") && msg.startsWith("check:")) {
                 String[] args = msg.substring(6).split(",");
-                if (trainers.contains(args[0].toLowerCase()))
+                if (trainers.contains(args[0].toLowerCase()) && args.length > 1)
                     ba.ipcSendMessage(ZONE_CHANNEL, "valid," + args[0] + "," + args[1], "RoboHelp", ba.getBotName());
                 else
                     ba.ipcSendMessage(ZONE_CHANNEL,"noaccess," + args[0], "RoboHelp", ba.getBotName());
