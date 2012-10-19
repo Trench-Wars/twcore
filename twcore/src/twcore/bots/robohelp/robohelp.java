@@ -146,7 +146,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!last", acceptedMessages, this, "handleLast", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
-        m_commandInterpreter.registerCommand("!hosted", acceptedMessages, this, "handleDisplayHosted", OperatorList.ZH_LEVEL);
+        //m_commandInterpreter.registerCommand("!hosted", acceptedMessages, this, "handleDisplayHosted", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!false", acceptedMessages, this, "handleFalseNewb", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!alert", acceptedMessages, this, "toggleAlert", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!time", acceptedMessages, this, "changeTimeFormatP", OperatorList.ZH_LEVEL);
