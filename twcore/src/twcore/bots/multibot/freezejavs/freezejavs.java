@@ -18,11 +18,11 @@ import java.util.TimerTask;
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
-import twcore.core.util.Tools;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
+import twcore.core.events.PlayerEntered;
 import twcore.core.game.Player;
 
 /**
@@ -64,21 +64,23 @@ public class freezejavs extends MultiModule {
     HashSet<String> freq0LevSet;         //set to keep track of freq 0 levs
     HashSet<String> freq1JavSet;         //set to keep track of freq 1 javs
     HashSet<String> freq1SpidSet;        //set to keep track of freq 1 spids
-    int timeLimit;               //defaults to 0 if game is not timed
-    boolean isRunning;           //whether or not the game is currently running
+    int timeLimit;                       //defaults to 0 if game is not timed
+    boolean isRunning;                   //whether or not the game is currently running
+    private boolean teamToggle;          //toggles team which to add new player to
     TimerTask m_runOutTheClock;
-
+    
     /**
      * Initialize the module.
      */
 
     public void init() {
-            freq0WarbirdSet  = new HashSet<String>();
-            freq0LevSet      = new HashSet<String>();
-            freq1JavSet      = new HashSet<String>();
-            freq1SpidSet     = new HashSet<String>();
-            timeLimit        = 0; //default if game is not timed
-        	isRunning        = false;
+        teamToggle       = false;
+        freq0WarbirdSet  = new HashSet<String>();
+        freq0LevSet      = new HashSet<String>();
+        freq1JavSet      = new HashSet<String>();
+        freq1SpidSet     = new HashSet<String>();
+        timeLimit        = 0; //default if game is not timed
+        isRunning        = false;
     }
 
     /**
@@ -86,19 +88,18 @@ public class freezejavs extends MultiModule {
      *
      * @return true is returned if the module is allowed to be unloaded.
      */
-    public boolean isUnloadable()
-    {
-      return !isRunning;
+    public boolean isUnloadable() {
+        return !isRunning;
     }
 
     /**
      * This method requests the events used by this module.
      */
-    public void requestEvents(ModuleEventRequester eventRequester)
-    {
-      eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
-      eventRequester.request(this, EventRequester.PLAYER_DEATH);
-      eventRequester.request(this, EventRequester.PLAYER_LEFT);
+    public void requestEvents(ModuleEventRequester eventRequester) {
+        eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+        eventRequester.request(this, EventRequester.PLAYER_DEATH);
+        eventRequester.request(this, EventRequester.PLAYER_LEFT);
+        eventRequester.request(this, EventRequester.PLAYER_ENTERED);
     }
 
     /**
@@ -165,12 +166,27 @@ public class freezejavs extends MultiModule {
      * @param name     the name of the player issuing the command
      * @param message  the command being issued
      */
-
      public void handlePlayerCommand( String name, String message ) {
         if( message.toLowerCase().equals( "!leave" ) ) {
             doLeave( name );
+        } else if (message.equalsIgnoreCase("!enter")) {
+            doEnter(name);
         }
      }
+
+     /**
+      * This method handles players entering the arena late. Will notify them 
+      * once to pm !enter to bot to join.
+      * 
+      * @param event the player entering event
+      */
+     @Override
+     public void handleEvent(PlayerEntered event) {
+         if (isRunning) {
+             m_botAction.sendSmartPrivateMessage(event.getPlayerName(), "Type "
+                     + "!enter to me to join");
+         }
+     }        
 
      /**
       * This method is called when a PlayerDeath event fires.  Every time a
@@ -484,8 +500,25 @@ public class freezejavs extends MultiModule {
         m_botAction.spec( name );
         m_botAction.spec( name );
         m_botAction.sendSmartPrivateMessage( name, "You are free to go!" );
-     }
+    }
 
+    /**
+     * This method allows late comers to enter arena without host interaction.
+     * 
+     * @param name name of player to join arena
+     */
+    public void doEnter(String name) {
+        if (teamToggle) {
+            m_botAction.setShip(name, WARBIRD);
+            m_botAction.setFreq(name, TEAM1_FREQ);
+            teamToggle = false;
+        } else {
+            m_botAction.setShip(name, JAVELIN);
+            m_botAction.setFreq(name, TEAM2_FREQ);
+            teamToggle = true;
+        }
+    }
+    
     /**
      * This method displays the list of commands when the !help command is
      * issued for this module.
