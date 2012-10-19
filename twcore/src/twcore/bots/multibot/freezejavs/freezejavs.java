@@ -172,39 +172,40 @@ public class freezejavs extends MultiModule {
         }
      }
 
-    /**
-     * This method is called when a PlayerDeath event fires.  Every time a
-     * player dies, we check to see if they're frozen/unfrozen, then we do
-     * the opposite.
-     *
-     * @param event  the PlayerDeath event that has fired
-     */
+     /**
+      * This method is called when a PlayerDeath event fires.  Every time a
+      * player dies, we check to see if they're frozen/unfrozen, then we do
+      * the opposite.
+      *
+      * @param event  the PlayerDeath event that has fired
+      */
+     public void handleEvent( PlayerDeath event ) {
+         if (isRunning) {
+             Player p = m_botAction.getPlayer(event.getKilleeID());
+             int freq = p.getFrequency();
+             int ship = p.getShipType();
+             
+             Player k = m_botAction.getPlayer(event.getKillerID());
 
-    public void handleEvent( PlayerDeath event ) {
-        if (isRunning) {
-            Player p = m_botAction.getPlayer(event.getKilleeID());
-            int freq = p.getFrequency();
-            int ship = p.getShipType();
-
-            if (ship == WARBIRD) {
-                m_botAction.setShip(event.getKilleeID(),SPIDER);
-                m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
-                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
-            } else if (ship == JAVELIN) {
-                m_botAction.setShip(event.getKilleeID(),LEVIATHAN);
-                m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
-                m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
-            } else if (ship == SPIDER || ship == LEVIATHAN) {
-                if (freq == TEAM1_FREQ) {
-                    m_botAction.setShip(event.getKilleeID(),JAVELIN);
-                    m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
-                } else if (freq == TEAM2_FREQ) {
-                    m_botAction.setShip(event.getKilleeID(),WARBIRD);
-                    m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
-                }
-            }
-        }
-    }
+             if (ship == WARBIRD && freq != k.getFrequency()) {
+                 m_botAction.setShip(event.getKilleeID(),SPIDER);
+                 m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
+                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
+             } else if (ship == JAVELIN && freq != k.getFrequency()) {
+                 m_botAction.setShip(event.getKilleeID(),LEVIATHAN);
+                 m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
+                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
+             } else if (ship == SPIDER || ship == LEVIATHAN) {
+                 if (freq == TEAM1_FREQ && freq != k.getFrequency()) {
+                     m_botAction.setShip(event.getKilleeID(),JAVELIN);
+                     m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
+                 } else if (freq == TEAM2_FREQ && freq != k.getFrequency()) {
+                     m_botAction.setShip(event.getKilleeID(),WARBIRD);
+                     m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
+                 }
+             }
+         }
+     }
 
     /**
      * This method is called when a FrequencyShipChange event fires.  Every time
