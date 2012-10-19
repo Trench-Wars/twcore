@@ -418,7 +418,12 @@ public class dangerous extends MultiModule {
             			PlayerInfo p = i.next();
             			sum += p.time;
             		}
-            		average = sum / size;//TODO:
+            		if( sum == 0 || size == 0 ) {
+                        m_botAction.sendSmartPrivateMessage( name, "Error adding player due to division-by-zero problem!  Report this immediately.");
+                        return;
+            		}
+            		
+            		average = sum / size;
             	    String[] msgs = message.substring(9).split(":");
             	    if(msgs.length != 2){
                 		m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !addlate <name>:<ship>");
@@ -426,7 +431,9 @@ public class dangerous extends MultiModule {
                 	}
             		try {
             			Integer shipType = Integer.parseInt(msgs[1]);
-            			m_players.put(msgs[0], new PlayerInfo(msgs[0], shipType, (int) Math.round(average)));
+            			PlayerInfo player = new PlayerInfo(msgs[0], shipType, (int) Math.round(average));
+            			m_players.put(msgs[0], player);
+                        m_botAction.scheduleTaskAtFixedRate( player, 1000, 1000 );
             			m_botAction.setShip(msgs[0], shipType);
             		} catch(NumberFormatException e){
             			m_botAction.sendSmartPrivateMessage( name, "Incorrect usage. Example: !addlate <name>:<ship>");
