@@ -1003,6 +1003,7 @@ public class welcomebot extends SubspaceBot {
         ba.closePreparedStatement(db, db, psGetTrusted);
         ba.closePreparedStatement(db, db, psAddTrusted);
         ba.closePreparedStatement(db, db, psRemTrusted);
+        ba.closePreparedStatement(db, db, psSetAlerting);
         ba.closePreparedStatement(db, db, psUpdatePlayer);
         ba.closePreparedStatement(db, db, psUpdateSession);
         ba.closePreparedStatement(db, db, psGetCountryCode);
