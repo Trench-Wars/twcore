@@ -566,7 +566,7 @@ public class welcomebot extends SubspaceBot {
         try {
             psSetAlerting.setBoolean(1, b);
             psSetAlerting.setString(2, name);
-            psSetAlerting.executeQuery();
+            psSetAlerting.execute();
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
