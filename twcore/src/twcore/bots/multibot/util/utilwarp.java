@@ -227,15 +227,15 @@ public class utilwarp extends MultiUtil {
     
     public void doWarp(int warpType, int warpID, int xCoord, int yCoord, double radius, boolean resetGroup) {
         if (warpType < WARP_ALL || warpType > WARP_FIRST_FREQ)
-            throw new IllegalArgumentException("ERROR: Unknown warp type.");
+            return;//throw new IllegalArgumentException("ERROR: Unknown warp type.");
         if ((warpID < MIN_FREQ || warpID > MAX_FREQ) && warpType == WARP_FREQ)
-            throw new IllegalArgumentException("Invalid freq number.");
+            return;//throw new IllegalArgumentException("Invalid freq number.");
         if ((warpID < MIN_SHIP || warpID > MAX_SHIP) && warpType == WARP_SHIP)
-            throw new IllegalArgumentException("Invalid ship type.");
+            return;//throw new IllegalArgumentException("Invalid ship type.");
         if (!isValidCoord(xCoord, yCoord))
-            throw new IllegalArgumentException("Coordinates are out of bounds.");
+            return;//throw new IllegalArgumentException("Coordinates are out of bounds.");
         if (radius < 0)
-            throw new IllegalArgumentException("Invalid warp radius.");
+            return;//throw new IllegalArgumentException("Invalid warp radius.");
         
         if (warpType == WARP_FIRST_FREQ) {
             Vector<Integer> freqNumbers = getFreqNumbers();
