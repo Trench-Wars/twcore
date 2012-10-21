@@ -91,7 +91,7 @@ public class utilwarp extends MultiUtil {
         int numTokens = argTokens.countTokens();
         
         if (numTokens < 2 || numTokens > 3)
-            throw new IllegalArgumentException("Please use the following format: !WarpTo <X>:<Y>:<Radius>.");
+            m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpTo <X>:<Y>:<Radius>.");
         try {
             int xCoord = Integer.parseInt(argTokens.nextToken());
             int yCoord = Integer.parseInt(argTokens.nextToken());
@@ -101,7 +101,7 @@ public class utilwarp extends MultiUtil {
             doWarp(WARP_ALL, 0, xCoord, yCoord, radius, false);
             m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_ALL, 0, xCoord, yCoord, radius));
         } catch (NumberFormatException e) {
-            throw new NumberFormatException("Please use the following format: !WarpTo <X>:<Y>:<Radius>.");
+            m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpTo <X>:<Y>:<Radius>.");
         }
     }
     
@@ -110,7 +110,7 @@ public class utilwarp extends MultiUtil {
         int numTokens = argTokens.countTokens();
         
         if (numTokens < 3 || numTokens > 4)
-            throw new IllegalArgumentException("Please use the following format: !WarpFreq <Freq>:<X>:<Y>:<Radius>.");
+            m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpFreq <Freq>:<X>:<Y>:<Radius>.");
         try {
             int freq = Integer.parseInt(argTokens.nextToken());
             int xCoord = Integer.parseInt(argTokens.nextToken());
@@ -121,7 +121,7 @@ public class utilwarp extends MultiUtil {
             doWarp(WARP_FREQ, freq, xCoord, yCoord, radius, false);
             m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_FREQ, freq, xCoord, yCoord, radius));
         } catch (NumberFormatException e) {
-            throw new NumberFormatException("Please use the following format: !WarpFreq <Freq>:<X>:<Y>:<Radius>.");
+            m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpFreq <Freq>:<X>:<Y>:<Radius>.");
         }
     }
     
@@ -130,7 +130,7 @@ public class utilwarp extends MultiUtil {
         int numTokens = argTokens.countTokens();
         
         if (numTokens < 3 || numTokens > 4)
-            throw new IllegalArgumentException("Please use the following format: !WarpShip <Ship>:<X>:<Y>:<Radius>.");
+            m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpShip <Ship>:<X>:<Y>:<Radius>.");
         try {
             int ship = Integer.parseInt(argTokens.nextToken());
             int xCoord = Integer.parseInt(argTokens.nextToken());
@@ -141,7 +141,7 @@ public class utilwarp extends MultiUtil {
             doWarp(WARP_SHIP, ship, xCoord, yCoord, radius, false);
             m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_SHIP, ship, xCoord, yCoord, radius));
         } catch (NumberFormatException e) {
-            throw new NumberFormatException("Please use the following format: !WarpShip <Ship>:<X>:<Y>:<Radius>.");
+            m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpShip <Ship>:<X>:<Y>:<Radius>.");
         }
     }
     
