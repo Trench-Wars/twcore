@@ -98,8 +98,11 @@ public class utilwarp extends MultiUtil {
             double radius = 0;
             if (numTokens == 3)
                 radius = Double.parseDouble(argTokens.nextToken());
-            doWarp(WARP_ALL, 0, xCoord, yCoord, radius, false);
-            m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_ALL, 0, xCoord, yCoord, radius));
+            String result = doWarp(WARP_ALL, 0, xCoord, yCoord, radius, false);
+            if (result != null)
+                m_botAction.sendSmartPrivateMessage(sender, result);
+            else
+                m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_ALL, 0, xCoord, yCoord, radius));
         } catch (NumberFormatException e) {
             m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpTo <X>:<Y>:<Radius>.");
         }
@@ -118,8 +121,11 @@ public class utilwarp extends MultiUtil {
             double radius = 0;
             if (numTokens == 4)
                 radius = Double.parseDouble(argTokens.nextToken());
-            doWarp(WARP_FREQ, freq, xCoord, yCoord, radius, false);
-            m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_FREQ, freq, xCoord, yCoord, radius));
+            String result = doWarp(WARP_FREQ, freq, xCoord, yCoord, radius, false);
+            if (result != null)
+                m_botAction.sendSmartPrivateMessage(sender, result);
+            else
+                m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_FREQ, freq, xCoord, yCoord, radius));
         } catch (NumberFormatException e) {
             m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpFreq <Freq>:<X>:<Y>:<Radius>.");
         }
@@ -138,8 +144,11 @@ public class utilwarp extends MultiUtil {
             double radius = 0;
             if (numTokens == 4)
                 radius = Double.parseDouble(argTokens.nextToken());
-            doWarp(WARP_SHIP, ship, xCoord, yCoord, radius, false);
-            m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_SHIP, ship, xCoord, yCoord, radius));
+            String result = doWarp(WARP_SHIP, ship, xCoord, yCoord, radius, false);
+            if (result != null)
+                m_botAction.sendSmartPrivateMessage(sender, result);
+            else
+                m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_SHIP, ship, xCoord, yCoord, radius));
         } catch (NumberFormatException e) {
             m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpShip <Ship>:<X>:<Y>:<Radius>.");
         }
@@ -225,17 +234,17 @@ public class utilwarp extends MultiUtil {
         m_botAction.moveToTile(512, 512);
     }
     
-    public void doWarp(int warpType, int warpID, int xCoord, int yCoord, double radius, boolean resetGroup) {
+    public String doWarp(int warpType, int warpID, int xCoord, int yCoord, double radius, boolean resetGroup) {
         if (warpType < WARP_ALL || warpType > WARP_FIRST_FREQ)
-            return;//throw new IllegalArgumentException("ERROR: Unknown warp type.");
+            return "ERROR: Unknown warp type.";
         if ((warpID < MIN_FREQ || warpID > MAX_FREQ) && warpType == WARP_FREQ)
-            return;//throw new IllegalArgumentException("Invalid freq number.");
+            return "Invalid freq number.";
         if ((warpID < MIN_SHIP || warpID > MAX_SHIP) && warpType == WARP_SHIP)
-            return;//throw new IllegalArgumentException("Invalid ship type.");
+            return "Invalid ship type.";
         if (!isValidCoord(xCoord, yCoord))
-            return;//throw new IllegalArgumentException("Coordinates are out of bounds.");
+            return "Coordinates are out of bounds.";
         if (radius < 0)
-            return;//throw new IllegalArgumentException("Invalid warp radius.");
+            return "Invalid warp radius.";
         
         if (warpType == WARP_FIRST_FREQ) {
             Vector<Integer> freqNumbers = getFreqNumbers();
@@ -246,6 +255,7 @@ public class utilwarp extends MultiUtil {
             }
         } else
             doWarpGroup(warpType, warpID, xCoord, yCoord, radius, resetGroup);
+        return null;
     }
     
     public void doWarpGroup(int warpType, int warpID, int xCoord, int yCoord, double radius, boolean resetGroup) {
