@@ -954,8 +954,8 @@ public class welcomebot extends SubspaceBot {
         int c = session.getSessionCount();
         for (Entry<String, Boolean> e : trusted.entrySet())
             if (e.getValue())
-                ba.sendSmartPrivateMessage(e.getKey(), "New player '" + session.getName() + "' has logged in now " + c + " times. Usage: " + session.getUsage());
-        ba.sendChatMessage("New player '" + session.getName() + "' has logged in now " + c + " times. Usage: " + session.getUsage());
+                ba.sendSmartPrivateMessage(e.getKey(), "New player '" + session.getName() + "' has logged in now " + c + " times. Usage: " + session.getUsage() + " hours");
+        ba.sendChatMessage("New player '" + session.getName() + "' has logged in now " + c + " times. Usage: " + session.getUsage() + " hours");
     }
     
     private void debug(String msg) {
