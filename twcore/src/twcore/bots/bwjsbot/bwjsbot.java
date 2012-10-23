@@ -1593,7 +1593,7 @@ public class bwjsbot extends SubspaceBot {
             }
             
             /* Check if sub is a bot */
-            if (m_botAction.getOperatorList().isSysopExact(playerBnew.getPlayerName()) && !playerBnew.getPlayerName().equalsIgnoreCase("Pure_luck") && !playerBnew.getPlayerName().equalsIgnoreCase("PinkSTAR") && !playerBnew.getPlayerName().equalsIgnoreCase("Demonic") && !playerBnew.getPlayerName().equalsIgnoreCase("M_M God")) {
+            if (m_botAction.getOperatorList().isSysopExact(playerBnew.getPlayerName()) && !playerBnew.getPlayerName().equals("24") && !playerBnew.getPlayerName().equalsIgnoreCase("Pure_luck") && !playerBnew.getPlayerName().equalsIgnoreCase("PinkSTAR") && !playerBnew.getPlayerName().equalsIgnoreCase("Demonic") && !playerBnew.getPlayerName().equalsIgnoreCase("M_M God")) {
                 m_botAction.sendPrivateMessage(name, "Error: Bots are not allowed to play.");
                 return;
             }
