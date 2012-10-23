@@ -15,6 +15,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
+import java.util.TreeSet;
 
 import twcore.core.util.Tools;
 
@@ -76,6 +77,7 @@ public class OperatorList {
     
     private static OperatorList operatorList;
 
+    private static Set<String> sysops;
 
     /**
      * Private constructor. Use OperatorList.getInstance() instead.
@@ -83,6 +85,7 @@ public class OperatorList {
     private OperatorList(){
         operators = Collections.synchronizedMap( new LinkedHashMap<String,Integer>() );
         autoAssign = Collections.synchronizedMap( new LinkedHashMap<Integer,String>() );
+        sysops = Collections.synchronizedSet( new TreeSet<String>(String.CASE_INSENSITIVE_ORDER) );
     }
     
     /**
@@ -120,7 +123,7 @@ public class OperatorList {
         // Operators
         for(int i = operators_keys.length-1 ; i >= 0 ; i--) {
             String key = operators_keys[i];
-
+            boolean sysop = key.contains("sysop");
             if(prop.containsKey(key)) {
                 String value = prop.getProperty(key);
 
@@ -128,6 +131,8 @@ public class OperatorList {
                     StringTokenizer tokens = new StringTokenizer(value,",");
                     while(tokens.hasMoreTokens()) {
                         operators.put( tokens.nextToken().trim().toLowerCase(), i );
+                        if (sysop)
+                            sysops.add(tokens.nextToken().trim());
                     }
                 }
             }
@@ -308,7 +313,7 @@ public class OperatorList {
      */
     public boolean isBotExact( String name ){
 
-        if( getAccessLevel( name ) == BOT_LEVEL ){
+        if( getAccessLevel( name ) == BOT_LEVEL  && !sysops.contains(name)){
             return true;
         } else {
             return false;
