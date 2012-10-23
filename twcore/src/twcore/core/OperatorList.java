@@ -123,7 +123,7 @@ public class OperatorList {
         // Operators
         for(int i = operators_keys.length-1 ; i >= 0 ; i--) {
             String key = operators_keys[i];
-            boolean sysop = key.contains("sysop");
+            boolean sysop = key.equals("level_sysop");
             if(prop.containsKey(key)) {
                 String value = prop.getProperty(key);
 
@@ -152,6 +152,10 @@ public class OperatorList {
         }
         
         fileInput.close();
+    }
+    
+    public Set<String> getSysops() {
+        return sysops;
     }
 
     /**

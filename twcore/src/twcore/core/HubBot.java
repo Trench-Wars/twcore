@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.TimerTask;
 
 import twcore.core.command.CommandInterpreter;
@@ -255,7 +256,11 @@ public class HubBot extends SubspaceBot {
             System.err.println("FATAL: No operators loaded, shutting down TWCore.");
             m_botAction.die();
         }
-        
+        String msg = "";
+        Set<String> s = m_botAction.getOperatorList().getSysops();
+        for (String n : s)
+            msg += "" + n + ", ";
+        m_botAction.sendPrivateMessage("WingZero", "Sysops: " + msg);
         Tools.printLog("Done initializing operators from operators.cfg");
         
         // Initiate process to auto-assign operators using the subgame staff files
