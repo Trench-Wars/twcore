@@ -18,6 +18,7 @@ import java.util.TimerTask;
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -206,18 +207,28 @@ public class freezejavs extends MultiModule {
              if (ship == WARBIRD && freq != k.getFrequency()) {
                  m_botAction.setShip(event.getKilleeID(),SPIDER);
                  m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
-                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
+                 m_botAction.specificPrize(event.getKilleeID(), Tools.Prize.ENERGY_DEPLETED);
+                 //Prizing it the "proper" way to keep it clean and easily readable
+                 //m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
              } else if (ship == JAVELIN && freq != k.getFrequency()) {
                  m_botAction.setShip(event.getKilleeID(),LEVIATHAN);
                  m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
-                 m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
+                 m_botAction.specificPrize(event.getKilleeID(), Tools.Prize.ENERGY_DEPLETED);
+                 //m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
              } else if (ship == SPIDER || ship == LEVIATHAN) {
-                 if (freq == TEAM1_FREQ && freq != k.getFrequency()) {
-                     m_botAction.setShip(event.getKilleeID(),JAVELIN);
-                     m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
-                 } else if (freq == TEAM2_FREQ && freq != k.getFrequency()) {
-                     m_botAction.setShip(event.getKilleeID(),WARBIRD);
-                     m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
+                 if (freq == k.getFrequency() ) {
+                     // Left_Eye's fix for unusual behavior (TK'd ships turn invisible sometimes)
+                     m_botAction.shipReset(event.getKilleeID());
+                     m_botAction.warpRandomly(event.getKilleeID());
+                     m_botAction.specificPrize(event.getKilleeID(), Tools.Prize.ENERGY_DEPLETED);
+                 } else {
+                     if (freq == TEAM1_FREQ) {
+                         m_botAction.setShip(event.getKilleeID(),JAVELIN);
+                         m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
+                     } else if (freq == TEAM2_FREQ) {
+                         m_botAction.setShip(event.getKilleeID(),WARBIRD);
+                         m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
+                     }
                  }
              }
          }
