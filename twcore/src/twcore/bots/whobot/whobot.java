@@ -242,11 +242,11 @@ public class whobot extends SubspaceBot {
                     online(name);
                 else if (msg.equals("!arenas"))
                     arenas(name);
-                else if (isNotBot(name)) {
+                else if (!ops.isBotExact(name)) {
                     ba.sendChatMessage(name + " said: " + msg);
                     ba.ipcTransmit(IPC, new IPCEvent(name + ":" + msg, System.currentTimeMillis(), EventRequester.MESSAGE));
                 }
-            } else if (isNotBot(name)) {
+            } else if (!ops.isBotExact(name)) {
                 ba.sendChatMessage(name + " said: " + msg);
                 if (msg.startsWith("!")) {
                     about(name);
@@ -369,7 +369,7 @@ public class whobot extends SubspaceBot {
         Iterator<Player> i = ba.getPlayerIterator();
         while (i.hasNext()) {
             String name = i.next().getPlayerName();
-            if (isNotBot(name)) {
+            if (!ops.isBotExact(name)) {
                 if (online.containsKey(name.toLowerCase())) {
                     online.put(name.toLowerCase(), now);
                     locateQueue.remove(name.toLowerCase());
@@ -441,13 +441,6 @@ public class whobot extends SubspaceBot {
         ba.sendChatMessage("STARTING all functions as requested by " + name);
         ba.sendSmartPrivateMessage(name, "Yes, sir! Setting the wheels in motion...");
         ba.requestArenaList();        
-    }
-    
-    private boolean isNotBot(String name) {
-        if (ops.isBotExact(name) || (!ops.isOwner(name) && ops.isSysopExact(name) && !name.equalsIgnoreCase("Pure_Luck") && !name.equalsIgnoreCase("Witness")))
-            return false;
-        else
-            return true;
     }
     
     private void status(String name) {
