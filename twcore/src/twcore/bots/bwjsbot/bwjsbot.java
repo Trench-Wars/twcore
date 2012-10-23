@@ -564,7 +564,7 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
-            if (m_botAction.getOperatorList().isSysopExact(p.getPlayerName()) && !p.getPlayerName().equalsIgnoreCase("Pure_Luck") && !p.getPlayerName().equalsIgnoreCase("pinkSTAR") && !p.getPlayerName().equalsIgnoreCase("Demonic") && !p.getPlayerName().equalsIgnoreCase("M_M God") && !p.getPlayerName().equalsIgnoreCase("WingZero") && !p.getPlayerName().equalsIgnoreCase("24")){
+            if (m_botAction.getOperatorList().isBotExact(p.getPlayerName())){
                 m_botAction.sendPrivateMessage(name, "Bots don't make for very good players :(");
                 return;                
             }
@@ -1593,7 +1593,7 @@ public class bwjsbot extends SubspaceBot {
             }
             
             /* Check if sub is a bot */
-            if (m_botAction.getOperatorList().isSysopExact(playerBnew.getPlayerName()) && !playerBnew.getPlayerName().equals("24") && !playerBnew.getPlayerName().equalsIgnoreCase("Pure_luck") && !playerBnew.getPlayerName().equalsIgnoreCase("PinkSTAR") && !playerBnew.getPlayerName().equalsIgnoreCase("Demonic") && !playerBnew.getPlayerName().equalsIgnoreCase("M_M God")) {
+            if (m_botAction.getOperatorList().isBotExact(playerBnew.getPlayerName())) {
                 m_botAction.sendPrivateMessage(name, "Error: Bots are not allowed to play.");
                 return;
             }
