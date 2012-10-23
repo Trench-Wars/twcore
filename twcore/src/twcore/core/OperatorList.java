@@ -317,7 +317,7 @@ public class OperatorList {
      */
     public boolean isBotExact( String name ){
 
-        if( getAccessLevel( name ) == SYSOP_LEVEL  && !sysops.contains(name)){
+        if( (getAccessLevel(name) == BOT_LEVEL || getAccessLevel( name ) == SYSOP_LEVEL)  && !sysops.contains(name)){
             return true;
         } else {
             return false;
