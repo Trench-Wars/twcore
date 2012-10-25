@@ -242,7 +242,8 @@ public class distensionbot extends SubspaceBot {
     private String m_database;                              // DB to connect to
     private BotSettings m_botSettings;
     private CommandInterpreter m_commandInterpreter;
-
+    private String arenaName = "distension";                // Name of arena bot is using
+                                                            // Note this is NOT where arena name is loaded from
 
     private Vector <ShipProfile>m_shipGeneralData;          // Generic (nonspecific) purchasing data for ships.  Uses 1-8 for #
     private Vector <ShipTypeProfile>m_shipTypeGeneralData;  // Generic ship type data for various ship specializations
@@ -623,13 +624,13 @@ public class distensionbot extends SubspaceBot {
         if( DEBUG ) {
             //m_botAction.sendUnfilteredPublicMessage("?find dugwyler" );
             if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
-                m_botAction.sendChatMessage("Distension BETA initialized with new ship-type enhancements.  ?go distension");
+                m_botAction.sendChatMessage("Distension BETA initialized with new ship-type enhancements.  ?go " + arenaName);
                 m_botAction.sendArenaMessage("Distension BETA loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  Please see the beta thread on the forums for bug reports & suggestions.");
             }
         } else {
             if( m_botSettings.getInt("DisplayLoadedMsg") == 1 ) {
-                m_botAction.sendChatMessage("Distension has been loaded.  ?go distension");
-                m_botAction.sendSmartPrivateMessage("MessageBot", "!announce distension:Distension is starting.  ?go distension to play." );
+                m_botAction.sendChatMessage("Distension has been loaded.  ?go " + arenaName);
+                m_botAction.sendSmartPrivateMessage("MessageBot", "!announce distension:Distension is starting.  ?go " + arenaName + " to play." );
                 m_botAction.sendArenaMessage("Distension has been loaded.  Enter into a ship to start playing (1 and 5 are starting ships).  PM the bot with !intro if you are new, and refer to F1 for more detailed help.");
             }
         }
@@ -1632,7 +1633,8 @@ public class distensionbot extends SubspaceBot {
      * @param event Event to handle.
      */
     public void handleEvent(LoggedOn event) {
-        m_botAction.joinArena(m_botSettings.getString("Arena"));
+        arenaName = m_botSettings.getString("Arena");
+        m_botAction.joinArena(arenaName);
     }
 
 
@@ -6622,9 +6624,9 @@ public class distensionbot extends SubspaceBot {
             public void run() {
                 if( !m_msgBetaPlayers.isEmpty() ) {
                     if( DEBUG )
-                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION BETA TEST: ?go distension if you can participate." );
+                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION BETA TEST: ?go " + arenaName + " if you can participate." );
                     else
-                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION STARTING: ?go distension if you wish to play." );
+                        m_botAction.sendRemotePrivateMessage( m_msgBetaPlayers.remove(), "DISTENSION STARTING: ?go " + arenaName + " if you wish to play." );
                 } else
                     this.cancel();
             }
@@ -11525,7 +11527,7 @@ public class distensionbot extends SubspaceBot {
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
         m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + (m_canScoreGoals ? " (goals active until then)":"") + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
-        m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go distension to play." );
+        m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go " + arenaName + " to play." );
 
         // Between rounds, switch between one and two flags
         int players = 0;
