@@ -108,6 +108,22 @@ public class distensionbot extends SubspaceBot {
     private final int ARMY_SYSTEM_NONSTATIC = 2;           // Armies balanced on the fly by bot
     private int m_armySystem = ARMY_SYSTEM_STATIC;      // Which army system is being used
 
+    // **** UNLOCK RANKS for 2012 Distension (much smaller to promote diversity)
+    // Note that Lanc and Weasel are still unlocked via special means
+    private final int RANK_REQ_ASSAULT_SHIP2 = 8;
+    private final int RANK_REQ_ASSAULT_SHIP3 = 2;
+    private final int RANK_REQ_ASSAULT_SHIP4 = 12;
+    private final int RANK_REQ_ASSAULT_SHIP8 = 4;
+
+    private final int RANK_REQ_SUPPORT_SHIP2 = 12;
+    private final int RANK_REQ_SUPPORT_SHIP3 = 4;
+    private final int RANK_REQ_SUPPORT_SHIP4 = 8;
+    private final int RANK_REQ_SUPPORT_SHIP8 = 2;
+
+    private final int RANK_REQ_SHIP9 = 10;    // All ships this rank required for Tactical Ops to unlock
+    private final float KPM_REQ_SHIP7 = 3.5f; // Kills per minute required in order to unlock Lanc
+    
+    /*
     private final int RANK_REQ_ASSAULT_SHIP2 = 20;
     private final int RANK_REQ_ASSAULT_SHIP3 = 5;
     private final int RANK_REQ_ASSAULT_SHIP4 = 30;
@@ -117,9 +133,10 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_REQ_SUPPORT_SHIP3 = 8;
     private final int RANK_REQ_SUPPORT_SHIP4 = 20;
     private final int RANK_REQ_SUPPORT_SHIP8 = 4;
-
+    
     private final int RANK_REQ_SHIP9 = 20;   // All ships this rank
     private final float KPM_REQ_SHIP7 = 5.0f; // Kills per minute required in order to unlock Lanc
+    */
 
     // Specials (beta only)
     //private final int RANK_REQ_SHIP6 = 4;    // N/A (only has level for beta)
