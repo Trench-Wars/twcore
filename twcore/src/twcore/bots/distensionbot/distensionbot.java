@@ -7634,7 +7634,7 @@ public class distensionbot extends SubspaceBot {
             shipDataSaved = false;
             fastRespawn = false;
             isRespawning = false;
-            waitInSpawn = true;
+            waitInSpawn = false;
             warpInBase = true;
             specialRespawn = false;
             sendKillMessages = true;
