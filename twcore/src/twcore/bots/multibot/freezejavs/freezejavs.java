@@ -135,7 +135,7 @@ public class freezejavs extends MultiModule {
      */
     public void handleCommand(String name, String message) {
 
-        if (message.startsWith("!leave")) {
+        if (message.startsWith("!leave") && m_players.containsKey(name)) {
             m_botAction.specWithoutLock(name);
             PlayerInfo player = m_players.get(name);
             if (player.isPlaying()) {
