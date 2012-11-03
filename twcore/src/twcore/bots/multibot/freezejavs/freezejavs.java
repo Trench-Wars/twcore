@@ -3,561 +3,787 @@
  *
  * Created: 07/05/2004
  *
- * Last Updated: 7/11/2004
- * - implemented !leave command
- * - implemented timed games
- * - cleaned things up in general
+ * Last Updated: 10/3/2012 by Ian (K A N E)
+ * - Revised the whole module to make it possible for player information to be stored during the game.
+ * - Fixed the !enter function to only work if they are not previously in the game
+ * - Added a !lagout function that returns players to the ship and freq they left the game at.
+ * - Added scoring that is displayed at the end of the game. The top 10 is currently what it is set to.
+ * 
+ * Side Note: The format and structure of this module was based off Qan's Dangerous Game module on multibot. 
+ * 			  Thank you Qan.
  */
 
 package twcore.bots.multibot.freezejavs;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
-import twcore.core.util.ModuleEventRequester;
-import twcore.core.util.Tools;
 import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
-import twcore.core.events.PlayerLeft;
 import twcore.core.events.PlayerEntered;
+import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
+import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 
 /**
- * This class is sort of a variant of the zombies module.  It is to be used
- * when hosting a game of ?go freezejavs.
- *
- * @author  Jason; Freezetag
- * @author Derek; Freezejavs
+ * This class is sort of a variant of the zombies module. It is to be used when
+ * hosting a game of ?go freezejavs.
  * 
+ * @author Jason; Freezetag
+ * @author Derek; Freezejavs
+ * @author Ian; Completely revised previous module.
  */
-
 public class freezejavs extends MultiModule {
 
-    /*
-     * Here are some constants.
-     */
+	public void init() {
 
-     //private static final int SPEC_FREQ   = 9999; //spec freq #
-     private static int WARBIRD     = 1;    //wb ship #
-     private static int JAVELIN     = 2;    //jav ship #
-     private static int SPIDER      = 3;    //spid ship #
-     private static int LEVIATHAN   = 4;    //lev ship #
-     private static int TEAM1_FREQ  = 0;    //wb starting freq
-     private static int TEAM2_FREQ  = 1;    //jav starting freq
-     private static int TEAM1_WARPX = 363;
-     private static int TEAM1_WARPY = 464;
-     private static int TEAM2_WARPX = 626;
-     private static int TEAM2_WARPY = 458;
-     
-     private static int SECS_IN_MIN = 60;   //num seconds in minute
-     private static int MS_IN_SEC   = 1000; //num milliseconds in second
-     private static int MIN_TIME_LIMIT = 5; //min time limit in minutes
+	}
 
-    /*
-     * Here are the class-wide variables.
-     */
+	/**
+	 * This method requests the events used by this module.
+	 */
+	public void requestEvents(ModuleEventRequester eventRequester) {
 
-    HashSet<String> freq0WarbirdSet;     //set to keep track of freq 0 wbs
-    HashSet<String> freq0LevSet;         //set to keep track of freq 0 levs
-    HashSet<String> freq1JavSet;         //set to keep track of freq 1 javs
-    HashSet<String> freq1SpidSet;        //set to keep track of freq 1 spids
-    int timeLimit;                       //defaults to 0 if game is not timed
-    boolean isRunning;                   //whether or not the game is currently running
-    private boolean teamToggle;          //toggles team which to add new player to
-    TimerTask m_runOutTheClock;
-    
-    /**
-     * Initialize the module.
-     */
+		eventRequester.request(this, EventRequester.PLAYER_ENTERED);
+		eventRequester.request(this, EventRequester.PLAYER_DEATH);
+		eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+		eventRequester.request(this, EventRequester.PLAYER_LEFT);
+		eventRequester.request(this, EventRequester.PLAYER_ENTERED);
 
-    public void init() {
-        teamToggle       = false;
-        freq0WarbirdSet  = new HashSet<String>();
-        freq0LevSet      = new HashSet<String>();
-        freq1JavSet      = new HashSet<String>();
-        freq1SpidSet     = new HashSet<String>();
-        timeLimit        = 0; //default if game is not timed
-        isRunning        = false;
-    }
+	}
 
-    /**
-     * This method checks to see if the module can be unloaded or not.
-     *
-     * @return true is returned if the module is allowed to be unloaded.
-     */
-    public boolean isUnloadable() {
-        return !isRunning;
-    }
+	// Timer Tasks for the rules n such.
+	private TimerTask m_runOutTheClock;
+	private TimerTask displayRules;
+	private TimerTask giveStartWarning;
+	private TimerTask startGame;
 
-    /**
-     * This method requests the events used by this module.
-     */
-    public void requestEvents(ModuleEventRequester eventRequester) {
-        eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
-        eventRequester.request(this, EventRequester.PLAYER_DEATH);
-        eventRequester.request(this, EventRequester.PLAYER_LEFT);
-        eventRequester.request(this, EventRequester.PLAYER_ENTERED);
-    }
+	// Toggles for game status and balancing teams.
+	public boolean isRunning = false;
+	public boolean teamToggle = false;
+	public boolean isTimer = false;
 
-    /**
-     * This method checks to see what permissions a player has before allowing
-     * them to execute certain commands.
-     *
-     * @param event  the Message being sent to the bot
-     */
+	// Declares a hashMap for the player info.
+	private HashMap<String, PlayerInfo> m_players;
 
-    public void handleEvent( Message event ) {
-        String message = event.getMessage();
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
-            String name = m_botAction.getPlayerName( event.getPlayerID() );
-            if( opList.isER( name ) ) {
-                handleCommand( name, message );
-            } else {
-                handlePlayerCommand( name, message );
-            }
-        }
-    }
+	// Decleration of int variables.
+	private static int WARBIRD = 1;
+	private static int JAVELIN = 2;
+	private static int SPIDER = 3;
+	private static int LEV = 4;
 
-    /**
-     * This method checks to see what command was sent, and then acts
-     * accordingly.
-     *
-     * @param name     the name of the player who issued the command
-     * @param message  the command the player issued
-     */
+	// Default frequencies that are used.
+	private static int TEAM1_FREQ = 0;
+	private static int TEAM2_FREQ = 1;
 
-    public void handleCommand( String name, String message ) {
-        if( message.toLowerCase().equals( "!rules" ) ) {
-            doRules();
-        } else if( message.toLowerCase().equals( "!start" ) ) {
-        	timeLimit = 0;
-            startGame( name );
-        } else if( message.toLowerCase().startsWith( "!start " ) ) {
-            m_botAction.sendPrivateMessage( name, message.substring( 7 ) );
-            if( message.substring( 7 ).length() > 2 ) {
-                m_botAction.sendPrivateMessage( name, "Invalid time limit "
-                           + "specified.  Please enter a whole number and/or "
-                           + "ensure that you're not trying to start an "
-                           + "insanely long game! :P" );
-            } else {
-                timeLimit = Integer.parseInt( message.substring( 7 ) );
-                if( timeLimit > MIN_TIME_LIMIT ) {
-                    startGame( name );
-                } else {
-                    m_botAction.sendPrivateMessage( name, "You must specify a "
-                    + "time limit of at least " + MIN_TIME_LIMIT + " minutes." );
-                }
-            }
-        } else if( message.toLowerCase().equals( "!stop" ) ) {
-            stopGame( name );
-        } else if( message.toLowerCase().equals( "!leave" ) ) {
-            doLeave( name );
-        }
-    }
+	// Warpcodes for both freqs.
+	private static int TEAM1_WARPX = 363;
+	private static int TEAM1_WARPY = 464;
+	private static int TEAM2_WARPX = 626;
+	private static int TEAM2_WARPY = 458;
 
-    /**
-     * This method is used to handle the !leave command for non-staff players.
-     * If a player is frozen and needs to leave mid-game, this'll spec 'em so
-     * they can go do their thing elsewhere.
-     *
-     * @param name     the name of the player issuing the command
-     * @param message  the command being issued
-     */
-     public void handlePlayerCommand( String name, String message ) {
-        if( message.toLowerCase().equals( "!leave" ) ) {
-            doLeave( name );
-        } else if (message.equalsIgnoreCase("!enter")) {
-            doEnter(name);
-        }
-     }
+	// Default point values for each action.
+	private int m_kills = 1;
+	private int m_saves = 1;
+	private int m_score = 1;
+	private int m_tk = 1;
 
-     /**
-      * This method handles players entering the arena late. Will notify them 
-      * once to pm !enter to bot to join.
-      * 
-      * @param event the player entering event
-      */
-     @Override
-     public void handleEvent(PlayerEntered event) {
-         if (isRunning) {
-             m_botAction.sendSmartPrivateMessage(event.getPlayerName(), "Type "
-                     + "!enter to me to join");
-         }
-     }        
+	// Converts Milliseconds into Minutes
+	private static int SECS_IN_MIN = 60;
+	private static int MS_IN_SEC = 1000;
 
-     /**
-      * This method is called when a PlayerDeath event fires.  Every time a
-      * player dies, we check to see if they're frozen/unfrozen, then we do
-      * the opposite.
-      *
-      * @param event  the PlayerDeath event that has fired
-      */
-     public void handleEvent( PlayerDeath event ) {
-         if (isRunning) {
-             Player p = m_botAction.getPlayer(event.getKilleeID());
-             int freq = p.getFrequency();
-             int ship = p.getShipType();
-             
-             Player k = m_botAction.getPlayer(event.getKillerID());
+	/**
+	 * Initializes game with a time limit if set. The default time limit is 0.
+	 * 
+	 * @param timeLimit
+	 */
+	public void startGame(final int timeLimit) {
+		m_botAction.setReliableKills(1);
+		m_botAction.toggleLocked();
 
-             if (ship == WARBIRD && freq != k.getFrequency()) {
-                 m_botAction.setShip(event.getKilleeID(),SPIDER);
-                 m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
-                 m_botAction.specificPrize(event.getKilleeID(), Tools.Prize.ENERGY_DEPLETED);
-                 //Prizing it the "proper" way to keep it clean and easily readable
-                 //m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
-             } else if (ship == JAVELIN && freq != k.getFrequency()) {
-                 m_botAction.setShip(event.getKilleeID(),LEVIATHAN);
-                 m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
-                 m_botAction.specificPrize(event.getKilleeID(), Tools.Prize.ENERGY_DEPLETED);
-                 //m_botAction.sendUnfilteredPrivateMessage(p.getPlayerName(),"*prize #-13");
-             } else if (ship == SPIDER || ship == LEVIATHAN) {
-                 if (freq == k.getFrequency() ) {
-                     // Left_Eye's fix for unusual behavior (TK'd ships turn invisible sometimes)
-                     m_botAction.shipReset(event.getKilleeID());
-                     m_botAction.warpRandomly(event.getKilleeID());
-                     m_botAction.specificPrize(event.getKilleeID(), Tools.Prize.ENERGY_DEPLETED);
-                 } else {
-                     if (freq == TEAM1_FREQ) {
-                         m_botAction.setShip(event.getKilleeID(),JAVELIN);
-                         m_botAction.setFreq(event.getKilleeID(),TEAM2_FREQ);
-                     } else if (freq == TEAM2_FREQ) {
-                         m_botAction.setShip(event.getKilleeID(),WARBIRD);
-                         m_botAction.setFreq(event.getKilleeID(),TEAM1_FREQ);
-                     }
-                 }
-             }
-         }
-     }
+		m_botAction.sendArenaMessage("Freeze Tag mode started.");
 
-    /**
-     * This method is called when a FrequencyShipChange event fires.  Every time
-     * a player switches freq/ship, we need to update the HashSets so we can
-     * can then check for a winner.  (This will also update the HashSets in the
-     * event that a player lags out.)
-     *
-     * @param event  the FrequencyShipChange event that fired
-     */
+		displayRules = new TimerTask() {
+			@Override
+			public void run() {
+				m_botAction
+						.sendArenaMessage("---------------------------- FREEZE JAVS RULES ----------------------------");
+				m_botAction
+						.sendArenaMessage("|                                                                        |");
+				m_botAction
+						.sendArenaMessage("| 1.) There will be two teams, a team of warbirds versus a team of javs. |");
+				m_botAction
+						.sendArenaMessage("|                                                                        |");
+				m_botAction
+						.sendArenaMessage("| 2.) If you are shot (tagged) by an enemy you will become frozen, which |");
+				m_botAction
+						.sendArenaMessage("|     will render you unable to move or fire.                            |");
+				m_botAction
+						.sendArenaMessage("|                                                                        |");
+				m_botAction
+						.sendArenaMessage("| 3.) To become unfrozen a teammate must shoot (tag) you.                |");
+				m_botAction
+						.sendArenaMessage("|                                                                        |");
+				m_botAction
+						.sendArenaMessage("| 4.) If no time limit is specified, the first team to entirely freeze   |");
+				m_botAction
+						.sendArenaMessage("|     the other team wins.  If a time limit is specified, the team with  |");
+				m_botAction
+						.sendArenaMessage("|     the least number of frozen players when time is up wins.           |");
+				m_botAction
+						.sendArenaMessage("|                                                                        |");
+				m_botAction
+						.sendArenaMessage("--------------------------------------------------------------------------");
+				m_botAction
+						.sendArenaMessage("|                                                                        |");
+				m_botAction
+						.sendArenaMessage("| NOTE: If you're frozen and you need to leave, you can PM the bot with  |");
+				m_botAction
+						.sendArenaMessage("| with !leave to get back in spec.                                       |");
+				m_botAction
+						.sendArenaMessage("|                                                                        |");
+				m_botAction
+						.sendArenaMessage("--------------------------------------------------------------------------");
+				m_botAction.sendArenaMessage(
+						"Use ESC to display all of the rules " + "at once.", 2);
 
-    public void handleEvent( FrequencyShipChange event ) {
-        if( isRunning ) {
-            Player p = m_botAction.getPlayer( event.getPlayerID() );
-            String name = p.getPlayerName().toLowerCase();
-            int freq = p.getFrequency();
-            int ship = p.getShipType();
-            if (ship == WARBIRD) {
-                freq1SpidSet.remove( name );
-                freq0WarbirdSet.add( name );
-            } else if (ship == JAVELIN) {
-                freq0LevSet.remove( name );
-                freq1JavSet.add( name );
-            } else if (ship == SPIDER || ship == LEVIATHAN) {
-                if (freq == TEAM1_FREQ) {
-                    freq1JavSet.remove( name );
-                    freq0LevSet.add( name );
-                } else if (freq == TEAM2_FREQ) {
-                    freq0WarbirdSet.remove( name );
-                    freq1SpidSet.add( name );
-                }
-            }
+			}
+		};
+		m_botAction.scheduleTask(displayRules, 10000);
 
-            /*
-             * Here we're checking to see one of the sets has emptied out, in
-             * which case a winner must be determined, regardless of whether or
-             * not the game is timed and/or time is up yet.
-             */
+		// A check to make sure that there are two people in the game.
+		if (m_botAction.getNumPlayers() < 2) {
+			m_botAction
+					.sendArenaMessage("Game does not have enough people to start. Need at least one player per team.");
+			cancel();
+		} else {
 
-            if( freq0WarbirdSet.isEmpty() || freq1JavSet.isEmpty() ) {
-                determineWinner();
-            }
-        }
-    }
+			giveStartWarning = new TimerTask() {
+				@Override
+				public void run() {
+					if (timeLimit == 0) {
+						m_botAction
+								.sendArenaMessage("This game of freeze javs has no "
+										+ "time limit.");
+						m_botAction.sendArenaMessage(
+								"The freezing will begin in "
+										+ "about 10 seconds!", 1);
+					} else {
+						m_botAction
+								.sendArenaMessage("This game of freeze tag has a "
+										+ "time limit of "
+										+ timeLimit
+										+ " minutes.");
+						m_botAction.sendArenaMessage(
+								"The freezing will begin in "
+										+ "about 10 seconds!", 1);
+						m_botAction.setTimer(timeLimit);
+					}
+				}
+			};
+			m_botAction.scheduleTask(giveStartWarning, 30000);
 
-    /**
-     * This method is called when a PlayerLeft event is fired.  If a player
-     * flat out leaves the arena (via ?go or esc+q) without speccing first,
-     * the HashSets need to be updated.
-     *
-     * @param event  the PlayerLeft event that fired
-     */
+			startGame = new TimerTask() {
+				@Override
+				public void run() {
+					m_botAction.changeAllShipsOnFreq(TEAM1_FREQ, WARBIRD);
+					m_botAction.changeAllShipsOnFreq(TEAM2_FREQ, JAVELIN);
+					m_botAction.warpFreqToLocation(TEAM1_FREQ, TEAM1_WARPX,
+							TEAM1_WARPY);
+					m_botAction.warpFreqToLocation(TEAM2_FREQ, TEAM2_WARPX,
+							TEAM2_WARPY);
+					m_botAction.scoreResetAll();
+					m_botAction.shipResetAll();
+					isRunning = true;
+					createPlayerRecords();
+					m_botAction.sendArenaMessage("GO GO GO !!!", 104);
+					if (isTimer == true) {
+						m_botAction.setTimer(timeLimit);
+						m_runOutTheClock = new TimerTask() {
+							@Override
+							public void run() {
+								checkWinner();
+							}
+						};
+						m_botAction.scheduleTask(m_runOutTheClock, timeLimit
+								* SECS_IN_MIN * MS_IN_SEC);
+					}
+				}
+			};
+			m_botAction.scheduleTask(startGame, 40000);
+		}
+	}
 
-    public void handleEvent( PlayerLeft event ) {
-        Player p = m_botAction.getPlayer( event.getPlayerID() );
-        String name = p.getPlayerName().toLowerCase();
-        freq0WarbirdSet.remove( name );
-        freq0LevSet.remove( name );
-        freq1JavSet.remove( name );
-        freq1SpidSet.remove( name );
-    }
+	/**
+	 * Creates a record for each of the players in the game at the start
+	 * 
+	 */
 
-    /**
-     * This method displays the rules of freeze tag in a superfluously perty
-     * set of arena messages.
-     */
+	public void createPlayerRecords() {
+		m_players = new HashMap<String, PlayerInfo>();
+		Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+		while (i.hasNext()) {
+			Player p = i.next();
+			PlayerInfo player = new PlayerInfo(p.getPlayerName(),
+					p.getShipType(), m_kills, m_saves, m_score);
+			m_players.put(p.getPlayerName(), player);
+		}
+	}
 
-    public void doRules() {
-        m_botAction.sendArenaMessage( "Here come the rules... "
-                                      + "get ready for a bit of spam!" );
-        m_botAction.sendArenaMessage( "Use ESC to display all of the rules "
-                                      +"at once.", 2 );
+	/**
+	 * Clears all player records, and cancels all timer tasks.
+	 * 
+	 */
+	public void clearRecords() {
+		m_botAction.cancelTasks();
 
-        /*
-         * Here's a TimerTask to delay the display of the rules just
-         * a wee bit.
-         */
+		if (m_players == null)
+			return;
+		if (m_players.values() == null)
+			return;
 
-        TimerTask displayRules = new TimerTask() {
-            public void run() {
-                m_botAction.sendArenaMessage(
-"---------------------------- FREEZE JAVS RULES ----------------------------" );
-            m_botAction.sendArenaMessage(
-"|                                                                        |" );
-            m_botAction.sendArenaMessage(
-"| 1.) There will be two teams, a team of warbirds versus a team of javs. |" );
-            m_botAction.sendArenaMessage(
-"|                                                                        |" );
-            m_botAction.sendArenaMessage(
-"| 2.) If you are shot (tagged) by an enemy you will become frozen, which |" );
-            m_botAction.sendArenaMessage(
-"|     will render you unable to move or fire.                            |" );
-            m_botAction.sendArenaMessage(
-"|                                                                        |" );
-            m_botAction.sendArenaMessage(
-"| 3.) To become unfrozen a teammate must shoot (tag) you.                |" );
-            m_botAction.sendArenaMessage(
-"|                                                                        |" );
-            m_botAction.sendArenaMessage(
-"| 4.) If no time limit is specified, the first team to entirely freeze   |" );
-            m_botAction.sendArenaMessage(
-"|     the other team wins.  If a time limit is specified, the team with  |" );
-            m_botAction.sendArenaMessage(
-"|     the least number of frozen players when time is up wins.           |" );
-            m_botAction.sendArenaMessage(
-"|                                                                        |" );
-            m_botAction.sendArenaMessage(
-"--------------------------------------------------------------------------" );
-            m_botAction.sendArenaMessage(
-"|                                                                        |" );
-            m_botAction.sendArenaMessage (
-"| NOTE: If you're frozen and you need to leave, you can PM the bot with  |" );
-            m_botAction.sendArenaMessage(
-"| with !leave to get back in spec.                                       |" );
-            m_botAction.sendArenaMessage(
-"|                                                                        |" );
-            m_botAction.sendArenaMessage(
-"--------------------------------------------------------------------------" );
-            }
-        };
-        m_botAction.scheduleTask( displayRules, 5000 );
-    }
+		Iterator<PlayerInfo> i = m_players.values().iterator();
 
-    /**
-     * This method starts a game of freeze tag.
-     *
-     * @param name  the name of the player who issued the !start command
-     */
+		while (i.hasNext()) {
+			PlayerInfo p = (PlayerInfo) i.next();
+			m_players.remove(p.getName());
 
-    public void startGame( String name ) {
-        if( !isRunning ) {
-            m_botAction.toggleLocked();
-            m_botAction.sendPrivateMessage( name, "Freeze Tag mode started." );
-            if (m_botAction.getArenaName().equalsIgnoreCase("tortugaft") || m_botAction.getArenaName().equalsIgnoreCase("#tortugaft")) {
-                // special settings for playing freezetag in ?go tortugaft
-                SPIDER = 4;
-            }
-            
-            m_botAction.changeAllShipsOnFreq(TEAM1_FREQ, WARBIRD);
-            m_botAction.changeAllShipsOnFreq(TEAM2_FREQ, JAVELIN);
-            freq0WarbirdSet.clear();
-            freq0LevSet.clear();
-            freq1JavSet.clear();
-            freq1SpidSet.clear();
-            fillFreqSets();
-            if( timeLimit == 0 ) {
-                m_botAction.sendArenaMessage( "This game of freeze javs has no "
-                                            + "time limit." );
-                m_botAction.sendArenaMessage( "The freezing will begin in "
-                                            + "about 10 seconds!", 1 );
-            } else {
-                m_botAction.sendArenaMessage( "This game of freeze tag has a "
-                                            + "time limit of " + timeLimit
-                                            + " minutes." );
-                m_botAction.sendArenaMessage( "The freezing will begin in "
-                                            + "about 10 seconds!", 1 );
-            }
-            doPreGame();
-        } else {
-            m_botAction.sendPrivateMessage( name, "You already started "
-            + "Freeze Tag mode, ya moron!" );
-        }
-    }
+		}
+	}
 
-    /**
-     * This method stops a game of freeze tag.  If no game is currently in
-     * progress, it will yell at the dipshit who tried to stop a non-existent
-     * game.
-     *
-     * @param name  the name of the player who issued the !stop command
-     */
+	/**
+	 * This method checks is called upon after an event happens that may
+	 * possibly end the game such as a lagout or death.
+	 */
+	public void checkWinner() {
 
-    public void stopGame( String name ) {
-        if( isRunning ) {
-                isRunning = false;
-                cancel();
-                m_botAction.sendPrivateMessage( name, "Freeze Javs mode "
-                + "stopped" );
-                m_botAction.specAll();
-                m_botAction.sendArenaMessage( "This game of freeze javs has "
-                + "been cancelled by " + name + ".", 13 );
-                m_botAction.sendArenaMessage( "If you are still frozen, PM "
-                + "!leave to " + m_botAction.getBotName() + " to be put to spectator.");
-                m_botAction.toggleLocked();
-        } else {
-                m_botAction.sendPrivateMessage( name, "freeze javs mode is not "
-                + "currently running, ya moron!" );
-        }
-    }
+		int warbirdLeft = 0;
+		int javsLeft = 0;
 
-    /**
-     * This method fills up the freqs sets at the start of the game.
-     */
+		Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
 
-    public void fillFreqSets() {
-        Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
-        while( it.hasNext() ) {
-            Player p = (Player)it.next();
-            if( p.getFrequency() == TEAM1_FREQ) {
-                freq0WarbirdSet.add( p.getPlayerName().toLowerCase() );
-            } else if( p.getFrequency() == TEAM2_FREQ) {
-                freq1JavSet.add( p.getPlayerName().toLowerCase() );
-            }
-        }
-    }
+		while (i.hasNext()) {
+			Player p = i.next();
+			if (p.getShipType() == WARBIRD && p.getFrequency() == TEAM1_FREQ)
+				warbirdLeft++;
+			else if (p.getShipType() == JAVELIN
+					&& p.getFrequency() == TEAM2_FREQ)
+				javsLeft++;
+		}
 
-    /**
-     * This method handles all of the pre-game stuff in a TimerTask.  The
-     * TimerTask is used simply to delay the start of the game by 10 seconds.
-     */
+		if (isTimer == false) {
+			if (warbirdLeft == 0)
+				doStats(JAVELIN);
+			if (javsLeft == 0)
+				doStats(WARBIRD);
+		}
 
-    public void doPreGame() {
-        TimerTask preGameStuff = new TimerTask() {
-            public void run() {
-                m_botAction.warpFreqToLocation(TEAM1_FREQ, TEAM1_WARPX, TEAM1_WARPY);
-                m_botAction.warpFreqToLocation(TEAM2_FREQ, TEAM2_WARPX, TEAM2_WARPY);
-                m_botAction.sendArenaMessage( "GO GO GO !!!", 104 );
-                m_botAction.scoreResetAll();
-                m_botAction.shipResetAll();
-                if( timeLimit > 0 ) {
-                    m_botAction.setTimer( timeLimit );
-                    m_runOutTheClock = new TimerTask() {
-                        public void run() {
-                            determineWinner();
-                        }
-                    };
-                    m_botAction.scheduleTask( m_runOutTheClock,
-                                timeLimit * SECS_IN_MIN * MS_IN_SEC );
-                }
-                isRunning = true;
-            }
-        };
-        m_botAction.scheduleTask( preGameStuff, 10000 );
-    }
+		if (isTimer == true) {
+			if (warbirdLeft > javsLeft)
+				doStats(WARBIRD);
+			if (javsLeft > warbirdLeft)
+				doStats(JAVELIN);
+			if (javsLeft == warbirdLeft)
+				doStats(WARBIRD);
+		}
 
-    /**
-     * This method does the actual determining of a winner based on the sizes
-     * of the HashSets.  Should one of the HashSets be empty, I do realize that
-     * it's a bit redundant to be comparing their sizes here, but it's not that
-     * big of a deal so shush. :P
-     */
+	}
 
-    public void determineWinner() {
-    	m_botAction.cancelTask(m_runOutTheClock);
-        if( freq1JavSet.size() < freq0WarbirdSet.size() ) {
-            isRunning = false;
-            m_botAction.sendArenaMessage(
-            "The warbirds have tagged their way to victory!", 5 );
-            m_botAction.changeAllShipsOnFreq(TEAM1_FREQ,WARBIRD);
-            if( !freq1SpidSet.isEmpty() ) {
-                m_botAction.changeAllShipsOnFreq(TEAM2_FREQ,WARBIRD);
-                m_botAction.setFreqtoFreq(TEAM2_FREQ,TEAM1_FREQ);
-            }
-            m_botAction.toggleLocked();
-        } else if( freq0WarbirdSet.size() < freq1JavSet.size() ) {
-            isRunning = false;
-            m_botAction.sendArenaMessage(
-            "The javelins have tagged their way to victory!", 5 );
-            m_botAction.changeAllShipsOnFreq(TEAM2_FREQ,JAVELIN);
-            if( !freq0LevSet.isEmpty() ) {
-                m_botAction.changeAllShipsOnFreq(TEAM1_FREQ,JAVELIN);
-                m_botAction.setFreqtoFreq(TEAM1_FREQ,TEAM2_FREQ);
-            }
-            m_botAction.toggleLocked();
-        }
-        m_botAction.setTimer(99999);
-    }
+	/**
+	 * This displays the stats of the game and then clears the record
+	 * afterwards.
+	 * 
+	 * @param winner
+	 *            Will display the winners at the bottom of the score box.
+	 */
+	public void doStats(int winner) {
 
-    /**
-     * This method performs the actual *spec commands when a player issues the
-     * !leave command to the bot.
-     *
-     * @param name  the name of the player who issued the !leave command
-     */
+		m_botAction
+				.sendArenaMessage("Kill = 1 pt /    Save = 1 pt /    Team Kills = -1 pt   ");
+		m_botAction
+				.sendArenaMessage("----------------------------------------------------- TOP PLAYERS");
+		m_botAction
+				.sendArenaMessage("   #       Kills        Saves        Score                   ");
 
-    public void doLeave( String name ) {
-        m_botAction.spec( name );
-        m_botAction.spec( name );
-        m_botAction.sendSmartPrivateMessage( name, "You are free to go!" );
-    }
+		for (int i = 1; i < 11; i++) { // Displays the top 10 players that were
+										// in the game
 
-    /**
-     * This method allows late comers to enter arena without host interaction.
-     * 
-     * @param name name of player to join arena
-     */
-    public void doEnter(String name) {
-        if (teamToggle) {
-            m_botAction.setShip(name, WARBIRD);
-            m_botAction.setFreq(name, TEAM1_FREQ);
-            teamToggle = false;
-        } else {
-            m_botAction.setShip(name, JAVELIN);
-            m_botAction.setFreq(name, TEAM2_FREQ);
-            teamToggle = true;
-        }
-    }
-    
-    /**
-     * This method displays the list of commands when the !help command is
-     * issued for this module.
-     *
-     * @return FreezeTagHelp  the list of commands used by the module
-     */
+			String name = getTopPlayer();
+			PlayerInfo p = m_players.get(name);
+			if (p != null) {
+				String sKills = stringConverter(p.getKills());
+				String sSave = stringConverter(p.getSaves());
+				String sScore = stringConverter(p.getScore());
+				m_botAction.sendArenaMessage("   " + i + ".  "
+						+ Tools.centerString(sKills, 9) + "    "
+						+ Tools.centerString(sSave, 9) + "    "
+						+ Tools.centerString(sScore, 9) + "    "
+						+ Tools.rightString(name, 20));
+				m_players.remove(name);
+			}
+		}
 
-    public String[] getModHelpMessage() {
-        String[] freezeTagHelp = {
-            "!rules                        -- Displays the rules of freeze javs via arena "
-                                            +"messages.",
-            "!start                        -- Starts a game of freeze javs with no time "
-                                            +"limit.",
-            "!start <time limit>           -- Starts a game of freeze javs with the "
-                                           + "specified time limit.  (15 minute minimum required)",
-            "!stop                         -- Stops a game of freeze javs.",
-            "!leave                        -- (Public Command) Allows frozen players to "
-                                            +"get into spec."
-        };
-        return freezeTagHelp;
-    }
+		if (winner == WARBIRD) {
+			m_botAction
+					.sendArenaMessage("---------The Warbirds have tagged their way to victory!---------");
+		} else if (winner == JAVELIN) {
+			m_botAction
+					.sendArenaMessage("---------The Javelins have tagged their way to victory!---------");
+		}
+		isRunning = false;
+		cancel();
 
-    /**
-     * This method is used to cancel any pending TimerTasks should the game be
-     * !stop'd prematurely.
-     */
+	}
 
-    public void cancel() {
-        m_botAction.cancelTasks();
-    }
-} //twbotfreezetag.java
+	/**
+	 * getTopPlayer is the calculations for ordering the top players in
+	 * doStats(); by score
+	 * 
+	 */
+	public String getTopPlayer() {
+		Iterator<PlayerInfo> i = m_players.values().iterator();
+		PlayerInfo topPlayer;
+
+		if (i.hasNext()) {
+			topPlayer = i.next();
+		} else {
+			return "";
+		}
+
+		while (i.hasNext()) {
+			PlayerInfo p = i.next();
+
+			if (p.getScore() > topPlayer.getScore()) {
+				topPlayer = p;
+			}
+		}
+		String topPlayerNew = topPlayer.getName();
+		return topPlayerNew;
+	}
+
+	/**
+	 * This handleEvent accepts msgs from players as well as mods.
+	 * 
+	 * @event The Message event in question.
+	 */
+	public void handleEvent(Message event) {
+
+		String message = event.getMessage();
+		if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
+			String name = m_botAction.getPlayerName(event.getPlayerID());
+			handleCommand(name, message);
+		}
+	}
+
+	/**
+	 * Individual commands for the message event are broken down
+	 * 
+	 * @param name
+	 *            The name of the person who sent the message
+	 * @param message
+	 *            The message itself
+	 */
+	public void handleCommand(String name, String message) {
+
+		if (message.startsWith("!leave")) {
+			m_botAction.specWithoutLock(name);
+			PlayerInfo player = m_players.get(name);
+			if (player.isPlaying()) {
+				player.lagger();
+				checkWinner();
+			}
+
+		} else if (message.startsWith("!lagout")) {
+			if (isRunning == true) {
+				PlayerInfo player = m_players.get(name);
+				if (player != null) {
+					if (player.isLagged()) {
+						returnedFromLagout(name);
+					} else {
+						m_botAction.sendPrivateMessage(name,
+								"You aren't lagged out!");
+					}
+				} else {
+					m_botAction
+							.sendPrivateMessage(name,
+									"Your name was not found in the record. Please try !enter");
+				}
+			} else {
+				m_botAction.sendPrivateMessage(name,
+						"The Game is not currently started.");
+			}
+
+		} else if (message.startsWith("!enter")) {
+			if (isRunning == true) {
+				PlayerInfo p = m_players.get(name);
+				if (p == null) {
+
+					if (teamToggle) {
+						m_botAction.setShip(name, WARBIRD);
+						m_botAction.setFreq(name, TEAM1_FREQ);
+						PlayerInfo player = new PlayerInfo(name, WARBIRD,
+								m_kills, m_saves, m_score);
+						m_players.put(name, player);
+						teamToggle = false;
+					} else {
+						m_botAction.setShip(name, JAVELIN);
+						m_botAction.setFreq(name, TEAM2_FREQ);
+						PlayerInfo player = new PlayerInfo(name, JAVELIN,
+								m_kills, m_saves, m_score);
+						m_players.put(name, player);
+						teamToggle = true;
+					}
+
+				} else {
+					m_botAction.sendPrivateMessage(name,
+							"Please Use The !lagout Command!");
+				}
+			} else {
+				m_botAction.sendPrivateMessage(name,
+						"The Game is not currently started.");
+			}
+		}
+
+		if (opList.isER(name)) {
+
+			if (message.equals("!start")) {
+				if (isRunning == false) {
+					startGame(0);
+				} else {
+					m_botAction.sendPrivateMessage(name,
+							"The game has already begun.");
+				}
+			} else if (message.startsWith("!start ")) {
+				if (isRunning == false) {
+					String[] parameters = Tools.stringChopper(
+							message.substring(7), ' ');
+					try {
+						int timeLimit = Integer.parseInt(parameters[0]);
+						startGame(timeLimit);
+					} catch (Exception e) {
+						m_botAction
+								.sendPrivateMessage(name,
+										"Error in formatting your command.  Please try again.");
+					}
+				}
+
+			} else if (message.startsWith("!stop")) {
+				if (isRunning == true) {
+					m_botAction.sendPrivateMessage(name,
+							"The FreezeTag Game Has Ended");
+					clearRecords();
+					isRunning = false;
+				} else {
+					m_botAction.sendPrivateMessage(name,
+							"FreezeTag has not been Enabled");
+				}
+			}
+		}
+	}
+
+	/**
+	 * Adds and subtracts time when players die.
+	 * 
+	 * @param event
+	 *            Contains event information on player who died.
+	 */
+	public void handleEvent(PlayerDeath event) {
+		if (isRunning == true) {
+			Player killed = m_botAction.getPlayer(event.getKilleeID());
+			Player killer = m_botAction.getPlayer(event.getKillerID());
+
+			if (killed != null) {
+				PlayerInfo player = m_players.get(killer.getPlayerName());
+				if (player != null) {
+					if (killer.getFrequency() == killed.getFrequency()) {
+						player.hadTK();
+						m_botAction.shipReset(event.getKilleeID());
+						m_botAction.warpRandomly(event.getKilleeID());
+						m_botAction.specificPrize(event.getKilleeID(),
+								Tools.Prize.ENERGY_DEPLETED);
+					} else {
+						if (killed.getShipType() != WARBIRD
+								&& killed.getShipType() != JAVELIN)
+							player.hadSave();
+						else
+							player.hadKill();
+
+						PlayerInfo dplayer = m_players.get(killed
+								.getPlayerName());
+						if (dplayer != null) {
+							dplayer.hadDeath();
+							checkWinner();
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Counts arena leaves as DCs to be safe.
+	 * 
+	 * @param event
+	 *            Contains event information on player.
+	 */
+	public void handleEvent(PlayerLeft event) {
+		if (isRunning == true) {
+			Player p = m_botAction.getPlayer(event.getPlayerID());
+
+			if (p != null) {
+				PlayerInfo player = m_players.get(p.getPlayerName());
+				if (player != null) {
+					if (player.isPlaying()) {
+						player.lagger();
+						checkWinner();
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Using the frequencyChange event to look out for possible lagouts to the
+	 * spec frequency.
+	 * 
+	 * @param event
+	 *            Contains information on a freq change.
+	 */
+	public void handleEvent(FrequencyShipChange event) {
+		if (isRunning == true) {
+			int checkFreq = event.getFrequency();
+			if (checkFreq == 9999) {
+				Player p = m_botAction.getPlayer(event.getPlayerID());
+				PlayerInfo player = m_players.get(p.getPlayerName());
+				if (p != null && player != null) {
+					player.lagger();
+					checkWinner();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Everyone that joins the arena while the game is in progress will recieve
+	 * a message to !lagout or !enter.
+	 * 
+	 * @param event
+	 *            - contains the valriable information for the event.
+	 */
+	public void handleEvent(PlayerEntered event) {
+		if (isRunning == true) {
+			if (m_players.containsKey(event.getPlayerName())) {
+				m_botAction
+						.sendPrivateMessage(event.getPlayerName(),
+								"Welcome Back! PM me with !lagout to get back in the game.");
+			} else {
+				m_botAction
+						.sendPrivateMessage(
+								event.getPlayerName(),
+								"Welcome to FreezeJavs! There is currently a game in progress. Please PM me with !enter to join!.");
+			}
+		}
+	}
+
+	/**
+	 * A basic converter for int values to strings.
+	 * 
+	 * @param intToString
+	 *            takes an int and
+	 * @return returns a string
+	 */
+	public String stringConverter(int intToString) {
+		String aString = Integer.toString(intToString);
+		return aString;
+	}
+
+	/**
+	 * A method that puts a returning player from lagout into the ship and spec
+	 * that they left the game as
+	 * 
+	 * @param name
+	 *            name of the player is needed.
+	 */
+	public void returnedFromLagout(String name) {
+		Player p = m_botAction.getPlayer(name);
+		if (p != null) {
+			PlayerInfo pInfo = m_players.get(p.getPlayerName());
+			m_botAction.setShip(name, pInfo.shipType);
+
+			if (pInfo.shipType == WARBIRD || pInfo.shipType == LEV)
+				m_botAction.setFreq(name, TEAM1_FREQ);
+			if (pInfo.shipType == JAVELIN || pInfo.shipType == SPIDER)
+				m_botAction.setFreq(name, TEAM2_FREQ);
+
+			m_botAction.sendPrivateMessage(name, "Welcome back!");
+			pInfo.isNotLagged();
+		} else {
+			m_botAction.sendPrivateMessage(name,
+					"Error!  Please ask the host to put you back in manually.");
+		}
+	}
+
+	/**
+	 * Your typical manual that comes with every robot to make our everyday life
+	 * a little easier.
+	 */
+	public String[] getModHelpMessage() {
+
+		String[] freezeTagHelp = {
+				"!start                        -- Starts a game of freeze javs with no time "
+						+ "limit.",
+				"!start <time limit>           -- Starts a game of freeze javs with the "
+						+ "specified time limit.  (15 minute minimum required)",
+				"!stop                         -- Stops a game of freeze javs.",
+				"!leave                        -- (Public Command) Allows frozen players to "
+						+ "get into spec.",
+				"!enter                        -- (Public Command) Allows frozen players to "
+						+ "join the game.",
+				"!lagout                       -- (Public Command) Allows frozen players to "
+						+ "return from the game."
+
+		};
+		return freezeTagHelp;
+	}
+
+	/**
+	 * Cleanup.
+	 */
+	public void cancel() {
+		isRunning = false;
+		m_botAction.cancelTasks();
+		m_botAction.toggleLocked();
+		clearRecords();
+	}
+
+	/**
+	 * Checkout.
+	 */
+	public boolean isUnloadable() {
+		clearRecords();
+		isRunning = false;
+		m_botAction.cancelTasks();
+		return true;
+	}
+
+	/**
+	 * Creates a temporary record for each player to track basic information
+	 * such as name, shiptype, lagged out or not, scores, kills, saves, and tks.
+	 * information is cleared after each game is completed.
+	 */
+	class PlayerInfo {
+
+		private String name;
+		private int shipType;
+		private int maxKills;
+		private int maxScore;
+		private int maxSaves;
+		private boolean isPlaying = true;
+		private boolean laggedOut = false;
+
+		// Default values added to a record when the record is created.
+		public PlayerInfo(String name, int shipType, int kills, int saves,
+				int score) {
+			this.name = name;
+			this.shipType = shipType;
+			maxKills = 0;
+			maxScore = 0;
+			maxSaves = 0;
+		}
+
+		// Returns a players name.
+		public String getName() {
+
+			return name;
+		}
+
+		// Adds points for killing a player ( Default: 1)
+		public void hadKill() {
+			maxKills += m_kills;
+			maxScore += m_kills;
+		}
+
+		// Subtracts points for tking a player (Default: 1)
+		public void hadTK() {
+			maxScore -= m_tk;
+		}
+
+		// Adds points for saving another plaeyr (Default: 1)
+		public void hadSave() {
+			maxSaves += m_saves;
+			maxScore += m_saves;
+		}
+
+		// Handles the ship / freq changes following a death.
+		public void hadDeath() {
+			Player p = m_botAction.getPlayer(name);
+			if (p != null) {
+				if (shipType == 1) {
+					m_botAction.setShip(name, 3);
+					m_botAction.setFreq(name, 1);
+					m_botAction
+							.specificPrize(name, Tools.Prize.ENERGY_DEPLETED);
+					shipType = 3;
+				} else if (shipType == 2) {
+					m_botAction.setShip(name, 4);
+					m_botAction.setFreq(name, 0);
+					m_botAction
+							.specificPrize(name, Tools.Prize.ENERGY_DEPLETED);
+					shipType = 4;
+				} else if (shipType == 3) {
+					m_botAction.setShip(name, 1);
+					m_botAction.setFreq(name, 0);
+					shipType = 1;
+				} else if (shipType == 4) {
+					m_botAction.setShip(name, 2);
+					m_botAction.setFreq(name, 1);
+					shipType = 2;
+				}
+			}
+
+		}
+
+		// Sets player's lag status to laggedOut
+		public void lagger() {
+			laggedOut = true;
+			m_botAction.sendPrivateMessage(name,
+					"PM me with !lagout to get back in the game.");
+		}
+
+		// boolean check if the player is lagged out.
+		public boolean isLagged() {
+			return laggedOut;
+		}
+
+		public void isNotLagged() {
+			laggedOut = false;
+		}
+
+		// boolean check if the player is playing.
+		public boolean isPlaying() {
+			return isPlaying;
+		}
+
+		// returns how many kills a player has.
+		public int getKills() {
+			return maxKills;
+		}
+
+		// returns how many kills a player has.
+		public int getSaves() {
+			return maxSaves;
+		}
+
+		// returns the score of a player (K+S-TK).
+		public int getScore() {
+			return maxScore;
+		}
+
+	}
+
+}
