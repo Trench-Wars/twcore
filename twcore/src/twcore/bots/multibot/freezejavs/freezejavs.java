@@ -135,54 +135,56 @@ public class freezejavs extends MultiModule {
      */
     public void handleCommand(String name, String message) {
 
-        if (message.startsWith("!leave") && m_players.containsKey(name)) {
-            m_botAction.specWithoutLock(name);
-            PlayerInfo player = m_players.get(name);
-            if (player.isPlaying()) {
-                player.lagger();
-                checkWinner();
-            }
-
-        } else if (message.startsWith("!lagout")) {
-            if (isRunning) {
+        if (isRunning) {
+            if (message.startsWith("!leave") && m_players.containsKey(name)) {
+                m_botAction.specWithoutLock(name);
                 PlayerInfo player = m_players.get(name);
-                if (player != null) {
-                    if (player.isLagged()) {
-                        returnedFromLagout(name);
+                if (player.isPlaying()) {
+                    player.lagger();
+                    checkWinner();
+                }
+
+            } else if (message.startsWith("!lagout")) {
+                if (isRunning) {
+                    PlayerInfo player = m_players.get(name);
+                    if (player != null) {
+                        if (player.isLagged()) {
+                            returnedFromLagout(name);
+                        } else {
+                            m_botAction.sendPrivateMessage(name, "You aren't lagged out!");
+                        }
                     } else {
-                        m_botAction.sendPrivateMessage(name, "You aren't lagged out!");
+                        m_botAction.sendPrivateMessage(name, "Your name was not found in the record. Please try !enter");
                     }
                 } else {
-                    m_botAction.sendPrivateMessage(name, "Your name was not found in the record. Please try !enter");
+                    m_botAction.sendPrivateMessage(name, "The Game is not currently started.");
                 }
-            } else {
-                m_botAction.sendPrivateMessage(name, "The Game is not currently started.");
-            }
 
-        } else if (message.startsWith("!enter")) {
-            if (isRunning) {
-                PlayerInfo p = m_players.get(name);
-                if (p == null) {
+            } else if (message.startsWith("!enter")) {
+                if (isRunning) {
+                    PlayerInfo p = m_players.get(name);
+                    if (p == null) {
 
-                    if (teamToggle) {
-                        m_botAction.setShip(name, WARBIRD);
-                        m_botAction.setFreq(name, TEAM1_FREQ);
-                        PlayerInfo player = new PlayerInfo(name, WARBIRD, m_kills, m_saves, m_score);
-                        m_players.put(name, player);
-                        teamToggle = false;
+                        if (teamToggle) {
+                            m_botAction.setShip(name, WARBIRD);
+                            m_botAction.setFreq(name, TEAM1_FREQ);
+                            PlayerInfo player = new PlayerInfo(name, WARBIRD, m_kills, m_saves, m_score);
+                            m_players.put(name, player);
+                            teamToggle = false;
+                        } else {
+                            m_botAction.setShip(name, JAVELIN);
+                            m_botAction.setFreq(name, TEAM2_FREQ);
+                            PlayerInfo player = new PlayerInfo(name, JAVELIN, m_kills, m_saves, m_score);
+                            m_players.put(name, player);
+                            teamToggle = true;
+                        }
+
                     } else {
-                        m_botAction.setShip(name, JAVELIN);
-                        m_botAction.setFreq(name, TEAM2_FREQ);
-                        PlayerInfo player = new PlayerInfo(name, JAVELIN, m_kills, m_saves, m_score);
-                        m_players.put(name, player);
-                        teamToggle = true;
+                        m_botAction.sendPrivateMessage(name, "Please Use The !lagout Command!");
                     }
-
                 } else {
-                    m_botAction.sendPrivateMessage(name, "Please Use The !lagout Command!");
+                    m_botAction.sendPrivateMessage(name, "The Game is not currently started.");
                 }
-            } else {
-                m_botAction.sendPrivateMessage(name, "The Game is not currently started.");
             }
         }
 
