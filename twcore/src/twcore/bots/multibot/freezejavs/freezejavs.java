@@ -83,6 +83,17 @@ public class freezejavs extends MultiModule {
     }
 
     /**
+     * Cleanup.
+     */
+    public void cancel() {
+        isRunning = false;
+        arenaLock = false;
+        m_botAction.cancelTasks();
+        m_botAction.toggleLocked();
+        clearRecords();
+    }
+
+    /**
      * This method requests the events used by this module.
      */
     public void requestEvents(ModuleEventRequester eventRequester) {
@@ -92,6 +103,264 @@ public class freezejavs extends MultiModule {
         eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
         eventRequester.request(this, EventRequester.PLAYER_LEFT);
         eventRequester.request(this, EventRequester.PLAYER_ENTERED);
+
+    }
+
+    /**
+     * This handleEvent accepts msgs from players as well as mods.
+     * 
+     * @event The Message event in question.
+     */
+    public void handleEvent(Message event) {
+
+        String message = event.getMessage();
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
+            String name = m_botAction.getPlayerName(event.getPlayerID());
+            handleCommand(name, message);
+        } else if (event.getMessageType() == Message.ARENA_MESSAGE) {
+            if (message.equals("Arena UNLOCKED") && arenaLock)
+                m_botAction.toggleLocked();
+            else if (message.equals("Arena LOCKED") && !arenaLock)
+                m_botAction.toggleLocked();
+        }
+    }
+
+    /**
+     * Individual commands for the message event are broken down
+     * 
+     * @param name
+     *            The name of the person who sent the message
+     * @param message
+     *            The message itself
+     */
+    public void handleCommand(String name, String message) {
+
+        if (message.startsWith("!leave")) {
+            m_botAction.specWithoutLock(name);
+            PlayerInfo player = m_players.get(name);
+            if (player.isPlaying()) {
+                player.lagger();
+                checkWinner();
+            }
+
+        } else if (message.startsWith("!lagout")) {
+            if (isRunning) {
+                PlayerInfo player = m_players.get(name);
+                if (player != null) {
+                    if (player.isLagged()) {
+                        returnedFromLagout(name);
+                    } else {
+                        m_botAction.sendPrivateMessage(name, "You aren't lagged out!");
+                    }
+                } else {
+                    m_botAction.sendPrivateMessage(name, "Your name was not found in the record. Please try !enter");
+                }
+            } else {
+                m_botAction.sendPrivateMessage(name, "The Game is not currently started.");
+            }
+
+        } else if (message.startsWith("!enter")) {
+            if (isRunning) {
+                PlayerInfo p = m_players.get(name);
+                if (p == null) {
+
+                    if (teamToggle) {
+                        m_botAction.setShip(name, WARBIRD);
+                        m_botAction.setFreq(name, TEAM1_FREQ);
+                        PlayerInfo player = new PlayerInfo(name, WARBIRD, m_kills, m_saves, m_score);
+                        m_players.put(name, player);
+                        teamToggle = false;
+                    } else {
+                        m_botAction.setShip(name, JAVELIN);
+                        m_botAction.setFreq(name, TEAM2_FREQ);
+                        PlayerInfo player = new PlayerInfo(name, JAVELIN, m_kills, m_saves, m_score);
+                        m_players.put(name, player);
+                        teamToggle = true;
+                    }
+
+                } else {
+                    m_botAction.sendPrivateMessage(name, "Please Use The !lagout Command!");
+                }
+            } else {
+                m_botAction.sendPrivateMessage(name, "The Game is not currently started.");
+            }
+        }
+
+        if (opList.isER(name)) {
+
+            if (message.equals("!start")) {
+                if (!isRunning) {
+                    startGame(0);
+                } else {
+                    m_botAction.sendPrivateMessage(name, "The game has already begun.");
+                }
+            } else if (message.startsWith("!start ")) {
+                if (!isRunning) {
+                    String[] parameters = Tools.stringChopper(message.substring(7), ' ');
+                    try {
+                        int timeLimit = Integer.parseInt(parameters[0]);
+                        startGame(timeLimit);
+                    } catch (Exception e) {
+                        m_botAction.sendPrivateMessage(name, "Error in formatting your command.  Please try again.");
+                    }
+                }
+
+            } else if (message.startsWith("!stop")) {
+                if (isRunning) {
+                    m_botAction.sendPrivateMessage(name, "The FreezeTag Game Has Ended");
+                    clearRecords();
+                    isRunning = false;
+                } else {
+                    m_botAction.sendPrivateMessage(name, "FreezeTag has not been Enabled");
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds and subtracts time when players die.
+     * 
+     * @param event
+     *            Contains event information on player who died.
+     */
+    public void handleEvent(PlayerDeath event) {
+        if (isRunning) {
+            Player killed = m_botAction.getPlayer(event.getKilleeID());
+            Player killer = m_botAction.getPlayer(event.getKillerID());
+
+            if (killed != null) {
+                PlayerInfo player = m_players.get(killer.getPlayerName());
+                if (player != null) {
+                    if (killer.getFrequency() == killed.getFrequency()) {
+                        player.hadTK();
+                        m_botAction.shipReset(event.getKilleeID());
+                        m_botAction.warpRandomly(event.getKilleeID());
+                        m_botAction.specificPrize(event.getKilleeID(), Tools.Prize.ENERGY_DEPLETED);
+                    } else {
+                        if (killed.getShipType() != WARBIRD && killed.getShipType() != JAVELIN)
+                            player.hadSave();
+                        else
+                            player.hadKill();
+
+                        PlayerInfo dplayer = m_players.get(killed.getPlayerName());
+                        if (dplayer != null) {
+                            dplayer.hadDeath();
+                            checkWinner();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Counts arena leaves as DCs to be safe.
+     * 
+     * @param event
+     *            Contains event information on player.
+     */
+    public void handleEvent(PlayerLeft event) {
+        if (isRunning) {
+            Player p = m_botAction.getPlayer(event.getPlayerID());
+
+            if (p != null) {
+                PlayerInfo player = m_players.get(p.getPlayerName());
+                if (player != null) {
+                    if (player.isPlaying()) {
+                        player.lagger();
+                        checkWinner();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Using the frequencyChange event to look out for possible lagouts to the spec frequency.
+     * 
+     * @param event
+     *            Contains information on a freq change.
+     */
+    public void handleEvent(FrequencyShipChange event) {
+        if (isRunning) {
+            int checkFreq = event.getFrequency();
+            if (checkFreq == 9999) {
+                Player p = m_botAction.getPlayer(event.getPlayerID());
+                PlayerInfo player = m_players.get(p.getPlayerName());
+                if (p != null && player != null) {
+                    player.lagger();
+                    checkWinner();
+                }
+            }
+        }
+    }
+
+    /**
+     * Everyone that joins the arena while the game is in progress will recieve a message to !lagout or !enter.
+     * 
+     * @param event
+     *            - contains the valriable information for the event.
+     */
+    public void handleEvent(PlayerEntered event) {
+        if (isRunning) {
+            if (m_players.containsKey(event.getPlayerName())) {
+                m_botAction.sendPrivateMessage(event.getPlayerName(), "Welcome Back! PM me with !lagout to get back in the game.");
+            } else {
+                m_botAction.sendPrivateMessage(event.getPlayerName(), "Welcome to FreezeJavs! There is currently a game in progress. Please PM me with !enter to join!.");
+            }
+        }
+    }
+
+    /**
+     * A method that puts a returning player from lagout into the ship and spec that they left the game as
+     * 
+     * @param name
+     *            name of the player is needed.
+     */
+    public void returnedFromLagout(String name) {
+        Player p = m_botAction.getPlayer(name);
+        if (p != null) {
+            PlayerInfo pInfo = m_players.get(p.getPlayerName());
+            m_botAction.setShip(name, pInfo.shipType);
+
+            if (pInfo.shipType == WARBIRD || pInfo.shipType == LEV)
+                m_botAction.setFreq(name, TEAM1_FREQ);
+            if (pInfo.shipType == JAVELIN || pInfo.shipType == SPIDER)
+                m_botAction.setFreq(name, TEAM2_FREQ);
+
+            m_botAction.sendPrivateMessage(name, "Welcome back!");
+            pInfo.isNotLagged();
+        } else {
+            m_botAction.sendPrivateMessage(name, "Error!  Please ask the host to put you back in manually.");
+        }
+    }
+
+    /**
+     * Creates a record for each of the players in the game at the start
+     * 
+     */
+    public void createPlayerRecords() {
+        m_players = new TreeMap<String, PlayerInfo>(String.CASE_INSENSITIVE_ORDER);
+
+        for (Player p : m_botAction.getPlayingPlayers()) {
+            PlayerInfo player = new PlayerInfo(p.getPlayerName(), p.getShipType(), m_kills, m_saves, m_score);
+            m_players.put(p.getPlayerName(), player);
+        }
+    }
+
+    /**
+     * Clears all player records, and cancels all timer tasks.
+     * 
+     */
+    public void clearRecords() {
+        m_botAction.cancelTasks();
+
+        if (m_players == null)
+            return;
+        if (m_players.values() == null)
+            return;
+
+        m_players.clear();
 
     }
 
@@ -168,7 +437,7 @@ public class freezejavs extends MultiModule {
                     isRunning = true;
                     createPlayerRecords();
                     m_botAction.sendArenaMessage("GO GO GO !!!", 104);
-                    if (isTimer == true) {
+                    if (isTimer) {
                         m_botAction.setTimer(timeLimit);
                         m_runOutTheClock = new TimerTask() {
                             @Override
@@ -182,36 +451,6 @@ public class freezejavs extends MultiModule {
             };
             m_botAction.scheduleTask(startGame, 40000);
         }
-    }
-
-    /**
-     * Creates a record for each of the players in the game at the start
-     * 
-     */
-
-    public void createPlayerRecords() {
-        m_players = new TreeMap<String, PlayerInfo>(String.CASE_INSENSITIVE_ORDER);
-
-        for (Player p : m_botAction.getPlayingPlayers()) {
-            PlayerInfo player = new PlayerInfo(p.getPlayerName(), p.getShipType(), m_kills, m_saves, m_score);
-            m_players.put(p.getPlayerName(), player);
-        }
-    }
-
-    /**
-     * Clears all player records, and cancels all timer tasks.
-     * 
-     */
-    public void clearRecords() {
-        m_botAction.cancelTasks();
-
-        if (m_players == null)
-            return;
-        if (m_players.values() == null)
-            return;
-
-        m_players.clear();
-
     }
 
     /**
@@ -229,14 +468,14 @@ public class freezejavs extends MultiModule {
                 javsLeft++;
         }
 
-        if (isTimer == false) {
+        if (!isTimer) {
             if (warbirdLeft == 0)
                 doStats(JAVELIN);
             if (javsLeft == 0)
                 doStats(WARBIRD);
         }
 
-        if (isTimer == true) {
+        if (isTimer) {
             if (warbirdLeft > javsLeft)
                 doStats(WARBIRD);
             if (javsLeft > warbirdLeft)
@@ -259,8 +498,7 @@ public class freezejavs extends MultiModule {
         m_botAction.sendArenaMessage("----------------------------------------------------- TOP PLAYERS");
         m_botAction.sendArenaMessage("   #       Kills        Saves        Score                   ");
 
-        for (int i = 1; i < 11; i++) { // Displays the top 10 players that were
-                                       // in the game
+        for (int i = 1; i < 11; i++) { // Displays the top 10 players that were in the game                                       
 
             String name = getTopPlayer();
             PlayerInfo p = m_players.get(name);
@@ -299,274 +537,7 @@ public class freezejavs extends MultiModule {
                 topPlayer = player;
             }
         }
-
-        String topPlayerNew = topPlayer.getName();
-        return topPlayerNew;
-    }
-
-    /**
-     * This handleEvent accepts msgs from players as well as mods.
-     * 
-     * @event The Message event in question.
-     */
-    public void handleEvent(Message event) {
-
-        String message = event.getMessage();
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
-            String name = m_botAction.getPlayerName(event.getPlayerID());
-            handleCommand(name, message);
-        } else if (event.getMessageType() == Message.ARENA_MESSAGE) {
-            if (message.equals("Arena UNLOCKED") && arenaLock)
-                m_botAction.toggleLocked();
-            else if (message.equals("Arena LOCKED") && !arenaLock)
-                m_botAction.toggleLocked();
-        }
-    }
-
-    /**
-     * Individual commands for the message event are broken down
-     * 
-     * @param name
-     *            The name of the person who sent the message
-     * @param message
-     *            The message itself
-     */
-    public void handleCommand(String name, String message) {
-
-        if (message.startsWith("!leave")) {
-            m_botAction.specWithoutLock(name);
-            PlayerInfo player = m_players.get(name);
-            if (player.isPlaying()) {
-                player.lagger();
-                checkWinner();
-            }
-
-        } else if (message.startsWith("!lagout")) {
-            if (isRunning == true) {
-                PlayerInfo player = m_players.get(name);
-                if (player != null) {
-                    if (player.isLagged()) {
-                        returnedFromLagout(name);
-                    } else {
-                        m_botAction.sendPrivateMessage(name, "You aren't lagged out!");
-                    }
-                } else {
-                    m_botAction.sendPrivateMessage(name, "Your name was not found in the record. Please try !enter");
-                }
-            } else {
-                m_botAction.sendPrivateMessage(name, "The Game is not currently started.");
-            }
-
-        } else if (message.startsWith("!enter")) {
-            if (isRunning == true) {
-                PlayerInfo p = m_players.get(name);
-                if (p == null) {
-
-                    if (teamToggle) {
-                        m_botAction.setShip(name, WARBIRD);
-                        m_botAction.setFreq(name, TEAM1_FREQ);
-                        PlayerInfo player = new PlayerInfo(name, WARBIRD, m_kills, m_saves, m_score);
-                        m_players.put(name, player);
-                        teamToggle = false;
-                    } else {
-                        m_botAction.setShip(name, JAVELIN);
-                        m_botAction.setFreq(name, TEAM2_FREQ);
-                        PlayerInfo player = new PlayerInfo(name, JAVELIN, m_kills, m_saves, m_score);
-                        m_players.put(name, player);
-                        teamToggle = true;
-                    }
-
-                } else {
-                    m_botAction.sendPrivateMessage(name, "Please Use The !lagout Command!");
-                }
-            } else {
-                m_botAction.sendPrivateMessage(name, "The Game is not currently started.");
-            }
-        }
-
-        if (opList.isER(name)) {
-
-            if (message.equals("!start")) {
-                if (isRunning == false) {
-                    startGame(0);
-                } else {
-                    m_botAction.sendPrivateMessage(name, "The game has already begun.");
-                }
-            } else if (message.startsWith("!start ")) {
-                if (isRunning == false) {
-                    String[] parameters = Tools.stringChopper(message.substring(7), ' ');
-                    try {
-                        int timeLimit = Integer.parseInt(parameters[0]);
-                        startGame(timeLimit);
-                    } catch (Exception e) {
-                        m_botAction.sendPrivateMessage(name, "Error in formatting your command.  Please try again.");
-                    }
-                }
-
-            } else if (message.startsWith("!stop")) {
-                if (isRunning == true) {
-                    m_botAction.sendPrivateMessage(name, "The FreezeTag Game Has Ended");
-                    clearRecords();
-                    isRunning = false;
-                } else {
-                    m_botAction.sendPrivateMessage(name, "FreezeTag has not been Enabled");
-                }
-            }
-        }
-    }
-
-    /**
-     * Adds and subtracts time when players die.
-     * 
-     * @param event
-     *            Contains event information on player who died.
-     */
-    public void handleEvent(PlayerDeath event) {
-        if (isRunning == true) {
-            Player killed = m_botAction.getPlayer(event.getKilleeID());
-            Player killer = m_botAction.getPlayer(event.getKillerID());
-
-            if (killed != null) {
-                PlayerInfo player = m_players.get(killer.getPlayerName());
-                if (player != null) {
-                    if (killer.getFrequency() == killed.getFrequency()) {
-                        player.hadTK();
-                        m_botAction.shipReset(event.getKilleeID());
-                        m_botAction.warpRandomly(event.getKilleeID());
-                        m_botAction.specificPrize(event.getKilleeID(), Tools.Prize.ENERGY_DEPLETED);
-                    } else {
-                        if (killed.getShipType() != WARBIRD && killed.getShipType() != JAVELIN)
-                            player.hadSave();
-                        else
-                            player.hadKill();
-
-                        PlayerInfo dplayer = m_players.get(killed.getPlayerName());
-                        if (dplayer != null) {
-                            dplayer.hadDeath();
-                            checkWinner();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Counts arena leaves as DCs to be safe.
-     * 
-     * @param event
-     *            Contains event information on player.
-     */
-    public void handleEvent(PlayerLeft event) {
-        if (isRunning == true) {
-            Player p = m_botAction.getPlayer(event.getPlayerID());
-
-            if (p != null) {
-                PlayerInfo player = m_players.get(p.getPlayerName());
-                if (player != null) {
-                    if (player.isPlaying()) {
-                        player.lagger();
-                        checkWinner();
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Using the frequencyChange event to look out for possible lagouts to the spec frequency.
-     * 
-     * @param event
-     *            Contains information on a freq change.
-     */
-    public void handleEvent(FrequencyShipChange event) {
-        if (isRunning == true) {
-            int checkFreq = event.getFrequency();
-            if (checkFreq == 9999) {
-                Player p = m_botAction.getPlayer(event.getPlayerID());
-                PlayerInfo player = m_players.get(p.getPlayerName());
-                if (p != null && player != null) {
-                    player.lagger();
-                    checkWinner();
-                }
-            }
-        }
-    }
-
-    /**
-     * Everyone that joins the arena while the game is in progress will recieve a message to !lagout or !enter.
-     * 
-     * @param event
-     *            - contains the valriable information for the event.
-     */
-    public void handleEvent(PlayerEntered event) {
-        if (isRunning == true) {
-            if (m_players.containsKey(event.getPlayerName())) {
-                m_botAction.sendPrivateMessage(event.getPlayerName(), "Welcome Back! PM me with !lagout to get back in the game.");
-            } else {
-                m_botAction.sendPrivateMessage(event.getPlayerName(), "Welcome to FreezeJavs! There is currently a game in progress. Please PM me with !enter to join!.");
-            }
-        }
-    }
-
-    /**
-     * A method that puts a returning player from lagout into the ship and spec that they left the game as
-     * 
-     * @param name
-     *            name of the player is needed.
-     */
-    public void returnedFromLagout(String name) {
-        Player p = m_botAction.getPlayer(name);
-        if (p != null) {
-            PlayerInfo pInfo = m_players.get(p.getPlayerName());
-            m_botAction.setShip(name, pInfo.shipType);
-
-            if (pInfo.shipType == WARBIRD || pInfo.shipType == LEV)
-                m_botAction.setFreq(name, TEAM1_FREQ);
-            if (pInfo.shipType == JAVELIN || pInfo.shipType == SPIDER)
-                m_botAction.setFreq(name, TEAM2_FREQ);
-
-            m_botAction.sendPrivateMessage(name, "Welcome back!");
-            pInfo.isNotLagged();
-        } else {
-            m_botAction.sendPrivateMessage(name, "Error!  Please ask the host to put you back in manually.");
-        }
-    }
-
-    /**
-     * Your typical manual that comes with every robot to make our everyday life a little easier.
-     */
-    public String[] getModHelpMessage() {
-
-        String[] freezeTagHelp = { "!start                        -- Starts a game of freeze javs with no time " + "limit.",
-                "!start <time limit>           -- Starts a game of freeze javs with the " + "specified time limit.  (15 minute minimum required)",
-                "!stop                         -- Stops a game of freeze javs.", "!leave                        -- (Public Command) Allows frozen players to " + "get into spec.",
-                "!enter                        -- (Public Command) Allows frozen players to " + "join the game.",
-                "!lagout                       -- (Public Command) Allows frozen players to " + "return from the game."
-
-        };
-        return freezeTagHelp;
-    }
-
-    /**
-     * Cleanup.
-     */
-    public void cancel() {
-        isRunning = false;
-        arenaLock = false;
-        m_botAction.cancelTasks();
-        m_botAction.toggleLocked();
-        clearRecords();
-    }
-
-    /**
-     * Checkout.
-     */
-    public boolean isUnloadable() {
-        clearRecords();
-        isRunning = false;
-        m_botAction.cancelTasks();
-        return true;
+        return topPlayer.getName();
     }
 
     /**
@@ -677,6 +648,31 @@ public class freezejavs extends MultiModule {
             return maxScore;
         }
 
+    }
+
+    /**
+     * Your typical manual that comes with every robot to make our everyday life a little easier.
+     */
+    public String[] getModHelpMessage() {
+
+        String[] freezeTagHelp = { "!start                        -- Starts a game of freeze javs with no time " + "limit.",
+                "!start <time limit>           -- Starts a game of freeze javs with the " + "specified time limit.  (15 minute minimum required)",
+                "!stop                         -- Stops a game of freeze javs.", "!leave                        -- (Public Command) Allows frozen players to " + "get into spec.",
+                "!enter                        -- (Public Command) Allows frozen players to " + "join the game.",
+                "!lagout                       -- (Public Command) Allows frozen players to " + "return from the game."
+
+        };
+        return freezeTagHelp;
+    }
+
+    /**
+     * Checkout.
+     */
+    public boolean isUnloadable() {
+        clearRecords();
+        isRunning = false;
+        m_botAction.cancelTasks();
+        return true;
     }
 
 }
