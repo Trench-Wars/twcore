@@ -149,7 +149,7 @@ public class freezejavs extends MultiModule {
                     }
                 }
             }
-            checkWinner();
+            m_botAction.scheduleTask(new TimerTask() { public void run() { checkWinner();}},1300);
         }
     }
 
