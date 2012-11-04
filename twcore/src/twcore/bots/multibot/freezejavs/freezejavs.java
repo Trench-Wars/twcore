@@ -548,16 +548,15 @@ public class freezejavs extends MultiModule {
         private void doWarning() {
             if (timeLimit == 0) {
                 m_botAction.sendArenaMessage("This game of freeze javs has no " + "time limit.");
-                m_botAction.sendArenaMessage("The freezing will begin in " + "about 10 seconds!", 1);
             } else {
                 m_botAction.sendArenaMessage("This game of freeze tag has a " + "time limit of " + (timeLimit * 60) + " minutes.");
-                m_botAction.sendArenaMessage("The freezing will begin in " + "about 10 seconds!", 1);
                 m_botAction.setTimer(timeLimit * 60);
             }
+            m_botAction.sendArenaMessage("The freezing will begin in " + "about 10 seconds!", 1);
+            m_botAction.createNumberOfTeams(2);
         }
 
         private void doGo() {
-            m_botAction.createNumberOfTeams(2);
             m_botAction.changeAllShipsOnFreq(TEAM1_FREQ, WARBIRD);
             m_botAction.changeAllShipsOnFreq(TEAM2_FREQ, JAVELIN);
             m_botAction.warpFreqToLocation(TEAM1_FREQ, TEAM1_WARPX, TEAM1_WARPY);
