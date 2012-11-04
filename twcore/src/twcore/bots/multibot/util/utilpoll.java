@@ -16,7 +16,6 @@ import twcore.core.game.Player;
  *
  * @author  Harvey Yau
  */
-
 public class utilpoll extends MultiUtil {
     private Poll currentPoll = null;
     private LinkedList<Integer> allowedFreqs = new LinkedList<Integer>();
@@ -39,7 +38,6 @@ public class utilpoll extends MultiUtil {
      * Handles all messages and choices, contains execution code
      * for each choice.
      */
-
     public void handleEvent( Message event ){
         if( event.getMessageType() != Message.PRIVATE_MESSAGE ) return;
         String name = m_botAction.getPlayerName( event.getPlayerID() );
@@ -91,8 +89,13 @@ public class utilpoll extends MultiUtil {
             } catch (NumberFormatException e) {
                 m_botAction.sendPrivateMessage( id, "Unable to parse '" + message.substring(11) + "' as a freq number!" );
             }
-        } else if ( message.startsWith( "!repeat" ) )	{
-        	currentPoll.repeatPoll();
+        } else if ( message.startsWith( "!repeat" ) ) {
+            if (currentPoll != null) {
+                currentPoll.repeatPoll();
+            } else {
+                m_botAction.sendPrivateMessage(name, "A poll isn't currently running.  This command is used to repeat to the arena the choices they can vote on.");
+                return;
+            }
         } else if( message.startsWith( "!clearallowed") ) {
             if( allowedFreqs.size() == 0 ) {
                 m_botAction.sendPrivateMessage( id, "All freqs are already allowed to vote!" );
@@ -106,7 +109,6 @@ public class utilpoll extends MultiUtil {
     /**
      * Returns help messages.
      */
-
     public String[] getHelpMessages() {
         String[] helps = {
             "------ Commands for the poll module -------",
@@ -122,7 +124,6 @@ public class utilpoll extends MultiUtil {
     /**
      * Poll Object that holds all poll related inquiries.
      */
-
     public class Poll{
 
         private String[] poll;
@@ -152,7 +153,6 @@ public class utilpoll extends MultiUtil {
          * @param name is the voting player
          * @param message is the player's choice presumably
          */
-
         public void handlePollCount( String name, String message ){
             try{
                 if( !Tools.isAllDigits( message )){
@@ -195,7 +195,6 @@ public class utilpoll extends MultiUtil {
         /**
          * Repeats the poll question and choices.
          */
-        
         public void repeatPoll()	{
         	m_botAction.sendArenaMessage( "Poll: " + poll[0] , 2 );
             for( int i = 1; i < poll.length; i++ ){
@@ -208,7 +207,6 @@ public class utilpoll extends MultiUtil {
         /**
          * Ends the poll and displays the vote tallies
          */
-
         public void endPoll(){
             m_botAction.sendArenaMessage( "The poll has ended! Question: "
             + poll[0] , 22 );
