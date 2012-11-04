@@ -261,8 +261,12 @@ private class CustomTimer{
 		messages.remove(index);
 	}
 	
-	private boolean hasIndex(int index){
-		return messages.get(index) != null;
+	private boolean hasIndex(int index){    
+        try {
+            return messages.get(index) != null;
+        } catch( IndexOutOfBoundsException e ) {
+            return false;            
+        }
 	}
 	
 	private ArrayList<String> getMessages(){

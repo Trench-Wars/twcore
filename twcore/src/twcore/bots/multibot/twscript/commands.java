@@ -201,7 +201,11 @@ private class CustomCommand {
         
     /** Checks to see if the given index exists */
     private boolean hasIndex(int index) {
-    	return messages.get(index) != null;
+        try {
+            return messages.get(index) != null;
+        } catch( IndexOutOfBoundsException e ) {
+            return false;            
+        }
     }
         
     /** Get the entire ArrayList of actions for this command. */
