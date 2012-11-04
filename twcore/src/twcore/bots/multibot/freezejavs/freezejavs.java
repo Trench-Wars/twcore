@@ -413,6 +413,7 @@ public class freezejavs extends MultiModule {
                 javsLeft++;
         }
 
+        m_botAction.sendPublicMessage("checkingWinner wbs:" + warbirdLeft + " javs:" + javsLeft);
         if (!isTimer) {
             if (warbirdLeft == 0)
                 doStats(JAVELIN);
@@ -495,7 +496,11 @@ public class freezejavs extends MultiModule {
      * 
      */
     private class CheckTimer extends TimerTask {
-        int timerInSeconds = 0;
+        int timerInSeconds;
+        
+        public CheckTimer() {
+            timerInSeconds = 0;
+        }
 
         public void run() {
             timerInSeconds++;
