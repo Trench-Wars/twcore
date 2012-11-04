@@ -412,8 +412,7 @@ public class freezejavs extends MultiModule {
             else if (p.getShipType() == JAVELIN && p.getFrequency() == TEAM2_FREQ)
                 javsLeft++;
         }
-
-        m_botAction.sendPublicMessage("checkingWinner wbs:" + warbirdLeft + " javs:" + javsLeft);
+        
         if (!isTimer) {
             if (warbirdLeft == 0)
                 doStats(JAVELIN);
