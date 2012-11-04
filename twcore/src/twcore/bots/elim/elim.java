@@ -500,8 +500,12 @@ public class elim extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "A new game will begin when there are at least two (2) people playing.");
         else if (state == State.VOTING)
             ba.sendSmartPrivateMessage(name, "We are voting on the next game.");
-        else if (state == State.STARTING || state == State.PLAYING || state == State.ENDING)
-            ba.sendSmartPrivateMessage(name, game.toString());
+        else if (state == State.STARTING || state == State.PLAYING || state == State.ENDING) {
+            if (game == null)
+                ba.sendSmartPrivateMessage(name, "We are between games/in an unknown state.");
+            else
+                ba.sendSmartPrivateMessage(name, game.toString());
+        }
     }
     
     /** Handles the !scorereset (sr) command which resets the stats for the specified ship */
