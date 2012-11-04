@@ -91,7 +91,6 @@ public class freezejavs extends MultiModule {
      */
     public void requestEvents(ModuleEventRequester eventRequester) {
 
-        eventRequester.request(this, EventRequester.PLAYER_ENTERED);
         eventRequester.request(this, EventRequester.PLAYER_DEATH);
         eventRequester.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
         eventRequester.request(this, EventRequester.PLAYER_LEFT);
@@ -149,7 +148,11 @@ public class freezejavs extends MultiModule {
                     }
                 }
             }
-            m_botAction.scheduleTask(new TimerTask() { public void run() { checkWinner();}},1300);
+            m_botAction.scheduleTask(new TimerTask() {
+                public void run() {
+                    checkWinner();
+                }
+            }, 1300);
         }
     }
 
@@ -344,6 +347,8 @@ public class freezejavs extends MultiModule {
             m_botAction.setFreq(name, TEAM1_FREQ);
         if (pInfo.getShip() == JAVELIN || pInfo.getShip() == SPIDER)
             m_botAction.setFreq(name, TEAM2_FREQ);
+        if (pInfo.getShip() == SPIDER || pInfo.getShip() == LEV)
+            m_botAction.specificPrize(name, Tools.Prize.ENERGY_DEPLETED);
 
         m_botAction.sendPrivateMessage(name, "Welcome back!");
         pInfo.isNotLagged();
@@ -412,7 +417,7 @@ public class freezejavs extends MultiModule {
             else if (p.getShipType() == JAVELIN && p.getFrequency() == TEAM2_FREQ)
                 javsLeft++;
         }
-        
+
         if (!isTimer) {
             if (warbirdLeft == 0)
                 doStats(JAVELIN);
@@ -439,8 +444,8 @@ public class freezejavs extends MultiModule {
     private void doStats(int winner) {
 
         m_botAction.sendArenaMessage("Kill = 1 pt /    Save = 1 pt /    Team Kills = -1 pt   ");
-        m_botAction.sendArenaMessage("----------------------------------------------------- TOP PLAYERS");
-        m_botAction.sendArenaMessage("   #       Kills        Saves        Score                   ");
+        m_botAction.sendArenaMessage("-----------------------------------------------------TOP PLAYERS");
+        m_botAction.sendArenaMessage("   #        Kills        Saves        Score                   ");
 
         for (int i = 1; i < 11; i++) { // Displays the top 10 players that were in the game                                       
 
@@ -450,8 +455,8 @@ public class freezejavs extends MultiModule {
                 String sKills = "" + p.getKills();
                 String sSave = "" + p.getSaves();
                 String sScore = "" + p.getScore();
-                m_botAction.sendArenaMessage("   " + i + ".  " + Tools.centerString(sKills, 9) + "    " + Tools.centerString(sSave, 9) + "    " + Tools.centerString(sScore, 9) + "    "
-                        + Tools.rightString(name, 20));
+                m_botAction.sendArenaMessage(Tools.centerString(" " + i + ".  ", 7) + Tools.centerString(sKills, 9) + "    " + Tools.centerString(sSave, 9) + "    " + Tools.centerString(sScore, 9)
+                        + "    " + Tools.rightString(name, 20));
                 m_players.remove(name);
             }
         }
@@ -460,7 +465,7 @@ public class freezejavs extends MultiModule {
             m_botAction.sendArenaMessage("---------The Warbirds have tagged their way to victory!---------");
             m_botAction.changeAllShips(WARBIRD);
         } else if (winner == JAVELIN) {
-            m_botAction.sendArenaMessage("---------The Javelins have tagged their way to victory!---------");
+            m_botAction.sendArenaMessage("---------The Javelins have tagged their way to victory!---------", 5);
             m_botAction.changeAllShips(JAVELIN);
         }
         isRunning = false;
@@ -496,7 +501,7 @@ public class freezejavs extends MultiModule {
      */
     private class CheckTimer extends TimerTask {
         int timerInSeconds;
-        
+
         public CheckTimer() {
             timerInSeconds = 0;
         }
@@ -519,7 +524,7 @@ public class freezejavs extends MultiModule {
          * The rules that are displayed at the begining of each game.
          */
         private void doRules() {
-            m_botAction.sendArenaMessage("---------------------------- FREEZE JAVS RULES ----------------------------");
+            m_botAction.sendArenaMessage("---------------------------- FREEZE JAVS RULES ----------------------------", 4);
             m_botAction.sendArenaMessage("|                                                                        |");
             m_botAction.sendArenaMessage("| 1.) There will be two teams, a team of warbirds versus a team of javs. |");
             m_botAction.sendArenaMessage("|                                                                        |");
@@ -594,7 +599,7 @@ public class freezejavs extends MultiModule {
         public void setShip(int ship) {
             shipType = ship;
         }
-        
+
         public int getShip() {
             return shipType;
         }
