@@ -107,43 +107,49 @@ public class freezejavs extends MultiModule {
      */
     public void handleEvent(PlayerDeath event) {
         if (isRunning) {
-            Player killed = m_botAction.getPlayer(event.getKilleeID());
-            Player killer = m_botAction.getPlayer(event.getKillerID());
+            Player pkilled = m_botAction.getPlayer(event.getKilleeID());
+            Player pkiller = m_botAction.getPlayer(event.getKillerID());
 
-            if (killed != null) {
-                PlayerInfo player = m_players.get(killer.getPlayerName());
-                if (player != null) {
+            if (pkilled != null && pkiller != null) {
+                PlayerInfo killer = m_players.get(pkiller.getPlayerName());
+                PlayerInfo killed = m_players.get(pkilled.getPlayerName());
+                if (killer != null && killed != null) {
 
-                    if (killer.getFrequency() == killed.getFrequency()) {
-                        player.hadTK();
+                    if (pkiller.getFrequency() == pkilled.getFrequency()) {
+                        killer.hadTK();
                         m_botAction.shipReset(event.getKilleeID());
                         m_botAction.warpRandomly(event.getKilleeID());
                         m_botAction.specificPrize(event.getKilleeID(), Tools.Prize.ENERGY_DEPLETED);
                     } else {
-                        if (killed.getShipType() != WARBIRD && killed.getShipType() != JAVELIN) {
-                            player.hadSave();
+                        if (pkilled.getShipType() != WARBIRD && pkilled.getShipType() != JAVELIN) {
+                            killer.hadSave();
                         } else {
-                            player.hadKill();
+                            killer.hadKill();
                         }
 
-                        if (killed.getShipType() == WARBIRD) {
-                            m_botAction.setShip(killed.getPlayerName(), SPIDER);
-                            m_botAction.setFreq(killed.getPlayerName(), TEAM2_FREQ);
-                            m_botAction.specificPrize(killed.getPlayerName(), Tools.Prize.ENERGY_DEPLETED);
-                        } else if (killed.getShipType() == JAVELIN) {
-                            m_botAction.setShip(killed.getPlayerName(), LEV);
-                            m_botAction.setFreq(killed.getPlayerName(), TEAM1_FREQ);
-                            m_botAction.specificPrize(killed.getPlayerName(), Tools.Prize.ENERGY_DEPLETED);
-                        } else if (killed.getShipType() == SPIDER) {
-                            m_botAction.setShip(killed.getPlayerName(), WARBIRD);
-                            m_botAction.setFreq(killed.getPlayerName(), TEAM1_FREQ);
-                        } else if (killed.getShipType() == LEV) {
-                            m_botAction.setShip(killed.getPlayerName(), JAVELIN);
-                            m_botAction.setFreq(killed.getPlayerName(), TEAM2_FREQ);
+                        if (pkilled.getShipType() == WARBIRD) {
+                            m_botAction.setShip(pkilled.getPlayerName(), SPIDER);
+                            m_botAction.setFreq(pkilled.getPlayerName(), TEAM2_FREQ);
+                            m_botAction.specificPrize(pkilled.getPlayerName(), Tools.Prize.ENERGY_DEPLETED);
+                            killed.setShip(SPIDER);
+                        } else if (pkilled.getShipType() == JAVELIN) {
+                            m_botAction.setShip(pkilled.getPlayerName(), LEV);
+                            m_botAction.setFreq(pkilled.getPlayerName(), TEAM1_FREQ);
+                            m_botAction.specificPrize(pkilled.getPlayerName(), Tools.Prize.ENERGY_DEPLETED);
+                            killed.setShip(LEV);
+                        } else if (pkilled.getShipType() == SPIDER) {
+                            m_botAction.setShip(pkilled.getPlayerName(), WARBIRD);
+                            m_botAction.setFreq(pkilled.getPlayerName(), TEAM1_FREQ);
+                            killed.setShip(WARBIRD);
+                        } else if (pkilled.getShipType() == LEV) {
+                            m_botAction.setShip(pkilled.getPlayerName(), JAVELIN);
+                            m_botAction.setFreq(pkilled.getPlayerName(), TEAM2_FREQ);
+                            killed.setShip(JAVELIN);
                         }
                     }
                 }
             }
+            checkWinner();
         }
     }
 
@@ -155,14 +161,12 @@ public class freezejavs extends MultiModule {
      */
     public void handleEvent(PlayerLeft event) {
         if (isRunning) {
-            Player p = m_botAction.getPlayer(event.getPlayerID());
-
+            String p = m_botAction.getPlayerName(event.getPlayerID());
             if (p != null) {
-                PlayerInfo player = m_players.get(p.getPlayerName());
-                if (player != null) {
-                    if (player.isPlaying()) {
-                        player.lagger();
-                    }
+                PlayerInfo player = m_players.get(p);
+                if (player != null && player.isPlaying()) {
+                    player.lagger();
+                    checkWinner();
                 }
             }
         }
@@ -176,13 +180,12 @@ public class freezejavs extends MultiModule {
      */
     public void handleEvent(FrequencyShipChange event) {
         if (isRunning) {
-            int checkFreq = event.getFrequency();
-            if (checkFreq == 9999) {
-                Player p = m_botAction.getPlayer(event.getPlayerID());
-                PlayerInfo player = m_players.get(p.getPlayerName());
-                if (p != null && player != null) {
+            if (event.getShipType() == 0) {
+                String name = m_botAction.getPlayerName(event.getPlayerID());
+                PlayerInfo player = m_players.get(name);
+                if (player != null)
                     player.lagger();
-                }
+                checkWinner();
             }
         }
     }
@@ -209,12 +212,12 @@ public class freezejavs extends MultiModule {
      * @event The Message event in question.
      */
     public void handleEvent(Message event) {
-
+        int type = event.getMessageType();
         String message = event.getMessage();
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
+        if (type == Message.PRIVATE_MESSAGE) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
             handleCommand(name, message);
-        } else if (event.getMessageType() == Message.ARENA_MESSAGE) {
+        } else if (type == Message.ARENA_MESSAGE) {
             if (message.equals("Arena UNLOCKED") && arenaLock)
                 m_botAction.toggleLocked();
             else if (message.equals("Arena LOCKED") && !arenaLock)
@@ -280,14 +283,12 @@ public class freezejavs extends MultiModule {
                 if (teamToggle) {
                     m_botAction.setShip(name, WARBIRD);
                     m_botAction.setFreq(name, TEAM1_FREQ);
-                    PlayerInfo player = new PlayerInfo(name, WARBIRD, 0, 0, 0);
-                    m_players.put(name, player);
+                    m_players.put(name, new PlayerInfo(name, WARBIRD));
                     teamToggle = false;
                 } else {
                     m_botAction.setShip(name, JAVELIN);
                     m_botAction.setFreq(name, TEAM2_FREQ);
-                    PlayerInfo player = new PlayerInfo(name, JAVELIN, 0, 0, 0);
-                    m_players.put(name, player);
+                    m_players.put(name, new PlayerInfo(name, JAVELIN));
                     teamToggle = true;
                 }
 
@@ -336,27 +337,21 @@ public class freezejavs extends MultiModule {
      *            name of the player is needed.
      */
     private void returnedFromLagout(String name) {
-        Player p = m_botAction.getPlayer(name);
-        if (p != null) {
-            PlayerInfo pInfo = m_players.get(p.getPlayerName());
-            m_botAction.setShip(name, pInfo.shipType);
+        PlayerInfo pInfo = m_players.get(name);
+        m_botAction.setShip(name, pInfo.getShip());
 
-            if (pInfo.shipType == WARBIRD || pInfo.shipType == LEV)
-                m_botAction.setFreq(name, TEAM1_FREQ);
-            if (pInfo.shipType == JAVELIN || pInfo.shipType == SPIDER)
-                m_botAction.setFreq(name, TEAM2_FREQ);
+        if (pInfo.getShip() == WARBIRD || pInfo.getShip() == LEV)
+            m_botAction.setFreq(name, TEAM1_FREQ);
+        if (pInfo.getShip() == JAVELIN || pInfo.getShip() == SPIDER)
+            m_botAction.setFreq(name, TEAM2_FREQ);
 
-            m_botAction.sendPrivateMessage(name, "Welcome back!");
-            pInfo.isNotLagged();
-        } else {
-            m_botAction.sendPrivateMessage(name, "Error!  Please ask the host to put you back in manually.");
-        }
+        m_botAction.sendPrivateMessage(name, "Welcome back!");
+        pInfo.isNotLagged();
     }
 
     private void startCheckTimer() {
-        try {
-            checkTimer.cancel();
-        } catch (Exception e) {}
+        if (checkTimer != null)
+            m_botAction.cancelTask(checkTimer);
 
         checkTimer = new CheckTimer();
         m_botAction.scheduleTask(checkTimer, Tools.TimeInMillis.SECOND, Tools.TimeInMillis.SECOND);
@@ -369,10 +364,8 @@ public class freezejavs extends MultiModule {
     private void createPlayerRecords() {
         m_players = new TreeMap<String, PlayerInfo>(String.CASE_INSENSITIVE_ORDER);
 
-        for (Player p : m_botAction.getPlayingPlayers()) {
-            PlayerInfo player = new PlayerInfo(p.getPlayerName(), p.getShipType(), 0, 0, 0);
-            m_players.put(p.getPlayerName(), player);
-        }
+        for (Player p : m_botAction.getPlayingPlayers())
+            m_players.put(p.getPlayerName(), new PlayerInfo(p.getPlayerName(), p.getShipType()));
     }
 
     /**
@@ -509,31 +502,13 @@ public class freezejavs extends MultiModule {
 
             if (timerInSeconds == 5)
                 doRules();
-            if (timerInSeconds == 30)
+            else if (timerInSeconds == 30)
                 doWarning();
-            if (timerInSeconds == 40)
+            else if (timerInSeconds == 40)
                 doGo();
-            if (timerInSeconds > 40)
-                recordCheck();
             if (timerInSeconds == timeLimit && timeLimit > 0)
                 isTimer = true;
 
-        }
-
-        /**
-         * A record check that goes off every second to make sure things are tracked properly.
-         */
-        private void recordCheck() {
-            for (Player p : m_botAction.getPlayingPlayers()) {
-                PlayerInfo name = m_players.get(p.getPlayerName());
-                if (name == null && p.getFrequency() < 2) {
-                    PlayerInfo player = new PlayerInfo(p.getPlayerName(), p.getShipType(), 0, 0, 0);
-                    m_players.put(p.getPlayerName(), player);
-                } else if (p.getFrequency() < 2 && name.shipType != p.getShipType()) {
-                    name.shipType = p.getShipType();
-                }
-            }
-            checkWinner();
         }
 
         /**
@@ -604,68 +579,76 @@ public class freezejavs extends MultiModule {
         private boolean laggedOut = false;
 
         // Default values added to a record when the record is created.
-        private PlayerInfo(String Name, int ShipType, int Kills, int Saves, int Score) {
-            this.name = Name;
-            this.shipType = ShipType;
+        public PlayerInfo(String name, int shipType) {
+            this.name = name;
+            this.shipType = shipType;
             maxKills = 0;
             maxScore = 0;
             maxSaves = 0;
         }
 
+        public void setShip(int ship) {
+            shipType = ship;
+        }
+        
+        public int getShip() {
+            return shipType;
+        }
+
         // Returns a players name.
-        private String getName() {
+        public String getName() {
             return name;
         }
 
         // Adds points for killing a player ( Default: 1)
-        private void hadKill() {
+        public void hadKill() {
             maxKills += m_kills;
             maxScore += m_kills;
         }
 
         // Subtracts points for tking a player (Default: 1)
-        private void hadTK() {
+        public void hadTK() {
             maxScore -= m_tk;
         }
 
         // Adds points for saving another player (Default: 1)
-        private void hadSave() {
+        public void hadSave() {
             maxSaves += m_saves;
             maxScore += m_saves;
         }
 
         // Sets player's lag status to laggedOut
-        private void lagger() {
+        public void lagger() {
             laggedOut = true;
             m_botAction.sendPrivateMessage(name, "PM me with !lagout to get back in the game.");
         }
 
         // boolean check if the player is lagged out.
-        private boolean isLagged() {
+        public boolean isLagged() {
             return laggedOut;
         }
 
-        private void isNotLagged() {
+        public void isNotLagged() {
             laggedOut = false;
         }
 
         // boolean check if the player is playing.
-        private boolean isPlaying() {
+        public boolean isPlaying() {
             return isPlaying;
         }
 
         // returns how many kills a player has.
-        private int getKills() {
+        public int getKills() {
             return maxKills;
         }
 
         // returns how many kills a player has.
-        private int getSaves() {
+        public int getSaves() {
             return maxSaves;
         }
 
         // returns the score of a player (K+S-TK).
-        private int getScore() {
+        public int getScore() {
             return maxScore;
         }
 
