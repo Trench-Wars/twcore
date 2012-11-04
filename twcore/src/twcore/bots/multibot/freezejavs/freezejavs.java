@@ -557,6 +557,7 @@ public class freezejavs extends MultiModule {
         }
 
         private void doGo() {
+            m_botAction.createNumberOfTeams(2);
             m_botAction.changeAllShipsOnFreq(TEAM1_FREQ, WARBIRD);
             m_botAction.changeAllShipsOnFreq(TEAM2_FREQ, JAVELIN);
             m_botAction.warpFreqToLocation(TEAM1_FREQ, TEAM1_WARPX, TEAM1_WARPY);
