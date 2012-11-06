@@ -434,10 +434,10 @@ public class freezetag extends MultiModule {
     private void doStats(int winner) {
 
         m_botAction.sendArenaMessage("Kill = 1 pt    /    Save = 1 pt   ");
-        m_botAction.sendArenaMessage("-----------------------------------------------------TOP PLAYERS");
+        m_botAction.sendArenaMessage("-----------------------------------------------------TOP PLAYERS", 5);
         m_botAction.sendArenaMessage("   #        Kills        Saves        Score                   ");
 
-        for (int i = 1; i < 11; i++) { // Displays the top 10 players that were in the game                                       
+        for (int i = 1; i < 6; i++) { // Displays the top players that were in the game                                       
 
             String name = getTopPlayer();
             PlayerInfo p = m_players.get(name);
@@ -455,7 +455,7 @@ public class freezetag extends MultiModule {
             m_botAction.sendArenaMessage("---------The Warbirds have tagged their way to victory!---------");
             m_botAction.changeAllShips(WARBIRD);
         } else if (winner == JAVELIN) {
-            m_botAction.sendArenaMessage("---------The Javelins have tagged their way to victory!---------", 5);
+            m_botAction.sendArenaMessage("---------The Javelins have tagged their way to victory!---------");
             m_botAction.changeAllShips(JAVELIN);
         }
         isRunning = false;
@@ -505,6 +505,8 @@ public class freezetag extends MultiModule {
                 doWarning();
             else if (timerInSeconds == 40)
                 doGo();
+            else if (timerInSeconds % 30 == 0)
+                m_botAction.sendTeamMessage("Please PM me with !enter to join the game or !lagout to return.");
             if (timerInSeconds == timeLimit && timeLimit > 0)
                 isTimer = true;
 
