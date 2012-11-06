@@ -1,5 +1,5 @@
 /**
- * twbotfreezetag.java
+ * freezejavs.java
  *
  * Created: 07/05/2004
  *
@@ -99,7 +99,7 @@ public class freezejavs extends MultiModule {
     }
 
     /**
-     * Adds and subtracts time when players die.
+     * Handles all the ship and freq changes when a player dies.
      * 
      * @param event
      *            Contains event information on player who died.
@@ -447,7 +447,7 @@ public class freezejavs extends MultiModule {
         m_botAction.sendArenaMessage("-----------------------------------------------------TOP PLAYERS", 5);
         m_botAction.sendArenaMessage("   #        Kills        Saves        Score                   ");
 
-        for (int i = 1; i < 6; i++) { // Displays the top 10 players that were in the game                                       
+        for (int i = 1; i < 6; i++) { // Displays the top players that were in the game                                       
 
             String name = getTopPlayer();
             PlayerInfo p = m_players.get(name);
@@ -523,7 +523,7 @@ public class freezejavs extends MultiModule {
         }
 
         /**
-         * The rules that are displayed at the begining of each game.
+         * The rules that are displayed at the beginning of each game.
          */
         private void doRules() {
             m_botAction.sendArenaMessage("---------------------------- FREEZE JAVS RULES ----------------------------", 4);
@@ -545,7 +545,7 @@ public class freezejavs extends MultiModule {
             m_botAction.sendArenaMessage("| with !leave to get back in spec.                                       |");
             m_botAction.sendArenaMessage("|                                                                        |");
             m_botAction.sendArenaMessage("--------------------------------------------------------------------------");
-            m_botAction.sendArenaMessage("Use ESC to display all of the rules " + "at once.", 2);
+            m_botAction.sendArenaMessage("Use ESC to display all of the rules " + "at once.");
         }
 
         /**
@@ -555,8 +555,8 @@ public class freezejavs extends MultiModule {
             if (timeLimit == 0) {
                 m_botAction.sendArenaMessage("This game of freeze javs has no " + "time limit.");
             } else {
-                m_botAction.sendArenaMessage("This game of freeze tag has a " + "time limit of " + (timeLimit * 60) + " minutes.");
-                m_botAction.setTimer(timeLimit * 60);
+                m_botAction.sendArenaMessage("This game of freeze tag has a " + "time limit of " + (timeLimit / 60) + " minutes.");
+                m_botAction.setTimer(timeLimit / 60);
             }
             m_botAction.sendArenaMessage("The freezing will begin in " + "about 10 seconds!", 1);
             m_botAction.createNumberOfTeams(2);
