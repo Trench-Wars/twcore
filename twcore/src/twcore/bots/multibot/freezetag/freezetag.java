@@ -535,7 +535,7 @@ public class freezetag extends MultiModule {
             m_botAction.sendArenaMessage("| with !leave to get back in spec.                                       |");
             m_botAction.sendArenaMessage("|                                                                        |");
             m_botAction.sendArenaMessage("--------------------------------------------------------------------------");
-            m_botAction.sendArenaMessage("Use ESC to display all of the rules " + "at once.", 2);
+            m_botAction.sendArenaMessage("Use ESC to display all of the rules " + "at once.");
         }
 
         /**
@@ -545,8 +545,8 @@ public class freezetag extends MultiModule {
             if (timeLimit == 0) {
                 m_botAction.sendArenaMessage("This game of freeze tag has no " + "time limit.");
             } else {
-                m_botAction.sendArenaMessage("This game of freeze tag has a " + "time limit of " + (timeLimit * 60) + " minutes.");
-                m_botAction.setTimer(timeLimit * 60);
+                m_botAction.sendArenaMessage("This game of freeze tag has a " + "time limit of " + (timeLimit / 60) + " minutes.");
+                m_botAction.setTimer(timeLimit / 60);
             }
             m_botAction.sendArenaMessage("The freezing will begin in " + "about 10 seconds!", 1);
             m_botAction.createNumberOfTeams(2);
