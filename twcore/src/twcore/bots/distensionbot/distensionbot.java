@@ -6585,7 +6585,7 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdGrant( String name, String msg ) {
-        if( !( name.equals("qan") || name.equals("dugwyler") ) )
+        if( !( name.equals("qan") || name.equals("dugwyler") || name.equals("WingZero")) )
             throw new TWCoreException( "Only the bot coder may use this command." );
 
         String[] args = msg.split(":");
