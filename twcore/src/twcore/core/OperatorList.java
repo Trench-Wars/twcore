@@ -105,9 +105,9 @@ public class OperatorList {
      * Initializes this OperatorList by loading the operators.cfg configuration file
      */
     public void init(File operatorsCfg) throws FileNotFoundException, IOException {
-        Properties prop = new Properties();
-        FileInputStream fileInput = new FileInputStream(operatorsCfg);
-        prop.load(fileInput);
+        //Properties prop = new Properties();
+        //FileInputStream fileInput = new FileInputStream(operatorsCfg);
+        //prop.load(fileInput);
 
         // temporary map for reading out the configuration
         String[] operators_keys = {
@@ -119,13 +119,14 @@ public class OperatorList {
                 "assign_highmod", "assign_dev", "assign_smod", "assign_sysop", "assign_owner"
         };
 
+        BotSettings cfg = new BotSettings(operatorsCfg);
 
         // Operators
         for(int i = operators_keys.length-1 ; i >= 0 ; i--) {
             String key = operators_keys[i];
             boolean sysop = key.equals("level_sysop");
-            if(prop.containsKey(key)) {
-                String value = prop.getProperty(key);
+            if(!cfg.getString(key).isEmpty()) {
+                String value = cfg.getString(key);
 
                 if(value.trim().length() > 0) {
                     StringTokenizer tokens = new StringTokenizer(value,",");
@@ -142,8 +143,8 @@ public class OperatorList {
         for(int i = auto_assign_keys.length-1 ; i >= 0 ; i--) {
             String key = auto_assign_keys[i];
 
-            if(prop.containsKey(key)) {
-                String value = prop.getProperty(key).trim();
+            if(!cfg.getString(key).isEmpty()) {
+                String value = cfg.getString(key).trim();
 
                 if(value.trim().length() > 0) {
                     autoAssign.put(i, value);
@@ -151,7 +152,7 @@ public class OperatorList {
             }
         }
         
-        fileInput.close();
+        //fileInput.close();
     }
     
     public Set<String> getSysops() {
