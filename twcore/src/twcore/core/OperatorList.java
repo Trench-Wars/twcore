@@ -203,7 +203,7 @@ public class OperatorList {
                         name = line.trim().toLowerCase();
 
                         // Ignore bot names that are already on the operator list as bot level
-                        if((sysops != null && sysops.contains(name)) || (operators.containsKey(name) && operators.get(name) == OperatorList.BOT_LEVEL)) {
+                        if(operators.containsKey(name) && operators.get(name) == OperatorList.BOT_LEVEL) {
                             continue;
                         }
 
