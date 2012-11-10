@@ -1114,13 +1114,14 @@ public class HubBot extends SubspaceBot {
                         "Robohelp    - [robohelp]",
                         "MessageBot  - [messagebot]",
                         "Radiobot    - [radiobot]",
-                        "TW-Guard    - [pubbot]",
+                        "TW-Guard*   - [pubbot]",
                         "TW-GuardHub - [pubhub]",
                         "Banner Boy  - [bannerboy]",
                         "TWDOpBot    - [twdop]",
                         "ForumBot    - [forumbot]",
                         "WhoBot      - [whobot]",
-                        "TwChat      - [twchat]"
+                        "TwChat      - [twchat]",
+                        "TW-WelcomeBot-[welcomebot]"
                         
                 };
                 m_botAction.remotePrivateMessageSpam(name, twcore);
@@ -1141,7 +1142,8 @@ public class HubBot extends SubspaceBot {
                         "Robo Ref  - [elim]",
                         "Basebot/Wbduelbot/Javduelbot/Spiderduelbot - [bwjsbot]",
                         "TW-Pub1   - [pubsystem]",
-                        "GammaBot2 - [octabot]"
+                        "GammaBot2 - [octabot]",
+                        "HockeyBot - [hockeybot]"
                 };
                 m_botAction.remotePrivateMessageSpam(name, twcoreEvents);
             }
@@ -1163,7 +1165,6 @@ public class HubBot extends SubspaceBot {
                         "TWDBot -    [twdbot]",
                         "TWDHub -    [twdhub]",
                         "Tournybot - [tournybot]",
-                        "HockeyBot - [hockeybot]",
                         "TWLBot* -   [twl]",
                         "TWDTBot -   [twdtbot]",
                         "MatchBot* - [twdt]"
