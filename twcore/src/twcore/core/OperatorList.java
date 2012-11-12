@@ -130,9 +130,10 @@ public class OperatorList {
                 if(value.trim().length() > 0) {
                     StringTokenizer tokens = new StringTokenizer(value,",");
                     while(tokens.hasMoreTokens()) {
-                        operators.put( tokens.nextToken().trim().toLowerCase(), i );
+                        String token = tokens.nextToken().trim().toLowerCase();
+                        operators.put(token , i );
                         if (sysop)
-                            sysops.add(tokens.nextToken().trim());
+                            sysops.add(token);
                     }
                 }
             }
