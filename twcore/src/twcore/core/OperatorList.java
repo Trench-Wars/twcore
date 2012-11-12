@@ -123,7 +123,7 @@ public class OperatorList {
         // Operators
         for(int i = operators_keys.length-1 ; i >= 0 ; i--) {
             String key = operators_keys[i];
-            boolean sysop = key.equals("level_sysop");
+            boolean sysop = key.equals("level_sysop") || key.equals("level_owner");
             if(prop.containsKey(key)) {
                 String value = prop.getProperty(key);
 
