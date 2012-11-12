@@ -324,9 +324,21 @@ public class pictionary extends MultiModule {
                 pickPlayer();
                 cantPlay.clear();
                 cantPlay.add(curArtist);
-                if (custGame)
+                m_botAction.sendArenaMessage("" + curArtist + " has been chosen to draw first.");
+                if (custGame) {
                     m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
-                else {
+    		        warn = new TimerTask() {
+    		        	@Override
+    		            public void run() {
+    		                m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you. Your turn will be forfeited if you do not.");
+    		                forcePass = new TimerTask() {
+    		                    public void run() {
+    		                        doPass(curArtist);
+    		                    }
+    		                }; m_botAction.scheduleTask(forcePass, 15000);
+    		            }
+    		        }; m_botAction.scheduleTask(warn, 15000);
+                } else {
                     grabWord();
                     doReadyCheck();
                 }
@@ -374,6 +386,7 @@ public class pictionary extends MultiModule {
             return;
         String passing = curArtist;
         m_botAction.specWithoutLock(curArtist);
+        gameProgress = READY_CHECK;
         while (passing.equals(curArtist)) {
             pickPlayer();
         }
@@ -383,9 +396,21 @@ public class pictionary extends MultiModule {
         try {
             m_botAction.cancelTasks();
         } catch (Exception e) {}
-        if (custGame)
+        if (custGame) {
             m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
-        else {
+		        warn = new TimerTask() {
+		        	@Override
+		            public void run() {
+		                m_botAction.sendSmartPrivateMessage(curArtist, "Private message me with !ready or your turn will be forfeited.");
+		                forcePass = new TimerTask() {
+		                    public void run() {
+		                        doPass(curArtist);
+		                    }
+		                };
+		                m_botAction.scheduleTask(forcePass, 15000);
+		            }
+		        }; m_botAction.scheduleTask(warn, 15000);
+    	} else {
             grabWord();
             doReadyCheck();
         }
@@ -432,11 +457,13 @@ public class pictionary extends MultiModule {
             doDraw();
         } else {
             warn = new TimerTask() {
+            	@Override
                 public void run() {
                     m_botAction.sendSmartPrivateMessage(curArtist, "Private message me with !ready or your turn will be forfeited.");
                     forcePass = new TimerTask() {
+                    	@Override
                         public void run() {
-                            doPass(m_botAction.getBotName());
+                            doPass(curArtist);
                         }
                     };
                     m_botAction.scheduleTask(forcePass, 15000);
@@ -476,6 +503,7 @@ public class pictionary extends MultiModule {
         m_botAction.warpTo(curArtist, XSpot, YSpot);
         m_botAction.sendSmartPrivateMessage(curArtist, "Draw: " + t_word);
         timerQuestion = new TimerTask() {
+        	@Override
             public void run() {
                 if (gameProgress == READY_CHECK) {
                     gameProgress = DRAWING;
@@ -495,6 +523,7 @@ public class pictionary extends MultiModule {
     /** ************************************************************* */
     public void displayHint() {
         timerHint = new TimerTask() {
+        	@Override
             public void run() {
                 if (gameProgress == DRAWING) {
                     gameProgress = HINT_GIVEN;
@@ -513,6 +542,7 @@ public class pictionary extends MultiModule {
     /** ************************************************************* */
     public void displayAnswer() {
         timerAnswer = new TimerTask() {
+        	@Override
             public void run() {
                 if (gameProgress == HINT_GIVEN) {
                     gameProgress = ANSWER_GIVEN;
@@ -628,6 +658,7 @@ public class pictionary extends MultiModule {
                             m_botAction.cancelTasks();
                         } catch (Exception e) {}
                         TimerTask adm = new TimerTask() {
+                            @Override
                             public void run() {
                                 startNextRound();
                             }
