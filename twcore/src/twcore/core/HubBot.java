@@ -611,6 +611,11 @@ public class HubBot extends SubspaceBot {
     			m_botAction.sendSmartPrivateMessage(messager, pm);
     		}
     	}
+    	Set<String> sys = list.getSysops();
+    	String s = "Sysops: ";
+    	for (String n : sys)
+    	    s += n + ", ";
+    	m_botAction.sendSmartPrivateMessage(messager, s);
     }
 
     /**
