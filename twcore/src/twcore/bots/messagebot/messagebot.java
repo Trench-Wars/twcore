@@ -66,23 +66,41 @@ import twcore.core.util.ipc.IPCMessage;
  *	Fixed !help order
  *
  *
- * TODO:
+ * TODO: Add Task functionality. Ops+ can set a task in a channel for general or to be done by someone specific.
+ * TODO: Any member can view the tasks currently set in the channel.
+ * TODO: Multi-line messages - at very least stop cutoff messages.
  *
- *	Multi-line messages
+ *
+ * DB Tables used:
+ * ---------------
+ * tblChannel          - fnChannelID, fcChannelName, fcOwner, fnPrivate
+ * tblChannelUser      - fnChannelID, fcChannel, fcName, fnLevel
+ * tblMessageSystem    - fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp
+ * tblMessageToBot     - fnID, fcSyncData 
+ * tblMessageBotIgnore - fcIgnorer, fcIgnoree
+ * 
+ * Check: 
+ * tblMessageBotUser - fcName, fnNotifyEnabled
+ * tblMessage        - fnMessageID, fcSubject, fcMessageType, fcTarget, fcMessage, fnSound, fnProcessed, ftUpdated
+ * 
+ * IPC Channel used is "messages". 
+ * This is called by pubbotmessage.java from a periodic timer for all players that enter.
+ * Also referenced in pubbot.java to connect and disconnect to the IPC Channel.
  *
  */
+
 public class messagebot extends SubspaceBot
 {
-	HashMap <String,Channel>channels;
-	//HashMap defaultChannel;
-	HashSet <String>ops;
-	CommandInterpreter m_CI;
-	TimerTask messageDeleteTask, messageBotSync;
+	private HashMap <String,Channel>channels;
+	private HashSet <String>ops;
+	private CommandInterpreter m_CI;
+	private TimerTask messageDeleteTask, messageBotSync;
 	public static final String IPCCHANNEL = "messages";
-	boolean bug = false;
-	public String database = "website";//If you change this you must also change line ~1426
-
+	//boolean bug = false;
+	private String database = "website";//If you change this you must also change line ~1426
+	
 	private LinkedList<String> playersOnline = new LinkedList<String>();
+	
 	/** Constructor, requests Message and Login events.
 	 *  Also prepares bot for use.
 	 */
@@ -93,7 +111,6 @@ public class messagebot extends SubspaceBot
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.LOGGED_ON);
 		channels = new HashMap<String,Channel>();
-		//defaultChannel = new HashMap();
 		ops = new HashSet<String>();
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
@@ -109,7 +126,7 @@ public class messagebot extends SubspaceBot
 	{
 		IPCMessage ipcMessage = (IPCMessage) event.getObject();
 		String message = ipcMessage.getMessage();
-		checkNewMessages(message.toLowerCase());
+		checkNewMessages(message);
 	}
 
 	/** Checks to see if the player has new messages.
@@ -117,6 +134,7 @@ public class messagebot extends SubspaceBot
 	 */
 	public void checkNewMessages(String name)
 	{
+	    name = name.trim().toLowerCase();
 		String query = "SELECT * FROM tblMessageSystem WHERE fcName = '"+Tools.addSlashesToString(name)+"' and fnRead = 0";
 		try {
 			ResultSet results = m_botAction.SQLQuery(database, query);
@@ -127,18 +145,11 @@ public class messagebot extends SubspaceBot
             m_botAction.SQLClose(results);
             if(unreadMsgs > 0) 
             {
-                //checkPlayerOnline(name);
-                //if( playersOnline.contains(name) ){
-                    m_botAction.sendSmartPrivateMessage(name, "You have "
-                            + unreadMsgs + " new message" + (unreadMsgs==1?"":"s") +
+                m_botAction.sendSmartPrivateMessage(name, "You have "
+                        + unreadMsgs + " new message" + (unreadMsgs==1?"":"s") +
                         ".  PM me with !read to read " + (unreadMsgs==1?"it":"them") +
                         ", or !messages for a list.");
-                    playersOnline.remove(name);
-                //}
-                   
-                /*else{
-                        sendSSMessage(name);
-                    }*/
+                playersOnline.remove(name);
             }
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
@@ -146,7 +157,6 @@ public class messagebot extends SubspaceBot
 	public void checkPlayerOnline(String name)
 	{
 	    m_botAction.locatePlayer(name);
-	    
 	}
 	/** Sets up the CommandInterpreter to respond to
 	 *  all of the commands.
@@ -193,6 +203,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!ignored",	 acceptedMessages, this, "whoIsIgnored");
         m_CI.registerCommand( "!lmessage",	 acceptedMessages, this, "leaveMessage");
         m_CI.registerCommand( "!regall",	 acceptedMessages, this, "registerAll");
+        m_CI.registerCommand(" !reload",     acceptedMessages, this, "reloadChannel");
         m_CI.registerCommand( "!memberof",   acceptedMessages, this, "memberOfChannels");
 
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing");
@@ -205,24 +216,29 @@ public class messagebot extends SubspaceBot
      */
     public void createChannel(String name, String message)
     {
-    	if(channels.containsKey(message.toLowerCase()))
+        message = message.trim().toLowerCase();
+        name = name.toLowerCase();
+        if(!m_botAction.getOperatorList().isBot(name) && !ops.contains(name))
+        {
+            m_botAction.sendSmartPrivateMessage(name, "Sorry, you need to be a ZH+ to create a channel.");
+            return;
+        }
+        if(channels.containsKey(message))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "Sorry, this channel is already owned.");
     		return;
     	}
-    	if(!m_botAction.getOperatorList().isBot(name))
+
+    	Channel c = new Channel(name, message, m_botAction, true, false);
+    	if (c.createChannel(name, message))
     	{
-    		m_botAction.sendSmartPrivateMessage(name, "Sorry, you need to be a ZH+ to create a channel.");
-    		return;
+            channels.put(message, c);
+            m_botAction.sendSmartPrivateMessage(name, "Channel " + message + " created");
     	}
-
-    	Channel c = new Channel(name.toLowerCase(), message.toLowerCase(), m_botAction, true, false);
-    	channels.put(message.toLowerCase(), c);
-
-    	String query = "INSERT INTO tblChannel (fcChannelName, fcOwner, fnPrivate) VALUES('"+Tools.addSlashesToString(message.toLowerCase())+"', '"+Tools.addSlashesToString(name.toLowerCase())+"', 0)";
-    	try {
-    		m_botAction.SQLClose(m_botAction.SQLQuery(database, query));
-    	} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
+    	else
+    	{
+            m_botAction.sendSmartPrivateMessage(name, "An error occured and channel " + message + " was not created.");
+    	}
     }
 
     /** Allows a channel owner or Highmod to delete a channel.
@@ -231,7 +247,7 @@ public class messagebot extends SubspaceBot
      */
     public void destroyChannel(String name, String message)
     {
-    	String channel = getChannel(name, message, true).toLowerCase();
+    	String channel = getChannel(name, message, true).trim().toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -239,47 +255,77 @@ public class messagebot extends SubspaceBot
     	}
 
     	Channel c = channels.get(channel);
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+    	name = name.toLowerCase();
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name))
     	{
-    		String query = "DELETE FROM tblChannel WHERE fcChannelName = '" + Tools.addSlashesToString(channel) + "'";
-    		String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(channel) + "'";
-    		try {
-    			m_botAction.SQLClose(m_botAction.SQLQuery(database, query));
-                        m_botAction.SQLClose(m_botAction.SQLQuery(database, query2));
-    		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
-    		m_botAction.sendSmartPrivateMessage(name, "Channel deleted.");
-    		c.messageChannel(name, "Channel " + channel + " deleted.");
-    		channels.remove(channel);
+    	    if (!c.isOwner(name) && m_botAction.getOperatorList().isSysop(c.owner))
+    	    {
+                m_botAction.sendSmartPrivateMessage(name, "You do not high enough privileges to do that on this channel.");
+    	    }
+    	    else
+    	    {
+    	        c.deleteChannel(channel);
+    	        c.messageChannel(name, "Channel " + channel + " deleted.");
+    	        channels.remove(channel);
+                m_botAction.sendSmartPrivateMessage(name, "Channel deleted.");
+    	    }
     	}
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
+    /** Force Reload a channel's information from the Database
+     * @param name of the Player issuing the command
+     * @param message Name of the channel to reload
+     */
+    public void reloadChannel(String name, String message)
+    {
+        message=message.trim().toLowerCase();
+        if (!channels.containsKey(message))
+        {
+            m_botAction.sendSmartPrivateMessage(name, "Channel " + message + " does not exist.");
+            return;
+        }
+        Channel c = channels.get(message);
+        c.reload();
+        m_botAction.sendSmartPrivateMessage(name, "Channel " + message + " has been reloaded from the database!");
+    }
+    
     /** Remove a player to a channel
      *  @param Name of player.
      *  @param Name of channel they want to join.
      */
     public void removePlayer(String name, String message)
     {
+    	//String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-    	if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "To remove a player from a channel, specify it this way: !remove channel:name");
-            return;    	    
-    	}
-        String channel = getChannel(name, message, false).toLowerCase();
-    	if(!channels.containsKey(channel)) {
+    	
+        if (pieces.length < 2)
+        {
+            m_botAction.sendSmartPrivateMessage(name, "Invalid format. Please specify <channel>:<player>");
+            return;
+        }
+    	
+    	String channel = pieces[0].trim().toLowerCase();
+    	if(!channels.containsKey(channel))
+    	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
+    	name = name.toLowerCase();
     	Channel c = channels.get(channel);
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || c.isOp(name) || ops.contains(name.toLowerCase())) {
-	    	if(c.leaveChannel(pieces[1], true)) {
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || c.isOp(name) || ops.contains(name))
+    	{
+	    	if(c.leaveChannel(pieces[1].trim().toLowerCase(), true)) 
+	    	{
 	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " removed.");
-	    	} else {
+	    	} 
+	    	else {
 	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " cannot be removed (owner? not a member?).");
 	    	}
-    	} else
+    	}
+    	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
@@ -287,32 +333,41 @@ public class messagebot extends SubspaceBot
      *  @param Name of player.
      *  @param Name of channel they want to join.
      */
-    public void addPlayer(String name, String message) {
-    	String channel = getChannel(name, message, false).toLowerCase();
-        String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "To add a player to a channel, specify it this way: !add channel:name");
-            return;         
-        }
+    public void addPlayer(String name, String message)
+    {
+    	//String channel = getChannel(name, message, false).toLowerCase();
+    	String pieces[] = message.split(":", 2);
 
-        if(!channels.containsKey(channel)) {
+        if (pieces.length < 2)
+        {
+            m_botAction.sendSmartPrivateMessage(name, "Invalid format. Please specify <channel>:<player>");
+            return;
+        }
+    	
+    	String channel = pieces[0].toLowerCase();
+    	if(!channels.containsKey(channel))
+    	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
     	
     	Channel c = channels.get(channel);
-    	if(c.isOwner(name) || c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) {
-	    	if(c.joinRequest(pieces[1], true)) {
+    	if(c.isOwner(name) || c.isOp(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
+    	{
+	    	if(c.joinRequest(pieces[1], true)) 
+	    	{
 	    		if (c.acceptPlayer(name, pieces[1],true)) {
 	    			m_botAction.sendSmartPrivateMessage(name, pieces[1] + " is now a member of " + c.channelName + ".");
 	    		}
 	    		else {
 	    			m_botAction.sendSmartPrivateMessage(name, "An error has occured.");
 	    		}
-	    	} else {
+	    	} 
+	    	else {
 	    		m_botAction.sendSmartPrivateMessage(name, pieces[1] + " cannot join this channel for some reason (already member? banned?).");
 	    	}
-    	} else
+    	}
+    	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
@@ -359,15 +414,12 @@ public class messagebot extends SubspaceBot
      *  @param Name of operator.
      *  @param Name of channel and player beinc accepted.
      */
-    public void acceptPlayer(String name, String message) {
+    public void acceptPlayer(String name, String message)
+    {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "To accept a player into a channel, specify it this way: !accept channel:name");
-            return;         
-        }
-
-        String channel = getChannel(name, message, false).toLowerCase();    	
-    	if(!channels.containsKey(channel)) {
+    	if(!channels.containsKey(channel))
+    	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
@@ -383,14 +435,10 @@ public class messagebot extends SubspaceBot
      *  @param Name of operator.
      *  @param Name of channel and player being rejected.
      */
-    public void declinePlayer(String name, String message) {
-    	String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "To decline a player into a channel, specify it this way: !decline channel:name");
-            return;         
-        }
-
+    public void declinePlayer(String name, String message)
+    {
     	String channel = getChannel(name, message, false).toLowerCase();
+    	String pieces[] = message.split(":", 2);
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -408,13 +456,10 @@ public class messagebot extends SubspaceBot
      *  @param Name of operator.
      *  @param Name of channel and message to be sent.
      */
-    public void announceToChannel(String name, String message) {
+    public void announceToChannel(String name, String message)
+    {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
-            return;         
-        }
-        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -434,12 +479,8 @@ public class messagebot extends SubspaceBot
 	 */
 	public void messageChannel(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
-            return;         
-        }
-        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -482,12 +523,8 @@ public class messagebot extends SubspaceBot
      */
     public void banPlayer(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
-            return;         
-        }
-        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -507,12 +544,8 @@ public class messagebot extends SubspaceBot
      */
     public void unbanPlayer(String name, String message)
     {
-        String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
-            return;         
-        }
-        String channel = getChannel(name, message, false).toLowerCase();
+    	String channel = getChannel(name, message, false).toLowerCase();
+    	String pieces[] = message.split(":", 2);
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -572,12 +605,8 @@ public class messagebot extends SubspaceBot
      */
     public void makeOp(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
-            return;
-        }
-        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -597,12 +626,8 @@ public class messagebot extends SubspaceBot
      */
     public void deOp(String name, String message)
     {
+    	String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
-            return;
-        }
-        String channel = getChannel(name, message, false).toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
@@ -624,25 +649,23 @@ public class messagebot extends SubspaceBot
 
     /** Grants ownership of a channel to a new player.
      *  @param Name of owner/Highmod
-     *  @param Name of channel and player beign given operator.
+     *  @param Name of channel and player being given operator.
      */
     public void grantChannel(String name, String message)
     {
+    	//String channel = getChannel(name, message, false).toLowerCase();
     	String pieces[] = message.split(":", 2);
-        if( pieces.length != 2 ) {
-            m_botAction.sendSmartPrivateMessage(name, "Use a colon to separate the two parameters, please.");
-            return;
-        }
-        String channel = getChannel(name, message, false).toLowerCase();
+    	String channel = pieces[0].toLowerCase();
     	if(!channels.containsKey(channel))
     	{
     		m_botAction.sendSmartPrivateMessage(name, "That channel does not exist.");
     		return;
     	}
 
-    	Channel c = channels.get(pieces[0].toLowerCase());
-    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase()))
-    		c.newOwner(name, pieces[1]);
+    	Channel c = channels.get(channel);
+    	name = name.toLowerCase();
+    	if(c.isOwner(name) || m_botAction.getOperatorList().isHighmod(name) || ops.contains(name))
+    		c.newOwner(name, pieces[1].toLowerCase());
     	else
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
@@ -721,9 +744,9 @@ public class messagebot extends SubspaceBot
     			Channel c = channels.get(channel);
     			if( c == null)
     			    return;
-    			if(c.isOwner(name.toLowerCase()))
+    			if(c.isOwner(name))
     				channel += ": Owner.";
-    			else if(c.isOp(name.toLowerCase()))
+    			else if(c.isOp(name))
     				channel += ": Operator.";
     			else
     				channel += ": Member.";
@@ -761,9 +784,9 @@ public class messagebot extends SubspaceBot
                 Channel c = channels.get(channel);
                 if( c == null)
                     return;
-                if(c.isOwner(name.toLowerCase()))
+                if(c.isOwner(message))
                     channel += ": Owner.";
-                else if(c.isOp(name.toLowerCase()))
+                else if(c.isOp(message))
                     channel += ": Operator.";
                 else
                     channel += ": Member.";
@@ -857,8 +880,8 @@ public class messagebot extends SubspaceBot
 	{
 		try {
 			m_botAction.joinArena(m_botAction.getBotSettings().getString("Default arena"));
-			m_botAction.ipcSubscribe(IPCCHANNEL);
-			//long before = Runtime.getRuntime().freeMemory();
+			//m_botAction.ipcSubscribe(IPCCHANNEL);
+
 			String opList[] = (m_botAction.getBotSettings().getString("Ops")).split(":");
 			for(int k = 0;k < opList.length;k++)
 				ops.add(opList[k].toLowerCase());
@@ -1079,7 +1102,7 @@ public class messagebot extends SubspaceBot
                 message = results.getString("fcMessage");
                 String time = dateFormat.format( new Date( results.getTimestamp("fdTimeStamp").getTime() ) );
                 String channel = results.getString("fcSender");
-                m_botAction.sendSmartPrivateMessage(name, time + " " + (!channel.equals("") ? " (" + channel + ") " : " " ) + Tools.removeSlashes(message));
+                m_botAction.sendSmartPrivateMessage(name, time + " " + (!channel.equals("") ? " (" + channel + ") " : " " ) + message);
                 if( results.getInt("fnRead") == 0 ) {
                     query = "UPDATE tblMessageSystem SET fnRead='1' WHERE fnID='" + messageNumber +"'";
                     m_botAction.SQLQueryAndClose(database, query);
@@ -1277,8 +1300,8 @@ public class messagebot extends SubspaceBot
 	 public void playerLogin(String name, String player)
 	 {
 	 	if(m_botAction.getOperatorList().isSysop(name))
-	 		checkNewMessages(player.toLowerCase());
-	 	else checkNewMessages(name.toLowerCase());
+	 		checkNewMessages(player);
+	 	else checkNewMessages(name);
 	 }
 
 	/** Sends the bot to a new arena.
@@ -1357,7 +1380,7 @@ public class messagebot extends SubspaceBot
 			{
 				HashSet <String>peopleToTell = new HashSet<String>();
 
-				String query = "SELECT * FROM tblMessageToBot ORDER BY fnID ASC";
+				String query = "SELECT fcSyncData FROM tblMessageToBot ORDER BY fnID ASC";
 				String query2 = "DELETE FROM tblMessageToBot";
 				try {
 					ResultSet results = m_botAction.SQLQuery(database, query);
@@ -1446,7 +1469,7 @@ public class messagebot extends SubspaceBot
      		return;
      	}
      	String pieces[] = message.split(":", 2);
-     	String player = pieces[0];
+     	String player = pieces[0].toLowerCase();
      	message = pieces[1];
      	try {
      		String query1 = "SELECT count(*) AS msgs FROM tblMessageSystem WHERE fcSender = '"+Tools.addSlashesToString(name)+"' AND fdTimeStamp > SUBDATE(NOW(), INTERVAL 7 DAY)";
@@ -1463,7 +1486,7 @@ public class messagebot extends SubspaceBot
      		if(results.next()) {
      			plrMsgsRcvdFrmName = results.getInt("msgs");
      		}
-                m_botAction.SQLClose(results);
+            m_botAction.SQLClose(results);
             /*
      		int plrMsgsRcvd = 0;
      		results = m_botAction.SQLQuery(database, query3);
@@ -1504,11 +1527,6 @@ public class messagebot extends SubspaceBot
      		return;
      	try {
     		String pieces[] = message.split(":",2);
-            if( pieces.length < 2 ) {
-                m_botAction.sendSmartPrivateMessage(name, "Usage: !regall channel:http://www.site.com/playerlist.txt");
-                return;         
-            }    		
-    		
     		URL site = new URL(pieces[1]);
     		HashSet <String>nameList = new HashSet<String>();
     		if(site.getFile().toLowerCase().endsWith("txt"))
@@ -1566,7 +1584,7 @@ public class messagebot extends SubspaceBot
              } else {
                  String msg = remainingMsgs.remove();
                  if( msg != null )
-                     m_botAction.sendRemotePrivateMessage( nameToSpam, Tools.removeSlashes(msg) );
+                     m_botAction.sendRemotePrivateMessage( nameToSpam, msg );
              }
          }
      }
@@ -1582,6 +1600,35 @@ class Channel
 	boolean isOpen;
 	String database = "website";
 
+	private enum LEVELS {
+	        owner(3),    //3
+	        operator(2),  //2
+	        member(1),     //1
+	        request(0),    //0
+	        nonmember(0),  //0
+	        //banned(),     //"-" previous level
+	        removed(-5);    //-5
+	        
+	        public final int value;
+	        
+	        LEVELS(int value) { this.value = value; }
+	        //public int index() { return index; }
+	}
+	
+    private enum CHSTATUS {
+        isPrivate(1),    //1
+        isPublic(0);  //0
+        public final int value;           
+        CHSTATUS(int value) { this.value = value; }
+    }
+    
+    private enum MSGSTATUS {
+        read(1),    //1
+        unRead(0);  //0
+        public final int value;           
+        MSGSTATUS(int value) { this.value = value; }        
+    }
+	
 	/** Constructs the new channel.
 	 */
 	public Channel(String creator, String cName, BotAction botAction, boolean pub, boolean auto)
@@ -1592,23 +1639,59 @@ class Channel
 		isOpen = pub;
 		members = new HashMap<String,Integer>();
 		banned = new HashSet<String>();
-		members.put(owner.toLowerCase(), new Integer(3));
-		updateSQL(owner.toLowerCase(), 3);
+		members.put(owner.toLowerCase(), LEVELS.owner.value);
+		updateSQL(owner.toLowerCase(), LEVELS.owner.value, channelName);
 
 		if(!auto)
 			m_bA.sendSmartPrivateMessage(owner, "Channel created.");
 	}
 
-	/** Returns wether the person is owner or not.
+	/** Creates a channel and returns true if successful. False if failure encountered.
+	 * @param ownerName Name of the new Channel Owner
+	 * @param channelName Name of the new Channel
+	 * @return
+	 */
+	public boolean createChannel(String ownerName, String channelName)
+	{
+	    ownerName = ownerName.toLowerCase();
+	    channelName = channelName.toLowerCase();
+	    
+        String query = "INSERT INTO tblChannel (fcChannelName, fcOwner, fnPrivate) VALUES('"+Tools.addSlashesToString(channelName)+"', '"+Tools.addSlashesToString(ownerName)+"'," + CHSTATUS.isPublic.value + ")";
+        try {
+            m_bA.SQLClose(m_bA.SQLQuery(database, query));            
+            return true;
+        } catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
+	    return false;
+	}
+	
+	/** Deletes a channel from the database, removing all users as well.
+	 * @param channelName Name of the Channel to remove
+	 * @return
+	 */
+	public boolean deleteChannel(String channelName)
+	{
+        String query = "DELETE FROM tblChannel WHERE fcChannelName = '" + Tools.addSlashesToString(channelName) + "'";
+        String query2 = "DELETE FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(channelName) + "'";
+        try {
+            m_bA.SQLClose(m_bA.SQLQuery(database, query));
+            m_bA.SQLClose(m_bA.SQLQuery(database, query2));
+            return true;
+            
+        } catch(SQLException sqle) { Tools.printStackTrace(sqle); }
+	    return false;
+	}
+	
+	/** Returns whether the person is owner or not.
 	 *  @param Name of player being checked.
 	 */
 	public boolean isOwner(String name)
 	{
-		if(!members.containsKey(name.toLowerCase()))
+	    name = name.toLowerCase();
+		if(!members.containsKey(name))
 			return false;
 
-		int level = members.get(name.toLowerCase()).intValue();
-		if(level == 3) return true;
+		int level = members.get(name).intValue();
+		if(level == LEVELS.owner.value) return true;
 		else return false;
 	}
 
@@ -1617,11 +1700,12 @@ class Channel
 	 */
 	public boolean isOp(String name)
 	{
-		if(!members.containsKey(name.toLowerCase()))
+	    name = name.toLowerCase();
+		if(!members.containsKey(name))
 			return false;
 
-		int level = members.get(name.toLowerCase()).intValue();
-		if(level >= 2) return true;
+		int level = members.get(name).intValue();
+		if(level >= LEVELS.operator.value) return true;
 		else return false;
 	}
 
@@ -1639,13 +1723,15 @@ class Channel
 	 */
 	public void newOwner(String name, String player)
 	{
-		if(members.containsKey(player.toLowerCase()))
+	    player = player.toLowerCase();
+		if(members.containsKey(player))
 		{
-			updateSQL(owner.toLowerCase(), 1);
-			updateSQL(player.toLowerCase(), 3);
+			updateSQL(owner.toLowerCase(), LEVELS.member.value, channelName);
+			updateSQL(player, LEVELS.owner.value, channelName);
 			try {
-                                m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
-			} catch(Exception e) { Tools.printStackTrace( e ); }
+			    m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName) + "'"));
+			} 
+			catch(Exception e) { Tools.printStackTrace( e ); }
 			owner = player;
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been made the owner of " + channelName + " channel.");
@@ -1667,7 +1753,7 @@ class Channel
 		}
 		if(members.containsKey(player.toLowerCase()))
 		{
-			updateSQL(player.toLowerCase(), 2);
+			updateSQL(player.toLowerCase(), LEVELS.operator.value,channelName);
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been made an operator in " + channelName + " channel.");
 			m_bA.sendSmartPrivateMessage(name, player + " has been granted op powers in " + channelName);
@@ -1688,7 +1774,7 @@ class Channel
 				m_bA.sendSmartPrivateMessage(name, "You can't take away your owner access!");
 				return;
 			}
-			updateSQL(player.toLowerCase(), 1);
+			updateSQL(player.toLowerCase(), LEVELS.member.value,channelName);
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "Your operator priveleges in " + channelName + " channel have been revoked.");
 			m_bA.sendSmartPrivateMessage(name, player + "'s op powers in " + channelName + " have been revoked.");
@@ -1703,7 +1789,7 @@ class Channel
 	public void makePrivate(String name)
 	{
 		try {
-                        m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
+		    m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fnPrivate = "+ CHSTATUS.isPrivate.value +" WHERE fcChannelName = '" + Tools.addSlashesToString(channelName) + "'"));
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now private channel.");
 		isOpen = false;
@@ -1715,8 +1801,9 @@ class Channel
 	public void makePublic(String name)
 	{
 		try {
-                        m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fnPrivate = 0 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
+		    m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fnPrivate = "+ CHSTATUS.isPublic.value  +" WHERE fcChannelName = '" + Tools.addSlashesToString(channelName) + "'"));
 		} catch(Exception e) { Tools.printStackTrace( e ); }
+		
 		m_bA.sendSmartPrivateMessage(name, "Now public channel.");
 		isOpen = true;
 	}
@@ -1736,7 +1823,7 @@ class Channel
 		{
 			String player = (String)it.next();
 			int level = members.get(player.toLowerCase()).intValue();
-			if(level > 0)
+			if(level > LEVELS.request.value)
 			{
 			    // sends a ?message to all players in channel
 			    /*m_bA.sendUnfilteredPublicMessage("?message " + player +
@@ -1762,7 +1849,7 @@ class Channel
 		{
 			String player = it.next();
 			int level = members.get(player.toLowerCase()).intValue();
-			if(level > 0)
+			if(level > LEVELS.request.value)
 			{
 				m_bA.sendSmartPrivateMessage(player, channelName + ": " + name + "> " + message);
 			}
@@ -1774,13 +1861,14 @@ class Channel
 	 */
 	public boolean joinRequest(String name, boolean silent)
 	{
-		if(members.containsKey(name.toLowerCase()))
+	    name = name.toLowerCase();
+		if(members.containsKey(name))
 		{
 			if (!silent)
 				m_bA.sendSmartPrivateMessage(name, "You are already on this channel.");
 			return false;
 		}
-		if(banned.contains(name.toLowerCase()))
+		if(banned.contains(name))
 		{
 			if (!silent)
 				m_bA.sendSmartPrivateMessage(name, "You have been banned from this channel.");
@@ -1788,13 +1876,13 @@ class Channel
 		}
 		if(isOpen)
 		{
-			updateSQL(name.toLowerCase(), 1);
+			updateSQL(name.toLowerCase(), LEVELS.member.value, channelName);
 			if (!silent)
 			m_bA.sendSmartPrivateMessage(name, "You have been accepted to " + channelName + " announcement channel.");
 		}
 		else
 		{
-			updateSQL(name.toLowerCase(), 0);
+			updateSQL(name.toLowerCase(), LEVELS.request.value, channelName);
 			if (!silent)
 				m_bA.sendSmartPrivateMessage(name, "You have been placed into the channel request list. The channel owner will make the decision.");
 		}
@@ -1806,10 +1894,10 @@ class Channel
 	 */
 	public boolean leaveChannel(String name, boolean silent)
 	{
-		if(members.containsKey(name.toLowerCase()))
+		if(members.containsKey(name))
 		{
-			int level = members.get(name.toLowerCase()).intValue();
-			if(level < 0)
+			int level = members.get(name).intValue();
+			if(level < LEVELS.member.value)
 			{
 				if (!silent)
 					m_bA.sendSmartPrivateMessage(name, "You are not on this channel.");
@@ -1820,7 +1908,7 @@ class Channel
 					m_bA.sendSmartPrivateMessage(name, "You have to make a new owner before you leave.");
 				return false;
 			}
-			updateSQL(name.toLowerCase(), -5);
+			updateSQL(name.toLowerCase(), LEVELS.removed.value, channelName);
 			if (!silent)
 				m_bA.sendSmartPrivateMessage(name, "You have been removed from the channel.");
 			return true;
@@ -1843,7 +1931,7 @@ class Channel
 		{
 			String p = it.next();
 			int level = members.get(p).intValue();
-			if(level == 0)
+			if(level == LEVELS.request.value)
 				m_bA.sendSmartPrivateMessage(name, p);
 		}
 	}
@@ -1856,7 +1944,7 @@ class Channel
 	{
 		if(members.containsKey(player.toLowerCase()))
 		{
-			updateSQL(player.toLowerCase(), new Integer(1));
+			updateSQL(player.toLowerCase(), LEVELS.member.value, channelName);
 			if (!silent)
 				m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been accepted into " + channelName + " channel.");
@@ -1877,7 +1965,7 @@ class Channel
 	{
 		if(members.containsKey(player.toLowerCase()))
 		{
-			updateSQL(player, -5);
+			updateSQL(player, LEVELS.removed.value, channelName);
 			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
 			leaveMessage(name, player, "You have been rejected from " + channelName + " channel.");
 			m_bA.sendSmartPrivateMessage(name, player + " rejected.");
@@ -1910,7 +1998,7 @@ class Channel
 		{
 			int level = members.get(player.toLowerCase()).intValue();
 			level *= -1;
-			updateSQL(player, level);
+			updateSQL(player, level, channelName);
 		}
 	}
 
@@ -1934,39 +2022,44 @@ class Channel
 		{
 			int level = members.get(player.toLowerCase()).intValue();
 			level *= -1;
-			updateSQL(player, level);
+			updateSQL(player, level, channelName);
 		}
 	}
 
 	/** Updates the database when a player's level of access changes.
 	 *  @param Player being changed.
 	 *  @param New level of access.
+	 *  @param the Channel to modify
 	 */
-	public void updateSQL(String player, int level)
+	public void updateSQL(String player, int level, String channelName)
 	{
-		String query = "SELECT * FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase())+"' AND fcChannel = '"+Tools.addSlashesToString(channelName)+"'";
-
+	    //ensure all entries going to DB are in the same case .. always.
+	    player = player.toLowerCase();
+	    channelName = channelName.toLowerCase();
+	    
+		String query = "SELECT * FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player)+"' AND fcChannel = '"+Tools.addSlashesToString(channelName)+"'";
 
 		try {
 			ResultSet results = m_bA.SQLQuery(database, query);
 			if(results.next())
 			{
-				if(level != -5) {
-					query = "UPDATE tblChannelUser SET fnLevel = " + level + " WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase()) + "' AND fcChannel = '" + Tools.addSlashesToString(channelName) +"'";
-					members.put(player.toLowerCase(), new Integer(level));
+				if(level != LEVELS.removed.value) {
+					query = "UPDATE tblChannelUser SET fnLevel = " + level + " WHERE fcName = '" + Tools.addSlashesToString(player) + "' AND fcChannel = '" + Tools.addSlashesToString(channelName) +"'";
+					members.put(player, new Integer(level));
 				} else {
-					query = "DELETE FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase())+"'";
-					members.remove(player.toLowerCase());
+					query = "DELETE FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player)+"' AND fcChannel = '" + Tools.addSlashesToString(channelName) +"'";
+					members.remove(player);
 				}
-                                m_bA.SQLClose(m_bA.SQLQuery(database, query));
+			    m_bA.SQLClose(m_bA.SQLQuery(database, query));
 			}
 			else
 			{
-				query = "INSERT INTO tblChannelUser (fcChannel, fcName, fnLevel) VALUES ('" + Tools.addSlashesToString(channelName) + "', '" + Tools.addSlashesToString(player.toLowerCase()) + "', " + level + ")";
-				members.put(player.toLowerCase(), new Integer(level));
-                                m_bA.SQLClose(m_bA.SQLQuery(database, query));
+				query = "INSERT INTO tblChannelUser (fcChannel, fcName, fnLevel) VALUES ('" + Tools.addSlashesToString(channelName) + "', '" + Tools.addSlashesToString(player) + "', " + level + ")";
+				members.put(player, new Integer(level));
+			    m_bA.SQLClose(m_bA.SQLQuery(database, query));
 			}
-                        m_bA.SQLClose(results);
+		    m_bA.SQLClose(results);
+		    
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 		  catch(NullPointerException npe) { System.out.println("Silly debugging...."); }
 	}
@@ -1978,9 +2071,9 @@ class Channel
 	 */
 	public void leaveMessage(String name, String player, String message)
 	{
-		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES (0, '"+Tools.addSlashesToString(player.toLowerCase())+"', '"+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(channelName)+"', 0, NOW())";
+		String query = "INSERT INTO tblMessageSystem (fnID, fcName, fcMessage, fcSender, fnRead, fdTimeStamp) VALUES (0, '"+Tools.addSlashesToString(player.toLowerCase())+"', '"+Tools.addSlashesToString(name) + ": " + Tools.addSlashesToString(message)+"', '"+Tools.addSlashesToString(channelName)+"',"+ MSGSTATUS.unRead.value+", NOW())";
 		try {
-                        m_bA.SQLClose(m_bA.SQLQuery(database, query));
+		    m_bA.SQLClose(m_bA.SQLQuery(database, query));
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 	}
 
@@ -1988,19 +2081,21 @@ class Channel
 	 */
 	public void reload()
 	{
-		String query = "SELECT * FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(channelName.toLowerCase())+"'";
+		String query = "SELECT * FROM tblChannelUser WHERE fcChannel = '" + Tools.addSlashesToString(channelName)+"'";
 
+		members.clear();
+		banned.clear();
 		try {
 			ResultSet results = m_bA.SQLQuery(database, query);
 			while(results.next())
 			{
 				String name = results.getString("fcName");
 				int level = results.getInt("fnLevel");
-				members.put(name.toLowerCase(), new Integer(level));
-				if(level < 0)
-					banned.add(name.toLowerCase());
+				members.put(name, new Integer(level));
+				if(level < LEVELS.request.value)
+					banned.add(name);
 			}
-                        m_bA.SQLClose(results);
+		    m_bA.SQLClose(results);
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
 
@@ -2030,7 +2125,7 @@ class Channel
 				owners.add(pName);
 			else if(isOp(pName))
                 ops.add(pName);
-			else if(level > 0)
+			else if(level > LEVELS.member.value)
                 mems.add(pName);
 			//k++;
 			/*
@@ -2138,7 +2233,7 @@ class Channel
 	 */
 	 public void updateAccess(String name, int level) {
 	 	members.put(name.toLowerCase(), new Integer(level));
-	 	if(level < 0) {
+	 	if(level < LEVELS.request.value) {
 	 		banned.add(name.toLowerCase());
 	 	} else if(banned.contains(name.toLowerCase())) {
 	 		banned.remove(name.toLowerCase());
