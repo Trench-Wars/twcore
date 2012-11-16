@@ -203,7 +203,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!ignored",	 acceptedMessages, this, "whoIsIgnored");
         m_CI.registerCommand( "!lmessage",	 acceptedMessages, this, "leaveMessage");
         m_CI.registerCommand( "!regall",	 acceptedMessages, this, "registerAll");
-        m_CI.registerCommand(" !reload",     acceptedMessages, this, "reloadChannel");
+        m_CI.registerCommand( "!reload",     acceptedMessages, this, "reloadChannel");
         m_CI.registerCommand( "!memberof",   acceptedMessages, this, "memberOfChannels");
 
         m_CI.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doNothing");
@@ -287,8 +287,14 @@ public class messagebot extends SubspaceBot
             return;
         }
         Channel c = channels.get(message);
-        c.reload();
-        m_botAction.sendSmartPrivateMessage(name, "Channel " + message + " has been reloaded from the database!");
+        if(c.isOwner(name) || m_botAction.getOperatorList().isSmod(name) || c.isOp(name) || ops.contains(name))
+        {
+            c.reload();
+            m_botAction.sendSmartPrivateMessage(name, "Channel " + message + " has been reloaded from the database!");
+            return;
+        }
+        else 
+            m_botAction.sendSmartPrivateMessage(name, "You do not have permissions to do that on this channel!");
     }
     
     /** Remove a player to a channel
@@ -2125,7 +2131,7 @@ class Channel
 				owners.add(pName);
 			else if(isOp(pName))
                 ops.add(pName);
-			else if(level > LEVELS.member.value)
+			else if(level > LEVELS.request.value)
                 mems.add(pName);
 			//k++;
 			/*
