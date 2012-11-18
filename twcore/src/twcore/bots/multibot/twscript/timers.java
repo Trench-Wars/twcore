@@ -18,6 +18,7 @@ import twcore.core.OperatorList;
 
 /**
  * @author milosh
+ * @update PoisonIvy - fixed typo #891
  */
 public class timers extends MultiUtil {
 	
@@ -104,7 +105,7 @@ public class timers extends MultiUtil {
                 timers.remove(message);
                 m_botAction.sendSmartPrivateMessage(name, "Timer '" + message + "' removed.");
             } else
-                m_botAction.sendSmartPrivateMessage(name, "Specified timer not found. Use !listtimer to see a list of registered timers.");
+                m_botAction.sendSmartPrivateMessage(name, "Specified timer not found. Use !listtimers to see a list of registered timers.");
         	return;
         }
         String timer = message.substring(0, index);
