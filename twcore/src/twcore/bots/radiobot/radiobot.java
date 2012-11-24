@@ -614,7 +614,6 @@ public final class radiobot extends SubspaceBot {
         m_announcingArena = false;
         m_someoneHosting = false;
         long diff = System.currentTimeMillis()-m_timeStartedToHost;
-        int minute = (int)(diff/(1000*60));
 
         m_botAction.sendArenaMessage(m_currentHost + " has signed off the radio, thank you for listening!",5);
 
@@ -624,8 +623,8 @@ public final class radiobot extends SubspaceBot {
         } else
             m_botAction.sendChatMessage(currentHost +" has finished hosting radio.");
         
-        m_botAction.sendSmartPrivateMessage(currentHost, "You hosted for " + (diff / 1000 / 60 / 60) + " hours and " + minute + " minutes.");
-        unhostStats();
+            m_botAction.sendSmartPrivateMessage(currentHost, "You hosted for " + (diff / 1000 / 60 / 60) + " hours and " + (diff / 1000 / 60 % 60) + " minutes.");
+            unhostStats();
     }
 
 
