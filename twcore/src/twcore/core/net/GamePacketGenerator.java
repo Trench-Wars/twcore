@@ -56,12 +56,7 @@ public class GamePacketGenerator {
                     size = m_messageList.size();
                     if( size == 1 ) {
                         ByteArray packet = m_messageList.getNextPacket();
-                        if( packet.size() == 6 && packet.readLittleEndianShort(0) == ((short)0x0400) ) {
-                            // Do not send single ACKs reliably
-                            composeImmediatePacket( packet, 6 );
-                        } else {
-                            sendReliableMessage( packet );
-                        }
+                        sendReliableMessage( packet );
                     } else if( size > 1 ){
                         sendClusteredPacket();
                     }
@@ -463,7 +458,8 @@ public class GamePacketGenerator {
         bytearray.addLittleEndianInt( ackID );  // ID
 
         if( m_ssEncryption != null ){
-            composePacket( bytearray );
+            m_ssEncryption.encrypt( bytearray, 4, 2 );
+            composeImmediatePacket( bytearray, 6 );
         } else {
             composeImmediatePacket( bytearray, 6 );
         }
