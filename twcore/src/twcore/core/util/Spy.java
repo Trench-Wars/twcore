@@ -123,8 +123,8 @@ public class Spy {
       {
         case Message.PUBLIC_MESSAGE:
           return "Public";
-        case Message.PRIVATE_MESSAGE:
-          return "Private";
+        //case Message.PRIVATE_MESSAGE:
+          //return "Private";
         case Message.TEAM_MESSAGE:
           return "Team";
         case Message.OPPOSING_TEAM_MESSAGE:
@@ -133,8 +133,8 @@ public class Spy {
           return "Arena";
         case Message.PUBLIC_MACRO_MESSAGE:
           return "Pub. Macro";
-        case Message.REMOTE_PRIVATE_MESSAGE:
-          return "Private";
+        //case Message.REMOTE_PRIVATE_MESSAGE:
+          //return "Private";
         case Message.WARNING_MESSAGE:
           return "Warning";
         case Message.SERVER_ERROR:
