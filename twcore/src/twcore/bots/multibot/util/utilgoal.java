@@ -38,6 +38,8 @@ public class utilgoal extends MultiUtil {
 				goalprize = 0,
 				goalsound = 0;
 	
+	boolean goalWarpAll = false;
+	
 	/**
 	  * Initializes
 	  */
@@ -96,6 +98,9 @@ public class utilgoal extends MultiUtil {
 			 	else
 			 		m_botAction.sendPrivateMessage(goalscorer, goalmessage);
 		 }	if (goalwarp != null)	{
+             if(goalWarpAll == true){
+                 m_botAction.warpAllRandomly();
+             } else 
 			 	if (goalwarp.length > 2)
 			 		m_botAction.warpTo(
 			 				goalscorer, goalwarp[0], goalwarp[1], goalwarp[2]);
@@ -179,6 +184,16 @@ public class utilgoal extends MultiUtil {
                 goalwarp[i] = coord[i];
 			m_botAction.sendPrivateMessage(sender, "Goal warp point set");
 		 }
+	 }
+	 
+	 public void doGoalWarpAll(String sender){
+	     if(goalWarpAll == false){
+	         goalWarpAll = true;
+	         m_botAction.sendSmartPrivateMessage(sender, "Warp all set to TRUE");
+	     } else {
+	         goalWarpAll = false;
+	         m_botAction.sendSmartPrivateMessage(sender, "Warp all set to FALSE");
+	     }
 	 }
 	 
 	 /**
@@ -272,6 +287,8 @@ public class utilgoal extends MultiUtil {
 				 	doGoalPrize(sender,message.substring(11));
 			 else if (message.startsWith("!goaldetails"))
 			 		doGoalDetails(sender);
+			 else if (message.startsWith("!warpall"))
+			        doGoalWarpAll(sender);
 		 }	catch (NumberFormatException nfe)	{
 			 	m_botAction.sendPrivateMessage(sender, 
 			 			"syntax must be numerical.");
@@ -295,6 +312,7 @@ public class utilgoal extends MultiUtil {
 	    			"!goalobjon   <objon#>                 -- Sets the objon        ",
 	    			"!goalprize   <prize#>                 -- Sets the prize        ",
 	    			"!goaldetails                          -- Shows the details     ",
+	    			"!warpall                              -- Warp All after goal?  ",
 	    			"++                                                           ++",
 	    			"Note: sending \" ~* \" rather than the syntax erases the setting",
 	    			"=GOAL=====================================================GOAL="
