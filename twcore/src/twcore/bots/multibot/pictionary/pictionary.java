@@ -72,6 +72,7 @@ public class pictionary extends MultiModule {
             "!displayrules  -- Shows the rules in *arena messages.",
             "!reset         -- Resets the current artist's mines.",
             "!pass          -- gives your drawing turn to a random player.",
+            "!pass <name>   -- passes the turn drawing to a specific player.",
             "!score         -- displays the current scores.",
             "!repeat        -- will repeat the hint or answer.",
             "!stats         -- will display your statistics.",
@@ -199,6 +200,8 @@ public class pictionary extends MultiModule {
             doReady(name);
         else if (msg.equalsIgnoreCase("!pass"))
             doPass(name);
+        else if (msg.startsWith("!pass "))
+            doPass(name, msg.substring(6));
         else if (msg.equalsIgnoreCase("!reset"))
             doReset(name);
         else if (msg.equalsIgnoreCase("!lagout"))
@@ -397,6 +400,7 @@ public class pictionary extends MultiModule {
             m_botAction.cancelTasks();
         } catch (Exception e) {}
         if (custGame) {
+        	grabWord();
             m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
 		        warn = new TimerTask() {
 		        	@Override
@@ -415,6 +419,48 @@ public class pictionary extends MultiModule {
             doReadyCheck();
         }
     }
+    
+    /** ************************************************************* */
+    /** * Passes the artist's to a specific player. ** */
+    /** ************************************************************* */    
+    public void doPass(String name, String cmd) {
+        if (!opList.isER(name))
+            return;
+        Player p = m_botAction.getPlayer(cmd);
+            if (p == null){
+                m_botAction.sendPrivateMessage(name, "Player was not found. Please check spelling and try again.");
+                return;
+            } else {
+                m_botAction.specWithoutLock(curArtist);
+                curArtist = cmd;
+                gameProgress = READY_CHECK;            
+                m_botAction.sendArenaMessage(name + " has chosen " + curArtist + " to draw next.");
+                cantPlay.clear();
+                cantPlay.add(curArtist);  
+                
+                try {
+                    m_botAction.cancelTasks();
+                } catch (Exception e) {}
+                if (custGame) {
+                    grabWord();
+                    m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
+                        warn = new TimerTask() {
+                            @Override
+                            public void run() {
+                                m_botAction.sendSmartPrivateMessage(curArtist, "Private message me with !ready or your turn will be forfeited.");
+                                forcePass = new TimerTask() {
+                                    public void run() {
+                                        doPass(curArtist);
+                                    }
+                                }; m_botAction.scheduleTask(forcePass, 15000);
+                            }
+                        }; m_botAction.scheduleTask(warn, 15000);
+                } else {
+                    grabWord();
+                    doReadyCheck();
+                }
+            }
+        }
     
     /**
      * Selects a random player in the arena.
@@ -562,7 +608,7 @@ public class pictionary extends MultiModule {
     /** * Gets a word from the database. ** */
     /** ************************************************************* */
     public void grabWord() {
-        try {
+    	try {
             ResultSet qryWordData;
             qryWordData = m_botAction.SQLQuery(mySQLHost, "SELECT WordID, Word FROM tblPict_Words WHERE TimesUsed=" + getMinTimesUsed() + " AND CHAR_LENGTH(Word) > 4 ORDER BY RAND(" + m_rnd.nextInt() + ") LIMIT 1");
             if (qryWordData.next()) {
