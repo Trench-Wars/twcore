@@ -56,12 +56,7 @@ public class GamePacketGenerator {
                     size = m_messageList.size();
                     if( size == 1 ) {
                         ByteArray packet = m_messageList.getNextPacket();
-                        if( packet.size() == 6 && packet.readLittleEndianShort(0) == ((short)0x0400) ) {
-                            // Do not send single ACKs reliably
-                            composeImmediatePacket( packet, 6 );
-                        } else {
-                            sendReliableMessage( packet );
-                        }
+                        sendReliableMessage( packet );
                     } else if( size > 1 ){
                         sendClusteredPacket();
                     }
@@ -258,7 +253,7 @@ public class GamePacketGenerator {
      * Get server time difference
      */
     public int getServerTimeDifference() {
-        return m_serverTimeDifference;
+    	return m_serverTimeDifference;
     }
 
     /**
@@ -377,74 +372,74 @@ public class GamePacketGenerator {
         
         Tools.printConnectionLog("SEND    : (0x17) Registration Form Response");
         
-        /*
-        Field   Length  Description
-            0       1       Type byte
-            1       32      Real name
-            33      64      Email
-            97      32      City
-            129     24      State
-            153     1       Sex('M'/'F')
-            154     1       Age
-        Connecting from...
-            155     1       Home
-            156     1       Work
-            157     1       School
-        System information
-            158     4       Processor type (586)
-            162     2       ?
-            164     2       ?
-        Windows registration information (SSC RegName ban)
-            166     40      Real name
-            206     40      Organization
-        Windows NT-based OS's do not send any hardware information (DreamSpec HardwareID ban)
-            246     40      System\CurrentControlSet\Services\Class\Display\0000
-            286     40      System\CurrentControlSet\Services\Class\Monitor\0000
-            326     40      System\CurrentControlSet\Services\Class\Modem\0000
-            366     40      System\CurrentControlSet\Services\Class\Modem\0001
-            406     40      System\CurrentControlSet\Services\Class\Mouse\0000
-            446     40      System\CurrentControlSet\Services\Class\Net\0000
-            486     40      System\CurrentControlSet\Services\Class\Net\0001
-            526     40      System\CurrentControlSet\Services\Class\Printer\0000
-            566     40      System\CurrentControlSet\Services\Class\MEDIA\0000
-            606     40      System\CurrentControlSet\Services\Class\MEDIA\0001
-            646     40      System\CurrentControlSet\Services\Class\MEDIA\0002
-            686     40      System\CurrentControlSet\Services\Class\MEDIA\0003
-            726     40      System\CurrentControlSet\Services\Class\MEDIA\0004
-        */
+    	/*
+		Field	Length	Description
+			0		1		Type byte
+			1		32		Real name
+			33		64		Email
+			97		32		City
+			129		24		State
+			153		1		Sex('M'/'F')
+			154		1		Age
+		Connecting from...
+			155		1		Home
+			156		1		Work
+			157		1		School
+		System information
+			158		4		Processor type (586)
+			162		2		?
+			164		2		?
+		Windows registration information (SSC RegName ban)
+			166		40		Real name
+			206		40		Organization
+		Windows NT-based OS's do not send any hardware information (DreamSpec HardwareID ban)
+			246		40		System\CurrentControlSet\Services\Class\Display\0000
+			286		40		System\CurrentControlSet\Services\Class\Monitor\0000
+			326		40		System\CurrentControlSet\Services\Class\Modem\0000
+			366		40		System\CurrentControlSet\Services\Class\Modem\0001
+			406		40		System\CurrentControlSet\Services\Class\Mouse\0000
+			446		40		System\CurrentControlSet\Services\Class\Net\0000
+			486		40		System\CurrentControlSet\Services\Class\Net\0001
+			526		40		System\CurrentControlSet\Services\Class\Printer\0000
+			566		40		System\CurrentControlSet\Services\Class\MEDIA\0000
+			606		40		System\CurrentControlSet\Services\Class\MEDIA\0001
+			646		40		System\CurrentControlSet\Services\Class\MEDIA\0002
+			686		40		System\CurrentControlSet\Services\Class\MEDIA\0003
+			726		40		System\CurrentControlSet\Services\Class\MEDIA\0004
+		*/
 
-        ByteArray bytearray = new ByteArray(766);
+    	ByteArray bytearray = new ByteArray(766);
 
-        bytearray.addByte( 0x17 );                      // Type
-        bytearray.addPaddedString(realname, 32);        // Real name
-        bytearray.addPaddedString(email, 64);           // E-mail
-        bytearray.addPaddedString(city, 32);            // City
-        bytearray.addPaddedString(state, 24);           // State
-        bytearray.addByte(0);                           // Sex/gender (Male)
-        bytearray.addByte(age);                         // Age
-        bytearray.addByte(1);                           // Connecting from Home
-        bytearray.addByte(1);                           //                 Work
-        bytearray.addByte(1);                           //                 School
-        bytearray.addLittleEndianInt(586);              // System information: Processor type (586)
-        bytearray.addLittleEndianShort((short)0xC000);  //                     ? Magic number 1
-        bytearray.addLittleEndianShort((short)2036);    //                     ? Magic number 2
-        bytearray.addPaddedString(realname, 40);        // Real name
-        bytearray.addPaddedString("TWCore", 40);        // Organization
-        bytearray.addPaddedString("TWCore", 40);        // Registry Sys. info.: ...\Display\0000
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\Monitor\0000
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\Modem\0000
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\Modem\0001
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\Mouse\0000
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\Net\0000
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\Net\0001
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\Printer\0000
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\MEDIA\0000
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\MEDIA\0001
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\MEDIA\0002
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\MEDIA\0003
-        bytearray.addPaddedString("TWCore", 40);        //                      ...\MEDIA\0004
+    	bytearray.addByte( 0x17 );						// Type
+    	bytearray.addPaddedString(realname, 32); 		// Real name
+    	bytearray.addPaddedString(email, 64);			// E-mail
+    	bytearray.addPaddedString(city, 32);			// City
+    	bytearray.addPaddedString(state, 24);			// State
+    	bytearray.addByte(0);							// Sex/gender (Male)
+    	bytearray.addByte(age);							// Age
+    	bytearray.addByte(1);							// Connecting from Home
+    	bytearray.addByte(1);							//                 Work
+    	bytearray.addByte(1);							//                 School
+    	bytearray.addLittleEndianInt(586);				// System information: Processor type (586)
+    	bytearray.addLittleEndianShort((short)0xC000);	//                     ? Magic number 1
+    	bytearray.addLittleEndianShort((short)2036);	//                     ? Magic number 2
+    	bytearray.addPaddedString(realname, 40);		// Real name
+    	bytearray.addPaddedString("TWCore", 40);		// Organization
+    	bytearray.addPaddedString("TWCore", 40);		// Registry Sys. info.:	...\Display\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Monitor\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Modem\0000
+    	bytearray.addPaddedString("TWCore", 40);		//        	   			...\Modem\0001
+    	bytearray.addPaddedString("TWCore", 40);		//         			  	...\Mouse\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Net\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Net\0001
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\Printer\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0000
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0001
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0002
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0003
+    	bytearray.addPaddedString("TWCore", 40);		//           			...\MEDIA\0004
 
-        this.sendMassiveChunkPacket( bytearray );
+    	this.sendMassiveChunkPacket( bytearray );
     }
 
     /**
@@ -463,7 +458,8 @@ public class GamePacketGenerator {
         bytearray.addLittleEndianInt( ackID );  // ID
 
         if( m_ssEncryption != null ){
-            composePacket( bytearray );
+            m_ssEncryption.encrypt( bytearray, 4, 2 );
+            composeImmediatePacket( bytearray, 6 );
         } else {
             composeImmediatePacket( bytearray, 6 );
         }
@@ -550,8 +546,8 @@ public class GamePacketGenerator {
         
         Tools.printConnectionLog("SEND    : (0x06) Chat message");
         
-        if( message.length() > 243 )
-            message = message.substring(0, 242);        // (hack) Don't send more than SS can handle
+    	if( message.length() > 243 )
+    		message = message.substring(0, 242);		// (hack) Don't send more than SS can handle
 
         int            size = message.length() + 6;
         ByteArray      bytearray = new ByteArray( size );
@@ -670,7 +666,7 @@ public class GamePacketGenerator {
         ByteArray   bytearray = new ByteArray( 3 );
         bytearray.addByte( 0x08 );  // Type byte
         if( playerID == -1 ) {
-            bytearray.addByte( 0xFF );  // All high bits = stop spectating
+            bytearray.addByte( 0xFF );	// All high bits = stop spectating
             bytearray.addByte( 0xFF );
         } else
             bytearray.addLittleEndianShort( playerID );
@@ -721,7 +717,7 @@ public class GamePacketGenerator {
         Tools.printConnectionLog("SEND    : (0x15) Drop Flags");
         
         ByteArray   bytearray = new ByteArray( 1 );
-        bytearray.addByte( 0x15 );  // Type byte
+        bytearray.addByte( 0x15 );	// Type byte
 
         sendReliableMessage( bytearray );
     }
@@ -736,8 +732,8 @@ public class GamePacketGenerator {
         Tools.printConnectionLog("SEND    : (0x19) Set personal banner");
 
         ByteArray bytearray = new ByteArray( 97 );
-        bytearray.addByte( 0x19 );          // Type byte
-        bytearray.addByteArray( banner );   // Banner without palette info
+        bytearray.addByte( 0x19 );			// Type byte
+        bytearray.addByteArray( banner );	// Banner without palette info
 
         sendReliableMessage( bytearray );
     }
@@ -817,7 +813,7 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
         Tools.printConnectionLog("SEND    : (0x18) Set ship type");
         
         ByteArray   bytearray = new ByteArray( 2 );
-        bytearray.addByte( 0x18 );  // Type byte
+        bytearray.addByte( 0x18 );	// Type byte
         bytearray.addByte( ship );
 
         sendReliableMessage( bytearray );
@@ -875,7 +871,7 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
         i = totalSize;
 
         while( i > 0 ){
-            size = 480;             // Sent in chunks of 480 bytes at max
+            size = 480;				// Sent in chunks of 480 bytes at max
 
             if( i < size ){
                 size = i;
