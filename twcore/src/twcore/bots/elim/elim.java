@@ -1280,6 +1280,8 @@ public class elim extends SubspaceBot {
             return;
         else if ((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) 
             return;
+        else if (lastWinner.getKills() < 1)
+            return;
         
         if (winStreak == 1)
             ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena + " to play -" + ba.getBotName());
