@@ -1280,7 +1280,7 @@ public class elim extends SubspaceBot {
             return;
         else if ((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) 
             return;
-        else if (lastWinner.getKills() < 1)
+        else if (lastWinner != null && lastWinner.getKills() < 1)
             return;
         
         if (winStreak == 1)
