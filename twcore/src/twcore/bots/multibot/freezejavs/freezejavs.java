@@ -255,7 +255,7 @@ public class freezejavs extends MultiModule {
         m_botAction.specWithoutLock(name);
         if (isRunning) {
             PlayerInfo player = m_players.get(name);
-            if (player.isPlaying()) {
+            if (player != null && player.isPlaying()) {
                 player.lagger();
             }
         }
