@@ -195,7 +195,7 @@ public class twhtROUND {
         int min = 0;
         int max = 0;
         String[] splitmsg;
-
+        m_ba.cancelTask(fo_timerTask);
         if (msg.contains(":")) {
 
             splitmsg = msg.split(":");
@@ -238,8 +238,9 @@ public class twhtROUND {
      * 
      */
     private void doDropBall() {
-        m_ba.specWithoutLock(m_ba.getBotName());
-        m_ba.setFreq(m_ba.getBotName(),2);
+        m_ba.getShip().sendPositionPacket();
+        m_ba.getShip().setShip(8);
+        m_ba.getShip().setFreq(2);
         m_fnRoundState = 1;
         startTimer();
     }   
@@ -249,8 +250,8 @@ public class twhtROUND {
      * 
      */
     private void doGetBall() { 
-        m_ba.setShip(m_ba.getBotName(),1);
-        m_ba.setFreq(m_ba.getBotName(),2);
+        m_ba.getShip().setShip(0);
+        m_ba.getShip().setFreq(2);
         m_ba.getShip().move(8192, 8192);
         m_ba.getShip().updatePosition();
         m_ba.getBall(ballID, ballTimeStamp);
