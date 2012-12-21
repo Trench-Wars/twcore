@@ -189,6 +189,9 @@ public class twhtGAME {
             if (p == null)
                 return;
             
+            if (p.equals(ba.getBotName())) 
+                return;
+            
             shipType = p.getShipType();
             if (shipType == Tools.Ship.SPECTATOR){                
                 
@@ -230,9 +233,12 @@ public class twhtGAME {
             String player;
             
             playerID = event.getPlayerID();         
-            player = ba.getPlayerName(playerID); 
+            player = ba.getPlayerName(playerID);
             
             if (player == null)
+                return;
+            
+            if (player.equals(ba.getBotName())) 
                 return;
                         
             twhtTEAM t = null;
