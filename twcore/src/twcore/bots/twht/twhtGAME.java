@@ -271,6 +271,7 @@ public class twhtGAME {
     public void handleEvent(SoccerGoal event) {
         if (m_curRound != null) {
             if (m_curRound.m_fnRoundState == 1 &&  !m_curRound.ballPlayer.isEmpty()){
+                m_curRound.m_fnRoundState = 3;
                 goalScorer = m_curRound.ballPlayer.pop();
                 ba.sendArenaMessage("Goal is under review.",2);
             startReview();
@@ -678,9 +679,9 @@ public class twhtGAME {
             
             if (p != null) {
                 if (freq == 0)
-                    ba.warpTo(playerA.getPlayerName(), 460, 455);
+                    ba.warpTo(playerA.getPlayerName(), 508, 449);
                 if (freq == 1)
-                    ba.warpTo(playerA.getPlayerName(), 570, 455);
+                    ba.warpTo(playerA.getPlayerName(), 515, 449);
             }
         } else { 
             ba.sendPrivateMessage(name, "Player not found on either team.");
@@ -705,9 +706,9 @@ public class twhtGAME {
             
             if (p != null) {
                 if (freq == 0)
-                    ba.warpTo(playerA.getPlayerName(), 501, 433);
+                    ba.warpTo(playerA.getPlayerName(), 500, 442);
                 if (freq == 1)
-                    ba.warpTo(playerA.getPlayerName(), 522, 433);
+                    ba.warpTo(playerA.getPlayerName(), 520, 442);
             }
         } else { 
             ba.sendPrivateMessage(name, "Player not found on either team.");

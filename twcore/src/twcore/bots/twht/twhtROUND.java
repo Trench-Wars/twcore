@@ -91,7 +91,7 @@ public class twhtROUND {
     public void handleEvent(BallPosition event) {
 
         
-        if (m_fnRoundState == 1 || m_fnRoundState == 3) {
+       
             ballID        = event.getBallID();
             ballTimeStamp = event.getTimeStamp();
             ballXloc      = event.getXLocation();
@@ -141,7 +141,7 @@ public class twhtROUND {
             }
             ballMap.remove(ballID);
             ballMap.put(ballID, carrier); 
-        }
+        
     }
     
     public void addPlayers(){
@@ -238,8 +238,8 @@ public class twhtROUND {
      * 
      */
     private void doDropBall() {
-        m_ba.getShip().setShip(8);
-        m_ba.getShip().setFreq(2);
+        m_ba.specWithoutLock(m_ba.getBotName());
+        m_ba.setFreq(m_ba.getBotName(),2);
         m_fnRoundState = 1;
         startTimer();
     }   
@@ -249,8 +249,8 @@ public class twhtROUND {
      * 
      */
     private void doGetBall() { 
-        m_ba.getShip().setShip(0);
-        m_ba.getShip().setFreq(2);
+        m_ba.setShip(m_ba.getBotName(),1);
+        m_ba.setFreq(m_ba.getBotName(),2);
         m_ba.getShip().move(8192, 8192);
         m_ba.getShip().updatePosition();
         m_ba.getBall(ballID, ballTimeStamp);
@@ -269,7 +269,6 @@ public class twhtROUND {
             
             ballPlayer.clear();
         }
-//        m_ba.sendArenaMessage(playerFired + " gave the puck to " + playerCaught);
         
     }
     
