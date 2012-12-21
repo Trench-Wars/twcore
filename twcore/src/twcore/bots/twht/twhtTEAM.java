@@ -100,7 +100,7 @@ public class twhtTEAM {
             
            addDelay = new TimerTask() {
                 public void run() {
-                    ba.sendArenaMessage("" + m_fnFrequency);
+    
                     ba.sendArenaMessage(playerName + " has been added for " + m_fcTeamName,2);                   
                     ba.setShip(playerName, playerShip);  
                     ba.setFreq(playerName, m_fnFrequency);
@@ -120,7 +120,6 @@ public class twhtTEAM {
         pA = m_players.get(playerAName);  
         
         pA.changePlayerState(2);
-        ba.sendArenaMessage("" + pA.getPlayerState());
         p = ba.getPlayer(playerAName);
         m_players.put(playerB, new twhtPLAYER(playerB.toLowerCase(), m_fcTeamName, playerShip, this));
 

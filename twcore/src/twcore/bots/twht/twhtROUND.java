@@ -147,18 +147,18 @@ public class twhtROUND {
     public void addPlayers(){
             m_fnRoundState = 0;
             if (m_roundNum == 1) {
-            m_ba.sendArenaMessage("Captains please enter in your line-up.");
+            m_ba.sendArenaMessage("Captains please enter in your line-up.",2);
             m_ba.sendArenaMessage("You can private message " + m_ba.getBotName() + " with !help cap for help.");            
             } else if (m_roundNum == 2) {
-                m_ba.sendArenaMessage("Captains please submit any line up changes. Sides will be switched for this period.");
+                m_ba.sendArenaMessage("Captains please submit any line up changes. Sides will be switched for this period.",2);
                 m_ba.sendArenaMessage("You can private message " + m_ba.getBotName() + " with !help cap for help.");            
                 m_game.setFrequencyAndSide();
             } else if (m_roundNum == 3) {
-                m_ba.sendArenaMessage("Captains please submit any line up changes. Sides will be switched for this period.");
+                m_ba.sendArenaMessage("Captains please submit any line up changes. Sides will be switched for this period.",2);
                 m_ba.sendArenaMessage("You can private message " + m_ba.getBotName() + " with !help cap for help.");         
                 m_game.setFrequencyAndSide();
             } else if (m_roundNum == 4) {
-                m_ba.sendArenaMessage("Captains please message the referee with your shootout order.");
+                m_ba.sendArenaMessage("Captains please message the referee with your shootout order.",2);
                 m_game.setFrequencyAndSide();              
             }           
         }
@@ -167,7 +167,7 @@ public class twhtROUND {
         
             if (m_fnRoundState == 0) {
                 m_fnRoundState = 3; 
-                    m_ba.sendArenaMessage("Round " + m_roundNum + " is ready to begin.");                   
+                    m_ba.sendArenaMessage("Round " + m_roundNum + " is ready to begin.",2);                   
                     
                 if (m_roundNum == 1)
                     m_ba.sendArenaMessage("( [ " + m_fcTeam1Name + "  (   )  "+ m_fcTeam2Name + " ])");
@@ -367,10 +367,13 @@ public class twhtROUND {
         int minutes = gameTime / 60;
         int seconds = gameTime % 60;
         
-        if ((m_roundNum == 1 || m_roundNum == 2) && gameTime == 120) {
+        if (seconds == 0 && minutes > 0)            
+            m_ba.sendArenaMessage("" + Tools.rightString("" + minutes, 2, '0') + ":" + Tools.rightString("" + seconds, 2, '0'),2);
+        
+        if ((m_roundNum == 1 || m_roundNum == 2) && gameTime == 600) {
             m_game.reportEndOfRound(m_roundNum);
             m_fnRoundState = -1;
-        } else if (m_roundNum == 3 && gameTime == 120){
+        } else if (m_roundNum == 3 && gameTime == 720){
             m_game.reportEndOfRound(m_roundNum);
             m_fnRoundState = -1;
         }
@@ -378,8 +381,7 @@ public class twhtROUND {
         m_game.m_team1.searchPenalties(gameTime);
         m_game.m_team2.searchPenalties(gameTime);
         
-        if (seconds == 0 && minutes > 0)            
-        m_ba.sendArenaMessage("" + Tools.rightString("" + minutes, 2, '0') + ":" + Tools.rightString("" + seconds, 2, '0'));
+        
         do_updateScoreBoard();
     }
     

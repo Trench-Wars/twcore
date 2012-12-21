@@ -76,7 +76,7 @@ public class twhtGAME {
     
     public void setupTeams() {
             m_team1 = new twhtTEAM(m_fcTeam1Name,m_fnTeam1ID, 0, 1, this, ba);
-            m_team2 = new twhtTEAM(m_fcTeam2Name,m_fnTeam2ID, 1, 2, this,ba);
+            m_team2 = new twhtTEAM(m_fcTeam2Name,m_fnTeam2ID, 1, 2, this, ba);
     }
     
     public void setupRound(int roundNumber) {
@@ -107,7 +107,7 @@ public class twhtGAME {
             delay = new TimerTask() {
                 @Override
                 public void run() {
-                    ba.sendArenaMessage("Round two will begin after a 2 minute intermission", 32);
+                    ba.sendArenaMessage("Round two will begin after a 2 minute intermission", 2);
 
                     intermission = new TimerTask() {
                         public void run() {
@@ -133,14 +133,14 @@ public class twhtGAME {
                 delay = new TimerTask() {
                     @Override
                     public void run() {
-                        ba.sendArenaMessage("Round two will begin after a 2 minute intermission", 32);
+                        ba.sendArenaMessage("Round two will begin after a 2 minute intermission", 2);
 
                         intermission = new TimerTask() {
                             public void run() {
                                 setupRound(3);
                             }
                         };
-                        ba.scheduleTask(intermission, Tools.TimeInMillis.MINUTE * 1);
+                        ba.scheduleTask(intermission, Tools.TimeInMillis.MINUTE * 2);
                     }
                 };
                 ba.scheduleTask(delay, Tools.TimeInMillis.SECOND * 10);
@@ -151,8 +151,8 @@ public class twhtGAME {
             } else if (fnTeam2Score > fnTeam1Score) {
                 doEndGame(m_fcTeam2Name, m_fcTeam1Name, fnTeam2Score, fnTeam1Score);
             } else if (fnTeam2Score == fnTeam1Score) {
-                ba.sendArenaMessage("Time is up! Overtime has ended");
-                ba.sendArenaMessage("The score is still tied, Prepare for a shootout.");
+                ba.sendArenaMessage("Time is up! Overtime has ended",5);
+                ba.sendArenaMessage("The score is still tied, Prepare for a shootout.",2);
                 roundNum =4;
                 delay = new TimerTask() {
                     @Override
@@ -272,7 +272,7 @@ public class twhtGAME {
         if (m_curRound != null) {
             if (m_curRound.m_fnRoundState == 1 &&  !m_curRound.ballPlayer.isEmpty()){
                 goalScorer = m_curRound.ballPlayer.pop();
-                ba.sendArenaMessage("Goal is under review.");
+                ba.sendArenaMessage("Goal is under review.",2);
             startReview();
                 if (m_curRound.ballPlayer.size() > 1) {
                     m_curRound.ballPlayer.pop();
@@ -636,7 +636,7 @@ public class twhtGAME {
                         playerA.changePlayerState(4);
                         playerA.setPenalty(penaltyTime);
                         
-                        ba.sendArenaMessage("Penalty set for " + penaltySeconds + " seconds on " + playerA.getPlayerName() + " for " + splitCmd[2]);
+                        ba.sendArenaMessage("Penalty set for " + penaltySeconds + " seconds on " + playerA.getPlayerName() + " for " + splitCmd[2],23);
                         
                         if (freq == 0)
                             ba.warpTo(playerA.getPlayerName(), 501, 433);
@@ -769,8 +769,8 @@ public class twhtGAME {
                     if (votes == "ownGoal")
                         ogVote++;
                 }
-                ba.sendArenaMessage(name + " has voted " + vote + ".");
-                ba.sendArenaMessage("Totals: CLEAN(" + clVote + ")  LAG(" + lagVote + ") GK(" + gkVote + ")  CR(" + crVote + ") OG(" + ogVote + ")");
+                ba.sendTeamMessage(name + " has voted " + vote + ".");
+                ba.sendTeamMessage("Totals: CLEAN(" + clVote + ")  LAG(" + lagVote + ") GK(" + gkVote + ")  CR(" + crVote + ") OG(" + ogVote + ")");
             }
         }
     }
@@ -1033,11 +1033,11 @@ public class twhtGAME {
         
             if (m_team1.isCaptain(name)){
                 team = m_team1;
-                ba.sendArenaMessage("" + team.getTeamName() + " is ready to begin.");
+                ba.sendArenaMessage("" + team.getTeamName() + " is ready to begin.",2);
             }
             if (m_team2.isCaptain(name)) {
                 team = m_team2;
-                ba.sendArenaMessage("" + team.getTeamName() + " is ready to begin.");
+                ba.sendArenaMessage("" + team.getTeamName() + " is ready to begin.",2);
             }
             if (name.equals(m_fcRefName)) {
             m_curRound.ready();
@@ -1066,7 +1066,7 @@ public class twhtGAME {
     public void goal(String msg) {
             if (voteInProgress) {
                 if (msg.equals("cl")) {
-                    ba.sendArenaMessage("Goal was considered clean.");
+                    ba.sendArenaMessage("Goal was considered clean.",2);
                     ba.sendArenaMessage(getPlayerTeam(goalScorer).getTeamName() + "'s Goal by: " + goalScorer);
                     ba.sendArenaMessage("Assist: " + assistOne + " " + assistTwo);                   
                         if (m_team1.isPlayer(goalScorer))
@@ -1076,13 +1076,13 @@ public class twhtGAME {
                         ba.sendArenaMessage("Score: " + m_fcTeam1Name + " " + fnTeam1Score + " - " + m_fcTeam2Name + " " + fnTeam2Score);
                         m_curRound.m_fnRoundState = 3;
                 } else if (msg.equals("lag")) {
-                    ba.sendArenaMessage("Goal was considered lag and will be voided.");
+                    ba.sendArenaMessage("Goal was considered lag and will be voided.",2);
                 } else if (msg.equals("cr")) {
-                    ba.sendArenaMessage("Goal was considered crease and will be voided.");
+                    ba.sendArenaMessage("Goal was considered crease and will be voided.",2);
                 } else if (msg.equals("gk")) {
-                    ba.sendArenaMessage("Goal was considered a goalie kill and will be void.");
+                    ba.sendArenaMessage("Goal was considered a goalie kill and will be void.",2);
                 } else if (msg.equals("og")) {
-                    ba.sendArenaMessage("Goal was considered an own goal and the other team will be rewarded a goal.");
+                    ba.sendArenaMessage("Goal was considered an own goal and the other team will be rewarded a goal.",2);
                     if (m_team1.isPlayer(goalScorer))
                         fnTeam2Score++;
                     if (m_team2.isPlayer(goalScorer))

@@ -346,7 +346,7 @@ public class twht extends SubspaceBot {
      */
     public void cmd_off(String name, String msg) {
 
-        ba.sendArenaMessage("I have been told to shutdown by " + name + ". Bye Bye");
+        ba.sendArenaMessage("I have been told to shutdown by " + name + ". Bye Bye",23);
         ba.sendPrivateMessage(name, "You really turn me off you know that.");
         endGame();
     }
