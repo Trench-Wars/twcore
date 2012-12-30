@@ -549,12 +549,19 @@ public class acro2 extends MultiModule {
     }
 
     public String[] getModHelpMessage() {
-        String[] help = { "ACROMANIA v2.0 BOT COMMANDS", "!start       - Starts a game of acromania.", "!stop        - Stops a game currently in progress.",
-                "!startcustom - Starts a game of acromania.  Host must", "               !setacro each round.", "!setacro     - Used to set the acronym for the next round",
-                "               (can be used only during a !startcustom game.", "!rules   - Displays game rules.", "!changes - Display changes since v1.0.",
-                "!showanswers - Shows who has entered which answer.", "!ignore <name> - Prevents the player from submitting any answers for this game.",
-                "!unignore <name> - Removes player from the ignore list and allows submissions.", "!listIgnore - Lists the current players added to the ignore list.",
-                "NOTE: This event should only be hosted by Mod+!" };
+        String[] help = { 
+                "ACROMANIA v2.0 BOT COMMANDS", "!start       - Starts a game of acromania.",
+                "!stop        - Stops a game currently in progress.",
+                "!startcustom - Starts a game of acromania.  Host must",
+                "               !setacro each round.",
+                "!setacro     - Used to set the acronym for the next round",
+                "               (can be used only during a !startcustom game.",
+                "!rules   - Displays game rules.", "!changes - Display changes since v1.0.",
+                "!showanswers - Shows who has entered which answer.",
+                "!ignore <name> - Prevents the player from submitting any answers for this game.",
+                "!unignore <name> - Removes player from the ignore list and allows submissions.",
+                "!listIgnore - Lists the current players added to the ignore list."
+                 };
         return help;
     }
 
