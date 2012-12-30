@@ -1,20 +1,20 @@
 package twcore.bots.multibot.pictionary;
 
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.Vector;
-import java.util.ArrayList;
 
 import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
-import twcore.core.util.ModuleEventRequester;
-import twcore.core.util.StringBag;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
 import twcore.core.stats.PlayerProfile;
+import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
 /**
@@ -49,10 +49,11 @@ public class pictionary extends MultiModule {
     public String m_prec = "-- ", gameType = "Bot's Pick.";
     public String t_definition, t_word = " ", curArtist = " ", theWinner, lastWord = " ";
 
-    public String[] helpmsg = { "Commands:", "!help          -- displays this.", "!rules         -- displays the rules.", "!lagout        -- puts you back in the game if you're drawing.",
-            "!pass          -- gives your drawing turn to a random player.", "!reset         -- resets your mines if drawing.", "!score         -- displays the current scores.",
-            "!repeat        -- will repeat the hint or answer.", "!stats         -- will display your statistics.", "!stats <name>  -- displays <name>'s statistics.",
-            "!topten        -- displays top ten player stats." };
+    public String[] helpmsg = { "Commands:", "!help               -- displays this.", "!rules              -- displays the rules.",
+            "!lagout             -- puts you back in the game if you're drawing.", "!pass               -- gives your drawing turn to a random player.",
+            "!reset              -- resets your mines if drawing.", "!score              -- displays the current scores.", "!repeat             -- will repeat the hint or answer.",
+            "!stats              -- will display your statistics.", "!stats <name>       -- displays <name>'s statistics.", "!topten             -- displays top ten player stats.",
+            "!red/!yellow!/!blue -- changes your mine colours." };
     public String[] opmsg = { "Moderator Commands:", "!start         -- Starts a default game of Pictionary to 10.", "!start <num>   -- Starts a game to <num> points.",
             "!gametype      -- Toggles between player pick or bot pick.", "!cancel        -- Cancels this game of Pictionary.", "!showanswer    -- Shows you the answer(You can't win that round).",
             "!displayrules  -- Shows the rules in *arena messages.", "!reset         -- Resets the current artist's mines.", "!pass          -- gives your drawing turn to a random player.",
@@ -197,6 +198,12 @@ public class pictionary extends MultiModule {
             m_botAction.smartPrivateMessageSpam(name, regrules);
         else if (msg.equalsIgnoreCase("!help"))
             m_botAction.smartPrivateMessageSpam(name, helpmsg);
+        else if (msg.equalsIgnoreCase("!red"))
+            doChangeColour(name, 1);
+        else if (msg.equalsIgnoreCase("!yellow"))
+            doChangeColour(name, 2);
+        else if (msg.equalsIgnoreCase("!blue"))
+            doChangeColour(name, 3);
         else
             doCustomWord(name, msg);
 
@@ -242,6 +249,30 @@ public class pictionary extends MultiModule {
             m_botAction.warpTo(curArtist, XSpot, YSpot);
         }
 
+    }
+
+    /** ************************************************************* */
+    /** * Changes the player's bomb level and colour. ** */
+    /** ************************************************************* */
+
+    public void doChangeColour(String name, int level) {
+        if (name.equals(curArtist) && (gameProgress == HINT_GIVEN || gameProgress == DRAWING)) {
+            m_botAction.sendUnfilteredPrivateMessage(name, "*prize #-9");
+            m_botAction.sendUnfilteredPrivateMessage(name, "*prize #-9");
+            m_botAction.sendUnfilteredPrivateMessage(name, "*prize #-9");
+            if (level == 1) {
+                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
+            }
+            if (level == 2) {
+                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
+                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
+            }
+            if (level == 3) {
+                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
+                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
+                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
+            }
+        }
     }
 
     /** ************************************************************* */
@@ -611,10 +642,16 @@ public class pictionary extends MultiModule {
     /** ************************************************************* */
     public void doCustomWord(String name, String message) {
         if (name.equalsIgnoreCase(curArtist) && custGame && gameProgress == READY_CHECK) {
-            if (message.length() < 13) {
+            if (message.length() < 22) {
                 if (isAllLetters(message)) {
                     t_word = message.toLowerCase().trim();
-                    t_definition = "The word begins with '" + t_word.substring(0, 1) + "'.";
+                    if (message.length() < 12) {
+                        t_definition = "The word begins with '" + t_word.substring(0, 1) + "'.";
+                    } else if (message.length() > 11 && message.length() < 16) {
+                        t_definition = "The word begins with '" + t_word.substring(0, 2) + "'.";
+                    } else if (message.length() > 15) {
+                        t_definition = "The word begins with '" + t_word.substring(0, 3) + "'.";
+                    }
                     m_botAction.sendSmartPrivateMessage(curArtist, "Word to draw: " + t_word);
                     try {
                         m_botAction.cancelTasks();
@@ -978,6 +1015,8 @@ public class pictionary extends MultiModule {
         } catch (Exception e) {}
         m_botAction.specAll();
         m_botAction.toggleLocked();
+        t_word = " ";
+        lastWord = " ";
     }
 
 }
