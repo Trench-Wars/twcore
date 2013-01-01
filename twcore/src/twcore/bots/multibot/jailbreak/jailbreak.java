@@ -321,7 +321,7 @@ public class jailbreak extends MultiModule {
     private void cmd_stop(String name) {
         if (isStarted) {
         	cancel();
-        	m_botAction.sendArenaMessage("Game has been stopped, arena is unlocked.", 3);
+        	m_botAction.sendArenaMessage("Game has been stopped.", 3);
         } else m_botAction.sendPrivateMessage(name, "The game has not been started yet.");
     }
 
@@ -470,7 +470,7 @@ public class jailbreak extends MultiModule {
          * The 10 second warning before go.
          */
         private void doWarning() {
-            m_botAction.sendArenaMessage("Jailbreak is about to begin in about 10 seconds!", 1);
+            m_botAction.sendArenaMessage("Jailbreak is about to begin in 10 seconds!", 1);
             m_botAction.createNumberOfTeams(2);
         }
 
@@ -485,12 +485,12 @@ public class jailbreak extends MultiModule {
             m_botAction.setDoors(255);
             m_botAction.warpFreqToLocation(0, 270, 426);
             m_botAction.warpFreqToLocation(1, 729, 595);
+            m_botAction.sendUnfilteredPublicMessage("*restart");
         	freq0Safe.clear();
         	freq1Safe.clear();
             isRunning = true;
             createPlayerRecords();
             m_botAction.sendArenaMessage("GO GO GO !!!", 104);
-            m_botAction.setPlayerPositionUpdating(3000);
         }
         
         /**
