@@ -272,7 +272,7 @@ public class BotQueue extends Thread {
                 return "has disconnected normally";
 	    } catch( NullPointerException e ) {
 	    	Tools.printStackTrace(e);
-	    	return "had a disconnection problem/was already DC'd (null pointer exception thrown)";
+	    	m_botAction.sendChatMessage( 1, name + " had a disconnection problem/was already DC'd (null pointer exception thrown)");
          }
         }
         return "not found in bot stable (possibly already disconnected)";
@@ -283,28 +283,25 @@ public class BotQueue extends Thread {
      * @param className Class of bots to remove
      */
     void hardRemoveAllBotsOfType( String className, String initiator ) {
-        String       rawClassName = className.toLowerCase();
-        ChildBot c;
-        LinkedList<String> names = new LinkedList<String>();
+              String             rawClassName = className.toLowerCase();
+              Integer            numBots      = m_botTypes.get( rawClassName );
+              LinkedList<String> names        = new LinkedList<String>();
 
-        Iterator<ChildBot> i = m_botStable.values().iterator();
-        while( i.hasNext() ) {
-            c = (ChildBot)i.next();
-            if( c != null )
-                if( c.getClassName().equals( rawClassName ) )
-                    names.add( c.getBot().getBotName() );
-        }
-        Iterator<String> j = names.iterator();
-        while( j.hasNext() ) {
-            String name = j.next();
-            removeBot( name, "!removetype by " + initiator );
-            m_botAction.sendChatMessage( 1, name + " logged off.  (!removetype initiated.)" );
-        }
-        Integer numBots = m_botTypes.get( rawClassName );
-        if( numBots != null )
-            if( numBots.intValue() != 0 )
-                m_botTypes.put( rawClassName, new Integer(0) );
-    }
+              for( ChildBot c : m_botStable.values() ) 
+                  if( c != null ) {
+                      if(c.getClassName().equals( rawClassName ))
+                          names.add( c.getBot().getBotName() );
+              }        
+              
+              for( String name : names ) {
+                  removeBot( name, "!removetype by " + initiator );
+                  m_botAction.sendChatMessage( 1, name + " logged off.  (!removetype initiated.)" );
+              }
+              
+              if( numBots != null && numBots.intValue() != 0 )
+                      m_botTypes.put( rawClassName, new Integer(0) );
+        }                          
+    
 
 
     /**
