@@ -6,15 +6,17 @@ import java.util.TreeSet;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
+import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
-import twcore.core.events.FrequencyShipChange;
-import twcore.core.events.SoccerGoal;
 import twcore.core.events.PlayerPosition;
+import twcore.core.events.SoccerGoal;
+import twcore.core.events.BallPosition;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
+import twcore.core.util.Tools.Ship;
 
 /**
  * jailbreak.java Created: 12/2012
@@ -35,6 +37,9 @@ public class jailbreak extends MultiModule {
     private boolean checkTimeStamp1 = false;
     private int timeStamp0 = 0;
     private int timeStamp1 = 0;
+    private int lastBallTimestamp0 = 0;
+    private int lastBallTimestamp1 = 0;
+    private TimerTask pause;
 
     // Declares a hashMap for the player info.
     private TreeMap<String, PlayerInfo> m_players;
@@ -44,18 +49,6 @@ public class jailbreak extends MultiModule {
 
     public void init() {
         m_botAction.setReliableKills(1);
-    }
-
-    /**
-     * Cleanup.
-     */
-    public void cancel() {
-        isRunning = false;
-        isStarted = false;
-        arenaLock = false;
-        m_botAction.cancelTasks();
-        m_botAction.toggleLocked();
-        clearRecords();
     }
 
     /**
@@ -69,6 +62,7 @@ public class jailbreak extends MultiModule {
         eventRequester.request(this, EventRequester.PLAYER_ENTERED);
         eventRequester.request(this, EventRequester.SOCCER_GOAL);
         eventRequester.request(this, EventRequester.PLAYER_POSITION);
+        eventRequester.request(this, EventRequester.BALL_POSITION);
     }
 
     /**
@@ -112,7 +106,6 @@ public class jailbreak extends MultiModule {
                 freq1Score = true;
                 m_botAction.sendArenaMessage("Freq 1 have scored! Their jail is broken!");
             }
-
         }
     }
 
@@ -124,7 +117,7 @@ public class jailbreak extends MultiModule {
      */
     public void handleEvent(FrequencyShipChange event) {
         if (isRunning) {
-            if (event.getShipType() == 0) {
+            if (event.getShipType() == Ship.SPECTATOR) {
                 String name = m_botAction.getPlayerName(event.getPlayerID());
                 PlayerInfo player = m_players.get(name);
                 if (player != null) {
@@ -159,21 +152,17 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * This handleEvent accepts msgs from players as well as mods.
-     * 
-     * @event The Message event in question.
+     * Handles ball timestamp (for dropping them at go)
      */
-    public void handleEvent(Message event) {
-        int type = event.getMessageType();
-        String message = event.getMessage();
-        if (type == Message.PRIVATE_MESSAGE) {
-            String name = m_botAction.getPlayerName(event.getPlayerID());
-            handleCommand(name, message);
-        } else if (type == Message.ARENA_MESSAGE) {
-            if (message.equals("Arena UNLOCKED") && arenaLock)
-                m_botAction.toggleLocked();
-            else if (message.equals("Arena LOCKED") && !arenaLock)
-                m_botAction.toggleLocked();
+
+    public void handleEvent(BallPosition event) {
+        int id = event.getBallID();
+        if (id == 0) {
+            lastBallTimestamp0 = event.getTimeStamp();
+        } else if (id == 1) {
+            lastBallTimestamp1 = event.getTimeStamp();
+        } else {
+            return;
         }
     }
 
@@ -214,6 +203,25 @@ public class jailbreak extends MultiModule {
                         freq1Safe.remove(playerName);
                 }
             }
+        }
+    }
+
+    /**
+     * This handleEvent accepts msgs from players as well as mods.
+     * 
+     * @event The Message event in question.
+     */
+    public void handleEvent(Message event) {
+        int type = event.getMessageType();
+        String message = event.getMessage();
+        if (type == Message.PRIVATE_MESSAGE) {
+            String name = m_botAction.getPlayerName(event.getPlayerID());
+            handleCommand(name, message);
+        } else if (type == Message.ARENA_MESSAGE) {
+            if (message.equals("Arena UNLOCKED") && arenaLock)
+                m_botAction.toggleLocked();
+            else if (message.equals("Arena LOCKED") && !arenaLock)
+                m_botAction.toggleLocked();
         }
     }
 
@@ -273,13 +281,13 @@ public class jailbreak extends MultiModule {
             PlayerInfo p = m_players.get(name);
             if (p == null) {
                 if (teamToggle) {
-                    m_botAction.setShip(name, 1);
+                    m_botAction.setShip(name, Ship.WARBIRD);
                     m_botAction.setFreq(name, 1);
                     m_players.put(name, new PlayerInfo(name, 1));
                     freq1Safe.add(name);
                     teamToggle = false;
                 } else {
-                    m_botAction.setShip(name, 1);
+                    m_botAction.setShip(name, Ship.WARBIRD);
                     m_botAction.setFreq(name, 0);
                     m_players.put(name, new PlayerInfo(name, 0));
                     freq0Safe.add(name);
@@ -315,7 +323,7 @@ public class jailbreak extends MultiModule {
     private void cmd_stop(String name) {
         if (isStarted) {
             cancel();
-            m_botAction.sendArenaMessage("Game has been stopped.", 3);
+            m_botAction.sendArenaMessage("Game has been stopped, arena is unlocked.", 3);
         } else
             m_botAction.sendPrivateMessage(name, "The game has not been started yet.");
     }
@@ -328,7 +336,7 @@ public class jailbreak extends MultiModule {
      */
     private void returnedFromLagout(String name) {
         PlayerInfo p = m_players.get(name);
-        m_botAction.setShip(name, 1);
+        m_botAction.setShip(name, Ship.WARBIRD);
         m_botAction.setFreq(name, p.getFreq());
         if (p.getFreq() == 0) {
             freq0Safe.add(name);
@@ -451,20 +459,19 @@ public class jailbreak extends MultiModule {
          * The rules that are displayed at the beginning of each game.
          */
         private void doRules() {
-            m_botAction.sendArenaMessage("------------------------------ Jailbreak RULES ------------------------------", 4);
-            m_botAction.sendArenaMessage("|	Jailbreak is a two teams game. Bring your team to victory by killing and  |");
-            m_botAction.sendArenaMessage("|	scoring goals! If you die, you get locked into your team's jail. The only |");
-            m_botAction.sendArenaMessage("|	way to get out is to have someone on your team score a goal! The team     |");
-            m_botAction.sendArenaMessage("|	that jails the entire opposing team wins. Good luck!                      |");
-            m_botAction.sendArenaMessage("-----------------------------------------------------------------------------");
-
+            m_botAction.sendArenaMessage("------------------------------ Jailbreak RULES ------------------------------");
+            m_botAction.sendArenaMessage("| Jailbreak is a two teams game. Bring your team to victory by killing and  |");
+            m_botAction.sendArenaMessage("| scoring goals! If you die, you get locked into your team's jail. The only |");
+            m_botAction.sendArenaMessage("| way to get out is to have someone on your team score a goal! The team     |");
+            m_botAction.sendArenaMessage("| that jails the entire opposing team wins. Good luck!                      |");
+            m_botAction.sendArenaMessage("-----------------------------------------------------------------------------", 4);
         }
 
         /**
          * The 10 second warning before go.
          */
         private void doWarning() {
-            m_botAction.sendArenaMessage("Jailbreak is about to begin in 10 seconds!", 1);
+            m_botAction.sendArenaMessage("Jailbreak is about to begin in about 10 seconds!", 1);
             m_botAction.createNumberOfTeams(2);
         }
 
@@ -473,18 +480,41 @@ public class jailbreak extends MultiModule {
          * 
          */
         private void doGo() {
-            m_botAction.changeAllShips(1);
+            m_botAction.changeAllShips(Ship.WARBIRD);
             m_botAction.scoreResetAll();
             m_botAction.shipResetAll();
             m_botAction.setDoors(255);
             m_botAction.warpFreqToLocation(0, 270, 426);
             m_botAction.warpFreqToLocation(1, 729, 595);
-            m_botAction.sendUnfilteredPublicMessage("*restart");
             freq0Safe.clear();
             freq1Safe.clear();
             isRunning = true;
             createPlayerRecords();
+            doBallDrop();
             m_botAction.sendArenaMessage("GO GO GO !!!", 104);
+        }
+
+        /**
+         * Drops both balls right in the middle (All ball-related stuff stolen from Joyrider's balldrop util)
+         */
+
+        private void doBallDrop() {
+            m_botAction.getShip().setShip(0);
+            m_botAction.getShip().move(7984, 8176);
+            m_botAction.getBall((byte) 0, lastBallTimestamp0);
+            m_botAction.getShip().setShip(8);
+
+            pause = new TimerTask() {
+                @Override
+                public void run() {
+                    m_botAction.getShip().setShip(0);
+                    m_botAction.getShip().move(8000, 8208);
+                    m_botAction.getBall((byte) 1, lastBallTimestamp1);
+                    m_botAction.getShip().setShip(8);
+                }
+            };
+
+            m_botAction.scheduleTask(pause, 1000);
         }
 
         /**
@@ -578,6 +608,18 @@ public class jailbreak extends MultiModule {
         public boolean isPlaying() {
             return isPlaying;
         }
+    }
+
+    /**
+     * Cleanup.
+     */
+    public void cancel() {
+        isRunning = false;
+        isStarted = false;
+        arenaLock = false;
+        m_botAction.cancelTasks();
+        m_botAction.toggleLocked();
+        clearRecords();
     }
 
     /**
