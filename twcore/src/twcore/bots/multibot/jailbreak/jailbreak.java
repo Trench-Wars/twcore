@@ -16,9 +16,8 @@ import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
-/** 
- * jailbreak.java 
- * Created: 12/2012
+/**
+ * jailbreak.java Created: 12/2012
  * 
  * @author Fusha
  * @author K A N E (Ian)
@@ -34,8 +33,8 @@ public class jailbreak extends MultiModule {
     private boolean freq1Score = false;
     private boolean checkTimeStamp0 = false;
     private boolean checkTimeStamp1 = false;
-    private int 	timeStamp0 = 0;
-    private int 	timeStamp1 = 0;
+    private int timeStamp0 = 0;
+    private int timeStamp1 = 0;
 
     // Declares a hashMap for the player info.
     private TreeMap<String, PlayerInfo> m_players;
@@ -72,7 +71,6 @@ public class jailbreak extends MultiModule {
         eventRequester.request(this, EventRequester.PLAYER_POSITION);
     }
 
-   
     /**
      * Counts arena leaves as DCs to be safe.
      * 
@@ -87,38 +85,37 @@ public class jailbreak extends MultiModule {
                 if (player != null && player.isPlaying()) {
                     player.lagger();
                     checkWinner();
-	                if (freq0Safe.size() > 0) {
-	                	if (freq0Safe.contains(p))
-	                	freq0Safe.remove(p);
-	                } else if (freq1Safe.size() > 0) {
-	                	if (freq1Safe.contains(p)) 
-	                	freq1Safe.remove(p);
-	                }
+                    if (freq0Safe.size() > 0) {
+                        if (freq0Safe.contains(p))
+                            freq0Safe.remove(p);
+                    } else if (freq1Safe.size() > 0) {
+                        if (freq1Safe.contains(p))
+                            freq1Safe.remove(p);
+                    }
                 }
             }
         }
     }
-    
+
     /**
-     * Handles the soccer goal event. 
+     * Handles the soccer goal event.
      * 
      * @param event
      *            Contains information on a freq change.
      */
     public void handleEvent(SoccerGoal event) {
         if (isRunning) {
-        	if (event.getFrequency() == 0) {
-        		freq0Score = true;
-        		m_botAction.sendArenaMessage("Freq 0 have scored! Their jail is broken!");
-        	} else if (event.getFrequency() == 1) {
-        		freq1Score = true;
-        		m_botAction.sendArenaMessage("Freq 1 have scored! Their jail is broken!");
-        	}
-        	
+            if (event.getFrequency() == 0) {
+                freq0Score = true;
+                m_botAction.sendArenaMessage("Freq 0 have scored! Their jail is broken!");
+            } else if (event.getFrequency() == 1) {
+                freq1Score = true;
+                m_botAction.sendArenaMessage("Freq 1 have scored! Their jail is broken!");
+            }
 
         }
     }
-    
+
     /**
      * Using the frequencyChange event to look out for possible lagouts to the spec frequency.
      * 
@@ -132,19 +129,18 @@ public class jailbreak extends MultiModule {
                 PlayerInfo player = m_players.get(name);
                 if (player != null) {
                     player.lagger();
-                	checkWinner();
+                    checkWinner();
                     if (freq0Safe.size() > 0) {
-                    	if (freq0Safe.contains(name))
-                    		freq0Safe.remove(name);
+                        if (freq0Safe.contains(name))
+                            freq0Safe.remove(name);
                     } else if (freq1Safe.size() > 1) {
-                    	if (freq1Safe.contains(name))
-                    		freq1Safe.remove(name);
+                        if (freq1Safe.contains(name))
+                            freq1Safe.remove(name);
                     }
                 }
             }
         }
     }
-
 
     /**
      * Everyone that joins the arena while the game is in progress will receive a message to !lagout or !enter.
@@ -180,46 +176,45 @@ public class jailbreak extends MultiModule {
                 m_botAction.toggleLocked();
         }
     }
-    
+
     /**
-     * Checks if a player is in safe and warps them out if their freq has scored, 
-     * or adds/removes them to/from the warping waiting list.
+     * Checks if a player is in safe and warps them out if their freq has scored, or adds/removes them to/from the warping waiting list.
      * 
      */
     public void handleEvent(PlayerPosition event) {
-    	boolean isSafe = false;
-    	int freq = -1;
-    	Player p;
-    	String playerName;
-    	
-    	isSafe = event.isInSafe();
-    	p = m_botAction.getPlayer(event.getPlayerID());
-    	
-    	if (p == null)
-    	return;
+        boolean isSafe = false;
+        int freq = -1;
+        Player p;
+        String playerName;
 
-    	freq = p.getFrequency();
-    	playerName = m_botAction.getPlayerName(p.getPlayerID());
-    	
-    	if (playerName == null)
-    	return;
-    	
-    	if (isRunning) {
-    		if (isSafe) {
-    			if (freq == 0)
-    				freq0Safe.add(playerName);
-    			else if (freq == 1)
-    				freq1Safe.add(playerName);
-    		} else {
-    			if (freq == 0 && freq0Safe.size() > 0) {
-    				if (freq0Safe.contains(playerName))
-        				freq0Safe.remove(playerName);
-    			} else if (freq == 1 && freq1Safe.size() > 0) {
-    				if (freq1Safe.contains(playerName))
-    					freq1Safe.remove(playerName);
-    			}   				
-    		}
-    	}
+        isSafe = event.isInSafe();
+        p = m_botAction.getPlayer(event.getPlayerID());
+
+        if (p == null)
+            return;
+
+        freq = p.getFrequency();
+        playerName = m_botAction.getPlayerName(p.getPlayerID());
+
+        if (playerName == null)
+            return;
+
+        if (isRunning) {
+            if (isSafe) {
+                if (freq == 0)
+                    freq0Safe.add(playerName);
+                else if (freq == 1)
+                    freq1Safe.add(playerName);
+            } else {
+                if (freq == 0 && freq0Safe.size() > 0) {
+                    if (freq0Safe.contains(playerName))
+                        freq0Safe.remove(playerName);
+                } else if (freq == 1 && freq1Safe.size() > 0) {
+                    if (freq1Safe.contains(playerName))
+                        freq1Safe.remove(playerName);
+                }
+            }
+        }
     }
 
     /**
@@ -305,13 +300,12 @@ public class jailbreak extends MultiModule {
      * @param name
      */
     private void cmd_start(String name) {
-    	if (!isStarted) {
-           startGame();
+        if (!isStarted) {
+            startGame();
         } else {
             m_botAction.sendPrivateMessage(name, "The game has already begun.");
         }
     }
-
 
     /**
      * Stop the current game
@@ -320,9 +314,10 @@ public class jailbreak extends MultiModule {
      */
     private void cmd_stop(String name) {
         if (isStarted) {
-        	cancel();
-        	m_botAction.sendArenaMessage("Game has been stopped.", 3);
-        } else m_botAction.sendPrivateMessage(name, "The game has not been started yet.");
+            cancel();
+            m_botAction.sendArenaMessage("Game has been stopped.", 3);
+        } else
+            m_botAction.sendPrivateMessage(name, "The game has not been started yet.");
     }
 
     /**
@@ -336,16 +331,16 @@ public class jailbreak extends MultiModule {
         m_botAction.setShip(name, 1);
         m_botAction.setFreq(name, p.getFreq());
         if (p.getFreq() == 0) {
-        	freq0Safe.add(name);
+            freq0Safe.add(name);
         } else if (p.getFreq() == 1) {
-        	freq1Safe.add(name);
+            freq1Safe.add(name);
         }
         m_botAction.sendPrivateMessage(name, "Welcome back!");
         p.isNotLagged();
     }
 
     /**
-     * Starts the timer for the heartbeat     * 
+     * Starts the timer for the heartbeat *
      * 
      */
     private void startCheckTimer() {
@@ -373,10 +368,10 @@ public class jailbreak extends MultiModule {
      */
     private void clearRecords() {
         m_botAction.cancelTask(checkTimer);
-        
+
         freq0Safe.clear();
         freq1Safe.clear();
-        
+
         if (m_players == null)
             return;
         if (m_players.values() == null)
@@ -405,19 +400,18 @@ public class jailbreak extends MultiModule {
      * This method checks to see if there is a winner
      */
     private void checkWinner() {
-    	if (isRunning) {
-    		if (m_botAction.getFrequencySize(0) == freq0Safe.size() && !freq0Score) {
-    			m_botAction.sendArenaMessage("Freq 0 has been completely jailed! Freq 1 are the winners!!!", 5);
-    	        m_botAction.sendArenaMessage("Thank you for playing! Arena UNLOCKED");
-    			cancel();
-    		} else if (m_botAction.getFrequencySize(1) == freq1Safe.size() && !freq1Score) {
-    			m_botAction.sendArenaMessage("Freq 1 has been completely jailed! Freq 0 are the winners!!!",  5);
-    	        m_botAction.sendArenaMessage("Thank you for playing! Arena UNLOCKED");
-    			cancel();	
-    		}
-    	}
+        if (isRunning) {
+            if (m_botAction.getFrequencySize(0) == freq0Safe.size() && !freq0Score) {
+                m_botAction.sendArenaMessage("Freq 0 has been completely jailed! Freq 1 are the winners!!!", 5);
+                m_botAction.sendArenaMessage("Thank you for playing! Arena UNLOCKED");
+                cancel();
+            } else if (m_botAction.getFrequencySize(1) == freq1Safe.size() && !freq1Score) {
+                m_botAction.sendArenaMessage("Freq 1 has been completely jailed! Freq 0 are the winners!!!", 5);
+                m_botAction.sendArenaMessage("Thank you for playing! Arena UNLOCKED");
+                cancel();
+            }
+        }
     }
-   
 
     /**
      * Checks the records and makes any adjustments if needed
@@ -425,12 +419,12 @@ public class jailbreak extends MultiModule {
      */
     private class CheckTimer extends TimerTask {
         int timerInSeconds;
-        
+
         //class constructor for checkTimer
         public CheckTimer() {
             timerInSeconds = 0;
         }
-        
+
         //What is ran every second
         public void run() {
             timerInSeconds++;
@@ -443,14 +437,14 @@ public class jailbreak extends MultiModule {
                 doGo();
             else if (timerInSeconds % 30 == 0)
                 m_botAction.sendTeamMessage("Please PM me with !enter to join the game or !lagout to return.");
-            
+
             if (freq0Score)
-            	doFreqOneScore();
+                doFreqOneScore();
             if (freq1Score)
-            	doFreqTwoScore();     
-            
-        	if (timerInSeconds > 80)
-        		checkWinner();
+                doFreqTwoScore();
+
+            if (timerInSeconds > 80)
+                checkWinner();
         }
 
         /**
@@ -463,7 +457,7 @@ public class jailbreak extends MultiModule {
             m_botAction.sendArenaMessage("|	way to get out is to have someone on your team score a goal! The team     |");
             m_botAction.sendArenaMessage("|	that jails the entire opposing team wins. Good luck!                      |");
             m_botAction.sendArenaMessage("-----------------------------------------------------------------------------");
-        
+
         }
 
         /**
@@ -486,61 +480,60 @@ public class jailbreak extends MultiModule {
             m_botAction.warpFreqToLocation(0, 270, 426);
             m_botAction.warpFreqToLocation(1, 729, 595);
             m_botAction.sendUnfilteredPublicMessage("*restart");
-        	freq0Safe.clear();
-        	freq1Safe.clear();
+            freq0Safe.clear();
+            freq1Safe.clear();
             isRunning = true;
             createPlayerRecords();
             m_botAction.sendArenaMessage("GO GO GO !!!", 104);
         }
-        
+
         /**
          * Starts and stops the timers after a goal is scored and warps the players.
          * 
          */
-        
-        private void doFreqOneScore() {
-        	for (Player p : m_botAction.getPlayingPlayers()) {
-        		if (freq0Safe.size() > 0) {
-        			if (p.getFrequency() == 0 && freq0Safe.contains(p.getPlayerName())) {
-        				m_botAction.warpTo(p.getPlayerName(), 238, 510, 1);
-        				freq0Safe.clear();
-        			}
-        		}
-        	}
-        	 
-        	 if (!checkTimeStamp0) {
-        		 timeStamp0 = timerInSeconds + 15;
-        	     checkTimeStamp0 = true;
-        	 }
 
-        	 if (timerInSeconds == timeStamp0) {
-        		 freq0Score = false;
-        		 m_botAction.sendArenaMessage("Freq 0's safe is now locked!", 1);
-        		 checkTimeStamp0 = false;
-        	 }
+        private void doFreqOneScore() {
+            for (Player p : m_botAction.getPlayingPlayers()) {
+                if (freq0Safe.size() > 0) {
+                    if (p.getFrequency() == 0 && freq0Safe.contains(p.getPlayerName())) {
+                        m_botAction.warpTo(p.getPlayerName(), 238, 510, 1);
+                        freq0Safe.clear();
+                    }
+                }
+            }
+
+            if (!checkTimeStamp0) {
+                timeStamp0 = timerInSeconds + 15;
+                checkTimeStamp0 = true;
+            }
+
+            if (timerInSeconds == timeStamp0) {
+                freq0Score = false;
+                m_botAction.sendArenaMessage("Freq 0's safe is now locked!", 1);
+                checkTimeStamp0 = false;
+            }
         }
 
         private void doFreqTwoScore() {
-        	for (Player p : m_botAction.getPlayingPlayers()) {
-        		if (freq1Safe.size() > 0) {
-        			if (p.getFrequency() == 1 && freq1Safe.contains(p.getPlayerName())) {
-        				m_botAction.warpTo(p.getPlayerName(), 761, 510, 1);
-        				freq1Safe.clear();
-        			}
-        		}
-        	}
+            for (Player p : m_botAction.getPlayingPlayers()) {
+                if (freq1Safe.size() > 0) {
+                    if (p.getFrequency() == 1 && freq1Safe.contains(p.getPlayerName())) {
+                        m_botAction.warpTo(p.getPlayerName(), 761, 510, 1);
+                        freq1Safe.clear();
+                    }
+                }
+            }
 
-        	 if (!checkTimeStamp1) {
-        		 timeStamp1 = timerInSeconds + 15;
-        		 checkTimeStamp1 = true;
-        	 } 
+            if (!checkTimeStamp1) {
+                timeStamp1 = timerInSeconds + 15;
+                checkTimeStamp1 = true;
+            }
 
-
-        	 if (timerInSeconds == timeStamp1) {
-        		 freq1Score = false;
-        		 m_botAction.sendArenaMessage("Freq 1's safe is now locked!", 1);
-        		 checkTimeStamp1 = false;
-        	 }
+            if (timerInSeconds == timeStamp1) {
+                freq1Score = false;
+                m_botAction.sendArenaMessage("Freq 1's safe is now locked!", 1);
+                checkTimeStamp1 = false;
+            }
         }
     }
 
@@ -560,9 +553,9 @@ public class jailbreak extends MultiModule {
             this.name = name;
             this.freq = freq;
         }
-        
+
         // Returns a players frequency
-        public int getFreq(){
+        public int getFreq() {
             return freq;
         }
 
@@ -592,10 +585,8 @@ public class jailbreak extends MultiModule {
      */
     public String[] getModHelpMessage() {
 
-        String[] JBHelp = { 
-                "!start         -- Starts the exciting game of JAILBREAK!",
-                "!stop          -- Cancels the game.                     "
-                
+        String[] JBHelp = { "!start         -- Starts the exciting game of JAILBREAK!", "!stop          -- Cancels the game.                     "
+
         };
         return JBHelp;
     }
