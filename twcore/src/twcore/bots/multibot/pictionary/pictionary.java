@@ -16,6 +16,7 @@ import twcore.core.stats.PlayerProfile;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
+import twcore.core.util.Tools.Ship;
 
 /**
  * Pictionary.
@@ -232,7 +233,7 @@ public class pictionary extends MultiModule {
 
     public void doLagout(String name) {
         if (name.equals(curArtist) && (gameProgress == HINT_GIVEN || gameProgress == DRAWING)) {
-            m_botAction.setShip(curArtist, 1);
+            m_botAction.setShip(curArtist, Ship.TERRIER);
             m_botAction.warpTo(curArtist, XSpot, YSpot);
         }
 
@@ -245,7 +246,7 @@ public class pictionary extends MultiModule {
     public void doReset(String name) {
         if ((name.equals(curArtist) || opList.isER(name)) && (gameProgress == HINT_GIVEN || gameProgress == DRAWING)) {
             m_botAction.specWithoutLock(curArtist);
-            m_botAction.setShip(curArtist, 1);
+            m_botAction.setShip(curArtist, Ship.TERRIER);
             m_botAction.warpTo(curArtist, XSpot, YSpot);
         }
 
@@ -257,20 +258,16 @@ public class pictionary extends MultiModule {
 
     public void doChangeColour(String name, int level) {
         if (name.equals(curArtist) && (gameProgress == HINT_GIVEN || gameProgress == DRAWING)) {
-            m_botAction.sendUnfilteredPrivateMessage(name, "*prize #-9");
-            m_botAction.sendUnfilteredPrivateMessage(name, "*prize #-9");
-            m_botAction.sendUnfilteredPrivateMessage(name, "*prize #-9");
+            m_botAction.shipReset(name);
             if (level == 1) {
-                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
+                return;
             }
             if (level == 2) {
-                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
-                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
+                m_botAction.specificPrize(name, 9);
             }
             if (level == 3) {
-                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
-                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
-                m_botAction.sendUnfilteredPrivateMessage(name, "*prize #9");
+                m_botAction.specificPrize(name, 9);
+                m_botAction.specificPrize(name, 9);
             }
         }
     }
@@ -332,6 +329,7 @@ public class pictionary extends MultiModule {
                 cantPlay.clear();
                 cantPlay.add(curArtist);
                 m_botAction.sendArenaMessage("" + curArtist + " has been chosen to draw first.");
+                grabWord();
                 if (custGame) {
                     m_botAction.sendSmartPrivateMessage(curArtist, "Private message me what you're drawing or type !ready for me to pick something for you.");
                     warn = new TimerTask() {
@@ -433,13 +431,18 @@ public class pictionary extends MultiModule {
     public void doPass(String name, String cmd) {
         if (!opList.isER(name))
             return;
-        Player p = m_botAction.getPlayer(cmd);
+        String n = m_botAction.getFuzzyPlayerName(cmd);
+        if (n == null) {
+            m_botAction.sendPrivateMessage(name, "Player was not found. Please check spelling and try again.");
+            return;
+        }
+        Player p = m_botAction.getPlayer(n);
         if (p == null) {
             m_botAction.sendPrivateMessage(name, "Player was not found. Please check spelling and try again.");
             return;
         } else {
             m_botAction.specWithoutLock(curArtist);
-            curArtist = cmd;
+            curArtist = p.getPlayerName();
             gameProgress = READY_CHECK;
             m_botAction.sendArenaMessage(name + " has chosen " + curArtist + " to draw next.");
             cantPlay.clear();
@@ -555,7 +558,7 @@ public class pictionary extends MultiModule {
     /** ************************************************************* */
     public void doDraw() {
         m_botAction.sendArenaMessage(m_prec + "Picture #" + pictNumber + ":");
-        m_botAction.setShip(curArtist, 1);
+        m_botAction.setShip(curArtist, Ship.TERRIER);
         m_botAction.warpTo(curArtist, XSpot, YSpot);
         m_botAction.sendSmartPrivateMessage(curArtist, "Draw: " + t_word);
         timerQuestion = new TimerTask() {
@@ -642,7 +645,7 @@ public class pictionary extends MultiModule {
     /** ************************************************************* */
     public void doCustomWord(String name, String message) {
         if (name.equalsIgnoreCase(curArtist) && custGame && gameProgress == READY_CHECK) {
-            if (message.length() < 22) {
+            if (message.length() <= 21) {
                 if (isAllLetters(message)) {
                     t_word = message.toLowerCase().trim();
                     if (message.length() < 12) {
@@ -660,7 +663,7 @@ public class pictionary extends MultiModule {
                 } else
                     m_botAction.sendSmartPrivateMessage(curArtist, "Please choose one word with no spaces or special characters.");
             } else
-                m_botAction.sendSmartPrivateMessage(curArtist, "Please pick a word of 12 letters or less.");
+                m_botAction.sendSmartPrivateMessage(curArtist, "Please pick a word of 21 letters or less.");
         }
     }
 
@@ -974,6 +977,7 @@ public class pictionary extends MultiModule {
                 while (temp.equals(curArtist)) {
                     pickPlayer();
                 }
+                m_botAction.sendArenaMessage("" + curArtist + " has been chosen to draw next.");
             } else
                 curArtist = theWinner;
             cantPlay.clear();
