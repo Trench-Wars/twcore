@@ -2043,7 +2043,7 @@ public class bwjsbot extends SubspaceBot {
     private boolean allowZoner() {
         int maxpop = ZONER_MAX_POP;
         if (ba.getArenaName().toLowerCase().startsWith("base"))
-            maxpop += 4;
+            maxpop += 9;
         if (((System.currentTimeMillis() - zonerTimestamp) <= (ZONER_WAIT_TIME * Tools.TimeInMillis.MINUTE)) || m_botAction.getArenaSize() > maxpop) {
             return false;
         } else {
