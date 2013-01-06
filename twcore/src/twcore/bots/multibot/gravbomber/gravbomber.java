@@ -16,6 +16,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
+import twcore.core.events.Prize;
 import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
@@ -70,6 +71,7 @@ public class gravbomber extends MultiModule {
         req.request(this, EventRequester.PLAYER_LEFT);
         req.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
         req.request(this, EventRequester.PLAYER_DEATH);
+        req.request(this, EventRequester.PRIZE);
     }
 
     public long getRequestedEvents() {
@@ -89,8 +91,6 @@ public class gravbomber extends MultiModule {
             if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.PUBLIC_MESSAGE || event.getMessageType() == Message.PUBLIC_MACRO_MESSAGE) {
                 handleCommand(name, message, event.getMessageType());
             }
-        } else if (event.getMessageType() == Message.ARENA_MESSAGE) {
-            handleArena(message);
         }
     }
 
@@ -195,6 +195,12 @@ public class gravbomber extends MultiModule {
                     //debug
                     if (m_debug) {
                         m_botAction.sendChatMessage(2, "Timer schedule for " + playerName + " Interval: " + m_botSettings.getInt("RepelAliveTime"));
+                    } else if (m_currentWeapon == WEAP_SHRAPBOMB) {
+                        m_timer.schedule((TimerTask) m_turnTasks.get(playerName), m_botSettings.getInt("BombAliveTime") + m_botSettings.getInt("BulletAliveTime"));
+                        //debug
+                        if (m_debug) {
+                            m_botAction.sendChatMessage(2, "Timer schedule for " + playerName + " Interval: " + m_botSettings.getInt("BombAliveTime") + m_botSettings.getInt("BulletAliveTime"));
+                        }
                     }
                 } else {
                     m_timer.schedule((TimerTask) m_turnTasks.get(playerName), m_botSettings.getInt("BombAliveTime"));
@@ -221,10 +227,11 @@ public class gravbomber extends MultiModule {
         if (m_playerList.indexOf(playerName) != -1 && !playerName.equals(m_botAction.getPlayerName(event.getVictim())) && event.getEnergyLost() > 0) {
             m_botAction.sendUnfilteredPrivateMessage(playerName, "*points " + event.getEnergyLost());
             m_currentTurnDamage += event.getEnergyLost();
+            //m_botAction.sendArenaMessage("DAMAGE REGISTERED FOR " + event.getEnergyLost() + " points!!!!!!"); //Fusha's debug
         }
 
         if (m_currentPlayer.getPlayerName().equals(playerName)) {
-            if (m_currentWeapon != WEAP_TRACER && m_currentWeapon != WEAP_BURST) {
+            if (m_currentWeapon != WEAP_TRACER && m_currentWeapon != WEAP_BURST && m_currentWeapon != WEAP_SHRAPBOMB) {
                 ((TimerTask) m_turnTasks.get(playerName)).cancel();
                 m_turnTasks.put(playerName, new TurnTask(playerName));
                 m_timer.schedule((TimerTask) m_turnTasks.get(playerName), 1500);
@@ -234,32 +241,77 @@ public class gravbomber extends MultiModule {
         }
     }
 
-    public void handleArena(String message) {
-        if (!m_gameStarted)
-            return;
+    /*
+     * This part doesn't work at all so using handleevent prize instead -Fusha
+     *
+    public void handleArena( String message ){
+        if(!m_gameStarted) return;
 
         //debug
-        if (m_debug)
-            m_botAction.sendChatMessage(2, message);
+        if(m_debug) m_botAction.sendChatMessage( 2, message );
 
-        if (message.indexOf(" picked up ") != -1) {
+        if ( message.indexOf(" picked up ") != -1 ){
             String playerName;
-            playerName = message.substring(0, message.lastIndexOf(" picked up "));
+            playerName = message.substring( 0, message.lastIndexOf(" picked up ") );
             int points = 0;
 
-            if (m_playerList.indexOf(playerName) != -1) {
-                if (message.endsWith(" Energy")) {
+            if( m_playerList.indexOf( playerName ) != -1 ){
+                if( message.endsWith(" Energy") ){
                     points = m_botSettings.getInt("EnergyPoints");
-                } else if (message.endsWith(" Rotation")) {
+                } else if( message.endsWith(" Rotation") ){
                     points = m_botSettings.getInt("RotationPoints");
-                } else if (message.endsWith(" Top Speed")) {
+                } else if( message.endsWith(" Top Speed") ){
                     points = m_botSettings.getInt("TopSpeedPoints");
                 }
+                
 
-                if (points != 0) {
-                    m_botAction.sendArenaMessage(playerName + " has picked up a bonus " + points + " points!");
-                    m_botAction.sendUnfilteredPrivateMessage(playerName, "*points " + points);
+                if(points != 0){
+                    m_botAction.sendArenaMessage( playerName + " has picked up a bonus " + points + " points!" );
+                    m_botAction.sendUnfilteredPrivateMessage( playerName, "*points " + points); // Fusha's patchwork
                 }
+            }
+        }
+    }
+    */
+
+    /**
+     * There was no handleevent for watching greens so adding one //Fusha's patchwork
+     */
+    public void handleEvent(Prize event) {
+        if (m_gameStarted) {
+
+            Player p;
+            String playerName;
+            int points = 0;
+            int green = 0;
+
+            p = m_botAction.getPlayer(event.getPlayerID());
+            if (p == null) {
+                return;
+            }
+            playerName = m_botAction.getPlayerName(p.getPlayerID());
+            if (playerName == null) {
+                return;
+            }
+            green = event.getPrizeType();
+            if (green == 2) {
+                points = m_botSettings.getInt("EnergyPoints");
+            } else if (green == 3) {
+                points = m_botSettings.getInt("RotationPoints");
+            } else if (green == 12) {
+                points = m_botSettings.getInt("TopSpeedPoints");
+            } else if (green == 10) {
+                points = m_botSettings.getInt("BouncePoints");
+                if (m_currentWeapon != WEAP_SHRAPBOMB) {
+                    m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-10");
+                }
+            }
+            if (points == m_botSettings.getInt("BouncePoints")) {
+                m_botAction.sendArenaMessage(playerName + " has picked up the SUPER RARE bonus of " + points +" points!!!", 5);
+                m_botAction.sendUnfilteredPrivateMessage(playerName, "*points " + points);
+            } else if (points != 0) {
+                m_botAction.sendArenaMessage(playerName + " has picked up a bonus " + points + " points!", 29);
+                m_botAction.sendUnfilteredPrivateMessage(playerName, "*points " + points);
             }
         }
     }
@@ -339,7 +391,8 @@ public class gravbomber extends MultiModule {
         m_botAction.sendUnfilteredPublicMessage("?set Bomb:JitterTime:32");
         m_botAction.sendUnfilteredPublicMessage("?set All:InitialRecharge:0");
         m_botAction.sendUnfilteredPublicMessage("?set All:EmpBomb:0");
-        m_botAction.sendUnfilteredPublicMessage("?set All:BombFireDelay:3000");
+        m_botAction.sendUnfilteredPublicMessage("?set All:BombFireDelay:" + m_turnTime / 10);
+        m_botAction.sendUnfilteredPublicMessage("?set All:BulletFireDelay:" + m_turnTime / 10);
         m_botAction.sendUnfilteredPublicMessage("?set All:BombBounceCount:0");
     }
 
@@ -348,6 +401,8 @@ public class gravbomber extends MultiModule {
             m_botAction.sendPrivateMessage(hostName, "Cannot start game, there is one currently in progress");
             return;
         }
+        
+        m_currentPlayerIndex = 0; //JOYRIDER FIXED THE ANNOYING PLAYER SKIPPING BUG WITH THIS HOORAY 4 HIM
 
         m_boughtWeapon = false;
         m_timer = new Timer(true);
@@ -363,6 +418,7 @@ public class gravbomber extends MultiModule {
         while (i.hasNext()) {
             pTemp = i.next();
             GBPlayerBag.add(pTemp.getPlayerName());
+            //m_botAction.sendArenaMessage("Size :" + GBPlayerBag.size()); //Fusha's debug
         }
 
         if (GBPlayerBag.size() < 2) {
@@ -407,6 +463,10 @@ public class gravbomber extends MultiModule {
 
             m_botAction.sendUnfilteredPublicMessage("?set All:InitialRecharge:5000");
             m_botAction.sendUnfilteredPublicMessage("*shipreset");
+            m_botAction.cancelTasks();
+            m_playerList.clear();
+            m_playerData.clear();
+            
         }
     }
 
@@ -448,6 +508,9 @@ public class gravbomber extends MultiModule {
         m_botAction.sendUnfilteredPrivateMessage(playerName, "*objon 2");
         m_botAction.sendPrivateMessage(playerName, "It is your turn, please !buy a weapon - Shot power set to: " + m_currentGBPlayer.getBombPower(), 3);
         toggleList(playerName, true);
+
+        m_currentTurnDamage = 0;
+        m_boughtWeapon = false;
 
         m_turnTasks.put(playerName, new TurnTask(playerName));
 
@@ -684,6 +747,7 @@ public class gravbomber extends MultiModule {
     }
 
     public void unloadWeapon(String playerName, int weaponID) {
+        m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
 
         switch (weaponID) {
             case WEAP_ROCKET:
@@ -695,7 +759,7 @@ public class gravbomber extends MultiModule {
             case WEAP_TRACER:
                 m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
                 m_botAction.sendUnfilteredPublicMessage("?set All:EmpBomb:0");
-                m_botAction.sendUnfilteredPublicMessage("?set All:BombFireDelay:3000");
+                m_botAction.sendUnfilteredPublicMessage("?set All:BombFireDelay:" + m_turnTime / 10);
                 break;
             case WEAP_THRUSTBOMB:
                 m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
