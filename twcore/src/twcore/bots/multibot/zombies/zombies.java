@@ -3,6 +3,8 @@ package twcore.bots.multibot.zombies;
 import java.util.HashSet;
 import java.util.ArrayList;
 
+import org.omg.CORBA.REBIND;
+
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
@@ -29,10 +31,12 @@ public class zombies extends MultiModule {
 	}
 
     HashSet <Integer>m_srcship = new HashSet<Integer>();
+    HashSet <Integer>m_rbkship = new HashSet<Integer>();
     int m_humanfreq;
     int m_killerShip;
     int m_zombiefreq;
     int m_zombieship;
+    int m_rebirthship;
     int m_lives;
     int m_rebirthkills;
     StringBag killmsgs;
@@ -72,7 +76,23 @@ public class zombies extends MultiModule {
     		m_srcship.remove(new Integer(srcship));
     	}
     }
+    
+    public void addRebirth(int rbkship, String name) {
+        if (m_srcship.contains(rbkship)) {
+            m_rbkship.add(new Integer(rbkship));
+            m_botAction.sendPrivateMessage(name, "Rebirth Ship added.");
+        } else {
+            m_botAction.sendPrivateMessage(name, "Rebirth Ship Must Be A Human Ship. Please !addship and Try again.");
+        }
+    }
 
+    public void delRebirth(int rbkship, String name) {
+        if (m_rbkship.contains(rbkship)) {
+            m_rbkship.remove(rbkship);
+            m_botAction.sendPrivateMessage(name, "Rebirth Ship removed.");
+        }
+    }
+    
     public void deleteKillMessage( String name, int index ){
 
         ArrayList<String> list = killmsgs.getList();
@@ -197,6 +217,28 @@ public class zombies extends MultiModule {
           		ship = 1;
           	delShip(ship, name);
           }
+          else if (message.startsWith("!addrebirth"))
+          {
+              String pieces[] = message.split(" ");
+              int ship = 1;
+              try {
+                  ship = Integer.parseInt(pieces[1]);
+              } catch(Exception e) {}
+              if(ship > 8 || ship < 1)
+                  return;
+              addRebirth(ship, name);              
+          }
+          else if (message.startsWith("!delrebirth"))
+          {
+              String pieces[] = message.split(" ");
+              int ship = 1;
+              try {
+                  ship = Integer.parseInt(pieces[1]);
+              } catch(Exception e) {}
+              if(ship > 8 || ship < 1)
+                  return;
+              delRebirth(ship, name);              
+          }
           else if(message.startsWith("!killership "))
           {
           	String pieces[] = message.split(" ");
@@ -269,7 +311,13 @@ public class zombies extends MultiModule {
                 }
                 // Rebirth kill check
                 if( m_rebirthkills > 0 && m_zombieship == p2.getShipType() && (p2.getWins()) >= m_rebirthkills ) {
-                    int shipNum = m_srcship.iterator().next().intValue(); // Get any ship available, as there's no preference
+                    int shipNum;
+                    if (m_rbkship.isEmpty())
+                        shipNum = m_srcship.iterator().next().intValue(); // Get any ship available, as there's no preference
+                    else 
+                        shipNum = m_rbkship.iterator().next().intValue();
+                    
+                    m_botAction.setFreq(event.getKillerID(), m_humanfreq);
                     m_botAction.setShip(event.getKillerID(), shipNum);
                     m_botAction.scoreReset( p2.getPlayerName() );
                 }
@@ -292,7 +340,9 @@ public class zombies extends MultiModule {
             "       (rebirthkills is optional: # kills needed to turn zombie back to human.  Default 0/off)",
             "!addship            - Adds a ship to the list of human ships.",
             "!delship            - Deletes ship from list of human ships.",
-            "!killership         - Sets the ship for a human that kills a zombie."
+            "!killership         - Sets the ship for a human that kills a zombie.",
+            "!addrebirth         - Sets which human ship the zombie will rebirth to (Default: Random Human)",
+            "!delrebirth         - Removes the ship a zombie will rebirth to (Does not remove as a human ship)."
         };
         return ZombiesHelp;
     }
