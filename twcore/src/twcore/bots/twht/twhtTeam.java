@@ -96,7 +96,7 @@ public class twhtTeam {
         final String playerName = name;
         final int playerShip = shipType;
 
-        m_players.put(name, new twhtPlayer(name.toLowerCase(), m_fcTeamName, shipType, 1, this));
+        m_players.put(name, new twhtPlayer(name.toLowerCase(), m_fcTeamName, shipType, 1, ba, this));
         
         addDelay = new TimerTask() {
             public void run() {
@@ -122,7 +122,7 @@ public class twhtTeam {
 
         pA.playerSubbed();
         p = ba.getPlayer(playerBName);
-        m_players.put(playerB, new twhtPlayer(playerBName.toLowerCase(), m_fcTeamName, playerShip, 1, this));
+        m_players.put(playerB, new twhtPlayer(playerBName.toLowerCase(), m_fcTeamName, playerShip, 1, ba, this));
 
         substituteDelay = new TimerTask() {
             public void run() {
@@ -148,8 +148,8 @@ public class twhtTeam {
         pB = m_players.get(playerB);
         pAShipType = pA.getPlayerShip();
         pBShipType = pB.getPlayerShip();
-        pA.changeShip(pBShipType);
-        pB.changeShip(pAShipType);
+        pA.setShipChange(pBShipType);
+        pB.setShipChange(pAShipType);
 
         switchDelay = new TimerTask() {
             public void run() {
@@ -167,7 +167,7 @@ public class twhtTeam {
 
         twhtPlayer p;
         p = m_players.get(player);
-        p.changeShip(shipType);
+        p.setShipChange(shipType);
 
         switchDelay = new TimerTask() {
             public void run() {
@@ -214,20 +214,7 @@ public class twhtTeam {
         }
 
     }
-
-    public Integer getPlayerState(String player) {
-        twhtPlayer p;
-        int playerState = -1;
-
-        p = m_players.get(player);
-
-        if (p != null) {
-            playerState = p.getPlayerState();
-        }
-
-        return playerState;
-    }
-
+    
     public void doLagout(String name) {
         String p;
         twhtPlayer pLag;
@@ -311,6 +298,20 @@ public class twhtTeam {
     public int getFrequency() {
         return m_fnFrequency;
     }
+    
+       
+    public void getTeamStats() {       
+               
+                ba.sendArenaMessage(Tools.formatString("|" + getTeamName(), 66, "-"));
+                ba.sendArenaMessage("|  |PLAYERS  |G |A |SH |ST |TO |CM |CT |PC |PCT  |T    |+/-|RATING",1);               
+                for(twhtPlayer i : m_players.values())
+                    i.reportPlayerStats();
+                ba.sendArenaMessage(Tools.formatString("|", 60, " "));
+                ba.sendArenaMessage("|  |GOALIES  |SV |SV%|GA |ST |TO |CM |CT  |GT   |A |+/-|RATING");
+                for(twhtPlayer i : m_players.values())
+                    i.reportGoalieStats();
+                ba.sendArenaMessage(Tools.formatString("", 66, " "));
+    }
 
     public void setFrequency(int freq) {
         m_fnFrequency = freq;
@@ -359,16 +360,61 @@ public class twhtTeam {
     
     public void setScoreFor() {
         m_fnTeamScore++;
+        
+        for (twhtPlayer i : m_players.values()) {
+            if (i.getPlayerState() == 1)
+            i.reportPlusMinus(true);
+        }
     }
     
     public void setScoreAgainst() {
-        
+        for (twhtPlayer i : m_players.values()) {
+            if (i.getPlayerState() == 1)
+            i.reportPlusMinus(false);
+        }
+    }
+    
+    public void setStartRound() {
+        for (twhtPlayer i : m_players.values()) { 
+            if (i.getPlayerState() == 1)
+                i.setShipStart(m_game.m_curRound.getIntTime());
+        }
+    }
+    
+    public void setEndRound() {
+        for (twhtPlayer i : m_players.values()) { 
+            if (i.getPlayerState() == 1)
+            i.setShipEnd(m_game.m_curRound.getIntTime());
+        }
     }
     
     public Integer getTeamScore() {
         return m_fnTeamScore;
     }
+    
+    public Integer getPlayerState(String player) {
+        twhtPlayer p;
+        int playerState = -1;
 
+        p = m_players.get(player);
+
+        if (p != null) {
+            playerState = p.getPlayerState();
+        }
+
+        return playerState;
+    }
+    
+    public String getGoalie() {
+        String playerName = null;
+        
+        for(twhtPlayer pA : m_players.values()) {
+            if (pA.getIsGoalie()) 
+                 playerName = pA.getPlayerName();
+        }
+        
+        return playerName;
+    }
     public void searchPenalties(int gameTime) {
         int penaltyTime;
         int penaltyWarning;

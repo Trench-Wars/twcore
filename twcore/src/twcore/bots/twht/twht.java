@@ -286,7 +286,9 @@ public class twht extends SubspaceBot {
      */
     @Override
     public void handleEvent(PlayerDeath event) {
-
+        if (m_game != null) {
+            m_game.handleEvent(event);
+        }
     }
 
     /**
@@ -505,7 +507,7 @@ public class twht extends SubspaceBot {
             ba.privateMessageSpam(name, help_team);
         } else if (msg.startsWith("vote")) {
             ba.privateMessageSpam(name, help_vote);
-        } else {
+        } else {    
             ba.privateMessageSpam(name, help_regular);
         }
     }
@@ -798,7 +800,57 @@ public class twht extends SubspaceBot {
 
     public void cmd_add(String name, String msg) {
         if (m_game != null)
+            if(name.equals(fcRefName)) {
+                String[] splitCmd;
+                String playerName;
+                int shipNum;
+                int teamNum;
+                twhtTeam team;
+                
+            
+                if (msg.contains(":")) {
+                    splitCmd = msg.split(":");
+                    if (splitCmd.length == 3) {
+                        try {
+                            shipNum = Integer.parseInt(splitCmd[1]);
+                            teamNum = Integer.parseInt(splitCmd[2]);
+                        } catch (NumberFormatException e) {
+                            ba.sendPrivateMessage(name, "Please use the command format !add <Player Name>:<Ship Number>:<Team Number> - Team Numbers: 1(" + fcTeam1Name + ") 2(" + fcTeam2Name + ")");
+                            return;
+                        }
+                        
+                        if ((shipNum <= 0 || shipNum >= 9) || (teamNum <= 0 || teamNum >= 3)) {
+                            ba.sendPrivateMessage(name, "Please use the command format !add <Player Name>:<Ship Number>:<Team Number> - Team Numbers: 1(" + fcTeam1Name + ") 2(" + fcTeam2Name + ")");
+                            return;
+                        }
+                            
+                        playerName = ba.getFuzzyPlayerName(splitCmd[0]);
+                        
+                        if (playerName == null)
+                            return;
+                        
+//                      if (ba.getOperatorList().isBotExact(playerName)) {
+//                      ba.sendPrivateMessage(name, "Error: Pick again, bots are not allowed to play.");
+//                      return;
+//                      }
+                        
+                        team = m_game.getPlayerTeam(playerName);
+                        
+                        if (team != null) {
+                            ba.sendPrivateMessage(name, "Player is already in the game");
+                            return;
+                        } else {
+                            if (teamNum == 1)
+                                m_game.doAddPlayer(fcTeam1Name, playerName, shipNum);
+                            else if (teamNum == 2)
+                                m_game.doAddPlayer(fcTeam2Name, playerName, shipNum);
+                        }                       
+                    } else 
+                        ba.sendPrivateMessage(name, "Please use the command format !add <Player Name>:<Ship Number>:<Team Number> - Team Numbers: 1(" + fcTeam1Name + ") 2(" + fcTeam2Name + ")");
+                }
+            } else {
             m_game.reqAddPlayer(name, msg);
+            }
     }
 
     public void cmd_addCenter(String name, String msg) {
@@ -884,7 +936,46 @@ public class twht extends SubspaceBot {
 
     public void cmd_change(String name, String msg) {
         if (m_game != null)
+            if(name.equals(fcRefName)) {
+                String[] splitCmd;
+                String playerName;
+                int shipNum;
+                twhtTeam team;             
+            
+                if (msg.contains(":")) {
+                    splitCmd = msg.split(":");
+                    if (splitCmd.length == 2) {
+                        try {
+                            shipNum = Integer.parseInt(splitCmd[1]);
+                        } catch (NumberFormatException e) {
+                            ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
+                            return;
+                        }
+                        
+                        if (shipNum <= 0 || shipNum >= 9) {
+                            ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
+                            return;
+                        }
+                            
+                        playerName = ba.getFuzzyPlayerName(splitCmd[0]);
+                        
+                        if (playerName == null) 
+                            return;
+                        
+                        team = m_game.getPlayerTeam(playerName);
+                        
+                        if (team == null) {
+                            ba.sendPrivateMessage(name, "Player is not in the game");
+                            return;
+                        } else {
+                                m_game.doChangePlayer(team.getTeamName(), playerName, shipNum);
+                        }                       
+                    } else 
+                        ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
+                }
+            } else {
             m_game.reqChangePlayer(name, msg);
+            }
     }
 
     public void cmd_switch(String name, String msg) {
@@ -927,7 +1018,7 @@ public class twht extends SubspaceBot {
 
     public void cmd_setGoal(String name, String msg) {
         if (m_game != null)
-            m_game.goal(msg);
+            m_game.doGoal(msg);
     }
 
     public void cmd_timeOut(String name, String msg) {
@@ -1015,7 +1106,8 @@ public class twht extends SubspaceBot {
         if (m_game != null)
             m_game.doCancelIntermission();
     }
-
+    
+    
     /**
      * Kills the bot. Yes, it is as violent as it sounds.
      * 

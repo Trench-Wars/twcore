@@ -30,6 +30,7 @@ public class twhtGame {
     TimerTask delay;
     TimerTask goalDelay;
     TimerTask taskDelay;
+    TimerTask statsDelay;
 
     twhtTeam m_team1;
     twhtTeam m_team2;
@@ -47,8 +48,8 @@ public class twhtGame {
     String m_fcRefName;
 
     String goalScorer;
-    String assistOne = "";
-    String assistTwo = "";
+    String assistOne = null;
+    String assistTwo = null;
 
     boolean voteInProgress;
     boolean isDatabase;
@@ -95,8 +96,11 @@ public class twhtGame {
 
     public void reportEndOfRound(int roundNum) {
         final int roundNumber = roundNum;
+        m_curRound.doRemoveBall();
         m_curRound.cancel();
-
+        m_team1.setEndRound();
+        m_team2.setEndRound();
+        
         if (roundNumber == 1) {
             ba.sendArenaMessage("Time is up! Round one has ended. ", 5);
             ba.sendArenaMessage("Score after one period: " + m_fcTeam1Name + ": " + fnTeam1Score + " vs " + m_fcTeam2Name + ": " + fnTeam2Score);
@@ -118,6 +122,16 @@ public class twhtGame {
             };
             ba.scheduleTask(delay, Tools.TimeInMillis.SECOND * 10);
 
+            statsDelay = new TimerTask() {
+                @Override
+                public void run() {
+                    m_team1.getTeamStats();
+                    m_team2.getTeamStats();
+                }
+            }; 
+            
+            ba.scheduleTask(statsDelay, Tools.TimeInMillis.SECOND * 20);
+            
         } else if (roundNumber == 2) {
             if (fnTeam1Score > fnTeam2Score) {
                 doEndGame(m_fcTeam1Name, m_fcTeam2Name, fnTeam1Score, fnTeam2Score);
@@ -143,6 +157,16 @@ public class twhtGame {
                     }
                 };
                 ba.scheduleTask(delay, Tools.TimeInMillis.SECOND * 10);
+                
+                statsDelay = new TimerTask() {
+                    @Override
+                    public void run() {
+                        m_team1.getTeamStats();
+                        m_team2.getTeamStats();
+                    }
+                }; 
+                
+                ba.scheduleTask(statsDelay, Tools.TimeInMillis.SECOND * 20);
             }
         } else if (roundNumber == 3) {
             if (fnTeam1Score > fnTeam2Score) {
@@ -160,7 +184,7 @@ public class twhtGame {
                 };
                 ba.scheduleTask(delay, Tools.TimeInMillis.SECOND * 10);
             }
-
+            
         }
     }
 
@@ -169,7 +193,18 @@ public class twhtGame {
         ba.sendArenaMessage(winner + " vs. " + loser + ": " + winScore + " - " + loseScore);
         ba.sendArenaMessage(winner + " wins this game!");
         resetVariables();
-        twht.endGame();
+        
+        statsDelay = new TimerTask() {
+            @Override
+            public void run() {
+                m_team1.getTeamStats();
+                m_team2.getTeamStats();
+                twht.endGame();
+            }
+        }; 
+        
+        ba.scheduleTask(statsDelay, Tools.TimeInMillis.SECOND * 20);
+        
     }
 
     /**
@@ -219,7 +254,30 @@ public class twhtGame {
      * The event that is triggered at the time a player leaves the arena
      */
     public void handleEvent(PlayerEntered event) {
-
+        int playerID;
+        String playerName;
+        twhtPlayer pA;
+        twhtTeam team;
+        
+        if (m_curRound != null) {
+            playerID = event.getPlayerID();            
+                       
+            playerName = ba.getPlayerName(playerID);
+            if (playerName == null)
+                return;
+            
+            team = getPlayerTeam(playerName);
+            
+            if (team == null)
+                ba.sendPrivateMessage(playerName, "Welcome to Hockey. There is a TWHT match currently in round " + m_curRound.getRoundNum() + " with " + m_fcTeam1Name + "(" + fnTeam1Score + ") vs " + m_fcTeam2Name + "(" + fnTeam2Score + ")");
+            else {
+                pA = team.searchPlayer(playerName);
+                if (pA.getPlayerState() == 3)
+                    ba.sendPrivateMessage(playerName, "You are currently lagged out from the game. PM me with !lagout to return.");                    
+            }
+                
+                
+        }
     }
 
     /**
@@ -264,7 +322,41 @@ public class twhtGame {
      * The event that is triggered at the time a player dies
      */
     public void handleEvent(PlayerDeath event) {
-
+        if (m_curRound != null && m_curRound.getRoundState() == 1) {
+            int killerID;
+            int killeeID;
+            String killer;
+            String killee;
+            twhtTeam tA;
+            twhtTeam tB;
+            twhtPlayer pA;
+            twhtPlayer pB;
+            
+                
+            killerID = event.getKillerID();
+            killeeID = event.getKilleeID();
+            
+            killer = ba.getPlayerName(killerID);
+            killee = ba.getPlayerName(killeeID);
+            
+            if (killer == null || killee == null)
+                return;
+            
+            tA = getPlayerTeam(killer);
+            tB = getPlayerTeam(killee);
+            
+            if (tA == null || tB ==  null)
+                return;
+            
+            pA = tA.searchPlayer(killer);
+            pB = tB.searchPlayer(killee);
+            
+            if (pA == null || pB ==  null)
+                return;
+            
+            pA.doStats(8);
+            pB.doStats(9);
+        }
     }
 
     /**
@@ -276,31 +368,22 @@ public class twhtGame {
                 m_curRound.m_fnRoundState = 3;
                 goalScorer = m_curRound.ballPlayer.pop();
                 ba.sendArenaMessage("Goal is under review.", 2);
-                startReview();
-                if (m_curRound.ballPlayer.size() > 1) {
+                
+                while (m_curRound.ballPlayer.size() > 2 && assistTwo == null ) {
+                    if (assistOne == null) {
                     m_curRound.ballPlayer.pop();
                     assistOne = m_curRound.ballPlayer.pop();
-                    if (assistOne == goalScorer)
-                        assistOne = " ";
-                    if (m_curRound.ballPlayer.size() > 1) {
-                        m_curRound.ballPlayer.pop();
-                        assistTwo = m_curRound.ballPlayer.pop();
-                        if (assistTwo == goalScorer || assistTwo == assistOne)
-                            assistTwo = " ";
-                        if (assistOne == " ") {
-                            assistOne = assistTwo;
-                            assistTwo = " ";
-                        }
-                        if (assistTwo == " " && m_curRound.ballPlayer.size() > 1) {
-                            m_curRound.ballPlayer.pop();
-                            assistTwo = m_curRound.ballPlayer.pop();
-                            if (assistTwo == goalScorer || assistTwo == assistOne) {
-                                assistTwo = " ";
-                            }
-                        }
-                        m_curRound.ballPlayer.clear();
-                    }
+                        if (assistOne == goalScorer)
+                            assistOne = null;
+                    } else {
+                    m_curRound.ballPlayer.pop();
+                    assistTwo = m_curRound.ballPlayer.pop();
+                        if (assistTwo == goalScorer)
+                            assistOne = null;
+                    }                    
                 }
+                m_curRound.ballPlayer.clear();
+                doReview();              
             }
         }
     }
@@ -367,10 +450,10 @@ public class twhtGame {
                 }
 
                 playerName = ba.getFuzzyPlayerName(splitCmd[0]);
-                //            if (ba.getOperatorList().isBotExact(playerName)) {
-                //                ba.sendPrivateMessage(name, "Error: Pick again, bots are not allowed to play.");
-                //                return;
-                //            }
+                            if (ba.getOperatorList().isBotExact(playerName)) {
+                                ba.sendPrivateMessage(name, "Error: Pick again, bots are not allowed to play.");
+                                return;
+                            }
                 if (playerName == null || shipNum > 8 || shipNum < 1) {
                     ba.sendPrivateMessage(name, "Player not found or Invalid Ship. Please try again.");
                     return;
@@ -994,7 +1077,7 @@ public class twhtGame {
     public void doTimeout(String teamName) {
         ba.sendArenaMessage(teamName + " has called a timeout.", 2);
         if (m_curRound != null)
-            m_curRound.pause();
+            m_curRound.doPause();
     }
 
     public void doLagOut(String teamName, String playerName) {
@@ -1090,15 +1173,14 @@ public class twhtGame {
         }
     }
 
-    public void startReview() {
+    public void doReview() {
 
         voteInProgress = true;
         goalDelay = new TimerTask() {
             @Override
             public void run() {
                 m_curRound.stopTimer();
-                m_curRound.doGetBall(4800, 4800);
-                m_curRound.doDropBall();
+                m_curRound.doRemoveBall();
             }
         };
         ba.scheduleTask(goalDelay, 2 * Tools.TimeInMillis.SECOND);
@@ -1132,30 +1214,42 @@ public class twhtGame {
 
     public void doPause(String name, String msg) {
         if (m_curRound != null)
-            m_curRound.pause();
+            m_curRound.doPause();
     }
 
-    public void goal(String msg) {
+    public void doGoal(String msg) {
         if (voteInProgress) {
+            twhtPlayer pA;
+            twhtTeam tA;
             if (msg.equals("cl")) {
                 ba.sendArenaMessage("Goal was considered clean.", 2);
                 ba.sendArenaMessage(getPlayerTeam(goalScorer).getTeamName() + "'s Goal by: " + goalScorer);
                 
-                if (!assistOne.equals(" ") && !assistTwo.equals(" "))                  
+                if (assistOne != null && assistTwo == null) {             
+                    ba.sendArenaMessage("Assist: " + assistOne);
+                    doPlayerStats(assistOne, 2);
+                } else if (assistOne != null && assistTwo != null) {
                     ba.sendArenaMessage("Assist: " + assistOne + " " + assistTwo);
+                    doPlayerStats(assistOne, 2);
+                    doPlayerStats(assistTwo, 2);
+                }
                 
                 if (m_team1.isPlayer(goalScorer)) {
                     fnTeam1Score++;
                     m_team1.setScoreFor();
-                    m_team2.setScoreAgainst();
+                    m_team2.setScoreAgainst();             
+                    if (m_team2.getGoalie() != null)
+                        doPlayerStats(m_team2.getGoalie(), 10);
                 } else if (m_team2.isPlayer(goalScorer)) {
                     fnTeam2Score++;
                     m_team2.setScoreFor();
                     m_team1.setScoreAgainst();
+                    if (m_team1.getGoalie() != null)
+                        doPlayerStats(m_team1.getGoalie(), 10);
                 }
-                m_curRound.doUpdateScoreBoard();
-                ba.sendArenaMessage("Score: " + m_fcTeam1Name + " " + fnTeam1Score + " - " + m_fcTeam2Name + " " + fnTeam2Score);
-                m_curRound.m_fnRoundState = 3;
+                doPlayerStats(goalScorer, 1);
+                doPlayerStats(goalScorer, 5);
+//                ba.sendArenaMessage("Score: " + m_fcTeam1Name + " " + fnTeam1Score + " - " + m_fcTeam2Name + " " + fnTeam2Score);
             } else if (msg.equals("lag")) {
                 ba.sendArenaMessage("Goal was considered lag and will be voided.", 2);
             } else if (msg.equals("cr")) {
@@ -1173,14 +1267,27 @@ public class twhtGame {
                     m_team1.setScoreFor();
                     m_team2.setScoreAgainst();
                 }
-                m_curRound.doUpdateScoreBoard();
-                ba.sendArenaMessage("Score: " + m_fcTeam1Name + " " + fnTeam1Score + " - " + m_fcTeam2Name + " " + fnTeam2Score);
-                m_curRound.m_fnRoundState = 3;
             }
+            m_curRound.doUpdateScoreBoard();
+            ba.sendArenaMessage("Score: " + m_fcTeam1Name + " " + fnTeam1Score + " - " + m_fcTeam2Name + " " + fnTeam2Score);
+            m_curRound.m_fnRoundState = 3;            
             voteInProgress = false;
-            assistOne = "";
-            assistTwo = "";
-        }
+            assistOne = null;
+            assistTwo = null;
+        }        
+    }
+    
+    public void doPlayerStats(String name, int statType) {
+        twhtPlayer pA = null;
+        twhtTeam tA = null;
+        
+        tA = getPlayerTeam(name);
+        
+        if (tA != null)
+        pA = tA.searchPlayer(name);
+        
+        if (pA != null)            
+        pA.doStats(statType);
     }
 
     public void getRequestList(String name, String msg) {
@@ -1267,6 +1374,87 @@ public class twhtGame {
             ba.sendPrivateMessage(name, "Please only use valid numbers.");
         }
     }
+    
+    public void doDisplayStats(String msg) {
+        twhtTeam team;
+        twhtPlayer p;
+        
+        team = getPlayerTeam(msg);
+        
+        if (team != null)
+            p = team.searchPlayer(msg);
+        else
+            return;
+          
+//        
+        p.getStastics();
+       
+    }
+//    
+//    public void doStats(String playerName, int statType) {
+//        /*Stat Types
+//         *1 - Goal
+//         *2 - Assist
+//         *3 - Save
+//         *4 - Steal
+//         *5 - SOG
+//         *6 - Turnover
+//         *7 - PuckCarry
+//         *8 - CheckMade
+//         *9 - Checked
+//         *10 - Goal Allowed
+//         */
+//        int stat = statType;
+//        twhtPlayer pA;
+//        twhtTeam team;
+//        
+//        team = getPlayerTeam(playerName);
+//        if (team == null)
+//            return;
+//        
+//        pA = team.searchPlayer(playerName);
+//        
+//        if (pA == null)
+//            return;
+//        
+//        ba.sendChatMessage(2, playerName + ": " + statType);
+//        
+//        switch (stat) {
+//        case 1:
+//            pA.m_statTracker.reportGoal();
+//            break;
+//        case 2:
+//            pA.m_statTracker.reportAssist();
+//            break;
+//        case 3:
+//            pA.m_statTracker.reportSave();
+//            break;
+//        case 4:
+//            pA.m_statTracker.reportSteal();
+//            break;
+//        case 5:
+//            pA.m_statTracker.reportShotOnGoal();
+//            break;
+//        case 6:
+//            pA.m_statTracker.reportTurnover();
+//            break;
+//        case 7:
+//            pA.m_statTracker.reportPuckCarry();
+//            break;
+//        case 8:
+//            pA.m_statTracker.reportCheckMade();
+//            break;
+//        case 9:
+//            pA.m_statTracker.reportCheckTaken();
+//            break;
+//        case 10:
+//            pA.m_statTracker.reportGoalAllowed();
+//            break;
+//        default:
+//            break;
+//        }
+//        
+//    }
 
     public void resetVariables() {
         m_judge.clear();
