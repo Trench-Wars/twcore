@@ -219,7 +219,7 @@ public class twhtRound {
             m_fnRoundState = 3;
             m_ba.sendArenaMessage("Round " + m_roundNum + " is ready to begin.", 2);
             m_scoreBoard = m_ba.getObjectSet();
-            doUpdateScoreBoard();
+            doUpdateScoreBoardTime();
             m_game.m_team1.setStartRound();
             m_game.m_team2.setStartRound();
             if (m_roundNum == 1)
@@ -343,23 +343,30 @@ public class twhtRound {
                 pBYLoc = posB.getYloc() / 16;              
 
                 if (fA == 1 && pAXLoc < freq0Xbline) {
-                    if (pAXLoc < pBXLoc) {
+                    if (pAXLoc <= pBXLoc) {
                         m_game.doPlayerStats(playerCaught, 4);
                         m_game.doPlayerStats(playerFired, 6);
-                    } else
-                    distance = ((pAXLoc - freq0Xgoal) * (pAYLoc - pBYLoc)) / (pAXLoc - pBXLoc);                 
+                    } else {                        
+                        if ((pAYLoc - pBYLoc) == 0) 
+                            pYLoc = 1;
+                        else 
+                            pYLoc = pAYLoc - pBYLoc;
+                    
+                    distance = ((pAXLoc - freq0Xgoal) * (pYLoc)) / (pAXLoc - pBXLoc);
+                    }
                 } else if (fA == 0 && pAXLoc > freq1Xbline) {
                     
-                    if (pAXLoc > pBXLoc) {
+                    if (pAXLoc >= pBXLoc) {
                         m_game.doPlayerStats(playerCaught, 4);
                         m_game.doPlayerStats(playerFired, 6);
-                    } else
+                    } else {                        
                         if ((pAYLoc - pBYLoc) == 0) 
                             pYLoc = 1;
                         else 
                             pYLoc = pAYLoc - pBYLoc;
                     
                     distance = ((pAXLoc - freq1Xgoal) * (pYLoc)) / (pAXLoc - pBXLoc);
+                    }
                 }
                     if (distance < 0)
                         distance = -distance;

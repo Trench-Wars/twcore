@@ -88,6 +88,7 @@ public class twht extends SubspaceBot {
     public twht(BotAction botAction) {
         super(botAction);
         ba = botAction;
+        bs = ba.getBotSettings();
         m_commandInterpreter = new CommandInterpreter(ba);
         bs = ba.getBotSettings();
         initVariables();
@@ -171,6 +172,11 @@ public class twht extends SubspaceBot {
         m_commandInterpreter.registerCommand("!ready", acceptedMessages, this, "cmd_ready");
         m_commandInterpreter.registerCommand("!lagout", acceptedMessages, this, "cmd_lagout");
         m_commandInterpreter.registerCommand("!myfreq", acceptedMessages, this, "cmd_myfreq");
+        m_commandInterpreter.registerCommand("!ff", acceptedMessages, this, "cmd_forfiet");
+        m_commandInterpreter.registerCommand("!penshot", acceptedMessages, this, "cmd_doPenaltyShot");
+        m_commandInterpreter.registerCommand("!setshot", acceptedMessages, this, "cmd_setPenaltyShot");
+        m_commandInterpreter.registerCommand("!cancelshot", acceptedMessages, this, "cmd_cancelPenaltyShot");
+        m_commandInterpreter.registerCommand("!startshot", acceptedMessages, this, "cmd_startPenaltyShot");
 
         m_commandInterpreter.registerCommand("!add", acceptedMessages, this, "cmd_add");
         m_commandInterpreter.registerCommand("!remove", acceptedMessages, this, "cmd_remove");
@@ -218,6 +224,8 @@ public class twht extends SubspaceBot {
         m_commandInterpreter.registerCommand("!go", acceptedMessages, this, "cmd_go", OperatorList.MODERATOR_LEVEL);
         m_commandInterpreter.registerCommand("!die", acceptedMessages, this, "cmd_die", OperatorList.MODERATOR_LEVEL);
         m_commandInterpreter.registerCommand("!off", acceptedMessages, this, "cmd_off", OperatorList.MODERATOR_LEVEL);
+        
+        m_commandInterpreter.registerDefaultCommand(Message.ARENA_MESSAGE, this, "handleArenaMessage");
     }
 
     /**
@@ -238,7 +246,7 @@ public class twht extends SubspaceBot {
      */
     @Override
     public void handleEvent(LoggedOn event) {
-        ba.joinArena("kane");
+        ba.joinArena("hockey");
         ba.sendUnfilteredPublicMessage("?chat=areala,KaneDEV");
     }
 
@@ -930,12 +938,30 @@ public class twht extends SubspaceBot {
     }
 
     public void cmd_remove(String name, String msg) {
-        if (m_game != null)
-            m_game.reqRemovePlayer(name, msg);
+        if (m_game != null) {
+            if(name.equals(fcRefName)) {
+            String playerName;
+            twhtTeam team;
+            
+            playerName = ba.getFuzzyPlayerName(msg);
+            
+            if (playerName == null) 
+                return;
+            
+            team = m_game.getPlayerTeam(playerName);
+            
+            if (team == null) {
+                ba.sendPrivateMessage(name, "Player is not in the game");
+                return;            
+            } else 
+                m_game.doRemovePlayer(team.getTeamName(), playerName);            
+        } else 
+            m_game.reqRemovePlayer(name, msg);        
+        }
     }
 
     public void cmd_change(String name, String msg) {
-        if (m_game != null)
+        if (m_game != null) {   
             if(name.equals(fcRefName)) {
                 String[] splitCmd;
                 String playerName;
@@ -945,37 +971,37 @@ public class twht extends SubspaceBot {
                 if (msg.contains(":")) {
                     splitCmd = msg.split(":");
                     if (splitCmd.length == 2) {
-                        try {
-                            shipNum = Integer.parseInt(splitCmd[1]);
-                        } catch (NumberFormatException e) {
-                            ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
-                            return;
-                        }
                         
-                        if (shipNum <= 0 || shipNum >= 9) {
-                            ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
-                            return;
-                        }
-                            
-                        playerName = ba.getFuzzyPlayerName(splitCmd[0]);
-                        
-                        if (playerName == null) 
-                            return;
-                        
-                        team = m_game.getPlayerTeam(playerName);
-                        
-                        if (team == null) {
-                            ba.sendPrivateMessage(name, "Player is not in the game");
-                            return;
-                        } else {
-                                m_game.doChangePlayer(team.getTeamName(), playerName, shipNum);
-                        }                       
-                    } else 
-                        ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
+                try {
+                    shipNum = Integer.parseInt(splitCmd[1]);
+                } catch (NumberFormatException e) {
+                    ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
+                return;
                 }
-            } else {
-            m_game.reqChangePlayer(name, msg);
+            
+            if (shipNum <= 0 || shipNum >= 9) {
+                ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
+                return;
             }
+                
+            playerName = ba.getFuzzyPlayerName(splitCmd[0]);
+            
+            if (playerName == null) 
+                return;
+            
+            team = m_game.getPlayerTeam(playerName);
+            
+            if (team == null) {
+                ba.sendPrivateMessage(name, "Player is not in the game");
+                    return;
+                } else 
+                    m_game.doChangePlayer(team.getTeamName(), playerName, shipNum);                 
+                } else 
+                ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
+                }
+        } else 
+        m_game.reqChangePlayer(name, msg);        
+        }
     }
 
     public void cmd_switch(String name, String msg) {
@@ -1101,12 +1127,38 @@ public class twht extends SubspaceBot {
         if (m_game != null)
             m_game.setRound(name, msg);
     }
+    
+  
 
     public void cmd_cancelBreak(String name, String msg) {
         if (m_game != null)
             m_game.doCancelIntermission();
     }
     
+    public void cmd_forfiet(String name, String msg) {
+        if (m_game != null)
+            m_game.doForfiet(name, msg);
+    }
+    
+    public void cmd_doPenaltyShot(String name, String msg) {
+        if (m_game != null)
+            m_game.doPenShot(name);
+    }
+    
+    public void cmd_setPenaltyShot(String name, String msg) {
+        if (m_game != null)
+            m_game.setPenShot(name, msg);
+    }
+    
+    public void cmd_cancelPenaltyShot(String name, String msg) {
+        if (m_game != null)
+            m_game.cancelPenShot(name);
+    }
+    
+    public void cmd_startPenaltyShot(String name, String msg) {
+        if (m_game != null)
+            m_game.startPenShot(name);
+    }
     
     /**
      * Kills the bot. Yes, it is as violent as it sounds.

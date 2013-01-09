@@ -31,6 +31,7 @@ public class twhtGame {
     TimerTask goalDelay;
     TimerTask taskDelay;
     TimerTask statsDelay;
+    TimerTask penShotDelay;
 
     twhtTeam m_team1;
     twhtTeam m_team2;
@@ -1126,11 +1127,22 @@ public class twhtGame {
         }
     }
     
-    public void getTeamList() {
-        twhtPlayer p;
-        
-//        for (twhtPlayer p : team1.m_players)
-    }
+//    public void doForfiet(String name, String msg) {
+//        int teamNum = 0;
+//        try {
+//            teamNum = Integer.parseInt(msg);
+//        } catch (NumberFormatException e) {
+//            return;
+//        }
+//        
+//        if (teamNum <= 0 || teamNum >= 3)
+//    }
+    
+//    public void getTeamList() {
+//        twhtPlayer p;
+//        
+////        for (twhtPlayer p : team1.m_players)
+//    }
 
     /**
      * This method will add a judge to the list
@@ -1249,6 +1261,8 @@ public class twhtGame {
                 }
                 doPlayerStats(goalScorer, 1);
                 doPlayerStats(goalScorer, 5);
+                if (m_curRound.getRoundNum() == 3)
+                    reportEndOfRound(3);
 //                ba.sendArenaMessage("Score: " + m_fcTeam1Name + " " + fnTeam1Score + " - " + m_fcTeam2Name + " " + fnTeam2Score);
             } else if (msg.equals("lag")) {
                 ba.sendArenaMessage("Goal was considered lag and will be voided.", 2);
@@ -1267,6 +1281,8 @@ public class twhtGame {
                     m_team1.setScoreFor();
                     m_team2.setScoreAgainst();
                 }
+                if (m_curRound.getRoundNum() == 3)
+                    reportEndOfRound(3);
             }
             m_curRound.doUpdateScoreBoard();
             ba.sendArenaMessage("Score: " + m_fcTeam1Name + " " + fnTeam1Score + " - " + m_fcTeam2Name + " " + fnTeam2Score);
@@ -1289,7 +1305,73 @@ public class twhtGame {
         if (pA != null)            
         pA.doStats(statType);
     }
+    
+    public void doForfiet(String name, String msg) {
+        int teamNum;
+        try {
+            teamNum = Integer.parseInt(msg);
+        } catch (NumberFormatException e) {
+            return;
+        }        
+        if (teamNum == 1) {
+            ba.sendArenaMessage("The Referee has declared " + m_fcTeam2Name + " forfeit winners, therfore win the match 10 - 0.", 5);
+            fnTeam1Score = 0;
+            fnTeam2Score = 10;
+            reportEndOfRound(2);
+        } else if (teamNum == 2) {
+            ba.sendArenaMessage("The Referee has declared " + m_fcTeam1Name + " forfeit winners, therfore win the match 10 - 0.", 5);
+            fnTeam1Score = 10;
+            fnTeam2Score = 0;
+            reportEndOfRound(2);
+        }
+    }
 
+    public void doPenShot(String name) {
+        if(m_curRound != null) {
+            ba.sendArenaMessage("A Penalty shot has been initiated.", 2);
+            m_team1.setPenaltyShotWarp();
+            m_team2.setPenaltyShotWarp();
+            m_curRound.stopTimer();
+            m_curRound.m_fnRoundState = 1;
+        }
+    }
+    
+    public void setPenShot(String name, String msg) {
+        if(m_curRound != null) {
+           String pA;
+           twhtTeam t;
+           
+           t = getPlayerTeam(msg);
+           
+           if (t != null) {
+               t.setPlayerShot(msg);
+           } else 
+               ba.sendPrivateMessage(name, "Player cannot be found");
+        }
+    }
+    
+    public void cancelPenShot(String name) {
+        if(m_curRound != null) {
+            ba.sendArenaMessage("A Penalty shot has been canceled.", 2);
+            m_team1.setFreqAndSide();
+            m_team2.setFreqAndSide();
+            m_curRound.m_fnRoundState = 3;
+        }
+    }
+    
+    public void startPenShot(String name) {
+        m_curRound.doGetBall(8192, 8192);
+        
+        penShotDelay = new TimerTask() {
+            @Override
+            public void run() {
+                m_curRound.doDropBall();
+                ba.sendArenaMessage("Go! Go! Go!", Tools.Sound.VICTORY_BELL);           
+            }
+        }; ba.scheduleTask(penShotDelay, Tools.TimeInMillis.SECOND * 2);
+
+    }
+    
     public void getRequestList(String name, String msg) {
         if (msg.equals("all")) {
             for (RefRequest i : refRequest.values()) {
@@ -1375,87 +1457,6 @@ public class twhtGame {
         }
     }
     
-    public void doDisplayStats(String msg) {
-        twhtTeam team;
-        twhtPlayer p;
-        
-        team = getPlayerTeam(msg);
-        
-        if (team != null)
-            p = team.searchPlayer(msg);
-        else
-            return;
-          
-//        
-        p.getStastics();
-       
-    }
-//    
-//    public void doStats(String playerName, int statType) {
-//        /*Stat Types
-//         *1 - Goal
-//         *2 - Assist
-//         *3 - Save
-//         *4 - Steal
-//         *5 - SOG
-//         *6 - Turnover
-//         *7 - PuckCarry
-//         *8 - CheckMade
-//         *9 - Checked
-//         *10 - Goal Allowed
-//         */
-//        int stat = statType;
-//        twhtPlayer pA;
-//        twhtTeam team;
-//        
-//        team = getPlayerTeam(playerName);
-//        if (team == null)
-//            return;
-//        
-//        pA = team.searchPlayer(playerName);
-//        
-//        if (pA == null)
-//            return;
-//        
-//        ba.sendChatMessage(2, playerName + ": " + statType);
-//        
-//        switch (stat) {
-//        case 1:
-//            pA.m_statTracker.reportGoal();
-//            break;
-//        case 2:
-//            pA.m_statTracker.reportAssist();
-//            break;
-//        case 3:
-//            pA.m_statTracker.reportSave();
-//            break;
-//        case 4:
-//            pA.m_statTracker.reportSteal();
-//            break;
-//        case 5:
-//            pA.m_statTracker.reportShotOnGoal();
-//            break;
-//        case 6:
-//            pA.m_statTracker.reportTurnover();
-//            break;
-//        case 7:
-//            pA.m_statTracker.reportPuckCarry();
-//            break;
-//        case 8:
-//            pA.m_statTracker.reportCheckMade();
-//            break;
-//        case 9:
-//            pA.m_statTracker.reportCheckTaken();
-//            break;
-//        case 10:
-//            pA.m_statTracker.reportGoalAllowed();
-//            break;
-//        default:
-//            break;
-//        }
-//        
-//    }
-
     public void resetVariables() {
         m_judge.clear();
         m_penalties.clear();

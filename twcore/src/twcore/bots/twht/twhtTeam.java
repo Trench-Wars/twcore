@@ -24,7 +24,7 @@ public class twhtTeam {
 
     Connection m_connection;
     BotAction ba;
-    BotSettings bs;
+//    BotSettings bs;
     twhtGame m_game;
 
     String dbConn = "website";
@@ -302,15 +302,15 @@ public class twhtTeam {
        
     public void getTeamStats() {       
                
-                ba.sendArenaMessage(Tools.formatString("|" + getTeamName(), 66, "-"));
-                ba.sendArenaMessage("|  |PLAYERS  |G |A |SH |ST |TO |CM |CT |PC |PCT  |T    |+/-|RATING",1);               
+                ba.sendArenaMessage(Tools.formatString("|" + getTeamName(), 73, "-"));
+                ba.sendArenaMessage("|SHIPS       |PLAYERS  |G |A |SH |ST |TO |CM |CT |PC |PCT  |T    |+/-|RATING",1);               
                 for(twhtPlayer i : m_players.values())
                     i.reportPlayerStats();
-                ba.sendArenaMessage(Tools.formatString("|", 60, " "));
-                ba.sendArenaMessage("|  |GOALIES  |SV |SV%|GA |ST |TO |CM |CT  |GT   |A |+/-|RATING");
+                ba.sendArenaMessage(Tools.formatString("|", 73, " "));
+                ba.sendArenaMessage("|    |GOALIES  |SV |SV%|GA |ST |TO |CM |CT  |GT   |A |+/-|RATING");
                 for(twhtPlayer i : m_players.values())
                     i.reportGoalieStats();
-                ba.sendArenaMessage(Tools.formatString("", 66, " "));
+                ba.sendArenaMessage(Tools.formatString("|", 73, " "));
     }
 
     public void setFrequency(int freq) {
@@ -358,19 +358,66 @@ public class twhtTeam {
         }
     }
     
+    public void setPenaltyShotWarp() {
+        Player p;
+
+        for (twhtPlayer i : m_players.values()) {
+            p = ba.getFuzzyPlayer(i.getPlayerName());
+            if (p != null) {
+                if (p.getFrequency() != m_fnFrequency && p.getFrequency() != 8025) {
+                    ba.setFreq(i.getPlayerName(), m_fnFrequency);
+                }
+
+                if (i.getPlayerState() == 1) {
+
+                    if (m_fnFrequency == 0) {
+                        if (i.getIsGoalie())
+                            ba.warpTo(i.getPlayerName(), 388, 512);
+                        else
+                            ba.warpTo(i.getPlayerName(), 480, 580);
+                    } else if (m_fnFrequency == 1) {
+                        if (i.getIsGoalie())
+                            ba.warpTo(i.getPlayerName(), 635, 512);
+                        else
+                            ba.warpTo(i.getPlayerName(), 550, 580);
+                    }
+                }
+            }
+        }
+    }
+    
+    public void setPlayerShot(String msg) {
+        Player p;
+        twhtPlayer pA;
+
+        p = ba.getFuzzyPlayer(msg);
+        if (p != null) {
+                if (p.getFrequency() != m_fnFrequency && p.getFrequency() != 8025) {
+                    ba.setFreq(p.getPlayerName(), m_fnFrequency);
+                }
+                pA = searchPlayer(p.getPlayerName());
+                
+                if (pA == null && pA.getPlayerState() != 1)
+                    return;
+                
+                ba.warpTo(pA.getPlayerName(), 510, 560);
+            }
+        } 
+    
+    
     public void setScoreFor() {
         m_fnTeamScore++;
         
         for (twhtPlayer i : m_players.values()) {
             if (i.getPlayerState() == 1)
-            i.reportPlusMinus(true);
+            i.doStats(12);
         }
     }
     
     public void setScoreAgainst() {
         for (twhtPlayer i : m_players.values()) {
             if (i.getPlayerState() == 1)
-            i.reportPlusMinus(false);
+                i.doStats(13);
         }
     }
     
