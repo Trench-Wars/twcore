@@ -172,7 +172,7 @@ public class twht extends SubspaceBot {
         m_commandInterpreter.registerCommand("!ready", acceptedMessages, this, "cmd_ready");
         m_commandInterpreter.registerCommand("!lagout", acceptedMessages, this, "cmd_lagout");
         m_commandInterpreter.registerCommand("!myfreq", acceptedMessages, this, "cmd_myfreq");
-        m_commandInterpreter.registerCommand("!ff", acceptedMessages, this, "cmd_forfiet");
+        m_commandInterpreter.registerCommand("!ff", acceptedMessages, this, "cmd_forfiet", fcRefName);
         m_commandInterpreter.registerCommand("!penshot", acceptedMessages, this, "cmd_doPenaltyShot", fcRefName);
         m_commandInterpreter.registerCommand("!setshot", acceptedMessages, this, "cmd_setPenaltyShot", fcRefName);
         m_commandInterpreter.registerCommand("!cancelshot", acceptedMessages, this, "cmd_cancelPenaltyShot", fcRefName);
