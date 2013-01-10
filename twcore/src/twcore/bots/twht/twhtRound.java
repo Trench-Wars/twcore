@@ -14,8 +14,10 @@ import twcore.core.util.Tools;
 import twcore.core.lvz.Objset;;
 
 /**
- * @author Ian
+ * This is the round class for thwt. It will control all the actions and store the variables
+ * that are round specific.
  * 
+ * @author Ian
  */
 public class twhtRound {
 
@@ -87,6 +89,7 @@ public class twhtRound {
     int ballFireCount = 0;
     int ballCatchCount = 1;
 
+    //Creates a new instance of twhtRound
     public twhtRound(int matchID, int fnTeam1ID, int fnTeam2ID, int roundNum, String fcTeam1Name, String fcTeam2Name, String refName, twhtGame twhtGame) {
         m_game = twhtGame;
         m_ba = m_game.ba;
@@ -101,8 +104,13 @@ public class twhtRound {
         m_scoreBoard2 = m_ba.getObjectSet();
     }
 
+    /**
+     * Tracks the ball position. Event is fired when the ball moves at an interval set
+     * in the map settings.
+     * 
+     * @param event
+     */
     public void handleEvent(BallPosition event) {
-
         ballID = event.getBallID();
         ballTimeStamp = event.getTimeStamp();
         ballXloc = event.getXLocation();
@@ -112,84 +120,96 @@ public class twhtRound {
        
         int carrier = event.getCarrier();
 
-        if (!ballMap.containsKey(ballID)) {
+        if (!ballMap.containsKey(ballID)) 
             ballMap.put(ballID, new Integer(-1));
-        }
-        
-//        if (((ballXloc / 16) == 380 && ((ballYloc / 16) == 501) || (ballYloc / 16) == 522)) {
-//            if (getBallMoved((ballXloc / 16), (ballYloc / 16))) {
-//            m_ba.sendArenaMessage("DINK");
-//            }
-//        }
         
         int b = ballMap.get(ballID);
+        
         if (m_fnRoundState == 1) {
             if ((carrier == -1) && (carrier < b)) {
                 Player p = m_ba.getPlayer(b);
+                
                 if (p == null)
                     return;
 
                 p_ballFired = p.getPlayerName();
                 ballCatchCount = 0;
                 ballFireCount++;
-                if (!p_ballFired.equals(m_ba.getBotName())){      
-                ballPlayer.push(p_ballFired);
-                p_position.put(p_ballFired, new TWHTPosition(p_ballFired));
-                p_hasBall = null;
-                }
                 
+                if (!p_ballFired.equals(m_ba.getBotName())){      
+                    ballPlayer.push(p_ballFired);
+                    p_position.put(p_ballFired, new TWHTPosition(p_ballFired));
+                    p_hasBall = null;
+                }
             } else if ((b == -1) && (b < carrier)) {
                 Player p = m_ba.getPlayer(carrier);
+                
                 if (p == null)
                     return;
 
                 p_ballCaught = p.getPlayerName();
                 ballCatchCount++;
+                
                 if (!p_ballCaught.equals(m_ba.getBotName())){
-                ballPlayer.push(p_ballCaught);
-                p_position.put(p_ballCaught, new TWHTPosition(p_ballCaught));
-                m_ba.spectatePlayer(p_ballCaught);
-                p_hasBall = p_ballCaught;
-                m_game.doPlayerStats(p_ballCaught, 7);
+                    ballPlayer.push(p_ballCaught);
+                    p_position.put(p_ballCaught, new TWHTPosition(p_ballCaught));
+                    m_ba.spectatePlayer(p_ballCaught);
+                    p_hasBall = p_ballCaught;
+                    m_game.doPlayerStats(p_ballCaught, 7);
                 }
             }
+            
             if ((ballFireCount >= 1) && (ballCatchCount >= 1)) {
-                getCatchAndFire(p_ballFired, p_ballCaught);
+                doCatchAndFire(p_ballFired, p_ballCaught);
                 ballFireCount = 0;
                 ballCatchCount = 0;
             }
         }
         ballMap.remove(ballID);
         ballMap.put(ballID, carrier);
+    }    
 
+    /**
+     * Changes the round time. Accepts parameters in <minutes>:<seconds> form
+     * 
+     * @param name
+     * @param time
+     */
+    public void setChangeTime(String name, String time) {
+        int minutes = 0;
+        int seconds = 0;
+        String[] splitmsg;
+
+        if (time.contains(":")) {
+            splitmsg = time.split(":");
+
+            if (splitmsg.length == 2) {
+                try {
+                    minutes = Integer.parseInt(splitmsg[0]);
+                    seconds = Integer.parseInt(splitmsg[1]);
+                } catch (NumberFormatException e) {
+                    return;
+                }
+                
+                if ((minutes < 0 || minutes > 12) || (seconds < 0 || seconds > 60)) {
+                    m_ba.sendPrivateMessage(name, "Invalid format. Please use !settime ##:##.");
+                    return;
+                }
+                gameTime = (minutes * 60) + seconds;
+                doUpdateScoreBoardTime();
+
+            } else
+                m_ba.sendPrivateMessage(name, "Invalid format. Please use !settime ##:##");
+        }
     }
 
-//    public Boolean getBallMoved(int X, int Y) {
-//        int oldX = 0;
-//        int oldY = 0;
-//        int newX = 0;
-//        int newY = 0;
-//        
-//        if (oldX == 0 && oldY == 0) {
-//            oldX = X;
-//            oldY = Y;
-//        } else {
-//            newX = X;
-//            newY = Y;
-//        }
-//        
-//        if (oldX == newX && oldY == newY)
-//            return false;
-//        else {
-//        oldX = 0;
-//        oldY = 0;
-//            return true;
-//        }
-//    }
-    
-    public void addPlayers() {
+    /**
+     * Executes the app player phase before every round.
+     */
+    public void doAddPlayers() {
         m_fnRoundState = 0;
         doRemoveBall();
+        
         if (m_roundNum == 1) {
             m_ba.sendArenaMessage("Captains please enter in your line-up.", 2);
             m_ba.sendArenaMessage("You can private message " + m_ba.getBotName() + " with !help cap for help.");
@@ -213,8 +233,10 @@ public class twhtRound {
         }
     }
 
-    public void ready() {
-
+    /**
+     * Executes the start of the round after the referee uses !ready
+     */
+    public void doReady() {
         if (m_fnRoundState == 0) {
             m_fnRoundState = 3;
             m_ba.sendArenaMessage("Round " + m_roundNum + " is ready to begin.", 2);
@@ -222,6 +244,7 @@ public class twhtRound {
             doUpdateScoreBoardTime();
             m_game.m_team1.setStartRound();
             m_game.m_team2.setStartRound();
+            
             if (m_roundNum == 1)
                 m_ba.sendArenaMessage("( [ " + m_fcTeam1Name + "  (   )  " + m_fcTeam2Name + " ])");
             else if (m_roundNum == 2)
@@ -232,7 +255,13 @@ public class twhtRound {
 
     }
     
-    public void faceOff(String name, String msg) {
+    /**
+     * Executes the faceoff
+     * 
+     * @param name
+     * @param msg
+     */
+    public void doFaceOff(String name, String msg) {
         int min = 0;
         int max = 0;
         String[] splitmsg;
@@ -242,10 +271,9 @@ public class twhtRound {
                 m_ba.cancelTask(fo_timerTask);
 
             if (msg.contains(":")) {
-
                 splitmsg = msg.split(":");
+                
                 if (splitmsg.length == 2) {
-
                     try {
                         min = Integer.parseInt(splitmsg[0]);
                         max = Integer.parseInt(splitmsg[1]);
@@ -258,7 +286,6 @@ public class twhtRound {
                         return;
                     }
                     doGetBall(8192, 8192);
-
                     m_game.setFrequencyAndSide();
                     m_ba.sendArenaMessage("Prepare for the Faceoff. Get on your correct sides.", 2);
 
@@ -270,14 +297,12 @@ public class twhtRound {
                         public void run() {
                             doDropBall();
                             m_ba.sendArenaMessage("Go! Go! Go!", Tools.Sound.VICTORY_BELL);
-                            startTimer();
+                            doStartTimer();
                             m_fnRoundState = 1;
                         }
-                    };
-                    m_ba.scheduleTask(fo_timerTask, lRandomDrop * Tools.TimeInMillis.SECOND);
-                } else {
-                    m_ba.sendPrivateMessage(name, "Invalid format. Please use !faceoff ##:##");
-                }
+                    }; m_ba.scheduleTask(fo_timerTask, lRandomDrop * Tools.TimeInMillis.SECOND);
+                } else 
+                    m_ba.sendPrivateMessage(name, "Invalid format. Please use !faceoff ##:##");                
             }
         } else {
             m_ba.sendPrivateMessage(name, "Cannot do faceoff while adding players or while the game is paused. please !ready or unpause the game to continue.");
@@ -286,12 +311,13 @@ public class twhtRound {
     }
     
     /**
+     * Everytime the game is in session and the ball transfers from one player or another
+     * this event is fired.
      * 
      * @param playerFired
      * @param playerCaught
      */
-    private void getCatchAndFire(String playerFired, String playerCaught) {
-        
+    public void doCatchAndFire(String playerFired, String playerCaught) {        
         twhtTeam tA = null;
         twhtTeam tB = null;
         twhtPlayer pA = null;
@@ -309,7 +335,6 @@ public class twhtRound {
         int estimatedY = 0;
 
         if (m_fnRoundState == 1) {
-
             tA = m_game.getPlayerTeam(playerFired);
             tB = m_game.getPlayerTeam(playerCaught);
 
@@ -346,7 +371,7 @@ public class twhtRound {
                     if (pAXLoc <= pBXLoc) {
                         m_game.doPlayerStats(playerCaught, 4);
                         m_game.doPlayerStats(playerFired, 6);
-                    } else {                        
+                    } else {
                         if ((pAYLoc - pBYLoc) == 0) 
                             pYLoc = 1;
                         else 
@@ -354,8 +379,7 @@ public class twhtRound {
                     
                     distance = ((pAXLoc - freq0Xgoal) * (pYLoc)) / (pAXLoc - pBXLoc);
                     }
-                } else if (fA == 0 && pAXLoc > freq1Xbline) {
-                    
+                } else if (fA == 0 && pAXLoc > freq1Xbline) {                    
                     if (pAXLoc >= pBXLoc) {
                         m_game.doPlayerStats(playerCaught, 4);
                         m_game.doPlayerStats(playerFired, 6);
@@ -368,21 +392,22 @@ public class twhtRound {
                     distance = ((pAXLoc - freq1Xgoal) * (pYLoc)) / (pAXLoc - pBXLoc);
                     }
                 }
-                    if (distance < 0)
-                        distance = -distance;
-                   
-                    if (pAYLoc <= pBYLoc)
-                        estimatedY = pAYLoc + distance;
-                    else if (pAYLoc > pBYLoc)
-                        estimatedY = pAYLoc - distance;
-                   
-                    if (estimatedY <= botYGoal && estimatedY >= topYGoal) {
-                        m_game.doPlayerStats(playerCaught, 3);
-                        m_game.doPlayerStats(playerFired, 5);
-                    } else {
-                        m_game.doPlayerStats(playerCaught, 4);
-                        m_game.doPlayerStats(playerFired, 6);
-                    }
+                
+                if (distance < 0)
+                    distance = -distance;
+               
+                if (pAYLoc <= pBYLoc)
+                    estimatedY = pAYLoc + distance;
+                else if (pAYLoc > pBYLoc)
+                    estimatedY = pAYLoc - distance;
+               
+                if (estimatedY <= botYGoal && estimatedY >= topYGoal) {
+                    m_game.doPlayerStats(playerCaught, 3);
+                    m_game.doPlayerStats(playerFired, 5);
+                } else {
+                    m_game.doPlayerStats(playerCaught, 4);
+                    m_game.doPlayerStats(playerFired, 6);
+                }
             } else {                
                 m_game.doPlayerStats(playerCaught, 4);
                 m_game.doPlayerStats(playerFired, 6);
@@ -391,103 +416,88 @@ public class twhtRound {
         }
     }
 
-    public void timeStamp() {
-        timeStamp = true;
-    }
-
-    public void startTimer() {
-        m_ba.cancelTask(gameTimer);
-
-        gameTimer = new TimerTask() {
-            public void run() {
-                gameTime++;
-                gameChecks();
-            }
-        };
-        m_ba.scheduleTask(gameTimer, Tools.TimeInMillis.SECOND, Tools.TimeInMillis.SECOND);
-    }
-    
+    /**
+     * Updates the scoreboard for the non-timer parts of the lvz
+     */
     public void doUpdateScoreBoard() {
-            twhtTeam leftT = null;
-            twhtTeam rightT = null;
-            int lScore;            
-            int rScore;
+        twhtTeam leftT = null;
+        twhtTeam rightT = null;
+        int lScore;            
+        int rScore;
 
-            if (m_roundNum == 1 || m_roundNum == 3) {
-                leftT = m_game.m_team1;
-                rightT = m_game.m_team2;
-            } else if (m_roundNum == 2) {
-                leftT = m_game.m_team2;
-                rightT = m_game.m_team1;
-            }            
+        if (m_roundNum == 1 || m_roundNum == 3) {
+            leftT = m_game.m_team1;
+            rightT = m_game.m_team2;
+        } else if (m_roundNum == 2) {
+            leftT = m_game.m_team2;
+            rightT = m_game.m_team1;
+        }            
 
-            lScore = leftT.getTeamScore();
-            rScore = rightT.getTeamScore();            
-
+        lScore = leftT.getTeamScore();
+        rScore = rightT.getTeamScore();
+        
+        if (m_ba.getArenaName().equalsIgnoreCase("hockey")) {                         
+            //Left Score
+            if (lScore % 10 > 0)
+                m_scoreBoard.showObject(100 + (lScore % 10));
+            else 
+                m_scoreBoard.hideObject(100);
             
-            if (m_ba.getArenaName().equalsIgnoreCase("hockey")) {                
-                             
-                //Left Score
-                if (lScore % 10 > 0)
-                    m_scoreBoard.showObject(100 + (lScore % 10));
-                else 
-                    m_scoreBoard.hideObject(100);
-                
-                if (lScore / 10 > 0)
-                    m_scoreBoard.showObject(110 + (lScore / 10));
-                else 
-                    m_scoreBoard.hideObject(110);    
+            if (lScore / 10 > 0)
+                m_scoreBoard.showObject(110 + (lScore / 10));
+            else 
+                m_scoreBoard.hideObject(110);    
 
-                //Right Score
-                if (rScore % 10 > 0)
-                    m_scoreBoard.showObject(200 + (rScore % 10));
-                else 
-                    m_scoreBoard.hideObject(200);
-                    
-                if (rScore / 10 > 0)
-                    m_scoreBoard.showObject(210 + (rScore / 10));
-                else 
-                    m_scoreBoard.hideObject(210);    
+            //Right Score
+            if (rScore % 10 > 0)
+                m_scoreBoard.showObject(200 + (rScore % 10));
+            else 
+                m_scoreBoard.hideObject(200);
                 
-                //Left Team Name - Team1
-                m_scoreBoard.showObject(490);
-                m_scoreBoard.showObject(341);
-                m_scoreBoard.showObject(302);
-                m_scoreBoard.showObject(423);
-                if (m_roundNum == 1 || m_roundNum == 3) {
-                    m_scoreBoard.showObject(574);        
-                } else if (m_roundNum == 2) {
-                    m_scoreBoard.showObject(584);
-                }
-                
-                //Right Team Name
-                m_scoreBoard.showObject(495);
-                m_scoreBoard.showObject(346);
-                m_scoreBoard.showObject(307);
-                m_scoreBoard.showObject(428);
-                if (m_roundNum == 1 || m_roundNum == 3) {
-                    m_scoreBoard.showObject(589);        
-                } else if (m_roundNum == 2) {
-                    m_scoreBoard.showObject(579);
-                }
-                
-            } else if (m_ba.getArenaName().equalsIgnoreCase("#hockey")) {              
+            if (rScore / 10 > 0)
+                m_scoreBoard.showObject(210 + (rScore / 10));
+            else 
+                m_scoreBoard.hideObject(210);    
             
+            //Left Team Name - Team1
+            m_scoreBoard.showObject(490);
+            m_scoreBoard.showObject(341);
+            m_scoreBoard.showObject(302);
+            m_scoreBoard.showObject(423);
+            
+            if (m_roundNum == 1 || m_roundNum == 3)
+                m_scoreBoard.showObject(574);        
+            else if (m_roundNum == 2) 
+                m_scoreBoard.showObject(584);            
+            
+            //Right Team Name
+            m_scoreBoard.showObject(495);
+            m_scoreBoard.showObject(346);
+            m_scoreBoard.showObject(307);
+            m_scoreBoard.showObject(428);
+            
+            if (m_roundNum == 1 || m_roundNum == 3)
+                m_scoreBoard.showObject(589);        
+            else if (m_roundNum == 2) 
+                m_scoreBoard.showObject(579);
+        } else if (m_ba.getArenaName().equalsIgnoreCase("#hockey")) {            
             //Round 
             m_scoreBoard.showObject(300 + m_roundNum - 1);
             
             //Left Score
             m_scoreBoard.showObject(210 + (lScore % 10));
             m_scoreBoard.showObject(200 + (lScore / 10));
-
+    
             //Right Score
             m_scoreBoard.showObject(230 + (rScore % 10));
             m_scoreBoard.showObject(220 + (rScore / 10));
-            }
-            m_ba.setObjects();
         }
+        m_ba.setObjects();
+    }
     
-    
+    /**
+     * Updates the scoreboard timers
+     */
     public void doUpdateScoreBoardTime() {
         if (m_scoreBoard2 != null) {
             m_scoreBoard2.hideAllObjects();
@@ -496,20 +506,15 @@ public class twhtRound {
             int time;
             int lpenTemp = 0, rpenTemp = 0;
 
-            time = getIntTime();        
+            time = getIntTime();
             
             if (m_ba.getArenaName().equalsIgnoreCase("hockey")) {                
-                
                 //Time
                 m_scoreBoard2.showObject(700 + ((time % 60) % 10));
                 m_scoreBoard2.showObject(710 + ((time % 60) / 10));
                 m_scoreBoard2.showObject(720 + ((time / 60) % 10));
-                m_scoreBoard2.showObject(730 + (time / 600));                
-
-            } else if (m_ba.getArenaName().equalsIgnoreCase("#hockey")) {                 
-                
- 
-
+                m_scoreBoard2.showObject(730 + (time / 600));
+            } else if (m_ba.getArenaName().equalsIgnoreCase("#hockey")) {
                 for(twhtPlayer i : leftT.m_players.values()) 
                     if (i.getPenalty() > 0) {
                         if (lpenTemp == 0)
@@ -519,8 +524,7 @@ public class twhtRound {
                     }
                 
                 if (lpenTemp > 0)
-                    lpenTemp = lpenTemp - getIntTime();
-                        
+                    lpenTemp = lpenTemp - getIntTime();                        
                             
                 for(twhtPlayer i : rightT.m_players.values()) 
                     if (i.getPenalty() > 0) {
@@ -540,21 +544,23 @@ public class twhtRound {
                 m_scoreBoard2.showObject(130 + (time / 600));
 
                 
-            //Left Penalty
-            m_scoreBoard2.showObject(420 + ((lpenTemp % 60) % 10));
-            m_scoreBoard2.showObject(410 + ((lpenTemp % 60) / 10));
-            m_scoreBoard2.showObject(400 + (lpenTemp / 60));
-            
-            //Right Penalty
-            m_scoreBoard2.showObject(450 + ((rpenTemp % 60) % 10));
-            m_scoreBoard2.showObject(440 + ((rpenTemp % 60) / 10));
-            m_scoreBoard2.showObject(430 + (rpenTemp / 60));
-            
+                //Left Penalty
+                m_scoreBoard2.showObject(420 + ((lpenTemp % 60) % 10));
+                m_scoreBoard2.showObject(410 + ((lpenTemp % 60) / 10));
+                m_scoreBoard2.showObject(400 + (lpenTemp / 60));
+                
+                //Right Penalty
+                m_scoreBoard2.showObject(450 + ((rpenTemp % 60) % 10));
+                m_scoreBoard2.showObject(440 + ((rpenTemp % 60) / 10));
+                m_scoreBoard2.showObject(430 + (rpenTemp / 60));
             }  
-          }
-        doUpdateScoreBoard();
         }
+        doUpdateScoreBoard();
+    }
     
+    /**
+     * Removes the ball from play
+     */
     public void doRemoveBall() {
         doGetBall(4800, 4800);
         
@@ -563,24 +569,26 @@ public class twhtRound {
             public void run() {
                 doDropBall();
             }
-        };
-        m_ba.scheduleTask(ballDelay, 2 * Tools.TimeInMillis.SECOND);
+        }; m_ba.scheduleTask(ballDelay, 2 * Tools.TimeInMillis.SECOND);
     }
     
+    /**
+     * Pauses the current game
+     */
     public void doPause() {
         if (m_fnRoundState == 1) {
-            stopTimer();
+            doStopTimer();
             m_ba.sendArenaMessage("Referee has paused the game.", 2);
             m_fnRoundState = 2;
             doRemoveBall();
-            } else if (m_fnRoundState == 2) {
+        } else if (m_fnRoundState == 2) {
             m_ba.sendArenaMessage("Referee has unpaused the game.", 2);
             m_fnRoundState = 3;
         }
     }
     
     /**
-     * 
+     * Drops the ball and returns the bot to spec
      */
     public void doDropBall() {
         m_ba.spec(m_ba.getBotName());
@@ -591,7 +599,7 @@ public class twhtRound {
     }
 
     /**
-     * 
+     * Causes the bot to grab the ball and goes to a specific location
      */
     public void doGetBall(int xLoc, int yLoc) {
         fo_botUpdateTimer = new TimerTask() {
@@ -600,8 +608,7 @@ public class twhtRound {
                 if (m_ba.getShip().needsToBeSent())
                     m_ba.getShip().sendPositionPacket();
             }
-        };
-        m_ba.scheduleTask(fo_botUpdateTimer, 0, 1000);
+        }; m_ba.scheduleTask(fo_botUpdateTimer, 0, 1000);
 
         droppingBall = true;
         m_ba.getShip().setShip(0);
@@ -610,94 +617,10 @@ public class twhtRound {
         m_ba.getBall(ballID, ballTimeStamp);
     }
 
-    public void stopTimer() {
-        m_ba.cancelTask(gameTimer);
-    }
-
-    public Integer getIntTime() {
-        return gameTime;
-    }
-
-    public String getStringTime() {
-        int minutes;
-        int seconds;
-
-        minutes = gameTime / 60;
-        seconds = gameTime % 60;
-
-        return "" + Tools.rightString("" + minutes, 2, '0') + ":" + Tools.rightString("" + seconds, 2, '0');
-    }
-
-//    public Integer getDistLeft(String name) {
-//        TWHTPosition p;
-//        int sideXloc = 374;
-//        int distance = 0;
-//
-//        p = p_position.get(name);
-//        distance = p.getXloc() - sideXloc;
-//        m_ba.sendArenaMessage("" + p.getXloc());
-//        if (distance < 0)
-//            distance = -distance;
-//
-//        return distance;
-//    }
-//
-//    public Integer getDistRight(String name) {
-//        TWHTPosition p;
-//        int sideXloc = 649;
-//        int distance = 0;
-//
-//        p = p_position.get(name);
-//        distance = p.getXloc() - sideXloc;
-//        m_ba.sendArenaMessage("" + p.getXloc());
-//        if (distance < 0)
-//            distance = -distance;
-//
-//        return distance;
-//    }
-
-    public Integer getRoundNum() {
-        return m_roundNum;
-    }
-
     /**
-     * @return the m_fnRoundState
+     * Checks what needs to be checked every second the round is running
      */
-    public int getRoundState() {
-        return m_fnRoundState;
-    }
-
-    public void changeTime(String name, String time) {
-        int minutes = 0;
-        int seconds = 0;
-        String[] splitmsg;
-
-        if (time.contains(":")) {
-            splitmsg = time.split(":");
-
-            if (splitmsg.length == 2) {
-
-                try {
-                    minutes = Integer.parseInt(splitmsg[0]);
-                    seconds = Integer.parseInt(splitmsg[1]);
-                } catch (NumberFormatException e) {
-                    return;
-                }
-                if ((minutes < 0 || minutes > 12) || (seconds < 0 || seconds > 60)) {
-                    m_ba.sendPrivateMessage(name, "Invalid format. Please use !settime ##:##.");
-                    return;
-                }
-                gameTime = (minutes * 60) + seconds;
-                doUpdateScoreBoardTime();
-
-            } else {
-                m_ba.sendPrivateMessage(name, "Invalid format. Please use !settime ##:##");
-            }
-        }
-    }
-
-    public void gameChecks() {
-
+    public void doGameChecks() {
         if ((m_roundNum == 1 || m_roundNum == 2) && gameTime == 600) {
             m_game.reportEndOfRound(m_roundNum);
             m_fnRoundState = -1;
@@ -716,21 +639,92 @@ public class twhtRound {
         doUpdateScoreBoardTime();
     }
 
-    public void cancel() {
-        m_ba.cancelTasks();
-
-        //        m_scoreBoard.hideAllObjects();
-        //
-        //        m_ba.setObjects();
+    /**
+     * Starts the timer for the round
+     */
+    public void doStartTimer() {
+        m_ba.cancelTask(gameTimer);
+        
+        gameTimer = new TimerTask() {
+            public void run() {
+                gameTime++;
+                doGameChecks();
+            }
+        }; m_ba.scheduleTask(gameTimer, Tools.TimeInMillis.SECOND, Tools.TimeInMillis.SECOND);
+    }
+    
+    /**
+     * stops the round timer
+     */
+    public void doStopTimer() {
+        m_ba.cancelTask(gameTimer);
     }
 
-    private class TWHTPosition {
+    /**
+     * Returns the round time in integer / second form
+     * 
+     * @return
+     */
+    public Integer getIntTime() {
+        return gameTime;
+    }
+
+    /**
+     * Returns the round time in string / mm:ss form
+     * 
+     * @return
+     */
+    public String getStringTime() {
+        int minutes;
+        int seconds;
+
+        minutes = gameTime / 60;
+        seconds = gameTime % 60;
+
+        return "" + Tools.rightString("" + minutes, 2, '0') + ":" + Tools.rightString("" + seconds, 2, '0');
+    }    
+
+    /**
+     * Returns the round number
+     * 
+     * @return
+     */
+    public Integer getRoundNum() {
+        return m_roundNum;
+    }
+
+    /**
+     * Returns the round state 
+     * 
+     * @return the m_fnRoundState
+     */
+    public int getRoundState() {
+        return m_fnRoundState;
+    }
+
+    /**
+     * Cancels what needs to be canceled when the round is over
+     */
+    public void cancel() {
+        m_ba.cancelTasks();
+        m_scoreBoard.hideAllObjects();        
+        m_ba.setObjects();
+    }
+
+    /**
+     * Position class that stores the ball position when it is fired or released
+     * 
+     * @author Ian
+     *
+     */
+    public class TWHTPosition {
+        
         private String name;
-        private int playerTimeStamp;
-        private short playerXloc;
-        private short playerYloc;
-        private short playerXvel;
-        private short playerYvel;
+        public int playerTimeStamp;
+        public short playerXloc;
+        public short playerYloc;
+        public short playerXvel;
+        public short playerYvel;
 
         //Class Constructor for TWHTPosition
         public TWHTPosition(String name) {
@@ -739,16 +733,12 @@ public class twhtRound {
         }
 
         // Sets the players position
-        private void setPosition() {
+        public void setPosition() {
             this.playerTimeStamp = ballTimeStamp;
             this.playerXloc = ballXloc;
             this.playerYloc = ballYloc;
             this.playerXvel = ballXvel;
             this.playerYvel = ballYvel;
-        }
-
-        public String getName() {
-            return name;
         }
 
         // Returns the player's recorded X location

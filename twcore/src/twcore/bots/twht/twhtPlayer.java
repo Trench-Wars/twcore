@@ -12,14 +12,14 @@ import twcore.core.BotAction;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
-/**twhtPlayer class holds all the individual player information for one TWHT Match. All Individual 
+/**
+ * twhtPlayer class holds all the individual player information for one TWHT Match. All Individual 
  * stats are entered and stored here.
  * 
  * @author Ian
  * 
  */
-public class twhtPlayer {
-    
+public class twhtPlayer {    
     
     TreeMap<Integer, twhtShip> m_ships = new TreeMap<Integer, twhtShip>();  //Initilizes the map that stores the individual ship data
     
@@ -49,7 +49,7 @@ public class twhtPlayer {
      */
     int m_fnPlayerState = 0;
     int m_fnPreviousState = 0;
-    int m_fnGoals, m_fnSaves, m_fnAssists, m_fnSteals, m_fnPlusMinus, m_fnSOG, m_fnTurnOver, m_fnPuckCarry, m_fnChecksMade, m_fnChecksTaken, m_fnGoalAllowed, m_fnGameTime, m_fnPuckCarryTime, m_fnGoalieTime, m_fnGoalieSteals, m_fnGoalieTurnOvers, m_fnGoalieChecks, m_fnGoalieChecked, m_timePlayed, g_rating, p_rating;
+    int m_fnGoals, m_fnSaves, m_fnAssists, m_fnSteals, m_fnPlusMinus, m_fnSOG, m_fnTurnOver, m_fnPuckCarry, m_fnChecksMade, m_fnChecksTaken, m_fnGoalAllowed, m_fnGameTime, m_fnPuckCarryTime, m_fnGoalieTime, m_fnGoalieSteals, m_fnGoalieTurnOvers, m_fnGoalieChecks, m_fnGoalieChecked, g_rating, p_rating;
     boolean m_switchedShip = false;
 
     /** Creates a new instance of MatchPlayer */
@@ -59,36 +59,9 @@ public class twhtPlayer {
         m_fnShipType = shipType;
         m_fnPlayerState = playerState;
         ba = botAction;
-//        bs = ba.getBotSettings();
+//      bs = ba.getBotSettings();
         m_ships.put(shipType, new twhtShip(shipType));
-    }
-
-    /**
-     * Method used to get a player's current ship type
-     * 
-     * @return
-     */
-    public Integer getPlayerShip() {
-        return m_fnShipType;
-    }   
-
-    /**
-     * Method used to get a player's current state
-     * 
-     * @return
-     */
-    public Integer getPlayerState() {
-        return m_fnPlayerState;
-    }
-
-    /**
-     * Method used to get a player's previous state
-     * 
-     * @return
-     */
-    public Integer getPreviousState() {
-        return m_fnPreviousState;
-    }
+    }    
 
     /**
      * Method used to set penalties. A timestamp of the round time when the penalty
@@ -121,8 +94,69 @@ public class twhtPlayer {
         
         setShipStart(m_team.m_game.m_curRound.getIntTime());
         }
+    }    
+
+    /**
+     * Starts the game timer to account for the player's time in the game
+     * @param time in seconds
+     */
+    public void setShipStart (int time) {
+        startTimeStamp = time;
     }
     
+    /**
+     * Ends the game timer to account for the player's time in the game
+     * @param time in seconds
+     */
+    public void setShipEnd (int time) {
+        twhtShip pS;
+        int gameTime;
+        
+        pS = m_ships.get(m_fnShipType);
+        
+        if (pS == null)
+            m_ships.put(m_fnShipType, new twhtShip(m_fnShipType));
+        
+        endTimeStamp = time;
+        gameTime = endTimeStamp - startTimeStamp;
+        
+        if (m_fnShipType == 7 || m_fnShipType == 8)
+            pS.reportGoalieTime(gameTime);
+        else
+            pS.reportGameTime(gameTime);
+        
+        startTimeStamp = 0;
+        endTimeStamp = 0;        
+    }   
+    
+
+    /**
+     * Method used to get a player's current ship type
+     * 
+     * @return
+     */
+    public Integer getPlayerShip() {
+        return m_fnShipType;
+    }   
+
+    /**
+     * Method used to get a player's current state
+     * 
+     * @return
+     */
+    public Integer getPlayerState() {
+        return m_fnPlayerState;
+    }
+
+    /**
+     * Method used to get a player's previous state
+     * 
+     * @return
+     */
+    public Integer getPreviousState() {
+        return m_fnPreviousState;
+    }
+
     /**
      * Returns the timestamp of the round time for when the penalty
      * will expire.
@@ -211,37 +245,70 @@ public class twhtPlayer {
     }
     
     /**
-     * Starts the game timer to account for the player's time in the game
-     * @param time in seconds
+     * Returns the players stats in an arena message for intermissions and end of game.
      */
-    public void setShipStart (int time) {
-        startTimeStamp = time;
+    public void reportPlayerStats() {
+        String shipString = "|";
+        twhtShip sh;
+        
+        for (int i = 1; i < 7; i++) 
+            if (m_ships.containsKey(i)) {
+                sh = m_ships.get(i);
+                
+                shipString = shipString + Tools.formatString(" " + sh.getShipType(), 2, " ");
+                m_fnGoals += sh.fnGoals;
+                m_fnAssists += sh.fnAssists;
+
+                m_fnSteals += sh.fnSteals;
+                m_fnPlusMinus += sh.fnPlusMinus;
+                m_fnSOG += sh.fnSOG;
+                m_fnTurnOver += sh.fnTurnOver;
+                m_fnPuckCarry += sh.fnPuckCarry;
+                m_fnChecksMade += sh.fnChecksMade;
+                m_fnChecksTaken += sh.fnChecksTaken;
+                m_fnGoalAllowed += sh.fnGoalAllowed;
+                m_fnGameTime += sh.fnGameTime;                            
+                m_fnPuckCarryTime += sh.fnPuckCarryTime;
+                p_rating += sh.getRating();
+            }
+        ba.sendArenaMessage(Tools.formatString(shipString, 13," ") + Tools.formatString("|" + getPlayerName(), 10," ") + Tools.formatString("|" + m_fnGoals, 3," ") + 
+                            Tools.formatString("|" + m_fnAssists, 3," ") + Tools.formatString("|" + m_fnSOG , 4," ") + Tools.formatString("|" + m_fnSteals , 4," ") + 
+                            Tools.formatString("|" + m_fnTurnOver , 4," ") + Tools.formatString("|" + m_fnChecksMade , 4," ") + Tools.formatString("|" + m_fnChecksTaken , 4," ") + 
+                            Tools.formatString("|" + m_fnPuckCarry , 4," ") + Tools.formatString("|" + doFormatTimeString(m_fnPuckCarryTime) , 6," ") + Tools.formatString("|" + doFormatTimeString(m_fnGameTime) , 6," ") + 
+                            Tools.formatString("|" + m_fnPlusMinus, 5," ") + Tools.formatString("|" + p_rating , 5," "));
     }
-    
+        
     /**
-     * Ends the game timer to account for the player's time in the game
-     * @param time in seconds
+     * Returns the players stats as a goalie in an arena message for intermissions and end of game.
      */
-    public void setShipEnd (int time) {
-        twhtShip pS;
-        int gameTime;
-        pS = m_ships.get(m_fnShipType);
-        
-        if (pS == null)
-            m_ships.put(m_fnShipType, new twhtShip(m_fnShipType));
-        
-        endTimeStamp = time;
-        gameTime = endTimeStamp - startTimeStamp;
-        
-        if (m_fnShipType == 7 || m_fnShipType == 8)
-            pS.reportGoalieTime(gameTime);
-        else
-            pS.reportGameTime(gameTime);
-        
-        startTimeStamp = 0;
-        endTimeStamp = 0;
-        
-    }
+    public void reportGoalieStats(){        
+            String shipString = "|";
+            twhtShip sh;
+            double m_getSavePerc = 0.0;
+            
+            for (int i = 7; i < 9; i ++) 
+                if (m_ships.containsKey(i)) {
+                    sh = m_ships.get(i);
+                    
+                    shipString = shipString + Tools.formatString(" " + sh.getShipType(), 2, " ");
+                    m_fnSaves += sh.fnSaves;
+                    m_fnGoalieTime += sh.fnGoalieTime;
+                    m_fnGoalieSteals += sh.fnGoalieSteals;
+                    m_fnGoalieTurnOvers += sh.fnGoalieTurnOvers;
+                    m_fnGoalieChecks += sh.fnGoalieChecks;
+                    m_fnGoalieChecked += sh.fnGoalieChecked;
+                    g_rating += sh.getRating();
+                }     
+            if (!shipString.equals("|")){
+                if ((m_fnSaves + m_fnGoalAllowed) != 0)
+                    m_getSavePerc =  m_fnSaves / (m_fnSaves + m_fnGoalAllowed) * 100.0;
+                
+                ba.sendArenaMessage(Tools.formatString(shipString, 5, " ") + Tools.formatString("|" + getPlayerName(), 10," ") + Tools.formatString("|" + m_fnSaves, 4," ") + 
+                            Tools.formatString("|" + m_getSavePerc, 4," ") + Tools.formatString("|" + m_fnGoalAllowed , 4," ") + Tools.formatString("|" + m_fnGoalieSteals , 4," ") + 
+                            Tools.formatString("|" + m_fnGoalieTurnOvers , 4," ") + Tools.formatString("|" + m_fnGoalieChecks , 4," ") + Tools.formatString("|" + m_fnGoalieChecked , 5," ") + 
+                            Tools.formatString("|" + doFormatTimeString(m_fnGoalieTime) , 6," ") + Tools.formatString("|" + m_fnAssists , 3," ") + Tools.formatString("|" + m_fnPlusMinus , 4," ") + Tools.formatString("|" + g_rating , 5," "));
+            }
+    }    
     
     /**
      * Handles the distribution for the stats based on stat type and the current ship for the player.
@@ -323,75 +390,10 @@ public class twhtPlayer {
             break;
         }
     }    
-    
-    
-    /**
-     * Returns the players stats in an arena message for intermissions and end of game.
-     */
-    public void reportPlayerStats() {
-        String shipString = "|";
-        twhtShip sh;
         
-        for (int i = 1; i < 7; i++) 
-            if (m_ships.containsKey(i)) {
-                sh = m_ships.get(i);
-                
-                shipString = shipString + Tools.formatString(" " + sh.getShipType(), 2, " ");
-                m_fnGoals += sh.fnGoals;
-                m_fnAssists += sh.fnAssists;
-
-                m_fnSteals += sh.fnSteals;
-                m_fnPlusMinus += sh.fnPlusMinus;
-                m_fnSOG += sh.fnSOG;
-                m_fnTurnOver += sh.fnTurnOver;
-                m_fnPuckCarry += sh.fnPuckCarry;
-                m_fnChecksMade += sh.fnChecksMade;
-                m_fnChecksTaken += sh.fnChecksTaken;
-                m_fnGoalAllowed += sh.fnGoalAllowed;
-                m_fnGameTime += sh.fnGameTime;                            
-                m_fnPuckCarryTime += sh.fnPuckCarryTime;
-                p_rating += sh.getRating();
-            }
-        ba.sendArenaMessage(Tools.formatString(shipString, 13," ") + Tools.formatString("|" + getPlayerName(), 10," ") + Tools.formatString("|" + m_fnGoals, 3," ") + 
-                            Tools.formatString("|" + m_fnAssists, 3," ") + Tools.formatString("|" + m_fnSOG , 4," ") + Tools.formatString("|" + m_fnSteals , 4," ") + 
-                            Tools.formatString("|" + m_fnTurnOver , 4," ") + Tools.formatString("|" + m_fnChecksMade , 4," ") + Tools.formatString("|" + m_fnChecksTaken , 4," ") + 
-                            Tools.formatString("|" + m_fnPuckCarry , 4," ") + Tools.formatString("|" + doFormatTimeString(m_fnPuckCarryTime) , 6," ") + Tools.formatString("|" + doFormatTimeString(m_fnGameTime) , 6," ") + 
-                            Tools.formatString("|" + m_fnPlusMinus, 5," ") + Tools.formatString("|" + p_rating , 5," "));
-    }
-    
-    
     /**
-     * Returns the players stats as a goalie in an arena message for intermissions and end of game.
+     * Used to format integer time values into a string ##:##
      */
-    public void reportGoalieStats(){        
-            String shipString = "|";
-            twhtShip sh;
-            double m_getSavePerc = 0.0;
-            
-            for (int i = 7; i < 9; i ++) 
-                if (m_ships.containsKey(i)) {
-                    sh = m_ships.get(i);
-                    
-                    shipString = shipString + Tools.formatString(" " + sh.getShipType(), 2, " ");
-                    m_fnSaves += sh.fnSaves;
-                    m_fnGoalieTime += sh.fnGoalieTime;
-                    m_fnGoalieSteals += sh.fnGoalieSteals;
-                    m_fnGoalieTurnOvers += sh.fnGoalieTurnOvers;
-                    m_fnGoalieChecks += sh.fnGoalieChecks;
-                    m_fnGoalieChecked += sh.fnGoalieChecked;
-                    g_rating += sh.getRating();
-                }           
-     
-            if (!shipString.equals("|")){
-                if ((m_fnSaves + m_fnGoalAllowed) != 0)
-                    m_getSavePerc =  m_fnSaves / (m_fnSaves + m_fnGoalAllowed) * 100.0;
-        ba.sendArenaMessage(Tools.formatString(shipString, 5, " ") + Tools.formatString("|" + getPlayerName(), 10," ") + Tools.formatString("|" + m_fnSaves, 4," ") + 
-                            Tools.formatString("|" + m_getSavePerc, 4," ") + Tools.formatString("|" + m_fnGoalAllowed , 4," ") + Tools.formatString("|" + m_fnGoalieSteals , 4," ") + 
-                            Tools.formatString("|" + m_fnGoalieTurnOvers , 4," ") + Tools.formatString("|" + m_fnGoalieChecks , 4," ") + Tools.formatString("|" + m_fnGoalieChecked , 5," ") + 
-                            Tools.formatString("|" + doFormatTimeString(m_fnGoalieTime) , 6," ") + Tools.formatString("|" + m_fnAssists , 3," ") + Tools.formatString("|" + m_fnPlusMinus , 4," ") + Tools.formatString("|" + g_rating , 5," "));
-            }
-    }
-    
     public String doFormatTimeString(int time) {
         int minutes;
         int seconds;
@@ -402,19 +404,27 @@ public class twhtPlayer {
         return "" + Tools.rightString("" + minutes, 2, '0') + ":" + Tools.rightString("" + seconds, 2, '0');
     }
     
-    public class twhtShip { 
+    /**
+     * This class keeps track of the stats for each ship the player uses.
+     * 
+     * @author Ian
+     *
+     */
+    public class twhtShip {
+        int lastTimeCheck;
         int shipType;
-        
-        long timePlayed, lastTimeCheck;
-        
         int p_rating; 
         int fnGoals, fnSaves, fnAssists, fnSteals, fnPlusMinus, fnSOG, fnTurnOver, fnPuckCarry, fnChecksMade, fnChecksTaken, fnGoalAllowed, fnGameTime, fnPuckCarryTime, fnGoalieTime, fnGoalieSteals, fnGoalieTurnOvers, fnGoalieChecks, fnGoalieChecked;
         
+        //Class constructor
         public twhtShip(int shipType) { 
             this.shipType = shipType;
             resetVariables();
         }
         
+        /**
+         * Initializes the variables
+         */
         public void resetVariables() {
             fnGoals = 0;
             fnAssists = 0;
@@ -428,7 +438,6 @@ public class twhtPlayer {
             fnChecksTaken = 0;
             fnGoalAllowed = 0;
             fnGameTime = 0;
-            timePlayed = 0;
             lastTimeCheck = 0;
             fnPuckCarryTime = 0;
             fnGoalieTime = 0;
@@ -439,28 +448,41 @@ public class twhtPlayer {
             p_rating = 0;
         }
         
+        /**
+         * Records a goal for a player
+         */
         public void reportGoal() {
             fnGoals++;
             p_rating += 107;
         }
-
         
+        /**
+         * Records a save for a player
+         */
         public void reportSave() {
             fnSaves++;
             p_rating += 27;
         }
 
-
+        /**
+         * Records a assist for a player
+         */
         public void reportAssist() {
             fnAssists++;
             p_rating += 60;
         }
 
+        /**
+         * Records a steal for a player
+         */
         public void reportSteal() {
             fnSteals++;
             p_rating += 16;
         }
 
+        /**
+         * Records plus/minus for a player
+         */
         public void reportPlusMinus(boolean plusMinus) {
             if (plusMinus){
                 fnPlusMinus++;
@@ -471,80 +493,128 @@ public class twhtPlayer {
             }
         }
 
+        /**
+         * Records a shot on goal for a player
+         */
         public void reportShotOnGoal() {
             fnSOG++;
             p_rating += 13;
         }
         
+        /**
+         * Records a turnover for a player
+         */
         public void reportTurnover() {
             fnTurnOver++;
             p_rating -= 13;
         }
 
+        /**
+         * Records a puck carry for a player
+         */
         public void reportPuckCarry() {
             fnPuckCarry++;
         }
 
+        /**
+         * Records a check made for a player
+         */
         public void reportCheckMade() {
             fnChecksMade++;
             p_rating += 8;
         }
 
+        /**
+         * Records a check taken for a player
+         */
         public void reportCheckTaken() {
             fnChecksTaken++;
             p_rating -= 3;
         }
 
+        /**
+         * Records a goal allowed for a player
+         */
         public void reportGoalAllowed() {
             fnGoalAllowed++;
             p_rating -= 49;
         }
         
+        /**
+         * Records a players game time for a player
+         */
         public void reportGameTime(int time) {
             fnGameTime += time;            
         }
-        
-        public void reportGoalieTime(int time) {
-            fnGoalieTime += time;            
-        }
-        
+                
+        /**
+         * Records the amount of time a player holds the puck
+         */
         public void reportPuckCarryTime() {
             fnPuckCarryTime++;
             p_rating++;
         }
         
+        /**
+         * Records the time spent as goalie for a player
+         */
+        public void reportGoalieTime(int time) {
+            fnGoalieTime += time;            
+        }
+        
+        /**
+         * Records when the goalie turns over the puck
+         */
         public void reportGoalieTurnover() {
             fnGoalieTurnOvers++;
             p_rating -= 16;
         }
         
+        /**
+         * Records when the goalie makes a check
+         */
         public void reportGoalieCheckMade() {
             fnGoalieChecks++;
             p_rating += 7;
         }
 
+        /**
+         * Records when the goalie takes a check
+         */
         public void reportGoalieCheckTaken() {
             fnGoalieChecked++;
             p_rating -= 10;
         }
         
+        /**
+         * Records when the goalie makes a steal
+         */
         public void reportGoalieSteal() {
             fnGoalieSteals++;
             p_rating += 20;
         }
         
+        /**
+         * Calculates the goalies save percentage
+         */
         public double getSavePerc() {
             double savePerc = 0;
          
             return savePerc;
         }
         
+        /**
+         * Calculates the rating for the player's ship
+         */
+        public Integer getRating() {
+            return p_rating;
+        }   
+        
+        /**
+         * Returns the ship type that the record is made for
+         */
         public Integer getShipType() {
             return shipType;
         }
-        public Integer getRating() {
-            return p_rating;
-        }        
-       
-    }
+   }
 }

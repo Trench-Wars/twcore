@@ -25,7 +25,10 @@ import twcore.core.lvz.Objset;
 import twcore.core.util.Spy;
 
 /**
- * TWHT Bot
+ * TWHT Bot - This bot is modeled after matchbot and takes a few elements from hockeybot.
+ * The bots purpose or function is to assist a referee in hosting a game of TWHT. The methods
+ * and classes used in this bot are not ment to provide full automation. It is more of a tool
+ * created for the use of the referee of a TWHT game.
  * 
  * @author Ian
  * 
@@ -39,6 +42,12 @@ public class twht extends SubspaceBot {
 
     int fnTeam2ID = 0;
     int fnRefereeID = 0;
+    int fnMatchID;
+    int fnTeam1ID;
+    int fnRankID;
+    int fnUserID;
+    int s_sround = 0;
+    
     String m_judge = null;
     String fcRefName = null;
 
@@ -47,22 +56,18 @@ public class twht extends SubspaceBot {
     Date ftTimeEnded;
     Date fdDateScheduled;
     Date fdTimeScheduled;
-
-    int fnMatchID;
-    int fnTeam1ID;
-    int fnRankID;
-    int fnUserID;
+    
     String fcUserName;
     String fcTeam1Name = null;
     String fcTeam2Name = null;
-
     String m_date = null;
     String s_fcTeam1Name = null;
     String s_fcTeam2Name = null;
     String s_fcRefName = null;
     String s_fdDateScheduled = null;
     String s_fdTimeScheduled = null;
-    int s_sround = 0;
+    String m_initialArena;
+    String m_botChat;
 
     String dbConn = "website";
 
@@ -75,14 +80,11 @@ public class twht extends SubspaceBot {
     BotSettings bs;
     Spy racismWatcher;
 
-    String m_initialArena;
-    String m_botChat;
-
     Stack<String> twhtOP;
+    Stack<String> twdops;
+    
     LinkedList m_players = new LinkedList<twhtPlayer>();
     LinkedList m_captains = new LinkedList<String>();
-
-    Stack<String> twdops;
 
     /* Creates a new instance of twht */
     public twht(BotAction botAction) {
@@ -102,11 +104,9 @@ public class twht extends SubspaceBot {
     private void initVariables() {
         today = new java.util.Date();
         racismWatcher = new Spy(ba);   //Racism watcher
-
         //        m_botSettings = ba.getBotSettings();
         //        m_arena = m_botSettings.getString("Arena");
         m_opList = ba.getOperatorList();
-
         twhtOP = new Stack<String>();
         //        loadTWHTop();
 
@@ -173,10 +173,10 @@ public class twht extends SubspaceBot {
         m_commandInterpreter.registerCommand("!lagout", acceptedMessages, this, "cmd_lagout");
         m_commandInterpreter.registerCommand("!myfreq", acceptedMessages, this, "cmd_myfreq");
         m_commandInterpreter.registerCommand("!ff", acceptedMessages, this, "cmd_forfiet");
-        m_commandInterpreter.registerCommand("!penshot", acceptedMessages, this, "cmd_doPenaltyShot");
-        m_commandInterpreter.registerCommand("!setshot", acceptedMessages, this, "cmd_setPenaltyShot");
-        m_commandInterpreter.registerCommand("!cancelshot", acceptedMessages, this, "cmd_cancelPenaltyShot");
-        m_commandInterpreter.registerCommand("!startshot", acceptedMessages, this, "cmd_startPenaltyShot");
+        m_commandInterpreter.registerCommand("!penshot", acceptedMessages, this, "cmd_doPenaltyShot", fcRefName);
+        m_commandInterpreter.registerCommand("!setshot", acceptedMessages, this, "cmd_setPenaltyShot", fcRefName);
+        m_commandInterpreter.registerCommand("!cancelshot", acceptedMessages, this, "cmd_cancelPenaltyShot", fcRefName);
+        m_commandInterpreter.registerCommand("!startshot", acceptedMessages, this, "cmd_startPenaltyShot", fcRefName);
 
         m_commandInterpreter.registerCommand("!add", acceptedMessages, this, "cmd_add");
         m_commandInterpreter.registerCommand("!remove", acceptedMessages, this, "cmd_remove");
@@ -801,11 +801,23 @@ public class twht extends SubspaceBot {
         }
     }
 
+    /**
+     * Handles the !pause command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_pause(String name, String msg) {
-        if (m_game != null)
-            m_game.doPause(name, msg);
+        if (m_game != null && m_game.m_curRound != null)
+            m_game.m_curRound.doPause();
     }
 
+    /**
+     * Handles the !add command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_add(String name, String msg) {
         if (m_game != null)
             if(name.equals(fcRefName)) {
@@ -932,11 +944,23 @@ public class twht extends SubspaceBot {
         }
     }
 
+    /**
+     * Handles the !settime command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_gameTime(String name, String msg) {
-        if (m_game != null)
-            m_game.setTime(name, msg);
+        if (m_game != null && m_game.m_curRound != null)
+            m_game.m_curRound.setChangeTime(name, msg);
     }
 
+    /**
+     * Handles the !remove command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_remove(String name, String msg) {
         if (m_game != null) {
             if(name.equals(fcRefName)) {
@@ -960,6 +984,12 @@ public class twht extends SubspaceBot {
         }
     }
 
+    /**
+     * Handles the !change command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_change(String name, String msg) {
         if (m_game != null) {   
             if(name.equals(fcRefName)) {
@@ -1004,18 +1034,30 @@ public class twht extends SubspaceBot {
         }
     }
 
+    /**
+     * Handles the !switch command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_switch(String name, String msg) {
         if (m_game != null)
             m_game.reqSwitchPlayer(name, msg);
     }
 
+    /**
+     * Handles the !sub command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_sub(String name, String msg) {
         if (m_game != null)
             m_game.reqSubPlayer(name, msg);
     }
 
     /**
-     * This is where the faceoff is handled.
+     * Handles the !faceoff command
      * 
      * @param name
      * @param msg
@@ -1023,138 +1065,292 @@ public class twht extends SubspaceBot {
     public void cmd_faceoff(String name, String msg) {
         if (m_game != null) {
             if (m_game.m_curRound != null)
-                m_game.m_curRound.faceOff(name, msg);
+                m_game.m_curRound.doFaceOff(name, msg);
         }
     }
 
+    /**
+     * Handles the !pen command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_setPenalty(String name, String msg) {
         if (m_game != null)
             m_game.setPenalty(name, msg);
     }
 
+    /**
+     * Handles the !rpen command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_removePenalty(String name, String msg) {
         if (m_game != null)
-            m_game.removePenalty(name, msg);
+            m_game.doRemovePenalty(name, msg);
     }
 
+    /**
+     * Handles the !wpen command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_warpPenalty(String name, String msg) {
         if (m_game != null)
-            m_game.warpPenalty(name, msg);
+            m_game.doWarpPenalty(name, msg);
     }
 
+    /**
+     * Handles the !goal command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_setGoal(String name, String msg) {
         if (m_game != null)
             m_game.doGoal(msg);
     }
 
+    /**
+     * Handles the !timeout command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_timeOut(String name, String msg) {
         if (m_game != null)
-            m_game.cmd_timeOut(name, msg);
+            m_game.reqTimeOut(name, msg);
     }
 
+    /**
+     * Handles the !cl vote
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_cl(String name, String msg) {
         if (m_game != null)
             m_game.getVote(name, "clean");
     }
 
+    /**
+     * Handles the !cr vote
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_cr(String name, String msg) {
         if (m_game != null)
             m_game.getVote(name, "crease");
     }
 
+    /**
+     * Handles the !lag vote
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_lag(String name, String msg) {
         if (m_game != null)
             m_game.getVote(name, "lag");
     }
 
+    /**
+     * Handles the !gk vote
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_gk(String name, String msg) {
         if (m_game != null)
             m_game.getVote(name, "goalieKill");
     }
 
+    /**
+     * Handles the !og vote
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_og(String name, String msg) {
         if (m_game != null)
             m_game.getVote(name, "ownGoal");
     }
-
+    
+    /**
+     * Handles the !judge command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_setJudge(String name, String msg) {
         if (m_game != null)
-            m_game.addJudge(name, msg);
+            m_game.doAddJudge(name, msg);
     }
 
+    /**
+     * Handles the !rjudge command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_removeJudge(String name, String msg) {
         if (m_game != null)
-            m_game.removeJudge(name, msg);
+            m_game.doRemoveJudge(name, msg);
     }
 
+    /**
+     * Handles the !ready command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_ready(String name, String msg) {
         if (m_game != null)
             m_game.doReady(name);
     }
 
+    /**
+     * Handles the !list command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_handleRequest(String name, String msg) {
         if (m_game != null)
             m_game.getRequestList(name, msg);
     }
 
+    /**
+     * Handles the !a command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_accept(String name, String msg) {
         if (m_game != null)
             m_game.acceptRequest(name, msg);
 
     }
 
+    /**
+     * Handles the !o command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_open(String name, String msg) {
         if (m_game != null)
             m_game.openRequest(name, msg);
     }
 
+    /**
+     * Handles the !d command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_deny(String name, String msg) {
         if (m_game != null)
             m_game.denyRequest(name, msg);
     }
 
+    /**
+     * Handles the !myfreq command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_myfreq(String name, String msg) {
         if (m_game != null)
             m_game.doMyfreq(name, msg);
     }
 
+    /**
+     * Handles the !lagout command 
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_lagout(String name, String msg) {
         if (m_game != null)
             m_game.reqLagoutPlayer(name, msg);
     }
 
+    /**
+     * Handles the !setround command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_setRound(String name, String msg) {
         if (m_game != null)
             m_game.setRound(name, msg);
     }
-    
-  
 
+    /**
+     * Handles the !cancelbreak command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_cancelBreak(String name, String msg) {
         if (m_game != null)
             m_game.doCancelIntermission();
     }
     
+    /**
+     * Handles the !ff command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_forfiet(String name, String msg) {
         if (m_game != null)
             m_game.doForfiet(name, msg);
     }
     
+    /**
+     * Handles teh !penshot command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_doPenaltyShot(String name, String msg) {
         if (m_game != null)
             m_game.doPenShot(name);
     }
     
+    /**
+     * Handles the !setshot command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_setPenaltyShot(String name, String msg) {
         if (m_game != null)
             m_game.setPenShot(name, msg);
     }
     
+    /**
+     * Handles the !cancelshot command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_cancelPenaltyShot(String name, String msg) {
         if (m_game != null)
             m_game.cancelPenShot(name);
     }
     
+    /**
+     * Handles the !startshot command
+     * 
+     * @param name
+     * @param msg
+     */
     public void cmd_startPenaltyShot(String name, String msg) {
         if (m_game != null)
             m_game.startPenShot(name);
