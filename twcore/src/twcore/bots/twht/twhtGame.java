@@ -462,7 +462,19 @@ public class twhtGame {
             m_team2.setFrequency(0);
         }
     }
-
+   
+    /**
+     * Ends the game with the current score
+     * 
+     * @param name
+     */
+    public void setEndGame(String name) {
+        if (fnTeam1Score > fnTeam2Score) 
+            doEndGame(m_fcTeam1Name, m_fcTeam2Name, fnTeam1Score, fnTeam2Score);
+        else if (fnTeam2Score > fnTeam1Score) 
+            doEndGame(m_fcTeam2Name, m_fcTeam1Name, fnTeam2Score, fnTeam1Score);    
+    }
+    
     /**
      * This method will get the votes of the different players.
      * 
@@ -1123,6 +1135,49 @@ public class twhtGame {
             m_curRound.doRemoveBall();
             m_curRound.m_fnRoundState = 1;
             isPShot = true;
+        }
+    }
+         
+    /**
+     * Adjusts the score for a team.
+     * 
+     * @param name
+     * @param msg
+     */
+    public void doSetScore(String name, String msg) {
+        int team = 0;
+        int score = 0;
+        String[] splitmsg;
+
+        if (msg.contains(":")) {
+            splitmsg = msg.split(":");
+
+            if (splitmsg.length == 2) {
+                try {
+                    team = Integer.parseInt(splitmsg[0]);
+                    score = Integer.parseInt(splitmsg[1]);
+                } catch (NumberFormatException e) {
+                    return;
+                }
+                
+                if (team <= 0 || team >= 3) {
+                    ba.sendPrivateMessage(name, "Invalid format. Please use !setscore <team#>:<score>.");
+                    return;
+                }
+    
+                if (team == 1) { 
+                    m_team1.m_fnTeamScore = score;
+                    fnTeam1Score = score;
+                    ba.sendArenaMessage("Team One's score has been changed to " + score, 2);
+                } else if (team == 2) {
+                    m_team2.m_fnTeamScore = score;
+                    fnTeam2Score = score;
+                    ba.sendArenaMessage("Team Two's score has been changed to " + score, 2);
+                }
+                
+                m_curRound.doUpdateScoreBoard();
+            } else
+                ba.sendPrivateMessage(name, "Invalid format. Please use !setscore ##:##");
         }
     }
     

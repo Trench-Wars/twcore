@@ -37,8 +37,6 @@ public class twhtRound {
     int m_fnTeam2ID;
     int m_matchID;
     int m_roundNum;
-    int m_fnTeam1Score = 0;
-    int m_fnTeam2Score = 0;
     int gameTime = 0;
 
     /*Round State:
@@ -197,7 +195,6 @@ public class twhtRound {
                 }
                 gameTime = (minutes * 60) + seconds;
                 doUpdateScoreBoardTime();
-
             } else
                 m_ba.sendPrivateMessage(name, "Invalid format. Please use !settime ##:##");
         }

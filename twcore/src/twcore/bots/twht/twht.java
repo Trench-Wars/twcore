@@ -177,6 +177,8 @@ public class twht extends SubspaceBot {
         m_commandInterpreter.registerCommand("!setshot", acceptedMessages, this, "cmd_setPenaltyShot", fcRefName);
         m_commandInterpreter.registerCommand("!cancelshot", acceptedMessages, this, "cmd_cancelPenaltyShot", fcRefName);
         m_commandInterpreter.registerCommand("!startshot", acceptedMessages, this, "cmd_startPenaltyShot", fcRefName);
+        m_commandInterpreter.registerCommand("!endgame", acceptedMessages, this, "cmd_endGame", fcRefName);
+        m_commandInterpreter.registerCommand("!setscore", acceptedMessages, this, "cmd_setScore", fcRefName);
 
         m_commandInterpreter.registerCommand("!add", acceptedMessages, this, "cmd_add");
         m_commandInterpreter.registerCommand("!remove", acceptedMessages, this, "cmd_remove");
@@ -404,9 +406,9 @@ public class twht extends SubspaceBot {
                 "| !ready                   Starts the next round.                                |", 
                 "| !judge <name>            Sets a goal judge for the current match               |",
                 "| !rjudge <name>           Removes a goal judge from the current match           |", 
-                "| !pen <name>:<min>        Sets a penalty on a player for a designated time      |",
-                "| !wpen                    Warps a player to the penalty box                     |", 
-                "| !rpen <name>             Removes a penalty on a player                         |",
+                "| !ff <team number>        Forfiets the game 0-10 for a team                     |",
+                "| !endgame                 Ends the game with the current score                  |", 
+                "| !setscore <team#>:<score>Adjust the score to the specified amount              |",
                 "| !goal <cl,cr,gk,lag,og>  Sets the final judgement on a goal thats under review |", 
                 "| !cancelbreak             Cancels the intermission if both caps agree to        |",
                 "| !faceoff <min>:<max>     The faceoff that is used to drop the puck             |",
@@ -424,7 +426,7 @@ public class twht extends SubspaceBot {
                 "|________________________________________________________________________________|",
                 "|                                                                                |", 
                 "| !settime mm:ss               Manually set the time of the current round.       |",
-                "| !setround #                  Manually sets the round for the game.       |",
+                "| !setround #                  Manually sets the round for the game.             |",
                 "| !pause                       Pauses the current timer                          |", 
                 "| !list all,denied,acccepted   Lists all the requests in que, default lists open |",
                 "| !a                           Accepts and executes an item on the que           |", 
@@ -483,6 +485,25 @@ public class twht extends SubspaceBot {
                 "|______________________________________________________________________________|",
 
         };
+        
+        String[] help_penalty = {
+                " ________________________________________________________________________________ ",
+                "|                                                                                |", 
+                "|                                  PENALTIES                                     |",
+                "|                                                                                |", 
+                "|   The following commands are used for penalties, setting and executing them.   |",
+                "|________________________________________________________________________________|", 
+                "|                                                                                |", 
+                "| !pen <name>:<min>        Sets a penalty on a player for a designated time      |",
+                "| !wpen                    Warps a player to the penalty box                     |", 
+                "| !rpen <name>             Removes a penalty on a player                         |",
+                "| !penshot                 Starts a penalty shot or use for the shootout         |", 
+                "| !setshot <name>          Sets the player for the penalty shot                  |",
+                "| !startshot               Starts the penalty shot                               |",
+                "| !cancelshot              Cancels a penalty shot                                |",
+                "|________________________________________________________________________________|",
+
+        };
 
         String[] help_regular = { 
                 " ______________________________________________________________________________ ",
@@ -494,12 +515,13 @@ public class twht extends SubspaceBot {
                 "|                                                                              |",
                 "|______________________________________________________________________________|", 
                 "|                                                                              |",
-                "| !status             View information on the current match.                   |", 
+                "| !status           View information on the current match.                     |", 
                 "| !help cap         Help menu for captains with various team controls          |",
                 "| !help vote        Help menu for goal judges and voting commands              |", 
                 "| !help op          Help menu for TWHTOps to setup the game                    |",
                 "| !help match       Help menu to display the utility game commands for a ref   |", 
                 "| !help ref         More commands for the referee                              |",
+                "| !help penalty     Help menu for everything that is penalties                 |",
                 "|______________________________________________________________________________|",
 
         };
@@ -515,6 +537,8 @@ public class twht extends SubspaceBot {
             ba.privateMessageSpam(name, help_team);
         } else if (msg.startsWith("vote")) {
             ba.privateMessageSpam(name, help_vote);
+        } else if (msg.startsWith("penalty")) {
+            ba.privateMessageSpam(name, help_penalty);
         } else {    
             ba.privateMessageSpam(name, help_regular);
         }
@@ -1357,6 +1381,22 @@ public class twht extends SubspaceBot {
     }
     
     /**
+     * Handles the !endgame command
+     * 
+     * @param name
+     * @param msg
+     */
+    public void cmd_endGame(String name, String msg) {
+        if (m_game != null)
+            m_game.setEndGame(name);
+    }
+    
+    public void cmd_setScore(String name, String msg) {
+        if (m_game != null)
+            m_game.doSetScore(name, msg);
+    }
+    
+    /**
      * Kills the bot. Yes, it is as violent as it sounds.
      * 
      */
@@ -1452,6 +1492,7 @@ public class twht extends SubspaceBot {
      * @param squadName
      * @return
      */
+    
     //    public int getTeamId(String squadName){
     //        try{
     //            PreparedStatement psGetTeamId;
