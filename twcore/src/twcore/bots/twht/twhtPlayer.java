@@ -19,7 +19,7 @@ import twcore.core.util.Tools;
  * @author Ian
  * 
  */
-public class twhtPlayer {    
+public class twhtPlayer {
     
     TreeMap<Integer, twhtShip> m_ships = new TreeMap<Integer, twhtShip>();  //Initilizes the map that stores the individual ship data
     
@@ -127,8 +127,7 @@ public class twhtPlayer {
         
         startTimeStamp = 0;
         endTimeStamp = 0;        
-    }   
-    
+    }    
 
     /**
      * Method used to get a player's current ship type
@@ -250,6 +249,7 @@ public class twhtPlayer {
     public void reportPlayerStats() {
         String shipString = "|";
         twhtShip sh;
+        int m_fnGoals = 0, m_fnAssists = 0, m_fnSteals = 0,m_fnPlusMinus = 0, m_fnSOG = 0, m_fnTurnOver = 0,m_fnPuckCarry = 0, m_fnChecksMade = 0, m_fnChecksTaken = 0, m_fnGoalAllowed = 0, m_fnGameTime = 0, m_fnPuckCarryTime = 0, p_rating = 0;
         
         for (int i = 1; i < 7; i++) 
             if (m_ships.containsKey(i)) {
@@ -258,7 +258,6 @@ public class twhtPlayer {
                 shipString = shipString + Tools.formatString(" " + sh.getShipType(), 2, " ");
                 m_fnGoals += sh.fnGoals;
                 m_fnAssists += sh.fnAssists;
-
                 m_fnSteals += sh.fnSteals;
                 m_fnPlusMinus += sh.fnPlusMinus;
                 m_fnSOG += sh.fnSOG;
@@ -271,11 +270,14 @@ public class twhtPlayer {
                 m_fnPuckCarryTime += sh.fnPuckCarryTime;
                 p_rating += sh.getRating();
             }
+        
+        if (m_fnGameTime > 30) {
         ba.sendArenaMessage(Tools.formatString(shipString, 13," ") + Tools.formatString("|" + getPlayerName(), 10," ") + Tools.formatString("|" + m_fnGoals, 3," ") + 
                             Tools.formatString("|" + m_fnAssists, 3," ") + Tools.formatString("|" + m_fnSOG , 4," ") + Tools.formatString("|" + m_fnSteals , 4," ") + 
                             Tools.formatString("|" + m_fnTurnOver , 4," ") + Tools.formatString("|" + m_fnChecksMade , 4," ") + Tools.formatString("|" + m_fnChecksTaken , 4," ") + 
                             Tools.formatString("|" + m_fnPuckCarry , 4," ") + Tools.formatString("|" + doFormatTimeString(m_fnPuckCarryTime) , 6," ") + Tools.formatString("|" + doFormatTimeString(m_fnGameTime) , 6," ") + 
                             Tools.formatString("|" + m_fnPlusMinus, 5," ") + Tools.formatString("|" + p_rating , 5," "));
+        }
     }
         
     /**
@@ -292,6 +294,8 @@ public class twhtPlayer {
                     
                     shipString = shipString + Tools.formatString(" " + sh.getShipType(), 2, " ");
                     m_fnSaves += sh.fnSaves;
+                    m_fnPlusMinus += sh.fnPlusMinus;
+                    m_fnGoalAllowed += sh.fnGoalAllowed;
                     m_fnGoalieTime += sh.fnGoalieTime;
                     m_fnGoalieSteals += sh.fnGoalieSteals;
                     m_fnGoalieTurnOvers += sh.fnGoalieTurnOvers;
@@ -299,7 +303,7 @@ public class twhtPlayer {
                     m_fnGoalieChecked += sh.fnGoalieChecked;
                     g_rating += sh.getRating();
                 }     
-            if (!shipString.equals("|")){
+            if (!shipString.equals("|") && m_fnGoalieTime > 30){
                 if ((m_fnSaves + m_fnGoalAllowed) != 0)
                     m_getSavePerc =  m_fnSaves / (m_fnSaves + m_fnGoalAllowed) * 100.0;
                 

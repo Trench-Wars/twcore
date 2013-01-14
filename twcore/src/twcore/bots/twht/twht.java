@@ -266,9 +266,8 @@ public class twht extends SubspaceBot {
      */
     @Override
     public void handleEvent(FrequencyShipChange event) {
-        if (m_game != null) {
-            m_game.handleEvent(event);
-        }
+        if (m_game != null) 
+            m_game.handleEvent(event);        
     }
 
     /**
@@ -276,9 +275,8 @@ public class twht extends SubspaceBot {
      */
     @Override
     public void handleEvent(PlayerEntered event) {
-        if (m_game != null) {
-            m_game.handleEvent(event);
-        }
+        if (m_game != null)
+            m_game.handleEvent(event);        
     }
 
     /**
@@ -286,9 +284,8 @@ public class twht extends SubspaceBot {
      */
     @Override
     public void handleEvent(PlayerLeft event) {
-        if (m_game != null) {
-            m_game.handleEvent(event);
-        }
+        if (m_game != null)
+            m_game.handleEvent(event);        
     }
 
     /**
@@ -306,9 +303,8 @@ public class twht extends SubspaceBot {
      */
     @Override
     public void handleEvent(SoccerGoal event) {
-        if (m_game != null) {
-            m_game.handleEvent(event);
-        }
+        if (m_game != null)
+            m_game.handleEvent(event);        
     }
 
     /**
@@ -316,9 +312,8 @@ public class twht extends SubspaceBot {
      */
     @Override
     public void handleEvent(BallPosition event) {
-        if (m_game != null) {
-            m_game.handleEvent(event);
-        }
+        if (m_game != null)
+            m_game.handleEvent(event);        
     }
 
     /**
@@ -336,7 +331,6 @@ public class twht extends SubspaceBot {
      * @param msg
      */
     public void cmd_view(String name, String msg) {
-
         String[] smatches = { "| Ref", "| " + fcRefName, "| Teams", "| " + fcTeam1Name, "| " + fcTeam2Name, "|______________________/", };
         ba.privateMessageSpam(name, smatches);
     }
@@ -348,7 +342,6 @@ public class twht extends SubspaceBot {
      * @param msg
      */
     public void cmd_off(String name, String msg) {
-
         ba.sendArenaMessage("I have been told to shutdown by " + name + ". Bye Bye", 23);
         ba.sendPrivateMessage(name, "You really turn me off you know that.");
 
@@ -356,11 +349,10 @@ public class twht extends SubspaceBot {
     }
 
     public void cmd_status(String name, String msg) {
-        if (m_game != null) {
+        if (m_game != null) 
             m_game.getStatus(name, msg);
-        } else {
-            ba.sendPrivateMessage(name, "Waiting for someone to load a game.");
-        }
+        else 
+            ba.sendPrivateMessage(name, "Waiting for someone to load a game.");        
     }
 
     /**
@@ -527,21 +519,20 @@ public class twht extends SubspaceBot {
         };
 
         //            if(twhtOP.contains(name)){
-        if (msg.startsWith("match")) {
+        if (msg.startsWith("match")) 
             ba.privateMessageSpam(name, help_op);
-        } else if (msg.startsWith("op")) {
+        else if (msg.startsWith("op"))
             ba.privateMessageSpam(name, help_game);
-        } else if (msg.startsWith("ref")) {
+        else if (msg.startsWith("ref"))
             ba.privateMessageSpam(name, help_ref);
-        } else if (msg.startsWith("cap")) {
+        else if (msg.startsWith("cap"))
             ba.privateMessageSpam(name, help_team);
-        } else if (msg.startsWith("vote")) {
+        else if (msg.startsWith("vote"))
             ba.privateMessageSpam(name, help_vote);
-        } else if (msg.startsWith("penalty")) {
+        else if (msg.startsWith("penalty"))
             ba.privateMessageSpam(name, help_penalty);
-        } else {    
-            ba.privateMessageSpam(name, help_regular);
-        }
+        else    
+            ba.privateMessageSpam(name, help_regular);        
     }
 
     /**
@@ -813,16 +804,15 @@ public class twht extends SubspaceBot {
      */
     public void cmd_doMatch(String name, String msg) {
         if (m_game == null) {
-            if (fcRefName == null || fcTeam1Name == null || fcTeam2Name == null) {
+            if (fcRefName == null || fcTeam1Name == null || fcTeam2Name == null) 
                 ba.sendPrivateMessage(name, "A game must be loaded before starting a match.");
-            } else {
+            else {
                 ba.sendArenaMessage("A Hockey Match Between " + fcTeam1Name + " and " + fcTeam2Name + " is starting.", 2);
                 ftTimeStarted = new java.util.Date();
                 m_game = new twhtGame(fnMatchID, fcRefName, fcTeam1Name, fnTeam1ID, fnTeam2ID, fcTeam2Name, ba, this, noDatabase);
             }
-        } else {
-            ba.sendPrivateMessage(name, "There is already a match in process here.");
-        }
+        } else 
+            ba.sendPrivateMessage(name, "There is already a match in process here.");        
     }
 
     /**
@@ -849,8 +839,7 @@ public class twht extends SubspaceBot {
                 String playerName;
                 int shipNum;
                 int teamNum;
-                twhtTeam team;
-                
+                twhtTeam team;                
             
                 if (msg.contains(":")) {
                     splitCmd = msg.split(":");
@@ -873,10 +862,10 @@ public class twht extends SubspaceBot {
                         if (playerName == null)
                             return;
                         
-//                      if (ba.getOperatorList().isBotExact(playerName)) {
-//                      ba.sendPrivateMessage(name, "Error: Pick again, bots are not allowed to play.");
-//                      return;
-//                      }
+                        if (ba.getOperatorList().isBotExact(playerName)) {
+                            ba.sendPrivateMessage(name, "Error: Pick again, bots are not allowed to play.");
+                            return;
+                        }
                         
                         team = m_game.getPlayerTeam(playerName);
                         
@@ -888,13 +877,12 @@ public class twht extends SubspaceBot {
                                 m_game.doAddPlayer(fcTeam1Name, playerName, shipNum);
                             else if (teamNum == 2)
                                 m_game.doAddPlayer(fcTeam2Name, playerName, shipNum);
-                        }                       
+                        }
                     } else 
                         ba.sendPrivateMessage(name, "Please use the command format !add <Player Name>:<Ship Number>:<Team Number> - Team Numbers: 1(" + fcTeam1Name + ") 2(" + fcTeam2Name + ")");
                 }
-            } else {
-            m_game.reqAddPlayer(name, msg);
-            }
+            } else
+            m_game.reqAddPlayer(name, msg);            
     }
 
     public void cmd_addCenter(String name, String msg) {
@@ -927,16 +915,16 @@ public class twht extends SubspaceBot {
                     throw new TWCoreException("Player or Team not found. Please try again.");
 
                 if (teamNum == 1) {
-                    if (m_game.m_team2.isCaptain(p)) {
+                    if (m_game.m_team2.isCaptain(p))
                         ba.sendPrivateMessage(name, "Player is already captain for other team");
-                    } else {
+                    else {
                         m_game.m_team1.m_captains.add(p);
                         ba.sendArenaMessage(p + " added to captain for " + fcTeam1Name, 2);
                     }
                 } else if (teamNum == 2) {
-                    if (m_game.m_team1.isCaptain(p)) {
+                    if (m_game.m_team1.isCaptain(p))
                         ba.sendPrivateMessage(name, "Player is already captain for other team");
-                    } else {
+                    else {
                         m_game.m_team2.m_captains.add(p);
                         ba.sendArenaMessage(p + " added to captain for " + fcTeam2Name, 2);
                     }
@@ -1021,39 +1009,39 @@ public class twht extends SubspaceBot {
                 String playerName;
                 int shipNum;
                 twhtTeam team;             
-            
+                
                 if (msg.contains(":")) {
-                    splitCmd = msg.split(":");
+                splitCmd = msg.split(":");
                     if (splitCmd.length == 2) {
                         
                 try {
                     shipNum = Integer.parseInt(splitCmd[1]);
                 } catch (NumberFormatException e) {
                     ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
-                return;
-                }
-            
-            if (shipNum <= 0 || shipNum >= 9) {
-                ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
-                return;
-            }
+                    return;
+                    }
                 
-            playerName = ba.getFuzzyPlayerName(splitCmd[0]);
-            
-            if (playerName == null) 
-                return;
-            
-            team = m_game.getPlayerTeam(playerName);
-            
-            if (team == null) {
-                ba.sendPrivateMessage(name, "Player is not in the game");
+                if (shipNum <= 0 || shipNum >= 9) {
+                    ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
+                    return;
+                }
+                    
+                playerName = ba.getFuzzyPlayerName(splitCmd[0]);
+                
+                if (playerName == null) 
+                    return;
+                
+                team = m_game.getPlayerTeam(playerName);
+                
+                if (team == null) {
+                    ba.sendPrivateMessage(name, "Player is not in the game");
                     return;
                 } else 
                     m_game.doChangePlayer(team.getTeamName(), playerName, shipNum);                 
                 } else 
                 ba.sendPrivateMessage(name, "Please use the command format !change <player name>:<ship num>");
                 }
-        } else 
+            } else 
         m_game.reqChangePlayer(name, msg);        
         }
     }
@@ -1410,7 +1398,6 @@ public class twht extends SubspaceBot {
     //        ba.sendPrivateMessage(name, "Added "+opName+" to the TWH-OPList");
     //        
     //    }
-
     //    /**
     //     * Returns the user's name given the user's id.
     //     * 
