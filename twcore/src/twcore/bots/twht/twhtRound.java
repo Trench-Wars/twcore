@@ -142,6 +142,7 @@ public class twhtRound {
                 }
             } else if ((b == -1) && (b < carrier)) {
                 Player p = m_ba.getPlayer(carrier);
+                twhtPlayer pA;
                 
                 if (p == null)
                     return;
@@ -157,19 +158,20 @@ public class twhtRound {
                     m_game.doPlayerStats(p_ballCaught, 7);
                     
                     twhtTeam t = null;
-                    if ((p.getShipType() == 7 || p.getShipType() == 8) && ((p.getFrequency() == 0 && ballXloc > freq0Xbline) || (p.getFrequency() == 1 && ballXloc < freq1Xbline))) {
-                        t = m_game.getPlayerTeam(p.getPlayerName());
-                        
-                        if (t != null)
-                            m_game.reqPenalty("Goalie interference", t.getPenTime("gcrossing"), p_ballCaught);
-                        
-                    } else if ((p.getShipType() != 7 && p.getShipType() !=8) && (ballYloc > 499 && ballYloc < 525 && ballXloc > 380 && ballXloc < 395 && p.getFrequency() == 0)) 
-                            if (getIsInCrease("left", ballXloc, ballYloc)) {                                
+                    t = m_game.getPlayerTeam(p.getPlayerName());
+                    
+                    if (t == null)
+                        return;
+                    pA = t.searchPlayer(p_ballCaught);
+                    if ((pA.getPlayerShip() == 7 || pA.getPlayerShip() == 8) && t.getFrequency() == 0 && (ballXloc / 16) > freq0Xbline || (t.getFrequency() == 1 && (ballXloc / 16) < freq1Xbline)) {                         
+                            m_game.reqPenalty("Goalie interference", t.getPenTime("gcrossing"), p_ballCaught);                        
+                    } else if ((pA.getPlayerShip() != 7 && pA.getPlayerShip() !=8) && ((ballYloc / 16) > 499 && (ballYloc / 16) < 525 && (ballXloc / 16) > 380 && (ballXloc / 16) < 395 && t.getFrequency() == 0)) 
+                            if (getIsInCrease("left",(ballXloc / 16), (ballYloc / 16))) {                                
                                     m_game.reqPenalty("Defensive Crease", t.getPenTime("dc"), p_ballCaught);
                                     m_game.reqPenalty("Blatant Defensive Crease", t.getPenTime("bdc"), p_ballCaught);   
                             }   
-                    else if ((p.getShipType() != 7 && p.getShipType() !=8) && (ballYloc > 499 && ballYloc < 525 && ballXloc > 630 && ballXloc < 645 && p.getFrequency() == 1))
-                            if (getIsInCrease("right", ballXloc, ballYloc)) {
+                    else if ((pA.getPlayerShip() != 7 && pA.getPlayerShip() !=8) && ((ballYloc / 16) > 499 && (ballYloc / 16) < 525 && (ballXloc / 16) > 630 && (ballXloc / 16) < 645 && t.getFrequency() == 1))
+                            if (getIsInCrease("right", (ballXloc / 16), (ballYloc / 16))) {
                                 m_game.reqPenalty("Defensive Crease", t.getPenTime("dc"), p_ballCaught);
                                 m_game.reqPenalty("Blatant Defensive Crease", t.getPenTime("bdc"), p_ballCaught);   
                             }
@@ -195,8 +197,8 @@ public class twhtRound {
     public void handleEvent(WatchDamage event) {
         short attacker;
         short attacked;
-        String pAName;
-        String pBName;
+        short xLoc;
+        short yLoc;
         Player pA;
         Player pB;
         
@@ -215,14 +217,14 @@ public class twhtRound {
         if (t == null)
             return;
         
-        pAName = pA.getPlayerName();
-        pBName = pB.getPlayerName();
+        xLoc = pB.getXTileLocation();
+        yLoc = pB.getYTileLocation();
         
-        if ((pB.getShipType() == 7 || pB.getShipType() ==8) && (pB.getYLocation() > 499 && pB.getYLocation() < 525 && pB.getXLocation() > 630 && pB.getXLocation() < 645 && pB.getFrequency() == 0)) {
-            if (getIsInCrease("left", pB.getXLocation(), pB.getYLocation()))
+        if ((pB.getShipType() == 7 || pB.getShipType() == 8) && (yLoc > 499 && yLoc < 525 && xLoc > 630 && xLoc < 645 && pB.getFrequency() == 0)) {
+            if (getIsInCrease("left", xLoc, yLoc))
                 m_game.reqPenalty("Attacked Goalie", t.getPenTime("gattack"), pA.getPlayerName());            
-        } else if ((pB.getShipType() == 7 || pB.getShipType() ==8) && (pB.getYLocation() > 499 && pB.getYLocation() < 525 && pB.getXLocation() > 380 && pB.getXLocation() < 395 && pB.getFrequency() == 1)) {
-            if (getIsInCrease("right", pB.getXLocation(), pB.getYLocation()))
+        } else if ((pB.getShipType() == 7 || pB.getShipType() ==8) && (yLoc > 499 && yLoc < 525 && xLoc > 380 && xLoc < 395 && pB.getFrequency() == 1)) {
+            if (getIsInCrease("right", xLoc, yLoc))
                 m_game.reqPenalty("Attacked Goalie", t.getPenTime("gattack"), pA.getPlayerName());            
         }
     }

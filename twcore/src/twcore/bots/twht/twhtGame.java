@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import twcore.core.BotAction;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.FrequencyChange;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
@@ -112,20 +113,58 @@ public class twhtGame {
             shipType = p.getShipType();
             if (shipType == Tools.Ship.SPECTATOR) {
                 twhtTeam t = null;
-
-                if (m_team1.isPlayer(p.getPlayerName())) 
-                    t = m_team1;
-                else if (m_team2.isPlayer(p.getPlayerName())) 
-                    t = m_team1;
-                else 
-                    return;
-                
                 twhtPlayer pA;
+
+                t = getPlayerTeam(p.getPlayerName());
+                
+                if (t == null)
+                    return;                
+                
                 pA = t.searchPlayer(p.getPlayerName());
-                if (pA != null && (pA.getPlayerState() == 1 || pA.getPlayerState() == 4))                   
-                    t.doLagout(p.getPlayerName());
+                
+                if (pA != null && (pA.getPlayerState() == 1 || pA.getPlayerState() == 4)){
+                    t.doLagout(pA.getPlayerName());
+                    pA.playerLaggedOut();
+                }
             }
         }
+    }
+    
+    /**
+     * The event that is triggered at the time a player changes freq or ship.
+     */    
+    public void handleEvent(FrequencyChange event) {
+        if (m_curRound != null) {
+            int freq;
+            Player p;
+            int playerID;
+
+            playerID = event.getPlayerID();
+            p = ba.getPlayer(playerID);
+            if (p == null)
+                return;
+            
+            if (p.equals(ba.getBotName()))
+                return;
+            
+            freq = p.getFrequency();
+            if (freq == 8025) {
+                twhtTeam t = null;
+                twhtPlayer pA;
+
+                t = getPlayerTeam(p.getPlayerName());
+                
+                if (t == null)
+                    return;                
+                
+                pA = t.searchPlayer(p.getPlayerName());
+                
+                if (pA != null && (pA.getPlayerState() == 1 || pA.getPlayerState() == 4)){
+                    t.doLagout(pA.getPlayerName());
+                    pA.playerLaggedOut();
+                }
+            }
+        }   
     }
 
     /**
@@ -172,18 +211,20 @@ public class twhtGame {
             if (player.equals(ba.getBotName()))
                 return;
 
-            twhtTeam t = null;            
-            if (m_team1.isPlayer(player)) 
-                t = m_team1;
-            else if (m_team2.isPlayer(player)) 
-                t = m_team1;
-            else 
-                return;
-            
+            twhtTeam t = null;
             twhtPlayer pA;
+
+            t = getPlayerTeam(player);
+            
+            if (t == null)
+                return;                
+            
             pA = t.searchPlayer(player);
-            if (pA != null && (pA.getPlayerState() == 1 || pA.getPlayerState() == 4)) 
+            
+            if (pA != null && (pA.getPlayerState() == 1 || pA.getPlayerState() == 4)){
                 t.doLagout(pA.getPlayerName());
+                pA.playerLaggedOut();
+            }
         }
     }
 

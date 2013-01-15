@@ -253,16 +253,13 @@ public class twhtTeam {
      */
     public void doLagout(String name) {
         String p;
-        twhtPlayer pLag;
 
         for (twhtPlayer i : m_players.values()) {
             p = ba.getFuzzyPlayerName(i.getPlayerName());
 
             if (p != null)
                 ba.sendPrivateMessage(p, name + " has lagged out of the game.");
-        }
-        pLag = m_players.get(name);
-        pLag.playerLaggedOut();
+        }    
     }
     
     public void doAddPenalty(int penalty) {        

@@ -157,7 +157,7 @@ public class twhtPlayer {
             m_game.reqPenalty("Respawn Killing", m_team.getPenTime("respawn"), checker);
 
         doStats(9);
-        ba.sendArenaMessage("" + lastCheck + " " + lastCheck2 + " " + lastCheck3 + " " + time);
+        
     }
     
     /**
@@ -238,17 +238,16 @@ public class twhtPlayer {
         
         return m_rating;
     }
-    
-    public void getCheckCheck(String checker, int time) {
-        
-    }
-    
+
     /**
      * Resets the penalty time stamp to 0. Used at the end of periods and to remove penalties.
      */
     public void resetPenalty() {
         penTimeStamp = 0;
         penTimeStampWarning = 0;
+        lastCheck = -1;
+        lastCheck2 = -1;
+        lastCheck3 = -1;
     }
 
     /**

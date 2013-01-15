@@ -15,6 +15,7 @@ import twcore.core.command.TWCoreException;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.BallPosition;
 import twcore.core.events.FrequencyShipChange;
+import twcore.core.events.FrequencyChange;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
@@ -155,6 +156,7 @@ public class twht extends SubspaceBot {
         req.request(EventRequester.PLAYER_DEATH);
         req.request(EventRequester.LOGGED_ON);
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
+        req.request(EventRequester.FREQUENCY_CHANGE);
         req.request(EventRequester.BALL_POSITION);
         req.request(EventRequester.SOCCER_GOAL);
         req.request(EventRequester.WATCH_DAMAGE);
@@ -268,6 +270,15 @@ public class twht extends SubspaceBot {
      */
     @Override
     public void handleEvent(FrequencyShipChange event) {
+        if (m_game != null) 
+            m_game.handleEvent(event);        
+    }
+    
+    /**
+     * The event that is triggered at the time a player changes freq or ship.
+     */
+    @Override
+    public void handleEvent(FrequencyChange event) {
         if (m_game != null) 
             m_game.handleEvent(event);        
     }
