@@ -9,6 +9,7 @@ import java.util.TreeMap;
 
 import twcore.core.BotAction;
 import twcore.core.events.BallPosition;
+import twcore.core.events.WatchDamage;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 import twcore.core.lvz.Objset;;
@@ -76,10 +77,10 @@ public class twhtRound {
     short ballYvel;
     short topYGoal = 502;
     short botYGoal = 521;
-    short freq0Xgoal = 380;
+    short freq0Xgoal = 378;
     short freq0Xbline = 462;
-    short freq1Xgoal = 380;
-    short freq1Xbline = 462;
+    short freq1Xgoal = 645;
+    short freq1Xbline = 561;
 
     String p_ballFired;
     String p_ballCaught;
@@ -134,10 +135,10 @@ public class twhtRound {
                 ballCatchCount = 0;
                 ballFireCount++;
                 
-                if (!p_ballFired.equals(m_ba.getBotName())){      
+                if (!p_ballFired.equals(m_ba.getBotName())){
                     ballPlayer.push(p_ballFired);
                     p_position.put(p_ballFired, new TWHTPosition(p_ballFired));
-                    p_hasBall = null;
+                    p_hasBall = null;                            
                 }
             } else if ((b == -1) && (b < carrier)) {
                 Player p = m_ba.getPlayer(carrier);
@@ -154,6 +155,25 @@ public class twhtRound {
                     m_ba.spectatePlayer(p_ballCaught);
                     p_hasBall = p_ballCaught;
                     m_game.doPlayerStats(p_ballCaught, 7);
+                    
+                    twhtTeam t = null;
+                    if ((p.getShipType() == 7 || p.getShipType() == 8) && ((p.getFrequency() == 0 && ballXloc > freq0Xbline) || (p.getFrequency() == 1 && ballXloc < freq1Xbline))) {
+                        t = m_game.getPlayerTeam(p.getPlayerName());
+                        
+                        if (t != null)
+                            m_game.reqPenalty("Goalie interference", t.getPenTime("gcrossing"), p_ballCaught);
+                        
+                    } else if ((p.getShipType() != 7 && p.getShipType() !=8) && (ballYloc > 499 && ballYloc < 525 && ballXloc > 380 && ballXloc < 395 && p.getFrequency() == 0)) 
+                            if (getIsInCrease("left", ballXloc, ballYloc)) {                                
+                                    m_game.reqPenalty("Defensive Crease", t.getPenTime("dc"), p_ballCaught);
+                                    m_game.reqPenalty("Blatant Defensive Crease", t.getPenTime("bdc"), p_ballCaught);   
+                            }   
+                    else if ((p.getShipType() != 7 && p.getShipType() !=8) && (ballYloc > 499 && ballYloc < 525 && ballXloc > 630 && ballXloc < 645 && p.getFrequency() == 1))
+                            if (getIsInCrease("right", ballXloc, ballYloc)) {
+                                m_game.reqPenalty("Defensive Crease", t.getPenTime("dc"), p_ballCaught);
+                                m_game.reqPenalty("Blatant Defensive Crease", t.getPenTime("bdc"), p_ballCaught);   
+                            }
+                    }
                 }
             }
             
@@ -161,12 +181,51 @@ public class twhtRound {
                 doCatchAndFire(p_ballFired, p_ballCaught);
                 ballFireCount = 0;
                 ballCatchCount = 0;
-            }
-        }
+            }        
         ballMap.remove(ballID);
         ballMap.put(ballID, carrier);
     }    
 
+    /**
+     * Tracks the ball position. Event is fired when the ball moves at an interval set
+     * in the map settings.
+     * 
+     * @param event
+     */
+    public void handleEvent(WatchDamage event) {
+        short attacker;
+        short attacked;
+        String pAName;
+        String pBName;
+        Player pA;
+        Player pB;
+        
+        attacker = event.getAttacker();
+        attacked = event.getVictim();
+        
+        pA = m_ba.getPlayer(attacker);
+        pB = m_ba.getPlayer(attacked);
+        
+        if (pA == null || pB == null)
+            return;
+        
+        twhtTeam t = null;
+        t = m_game.getPlayerTeam(pB.getPlayerName());
+        
+        if (t == null)
+            return;
+        
+        pAName = pA.getPlayerName();
+        pBName = pB.getPlayerName();
+        
+        if ((pB.getShipType() == 7 || pB.getShipType() ==8) && (pB.getYLocation() > 499 && pB.getYLocation() < 525 && pB.getXLocation() > 630 && pB.getXLocation() < 645 && pB.getFrequency() == 0)) {
+            if (getIsInCrease("left", pB.getXLocation(), pB.getYLocation()))
+                m_game.reqPenalty("Attacked Goalie", t.getPenTime("gattack"), pA.getPlayerName());            
+        } else if ((pB.getShipType() == 7 || pB.getShipType() ==8) && (pB.getYLocation() > 499 && pB.getYLocation() < 525 && pB.getXLocation() > 380 && pB.getXLocation() < 395 && pB.getFrequency() == 1)) {
+            if (getIsInCrease("right", pB.getXLocation(), pB.getYLocation()))
+                m_game.reqPenalty("Attacked Goalie", t.getPenTime("gattack"), pA.getPlayerName());            
+        }
+    }
     /**
      * Changes the round time. Accepts parameters in <minutes>:<seconds> form
      * 
@@ -657,6 +716,29 @@ public class twhtRound {
         m_ba.cancelTask(gameTimer);
     }
 
+    /**
+     * 
+     * 
+     * @return
+     */
+    public boolean getIsInCrease(String side, int xLoc, int yLoc) {
+        int creaseXLoc = 0;
+        int creaseYLoc = 511;
+        double distance;
+        
+        if (side.equals("left"))
+            creaseXLoc = 381;    
+        else if (side.equals("right"))
+            creaseXLoc = 642;
+        
+        distance = Math.sqrt(Math.pow((creaseXLoc - xLoc), 2) + Math.pow((creaseYLoc - yLoc), 2));
+        if (distance <= 10)
+            return true;
+        else 
+            return false;
+        
+    }
+    
     /**
      * Returns the round time in integer / second form
      * 

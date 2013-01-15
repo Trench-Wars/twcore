@@ -21,6 +21,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.SoccerGoal;
+import twcore.core.events.WatchDamage;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Spy;
 
@@ -156,6 +157,7 @@ public class twht extends SubspaceBot {
         req.request(EventRequester.FREQUENCY_SHIP_CHANGE);
         req.request(EventRequester.BALL_POSITION);
         req.request(EventRequester.SOCCER_GOAL);
+        req.request(EventRequester.WATCH_DAMAGE);
     }
 
     /**
@@ -266,6 +268,15 @@ public class twht extends SubspaceBot {
      */
     @Override
     public void handleEvent(FrequencyShipChange event) {
+        if (m_game != null) 
+            m_game.handleEvent(event);        
+    }
+    
+    /**
+     * The event that is triggered at the time a player changes freq or ship.
+     */
+    @Override
+    public void handleEvent(WatchDamage event) {
         if (m_game != null) 
             m_game.handleEvent(event);        
     }

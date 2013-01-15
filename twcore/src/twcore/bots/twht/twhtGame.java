@@ -15,6 +15,7 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.SoccerGoal;
+import twcore.core.events.WatchDamage;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -219,7 +220,7 @@ public class twhtGame {
                 return;
             
             pA.doStats(8);
-            pB.doStats(9);
+            pB.setLastCheck(m_curRound.getIntTime(),pA.getPlayerName());
         }
     }
 
@@ -258,6 +259,14 @@ public class twhtGame {
      * The event that is triggered at the time the ball moves.
      */
     public void handleEvent(BallPosition event) {
+        if (m_curRound != null) 
+            m_curRound.handleEvent(event);        
+    }
+    
+    /**
+     * The event that is triggered at the time a player changes freq or ship.
+     */    
+    public void handleEvent(WatchDamage event) {
         if (m_curRound != null) 
             m_curRound.handleEvent(event);        
     }
@@ -409,6 +418,18 @@ public class twhtGame {
                                 ba.warpTo(playerA.getPlayerName(), 500, 442);
                             if (freq == 1)
                                 ba.warpTo(playerA.getPlayerName(), 520, 442);
+                            
+                            if (splitCmd[2].equalsIgnoreCase("Attacked Goalie"))
+                                team.doAddPenalty(1);
+                            else if (splitCmd[2].equalsIgnoreCase("Blatant Defensive Crease"))
+                                team.doAddPenalty(2);
+                            else if (splitCmd[2].equalsIgnoreCase("Defensive Crease"))
+                                team.doAddPenalty(3);
+                            else if (splitCmd[2].equalsIgnoreCase("Goalie interference"))
+                                team.doAddPenalty(4);
+                            else if (splitCmd[2].equalsIgnoreCase("Respawn Killing"))
+                                team.doAddPenalty(5);
+                               
                         } else 
                             ba.sendPrivateMessage(name, "Player not found on either team.");                        
                     } else 
@@ -1519,6 +1540,26 @@ public class twhtGame {
         } else 
             return;        
     }
+
+    /**
+     * This is the method where the bot puts in a request to assign a penalty.
+     * 
+     * @param teamName
+     * @param penalty
+     * @param penLength
+     * @param playerName
+     */
+    public void reqPenalty(String penalty, int penLength, String playerName) {
+        twhtTeam t = null;
+        twhtPlayer p = null;
+        
+        t = getPlayerTeam(playerName);
+        
+        if (t != null)
+            p = t.searchPlayer(playerName);
+        
+        refRequest.put(getNextRecordNumber(), new RefRequest(getNextRecordNumber(),m_curRound.getRoundNum(), 7, m_fcRefName, t.getTeamName(), p.getPlayerName() + ":" + penLength + ":" + penalty));
+    }
     
     /**
      * Returns the request list to the referee. Possible parameters are all, denied, and accepted
@@ -1654,6 +1695,7 @@ public class twhtGame {
          * 4 - Remove
          * 5 - Timeout
          * 6 - Lagout
+         * 7 - Penalty
          */
         int reqType;
 
@@ -1666,12 +1708,14 @@ public class twhtGame {
         int callNumber;
         int roundNumber;
         int shipType;
+        int penaltyLen;
         String roundTime;
         String requester;
         String teamName;
         String reqString;
         String playerA = "";
         String playerB = "";
+        String penType = "";
 
         //Class constructor
         public RefRequest(int callNum, int roundNum, int requestType, String name, String team, String RequestString) {
@@ -1710,6 +1754,11 @@ public class twhtGame {
                 playerA = reqString;
              else if (reqType == 6) 
                 playerA = requester;
+             else if (reqType == 7) {
+                playerA = splitCmd[0];
+                penaltyLen = Integer.parseInt(splitCmd[1]);
+                penType = splitCmd[2];
+             }
             
             ba.sendPrivateMessage(m_fcRefName, "New Request Recieved:");
             pmRequestRef();
@@ -1733,7 +1782,8 @@ public class twhtGame {
                 ba.sendPrivateMessage(m_fcRefName, "#" + callNumber + " - Round " + roundNumber + " " + roundTime + " - " + teamName + " - TIMEOUT ");
             else if (reqType == 6) 
                 ba.sendPrivateMessage(m_fcRefName, "#" + callNumber + " - Round " + roundNumber + " " + roundTime + " - " + teamName + " - LAGOUT " + requester);
-            
+            else if (reqType == 7)
+                ba.sendPrivateMessage(m_fcRefName, "#" + callNumber + " - Round " + roundNumber + " " + roundTime + " - " + teamName + " - RECOMMENDED PENALTY " + penType + " ON " +  playerA + " FOR " + penaltyLen + " seconds");
         }
 
         /**
@@ -1757,7 +1807,9 @@ public class twhtGame {
                 else if (reqType == 5)
                     doTimeout(teamName);
                 else if (reqType == 6) 
-                    doLagOut(teamName, requester);                
+                    doLagOut(teamName, requester);      
+                else if (reqType == 7)
+                    setPenalty(m_fcRefName, "" + playerA + ":" + penaltyLen + ":" + penType);
             } else 
                 ba.sendPrivateMessage(m_fcRefName, "Request has already been executed once and cannot be executed again.");            
         }

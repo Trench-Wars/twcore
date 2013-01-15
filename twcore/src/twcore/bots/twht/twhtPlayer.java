@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.Arrays;
 
+import twcore.bots.twht.twhtGame.RefRequest;
 import twcore.core.BotAction;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
@@ -27,6 +28,7 @@ public class twhtPlayer {
 //    BotSettings bs;
     BotAction ba;                   //Some bot action
     twhtTeam m_team;                //The twht team class
+    twhtGame m_game;
     String m_fcPlayerName;          //Players name
     int fnUserID;                   //UsersID
 
@@ -40,6 +42,7 @@ public class twhtPlayer {
     int startTimeStamp = 0;         //Starts a timer for tracking game time
     int endTimeStamp = 0;           //Ends the timer for tracking game time
     int m_rating = 0;               //Variable to track total rating
+    int lastCheck, lastCheck2, lastCheck3;
     
     /* Playerstate: 0 - Not In Game
                     1 - In Game
@@ -53,13 +56,17 @@ public class twhtPlayer {
     boolean m_switchedShip = false;
 
     /** Creates a new instance of MatchPlayer */
-    public twhtPlayer(String fcPlayerName, String teamName, int shipType, int playerState, BotAction botAction, twhtTeam twhtTeam) {
+    public twhtPlayer(String fcPlayerName, String teamName, int shipType, int playerState, BotAction botAction, twhtGame twhtGAME, twhtTeam twhtTeam) {
         m_team = twhtTeam;
+        m_game = twhtGAME;
         m_fcPlayerName = fcPlayerName;
         m_fnShipType = shipType;
         m_fnPlayerState = playerState;
         ba = botAction;
 //      bs = ba.getBotSettings();
+        lastCheck = -1;
+        lastCheck2 = -1;
+        lastCheck3 = -1;
         m_ships.put(shipType, new twhtShip(shipType));
     }    
 
@@ -127,8 +134,32 @@ public class twhtPlayer {
         
         startTimeStamp = 0;
         endTimeStamp = 0;        
-    }    
+    }
+    
+    /**
+     * Detection method for the respawn kill
+     */
+    public void setLastCheck(int time, String checker) {
+      if (lastCheck == -1)
+            lastCheck = time;
+        else if ((time - lastCheck) > 5 && lastCheck2 == -1 && lastCheck3 == -1) {
+            lastCheck = time;
+        } else if ((time - lastCheck) > 5 && lastCheck2 != -1 && lastCheck3 == -1) {
+            lastCheck = lastCheck2;
+            lastCheck2 = -1;
+        } else if ((time - lastCheck) > 5 && lastCheck2 != -1 && lastCheck3 != -1) {
+            lastCheck = lastCheck2;
+            lastCheck2 = -1;
+            lastCheck3 = -1;
+        } else if ((time - lastCheck) <= 5 && lastCheck2 == -1  && lastCheck3 == -1) {
+            lastCheck2 = time;
+        } else if ((lastCheck3 - lastCheck) <= 5 && lastCheck2 != -1  && lastCheck3 == -1) 
+            m_game.reqPenalty("Respawn Killing", m_team.getPenTime("respawn"), checker);
 
+        doStats(9);
+        ba.sendArenaMessage("" + lastCheck + " " + lastCheck2 + " " + lastCheck3 + " " + time);
+    }
+    
     /**
      * Method used to get a player's current ship type
      * 
@@ -206,6 +237,10 @@ public class twhtPlayer {
             m_rating += i.getRating();
         
         return m_rating;
+    }
+    
+    public void getCheckCheck(String checker, int time) {
+        
     }
     
     /**
@@ -305,10 +340,10 @@ public class twhtPlayer {
                 }     
             if (!shipString.equals("|") && m_fnGoalieTime > 30){
                 if ((m_fnSaves + m_fnGoalAllowed) != 0)
-                    m_getSavePerc =  m_fnSaves / (m_fnSaves + m_fnGoalAllowed) * 100.0;
+                    m_getSavePerc =  100 * (m_fnSaves / (m_fnSaves + m_fnGoalAllowed));
                 
                 ba.sendArenaMessage(Tools.formatString(shipString, 5, " ") + Tools.formatString("|" + getPlayerName(), 10," ") + Tools.formatString("|" + m_fnSaves, 4," ") + 
-                            Tools.formatString("|" + m_getSavePerc, 4," ") + Tools.formatString("|" + m_fnGoalAllowed , 4," ") + Tools.formatString("|" + m_fnGoalieSteals , 4," ") + 
+                            Tools.formatString("|" + m_getSavePerc, 6," ") + Tools.formatString("|" + m_fnGoalAllowed , 4," ") + Tools.formatString("|" + m_fnGoalieSteals , 4," ") + 
                             Tools.formatString("|" + m_fnGoalieTurnOvers , 4," ") + Tools.formatString("|" + m_fnGoalieChecks , 4," ") + Tools.formatString("|" + m_fnGoalieChecked , 5," ") + 
                             Tools.formatString("|" + doFormatTimeString(m_fnGoalieTime) , 6," ") + Tools.formatString("|" + m_fnAssists , 3," ") + Tools.formatString("|" + m_fnPlusMinus , 4," ") + Tools.formatString("|" + g_rating , 5," "));
             }

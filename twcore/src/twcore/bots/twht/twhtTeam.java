@@ -35,7 +35,13 @@ public class twhtTeam {
     int m_fnTeamNumber;
     int m_fnFrequency;
     int m_fnTeamScore;
-
+    int pen_fnAttackingGoalie = 0;
+    int pen_fnBDC = 0;
+    int pen_fnDC = 0;
+    int pen_fnFaceoff = 0;
+    int pen_fnGoalieCrossing = 0;
+    int pen_fnRespawnKill = 0;
+    
     LinkedList<String> m_captains;
     LinkedList<String> player;
     TreeMap<String, twhtPlayer> m_players = new TreeMap<String, twhtPlayer>(String.CASE_INSENSITIVE_ORDER);
@@ -101,7 +107,7 @@ public class twhtTeam {
         final String playerName = name;
         final int playerShip = shipType;
 
-        m_players.put(name, new twhtPlayer(name.toLowerCase(), m_fcTeamName, shipType, 1, ba, this));
+        m_players.put(name, new twhtPlayer(name.toLowerCase(), m_fcTeamName, shipType, 1, ba, m_game, this));
         
         addDelay = new TimerTask() {
             public void run() {                
@@ -130,7 +136,7 @@ public class twhtTeam {
 
         pA.playerSubbed();
         p = ba.getPlayer(playerBName);
-        m_players.put(playerB, new twhtPlayer(playerBName.toLowerCase(), m_fcTeamName, playerShip, 1, ba, this));
+        m_players.put(playerB, new twhtPlayer(playerBName.toLowerCase(), m_fcTeamName, playerShip, 1, ba, m_game, this));
 
         substituteDelay = new TimerTask() {
             public void run() {
@@ -258,6 +264,28 @@ public class twhtTeam {
         pLag = m_players.get(name);
         pLag.playerLaggedOut();
     }
+    
+    public void doAddPenalty(int penalty) {        
+        switch (penalty) {
+            case 1:
+                pen_fnAttackingGoalie++;
+                break;
+            case 2:
+                pen_fnBDC++;
+                break;
+            case 3:
+                pen_fnDC++;
+                break;
+            case 4:
+                pen_fnGoalieCrossing++;
+                break;
+            case 5:
+                pen_fnRespawnKill++;
+                break;
+            default:
+                break;
+            }
+    }
 
     /**
      * Checks to see if a player is captain of the team
@@ -345,12 +373,50 @@ public class twhtTeam {
         for(twhtPlayer i : m_players.values())
             i.reportPlayerStats();
         ba.sendArenaMessage(Tools.formatString("|", 73, " "));
-        ba.sendArenaMessage("|    |GOALIES  |SV |SV%|GA |ST |TO |CM |CT  |GT   |A |+/-|RATING");
+        ba.sendArenaMessage("|    |GOALIES  |SV |SV%  |GA |ST |TO |CM |CT  |GT   |A |+/-|RATING");
         for(twhtPlayer i : m_players.values())
             i.reportGoalieStats();
         ba.sendArenaMessage(Tools.formatString("|", 73, " "));
     }
 
+    /**
+     * Figures out how long the penalty should be set for
+     * 
+     * @param penalty
+     * @return
+     */
+    public Integer getPenTime (String penalty) {
+        if (penalty.equals("respawn")) {
+            if (pen_fnRespawnKill == 0)
+                return 120;
+            else if(pen_fnRespawnKill == 1 || pen_fnRespawnKill == 2)
+                return 300;
+//        } else if (penalty.equals("faceoff")) {
+//            if (pen_fnFaceoff == 0 || pen_fnFaceoff == 1)
+//                return 120;
+//            else if (pen_fnFaceoff == 2)
+//                return 300;
+        } else if (penalty.equals("gcrossing")) { 
+            if (pen_fnGoalieCrossing == 0)
+                return 120;
+            else if(pen_fnGoalieCrossing  == 1 || pen_fnGoalieCrossing == 2)
+                return 300;            
+        } else if (penalty.equals("gattack")) {
+            if (pen_fnAttackingGoalie == 0)
+                return 120;
+            else if(pen_fnAttackingGoalie  == 1 || pen_fnAttackingGoalie == 2)
+                return 300;              
+        } else if (penalty.equals("dc")) {
+            if (pen_fnDC == 0 || pen_fnDC == 1)
+                return 120;
+            else if (pen_fnDC == 2)
+                return 300;             
+        } else if (penalty.equals("bdc")) 
+                return 300;       
+        
+        return -1;
+    }
+    
     /**
      * Sets the team's current frequency
      * 
