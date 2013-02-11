@@ -1337,8 +1337,8 @@ public class duel2bot extends SubspaceBot{
         if (alias.containsKey(name.toLowerCase())) {
             //String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
             //query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + "))";    		
-            String query = "SELECT U.fcUserName as n FROM tblDuel2__player DP LEFT JOIN tblUser U ON DP.fnUserID = U.fnUserID WHERE DP.fnUserID IN (SELECT a2.fnUserID FROM tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP WHERE a1.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"+Tools.addSlashesToString(name)+"' ORDER BY fnUserID ASC LIMIT 1)) AND fnEnabled = 1 LIMIT 100";
-    		
+            //String query = "SELECT U.fcUserName as n FROM tblDuel2__player DP LEFT JOIN tblUser U ON DP.fnUserID = U.fnUserID WHERE DP.fnUserID IN (SELECT a2.fnUserID FROM tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP WHERE a1.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"+Tools.addSlashesToString(name)+"' ORDER BY fnUserID ASC LIMIT 1)) AND fnEnabled = 1 LIMIT 100";
+            String query = "SELECT DISTINCT U.fcUserName as n FROM tblUser U JOIN (tblDuel2__player DP JOIN (tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP) ON a2.fnUserID = DP.fnUserID) ON U.fnUserID = DP.fnUserID  WHERE  a1.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"+Tools.addSlashesToString(name)+"' ORDER BY fnUserID ASC LIMIT 1) AND a1.fdUpdated > DATE_SUB(NOW(), INTERVAL 2 YEAR) AND a2.fdUpdated > DATE_SUB(NOW(), INTERVAL 2 YEAR) AND DP.fnEnabled = 1";
             ba.SQLBackgroundQuery(db, "alias:" + alias.remove(name.toLowerCase()), query);
         }
         DuelPlayer p = getPlayer(name);

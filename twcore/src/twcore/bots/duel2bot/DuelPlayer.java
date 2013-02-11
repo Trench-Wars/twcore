@@ -846,7 +846,7 @@ public class DuelPlayer {
         //String a = "SELECT a2.fnUserID FROM tblDuel2__player P, tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP WHERE a1.fnUserID = " + userID + " AND p.fnUserID = a2.fnUserID AND p.fnEnabled = 1";
         //String query = "SELECT fnUserID FROM tblDuel2__player P WHERE fnEnabled = 1 AND ((fcIP = '" + Tools.addSlashesToString(ip) + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + ")) OR fnUserID = " + userID + ")";
         //String query = "SELECT fnUserID FROM tblDuel2__player WHERE fnEnabled = 1 AND fnUserID IN (" + a + ")";
-        String query = "SELECT DISTINCT DP.fnUserID FROM tblDuel2__player DP JOIN (tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP) ON a2.fnUserID = DP.fnUserID WHERE  a1.fnUserID = 7433 AND a1.fdUpdated > DATE_SUB(NOW(), INTERVAL 2 YEAR) AND a2.fdUpdated > DATE_SUB(NOW(), INTERVAL 2 YEAR) AND DP.fnEnabled = 1";
+        String query = "SELECT DISTINCT DP.fnUserID FROM tblDuel2__player DP JOIN (tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP) ON a2.fnUserID = DP.fnUserID WHERE  a1.fnUserID = " + userID + " AND a1.fdUpdated > DATE_SUB(NOW(), INTERVAL 2 YEAR) AND a2.fdUpdated > DATE_SUB(NOW(), INTERVAL 2 YEAR) AND DP.fnEnabled = 1";
         ResultSet rs = null;
         try {
             rs = ba.SQLQuery(db, query);
