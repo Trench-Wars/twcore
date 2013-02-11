@@ -342,9 +342,13 @@ public class duel2bot extends SubspaceBot{
                     else
                         msg += " but disabled.";
                     ba.sendSmartPrivateMessage(args[1], msg);
-                    String ip = rs.getString("ip");
-                    String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
-                    query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + rs.getInt("mid") + "))";
+                    //String ip = rs.getString("ip");
+                    //String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
+                    //query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + rs.getInt("mid") + "))";
+                    String query = "SELECT U.fcUserName FROM tblDuel2__player DP LEFT JOIN tblUser U ON DP.fnUserID = U.fnUserID WHERE " +
+                    		"DP.fnUserID IN (SELECT a2.fnUserID FROM tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP WHERE " +
+                    			"a1.fnUserID = (SELECT fnUserID FROM tblAlias WHERE fcUserName = '"+Tools.addSlashesToString(args[2])+"' ORDER BY fnUserID ASC LIMIT 1)) " +
+                    					"AND fnEnabled = 1 LIMIT 100";
                     ba.SQLBackgroundQuery(db, "alias:" + args[1], query);
                 } else {
                     if (alias.containsKey(args[2].toLowerCase()))
