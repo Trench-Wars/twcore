@@ -347,8 +347,17 @@ public class duel2bot extends SubspaceBot{
                     //query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + rs.getInt("mid") + "))";
                     String query = "SELECT U.fcUserName as n FROM tblDuel2__player DP LEFT JOIN tblUser U ON DP.fnUserID = U.fnUserID WHERE " +
                     		"DP.fnUserID IN (SELECT a2.fnUserID FROM tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP WHERE " +
-                    			"a1.fnUserID = " + rs.getInt("id") + " AND fnEnabled = 1 LIMIT 1000";
-                    ba.SQLBackgroundQuery(db, "alias:" + args[1], query);
+                    			"a1.fnUserID = " + rs.getInt("id") + " AND fnEnabled = 1 LIMIT 100";
+                    //ba.SQLBackgroundQuery(db, "alias:" + args[1], query);
+                    ba.SQLClose(rs);
+                    rs = ba.SQLQuery(db, query);
+                    if (rs.next()) {
+                        msg = "Registered aliases: " + rs.getString("n");
+                        while (rs.next())
+                            msg += ", " + rs.getString("n");
+                        ba.sendSmartPrivateMessage(args[1], msg);
+                    } else
+                        ba.sendSmartPrivateMessage(args[1], "No aliases found.");
                 } else {
                     if (alias.containsKey(args[2].toLowerCase()))
                         ba.sendSmartPrivateMessage(args[1], "Someone else is trying to alias check this player as well. Please try again later.");
