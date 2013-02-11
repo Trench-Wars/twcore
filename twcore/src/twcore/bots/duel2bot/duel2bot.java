@@ -1325,8 +1325,10 @@ public class duel2bot extends SubspaceBot{
         String ip = pieces[0].substring(3);
         String mid = pieces[5].substring(10);
         if (alias.containsKey(name.toLowerCase())) {
-            String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
-            query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + "))";
+            //String query = "SELECT u.fcUserName as n FROM tblDuel2__player p LEFT JOIN tblUser u ON p.fnUserID = u.fnUserID WHERE ";
+            //query += "fnEnabled = 1 AND (fcIP = '" + ip + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + "))";    		
+            String query = "SELECT fcUserName FROM tblDuel2__player WHERE fnUserID IN (SELECT a2.fnUserID FROM tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP WHERE a1.fnUserID = (SELECT fnUserID FROM tblUser WHERE fcUserName = '"+Tools.addSlashesToString(name)+"' ORDER BY fnUserID ASC LIMIT 1)) AND fnEnabled = 1 LIMIT 100";
+    		
             ba.SQLBackgroundQuery(db, "alias:" + alias.remove(name.toLowerCase()), query);
         }
         DuelPlayer p = getPlayer(name);
