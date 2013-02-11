@@ -574,7 +574,7 @@ public class OperatorList {
 
     public boolean isSysopExact( String name ){
 
-        if( getAccessLevel( name ) == SYSOP_LEVEL ){
+        if( getAccessLevel( name ) == SYSOP_LEVEL || sysops.contains(name) ){
             return true;
         } else {
             return false;
