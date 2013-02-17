@@ -145,7 +145,7 @@ public class updatebot extends SubspaceBot {
         updates.clear();
         ResultSet rs = null;
         try {
-            rs = ba.SQLQuery(db, "SELECT * FROM tblUpdate WHERE fnRead = 1");
+            rs = ba.SQLQuery(db, "SELECT * FROM tblUpdate WHERE fnRead = 0");
             while (rs.next()) {
                 Update u = new Update(rs.getInt("fnUpdateID"), rs.getString("fcName"), rs.getString("fcMessage"), rs.getString("ftCreated"));
                 updates.put(u.getID(), u);
