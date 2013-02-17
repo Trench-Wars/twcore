@@ -8,10 +8,12 @@
 	<property name="mail.jar" value="lib/mail.jar"/>
 	<property name="activation.jar" value="lib/activation.jar"/>
 	<property name="gson.jar" value="lib/gson.jar"/>
+	<property name="facebook4j" value="lib/facebook4j-core-1.1.3.jar"/>
 	<path id="build.path">
 		<pathelement location="${mail.jar}"/>
 		<pathelement location="${activation.jar}"/>
 		<pathelement location="${gson.jar}"/>
+		<pathelement location="${facebook4j}"/>
 	</path>
 	
     <target name="core" description="Builds the TWCore core" depends="configCopy">
@@ -32,7 +34,7 @@
       
     <target name="bots" description="Builds the TWCore bots" depends="configCopy">
     	<echo>Compiling Bots (this may take a moment)</echo>
-    	<javac classpath="bin/twcore.jar;lib/gson.jar" srcdir="src/twcore/bots" destdir="bin" debug="on" debuglevel="lines,vars,source" /> 
+    	<javac classpath="bin/twcore.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar" srcdir="src/twcore/bots" destdir="bin" debug="on" debuglevel="lines,vars,source" /> 
     </target> 
 
     <target name="clean" description="Deletes the jar and all class files">
@@ -66,7 +68,7 @@
 		<javadoc 
 			access="package" 
 			author="true" 
-			classpath="lib/mysql-connector-java-5.0.7-bin.jar;lib/googleapi.jar;lib/aim.jar;lib/mail.jar;lib/activation.jar;lib/gson.jar" 
+			classpath="lib/mysql-connector-java-5.0.7-bin.jar;lib/googleapi.jar;lib/aim.jar;lib/mail.jar;lib/activation.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar" 
 			destdir="javadoc" 
 			doctitle="Trench Wars Bot Core (TWCore) API Documentation" 
 			nodeprecated="false" 
