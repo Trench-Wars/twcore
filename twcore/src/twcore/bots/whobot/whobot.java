@@ -35,7 +35,7 @@ public class whobot extends SubspaceBot {
     private static final long GO_TIME = 20 * Tools.TimeInMillis.SECOND;
     private static final long GO_DELAY = 120 * Tools.TimeInMillis.SECOND;
     private static final String PUBBOT = "TW-Guard";
-    private static final String WHOHUB = "TWChat";
+    private static final String WHOHUB = "TW-Chat";
     private static final String HOME = "#robopark";
     private static final int MAX_SPAM = 5;
 
@@ -318,7 +318,7 @@ public class whobot extends SubspaceBot {
                 ",---------------------------| WhoBot |---------------------------+",
                 "| WhoBot is a roaming bot that keeps track of online players in  |",
                 "| private and low population arenas. WhoBot synchronizes with    |",
-                "| TWChat bot so that the online player information remains as    |",
+                "| TW-Chat bot so that the online player information remains as   |",
                 "| accurate as possible. After roaming, WhoBot also uses *locate  |",
                 "| to reduce update delays caused by SS arena change restrictions.|",
                 "`----------------------------------------------------------------+"

@@ -1114,19 +1114,19 @@ public class HubBot extends SubspaceBot {
                         "- Use !spawn <typebot> to spawn it -",
                         "------- NickName / typebot ---------",
                         " ",
-                        "Staffbot    - [staffbot]",
-                        "Zonerbot    - [zonerbot]",
-                        "Robohelp    - [robohelp]",
-                        "MessageBot  - [messagebot]",
-                        "Radiobot    - [radiobot]",
-                        "TW-Guard*   - [pubbot]",
-                        "TW-GuardHub - [pubhub]",
-                        "Banner Boy  - [bannerboy]",
-                        "TWDOpBot    - [twdop]",
-                        "ForumBot    - [forumbot]",
-                        "WhoBot      - [whobot]",
-                        "TwChat      - [twchat]",
-                        "TW-WelcomeBot-[welcomebot]"
+                        "Staffbot      - [staffbot]",
+                        "Zonerbot      - [zonerbot]",
+                        "Robohelp      - [robohelp]",
+                        "MessageBot    - [messagebot]",
+                        "Radiobot      - [radiobot]",
+                        "TW-Guard*     - [pubbot]",
+                        "TW-GuardHub   - [pubhub]",
+                        "Banner Boy    - [bannerboy]",
+                        "TWDOpBot      - [twdop]",
+                        "ForumBot      - [forumbot]",
+                        "WhoBot        - [whobot]",
+                        "TW-Chat       - [twchat]",
+                        "TW-WelcomeBot -[welcomebot]"
                         
                 };
                 m_botAction.remotePrivateMessageSpam(name, twcore);
