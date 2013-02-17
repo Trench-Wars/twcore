@@ -169,7 +169,7 @@ public class updatebot extends SubspaceBot {
         private String date;
         private boolean read;
         
-        public Update(int id, String msg, String name, String date) {
+        public Update(int id, String name, String msg, String date) {
             this.id = id;
             this.msg = msg;
             this.name = name;
