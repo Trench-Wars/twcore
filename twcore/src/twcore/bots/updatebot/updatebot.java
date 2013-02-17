@@ -39,6 +39,8 @@ public class updatebot extends SubspaceBot {
     public updatebot(BotAction botAction) {
         super(botAction);
         
+        opList = ba.getOperatorList();
+        
         EventRequester er = ba.getEventRequester();
         er.request(EventRequester.LOGGED_ON);
         er.request(EventRequester.MESSAGE);
