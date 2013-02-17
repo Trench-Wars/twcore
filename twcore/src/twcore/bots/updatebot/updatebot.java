@@ -138,12 +138,13 @@ public class updatebot extends SubspaceBot {
     private void cmd_list(String name) {
         ArrayList<String> list = new ArrayList<String>();
         list.add("R | Updater Name        | Message");
+        list.add("--|---------------------|--------");
 
         for (Update u : updates.values()) {
             String[] msg = u.getMessage();
-            list.add((u.getRead() ? "x" : " ") + " | " + Tools.formatString(u.getName(), 19) + " | ");
-            for (String s : msg)
-                list.add("                          " + s);
+            list.add((u.getRead() ? "x" : " ") + " | " + Tools.formatString(u.getName(), 19) + " | " + msg[0]);
+            for (int i = 1; i < msg.length; i++)
+                list.add("                          " + msg[i]);
         }
         ba.smartPrivateMessageSpam(name, list.toArray(new String[list.size()]));
     }
