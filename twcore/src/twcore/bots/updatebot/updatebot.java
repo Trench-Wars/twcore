@@ -77,7 +77,9 @@ public class updatebot extends SubspaceBot {
         
         if (type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.PRIVATE_MESSAGE) {
             
-            if (cmd.equals("!reload"))
+            if (cmd.startsWith("!h"))
+                cmd_help(name);
+            else if (cmd.equals("!reload"))
                 cmd_reload(name);
             else if (cmd.equals("!list"))
                 cmd_list(name);
@@ -95,13 +97,18 @@ public class updatebot extends SubspaceBot {
     }
     
     /**
-     * Kills bot.
-     * 
-     * @param name
+     * Displays command help information.
      */
-    private void cmd_die(String name) {
-        ba.sendSmartPrivateMessage(name, "Noose tied, bucket kicked...");
-        new Die();
+    private void cmd_help(String name) {
+        String[] msg = new String[] {
+                ",-- Update Tracker --------------------------------------------------------.",
+                "| !reload          - Clears updates and loads unread updates from database |",
+                "| !list            - Displays the currently loaded unread updates          |",
+                "| !add <message>   - Adds an unread update message to the database         |",
+                "| !die             - Kills bot                                             |",
+                "`--------------------------------------------------------------------------'"
+        };
+        ba.smartPrivateMessageSpam(name, msg);
     }
     
     /**
@@ -147,6 +154,16 @@ public class updatebot extends SubspaceBot {
                 list.add("                          " + msg[i]);
         }
         ba.smartPrivateMessageSpam(name, list.toArray(new String[list.size()]));
+    }
+    
+    /**
+     * Kills bot.
+     * 
+     * @param name
+     */
+    private void cmd_die(String name) {
+        ba.sendSmartPrivateMessage(name, "Noose tied, bucket kicked...");
+        new Die();
     }
     
     /**
