@@ -87,13 +87,29 @@ public class updatebot extends SubspaceBot {
             
             if (opList.isSmod(name)) {
                 if (cmd.equals("!die")) {
-                    new Die();
+                    cmd_die(name);
                 }
             }
             
         }
     }
     
+    /**
+     * Kills bot.
+     * 
+     * @param name
+     */
+    private void cmd_die(String name) {
+        ba.sendSmartPrivateMessage(name, "Noose tied, bucket kicked...");
+        new Die();
+    }
+    
+    /**
+     * Adds a new update message to the datebase.
+     * 
+     * @param name Update message creator name
+     * @param msg Message content
+     */
     private void cmd_add(String name, String msg) {
         msg = msg.substring(msg.indexOf(" ") + 1);
         try {
@@ -121,12 +137,13 @@ public class updatebot extends SubspaceBot {
      */
     private void cmd_list(String name) {
         ArrayList<String> list = new ArrayList<String>();
-        list.add("R | Name               | Message");
+        list.add("R | Updater Name        | Message");
+
         for (Update u : updates.values()) {
             String[] msg = u.getMessage();
             list.add((u.getRead() ? "x" : " ") + " | " + Tools.formatString(u.getName(), 19) + " | ");
             for (String s : msg)
-                list.add("    " + s);
+                list.add("                          " + s);
         }
         ba.smartPrivateMessageSpam(name, list.toArray(new String[list.size()]));
     }
@@ -162,7 +179,7 @@ public class updatebot extends SubspaceBot {
      */
     private class Update {
         
-        private static final int size = 225;
+        private static final int size = 100;
         private int id;
         private String msg;
         private String name;
