@@ -317,7 +317,7 @@ public class updates extends SubspaceBot {
 
         for (Update u : updates.values()) {
             String[] msg = u.getMessage();
-            list.add("" + Tools.formatString("" + u.getID(), 3) + 
+            list.add("" + formatNumber(u.getID(), 3) + 
                     " | " + (u.getRead() ? "x" : " ") + 
                     " | " + Tools.formatString(u.getName(), 19) + 
                     " | " + msg[0]);
@@ -363,6 +363,21 @@ public class updates extends SubspaceBot {
             return cmd.substring(index + 1);
         else
             return null;
+    }
+    
+    /**
+     * Helper method takes a number and adds spaces in front of it to meet the
+     * specified string size.
+     * 
+     * @param n
+     * @param size
+     * @return String padded to size
+     */
+    private String formatNumber(int n, int size) {
+        String str = "" + n;
+        while (str.length() < size)
+            str = " " + str;
+        return str;
     }
     
     /**
