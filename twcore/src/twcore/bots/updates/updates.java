@@ -245,8 +245,6 @@ public class updates extends SubspaceBot {
                 String list = rep;
                 for (String s : reps)
                     list += "," + s;
-                if (!list.isEmpty())
-                    list = list.substring(1);
                 reps.add(rep);
                 cfg.put("Reps", list);
                 cfg.save();
@@ -386,7 +384,8 @@ public class updates extends SubspaceBot {
     private void reloadReps() {
         String[] list = cfg.getString("Reps").split(",");
         for (String rep : list)
-            reps.add(rep);
+            if (rep.length() > 0)
+                reps.add(rep);
     }
     
     /**
