@@ -346,7 +346,7 @@ public class updates extends SubspaceBot {
                     " | " + Tools.formatString(u.getName(), 19) + 
                     " | " + msg[0]);
             for (int i = 1; i < msg.length; i++)
-                list.add(Tools.formatString(" ", 40) + msg[i]);
+                list.add(Tools.formatString(" ", 32) + msg[i]);
         }
         ba.smartPrivateMessageSpam(name, list.toArray(new String[list.size()]));
     }
@@ -438,7 +438,7 @@ public class updates extends SubspaceBot {
      */
     private class Update {
         
-        private static final int size = 100;
+        private static final int SIZE = 75;
         private int id;
         private String msg;
         private String name;
@@ -469,9 +469,9 @@ public class updates extends SubspaceBot {
         public String[] getMessage() {
             String str = msg;
             ArrayList<String> msgs = new ArrayList<String>();
-            while (str.length() > size) {
-                msgs.add(str.substring(0, size));
-                str = str.substring(size);
+            while (str.length() > SIZE) {
+                msgs.add(str.substring(0, SIZE));
+                str = str.substring(SIZE);
             }
             msgs.add(str);
             return msgs.toArray(new String[msgs.size()]);
