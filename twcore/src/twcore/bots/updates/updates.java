@@ -123,7 +123,6 @@ public class updates extends SubspaceBot {
     private void cmd_help(String name) {
         String[] msg = new String[] {
                 ",-- Update Tracker --------------------------------------------------------.",
-                "| !reload          - Clears updates and loads unread updates from database |",
                 "| !list            - Displays the currently loaded unread updates          |",
                 "| !add <message>   - Adds an unread update message to the database         |",
                 "| !reps            - Lists the current representatives                     |",
@@ -137,6 +136,7 @@ public class updates extends SubspaceBot {
                     "| !del <ID>        - Permanently deletes update with ID <ID>               |",
                     "| !addrep <name>   - Adds <name> to the list of representatives            |",
                     "| !remrep <name>   - Removes <name> from the list of representatives       |",
+                    "| !reload          - Reloads updates from database and reps from file      |",
                     "| !die             - Kills bot                                             |",
             };
             ba.smartPrivateMessageSpam(name, msg);
