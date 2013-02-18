@@ -103,12 +103,14 @@ public class updates extends SubspaceBot {
             if (opList.isSmod(name) || reps.contains(name)) {
                 if (cmd.equals("!die"))
                     cmd_die(name);
-                else if (cmd.equals("!addrep"))
+                else if (cmd.startsWith("!addr"))
                     cmd_addRep(name, msg);
-                else if (cmd.equals("!remrep"))
+                else if (cmd.startsWith("!rem"))
                     cmd_remRep(name, msg);
                 else if (cmd.equals("!read"))
                     cmd_read(name, msg);
+                else if (cmd.startsWith("!del"))
+                    cmd_delete(name, msg);
                 
             }
             
@@ -132,6 +134,7 @@ public class updates extends SubspaceBot {
                     "| !read <arg>      - Marks <arg> as read/unread where arg is all, an ID#,  |",
                     "|                     a range of IDs (i.e. 4-22), or                       |",
                     "|                     all to mark all unread as read                       |",
+                    "| !del <ID>        - Permanently deletes update with ID <ID>               |",
                     "| !addrep <name>   - Adds <name> to the list of representatives            |",
                     "| !remrep <name>   - Removes <name> from the list of representatives       |",
                     "| !die             - Kills bot                                             |",
@@ -140,6 +143,29 @@ public class updates extends SubspaceBot {
         }
         ba.sendSmartPrivateMessage(name, 
                     "`--------------------------------------------------------------------------'");
+    }
+    
+    /**
+     * Permanently deletes an update.
+     * 
+     * @param name
+     * @param msg
+     */
+    private void cmd_delete(String name, String msg) {
+        msg = getParameter(msg);
+        if (msg != null) {
+            try {
+                int id = Integer.valueOf(msg.trim());
+                if (id > 0 && updates.containsKey(id)) {
+                    updates.remove(id);
+                    ba.SQLBackgroundQuery(DB, null, "DELETE FROM tblUpdate WHERE fnUpdateID = " + id);
+                    ba.sendSmartPrivateMessage(name, "Deleted update " + id + ".");
+                } else
+                    ba.sendSmartPrivateMessage(name, "No update found with ID number " + id);
+            } catch (NumberFormatException e) {
+                ba.sendSmartPrivateMessage(name, "Invalid update ID number!");
+            }
+        }
     }
     
     /**
