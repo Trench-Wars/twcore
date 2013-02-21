@@ -169,7 +169,7 @@ public class UserData {
 
     public boolean giveRank(int rankNr) {
         if (fnUserID != 0) try {
-            ba.SQLQuery(connName,
+            ba.SQLQueryAndClose(connName,
                     "INSERT tblUserRank (fnUserID, fnRankID) VALUES ("
                             + fnUserID + ", " + rankNr + ")");
             lastQuery = System.currentTimeMillis();
