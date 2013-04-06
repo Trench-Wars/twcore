@@ -6609,7 +6609,7 @@ public class distensionbot extends SubspaceBot {
         }
         
         DistensionArmy army = m_armies.get( newArmyNum );
-        DistensionArmy oldarmy = p.getArmy();
+        DistensionArmy oldarmy = player.getArmy();
         
         if( army == null )
             throw new TWCoreException( "Invalid army #.  Syntax: !db-army <name>:<army#>" );
@@ -6619,13 +6619,13 @@ public class distensionbot extends SubspaceBot {
         cmdDock( name, args[0] );        
         
         try {
-            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID='" + newArmyNum +"' WHERE fnID='" + p.getDatabaseID() + "'" );
+            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID='" + newArmyNum +"' WHERE fnID='" + player.getDatabaseID() + "'" );
         } catch (SQLException e ) {
             Tools.printStackTrace("Problem saving player while changing armies: " + args[0], e);
             throw new TWCoreException( "Problem while attempting to update the database with new army number." );
         }
 
-        p.setArmy( newArmyNum );
+        player.setArmy( newArmyNum );
         army.adjustPilotsTotal(1);
         if( oldarmy != null )
             oldarmy.adjustPilotsTotal(-1);
@@ -6633,7 +6633,7 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "Old player army was null for some godforsaken reason beyond my ken." );
 
         m_botAction.sendPrivateMessage( name, "Player has joined " + army.getName().toUpperCase() + " (army " + newArmyNum + ") as pilot #" + (army.getPilotsTotal() + 1) + "." );
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You have been elected to join " + army.getName().toUpperCase() + " (army " + newArmyNum + ") as pilot #" + (army.getPilotsTotal() + 1) + ". Congratulations! Come greet your new comrades!" );
+        m_botAction.sendPrivateMessage( player.getArenaPlayerID(), "You have been elected to join " + army.getName().toUpperCase() + " (army " + newArmyNum + ") as pilot #" + (army.getPilotsTotal() + 1) + ". Congratulations! Come greet your new comrades!" );
     }
     
     
