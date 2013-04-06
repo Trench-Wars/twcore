@@ -1246,6 +1246,8 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip" );
         m_commandInterpreter.registerCommand( "!db-wipeplayer", acceptedMessages, this, "cmdDBWipePlayer" );  // Not published in !help
         m_commandInterpreter.registerCommand( "!db-randomarmies", acceptedMessages, this, "cmdDBRandomArmies" );
+        m_commandInterpreter.registerCommand( "!db-army", acceptedMessages, this, "cmdDBSetArmy" );
+        m_commandInterpreter.registerCommand( "!db-a", acceptedMessages, this, "cmdDBSetArmy" );
         m_commandInterpreter.registerCommand( "!debug-getint", acceptedMessages, this, "cmdGetInt", OperatorList.DEV_LEVEL );
         m_commandInterpreter.registerCommand( "!debug-getbool", acceptedMessages, this, "cmdGetBool", OperatorList.DEV_LEVEL );
         m_commandInterpreter.registerCommand( "!debug-setvar", acceptedMessages, this, "cmdSetVar", OperatorList.DEV_LEVEL );
@@ -1430,6 +1432,7 @@ public class distensionbot extends SubspaceBot {
                 "  !db-addship <name>:<ship#>           - Adds ship# to name's record.",
                 "  !db-wipeship <name>:<ship#>          - Wipes ship# from name's record.",
                 "  !db-randomarmies                     - Randomizes all armies.",
+                "  !db-army <name>:<army#>              - Sets player to army#. Shortcut: !db-a",
                 "--- NOTE: DEPENDING ON YOUR STATUS, YOU MAY OR MAY NOT HAVE ACCESS TO THESE CMDS ---"
         };
         spamWithDelay(p.getArenaPlayerID(), helps);
@@ -6517,7 +6520,7 @@ public class distensionbot extends SubspaceBot {
             m_armies.get(0).manuallySetPilotsTotal( army0Count );
             m_armies.get(1).manuallySetPilotsTotal( army1Count );
             m_botAction.sendPrivateMessage( name, "Army reconfiguration complete; all " + totalCount + " players reassigned.  Army 0: " + army0Count + " pilots; Army 1: " + army1Count + " pilots." );
-            m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " randomized armies." );
+            //m_botAction.sendRemotePrivateMessage("MessageBot", "!lmessage qan:" + name + " randomized armies." );
             cmdSaveDie(name,"");
         } catch (SQLException e ) {
             Tools.printStackTrace( "Error getting player data from DB for !db-randomarmies.", e );
@@ -6576,6 +6579,64 @@ public class distensionbot extends SubspaceBot {
     }
     */
 
+    /**
+     * Sets player to specified army.
+     * @param name
+     * @param msg
+     */
+    public void cmdDBSetArmy( String name, String msg ) {
+        DistensionPlayer p = m_players.get( name );
+        if( p == null ) {
+            cmdReturn(name, msg);
+            throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
+        }
+        if( p.getOpStatus() < 3 )
+            throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+
+        String[] args = msg.split(":");
+        if( args.length != 2 || args[0].equals("") || args[1].equals("") )
+            throw new TWCoreException( "Syntax: !db-army <name>:<army#>" );
+        DistensionPlayer player = m_players.get( args[0] );
+        if( player == null ) {
+            m_botAction.sendPrivateMessage( name, args[0] + " not found in arena.  Player must be in arena in order to use this command." );
+            return;
+        }
+        int newArmyNum = 0;
+        try {
+            newArmyNum = Integer.parseInt( args[1] );
+        } catch (NumberFormatException e) {
+            throw new TWCoreException( "Invalid army #.  Syntax: !db-army <name>:<army#>" );
+        }
+        
+        DistensionArmy army = m_armies.get( newArmyNum );
+        DistensionArmy oldarmy = p.getArmy();
+        
+        if( army == null )
+            throw new TWCoreException( "Invalid army #.  Syntax: !db-army <name>:<army#>" );
+        if( newArmyNum == player.getArmyID() )
+            throw new TWCoreException( "Player is currently on that army." );
+
+        cmdDock( name, args[0] );        
+        
+        try {
+            m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID='" + newArmyNum +"' WHERE fnID='" + p.getDatabaseID() + "'" );
+        } catch (SQLException e ) {
+            Tools.printStackTrace("Problem saving player while changing armies: " + args[0], e);
+            throw new TWCoreException( "Problem while attempting to update the database with new army number." );
+        }
+
+        p.setArmy( newArmyNum );
+        army.adjustPilotsTotal(1);
+        if( oldarmy != null )
+            oldarmy.adjustPilotsTotal(-1);
+        else
+            throw new TWCoreException( "Old player army was null for some godforsaken reason beyond my ken." );
+
+        m_botAction.sendPrivateMessage( name, "Player has joined " + army.getName().toUpperCase() + " (army " + newArmyNum + ") as pilot #" + (army.getPilotsTotal() + 1) + "." );
+        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You have been elected to join " + army.getName().toUpperCase() + " (army " + newArmyNum + ") as pilot #" + (army.getPilotsTotal() + 1) + ". Congratulations! Come greet your new comrades!" );
+    }
+    
+    
 
     // BETA-ONLY COMMANDS
 
@@ -9779,7 +9840,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         /**
-         * @return Returns the ID as found in the DB (not as found in Arena).
+         * @return Returns the ID as found in the arena (not as found in DB).
          */
         public int getArenaPlayerID() {
             return arenaPlayerID;
