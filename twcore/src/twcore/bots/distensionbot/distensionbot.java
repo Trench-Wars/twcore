@@ -6616,7 +6616,7 @@ public class distensionbot extends SubspaceBot {
         if( newArmyNum == player.getArmyID() )
             throw new TWCoreException( "Player is currently on that army." );
 
-        cmdDock( name, args[0] );        
+        cmdDock( args[0], "" );
         
         try {
             m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID='" + newArmyNum +"' WHERE fnID='" + player.getDatabaseID() + "'" );
