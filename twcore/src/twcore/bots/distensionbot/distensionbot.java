@@ -3423,15 +3423,16 @@ public class distensionbot extends SubspaceBot {
             sharingPercent = p.getBaseProfitSharingPercent();
         }
         ShipTypeProfile sp = p.getShipTypeProfile();
+
         int chgranks = sp.ranksUntilNextRecharge(p.getRank());
         String chgmsg = "";
         if( chgranks != -1 )
-            chgmsg += "(+1 in " + chgranks + " rank" + ( chgranks == 1 ? "" : "s" ) + ")";
+            chgmsg += "CHG: +1 in " + chgranks + " rank" + ( chgranks == 1 ? "" : "s" ) + "";
         int nrgranks = sp.ranksUntilNextEnergy(p.getRank());
         String nrgmsg = "";
         if( nrgranks != -1 )
-            nrgmsg += "(+1 in " + nrgranks + " rank" + ( nrgranks == 1 ? "" : "s" ) + ")";
-
+            nrgmsg += "NRG: +1 in " + nrgranks + " rank" + ( nrgranks == 1 ? "" : "s" ) + ")";
+        
         statusSpam.add("," + Tools.formatString("", nameString.length() - 3, "-") + ".");
         statusSpam.add( nameString );
         statusSpam.add( "." + Tools.formatString("", spamLength - 2, "=") + ".");
@@ -3461,6 +3462,10 @@ public class distensionbot extends SubspaceBot {
             statusSpam.add( "|" + Tools.centerString("You are the Fleet Admiral, the highest and most honorable rank of all.", spamLength - 2) + "|" );
         else
             statusSpam.add( Tools.formatString( "| Promotion estimated after " + p.getWinsRequiredForNextCommandRank() + " more battle(s) won.", spamLength -1) + "|");
+        if( p.getShipType() != SHIPTYPE_Z_CLASS ) {
+            statusSpam.add( "|" + Tools.formatString( chgmsg + "  " + nrgmsg, spamLength - 2) + "|" );            
+        }
+        
         int bonus = p.getRemainingBonus();
         if( bonus > 0 )
             statusSpam.add( Tools.formatString( "| Remaining RP on which you receive a special bonus: " + bonus + "RP", spamLength -1) + "|");
@@ -4266,20 +4271,26 @@ public class distensionbot extends SubspaceBot {
 
                     // Increased bonuses for higher ranks, as it takes more to make a dent in
                     // their to-rank amounts
-                    if( rank >= 70 )        // 70: 3500RP
+                    if( rank >= 70 )
                         reward *= 50;
-                    else if( rank >= 60 )   // 60: 1200RP
+                    else if( rank >= 60 )
+                        reward *= 30;
+                    else if( rank >= 50 )
+                        reward *= 25;
+                    else if( rank >= 40 )
                         reward *= 20;
-                    else if( rank >= 50 )   // 50: 500RP
+                    else if( rank >= 35 )
+                        reward *= 15;
+                    else if( rank >= 30 )
+                        reward *= 12;
+                    else if( rank >= 25 )
                         reward *= 10;
-                    else if( rank >= 40 )   // 40: 240RP
+                    else if( rank >= 20 )
                         reward *= 8;
-                    else if( rank >= 30 )   // 30: 150RP
-                        reward *= 5;
-                    else if( rank >= 20 )   // 20: 80RP
+                    else if( rank >= 15 )
+                        reward *= 6;
+                    else if( rank >= 10 )
                         reward *= 4;
-                    else if( rank >= 10 )   // 10: 30RP
-                        reward *= 3;
                     else                    //  0: 10RP
                         reward *= 2;
                     if( gameGoing && m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
@@ -7695,7 +7706,7 @@ public class distensionbot extends SubspaceBot {
             shipDataSaved = false;
             fastRespawn = false;
             isRespawning = false;
-            waitInSpawn = false;
+            waitInSpawn = true;
             warpInBase = true;
             specialRespawn = false;
             sendKillMessages = true;
@@ -7790,6 +7801,7 @@ public class distensionbot extends SubspaceBot {
                     battlesWon = 0;
                     timePlayed = 0;
                     rewardRemaining = 0;
+                    waitInSpawn = false;            // New players are warped out, to avoid confusion 
                     m_botAction.SQLClose(r);
                 }
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG ); }
