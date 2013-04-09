@@ -8,6 +8,7 @@ import java.util.TimerTask;
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.events.FrequencyShipChange;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.events.PlayerEntered;
@@ -60,6 +61,7 @@ public final class prodem extends MultiModule {
     public void requestEvents(ModuleEventRequester events) {
 		events.request(this, EventRequester.PLAYER_DEATH);
 		events.request(this, EventRequester.PLAYER_ENTERED);
+        events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
 	}
 
     public void setupTimerTasks(){
@@ -84,7 +86,7 @@ public final class prodem extends MultiModule {
     }
 
     ///*** Incomming Messages ///***
-public void handleEvent( Message event ) {
+    public void handleEvent( Message event ) {
         String message = event.getMessage();
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
@@ -142,8 +144,10 @@ public void handleEvent( Message event ) {
         if( i == null ) botStop(m_botAction.getBotName());
         while( i.hasNext() ){
             Player tempP = (Player)i.next();
-            String name = tempP.getPlayerName();
-            playerMap.put( name, new PlayerProfile( name, 8, tempP.getFrequency() ) );
+            if (tempP != null && tempP.getShipType() != 0 ) {
+                String name = tempP.getPlayerName();
+                playerMap.put( name, new PlayerProfile( name, 8, tempP.getFrequency() ) );
+            }
         }
 
         startGame = new TimerTask() {
@@ -369,9 +373,16 @@ public void handleEvent( Message event ) {
 
     public void handleEvent( PlayerEntered event ) {
         if(gameProgress == 1)
-            m_botAction.sendPrivateMessage( event.getPlayerName(), "Lagout or want in just pm me with !prolag");
+            m_botAction.sendPrivateMessage( event.getPlayerName(), "Lagout or want in? Just PM me with !prolag");
     }
 
+    /**
+     * Check for players dropping to spec and 
+     */
+    public void handleEvent( FrequencyShipChange event ) {
+        if (event.getShipType() == 0 && gameProgress == 1)
+            m_botAction.sendPrivateMessage( event.getPlayerID(), "Lagout or want in? Just PM me with !prolag");                
+    }
 
     ///*** Help Messages ///***
     public String[] getModHelpMessage() {
