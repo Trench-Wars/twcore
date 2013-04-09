@@ -1548,14 +1548,17 @@ public class zonerbot extends SubspaceBot {
         /** Checks if expired then terminates the periodic zoner if so otherwise sends zoner **/
         public void run() {
             long now = System.currentTimeMillis();
-            if ((created + (duration * Tools.TimeInMillis.HOUR)) < now)
+            if (now > (created + (duration * Tools.TimeInMillis.HOUR)))
                 end();
             else
-                periodicQueue.add(this);
+                if( duration < 0 )
+                    periodicQueue.add(this);
         }
         
         public void zone() {
             try {
+                if (duration < 0)   // Safety check
+                    return;
                 if (advert.length() > NATURAL_LINE)
                     zoneMessageSpam(splitString(advert, LINE_LENGTH), sound);
                 else if (sound > -1)
@@ -1573,6 +1576,8 @@ public class zonerbot extends SubspaceBot {
         public void end() {
             ba.cancelTask(this);
             periodic.remove(this);
+            periodicQueue.remove(this);
+            duration = -1;
             updateIndices();
             if (id != -1)
                 ba.SQLBackgroundQuery(db, null, "DELETE FROM tblPeriodic WHERE fnMessageID = " + id);
@@ -1592,6 +1597,7 @@ public class zonerbot extends SubspaceBot {
         }
     }
     
+    
     private class PeriodicTimer extends TimerTask {
         
         public PeriodicTimer() {
@@ -1608,12 +1614,15 @@ public class zonerbot extends SubspaceBot {
             if (now - lastPeriodic > (PER_DELAY * Tools.TimeInMillis.MINUTE)) {
                 lastPeriodic = now;
                 debug("Zoning periodic...");
-                periodicQueue.remove(0).zone();
+                Periodic p = periodicQueue.remove(0);  
+                if (p != null && p.duration != -1 )
+                    p.zone();
             } else
                 debug("Too early for periodic, so continue waiting...");
         }
     }
 
+    
     /** Die TimerTask allows for bot to close shop before killing **/
     private class Die extends TimerTask {
         @Override
