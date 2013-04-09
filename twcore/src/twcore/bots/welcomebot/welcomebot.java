@@ -197,6 +197,10 @@ public class welcomebot extends SubspaceBot {
         else {
             try {
                 int taken = -1;
+                if (psCheckAlerts.isClosed()) {  // For some reason, this PS was getting closed, causing exceptions.
+                    Tools.printLog("PreparedStatement attempting to be accessed in PlayerEntered event that is already closed. ?message WingZero or qan");
+                    return;
+                }
                 psCheckAlerts.clearParameters();
                 psCheckAlerts.setString(1, name);
                 ResultSet rs = psCheckAlerts.executeQuery();
@@ -997,6 +1001,7 @@ public class welcomebot extends SubspaceBot {
     }
     
     public void handleDisconnect() {
+        ready = false;      // To prevent any prepared statements from being accessed via events while dcing
         ba.ipcUnSubscribe(IPC_CHANNEL);
         ba.closePreparedStatement(web, db, psInsertNewb);
         ba.closePreparedStatement(web, db, psCheckAlerts);
