@@ -360,7 +360,8 @@ public class distensionbot extends SubspaceBot {
     // DATA FOR FLAG TIMER
     private static final int SCORE_REQUIRED_FOR_WIN = 3;// Max # rounds (odd numbers only)
     private static final int SECTOR_CHANGE_SECONDS = 4; // Seconds it takes to secure hold or break one
-    private static final int INTERMISSION_SECS = 60;    // Seconds between end of free play & start of next battle
+    private static final int INTERMISSION_SECS = 20;    // Seconds between end of free play & start of next battle
+    private static final int BALLTIME_MINS = 3;         // Minutes of ballgame time
     private static final int PLAYERS_FOR_2_FLAGS = 26;  // Minimum # players required to activate 2 flags
     private static final int SUDDEN_DEATH_MINUTES = 35; // Minutes after which round ends with a truce
     private boolean flagTimeStarted;                    // True if flag time is enabled
@@ -6997,6 +6998,7 @@ public class distensionbot extends SubspaceBot {
                         m_flagRules = (int)Math.round( Math.random() ); // Randomize starting rules
                         m_roundNum = 0;
                         flagTimeStarted = true;
+                        m_canScoreGoals = false;
                     }
                     stopFlagTime = false;       // Cancel stopping; new opposing player entered
                     return;
@@ -11643,7 +11645,13 @@ public class distensionbot extends SubspaceBot {
         String warning = "";
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
-        m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + (m_canScoreGoals ? " (goals active until then)":"") + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+        
+        if( m_canScoreGoals ) {
+            m_botAction.sendArenaMessage( "BALLGAME FINISHED!  " + roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+            m_canScoreGoals = false;
+        }else
+            m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+            
         m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go " + arenaName + " to play." );
 
         // Between rounds, switch between one and two flags
@@ -11701,7 +11709,7 @@ public class distensionbot extends SubspaceBot {
             }
         }
         m_botAction.cancelTask(startTimer);
-
+        
         startTimer = new StartRoundTask();
         m_botAction.scheduleTask( startTimer, INTERMISSION_SECS * 1000 );
     }
@@ -12427,7 +12435,8 @@ public class distensionbot extends SubspaceBot {
             m_botAction.setTimer( 5 );
         } else {
             freePlayTimer = new FreePlayTask();
-            freePlayTimer.setTime( intermissionTime );
+            freePlayTimer.setTime( BALLTIME_MINS * Tools.TimeInMillis.MINUTE );
+
             m_botAction.scheduleTask( freePlayTimer, 15000 );
 
             doScores(15000);
@@ -12438,10 +12447,10 @@ public class distensionbot extends SubspaceBot {
                                                             //  ... but for this round end only.
 
         }
-        if( intermissionTime >= Tools.TimeInMillis.MINUTE && !DEBUG )
-            m_botAction.setTimer( (intermissionTime + Tools.TimeInMillis.SECOND) / Tools.TimeInMillis.MINUTE );
+        //if( intermissionTime >= Tools.TimeInMillis.MINUTE && !DEBUG )
+        //    m_botAction.setTimer( (intermissionTime + Tools.TimeInMillis.SECOND) / Tools.TimeInMillis.MINUTE );
         intermissionTimer = new IntermissionTask();
-        m_botAction.scheduleTask( intermissionTimer, intermissionTime + 15000 );
+        m_botAction.scheduleTask( intermissionTimer, BALLTIME_MINS + 15000 );
     }
 
 
