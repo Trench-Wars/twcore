@@ -104,6 +104,7 @@ public class distensionbot extends SubspaceBot {
     private final float OPS_STRENGTH_MULTIPLIER = 1.5f;    // How much a terr's strength is multiplied by
 
     private final int ARMY_SYSTEM_STATIC = 0;              // Armies recorded in DB and do not change
+    @SuppressWarnings("unused")
     private final int ARMY_SYSTEM_SEMISTATIC = 1;          // Player gets army for the day/week/etc.
     private final int ARMY_SYSTEM_NONSTATIC = 2;           // Armies balanced on the fly by bot
     private int m_armySystem = ARMY_SYSTEM_STATIC;      // Which army system is being used
@@ -927,6 +928,8 @@ public class distensionbot extends SubspaceBot {
                 MOVE OVER #
             PLAYERS TO OTHER SIDE
                      */
+                    
+                    // INCOMPLETE.
                     if( m_armySystem == ARMY_SYSTEM_NONSTATIC ) {
                         // Army 0: 400  Army 1: 600   Diff: 200
                         // Army 0 is also down 1 or more people.
@@ -4597,7 +4600,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void cmdTargetedEMP( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
-        if( p == null )
+        if( p == null || flagTimer == null )
             return;
         if( p.getShipNum() == -1 )
             throw new TWCoreException( "You must !return first." );
@@ -4612,27 +4615,39 @@ public class distensionbot extends SubspaceBot {
         GroupSpamTask emp0 = new GroupSpamTask();
         GroupSpamTask emp1 = new GroupSpamTask();
         GroupSpamTask emp2 = new GroupSpamTask();
+        
+        boolean earlyEMP = (flagTimer.isRunning() && flagTimer.getTotalSecs() < 15);  
 
         for( DistensionPlayer p3 : m_players.values() ) {
             if( p3.getArmyID() != freq ) {
-                Random r = new Random();
-                if( r.nextFloat() > 0.2f ) {
-                    emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.PLAY_MUSIC_ONCE );
-                    emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENGINE_SHUTDOWN, 0 );
+                if( !earlyEMP ) {
+                    Random r = new Random();
+                    if( r.nextFloat() > 0.2f ) {
+                        emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.PLAY_MUSIC_ONCE );
+                        emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENGINE_SHUTDOWN, 0 );
+                    } else {
+                        emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.PLAY_MUSIC_ONCE );
+                        emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENGINE_SHUTDOWN_EXTENDED, 0 );
+                    }
+                    emp1.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, 0 );
+                    emp2.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.STOP_MUSIC );
                 } else {
-                    emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.PLAY_MUSIC_ONCE );
-                    emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENGINE_SHUTDOWN_EXTENDED, 0 );
+                    // An early-round EMP only depletes energy, and does not shutdown.
+                    emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, 0 );                    
                 }
-                emp1.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, 0 );
-                emp2.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.STOP_MUSIC );
             }
         }
         m_botAction.scheduleTask(emp0, MESSAGE_SPAM_DELAY, 75 );
-        m_botAction.scheduleTask(emp1, Tools.TimeInMillis.SECOND * 3, MESSAGE_SPAM_DELAY );
-        m_botAction.scheduleTask(emp2, Tools.TimeInMillis.SECOND * 6, MESSAGE_SPAM_DELAY );
+        if( !earlyEMP ) {
+            m_botAction.scheduleTask(emp1, Tools.TimeInMillis.SECOND * 3, MESSAGE_SPAM_DELAY );
+            m_botAction.scheduleTask(emp2, Tools.TimeInMillis.SECOND * 6, MESSAGE_SPAM_DELAY );
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on the enemy!" );
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on your army!" );
+        } else {
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), p.getName() + " unleashed a weakened ELECTRO-MAGNETIC PULSE on the enemy." );
+            m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed a weakened ELECTRO-MAGNETIC PULSE on your army." );
+        }
         m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_EMP );
-        m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on the enemy!" );
-        m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on your army!" );
     }
 
     /**
@@ -7419,6 +7434,7 @@ public class distensionbot extends SubspaceBot {
         LinkedList <String>remainingMsgs = new LinkedList<String>();
         int arenaIDToSpam = -1;
 
+        @SuppressWarnings("unused")
         public void setMsgs( int id, LinkedList<String> list ) {
             arenaIDToSpam = id;
             remainingMsgs = list;
@@ -7620,8 +7636,8 @@ public class distensionbot extends SubspaceBot {
         private long      opsAFKNotifyTime;     // Timestamp of Ops being notified of AFK
         private long      lastVengeTime;        // Timestamp of last time Vengeful Bastard fired on player
         private long      lastSummonTime;       // Timestamp of last time summon was used
-        private long      lastNeededShipChange; // Timestamp of last time they earned a bonus for changing to needed ship
-        private int       awardGivenForNeededChange;    // Amount of award given for changing to a needed ship
+//        private long      lastNeededShipChange; // Timestamp of last time they earned a bonus for changing to needed ship
+//        private int       awardGivenForNeededChange;    // Amount of award given for changing to a needed ship
         private String    lastVenger;           // Name of player that last fired Vengeful Bastard on player
         private double    bonusBuildup;         // Bonus for !killmsg that is "building up" over time
         private boolean   warnedForTK;          // True if they TKd / notified of penalty this match
@@ -9660,6 +9676,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * Sets player as having been warned for TK.
          */
+        @SuppressWarnings("unused")
         public void setWarnedForTK() {
             warnedForTK = true;
         }
@@ -9798,6 +9815,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * Set lagout timer to 0.
          */
+        @SuppressWarnings("unused")
         public void clearLagoutTimer() {
             lagoutTimer = 0;
         }
@@ -9953,6 +9971,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * @return Returns unmultiplied strength of ship (upgrade level + default player strength).
          */
+        @SuppressWarnings("unused")
         public int getUnmultipliedStrength() {
             return getRank() + RANK_0_STRENGTH;
         }
@@ -9967,6 +9986,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * @return Returns the rank point amount needed for the next rank; -1 if not in a ship
          */
+        @SuppressWarnings("unused")
         public int getNextRankPoints() {
             return nextRank;
         }
@@ -9974,6 +9994,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * @return Returns rank point amount at which this rank started; -1 if not in a ship
          */
+        @SuppressWarnings("unused")
         public int getRankPointStart() {
             return rankStart;
         }
@@ -10063,6 +10084,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * @return Returns DistensionArmy opposing the player, in two army system.
          */
+        @SuppressWarnings("unused")
         public DistensionArmy getOpposingArmy() {
             return m_armies.get( new Integer( getOpposingArmyID() ) );
         }
@@ -10120,6 +10142,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * @return True if player has been warned for teamkilling this session.
          */
+        @SuppressWarnings("unused")
         public boolean wasWarnedForTK() {
             return warnedForTK;
         }
@@ -10127,6 +10150,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * @return True if player is currently playing / in ship.
          */
+        @SuppressWarnings("unused")
         public boolean isInShip() {
             return shipNum > 0;
         }
@@ -10416,7 +10440,7 @@ public class distensionbot extends SubspaceBot {
         boolean isDefault;              // True if army is available by default (not user-created)
         boolean isPrivate;              // True if army can't be seen on !armies screen
         int profitShareRP;              // Amount of RP made from profit shares
-        List <String>profitSharers;     // Players with profit-sharing on freq
+        //List <String>profitSharers;     // Players with profit-sharing on freq
 
         /**
          * Creates record for an army, given an ID.
@@ -10446,7 +10470,7 @@ public class distensionbot extends SubspaceBot {
             pilotsInGame = 0;
             highestNumPilotsThisShare = 0;
             profitShareRP = 0;
-            profitSharers = Collections.synchronizedList( new LinkedList<String>() );
+            //profitSharers = Collections.synchronizedList( new LinkedList<String>() );
         }
 
         // SETTERS
@@ -10849,6 +10873,7 @@ public class distensionbot extends SubspaceBot {
             this.lineDesc = lineDesc;
         }
 
+        @SuppressWarnings("unused")
         public void setMaxRankForChange( int rank ) {
             this.maxRankForChange = rank;
         }
@@ -10937,6 +10962,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * @return Returns the cost.  -1 if array-defined.
          */
+        @SuppressWarnings("unused")
         public int getCost() {
             return cost;
         }
@@ -11026,6 +11052,7 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
+        @SuppressWarnings("unused")
         public PlayerSlotManager( int[] slots, int[] slotStatus, LinkedList<DistensionPlayer> waitingList ) {
             this.slots = slots;
             this.slotStatus = slotStatus;
@@ -12236,13 +12263,14 @@ public class distensionbot extends SubspaceBot {
         attackPoints = Math.round( totalPoints * percentAttack );
 
         // For display purposes only
-        float attack, support, combo;
-        attack = attackPoints;
-        support = supportPoints;
+        float combo;
+        //float attack, support;
+        //attack = attackPoints;
+        //support = supportPoints;
         combo = attackPoints + supportPoints;
         if( DEBUG ) {
-            attack *= DEBUG_MULTIPLIER;
-            support *= DEBUG_MULTIPLIER;
+            //attack *= DEBUG_MULTIPLIER;
+            //support *= DEBUG_MULTIPLIER;
             combo *= DEBUG_MULTIPLIER;
         }
 
@@ -12983,6 +13011,7 @@ public class distensionbot extends SubspaceBot {
          * a tie, does not care because it's only bragging rights anyway. :P
          * @return Array of size 2, index 0 being the team leader and 1 being # flaggrabs
          */
+        @SuppressWarnings("unused")
         public String[] getTeamLeader( HashSet<String> MVPs ) {
             String[] leaderInfo = {"", "", ""};
             HashSet <String>ties = new HashSet<String>();
