@@ -9,6 +9,7 @@ import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 import twcore.core.OperatorList;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
@@ -43,6 +44,7 @@ public class enigma extends MultiModule {
     int					curTime = 0;
     boolean 			gameProgress = false, eventProgress = false, startProgress = false;
     boolean				allowLagout = true;
+    boolean             isDM = false;
 
 
 
@@ -84,7 +86,8 @@ public class enigma extends MultiModule {
         int acceptedMessages;
 
         acceptedMessages = Message.PRIVATE_MESSAGE;
-        m_commandInterpreter.registerCommand( "!start", 	acceptedMessages, this, "doStartGame" );
+        m_commandInterpreter.registerCommand( "!start", 	acceptedMessages, this, "doStartGameNotDM" );
+        m_commandInterpreter.registerCommand( "!startdm",   acceptedMessages, this, "doStartGameDM" );
         m_commandInterpreter.registerCommand( "!help",  	acceptedMessages, this, "doShowHelp" );
         m_commandInterpreter.registerCommand( "!cancel", 	acceptedMessages, this, "doCancelGame" );
         m_commandInterpreter.registerCommand( "!stop", 		acceptedMessages, this, "doStopGame" );
@@ -97,70 +100,95 @@ public class enigma extends MultiModule {
     }
 
 
+    public void doStartGameNotDM( String name, String message ) {
+        doStartGame( name, message, false );
+    }
+    
+    public void doStartGameDM( String name, String message ) {
+        doStartGame( name, message, true );
+    }
+    
     /****************************************************************/
     /*** Starts a game of Enigma.                                 ***/
     /****************************************************************/
-    public void doStartGame( String name, String message ) {
-        if( m_botAction.getOperatorList().isER( name ) && gameProgress == false ) {
-            //Sets up players.
-            gameProgress = true;
-            startProgress = true;
-            checkDoors = curTime + 100;
-            checkMessages = curTime + 2;
+    public void doStartGame( String name, String message, boolean isThisDM ) {
+        isDM = isThisDM;
+        
+        if ( !m_botAction.getOperatorList().isER( name ) )
+            return;
+        if( !gameProgress ) {
+            m_botAction.sendPrivateMessage(name, "Game's already running! Use !stop to end the game.");
+            return;
+        }
+
+
+        //Sets up players.
+        gameProgress = true;
+        startProgress = true;
+        checkDoors = curTime + 100;
+        checkMessages = curTime + 2;
+        m_botAction.sendArenaMessage("Enigma is starting!", 21);
+        m_botAction.toggleLocked();
+        
+        if( !isDM ) {
             m_botAction.showObject(10);
-            m_botAction.sendArenaMessage("Enigma is starting!", 21);
-            m_botAction.toggleLocked();
             m_botAction.setAlltoFreq(0);
             m_botAction.changeAllShips(1);
-            //This is confusing but easiest way to do it in my opinion without sleeping.
-            start1 = new TimerTask() {
-                public void run() {
-                    if(gameProgress) {
+        } else {
+            m_botAction.sendPrivateMessage(name, "NOTE TO HOST: DM mode does not spec anyone at a certain number of deaths, or call a winner. That's on you!");
+        }
+        
+        //This is confusing but easiest way to do it in my opinion without sleeping.
+        start1 = new TimerTask() {
+            public void run() {
+                if(gameProgress) {
+                    if( !isDM ) {
                         m_botAction.sendArenaMessage("Enigma Rules/Tips", 103);
                         m_botAction.showObject(11);
-                        //2
-                        start2 = new TimerTask() {
-                            public void run() {
-                                if(gameProgress) {
-                                    m_botAction.sendArenaMessage("Game Starts Shortly", 2);
-                                    m_botAction.showObject(12);
-                                    //3
-                                    start3 = new TimerTask() {
-                                        public void run() {
-                                            if(gameProgress) {
-                                                startProgress = false;
-                                                m_botAction.sendArenaMessage("Enigma has begun! GO GO GO!", 104);
-                                                m_botAction.showObject(13);
-                                                checkDoors = curTime + 1;
-                                                m_botAction.sendUnfilteredPublicMessage("*shipreset");
-
-                                                checkEvents = curTime + getRandom( 10, 15 );
-                                                if(checkEvents == checkDoors)
-                                                    checkEvents++;
-                                            }
-                                        }
-                                    };
-                                    m_botAction.scheduleTask(start3,5500);
-                                }
-                            }
-                        };
-                        m_botAction.scheduleTask(start2,20500);
                     }
+                    //2
+                    start2 = new TimerTask() {
+                        public void run() {
+                            if(gameProgress) {
+                                m_botAction.sendArenaMessage("Game starts shortly ...", 2);
+                                m_botAction.showObject(12);
+                                //3
+                                start3 = new TimerTask() {
+                                    public void run() {
+                                        if(gameProgress) {
+                                            startProgress = false;
+                                            m_botAction.sendArenaMessage("Enigma has begun! GO GO GO!", 104);
+                                            m_botAction.showObject(13);
+                                            checkDoors = curTime + 1;
+                                            m_botAction.sendUnfilteredPublicMessage("*shipreset");
 
+                                            checkEvents = curTime + getRandom( 10, 15 );
+                                            if(checkEvents == checkDoors)
+                                                checkEvents++;
+                                        }
+                                    }
+                                };
+                                m_botAction.scheduleTask(start3,5500);
+                            }
+                        }
+                    };
+                    m_botAction.scheduleTask(start2,20500);
                 }
-            };
-            m_botAction.scheduleTask(start1,4000);
-            //doSleep(3500);
 
-        }
+            }
+        };
+        m_botAction.scheduleTask(start1,4000);
+        //doSleep(3500);
+
     }
-
+    
     /****************************************************************/
     /*** Cancels the game.                                        ***/
     /****************************************************************/
     public void doCancelGame(String name, String message) {
         if( m_botAction.getOperatorList().isER( name ) && gameProgress == true) {
-            m_botAction.sendArenaMessage("Enigma has been cancelled.", 103);
+            m_botAction.sendArenaMessage("The Enigma retreats into the void ...", Tools.Sound.VICTORY_BELL);
+
             m_botAction.toggleLocked();
             m_botAction.setDoors(255);
             m_botAction.prizeAll(7);
@@ -189,6 +217,10 @@ public class enigma extends MultiModule {
     /*** Stops the game.                                          ***/
     /****************************************************************/
     public void doStopGame(String name, String message) {
+        if( isDM ) {
+            doCancelGame(name,message);
+            return;
+        }
         final String winner = message;
         if( m_botAction.getOperatorList().isER( name ) && (gameProgress == true)  && (message.length() > 1)) {
             if(!startProgress) {
@@ -263,10 +295,9 @@ public class enigma extends MultiModule {
                 m_botAction.sendUnfilteredPublicMessage("?set misc:bouncefactor:28");
                 m_botAction.setDoors(255);
                 m_botAction.prizeAll(7);
-                m_botAction.sendPrivateMessage(name,"Settings reset");
-            }
-            else
-                m_botAction.sendPrivateMessage(name, "I will not reset the arena settings while a game is in progress");
+                m_botAction.sendPrivateMessage(name,"Settings reset.");
+            } else
+                m_botAction.sendPrivateMessage(name, "I will not reset the arena settings while a game is in progress!");
         }
     }
 
@@ -286,7 +317,9 @@ public class enigma extends MultiModule {
     		"|---------------------------------------------------------------|",
     		"|  Commands directed privately:                                 |",
     		"|  !start          - Begins a game of enigma.                   |",
+            "|  !startdm        - Begins a game of enigma DM (?go enigmadm)  |",
     		"|  !stop <name>    - Stops a game of enigma w/<name> as winner. |",
+            "|  !stop           - Stops DM game (same as !cancel)            |",
     		"|  !cancel         - Cancels a game of enigma.                  |",
     		"|  !reset          - Resets the arena in case of bot lagout/etc.|",
     		"|  !whatis         - Answers: what is Enigma?                   |",
@@ -378,7 +411,7 @@ public class enigma extends MultiModule {
 
                 //Checks messages.
                 if( curTime == checkMessages ) {
-                    if( gameProgress )
+                    if( gameProgress && allowLagout )
                         m_botAction.sendTeamMessage( "If you'd like to play personal message (PM) me with !lagout" );
                     checkMessages += m_delay;
                 }
@@ -598,7 +631,7 @@ public class enigma extends MultiModule {
     }
 
     public void handleEvent( PlayerEntered event ) {
-        if(gameProgress)
+        if(gameProgress && allowLagout)
             m_botAction.sendPrivateMessage(event.getPlayerName(), "Enigma has started, if you wish to play please pm me with :  !lagout");
     }
 
