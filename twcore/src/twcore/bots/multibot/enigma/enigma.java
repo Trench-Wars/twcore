@@ -116,11 +116,10 @@ public class enigma extends MultiModule {
         
         if ( !m_botAction.getOperatorList().isER( name ) )
             return;
-        if( !gameProgress ) {
+        if( gameProgress ) {
             m_botAction.sendPrivateMessage(name, "Game's already running! Use !stop to end the game.");
             return;
         }
-
 
         //Sets up players.
         gameProgress = true;
