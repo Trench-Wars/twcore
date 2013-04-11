@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -52,7 +53,8 @@ public class bwjsbot extends SubspaceBot {
     private BWJSTeam[] team;                                //Teams
     private Spy racismWatcher;                              //Racism watcher
     
-    private ArrayList<String> listNotplaying;               //List of notplaying players
+    private HashMap<String,Long> listNotplaying;            //List of notplaying players
+	private long NOTPLAYING_SECS_TO_WAIT = 45 * 1000;       //Time players must wait after enabling !np to disable
     private ArrayList<String> listAlert;                    //List of players who toggled !subscribe on
     private ArrayList<ExtendedLog> listExtendedLog;         //Logs more information of a game
     
@@ -266,9 +268,8 @@ public class bwjsbot extends SubspaceBot {
             name = m_botAction.getPlayerName(event.getPlayerID());
 
             /* Null pointer exception check */
-            if (name == null) {
+            if (name == null)
                 return;
-            }
             
             sendWelcomeMessage(name);   //Sends welcome message with status info to the player
             putOnFreq(name);            //Puts the player on the corresponding frequency
@@ -579,7 +580,7 @@ public class bwjsbot extends SubspaceBot {
             }
             
             /* Check if the player is set to notplaying */
-            if (listNotplaying.contains(p_lc)) {
+            if (listNotplaying.containsKey(p_lc)) {
                 m_botAction.sendPrivateMessage(name, "Error: " + p.getPlayerName() + " is set to notplaying.");
                 return;
             }
@@ -676,7 +677,7 @@ public class bwjsbot extends SubspaceBot {
         }
         
         /* Check if sender is on the not playing list */
-        if (listNotplaying.contains(name)) {
+        if (listNotplaying.containsKey(name)) {
             sendCaptainList(name);
             return;
         }
@@ -844,7 +845,7 @@ public class bwjsbot extends SubspaceBot {
             return;
         }
         
-        if (listNotplaying.contains(p.getPlayerName().toLowerCase())) {
+        if (listNotplaying.containsKey(p.getPlayerName().toLowerCase())) {
             m_botAction.sendPrivateMessage(name, p.getPlayerName() + " is already set to !notplaying.");
             return;
         }
@@ -1102,7 +1103,7 @@ public class bwjsbot extends SubspaceBot {
             }
             
             /* Check if the player is set to not playing */
-            if (listNotplaying.contains(name.toLowerCase())) {
+            if (listNotplaying.containsKey(name.toLowerCase())) {
                 return;
             }
             
@@ -1125,18 +1126,26 @@ public class bwjsbot extends SubspaceBot {
             t = getTeam(name);
             
             /* Check if player is on the notplaying list and if so remove him from that list */
-            if (listNotplaying.contains(name.toLowerCase())) {
-                listNotplaying.remove(name.toLowerCase());  //Remove from him from the notplaying list
-                m_botAction.sendPrivateMessage(name, 
-                    "You have been removed from the not playing list.");   //Notify the player
-                /* Put the player on the spectator frequency */
-                m_botAction.setShip(name, 1);
-                m_botAction.specWithoutLock(name);
-                return;
+				Long timeSinceNP;
+				timeSinceNP = listNotplaying.get(name.toLowerCase());
+            if (timeSinceNP != null) {
+				    if (System.currentTimeMillis() < timeSinceNP + NOTPLAYING_SECS_TO_WAIT) {
+                    m_botAction.sendPrivateMessage(name, 
+                        "You must wait awhile longer before issuing another !np command, out of respect for fairness.");   //Notify the player
+						  return;
+					 } else {					 
+                    listNotplaying.remove(name.toLowerCase());  //Remove from him from the notplaying list
+                    m_botAction.sendPrivateMessage(name, 
+                        "You have been removed from the not playing list.");   //Notify the player
+                    /* Put the player on the spectator frequency */
+                    m_botAction.setShip(name, 1);
+                    m_botAction.specWithoutLock(name);
+                    return;
+					 }
             }
             
             /* Add the player to the notplaying list */
-            listNotplaying.add(name.toLowerCase()); //Add the player to the notplaying list
+            listNotplaying.put(name.toLowerCase(),System.currentTimeMillis()); //Add the player to the notplaying list
             m_botAction.sendPrivateMessage(name, "You have been added to the not playing list. " +
                     "(Captains will be unable to add or sub you in.)"); //Notify the player
             m_botAction.specWithoutLock(name);  //Spectate the player
@@ -1606,7 +1615,7 @@ public class bwjsbot extends SubspaceBot {
             }
             
             /* Check if <playerB> is on the notplaying list */
-            if (listNotplaying.contains(playerBnew.getPlayerName().toLowerCase())) {
+            if (listNotplaying.containsKey(playerBnew.getPlayerName().toLowerCase())) {
                 m_botAction.sendPrivateMessage(name,
                     "Error: " + playerBnew.getPlayerName() + " is set to not playing.");
                 return;
@@ -2117,7 +2126,7 @@ public class bwjsbot extends SubspaceBot {
     private void putOnFreq(String name) {
         name = name.toLowerCase();
         
-        if (listNotplaying.contains(name)) {
+        if (listNotplaying.containsKey(name)) {
             m_botAction.setFreq(name, FREQ_NOTPLAYING);
             m_botAction.sendPrivateMessage(name, "You are on the !notplaying-list, " +
                     "captains are unable to sub or put you in. " + 
@@ -2149,8 +2158,8 @@ public class bwjsbot extends SubspaceBot {
         
         racismWatcher = new Spy(m_botAction);   //Racism watcher
         
-        listNotplaying = new ArrayList<String>();
-        listNotplaying.add(m_botAction.getBotName().toLowerCase());
+        listNotplaying = new HashMap<String,Long>();
+        listNotplaying.put(m_botAction.getBotName().toLowerCase(),new Long(0));
         listAlert = new ArrayList<String>();
         listExtendedLog = new ArrayList<ExtendedLog>();
         
@@ -2482,9 +2491,9 @@ public class bwjsbot extends SubspaceBot {
             if (i.getShipType() != Tools.Ship.SPECTATOR) {
                 m_botAction.specWithoutLock(id);
             }
-            if (listNotplaying.contains(i.getPlayerName().toLowerCase()) && freq != FREQ_NOTPLAYING) {
+            if (listNotplaying.containsKey(i.getPlayerName().toLowerCase()) && freq != FREQ_NOTPLAYING) {
                 m_botAction.setFreq(id, FREQ_NOTPLAYING);
-            } else if (freq != FREQ_SPEC && !listNotplaying.contains(i.getPlayerName().toLowerCase())) {
+            } else if (freq != FREQ_SPEC && !listNotplaying.containsKey(i.getPlayerName().toLowerCase())) {
                 m_botAction.setShip(id, 1);
                 m_botAction.specWithoutLock(id);
             }
@@ -3731,7 +3740,7 @@ public class bwjsbot extends SubspaceBot {
             p_state = SUBBED;
             if (m_botAction.getPlayer(p_name) != null) {
                 m_botAction.specWithoutLock(p_name);
-                if (!listNotplaying.contains(p_name.toLowerCase())) {
+                if (!listNotplaying.containsKey(p_name.toLowerCase())) {
                     m_botAction.setFreq(p_name, p_frequency);
                 }
             }
@@ -3827,6 +3836,7 @@ public class bwjsbot extends SubspaceBot {
          * @param shipType shipType
          * @return kills made in a specific ship
          */
+        @SuppressWarnings("unused")
         private int getKills(int shipType) {
             int kills = 0;
             for (int j = WARBIRD_KILL; j <= SHARK_KILL; j++)
@@ -3838,7 +3848,8 @@ public class bwjsbot extends SubspaceBot {
          * Returns teamkills made in a specific ship
          * @param shipType ship
          * @return teamkills made in a specific ship
-         */
+         */        
+        @SuppressWarnings("unused")
         private int getTeamKills(int shipType) {
             int kills = 0;
             
@@ -4691,7 +4702,7 @@ public class bwjsbot extends SubspaceBot {
                 m_botAction.specWithoutLock(name);
             }
             
-            if (listNotplaying.contains(name)) {
+            if (listNotplaying.containsKey(name)) {
                 m_botAction.setFreq(name, FREQ_NOTPLAYING);
             } else {
                 m_botAction.setFreq(name, FREQ_SPEC);
