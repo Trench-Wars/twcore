@@ -687,7 +687,7 @@ public class zonerbot extends SubspaceBot {
             for (Advert advert : queue.values()) {
                 if (advert.isGranter(name)) {
                     ba.sendSmartPrivateMessage(name, advert.approve());
-                    break;
+                    return;
                 }
             }
             ba.sendSmartPrivateMessage(name, "You have not granted any adverts.");
