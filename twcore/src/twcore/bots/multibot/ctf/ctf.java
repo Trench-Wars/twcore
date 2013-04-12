@@ -247,6 +247,8 @@ public class ctf extends MultiModule {
             if (opList.isER(name)) {
                 if (msg.startsWith("!start"))
                     cmd_start(name, msg);
+                if (msg.startsWith("!stop"))
+                    cmd_stop(name);
                 if (msg.startsWith("!reset"))
                     cmd_reset(name);
                 if (msg.equals("!has"))
@@ -331,6 +333,18 @@ public class ctf extends MultiModule {
         ba.sendArenaMessage("Game to " + toWin + " goals.");
         ba.sendArenaMessage("GO GO GO!!!", 104);
         starter = name;
+    }
+    
+    private void cmd_stop(String name) {
+        ba.sendArenaMessage("Game stopped prematurely!");
+        displayStats();
+        try {
+            ba.cancelTask(spec);
+            ba.cancelTask(flag[0]);
+            ba.cancelTask(flag[1]);
+        } catch( Exception e) {
+        }
+        ba.sendPrivateMessage(name, "Game ended early by your command, Master.");
     }
     
     private void cmd_reset(String name) {
@@ -688,6 +702,7 @@ public class ctf extends MultiModule {
         return new String[] {
                 "Halo CTF Commands: ",
                 " !start <#>       - Start a new game to # goals, or default is 5",
+                " !stop            - Ends game prematurely/before all caps are made",
                 " !score           - Display current score",
                 " !stats <name>    - Displays your current stats or stats of <name>",
                 " !reset           - Completely resets the flag game",
