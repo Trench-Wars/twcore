@@ -12450,7 +12450,7 @@ public class distensionbot extends SubspaceBot {
         //if( intermissionTime >= Tools.TimeInMillis.MINUTE && !DEBUG )
         //    m_botAction.setTimer( (intermissionTime + Tools.TimeInMillis.SECOND) / Tools.TimeInMillis.MINUTE );
         intermissionTimer = new IntermissionTask();
-        m_botAction.scheduleTask( intermissionTimer, BALLTIME_MINS + 15000 );
+        m_botAction.scheduleTask( intermissionTimer, ( BALLTIME_MINS * Tools.TimeInMillis.MINUTE ) + 15000 );
     }
 
 
@@ -12648,7 +12648,7 @@ public class distensionbot extends SubspaceBot {
             m_goalsArmy0 = 0;
             m_goalsArmy1 = 0;
             m_botAction.warpAllRandomly();
-            m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( (time + 1000) /1000 ) + ".  Rules: Flags worth no points; goals earn RP.", Tools.Sound.VICTORY_BELL );
+            m_botAction.sendArenaMessage( "FREE PLAY for the next " + getTimeString( (time) /1000 ) + ".  Rules: Flags worth no points; goals earn RP.", Tools.Sound.VICTORY_BELL );
         }
     }
 
