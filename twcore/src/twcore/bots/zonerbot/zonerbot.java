@@ -1548,10 +1548,9 @@ public class zonerbot extends SubspaceBot {
         /** Checks if expired then terminates the periodic zoner if so otherwise sends zoner **/
         public void run() {
             long now = System.currentTimeMillis();
-            if ((created + (duration * Tools.TimeInMillis.HOUR)) < now)
+            if (now > (created + (duration * Tools.TimeInMillis.HOUR)))
                 end();
-            else
-                if( duration < 0 )
+            else if (duration >= 0)
                     periodicQueue.add(this);
         }
         
