@@ -1061,6 +1061,8 @@ public class zonerbot extends SubspaceBot {
             pieces++;
         String[] result = new String[pieces];
         for (int i = 0; i < pieces; i++) {
+            if (msg.length() < length)
+                return new String[] {"FAILED - " + msg};
             if (i == 0)
                 result[i] = msg.substring(0, length-1);
             else if (i < (pieces - 1))
