@@ -1061,10 +1061,8 @@ public class zonerbot extends SubspaceBot {
             pieces++;
         String[] result = new String[pieces];
         for (int i = 0; i < pieces; i++) {
-            if (msg.length() < length)
-                return new String[] {"FAILED - " + msg};
             if (i == 0)
-                result[i] = msg.substring(0, length-1);
+                result[i] = msg.substring(0, (i > 1 ? length : msg.length()));
             else if (i < (pieces - 1))
                 result[i] = msg.substring(i * length, i * length + length);
             else
@@ -1550,7 +1548,7 @@ public class zonerbot extends SubspaceBot {
         /** Checks if expired then terminates the periodic zoner if so otherwise sends zoner **/
         public void run() {
             long now = System.currentTimeMillis();
-            if (now > (created + (duration * Tools.TimeInMillis.HOUR)))
+            if ((created + (duration * Tools.TimeInMillis.HOUR)) < now)
                 end();
             else
                 if( duration < 0 )
