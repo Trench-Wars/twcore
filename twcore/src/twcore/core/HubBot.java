@@ -837,7 +837,7 @@ public class HubBot extends SubspaceBot {
 	    	if(operatorList.isSysop(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots !listonbots");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype");
-	    		m_botAction.sendSmartPrivateMessage( messager, "                  !smartshutdown !shutdownidlebots !shutdownallbots");
+	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !smartshutdown !shutdownidlebots !shutdownallbots");
 	    	}
 	    	if(operatorList.isSmod(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "ACCESS CONTROL:   !updateaccess !listoperators");
@@ -919,7 +919,7 @@ public class HubBot extends SubspaceBot {
 	    	// !shutdowncore
 	    	else if (argument.equalsIgnoreCase("shutdowncore")) {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Performs a clean shutdown of all the bots and the entire core. Disable restart scripts first.");
-	    		m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SYSOP_LEVEL));
+	    		m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SMOD_LEVEL));
 	    		m_botAction.sendSmartPrivateMessage( messager , " !shutdowncore");
 	    	}
 	    	// !smartshutdown
