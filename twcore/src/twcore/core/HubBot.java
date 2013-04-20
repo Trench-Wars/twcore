@@ -111,14 +111,14 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess", accessRequired );
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators", accessRequired );
         m_commandInterpreter.registerCommand( "!recycleserver", acceptedMessages, this, "handleRecycleCommand", accessRequired );
+        m_commandInterpreter.registerCommand( "!shutdowncore", acceptedMessages, this, "handleShutdownCommand", accessRequired );
+        m_commandInterpreter.registerCommand( "!sdc", acceptedMessages, this, "handleShutdownCommand", accessRequired );
         
         // Sysop+
         accessRequired = OperatorList.SYSOP_LEVEL;
         m_commandInterpreter.registerCommand( "!forcespawn", acceptedMessages, this, "handleForceSpawnMessage", accessRequired );
         m_commandInterpreter.registerCommand( "!hiders", acceptedMessages, this, "handleHiders", accessRequired );
         m_commandInterpreter.registerCommand( "!reload", acceptedMessages, this, "handleReloadHiders", accessRequired );
-        m_commandInterpreter.registerCommand( "!shutdowncore", acceptedMessages, this, "handleShutdownCommand", accessRequired );
-        m_commandInterpreter.registerCommand( "!sdc", acceptedMessages, this, "handleShutdownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!smartshutdown", acceptedMessages, this, "handleSmartShutdownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdownidlebots", acceptedMessages, this, "handleShutdownIdleBotsCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdownallbots", acceptedMessages, this, "handleShutdownAllBotsCommand", accessRequired );
@@ -832,12 +832,12 @@ public class HubBot extends SubspaceBot {
 	    	}
 	    	if(operatorList.isHighmod(messager) && !operatorList.isSysop(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !waitinglist !listbots !listonbots");
-	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype");
+	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !removetype");
 	    	}
 	    	if(operatorList.isSysop(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots !listonbots");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype");
-	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !smartshutdown !shutdownidlebots !shutdownallbots");
+	    		m_botAction.sendSmartPrivateMessage( messager, "                  !smartshutdown !shutdownidlebots !shutdownallbots");
 	    	}
 	    	if(operatorList.isSmod(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "ACCESS CONTROL:   !updateaccess !listoperators");
