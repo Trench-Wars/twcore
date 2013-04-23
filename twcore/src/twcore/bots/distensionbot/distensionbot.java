@@ -6489,6 +6489,7 @@ public class distensionbot extends SubspaceBot {
             } else {
                 m_botAction.sendPrivateMessage( name, "Player not found." );
             }
+            m_botAction.SQLClose(r);
         } catch (SQLException e ) {
             m_botAction.sendPrivateMessage( name, "DB command not successful." );
         }
@@ -6539,6 +6540,7 @@ public class distensionbot extends SubspaceBot {
                 }
                 totalCount++;
             }
+            m_botAction.SQLClose(r);
             m_botAction.specAll();
             for( int pid : newArmy0 )
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fnArmyID='0' WHERE fnID='" + pid + "'" );
@@ -7820,8 +7822,8 @@ public class distensionbot extends SubspaceBot {
                     timePlayed = 0;
                     rewardRemaining = 0;
                     waitInSpawn = false;            // New players are warped out, to avoid confusion 
-                    m_botAction.SQLClose(r);
                 }
+                m_botAction.SQLClose(r);
             } catch (SQLException e ) { m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG ); }
         }
 
