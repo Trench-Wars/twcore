@@ -268,7 +268,7 @@ public class bwjsbot extends SubspaceBot {
             name = m_botAction.getPlayerName(event.getPlayerID());
 
             /* Null pointer exception check */
-            if (name == null)
+            if (name == null || m_botAction.getOperatorList().isBotExact(name))
                 return;
             
             sendWelcomeMessage(name);   //Sends welcome message with status info to the player
