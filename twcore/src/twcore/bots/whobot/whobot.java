@@ -200,9 +200,9 @@ public class whobot extends SubspaceBot {
         }
 
         if (event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE || event.getMessageType() == Message.PRIVATE_MESSAGE) {
-            String name = m_botAction.getPlayerName(event.getPlayerID());
-            if (name == null || name.length() < 1) 
-                name = event.getMessager();
+            String name = event.getMessager();
+            if (name == null || name.length() < 1)
+                name = m_botAction.getPlayerName(event.getPlayerID());
 
             if (msg.equals("!about")) {
                 about(name);
