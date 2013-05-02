@@ -243,10 +243,10 @@ public class welcomebot extends SubspaceBot {
     public void handleEvent(PlayerDeath event) {
         if (!ready) return;
         String killer = ba.getPlayerName(event.getKillerID());
-        if (sessions.containsKey(killer))
+        if (killer != null && sessions.containsKey(killer))
             sessions.get(killer).addKill();
         String killed = ba.getPlayerName(event.getKilleeID());
-        if (sessions.containsKey(killed))
+        if (killed != null && sessions.containsKey(killed))
             sessions.get(killed).addDeath();
     }
     
