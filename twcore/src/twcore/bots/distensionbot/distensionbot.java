@@ -2,6 +2,7 @@ package twcore.bots.distensionbot;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
@@ -61,6 +62,7 @@ import twcore.core.util.Tools;
  */
 public class distensionbot extends SubspaceBot {
 
+    // Misc defines
     private boolean DEBUG = false;                         // Debug mode.  Generally for beta-testing.
     private final float DEBUG_MULTIPLIER = 9.2f;           // Amount of RP to give extra in debug mode
     private final float REWARD_RATE = 1.2f;                // Multiplier for RP earned in beta "reward" time
@@ -85,6 +87,7 @@ public class distensionbot extends SubspaceBot {
     private final int SCRAP_CLEARING_FREQUENCY = 60;       // # seconds after the most recent scrap is forgotten
     private final int WARP_POINT_CHECK_FREQUENCY = 4;      // # seconds between checking warp points for players
     private final int VENGEFUL_VALID_SECONDS = 12;         // # seconds after V.B. fire in which VB gets RP bonus
+    private final int EMP_DISALLOWED_SECS = 30;            // # seconds to end round when EMP can't be used 
     private final int STREAK_RANK_PROXIMITY_DIVISOR = 2;   // Divisor for rank to determine streak rank prox (50 / 2 = 25 rank prox)
     private final int STREAK_RANK_PROXIMITY_MINIMUM = 10;  // Min streak rank proximity allowed
     private final int PILOTS_REQ_EACH_ARMY = 3;            // # players needed on each army for game to start
@@ -494,6 +497,10 @@ public class distensionbot extends SubspaceBot {
     private final int SOUND_START = 243;                // GOGOGO Reaplacement.
     private final int SOUND_SUDDEN_DEATH = 244;         // Sudden Death active
     private final int SOUND_VICTORY = 245;              // Round win
+    
+    
+    // Database PreparedStatements
+    
 
 
 
@@ -4617,11 +4624,12 @@ public class distensionbot extends SubspaceBot {
         GroupSpamTask emp1 = new GroupSpamTask();
         GroupSpamTask emp2 = new GroupSpamTask();
         
-        boolean earlyEMP = (flagTimer.isRunning() && flagTimer.getTotalSecs() < 15);  
+        boolean earlyEMP = (flagTimer.isRunning() && flagTimer.getTotalSecs() < 15);
+        boolean lateEMP = (flagTimer.isRunning() && flagTimer.getSecondsRemainingToWin() < 30);
 
         for( DistensionPlayer p3 : m_players.values() ) {
             if( p3.getArmyID() != freq ) {
-                if( !earlyEMP ) {
+                if( !earlyEMP && !lateEMP ) {
                     Random r = new Random();
                     if( r.nextFloat() > 0.2f ) {
                         emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.PLAY_MUSIC_ONCE );
@@ -4639,8 +4647,7 @@ public class distensionbot extends SubspaceBot {
             }
         }
         m_botAction.scheduleTask(emp0, MESSAGE_SPAM_DELAY, 75 );
-        if( !earlyEMP ) {
-            m_botAction.scheduleTask(emp1, Tools.TimeInMillis.SECOND * 3, MESSAGE_SPAM_DELAY );
+        if( !earlyEMP && !lateEMP ) {
             m_botAction.scheduleTask(emp2, Tools.TimeInMillis.SECOND * 6, MESSAGE_SPAM_DELAY );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on the enemy!" );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed an ELECTRO-MAGNETIC PULSE on your army!" );
@@ -13147,6 +13154,13 @@ public class distensionbot extends SubspaceBot {
          */
         public int getTimeNeededForWin() {
             return flagSecondsRequired;
+        }
+        
+        /**
+         * @return Seconds needed for whichever team is holding the flag(s) to win the round
+         */
+        public int getSecondsRemainingToWin() {
+            return flagSecondsRequired - secondsHeld;
         }
 
         /**
