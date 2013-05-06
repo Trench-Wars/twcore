@@ -1090,10 +1090,8 @@ public class robohelp extends SubspaceBot {
     }
 
     public void handleDie(String name, String message) {
-        if (opList.isSysop(name)) {
-            m_botAction.cancelTasks();
-            m_botAction.die("RoboHelp disconnected by " + name);
-        }
+        m_botAction.cancelTasks();
+        m_botAction.die("RoboHelp disconnected by " + name);
     }
 
     public void handleWarn(String playerName, String message) {
