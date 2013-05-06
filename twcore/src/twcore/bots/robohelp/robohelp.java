@@ -157,10 +157,10 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!banned", acceptedMessages, this, "handleListTellBanned", OperatorList.SMOD_LEVEL);
         m_commandInterpreter.registerCommand("!unban", acceptedMessages, this, "unbanTell", OperatorList.SMOD_LEVEL);
         m_commandInterpreter.registerCommand("!addban", acceptedMessages, this, "handleAddBan", OperatorList.SMOD_LEVEL);
+        m_commandInterpreter.registerCommand("!die", acceptedMessages, this, "handleDie", OperatorList.SMOD_LEVEL);
 
         // Sysop+ 
         m_commandInterpreter.registerCommand("!reload", acceptedMessages, this, "handleReload", OperatorList.SYSOP_LEVEL);
-        m_commandInterpreter.registerCommand("!die", acceptedMessages, this, "handleDie", OperatorList.SYSOP_LEVEL);
         m_commandInterpreter.registerCommand("!loadnewbs", acceptedMessages, this, "loadLastNewbs", OperatorList.SYSOP_LEVEL);
 
         acceptedMessages = Message.CHAT_MESSAGE;
