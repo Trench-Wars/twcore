@@ -30,7 +30,7 @@ public class DraftTeam {
     public static final int MAXRES_X = 1440;
     public static final int MAXRES_Y = 1024;
     public int MAX_STARS = 60;
-    public int season = 9;
+    public int season = 10;
     
     BotAction       ba;
     OperatorList    oplist;
