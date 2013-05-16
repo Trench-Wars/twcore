@@ -33,7 +33,7 @@ public class twdt extends SubspaceBot {
     public BotSettings rules;
 
     public static final String db = "website";
-    public static final Integer dtSeason = 9;
+    public static final Integer dtSeason = 10;
     public GameType type;
     public DraftGame game;
     
