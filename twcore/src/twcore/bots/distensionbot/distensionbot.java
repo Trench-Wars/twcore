@@ -697,7 +697,8 @@ public class distensionbot extends SubspaceBot {
                     }
                     String query = "UPDATE tblDistensionGenData SET fdNextResetTime='" + format.format(newResetTime) + "' WHERE fnSettingNum='" + config + "'";
                     m_botAction.SQLQueryAndClose( m_database, query );
-                    m_botAction.sendRemotePrivateMessage( "MessageBot", "!lmessage qan:Reset query: " + query );
+                    if( DEBUG )
+                        m_botAction.sendRemotePrivateMessage( "MessageBot", "!lmessage qan:Reset query: " + query );
                 }
             }
         } catch (SQLException e ) { }
