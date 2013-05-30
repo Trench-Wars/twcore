@@ -71,7 +71,7 @@ public class distensionbot extends SubspaceBot {
     private final int AUTOSAVE_DELAY = 3;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 150;             // Delay in ms between msgs in list, when spammed to single
     private final int NUM_UNIVERSAL_MSGS_SPAMMED = 2;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
-    private int PRIZE_SPAM_DELAY = 15;                     // Delay in ms between prizes for individual players
+    private int PRIZE_SPAM_DELAY = 20;                     // Delay in ms between prizes for individual players
     private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
@@ -96,8 +96,8 @@ public class distensionbot extends SubspaceBot {
     private final float EARLY_RANK_FACTOR = 1.6f;          // Factor for rank increases (lvl 1-9)
     private final float LOW_RANK_FACTOR = 1.15f;           // Factor for rank increases (lvl 10+)
     private final float NORMAL_RANK_FACTOR = 1.10f;        // Factor for rank increases (lvl 25+)
-    private final float HIGH_RANK_FACTOR = 1.25f;          // Factor for rank increases (lvl 50+)
-    private final float STUPIDLY_HIGH_RANK_FACTOR = 1.6f;  // Factor for rank increases (lvl 70+)
+    private final float HIGH_RANK_FACTOR = 1.20f;          // Factor for rank increases (lvl 50+)
+    private final float STUPIDLY_HIGH_RANK_FACTOR = 1.35f; // Factor for rank increases (lvl 70+)
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
@@ -1074,7 +1074,7 @@ public class distensionbot extends SubspaceBot {
                                 }
                             }
                             if( !armyHasShark[i] && armyPilots[i] > 4 ) {
-                                m_botAction.sendOpposingTeamMessageByFrequency( 0, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
+                                m_botAction.sendOpposingTeamMessageByFrequency( i, "SHARK NEEDED: Shark pilot urgently requested by HQ.  Switch ships to receive a bonus." );
                             }
                         }
                     }
@@ -2971,6 +2971,14 @@ public class distensionbot extends SubspaceBot {
         } catch ( Exception e ) {
             throw new TWCoreException( "Exactly which ship do you mean there?  Give me a number.  Maybe check the !hangar first." );
         }
+        
+        if( m_lagouts.contains(p) ) {
+            // If we have a successful !lagout return, don't bother with the rest; otherwise continue
+            if( cmdLagout( name, msg ) == true )
+                return;
+        }
+            
+        
         if( lastShipNum == shipNum )
             throw new TWCoreException( "You're already in that ship." );
         if( !p.shipIsAvailable( shipNum ) )
@@ -3211,6 +3219,8 @@ public class distensionbot extends SubspaceBot {
             if( p.getShipNum() > 0 )
                 m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Ship status was NOT logged.  Please notify a member of staff immediately!");
         }
+        if( p.getShipNum() == 9 )
+            m_botAction.setFreq( p.getArenaPlayerID(), 9999);
 
         p.setIgnoreShipChanges(false);
         if( p.getShipNum() > 0 )        // If player was !leaving, don't set them to ship 0...
@@ -4375,13 +4385,13 @@ public class distensionbot extends SubspaceBot {
                 shipStrength += p2.getStrength();
             }
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 )
-                    + (shipStrength > 0 ? ("  " + shipStrength + " STR" + text) : "") );
+                    + (shipStrength > 0 ? ("  " + Tools.formatString( String.valueOf( shipStrength ), 3 ) + " STR" + text) : "") );
             totalStrength += shipStrength;
         }
         if( team.get(0).size() > 0 ) {
             DistensionPlayer p2 = m_players.get( team.get(0).get(0) );
             players++;
-            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "+ Ops    " + p2.getStrength() + " STR   " + p2.getName() + "(" + p2.getRank() + ")");
+            m_botAction.sendPrivateMessage(p.getArenaPlayerID(), "+ Ops      " + Tools.formatString( String.valueOf( p2.getStrength() ), 3 ) + " STR   " + p2.getName() + "(" + p2.getRank() + ")");
         }
 
         m_botAction.sendPrivateMessage(p.getArenaPlayerID(), players + " players, " + totalStrength + " total strength.  (STR = rank + " + RANK_0_STRENGTH + ")" );
@@ -4423,11 +4433,12 @@ public class distensionbot extends SubspaceBot {
      * Puts a player back into the game with participation bonus intact.
      * @param name
      * @param msg
+     * @return True if lagout succeeded
      */
-    public void cmdLagout( String name, String msg ) {
+    public boolean cmdLagout( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
-            return;
+            return false;
         if( p.getShipNum() == -1 ) {
             m_botAction.sendPrivateMessage( name, "You must !return before you !lagout.  Attempting to !return you automatically.  NOTE: If you were DC'd, you will not be able to !lagout." );
 	    try {
@@ -4435,7 +4446,7 @@ public class distensionbot extends SubspaceBot {
             } catch( Exception e ) {
                 Tools.printLog("Distension: " + name + " had !return initiated but had already returned!" );
             }
-            return;
+            return false;
         }
         if( p.getShipNum() != 0 )
             throw new TWCoreException( "You're already in the battle!" );
@@ -4455,7 +4466,7 @@ public class distensionbot extends SubspaceBot {
             if( !p.getCurrentShipFromDB() ) {
                 m_botAction.sendPrivateMessage( name, "Error getting back in with that ship!  Please contact a mod." );
                 p.setShipNum( 0 );
-                return;
+                return false;
             }
             for( DistensionArmy a : m_armies.values() )
                 a.recalculateFigures();
@@ -4476,7 +4487,9 @@ public class distensionbot extends SubspaceBot {
             cmdProgress( name, null );
         } else {
             m_botAction.sendPrivateMessage( name, "No need to !lagout ... no battle's going!  Just hop right in." );
+            return false;
         }
+        return true;
     }
 
     /**
@@ -8499,7 +8512,7 @@ public class distensionbot extends SubspaceBot {
                 if( tick % neededTick == 0 ) {
                     if( !jumpSpace ) {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_JUMPSPACE );
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "JumpSpace Drive ready.  PM >>> to use.", SOUND_POWERUP_RECHARGED );
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "JumpSpace Drive ready.  PM '>>> [N|S|E|W|NW|SW|SE|SW]' to use.", SOUND_POWERUP_RECHARGED );
                         jumpSpace = true;
                         //prized = true;
                     }
@@ -12259,7 +12272,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         // Points to be divided up by all
-        float totalPoints = (float)(minsToWin * 0.4f) * (strengthAvg0 + strengthAvg1 + bonusRanksForPointAllocation);
+        float totalPoints = (float)(minsToWin * 0.7f) * (strengthAvg0 + strengthAvg1 + bonusRanksForPointAllocation);
 
         if( totalLvlSupport < 1.0f) totalLvlSupport = 1.0f;
         if( totalLvlAttack < 1.0f) totalLvlAttack = 1.0f;
