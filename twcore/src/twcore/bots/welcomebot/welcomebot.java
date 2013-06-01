@@ -582,12 +582,12 @@ public class welcomebot extends SubspaceBot {
         Player p = ba.getPlayer(msg);
         if (p == null)
             p = ba.getFuzzyPlayer(msg);
-        Player s = ba.getPlayer(name);
-        long x = (long)Math.floor(((double)p.getXTileLocation()) / 51.2); // Break it up into coords (1024 / 51.2 = 20)
-        long y = (long)(Math.floor(((double)p.getYTileLocation()) / 51.2)) + 1; // Don't forget to carry the 0!
-        char xchar = (char)(65 + x);
                         
         if (p != null) {
+            Player s = ba.getPlayer(name);
+            long x = (long)Math.floor(((double)p.getXTileLocation()) / 51.2); // Break it up into coords (1024 / 51.2 = 20)
+            long y = (long)(Math.floor(((double)p.getYTileLocation()) / 51.2)) + 1; // Don't forget to carry the 0!
+            char xchar = (char)(65 + x);
             String str = msg + " @ " + xchar + y + " (" + p.getXTileLocation() + "," + p.getYTileLocation() + ")";
             if (s != null)
                 str += "   [YOU: (" + s.getXTileLocation() + "," + s.getYTileLocation() + ")]";
