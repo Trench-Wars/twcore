@@ -7925,11 +7925,13 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
                             return success;
                         }
-                        int shipsOver20 = r.getInt( "TOTAL" );
-                        if( shipsOver20 == 9 ) {
-                            bonusRPMult = 0.5f;
-                        } else {
-                            bonusRPMult = (float)shipsOver20 * 0.05f;
+                        if( r.next() ) {
+                            int shipsOver20 = r.getInt( "TOTAL" );
+                            if( shipsOver20 == 9 ) {
+                                bonusRPMult = 0.5f;
+                            } else {
+                                bonusRPMult = (float)shipsOver20 * 0.05f;
+                            }
                         }
                     }
                     
