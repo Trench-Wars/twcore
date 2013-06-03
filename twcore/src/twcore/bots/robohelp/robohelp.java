@@ -83,6 +83,7 @@ public class robohelp extends SubspaceBot {
     String findPopulation = "";
     int setPopID = -1;
     boolean timeFormat = false;
+    boolean whitespaceAfterCalls = true;        // True if we insert a Robohelp> line after calls
 
     String lastStafferClaimedCall;
 
@@ -468,8 +469,12 @@ public class robohelp extends SubspaceBot {
         } else if (callsUntilAd == 0) {
             callsUntilAd = CALL_INTERVAL;
             msg += "Call #" + help.getID() + CALL_AD;
-        } else if (now - lastAlert < CALL_EXPIRATION_TIME)
+        } else if (now - lastAlert < CALL_EXPIRATION_TIME) {
             msg += "Call #" + help.getID();
+        } else if( whitespaceAfterCalls ) {
+            msg = " ";
+        }
+        
         if (msg.length() > 0)
             m_botAction.sendChatMessage(msg);
         lastAlert = now;
@@ -520,8 +525,11 @@ public class robohelp extends SubspaceBot {
             if (callsUntilAd == 0) {
                 callsUntilAd = CALL_INTERVAL;
                 msg += "Call #" + helpRequest.getID() + CALL_AD;
-            } else if (now - lastAlert < CALL_EXPIRATION_TIME)
+            } else if (now - lastAlert < CALL_EXPIRATION_TIME) {
                 msg += "Call #" + helpRequest.getID();
+            } else if( whitespaceAfterCalls ) {
+                msg = " ";
+            }
             if (msg.length() > 0)
                 m_botAction.sendChatMessage(msg);
             lastAlert = now;
@@ -596,8 +604,11 @@ public class robohelp extends SubspaceBot {
         if (callsUntilAd == 0) {
             callsUntilAd = CALL_INTERVAL;
             msg += "Call #" + newb.getID() + CALL_AD;
-        } else if (now - lastAlert < CALL_EXPIRATION_TIME)
+        } else if (now - lastAlert < CALL_EXPIRATION_TIME) {
             msg += "Call #" + newb.getID();
+        } else if( whitespaceAfterCalls ) {
+            msg = " ";
+        }            
         if (msg.length() > 0)
             m_botAction.sendChatMessage(msg);
         lastAlert = now;
@@ -2259,7 +2270,10 @@ public class robohelp extends SubspaceBot {
                 "  !undo                                    - Un-falsifies the last new player alert so that it will affect stats",
                 "  !undo <Player>                           - Un-falsifies all new player alerts for <Player> (doesn't have to be in !newbs)",
                 "  !newbs                                   - Lists recent new player alerts and claimer information",
-                "  !newbs <num>                             - Lists the last <nuM> new player alerts and claimer information" };
+                "  !newbs <num>                             - Lists the last <nuM> new player alerts and claimer information",
+                "  ihave                                    - Claims most recent newplayer call but does not affect stats",
+                "  ihave #<id>, ihave <id>                  - Claims newplayer Call #<id> but does not affect staff stats" };
+        
         m_botAction.smartPrivateMessageSpam(playerName, helpText);
     }
 
@@ -2329,13 +2343,11 @@ public class robohelp extends SubspaceBot {
                 handleFalseNewb(name, message);
             else if (message.startsWith("!undo"))
                 handleUndoFalse(name, message);
-            else if (!message.contains("that") && !message.contains("it") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have"))
-                    && opList.isZH(name))
+            else if (!message.contains("that") && !message.contains("it") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")))
                 handleClaims(name, message);
-            else if (!message.contains("that") && message.contains("#") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have"))
-                    && opList.isZH(name))
+            else if (!message.contains("that") && message.contains("#") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")))
                 handleClaims(name, message);
-            else if ((message.startsWith("on it") || message.startsWith("got it")) && opList.isZH(name))
+            else if ((message.startsWith("on it") || message.startsWith("got it")))
                 handleClaims(name, message);
             else if (message.startsWith("on that") || message.startsWith("got that"))
                 handleThat(name, null);
