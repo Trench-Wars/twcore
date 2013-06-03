@@ -71,7 +71,7 @@ public class distensionbot extends SubspaceBot {
     private final int AUTOSAVE_DELAY = 3;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 150;             // Delay in ms between msgs in list, when spammed to single
     private final int NUM_UNIVERSAL_MSGS_SPAMMED = 2;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
-    private int PRIZE_SPAM_DELAY = 20;                     // Delay in ms between prizes for individual players
+    private int PRIZE_SPAM_DELAY = 21;                     // Delay in ms between prizes for individual players
     private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
@@ -282,6 +282,7 @@ public class distensionbot extends SubspaceBot {
     private long m_shutdownTimeMillis;                      // Time at which to shutdown, in ms
     private boolean m_readyForPlay = false;                 // True if bot has entered arena and is ready to go
     private boolean m_roundGettingStarted = false;          // True if round is being started (all players in rearm areas)
+    private boolean m_bonusForMultiship = true;             // True if bonus given for having many ships rank 20+
     private int[] m_flagOwner = {-1, -1};                   // ArmyIDs of flag owners; -1 for none
     private List <String>m_mineClearedPlayers;              // Players who have already cleared mines this battle
     private Map <String,Integer>m_scrappingPlayers;         // Players who have scrapped recently, and what they scrapped
@@ -2854,6 +2855,9 @@ public class distensionbot extends SubspaceBot {
         }
 
         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), p.getPlayerRankString() + " " + p.getName().toUpperCase() + " authorized as a pilot of " + p.getArmyName().toUpperCase() + ".  Returning you to HQ." );
+        if( p.getRPMultiplier() > 0.05f ) {
+            m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "[CELEBRATE DIVERSITY BONUS]  +" + (int)(p.getRPMultiplier() * 100) + "% RP  (+5%/ship in hangar over rank 20)" );
+        }
         p.setShipNum( 0 );
         if( p.getArmyID() == 0 ) {
             playerObjs.showObject(p.getArenaPlayerID(), LVZ_PRM_PERSONAL_FLAG );
@@ -4639,7 +4643,7 @@ public class distensionbot extends SubspaceBot {
         GroupSpamTask emp2 = new GroupSpamTask();
         
         boolean earlyEMP = (flagTimer.isRunning() && flagTimer.getTotalSecs() < 15);
-        boolean lateEMP = (flagTimer.isRunning() && flagTimer.getSecondsRemainingToWin() < 30);
+        boolean lateEMP = (flagTimer.isRunning() && flagTimer.getSecondsRemainingToWin() < EMP_DISALLOWED_SECS);
 
         for( DistensionPlayer p3 : m_players.values() ) {
             if( p3.getArmyID() != freq ) {
@@ -7630,6 +7634,7 @@ public class distensionbot extends SubspaceBot {
         private int       idleTicksDocked;      // # ticks player has been idle while docked
         private int       assistArmyID;         // ID of army player is assisting; -1 if not assisting
         private int       recentlyEarnedRP;     // RP earned since changing to this ship
+        private float     bonusRPMult;          // % RP added as bonus
         private int       numLagouts;           // # lagouts this round
         private int       lagoutTimer;          // # seconds remaining before lagout expires
         private int       currentOP;            // Current # OP points (for Tactical Ops)
@@ -7717,6 +7722,7 @@ public class distensionbot extends SubspaceBot {
             idleTicksDocked = 0;
             assistArmyID = -1;
             recentlyEarnedRP = 0;
+            bonusRPMult = 0.0f;
             numLagouts = 0;
             lagoutTimer = 0;
             bonusBuildup = 0.0;
@@ -7906,8 +7912,27 @@ public class distensionbot extends SubspaceBot {
                     battlesWon = r.getInt( "fnBattlesWon" );
                     rewardRemaining = r.getInt( "fnRewardRP" );
                     sendKillMessages = r.getString( "fcSendKillMsg" ).equals("y");
+                    
                     for( int i = 0; i < 9; i++ )
                         shipsAvail[i] = ( r.getString( "fcShip" + (i + 1) ).equals( "y" ) ? true : false );
+                    
+                    // +5% RP bonus for all ships over 20
+                    if( m_bonusForMultiship ) {
+                        r = m_botAction.SQLQuery( m_database, "SELECT COUNT(*) AS TOTAL FROM tblDistensionShip " +
+                                "WHERE fnPlayerID='" + dbPlayerID + "' AND fnRank >= 20" );
+                        if( r == null ) {
+                            Tools.printLog( "Null ResultSet returned for query: 'SELECT COUNT(*) etc etc etc'" );
+                            m_botAction.sendPrivateMessage( arenaPlayerID, DB_PROB_MSG );
+                            return success;
+                        }
+                        int shipsOver20 = r.getInt( "TOTAL" );
+                        if( shipsOver20 == 9 ) {
+                            bonusRPMult = 0.5f;
+                        } else {
+                            bonusRPMult = (float)shipsOver20 * 0.05f;
+                        }
+                    }
+                    
                     success = 1;
                 }
                 m_botAction.SQLClose(r);
@@ -8116,6 +8141,7 @@ public class distensionbot extends SubspaceBot {
                     maxOP = 0;
                     maxComms = 0;
                 }
+                
                 // Setup special (aka unusual) abilities
                 Vector<ShipUpgrade> upgrades = m_shipGeneralData.get( shipNum ).getAllUpgrades();
                 for( int i = 0; i < NUM_UPGRADES; i++ ) {
@@ -8773,17 +8799,19 @@ public class distensionbot extends SubspaceBot {
                         points = (int)((float)points * REWARD_RATE);
                     }
                 }
-                if( limit ) {
-                    // Allow only 50% of a rank to be earned from any point increase.
-                    if( points > (nextRank - rankStart) / 2 )
-                        points = (nextRank - rankStart) / 2;
-                }
                 if( !sendKillMessages ) {
                     bonusBuildup += points / 50;
                     while( bonusBuildup > 1.0 ) {
                         points++;
                         bonusBuildup--;
                     }
+                }
+                if( bonusRPMult > 0.0f )
+                    points += (int)((float)points * bonusRPMult);
+                if( limit ) {
+                    // Allow only 50% of a rank to be earned from any point increase.
+                    if( points > (nextRank - rankStart) / 2 )
+                        points = (nextRank - rankStart) / 2;
                 }
                 if( limit ) {
                     // Max points allowed to be added is number of points needed to rank up.
@@ -10365,6 +10393,13 @@ public class distensionbot extends SubspaceBot {
             return currentEnergyLevel + (currentMultiEnergyLevel * MULTIPRIZE_AMOUNT);
         }
 
+        /**
+         * @return Bonus multiplier for having many ships that are rank 20+
+         */
+        public float getRPMultiplier() {
+            return bonusRPMult;
+        }
+        
         /**
          * @return Amount of RP remaining over which a bonus will be applied
          */
