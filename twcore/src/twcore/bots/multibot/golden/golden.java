@@ -51,17 +51,16 @@ public class golden extends MultiModule {
    public void handleEvent( PlayerDeath event ){
        if( !isRunning ) return;
        
+       Player killee = m_botAction.getPlayer( event.getKilleeID() );
        Player killer = m_botAction.getPlayer( event.getKillerID() );
-       if( killer == null )
+       if( killer == null || killee == null)
            return;
 
-       String killeename = m_botAction.getPlayerName( event.getKilleeID() );
-       String killername = m_botAction.getPlayerName( event.getKillerID() );
-       Player deathGuy = m_botAction.getPlayer( event.getKilleeID() );
-       Player killerGuy = m_botAction.getPlayer( event.getKillerID() );
+       String killeename = killee.getPlayerName();
+       String killername = killer.getPlayerName();
        //If the person dead has the golden gun then switch ships.
 //Old check       if ((killeename.compareToIgnoreCase( hasGun) == 0) && (deathGuy.getFrequency() == gunFreq) && (deathGuy.isShip(gunShip)))
-       if ((deathGuy.getFrequency() == gunFreq) && (deathGuy.isShip(gunShip)))
+       if ((killee.getFrequency() == gunFreq) && (killee.isShip(gunShip)))
            {if (m_botAction.getPlayer( event.getKilleeID() ).isPlaying() )
                {m_botAction.setShip(killeename, humanShip);
                //Sets old Golden Gunner to human ship
@@ -98,19 +97,6 @@ public class golden extends MultiModule {
            m_botAction.sendArenaMessage( killername + killMessage); 
            //Announces new gunner.
            }
-       if ( deathGuy.getLosses() >= specPlayers ){
-           m_botAction.spec( event.getKilleeID() );
-           m_botAction.spec( event.getKilleeID() );
-           m_botAction.sendArenaMessage( killeename + " is out with " + deathGuy.getWins() + " kills, " + deathGuy.getLosses() + " losses." );
-           }
-
-       deathGuy = m_botAction.getPlayer( event.getKillerID() );
-       if ( deathGuy.getLosses() >= specPlayers ){
-           m_botAction.spec( event.getKillerID() );
-           m_botAction.spec( event.getKillerID() );
-           m_botAction.sendArenaMessage( killername + " is out with " + deathGuy.getWins() + " kills, " + deathGuy.getLosses() + " losses." );
-           }
-
    }
 
    /**
@@ -341,7 +327,7 @@ public class golden extends MultiModule {
        try {
            resetPlayer.cancel();
        } catch (Exception e) {}
-       m_botAction.cancelTask(goldenPrizes)
+       m_botAction.cancelTask(goldenPrizes);
    }
 
    public boolean isUnloadable()    {
