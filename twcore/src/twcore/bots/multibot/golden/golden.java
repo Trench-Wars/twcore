@@ -33,7 +33,8 @@ public class golden extends MultiModule {
    int specPlayers = 25;
    int resetDelay = 5;
    TimerTask resetPlayer;
-
+   TimerTask goldenPrizes;
+   
    public void init() {
    }
 
@@ -49,7 +50,7 @@ public class golden extends MultiModule {
     */
    public void handleEvent( PlayerDeath event ){
        if( !isRunning ) return;
-
+       
        Player killer = m_botAction.getPlayer( event.getKillerID() );
        if( killer == null )
            return;
@@ -57,6 +58,7 @@ public class golden extends MultiModule {
        String killeename = m_botAction.getPlayerName( event.getKilleeID() );
        String killername = m_botAction.getPlayerName( event.getKillerID() );
        Player deathGuy = m_botAction.getPlayer( event.getKilleeID() );
+       Player killerGuy = m_botAction.getPlayer( event.getKillerID() );
        //If the person dead has the golden gun then switch ships.
 //Old check       if ((killeename.compareToIgnoreCase( hasGun) == 0) && (deathGuy.getFrequency() == gunFreq) && (deathGuy.isShip(gunShip)))
        if ((deathGuy.getFrequency() == gunFreq) && (deathGuy.isShip(gunShip)))
@@ -71,17 +73,29 @@ public class golden extends MultiModule {
                //Sets new golden Gunner to gun freq
                m_botAction.setShip(killername, gunShip);
                //Sets new golden Gunner to gun ship
+               m_botAction.specificPrize(killername, 17);
+               //Handles prizes for new Golden Gunner
+               final String newGun = killername;
+               goldenPrizes = new TimerTask() {
+            	   // @Override
+            	   	public void run() {
+            	   		m_botAction.specificPrize(newGun, Tools.Prize.SUPER);
+					
+				   }   
+               };
+               m_botAction.scheduleTask( goldenPrizes, Tools.TimeInMillis.SECOND * 1, Tools.TimeInMillis.SECOND * 5 );
                }
            final String oldGun = killeename;
             resetPlayer = new TimerTask() {
+            	// @Override
                public void run() {
-//for testing                    m_botAction.sendArenaMessage( "shipreseting old gun holder: " + oldGun);
                     m_botAction.shipReset( oldGun );
+                    
                     }
                };
-           m_botAction.scheduleTask( resetPlayer, resetDelay * 1000 );
-           //Remembers new gunner
-           m_botAction.sendArenaMessage( killername + killMessage);
+           m_botAction.scheduleTask( resetPlayer, resetDelay * Tools.TimeInMillis.SECOND );
+           //Remembers new gunner  //No it doesnt? that code would perform a timertask thats only function is to shipreset 5 seconds a
+           m_botAction.sendArenaMessage( killername + killMessage); 
            //Announces new gunner.
            }
        if ( deathGuy.getLosses() >= specPlayers ){
@@ -327,6 +341,7 @@ public class golden extends MultiModule {
        try {
            resetPlayer.cancel();
        } catch (Exception e) {}
+       m_botAction.cancelTask(goldenPrizes)
    }
 
    public boolean isUnloadable()    {
