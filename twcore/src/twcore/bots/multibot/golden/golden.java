@@ -39,6 +39,7 @@ public class golden extends MultiModule {
    //int resetDelay = 5;
    //TimerTask resetPlayer;
    TimerTask goldenPrizes;
+   TimerTask changeDelay;
    
    public void init() {
    }
@@ -71,18 +72,27 @@ public class golden extends MultiModule {
        if (killee != null) {
            m_botAction.setShip(killee,humanShip);
            m_botAction.setFreq(killee,humanFreq);
+           m_botAction.cancelTasks();
            m_botAction.shipReset(killee);
-           m_botAction.cancelTask(goldenPrizes);
-       }
-    	   m_botAction.setShip(killer,gunShip);
-    	   m_botAction.setFreq(killer,gunFreq);
 
-          goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
-              public void run() {
-                  m_botAction.specificPrize(killer, Tools.Prize.SUPER);
-              }
-         };
-         m_botAction.scheduleTask(goldenPrizes, Tools.TimeInMillis.SECOND * 3.8, Tools.TimeInMillis.SECOND * 5);
+       }    	   
+    	   changeDelay = new TimerTask() {
+    	       @Override 
+    	       public void run() {
+    	           m_botAction.setShip(killer,gunShip);
+    	           m_botAction.setFreq(killer,gunFreq);
+    	           
+    	           goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
+    	               @Override
+    	               public void run() {
+    	                   m_botAction.specificPrize(killer, Tools.Prize.SUPER);
+    	               }
+    	          };
+    	          m_botAction.scheduleTask(goldenPrizes, Tools.TimeInMillis.SECOND * 3, Tools.TimeInMillis.SECOND * 5);
+    	       }
+    	   };
+    	   m_botAction.scheduleTask(changeDelay, Tools.TimeInMillis.SECOND * 4);
+          
          hasGun = killer;
    }
     
@@ -108,7 +118,6 @@ public class golden extends MultiModule {
 	   m_botAction.setAlltoFreq(humanFreq);
 	   m_botAction.changeAllShips(humanShip);
 	   switchGun(playerName,null);
-	   m_botAction.specificPrize(playerName, Tools.Prize.SUPER);
 	   m_botAction.sendArenaMessage("Golden Gun has started! " + playerName + " has the Golden Gun!",104);
    }
    
@@ -195,7 +204,7 @@ public class golden extends MultiModule {
                // "!resetdelay <#)  - changes deley between when goldengun dies and *shipreset"
 
    public void cancel() {
-       m_botAction.cancelTask(goldenPrizes);
+       m_botAction.cancelTasks();
    }
 
    public boolean isUnloadable()    {
