@@ -72,6 +72,7 @@ public class golden extends MultiModule {
            m_botAction.setShip(killee,humanShip);
            m_botAction.setFreq(killee,humanFreq);
            m_botAction.shipReset(killee);
+           m_botAction.cancelTask(goldenPrizes);
        }
     	   m_botAction.setShip(killer,gunShip);
     	   m_botAction.setFreq(killer,gunFreq);
@@ -81,7 +82,7 @@ public class golden extends MultiModule {
                   m_botAction.specificPrize(killer, Tools.Prize.SUPER);
               }
          };
-         m_botAction.scheduleTask(goldenPrizes, Tools.TimeInMillis.SECOND * 4, Tools.TimeInMillis.SECOND * 5);
+         m_botAction.scheduleTask(goldenPrizes, Tools.TimeInMillis.SECOND * 3.8, Tools.TimeInMillis.SECOND * 5);
          hasGun = killer;
    }
     
