@@ -62,18 +62,27 @@ public class golden extends MultiModule {
        if( killer == null || killee == null)
            return;
        if (killee.getPlayerName().equals(hasGun)) {
-    	   switchGun(killer,killee);
+    	   switchGun(killer.getPlayerName(),killee.getPlayerName());
        }
        }
    }
-   public void switchGun(Player killer, Player killee) {
+   public void switchGun(final String killer, String killee) {
 	   // This method switches which player is the gunner...
-    	   m_botAction.setShip(killer.getPlayerID(),gunShip);
-    	   m_botAction.setFreq(killer.getPlayerID(),gunFreq);
-    	   m_botAction.setShip(killee.getPlayerID(),humanShip);
-    	   m_botAction.setFreq(killee.getPlayerID(),humanFreq);
-    	   hasGun = killer.getPlayerName();
-    	   m_botAction.specificPrize(hasGun, Tools.Prize.SUPER);
+       if (killee != null) {
+           m_botAction.setShip(killee,humanShip);
+           m_botAction.setFreq(killee,humanFreq);
+           m_botAction.shipReset(killee);
+       }
+    	   m_botAction.setShip(killer,gunShip);
+    	   m_botAction.setFreq(killer,gunFreq);
+
+          goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
+              public void run() {
+                  m_botAction.specificPrize(killer, Tools.Prize.SUPER);
+              }
+         };
+         m_botAction.scheduleTask(goldenPrizes, Tools.TimeInMillis.SECOND * 4, Tools.TimeInMillis.SECOND * 5);
+         hasGun = killer;
    }
     
    public String randomPlayer() {
@@ -91,28 +100,22 @@ public class golden extends MultiModule {
        addPlayerName = randomPlayerBag.grabAndRemove();
        return addPlayerName;
    }
+   
    public void startGame(String playerName) {
-	   // pretty obvious what it does here... 
+       Player p;        
+       // pretty obvious what it does here... 
 	   m_botAction.setAlltoFreq(humanFreq);
 	   m_botAction.changeAllShips(humanShip);
-	   m_botAction.setShip(playerName,gunShip);
-	   m_botAction.setFreq(playerName,gunFreq);
+	   switchGun(playerName,null);
+	   m_botAction.specificPrize(playerName, Tools.Prize.SUPER);
 	   m_botAction.sendArenaMessage("Golden Gun has started! " + playerName + " has the Golden Gun!",104);
-	   // Sets Ships
-	   final String gunGuy = playerName; // final string for timertask
-	   goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
-		public void run() {
-		   m_botAction.specificPrize(gunGuy, Tools.Prize.SUPER);
-		}
-	   };
-	   m_botAction.scheduleTask(goldenPrizes, Tools.TimeInMillis.SECOND / 10, Tools.TimeInMillis.SECOND * 5);
-       // Prizes
    }
+   
 	public void setGun (String playerName) {
 		// performs a switch without a kill happening. A similar process to what will happen with startGame, except its coded independently
 		Player newGun = m_botAction.getFuzzyPlayer(playerName);
 		Player oldGun = m_botAction.getFuzzyPlayer(hasGun);
-		switchGun(newGun,oldGun);
+		switchGun(newGun.getPlayerName(),oldGun.getPlayerName());
 	}
        
    public void handleEvent(Message event) {
