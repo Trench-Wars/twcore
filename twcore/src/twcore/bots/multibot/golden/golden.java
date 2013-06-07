@@ -72,7 +72,7 @@ public class golden extends MultiModule {
     	   m_botAction.setFreq(killer.getPlayerID(),gunFreq);
     	   m_botAction.setShip(killee.getPlayerID(),humanShip);
     	   m_botAction.setFreq(killee.getPlayerID(),humanFreq);
-    	   hasGun.equals(killer);
+    	   hasGun = killer.getPlayerName();
     	   m_botAction.specificPrize(hasGun, Tools.Prize.SUPER);
    }
     
@@ -97,6 +97,7 @@ public class golden extends MultiModule {
 	   m_botAction.changeAllShips(humanShip);
 	   m_botAction.setShip(playerName,gunShip);
 	   m_botAction.setFreq(playerName,gunFreq);
+	   m_botAction.sendArenaMessage("Golden Gun has started! " + playerName + " has the Golden Gun!",104);
 	   // Sets Ships
 	   final String gunGuy = playerName; // final string for timertask
 	   goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
@@ -139,14 +140,17 @@ public class golden extends MultiModule {
 						hasGun = randomPlayer();
 						startGame(hasGun);
 					}
-				} else if (message.startsWith("!startgun ")) {  // lets host pick gunner like !startgun WillBy (uses fuzzy name so !startgun will should work too
+				} else if (message.startsWith("!start ")) {  // lets host pick gunner like !startgun WillBy (uses fuzzy name so !startgun will should work too
 					if (isRunning == true)
 						m_botAction.sendPrivateMessage(name, "Golden Gun already started.");
 					else {
 					isRunning = true;
-					hasGun = (message.substring(10));
-					hasGun = m_botAction.getFuzzyPlayerName(hasGun);
-					startGame(hasGun);
+					hasGun = (message.substring(7));
+    					if (!hasGun.isEmpty()) { 
+    				        hasGun = m_botAction.getFuzzyPlayerName(hasGun);
+    					    if (hasGun != null) 
+    					        startGame(hasGun);
+    					}
 					}
 				} else if (message.startsWith("!setgun ")) {
 					hasGun = message.substring(8);
@@ -159,6 +163,7 @@ public class golden extends MultiModule {
 					}
 					m_botAction.sendPrivateMessage(name, "Golden Gun deactivated");
 					isRunning = false;
+					cancel();
 						
 				} else if (message.equalsIgnoreCase("!randomplayer")) {
 					m_botAction.sendPrivateMessage(name, randomPlayer());
