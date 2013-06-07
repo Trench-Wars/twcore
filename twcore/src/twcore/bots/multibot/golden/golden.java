@@ -39,7 +39,6 @@ public class golden extends MultiModule {
    //int resetDelay = 5;
    //TimerTask resetPlayer;
    TimerTask goldenPrizes;
-   TimerTask changeDelay;
    
    public void init() {
    }
@@ -75,11 +74,7 @@ public class golden extends MultiModule {
            m_botAction.cancelTasks();
            m_botAction.shipReset(killee);
 
-       }    	   
-    	   changeDelay = new TimerTask() {
-    	       @Override 
-    	       public void run() {
-    	           m_botAction.setShip(killer,gunShip);
+       }    	   m_botAction.setShip(killer,gunShip);
     	           m_botAction.setFreq(killer,gunFreq);
     	           
     	           goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
@@ -88,10 +83,7 @@ public class golden extends MultiModule {
     	                   m_botAction.specificPrize(killer, Tools.Prize.SUPER);
     	               }
     	          };
-    	          m_botAction.scheduleTask(goldenPrizes, Tools.TimeInMillis.SECOND * 3, Tools.TimeInMillis.SECOND * 5);
-    	       }
-    	   };
-    	   m_botAction.scheduleTask(changeDelay, Tools.TimeInMillis.SECOND * 4);
+    	          m_botAction.scheduleTask(goldenPrizes, 100, Tools.TimeInMillis.SECOND * 5);
           
          hasGun = killer;
    }
@@ -113,7 +105,6 @@ public class golden extends MultiModule {
    }
    
    public void startGame(String playerName) {
-       Player p;        
        // pretty obvious what it does here... 
 	   m_botAction.setAlltoFreq(humanFreq);
 	   m_botAction.changeAllShips(humanShip);
