@@ -94,19 +94,23 @@ public class golden extends MultiModule {
 					hasGun = (message.substring(7));
     					if (!hasGun.isEmpty()) { 
     				        hasGun = m_botAction.getFuzzyPlayerName(hasGun);
-    					    if (hasGun != null) 
+    					    if (hasGun != null){ 
     					        startGame(hasGun);
+    					    	isRunning = true;
+    					    }
     					}
-    					isRunning = true;
+    					
 					}
 				} else if (message.startsWith("!setgun ")) {
 					if (!isRunning)
 						m_botAction.sendPrivateMessage(name, "Golden Gun needs to be running first!");
+					else {
 					hasGun = message.substring(8);
 					if (!hasGun.isEmpty()) { 
 						hasGun = m_botAction.getFuzzyPlayerName(hasGun);
 						if (hasGun != null)
 							setGun(hasGun);
+					}
 					}
 				} else if( message.startsWith( "!stop" )){
 					if( !isRunning ) {
@@ -133,7 +137,7 @@ public class golden extends MultiModule {
 
        }    	   m_botAction.setShip(killer,gunShip);
     	           m_botAction.setFreq(killer,gunFreq);
-    	           m_botAction.sendArenaMessage(killer + "has captured the Golden Gun!");
+    	           m_botAction.sendArenaMessage(killer + "has captured the Golden Gun!",2);
     	           goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
     	               @Override
     	               public void run() {
