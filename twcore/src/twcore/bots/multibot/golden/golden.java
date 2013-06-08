@@ -134,10 +134,10 @@ public class golden extends MultiModule {
            m_botAction.setFreq(killee,humanFreq);
            m_botAction.cancelTasks();
            m_botAction.shipReset(killee);
+           m_botAction.sendArenaMessage(killer + "has captured the Golden Gun!",2);
 
        }    	   m_botAction.setShip(killer,gunShip);
     	           m_botAction.setFreq(killer,gunFreq);
-    	           m_botAction.sendArenaMessage(killer + "has captured the Golden Gun!",2);
     	           goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
     	               @Override
     	               public void run() {
@@ -169,6 +169,8 @@ public class golden extends MultiModule {
        // pretty obvious what it does here... 
 	   m_botAction.setAlltoFreq(humanFreq);
 	   m_botAction.changeAllShips(humanShip);
+	   m_botAction.scoreResetAll();
+	   m_botAction.shipResetAll();
 	   switchGun(playerName,null);
 	   m_botAction.sendArenaMessage("Golden Gun has started! " + playerName + " has the Golden Gun!",104);
    }
