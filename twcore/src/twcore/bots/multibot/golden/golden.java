@@ -66,6 +66,63 @@ public class golden extends MultiModule {
        }
        }
    }
+   
+   public void handleEvent(Message event) {
+	   	// receieves info from the game, directs to handleCommand
+		String message = event.getMessage();
+		if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
+			String name = m_botAction.getPlayerName(event.getPlayerID());
+			handleCommand(name, message);
+		}
+  }
+   
+   public void handleCommand( String name, String message ){ 
+	   // handling of !commands, for now just <ER>+
+	   if (opList.isER(name)) {
+				if (message.equals("!start")) {  // starts with random player
+					if (isRunning)
+						m_botAction.sendPrivateMessage(name, "Golden Gun already started.");
+					else {
+						hasGun = randomPlayer();
+						startGame(hasGun);
+						isRunning = true;
+					}
+				} else if (message.startsWith("!start ")) {  // lets host pick gunner like !startgun WillBy (uses fuzzy name so !startgun will should work too
+					if (isRunning)
+						m_botAction.sendPrivateMessage(name, "Golden Gun already started.");
+					else {
+					hasGun = (message.substring(7));
+    					if (!hasGun.isEmpty()) { 
+    				        hasGun = m_botAction.getFuzzyPlayerName(hasGun);
+    					    if (hasGun != null) 
+    					        startGame(hasGun);
+    					}
+    					isRunning = true;
+					}
+				} else if (message.startsWith("!setgun ")) {
+					if (!isRunning)
+						m_botAction.sendPrivateMessage(name, "Golden Gun needs to be running first!");
+					hasGun = message.substring(8);
+					if (!hasGun.isEmpty()) { 
+						hasGun = m_botAction.getFuzzyPlayerName(hasGun);
+						if (hasGun != null)
+							setGun(hasGun);
+					}
+				} else if( message.startsWith( "!stop" )){
+					if( !isRunning ) {
+						m_botAction.sendPrivateMessage(name, "Golden Gun is already stopped, cannot stop.");
+						return;
+					}
+					m_botAction.sendPrivateMessage(name, "Golden Gun deactivated");
+					isRunning = false;
+					cancel();
+						
+				} else if (message.equalsIgnoreCase("!randomplayer")) {
+					m_botAction.sendPrivateMessage(name, randomPlayer());
+				}
+	   }  	
+	 }
+       
    public void switchGun(final String killer, String killee) {
 	   // This method switches which player is the gunner...
        if (killee != null) {
@@ -76,7 +133,7 @@ public class golden extends MultiModule {
 
        }    	   m_botAction.setShip(killer,gunShip);
     	           m_botAction.setFreq(killer,gunFreq);
-    	           
+    	           m_botAction.sendArenaMessage(killer + "has captured the Golden Gun!");
     	           goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
     	               @Override
     	               public void run() {
@@ -118,62 +175,6 @@ public class golden extends MultiModule {
 		Player oldGun = m_botAction.getFuzzyPlayer(hasGun);
 		switchGun(newGun.getPlayerName(),oldGun.getPlayerName());
 	}
-       
-   public void handleEvent(Message event) {
-	   	// receieves info from the game, directs to handleCommand
-		String message = event.getMessage();
-		if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
-			String name = m_botAction.getPlayerName(event.getPlayerID());
-			handleCommand(name, message);
-		}
-   }
-   /**
-    * This method does actions depending what you PM bot with and your powers.
-    *
-    * @param name is the person that messaged the bot.
-    * @param message is text they sent.
-    */
-   public void handleCommand( String name, String message ){ 
-	   // handling of !commands, for now just <ER>+
-	   if (opList.isER(name)) {
-				if (message.equals("!start")) {  // starts with random player
-					if (isRunning == true)
-						m_botAction.sendPrivateMessage(name, "Golden Gun already started.");
-					else {
-						isRunning = true;
-						hasGun = randomPlayer();
-						startGame(hasGun);
-					}
-				} else if (message.startsWith("!start ")) {  // lets host pick gunner like !startgun WillBy (uses fuzzy name so !startgun will should work too
-					if (isRunning == true)
-						m_botAction.sendPrivateMessage(name, "Golden Gun already started.");
-					else {
-					isRunning = true;
-					hasGun = (message.substring(7));
-    					if (!hasGun.isEmpty()) { 
-    				        hasGun = m_botAction.getFuzzyPlayerName(hasGun);
-    					    if (hasGun != null) 
-    					        startGame(hasGun);
-    					}
-					}
-				} else if (message.startsWith("!setgun ")) {
-					hasGun = message.substring(8);
-					hasGun = m_botAction.getFuzzyPlayerName(hasGun);
-					setGun(hasGun);
-				} else if( message.startsWith( "!stop" )){
-					if( !isRunning ) {
-						m_botAction.sendPrivateMessage(name, "Golden Gun is already stopped, cannot stop.");
-						return;
-					}
-					m_botAction.sendPrivateMessage(name, "Golden Gun deactivated");
-					isRunning = false;
-					cancel();
-						
-				} else if (message.equalsIgnoreCase("!randomplayer")) {
-					m_botAction.sendPrivateMessage(name, randomPlayer());
-				}
-	   }  	
-	 }
        
    public String[] getModHelpMessage() {
        String[] GoldenHelp = {
