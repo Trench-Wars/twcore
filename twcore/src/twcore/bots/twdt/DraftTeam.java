@@ -27,9 +27,9 @@ import twcore.bots.twdt.DraftRound.RoundState;
 public class DraftTeam {
 
     public static final String db = "website";
-    public static final int MAXRES_X = 1440;
-    public static final int MAXRES_Y = 1024;
-    public int MAX_STARS = 60;
+    public static final int MAXRES_X = 1920;
+    public static final int MAXRES_Y = 1440;
+    public int MAX_STARS = 425;
     public int season = 10;
     
     BotAction       ba;
