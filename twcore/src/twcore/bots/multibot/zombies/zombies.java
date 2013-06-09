@@ -1,9 +1,7 @@
 package twcore.bots.multibot.zombies;
 
-import java.util.HashSet;
+import java.util.TreeSet;
 import java.util.ArrayList;
-
-import org.omg.CORBA.REBIND;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
@@ -30,8 +28,8 @@ public class zombies extends MultiModule {
 		events.request(this, EventRequester.PLAYER_DEATH);
 	}
 
-    HashSet <Integer>m_srcship = new HashSet<Integer>();
-    HashSet <Integer>m_rbkship = new HashSet<Integer>();
+    TreeSet <Integer>m_srcship = new TreeSet<Integer>();
+    TreeSet <Integer>m_rbkship = new TreeSet<Integer>();
     int m_humanfreq;
     int m_killerShip;
     int m_zombiefreq;
@@ -44,8 +42,13 @@ public class zombies extends MultiModule {
     boolean modeSet = false;
     boolean killerShipSet = false;
     boolean rebK = false;
+    boolean debug = false;
+    String debugger = "";
 
     public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives, int rebirthkills ){
+        if (debug)
+            m_botAction.sendRemotePrivateMessage(debugger, "HFreq: " + srcfreq + " HShip: " + srcship + "ZFreq: " + destfreq + "ZShip: " + destship + "Lives: " + lives + "RBK: " + rebirthkills );
+
         m_humanfreq = srcfreq;
         m_srcship.add(new Integer(srcship));
         m_zombiefreq = destfreq;
@@ -175,6 +178,13 @@ public class zombies extends MultiModule {
     }
 
     public void handleCommand( String name, String message ){
+        
+        if(message.startsWith("!debug ") && opList.isOwner(name)) {
+            if (!message.substring(7).isEmpty())
+            debugger = message.substring(7);            
+        } else if (message.equals("!debug") && debug)
+            debug = false;
+        
         if( message.startsWith( "!list" )){
             listKillMessages( name );
         } else if( message.startsWith( "!add " )){
@@ -271,12 +281,19 @@ public class zombies extends MultiModule {
         if( modeSet && isRunning ){
             Player p = m_botAction.getPlayer( event.getKilleeID() );
             Player p2 = m_botAction.getPlayer( event.getKillerID() );
-            if( p == null || p2 == null )
+            if( p == null || p2 == null ) {
+                if (debug)
+                    m_botAction.sendRemotePrivateMessage(debugger, "Kilee or Killer player object is null");                    
                 return;
+            }
             try {
                 if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq && p2.getFrequency() != m_humanfreq){
                     m_botAction.setShip( event.getKilleeID(), m_zombieship );
                     m_botAction.setFreq( event.getKilleeID(), m_zombiefreq );
+                    
+                    if (debug)
+                        m_botAction.sendRemotePrivateMessage(debugger, "Zombies: " + p2.getPlayerName() + " has killed " + p.getPlayerName());
+                    
                     if(rebK)
                     	m_botAction.scoreReset( event.getKilleeID() );
                     String killmsg = killmsgs.toString();
@@ -322,7 +339,9 @@ public class zombies extends MultiModule {
                     m_botAction.scoreReset( p2.getPlayerName() );
                 }
             } catch (Exception e) {
-
+                if (debug)
+                    m_botAction.sendRemotePrivateMessage(debugger, "Zombies: Error in switching ships:" + e);            
+                return;
             }
         }
     }
