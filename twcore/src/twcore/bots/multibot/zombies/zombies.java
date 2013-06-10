@@ -38,16 +38,16 @@ public class zombies extends MultiModule {
     int m_lives;
     int m_rebirthkills;
     StringBag killmsgs;
-    boolean isRunning = false;
-    boolean modeSet = false;
+    public boolean isRunning = false;
+    public boolean modeSet = false;
     boolean killerShipSet = false;
     boolean rebK = false;
-    boolean debug = false;
-    String debugger = "";
+    public boolean debug = true;
+    public String debugger = "K A N E";
 
     public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives, int rebirthkills ){
-        if (debug)
-            m_botAction.sendRemotePrivateMessage(debugger, "HFreq: " + srcfreq + " HShip: " + srcship + "ZFreq: " + destfreq + "ZShip: " + destship + "Lives: " + lives + "RBK: " + rebirthkills );
+        
+            m_botAction.sendPrivateMessage(debugger, "HFreq: " + srcfreq + " HShip: " + srcship + "ZFreq: " + destfreq + "ZShip: " + destship + "Lives: " + lives + "RBK: " + rebirthkills );
 
         m_humanfreq = srcfreq;
         m_srcship.add(new Integer(srcship));
@@ -182,11 +182,11 @@ public class zombies extends MultiModule {
         if(message.startsWith("!debug ") && opList.isDeveloper(name.toLowerCase())) {
             if (!message.substring(7).isEmpty()) {
                 m_botAction.sendRemotePrivateMessage(debugger, "You are now set to the debugger for zombies");
-                debugger = message.substring(7);            
+                debugger = message.substring(7);
+                debug = true;
             }
-        } else if (message.equals("!debug") && debug) {
+        } else if (message.equals("!debug")) {
             m_botAction.sendRemotePrivateMessage(debugger, "debugging turned off");
-            debug = false;
         }
         
         if( message.startsWith( "!list" )){
@@ -286,7 +286,6 @@ public class zombies extends MultiModule {
             Player p = m_botAction.getPlayer( event.getKilleeID() );
             Player p2 = m_botAction.getPlayer( event.getKillerID() );
             if( p == null || p2 == null ) {
-                if (debug)
                     m_botAction.sendRemotePrivateMessage(debugger, "Kilee or Killer player object is null");                    
                 return;
             }
@@ -295,7 +294,6 @@ public class zombies extends MultiModule {
                     m_botAction.setShip( event.getKilleeID(), m_zombieship );
                     m_botAction.setFreq( event.getKilleeID(), m_zombiefreq );
                     
-                    if (debug)
                         m_botAction.sendRemotePrivateMessage(debugger, "Zombies: " + p2.getPlayerName() + " has killed " + p.getPlayerName());
                     
                     if(rebK)
