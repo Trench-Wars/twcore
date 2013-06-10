@@ -1,5 +1,5 @@
 package twcore.bots.tictactoe;
-
+//If You need lvz ?message Ahmad~:Need Lvz
 //Import all of the TWCore classes so you can use them 
 
 import java.util.TimerTask;
@@ -41,7 +41,11 @@ public class tictactoe extends SubspaceBot {
     private String[] players;
     private Challenge challenge;
     private int playerTurn;
-
+    private int [] xx ={0,0,0,0,0,0,0,0,0,0};
+    private int [] oo ={0,0,0,0,0,0,0,0,0,0};
+    public static int random(int range){
+    	return (int)(java.lang.Math.random() * (range+1));
+    }
     public tictactoe(BotAction botAction) {
         //This instantiates your BotAction
         super(botAction);
@@ -180,7 +184,6 @@ public class tictactoe extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Player not found in this arena.");
         }
     }
-    
     private void cmd_accept(String name) {
         if (board != null)
             ba.sendPrivateMessage(name, "There is a game in progress so no challenge can be active.");
@@ -202,25 +205,33 @@ public class tictactoe extends SubspaceBot {
             board = null;
             playerTurn = -1;
             // O // 
-            ba.setupObject(1, false);
-            ba.setupObject(2, false);
-            ba.setupObject(3, false);
-            ba.setupObject(4, false);
-            ba.setupObject(5, false);
-            ba.setupObject(6, false);
-            ba.setupObject(7, false);
-            ba.setupObject(8, false);
-            ba.setupObject(9, false);
+            m_botAction.sendUnfilteredPublicMessage("*objoff 90");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 91");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 92");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 93");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 94");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 95");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 96");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 97");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 1");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 2");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 3");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 4");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 5");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 6");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 7");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 8");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 9");
             // X //
-            ba.setupObject(10, false);
-            ba.setupObject(11, false);
-            ba.setupObject(12, false);
-            ba.setupObject(13, false);
-            ba.setupObject(14, false);
-            ba.setupObject(15, false);
-            ba.setupObject(16, false);
-            ba.setupObject(17, false);
-            ba.setupObject(18, false);
+            m_botAction.sendUnfilteredPublicMessage("*objoff 10");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 11");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 12");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 13");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 14");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 15");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 16");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 17");
+            m_botAction.sendUnfilteredPublicMessage("*objoff 18");
             ba.sendArenaMessage("This game has been killed by " + name + ".");
         } else if (challenge != null) {
             challenge.cancel(name);
@@ -235,12 +246,16 @@ public class tictactoe extends SubspaceBot {
         }
         else if (getPlayer(name) == playerTurn) {
         msg = msg.substring(msg.indexOf(" ") + 1).trim();
-        int x ,y;
+        int x = 0;
+        int y = 0;
         try {
             if (msg.length() == 3 && msg.indexOf(",") == 1) {
                 String[] vals = msg.split(",");
+                if (Integer.valueOf(vals[0]) > 0 || Integer.valueOf(vals[1]) > 0 || Integer.valueOf(vals[0]) < 4 || Integer.valueOf(vals[1]) < 4 )
+                {
                 x = Integer.valueOf(vals[0]);
                 y = Integer.valueOf(vals[1]);
+                }
                 if (x < 1 || y < 1 || x > 3 || y > 3) 
                     throw new NumberFormatException();
             } else 
@@ -254,7 +269,7 @@ public class tictactoe extends SubspaceBot {
         if (board[x][y] != Token._) {
             ba.sendSmartPrivateMessage(name, "You must choose an empty box.");
         } else {
-            // X Player //
+            // O Player //
             if (name == players[1])
             {
             // +---+---+---+
@@ -265,24 +280,20 @@ public class tictactoe extends SubspaceBot {
             if (x == 0)if(y == 0)
             {
                 // O // 
-            	
-            	ba.showObject(1);
-            	ba.setObjects();
-               // ba.sendPublicMessage("1"); obj id Fix me
+            	m_botAction.sendUnfilteredPublicMessage("*objon 1");
+            	oo[1] = 1;
             }
             if (x == 0)if(y == 1)
             {
                 // O // 
-            	ba.showObject(4);
-            	ba.setObjects();
-              //  ba.sendPublicMessage("4");
+            	m_botAction.sendUnfilteredPublicMessage("*objon 4");
+            	oo[4] = 1;
             }
             if (x == 0)if(y == 2)
             {
                 // O // 
-            	ba.showObject(7);
-            	ba.setObjects();
-              //  ba.sendPublicMessage("7");
+            	m_botAction.sendUnfilteredPublicMessage("*objon 7");
+            	oo[7] = 1;
             }
             
             // +---+---+---+
@@ -293,23 +304,20 @@ public class tictactoe extends SubspaceBot {
             if (x == 1)if(y == 0)
             {
                 // O // 
-            	ba.showObject(2);
-            	ba.setObjects();
-               // ba.sendPublicMessage("2");
+            	m_botAction.sendUnfilteredPublicMessage("*objon 2");
+            	oo[2] = 1;
             }
             if (x == 1)if(y == 1)
             {
                 // O // 
-            	ba.showObject(5);
-            	ba.setObjects();
-               // ba.sendPublicMessage("5");
+            	m_botAction.sendUnfilteredPublicMessage("*objon 5");
+            	oo[5] = 1;
             }
             if (x == 1)if(y == 2)
             {
                 // O // 
-            	ba.showObject(8);
-            	ba.setObjects();
-              //  ba.sendPublicMessage("8");
+            	m_botAction.sendUnfilteredPublicMessage("*objon 8");
+            	oo[8] = 1;
             }
             // +---+---+---+
             // |   |   |   |
@@ -319,27 +327,24 @@ public class tictactoe extends SubspaceBot {
             if (x == 2)if(y == 0)
             {
                 // O // 
-            	ba.showObject(3);
-            	ba.setObjects();
-               // ba.sendPublicMessage("3");
+            	m_botAction.sendUnfilteredPublicMessage("*objon 3");
+            	oo[3]=1;
             }
             if (x == 2)if(y == 1)
             {
                 // O // 
-            	ba.showObject(6);
-            	ba.setObjects();
-              //  ba.sendPublicMessage("6");
+            	m_botAction.sendUnfilteredPublicMessage("*objon 6");
+            	oo[6]=1;
             }
             if (x == 2)if(y == 2)
             {
                 // O // 
-            	ba.showObject(9);
-            	ba.setObjects();
-               // ba.sendPublicMessage("9");
+            	m_botAction.sendUnfilteredPublicMessage("*objon 9");
+            	oo[9]=1;
             }
             }
             
-            // O Player //
+            // X Player //
             else if (name == players[0])
             {
             // +---+---+---+
@@ -349,24 +354,21 @@ public class tictactoe extends SubspaceBot {
             // +---+---+---+
             if (x == 0)if(y == 0)
             {
-                // O // 
-            	ba.showObject(10);
-            	ba.setObjects();
-               // ba.sendPublicMessage("10");
+                // X // 
+            	m_botAction.sendUnfilteredPublicMessage("*objon 10");
+            	xx[1]=1;
             }
             if (x == 0)if(y == 1)
             {
-                // O // 
-            	ba.showObject(13);
-            	ba.setObjects();
-               // ba.sendPublicMessage("13");
+                // X // 
+            	m_botAction.sendUnfilteredPublicMessage("*objon 13");
+            	xx[4]=1;
             }
             if (x == 0)if(y == 2)
             {
-                // O // 
-            //	ba.showObject(16);
-            	ba.setObjects();
-               // ba.sendPublicMessage("16");
+                // X // 
+            	xx[7]=1;
+            	m_botAction.sendUnfilteredPublicMessage("*objon 16");
             }
             
             // +---+---+---+
@@ -376,24 +378,21 @@ public class tictactoe extends SubspaceBot {
             // +---+---+---+
             if (x == 1)if(y == 0)
             {
-                // O // 
-            //	ba.showObject(11);
-            	ba.setObjects();
-              //  ba.sendPublicMessage("11");
+                // X // 
+            	m_botAction.sendUnfilteredPublicMessage("*objon 11");
+            	xx[2]=1;
             }
             if (x == 1)if(y == 1)
             {
-                // O // 
-           // 	ba.showObject(14);
-            	ba.setObjects();
-              //  ba.sendPublicMessage("14");
+                // X // 
+            	xx[5]=1;
+            	m_botAction.sendUnfilteredPublicMessage("*objon 14");
             }
             if (x == 1)if(y == 2)
             {
-                // O // 
-            //	ba.showObject(17);
-            	ba.setObjects();
-              //  ba.sendPublicMessage("17");
+                // X // 
+            	xx[8]=1;
+            	m_botAction.sendUnfilteredPublicMessage("*objon 17");
             }
             // +---+---+---+
             // |   |   |   |
@@ -402,24 +401,21 @@ public class tictactoe extends SubspaceBot {
             // +---+---+---+
             if (x == 2)if(y == 0)
             {
-                // O // 
-            //	ba.showObject(12);
-            	ba.setObjects();
-              //  ba.sendPublicMessage("12");
+                // X // 
+            	xx[3]=1;
+            	m_botAction.sendUnfilteredPublicMessage("*objon 12");
             }
             if (x == 2)if(y == 1)
             {
-                // O // 
-            	//ba.showObject(15);
-            	ba.setObjects();
-             //   ba.sendPublicMessage("15");
+                // X // 
+            	xx[6]=1;
+            	m_botAction.sendUnfilteredPublicMessage("*objon 15");
             }
             if (x == 2)if(y == 2)
             {
-                // O // 
-            	//ba.showObject(18);
-            	ba.setObjects();
-             //   ba.sendPublicMessage("18");
+                // X // 
+            	xx[9]=1;
+            	m_botAction.sendUnfilteredPublicMessage("*objon 18");
             }
             }
             board[x][y] = Token.get(playerTurn);
@@ -431,16 +427,13 @@ public class tictactoe extends SubspaceBot {
                     ba.sendArenaMessage("GAME OVER: " + players[winner.player] + " wins as " + winner.toString() + "'s!" , 5);
                 if (winner.player == 1)
                 {
-                	ba.setObjects(21);
-                //	ba.sendPublicMessage("21");
-                	ba.getObjectSet();
+                	// O Wins //
+                	m_botAction.sendUnfilteredPublicMessage("*objon 21");
                 }
                 if (winner.player == 0)
                 {
-                	ba.setupObject(20, true);
-                	ba.setObjects(20);
-                //	ba.sendPublicMessage("20");
-                	ba.getObjectSet();
+                	// X Wins //
+                	m_botAction.sendUnfilteredPublicMessage("*objon 20");
                 }
                 players = null;
                 board = null;
@@ -458,24 +451,37 @@ public class tictactoe extends SubspaceBot {
                 { Token._, Token._, Token._ }, 
                 { Token._, Token._, Token._ }, 
         };
-    	ba.hideObject(1);
-    	ba.hideObject(2);
-    	ba.hideObject(3);
-    	ba.hideObject(4);
-    	ba.hideObject(5);
-    	ba.hideObject(6);
-    	ba.hideObject(7);
-    	ba.hideObject(8);
-    	ba.hideObject(9);
-    	ba.hideObject(10);
-    	ba.hideObject(11);
-    	ba.hideObject(12);
-    	ba.hideObject(13);
-    	ba.hideObject(14);
-    	ba.hideObject(15);
-    	ba.hideObject(16);
-    	ba.hideObject(17);
-    	ba.hideObject(18);
+        m_botAction.sendUnfilteredPublicMessage("*objoff 90");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 91");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 92");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 93");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 94");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 95");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 96");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 97");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 1");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 2");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 3");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 4");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 5");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 6");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 7");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 8");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 9");
+        // X //
+        m_botAction.sendUnfilteredPublicMessage("*objoff 10");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 11");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 12");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 13");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 14");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 15");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 16");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 17");
+        m_botAction.sendUnfilteredPublicMessage("*objoff 18");
+        for (int i = 0; i > 10; ++i){
+        	xx[i]=0;
+        	oo[i]=0;
+        }
         players = new String[] { challenge.challer, challenge.challed };
         ba.cancelTask(challenge);
         challenge = null;
@@ -499,81 +505,88 @@ public class tictactoe extends SubspaceBot {
     private Token getWinner() {
         Token result = null;
         if (board[0][0] != Token._) {
-            if (board[0][0] == board[0][1] && board[0][1] == board[0][2])
+            if (board[0][0] == board[0][1] && board[0][1] == board[0][2]){
                 result = board[0][0];
-            // Object id [90]
+            m_botAction.sendUnfilteredPublicMessage("*objon 90");
             // +---+---+---+
             // | x | x | x |
             // |   |   |   |
             // |   |   |   |
             // +---+---+---+
-            else if (board[0][0] == board[1][0] && board[1][0] == board[2][0])
+        }
+            else if (board[0][0] == board[1][0] && board[1][0] == board[2][0]){
                 result = board[0][0];
-         // Object id [91]
+        m_botAction.sendUnfilteredPublicMessage("*objon 91");
             // +---+---+---+
             // | x |   |   |
             // | x |   |   |
             // | x |   |   |
             // +---+---+---+
-            else if (board[0][0] == board[1][1] && board[1][1] == board[2][2])
+                }
+            else if (board[0][0] == board[1][1] && board[1][1] == board[2][2]){
                 result = board[0][0];
-         // Object id [92]
+            m_botAction.sendUnfilteredPublicMessage("*objon 92");
             // +---+---+---+
             // | x |   |   |
             // |   | x |   |
             // |   |   | x |
             // +---+---+---+
+            }
             
         }
         if (board[0][2] != Token._) {
         	
-            if (board[0][2] == board[1][2] && board[1][2] == board[2][2])
+            if (board[0][2] == board[1][2] && board[1][2] == board[2][2]){
                 result = board[0][2];
-         // Object id [94]
+            m_botAction.sendUnfilteredPublicMessage("*objon 94");
+
             // +---+---+---+
             // |   |   | x |
             // |   |   | x |
             // |   |   | x |
             // +---+---+---+
-            else if (board[0][2] == board[1][1] && board[1][1] == board[2][0])
+            }
+            else if (board[0][2] == board[1][1] && board[1][1] == board[2][0]){
                 result = board[0][2];
-         // Object id [95]
+                m_botAction.sendUnfilteredPublicMessage("*objon 95");
             // +---+---+---+
             // |   |   | x |
             // |   | x |   |
             // | x |   |   |
             // +---+---+---+
-            
+            }
         } 
         if (board[2][2] != Token._) {
-            if (board[2][2] == board[2][1] && board[2][1] == board[2][0])
+            if (board[2][2] == board[2][1] && board[2][1] == board[2][0]){
                 result = board[2][2];
-         // Object id [97]
+                m_botAction.sendUnfilteredPublicMessage("*objon 97");
             // +---+---+---+
             // |   |   |   |
             // |   |   |   |
             // | x | x | x |
             // +---+---+---+
-            
+            }
         } 
         if (board[1][1] != Token._) {
         	
-            if (board[1][1] == board[1][0] && board[1][0] == board[1][2])
+            if (board[1][1] == board[1][0] && board[1][0] == board[1][2]){
                 result = board[1][1];
-         // Object id [96]
+                m_botAction.sendUnfilteredPublicMessage("*objon 96");
             // +---+---+---+
             // |   |   |   |
             // | x | x | x |
             // |   |   |   |
             // +---+---+---+
-            else if (board[1][1] == board[0][1] && board[0][1] == board[2][1])
+            }
+            else if (board[1][1] == board[0][1] && board[0][1] == board[2][1]){
                 result = board[1][1];
-         // Object id [93]
+                m_botAction.sendUnfilteredPublicMessage("*objon 93");
             // +---+---+---+
             // |   | x |   |
             // |   | x |   |
             // |   | x |   |
             // +---+---+---+
+        }
         }
         if (result != null)
             return result;
