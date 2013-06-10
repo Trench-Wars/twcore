@@ -179,11 +179,15 @@ public class zombies extends MultiModule {
 
     public void handleCommand( String name, String message ){
         
-        if(message.startsWith("!debug ") && opList.isOwner(name)) {
-            if (!message.substring(7).isEmpty())
-            debugger = message.substring(7);            
-        } else if (message.equals("!debug") && debug)
+        if(message.startsWith("!debug ") && opList.isDeveloper(name.toLowerCase())) {
+            if (!message.substring(7).isEmpty()) {
+                m_botAction.sendRemotePrivateMessage(debugger, "You are now set to the debugger for zombies");
+                debugger = message.substring(7);            
+            }
+        } else if (message.equals("!debug") && debug) {
+            m_botAction.sendRemotePrivateMessage(debugger, "debugging turned off");
             debug = false;
+        }
         
         if( message.startsWith( "!list" )){
             listKillMessages( name );
