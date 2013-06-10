@@ -46,9 +46,6 @@ public class zombies extends MultiModule {
     public String debugger = "K A N E";
 
     public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives, int rebirthkills ){
-        
-            m_botAction.sendPrivateMessage(debugger, "HFreq: " + srcfreq + " HShip: " + srcship + "ZFreq: " + destfreq + "ZShip: " + destship + "Lives: " + lives + "RBK: " + rebirthkills );
-
         m_humanfreq = srcfreq;
         m_srcship.add(new Integer(srcship));
         m_zombiefreq = destfreq;
@@ -60,6 +57,8 @@ public class zombies extends MultiModule {
         else
         	rebK = false;
         modeSet = true;
+        m_botAction.sendPrivateMessage(debugger, "Never give up. Never surrender - BuzzLightYear" );
+        m_botAction.sendPrivateMessage(debugger, "HFreq: " + m_humanfreq + " HShip: " + m_srcship.size() + "ZFreq: " + m_zombiefreq + "ZShip: " + m_zombieship + "Lives: " + m_lives + "RBK: " + m_rebirthkills );
     }
 
     public void addShip(int srcship, String name)
@@ -181,8 +180,8 @@ public class zombies extends MultiModule {
         
         if(message.startsWith("!debug ") && opList.isDeveloper(name.toLowerCase())) {
             if (!message.substring(7).isEmpty()) {
-                m_botAction.sendRemotePrivateMessage(debugger, "You are now set to the debugger for zombies");
                 debugger = message.substring(7);
+                m_botAction.sendRemotePrivateMessage(debugger, "You are now set to the debugger for zombies");
                 debug = true;
             }
         } else if (message.equals("!debug")) {
@@ -294,7 +293,7 @@ public class zombies extends MultiModule {
                     m_botAction.setShip( event.getKilleeID(), m_zombieship );
                     m_botAction.setFreq( event.getKilleeID(), m_zombiefreq );
                     
-                        m_botAction.sendRemotePrivateMessage(debugger, "Zombies: " + p2.getPlayerName() + " has killed " + p.getPlayerName());
+                        m_botAction.sendRemotePrivateMessage(debugger, "Zombies: " + p2.getPlayerName() + " has killed " + p.getPlayerName() + " (" + p.getLosses() + ") ");
                     
                     if(rebK)
                     	m_botAction.scoreReset( event.getKilleeID() );
