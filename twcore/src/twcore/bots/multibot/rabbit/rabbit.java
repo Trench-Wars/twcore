@@ -36,6 +36,7 @@ public class rabbit extends MultiModule{
 		};
 
 	private boolean	inProgress = false;
+	private boolean lockState = false;
 	private int timeLimit = 15, Killsound, FCsound;;
 	private int shipType = ANY_SHIP;
 	private ArrayList<String> rabbitList = new ArrayList<String>(4);
@@ -54,11 +55,13 @@ public class rabbit extends MultiModule{
 		String message = event.getMessage();
 		if (event.getMessageType() == Message.PRIVATE_MESSAGE)
 			{
-			String name = m_botAction.getPlayerName(event.getPlayerID());
-			if (opList.isER(name))
-				{
-				handleCommand(name, message);
-				}
+    			String name = m_botAction.getPlayerName(event.getPlayerID());
+    			if (opList.isER(name))
+    				handleCommand(name, message);
+			} else if( event.getMessageType() == Message.ARENA_MESSAGE) {
+		            if((message.equals("Arena LOCKED") && lockState) || (message.equals("Arena UNLOCKED") && !lockState)){
+		                m_botAction.toggleLocked();
+		            }
 			}
 		}
 
@@ -168,11 +171,13 @@ public class rabbit extends MultiModule{
 				}
 			if (getPlayerCount() >= 3)
 				{
-				m_botAction.toggleLocked();
+                lockState = true;
+                m_botAction.toggleLocked();
 				m_botAction.sendArenaMessage("Rabbit mode activated by "
 				+ name + ".");
 				m_botAction.sendArenaMessage("Get ready, game starts in 10 "
 				+ "seconds.", 2);
+                m_botAction.resetFlagGame();
 
 				TimerTask makeTeams = new TimerTask()
 					{
@@ -192,6 +197,7 @@ public class rabbit extends MultiModule{
 						{
 						inProgress = true;
 						m_botAction.scoreResetAll();
+						m_botAction.shipResetAll();
 						m_botAction.setTimer(timeLimit);
 						m_botAction.sendArenaMessage("Go go go!", 104);
 						}
@@ -227,7 +233,8 @@ public class rabbit extends MultiModule{
 		{
 		inProgress = false;
 		m_botAction.sendArenaMessage("MVP: " + getMVP() + "!", 7);
-		m_botAction.toggleLocked();
+        lockState = false;
+        m_botAction.toggleLocked();
 		rabbitList.clear();
 		}
 
@@ -240,7 +247,8 @@ public class rabbit extends MultiModule{
 			m_botAction.cancelTasks();
 			m_botAction.sendArenaMessage("This game has been brutally killed "
 			+ "by " + name + ".", 13);
-			m_botAction.toggleLocked();
+            lockState = false;
+            m_botAction.toggleLocked();
 			}
 		else
 			{
