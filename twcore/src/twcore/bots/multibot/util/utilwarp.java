@@ -79,7 +79,7 @@ public class utilwarp extends MultiUtil {
                 "!Warpto <X>:<Y>:<Radius>                  -- Warps everyone to <X>, <Y> within a distance of <Radius>.",
                 "!WarpFreq <Freq>:<X>:<Y>:<Radius>         -- Warps freq <Freq> to <X>, <Y> within a distance of <Radius>.",
                 "!WarpShip <Ship>:<X>:<Y>:<Radius>         -- Warps ship <Ship> to <X>, <Y> within a distance of <Radius>.",
-                "!SetupWarp <Argument>                     -- Performs the setup warp for this arena based on the <Argument>.",
+                "!SetupWarp <Argument>                     -- Performs the setup warp for this arena based on the <Argument>. (!sw for shorthand command)",
                 "!SetupWarpList                            -- Displays the setup warp information.",
                 "!Whereami                                 -- Shows your current coords."
         };
@@ -285,6 +285,8 @@ public class utilwarp extends MultiUtil {
             doSetupWarpCmd(sender, "");
         else if (command.startsWith("!setupwarp "))
             doSetupWarpCmd(sender, message.substring(11));
+        else if (command.startsWith("!sw "))
+            doSetupWarpCmd(sender, message.substring(4));
         else if (command.equalsIgnoreCase("!setupwarplist"))
             doSetupWarpListCmd(sender);
         else if (command.equalsIgnoreCase("!whereami"))
