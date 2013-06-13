@@ -86,7 +86,7 @@ public class whobot extends SubspaceBot {
         locating = "";
         debugger = "";
         DEBUG = false;
-        alert = true;
+        alert = false;
         String[] nogos = ba.getBotSettings().getString("NoGoArenas").split(" ");
         for (String n : nogos)
             nogo.add(n);
@@ -215,7 +215,7 @@ public class whobot extends SubspaceBot {
                 return;
             }
             
-            if ((ops.isSmod(name) || name.equalsIgnoreCase("flared")) && msg.startsWith("!say ")) {
+            if (ops.isSmod(name) && msg.startsWith("!say ")) {
                 say(name, msg);
                 return;
             }
