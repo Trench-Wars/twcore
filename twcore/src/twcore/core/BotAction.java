@@ -3709,6 +3709,15 @@ public class BotAction
     }
 
     /**
+     * @return A random playing Player. 
+     */
+    public Player getRandomPlayingPlayer() {
+        List <Player>l = m_arenaTracker.getPlayingPlayers();
+        Random r = new Random();
+        return l.get( r.nextInt(l.size()) );
+    }
+
+    /**
      * Gets the Flag object associated with the FlagID provided.  The Flag object
      * describes all the pertinent details about a flag in the arena the bot is in.
      * @param flagID The FlagID of the player you wish to retrieve info for.
