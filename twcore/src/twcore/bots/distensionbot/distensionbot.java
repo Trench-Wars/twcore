@@ -6644,7 +6644,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 3 )
+        if( p.getOpStatus() < 2 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         String[] args = msg.split(":");
@@ -12970,11 +12970,11 @@ public class distensionbot extends SubspaceBot {
             DistensionPlayer p = m_players.get(breakerName);
             if( p != null ) {
                 if( remain < 4 )
-                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN!!  " + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!!", Tools.Sound.INCONCEIVABLE );
+                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN!!  " + p.getArmyName() + "(" + p.getArmyID() + ") - " + " "  + p.getName() + " at 0:0" + remain + "!!", Tools.Sound.INCONCEIVABLE );
                 else if( remain < 10 )
-                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN: "   + p.getArmyName() + " ("  + p.getName() + ") at 0:0" + remain + "!", Tools.Sound.CROWD_OOO );
+                    m_botAction.sendArenaMessage( "SECTOR HOLD BROKEN: "   + p.getArmyName() + "(" + p.getArmyID() + ") - " + " "  + p.getName() + " at 0:0" + remain + "!", Tools.Sound.CROWD_OOO );
                 else
-                    m_botAction.sendArenaMessage( "HOLD BROKEN: "   + p.getArmyName() + " - " + p.getName(), SOUND_ROUND_BREAK );
+                    m_botAction.sendArenaMessage( "HOLD BROKEN: "   + p.getArmyName() + "(" + p.getArmyID() + ") - " + " - " + p.getName(), SOUND_ROUND_BREAK );
                 addSectorBreak( p.getName() );
             } else {
                 DistensionArmy a = m_armies.get( breakingArmyID );
