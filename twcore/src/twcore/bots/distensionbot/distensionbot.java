@@ -710,7 +710,7 @@ public class distensionbot extends SubspaceBot {
      */
     public void setupTimerTasks() {
         m_specialAbilityPrizer = new SpecialAbilityTask();
-        m_botAction.scheduleTaskAtFixedRate(m_specialAbilityPrizer, 30000, 30000 );
+        m_botAction.scheduleTaskAtFixedRate(m_specialAbilityPrizer, 15000, 15000 );
 
         m_prizeQueue = new PrizeQueue();
         m_botAction.scheduleTaskAtFixedRate(m_prizeQueue, UPGRADE_DELAY, UPGRADE_DELAY);
@@ -8487,32 +8487,32 @@ public class distensionbot extends SubspaceBot {
                 }
             }
             else if( shipNum == 3) {
-                // Energy tank ability; each level worth an additional 25%
+                // Energy tank ability; each level worth an additional 12.5%
                 if( !energyTank ) {
                     double etChance = Math.random() * 100.0;
-                    if( ((double)purchasedUpgrades[10] * 25.0) > etChance ) {
+                    if( ((double)purchasedUpgrades[10] * 12.5) > etChance ) {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_ENERGY_TANK );
                         m_botAction.sendPrivateMessage(arenaPlayerID, "Energy Tank replenished.  !! to use.", SOUND_POWERUP_RECHARGED );
                         energyTank = true;
                     }
                 }
-                // Energy stream ability; each level worth an additional 10%
+                // Energy stream ability; each level worth an additional 4.5%
                 double superChance = Math.random() * 100.0;
-                if( (double)purchasedUpgrades[11] * 9.0 > superChance && !isRespawning ) {
+                if( (double)purchasedUpgrades[11] * 4.5 > superChance && !isRespawning ) {
                     m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.SUPER, SOUND_POWER_ACTIVE );
                     m_botAction.showObjectForPlayer(arenaPlayerID, LVZ_SUPER );
                     //prized = true;
                 }
             } else if( shipNum == 8) {
-                // Repel regen ability; each level worth an additional 25%
-                double repChance = Math.random() * 4.0;
-                if( (double)purchasedUpgrades[9] > repChance && !isRespawning ) {
+                // Repel regen ability; each level worth an additional 15%
+                double repChance = Math.random() * 100.0;
+                if( (double)purchasedUpgrades[9] * 15.0 > repChance && !isRespawning ) {
                     m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.REPEL, SOUND_POWERUP_RECHARGED );
                     //prized = true;
                 }
             } else if( shipNum == 1) {
                 // Thor ability (every 5 minutes)
-                if( purchasedUpgrades[11] > 0 && tick % 10 == 0 ) {
+                if( purchasedUpgrades[11] > 0 && tick % 20 == 0 ) {
                     m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_THOR );
                     bonusPrize = Tools.Prize.THOR;
                     //prized = true;
@@ -8521,8 +8521,8 @@ public class distensionbot extends SubspaceBot {
                 // Firebloom ability.
                 // Every 2 minutes with lvl1, every 1 minutes with lvl2, spawn w/ @ lvl3 (+ get every minute)
                 if( firebloom > 0 ) {
-                    if( (firebloom == 1 && tick % 4 == 0) ||
-                        (firebloom >= 2 && tick % 2 == 0) ) {
+                    if( (firebloom == 1 && tick % 8 == 0) ||
+                        (firebloom >= 2 && tick % 4 == 0) ) {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_FIREBLOOM );
                         bonusPrize = Tools.Prize.BURST;
                         //prized = true;
@@ -8532,10 +8532,10 @@ public class distensionbot extends SubspaceBot {
                 // JumpSpace ability (free at rank 15, but doesn't work well)
                 int neededTick;
                 switch( purchasedUpgrades[9] ) {
-                    case 1: neededTick = 15; break;     // 7.5min
-                    case 2: neededTick = 10; break;     // 5m
-                    case 3: neededTick = 5; break;      // 2.5m
-                    default: neededTick = 20; break;    // 10m (for only freebie version)
+                    case 1: neededTick = 30; break;     // 7.5min
+                    case 2: neededTick = 20; break;     // 5m
+                    case 3: neededTick = 10; break;     // 2.5m
+                    default: neededTick = 40; break;    // 10m (for only freebie version)
                 }
                 if( tick % neededTick == 0 ) {
                     if( !jumpSpace ) {
@@ -8546,25 +8546,25 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             } else if( shipNum == 6) {
-                // Prismatic Array ability; creates decoy array when used
+                // Prismatic Array ability (7.5% chance/tick); creates decoy array when used
                 if( !prismatic ) {
                     double pmChance = Math.random() * 100.0;
-                    if( ((double)purchasedUpgrades[14] * 15.0) > pmChance ) {
+                    if( ((double)purchasedUpgrades[14] * 7.5) > pmChance ) {
                         m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_PRISMATIC );
                         m_botAction.sendPrivateMessage(arenaPlayerID, "Prismatic Array replenished.  --- to use.", SOUND_POWERUP_RECHARGED);
                         prismatic = true;
                     }
                 }
                 if( brick > 0 ) {
-                    if( (brick == 1 && tick % 2 == 0) ||
-                        (brick >= 2 && tick % 1 == 0) ) {
+                    if( (brick == 1 && tick % 4 == 0) ||
+                        (brick >= 2 && tick % 2 == 0) ) {
                         m_botAction.sendPrivateMessage( arenaPlayerID, "Brick replenished." );
                         m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*prize#" + Tools.Prize.BRICK, SOUND_POWERUP_RECHARGED );
                     }
                 }
             } else if( shipNum == 9 ) {
                 // Allow another Comm every minute, up to max allowed
-                if( tick % 3 == 0 ) {
+                if( tick % 4 == 0 ) {
                     if( currentComms < maxComms ) {
                         currentComms++;
                         m_botAction.sendPrivateMessage(arenaPlayerID, "+1 Comm Authorization  ( " + currentComms + " / " + maxComms + " )" );
@@ -8572,7 +8572,7 @@ public class distensionbot extends SubspaceBot {
                 }
 
                 // Regenerate OP
-                if( tick % 2 == 0 ) {
+                if( tick % 4 == 0 ) {
                     int increase = purchasedUpgrades[2] + DEFAULT_OP_REGEN;
                     if( currentOP < maxOP ) {
                         if( currentOP + increase > maxOP )
@@ -8583,7 +8583,7 @@ public class distensionbot extends SubspaceBot {
                 }
 
                 // Give report on Shark/Terr status every 5 min
-                if( tick % 10 == 0 ) {
+                if( tick % 20 == 0 ) {
                     int terrs = 0;
                     int sharks = 0;
                     int others = 0;
