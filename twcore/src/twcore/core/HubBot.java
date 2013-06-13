@@ -93,6 +93,7 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList", accessRequired );
         m_commandInterpreter.registerCommand( "!billerdown", acceptedMessages, this, "handleBillerDownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "displayListBots", accessRequired );
+        m_commandInterpreter.registerCommand( "!lb", acceptedMessages, this, "displayListBots", accessRequired );
         // Moderator+
         m_commandInterpreter.registerCommand( "!uptime", acceptedMessages, this, "handleUptimeCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!dbstatus", acceptedMessages, this, "handleDbStatus", accessRequired );
