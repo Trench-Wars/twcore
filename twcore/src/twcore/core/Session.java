@@ -374,7 +374,18 @@ public class Session extends Thread {
         if( set == null )
             TIMEOUT_DELAY = 60000;
         else
-            TIMEOUT_DELAY = set;        
+            TIMEOUT_DELAY = set;
+        
+        set = null;
+        if( settings != null )
+            set = settings.getInteger( "dbg-LoginDelay" );
+        int LOGIN_DELAY;
+        if( set == null )
+            LOGIN_DELAY = 7000;
+        else
+            LOGIN_DELAY = set;        
+
+        
         int clientKey = (int)(-Math.random() * Integer.MAX_VALUE);
 
         m_packetInterpreter.setSubspaceBot( m_subspaceBot );
@@ -388,8 +399,8 @@ public class Session extends Thread {
         	while(m_state == STARTING && !interrupted()) {
                 currentTime = System.currentTimeMillis();
 
-                if( currentTime - m_initialTime > 5000 ){
-                    Tools.printLog( m_name + " failed to log in.  Login timed out." );
+                if( currentTime - m_initialTime > LOGIN_DELAY ){
+                    Tools.printLog( m_name + " failed to log in.  Login timed out after " + LOGIN_DELAY + "ms" );
                     disconnect( "login timed out" );
                     return;
                 }
