@@ -1955,7 +1955,7 @@ class Channel
 					query = "UPDATE tblChannelUser SET fnLevel = " + level + " WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase()) + "' AND fcChannel = '" + Tools.addSlashesToString(channelName) +"'";
 					members.put(player.toLowerCase(), new Integer(level));
 				} else {
-					query = "DELETE FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase())+"'";
+					query = "DELETE FROM tblChannelUser WHERE fcName = '" + Tools.addSlashesToString(player.toLowerCase()) + "' AND fcChannel = '" + Tools.addSlashesToString(channelName) +"'";
 					members.remove(player.toLowerCase());
 				}
                                 m_bA.SQLClose(m_bA.SQLQuery(database, query));
