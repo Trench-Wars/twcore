@@ -75,7 +75,7 @@ public class distensionbot extends SubspaceBot {
     private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
-    private final int TICKS_BEFORE_SPAWN = 10;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
+    private final int TICKS_BEFORE_SPAWN = 12;             // # of UPGRADE_DELAYs * DELAYS_BEFORE_TICK before respawn
     private final int IDLE_FREQUENCY_CHECK = 10;           // In seconds, how frequently to check for idlers
     private final int IDLE_TICKS_BEFORE_DOCK = 9;          // # IDLE_FREQUENCY_CHECKS in idle before player is docked
     private final int IDLE_TICKS_DOCKED_FOR_SWAPOUT = 12;  // # IDLE_FREQUENCY_CHECKS in idle before player is docked
@@ -290,6 +290,7 @@ public class distensionbot extends SubspaceBot {
     private LinkedList <String>m_ignoreWarpPlayers;         // Players who have just warped and should be ignored
     private HashMap <String,Integer>m_defectors;            // Players wishing to defect who need to confirm defection
     private long m_lastSave;                                // Last time data was saved
+    private float m_RPBonus;                                // RP bonus (for when bot crashes)
 
     // LIMITING SYSTEM
     private PlayerSlotManager m_slotManager;                // Manager for player slots
@@ -612,6 +613,7 @@ public class distensionbot extends SubspaceBot {
         else
             DEBUG = false;
         m_lastSave = System.currentTimeMillis();
+        m_RPBonus = 0.0f;
     }
 
     /**
@@ -1254,6 +1256,7 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!shutdown", acceptedMessages, this, "cmdShutdown" );
         m_commandInterpreter.registerCommand( "!shutdowninfo", acceptedMessages, this, "cmdShutdownInfo" );
         m_commandInterpreter.registerCommand( "!setmaxplayers", acceptedMessages, this, "cmdSetMaxPlayers" );
+        m_commandInterpreter.registerCommand( "!rpbonus", acceptedMessages, this, "cmdRPBonus" );
         m_commandInterpreter.registerCommand( "!db-changename", acceptedMessages, this, "cmdDBChangeName" );
         m_commandInterpreter.registerCommand( "!db-addship", acceptedMessages, this, "cmdDBAddShip" );
         m_commandInterpreter.registerCommand( "!db-wipeship", acceptedMessages, this, "cmdDBWipeShip" );
@@ -2682,7 +2685,7 @@ public class distensionbot extends SubspaceBot {
                 if( r != null ) {
                     while( r.next() ) {
                         int ship = r.getInt("fnShipNum");
-                        m_botAction.SQLQueryAndClose(m_database, "UPDATE tblDistensionShip SET fnRankPoints='" + m_shipGeneralData.get(ship).getNextRankCost(r.getInt("fnRank") - 2) + "'"+
+                        m_botAction.SQLQueryAndClose(m_database, "UPDATE tblDistensionShip SET fnRankPoints='" + m_shipGeneralData.get(ship).getNextRankCost(r.getInt("fnRank") - 1) + "'"+
                                 " WHERE fnShipNum='" + ship + "' AND fnPlayerID='" + p.getDatabaseID() + "'");
                     }
                 }
@@ -2734,7 +2737,7 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "Whoa, and what the hell army are you in now?  You're confusing me... might want to tell someone important that I told you this." );
 
 
-        boolean weak = (oldarmy.getPilotsTotal() > army.getPilotsTotal() + 3 );
+        boolean weak = (oldarmy.getPilotsTotal() > army.getPilotsTotal() + 1 );
 
         // Free !defect if army has less pilots
         if( weak ) {
@@ -2743,7 +2746,7 @@ public class distensionbot extends SubspaceBot {
         } else {
             m_defectors.remove(name);
             m_defectors.put(name, new Integer(armyNum) );
-            m_botAction.sendPrivateMessage( name, "So you want to betray them all, eh?  That can be arranged ... but it won't be easy.  You'll lose a full rank in every ship you fly, plus any progress you've made to the next rank." );
+            m_botAction.sendPrivateMessage( name, "So you want to betray them all, eh?  That can be arranged ... but it won't be easy.  You'll lose all progress towards next rank in every ship you fly." );
             m_botAction.sendPrivateMessage( name, "Sorry that it has to be this way ... but they're not going to trust a traitor just yet.  If this arrangement is acceptable, we'll get started.  (PM !defect yes TO ACCEPT)" );
         }
     }
@@ -6009,13 +6012,14 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-        if( !autosave )
-            m_botAction.sendArenaMessage( "Saving player data ..." ,1 );
+        //if( !autosave )
+        //    m_botAction.sendArenaMessage( "Saving player data ..." ,1 );
         int players = 0;
         int playersunsaved = 0;
         long starttime = System.currentTimeMillis();
         for( DistensionPlayer p : m_players.values() ) {
             if( autosave ) {
+                p.savePlayerDataToDB();
                 p.saveCurrentShipToDB();
             } else {
                 p.savePlayerDataToDB();
@@ -6036,7 +6040,7 @@ public class distensionbot extends SubspaceBot {
             else
                 m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  " + playersunsaved + " players could not be saved.", 2 );
         }
-        if( m_beginDelayedShutdown ) {
+        if( m_beginDelayedShutdown && !(name.equals(m_botAction.getBotName())) ) {
             m_botAction.sendPrivateMessage( name, "IMPORTANT NOTE TO MODERATOR: Bot will automatically save and shut down at end of this round." );
         }
         m_lastSave = System.currentTimeMillis();
@@ -6110,7 +6114,7 @@ public class distensionbot extends SubspaceBot {
                 }
             };
             try {
-            m_botAction.scheduleTask(dieTask, 1000);
+            m_botAction.scheduleTask(dieTask, 5000);
             } catch(IllegalStateException e) {
                 m_botAction.die( "mod-initiated by !shutdown" );
             }
@@ -6179,6 +6183,9 @@ public class distensionbot extends SubspaceBot {
                     m_botAction.sendArenaMessage("--- DELAYED SHUTDOWN INITIATED ---  The beta test will stop at the next end of round.  Thank you for testing.", Tools.Sound.VICTORY_BELL );
                 else
                     m_botAction.sendArenaMessage("--- DELAYED SHUTDOWN INITIATED ---  The game will stop at the next end of round.  Thank you for playing.", Tools.Sound.VICTORY_BELL );
+                // If in ballgame mode, save immediately
+                if( m_canScoreGoals )
+                    cmdSaveData( m_botAction.getBotName(), "" );
             }
         };
         try {
@@ -6231,7 +6238,12 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdSetMaxPlayers( String name, String msg ) {
-        return;
+        // Thanks to the classy person who commented out an entire method and didn't even leave a comment,
+        // much less any info that PMs the user letting them know the cmd is disabled. Could have done it
+        // via a boolean if you wanted to be slick. Anyway, real professional, guys :(  -qan
+        
+        throw new TWCoreException("This method is disabled for some reason. Please ask a coder why." );        
+        //return;
 
         /*
         boolean isBot = name.equals(m_botAction.getBotName());
@@ -6270,6 +6282,37 @@ public class distensionbot extends SubspaceBot {
         */
     }
 
+    /**
+     * Sets a temporary RP bonus, for when the bot crashes.
+     * @param name
+     * @param msg
+     */
+    public void cmdRPBonus( String name, String msg ) {
+        boolean isBot = name.equals(m_botAction.getBotName());
+        if( !isBot ) {
+            DistensionPlayer p = m_players.get( name );
+            if( p == null )
+                throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
+            if( p.getOpStatus() < 2 )
+                throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
+        }
+
+        if( !Tools.isAllDigits(msg) )
+            throw new TWCoreException("Give me a number.");
+        Integer num = Integer.parseInt(msg);
+        if( !isBot && (num < 0 || num > 30) )
+            throw new TWCoreException("Please pick a number between 0 (to disable) and 30 (+30% bonus).");
+
+        if( num == 0 ) {
+            m_RPBonus = 0.0f;
+            throw new TWCoreException("Disabled RP bonus.");
+        } else {
+            m_RPBonus = ((float)num * 0.01f);
+            throw new TWCoreException("Bonus set to " + num + "%");
+        }
+    }
+
+    
 
     /**
      * Bans a player from playing Distension.
@@ -7277,7 +7320,7 @@ public class distensionbot extends SubspaceBot {
             desc = "+10% chance of full charge after every kill";
             break;
         case ABILITY_JUMPSPACE:
-            desc = "Spacial Jump improvements (+regen, -cooldown)";
+            desc = "Spacial Jump improvements (+regen, -cooldown, >>> to use)";
             break;
         case ABILITY_THOR:
             desc = "Thor recharged every 5 minutes";
@@ -7286,7 +7329,7 @@ public class distensionbot extends SubspaceBot {
             desc = "Chance of Super/Shields after streak of 5";
             break;
         case ABILITY_PRISMATIC_ARRAY:
-            desc = "+15% chance to refuel prismatic decoy array";
+            desc = "+15% chance to refuel prismatic decoy array (--- to use)";
             break;
         case ABILITY_FIREBLOOM:
             desc = "Expedient rearming of Firebloom burst";
@@ -8808,8 +8851,8 @@ public class distensionbot extends SubspaceBot {
                         bonusBuildup--;
                     }
                 }
-                if( bonusRPMult > 0.0f )
-                    points += (int)((float)points * bonusRPMult);
+                if( bonusRPMult > 0.0f || m_RPBonus > 0.0f )
+                    points += (int)((float)points * (bonusRPMult + m_RPBonus));
                 if( limit ) {
                     // Allow only 50% of a rank to be earned from any point increase.
                     if( points > (nextRank - rankStart) / 2 )
@@ -12483,7 +12526,6 @@ public class distensionbot extends SubspaceBot {
             }
         }
 
-        cmdSaveData(":autosave:", "");
 
         if( m_beginDelayedShutdown ) {
             m_botAction.sendArenaMessage( "AUTOMATED SHUTDOWN INITIATED ...  5 minutes allowed to refit your ship if you wish.  Kills do not count during this time.", 1 );
@@ -12494,6 +12536,7 @@ public class distensionbot extends SubspaceBot {
             intermissionTime = 5 * Tools.TimeInMillis.MINUTE;
             m_botAction.setTimer( 5 );
         } else {
+            cmdSaveData(":autosave:", "");
             freePlayTimer = new FreePlayTask();
             freePlayTimer.setTime( BALLTIME_MINS * Tools.TimeInMillis.MINUTE );
 
