@@ -20,7 +20,7 @@ import twcore.core.util.Tools;
 public class golden extends MultiModule {
 
    boolean isRunning = false;
-   boolean coordsOn;
+   boolean coordsOn = false;
    String hasGun = "";
    //String killMessage = " has got the Golden Gun! Run!";
    int gunShip = 1;
@@ -128,9 +128,9 @@ public class golden extends MultiModule {
 					if (!isRunning) {
 						m_botAction.sendPrivateMessage(name, "Golden Gun isn't running yet. You have to !start it first!");
 					} else {
-					getCoords();
-					m_botAction.sendPrivateMessage(name,hasGun + " is located at " + xCoord + yCoord);
+					m_botAction.sendPrivateMessage(name,hasGun + " is located at: " + getCoords(hasGun));
 					}
+					
 				} else if (message.startsWith("!coordson")) { // command to start periodic *Arena messages of gunners coordinates using a TimerTask
 					if (!isRunning) {
 						m_botAction.sendPrivateMessage(name, "Golden Gun isn't running yet. You have to !start it first!");
@@ -179,11 +179,11 @@ public class golden extends MultiModule {
     	          coords = new TimerTask() {
     	        	  @Override
 						public void run() {
-							getCoords();
+							getCoords(killer);
 							m_botAction.sendArenaMessage(killer + " is located at " + xCoord + yCoord,2);
 						}
 					};
-					m_botAction.scheduleTaskAtFixedRate(coords, 1 * Tools.TimeInMillis.SECOND, 15 * Tools.TimeInMillis.SECOND);
+					m_botAction.scheduleTaskAtFixedRate(coords, 5 * Tools.TimeInMillis.SECOND, 15 * Tools.TimeInMillis.SECOND);
          
    }
     
@@ -221,17 +221,18 @@ public class golden extends MultiModule {
 		switchGun(newGun.getPlayerName(),oldGun.getPlayerName());
 	}
 	
-	public void getCoords() {
+	public String getCoords(String playerName) {
 		// method that will generate in-game coordinates (A1, T20, etc) 
-		m_botAction.spectatePlayer(hasGun);
-		Player p = m_botAction.getPlayer(hasGun);
+		m_botAction.spectatePlayer(playerName);
+		Player p = m_botAction.getPlayer(playerName);
 		if (p == null)
-			return;
+			return null;
 		x = p.getXTileLocation();
 		y = p.getYTileLocation();
-		int tempX = x/52 + 65;
+		int tempX = x/52 + 64; 
 		xCoord = ((char) tempX);
 		yCoord = y/52 + 1;
+		return "" + xCoord + yCoord;
 	} 
 	
    public String[] getModHelpMessage() {
