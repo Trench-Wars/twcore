@@ -13,13 +13,9 @@ import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
 /**
- * Golden Gun module
- *
- * Based on conquer module
- * And I bloody stole a function from zombies.
- * PS: bloody stole function from hunt too.
- *
- * @author  Kyace
+ * Golden Gun
+ * Rewrote this silly module
+ * By WillBy
  */
 public class golden extends MultiModule {
 
@@ -33,11 +29,16 @@ public class golden extends MultiModule {
    int killerID;
    int killeeID;
    int arenaSize;
+   int x;
+   int y;
+   char xCoord;
+   int yCoord;
    String addPlayerName;
    String playerName;
    //int specPlayers = 25;
    //int resetDelay = 5;
    //TimerTask resetPlayer;
+   TimerTask coords;
    TimerTask goldenPrizes;
    
    public void init() {
@@ -112,7 +113,31 @@ public class golden extends MultiModule {
 							setGun(hasGun);
 					}
 					}
-				} else if( message.startsWith( "!stop" )){
+					
+				} else if (message.startsWith("!guncoords")) {
+					if (!isRunning) {
+						m_botAction.sendPrivateMessage(name, "Golden Gun isn't running yet. You have to !start it first!");
+					} else {
+					getCoords();
+					m_botAction.sendPrivateMessage(name,hasGun + " is located at " + xCoord + yCoord);
+					}
+				} else if (message.startsWith("!coordson")) { // command to start periodic *Arena messages of gunners coordinates using a TimerTask
+					if (!isRunning) {
+						m_botAction.sendPrivateMessage(name, "Golden Gun isn't running yet. You have to !start it first!");
+					} else {
+						coords = new TimerTask() {
+							public void run() {
+								getCoords();
+								m_botAction.sendArenaMessage(hasGun + " is located at " + xCoord + yCoord,2);
+							}
+						};
+						m_botAction.scheduleTaskAtFixedRate(coords, 1 * Tools.TimeInMillis.SECOND, 15 * Tools.TimeInMillis.SECOND);
+						}
+					
+				} else if (message.startsWith("!coordsoff")) { // cancels timertask for coordinates
+					m_botAction.cancelTask(coords);
+					
+				} else if( message.startsWith( "!stop" )) {
 					if( !isRunning ) {
 						m_botAction.sendPrivateMessage(name, "Golden Gun is already stopped, cannot stop.");
 						return;
@@ -125,7 +150,8 @@ public class golden extends MultiModule {
 					m_botAction.sendPrivateMessage(name, randomPlayer());
 				}
 	   }  	
-	 }
+   }
+	 
        
    public void switchGun(final String killer, String killee) {
 	   // This method switches which player is the gunner...
@@ -134,7 +160,7 @@ public class golden extends MultiModule {
            m_botAction.setFreq(killee,humanFreq);
            m_botAction.cancelTasks();
            m_botAction.shipReset(killee);
-           m_botAction.sendArenaMessage(killer + "has captured the Golden Gun!",2);
+           m_botAction.sendArenaMessage(killer + " has captured the Golden Gun!",2);
 
        }    	   m_botAction.setShip(killer,gunShip);
     	           m_botAction.setFreq(killer,gunFreq);
@@ -153,7 +179,7 @@ public class golden extends MultiModule {
 	   // Generates a random player String to be used in startGame or if the host just wants to generate a random name 
 	   Player p;
        StringBag randomPlayerBag = new StringBag();
-       Iterator<Player> i = m_botAction.getPlayerIterator();
+      Iterator<Player> i = m_botAction.getPlayerIterator();
        if (i == null)
            return null;
        while (i.hasNext()) {
@@ -164,6 +190,7 @@ public class golden extends MultiModule {
        addPlayerName = randomPlayerBag.grabAndRemove();
        return addPlayerName;
    }
+   
    
    public void startGame(String playerName) {
        // pretty obvious what it does here... 
@@ -181,14 +208,30 @@ public class golden extends MultiModule {
 		Player oldGun = m_botAction.getFuzzyPlayer(hasGun);
 		switchGun(newGun.getPlayerName(),oldGun.getPlayerName());
 	}
-       
+	
+	public void getCoords() {
+		// method that will generate in-game coordinates (A1, T20, etc) 
+		m_botAction.spectatePlayer(hasGun);
+		Player p = m_botAction.getPlayer(hasGun);
+		if (p == null)
+			return;
+		x = p.getXTileLocation();
+		y = p.getYTileLocation();
+		int tempX = x/52 + 64;
+		xCoord = ((char) tempX);
+		yCoord = y/52;
+	} 
+	
    public String[] getModHelpMessage() {
        String[] GoldenHelp = {
-               "!start     - starts Golden Gun with random gunner",
+               "!start           - starts Golden Gun with random gunner",
                "!start <name>    - starts Golden Gun with name as gunner",
                "!setgun <name>   - sets a new gunner",
                "!randomplayer    - PMs you with name of random player" ,
                "!stop            - stops Golden Gun mode",   
+               "!guncoords       - PMs you with the location of the Golden Gunner",
+               "!coordson        - sends periodic arena messages of the Gunner's coordinates",
+               "!coordsoff       - turns off periodic coordinate arena messages"
        };
        return GoldenHelp;
    }
