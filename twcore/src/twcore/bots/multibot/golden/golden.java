@@ -20,6 +20,7 @@ import twcore.core.util.Tools;
 public class golden extends MultiModule {
 
    boolean isRunning = false;
+   boolean coordsOn;
    String hasGun = "";
    //String killMessage = " has got the Golden Gun! Run!";
    int gunShip = 1;
@@ -124,18 +125,12 @@ public class golden extends MultiModule {
 				} else if (message.startsWith("!coordson")) { // command to start periodic *Arena messages of gunners coordinates using a TimerTask
 					if (!isRunning) {
 						m_botAction.sendPrivateMessage(name, "Golden Gun isn't running yet. You have to !start it first!");
-					} else {
-						coords = new TimerTask() {
-							public void run() {
-								getCoords();
-								m_botAction.sendArenaMessage(hasGun + " is located at " + xCoord + yCoord,2);
-							}
-						};
-						m_botAction.scheduleTaskAtFixedRate(coords, 1 * Tools.TimeInMillis.SECOND, 15 * Tools.TimeInMillis.SECOND);
-						}
-					
+					} else 
+						coordsOn = true;
+
 				} else if (message.startsWith("!coordsoff")) { // cancels timertask for coordinates
 					m_botAction.cancelTask(coords);
+					coordsOn = false;
 					
 				} else if( message.startsWith( "!stop" )) {
 					if( !isRunning ) {
@@ -162,7 +157,8 @@ public class golden extends MultiModule {
            m_botAction.shipReset(killee);
            m_botAction.sendArenaMessage(killer + " has captured the Golden Gun!",2);
 
-       }    	   m_botAction.setShip(killer,gunShip);
+       }    	   hasGun = killer;
+       				m_botAction.setShip(killer,gunShip);
     	           m_botAction.setFreq(killer,gunFreq);
     	           goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
     	               @Override
@@ -171,8 +167,15 @@ public class golden extends MultiModule {
     	               }
     	          };
     	          m_botAction.scheduleTask(goldenPrizes, 100, Tools.TimeInMillis.SECOND * 5);
-          
-         hasGun = killer;
+    	          coords = new TimerTask() {
+    	        	  @Override
+						public void run() {
+							getCoords();
+							m_botAction.sendArenaMessage(killer + " is located at " + xCoord + yCoord,2);
+						}
+					};
+					m_botAction.scheduleTaskAtFixedRate(coords, 1 * Tools.TimeInMillis.SECOND, 15 * Tools.TimeInMillis.SECOND);
+         
    }
     
    public String randomPlayer() {
@@ -217,9 +220,9 @@ public class golden extends MultiModule {
 			return;
 		x = p.getXTileLocation();
 		y = p.getYTileLocation();
-		int tempX = x/52 + 64;
+		int tempX = x/52 + 65;
 		xCoord = ((char) tempX);
-		yCoord = y/52;
+		yCoord = y/52 + 1;
 	} 
 	
    public String[] getModHelpMessage() {
