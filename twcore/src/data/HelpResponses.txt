@@ -112,7 +112,8 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Sysops &Who|The sysops of SSCU Trench Wars are Pure_Luck and Weaver.
 &Owner &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
 &Owners &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
-Abuse Abusing Abused Abuser|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
+Staffabuse|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
+Complaints|To file a general complaint or to register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 &Staff &Complaint|To register any complaints about any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting request. We will attempt to handle your request as promptly as possible but there is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the <ER> tag next to their name.
 &Host &Base|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
@@ -460,13 +461,14 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Drinking &And &Driving|Please take care when operating your ship while under the influence of alcohol.
 
 # !tell who <staffmember>
+# LINE LENGTH: |                                                      |
 &Weaver &Who|Weaver: If you've got a problem he's not your man, but if you're a problem he'll give you a ban! =)
 &Dock> &Who|Dock is a sysop of SSCU Trench Wars.  He, along with Sphonk, created the bot core that is currently being used in Trench Wars.  His email address is DoCk@yaunet.com.
 &Priitk &Who|PriitK is a SSCU Trench Wars SysOp, a Billing Server Operator and the creator of Continuum.  His email address is priitk@trenchwars.org.
 &Pure_Luck &Who|Pure_Luck> greatest terr alive (base + lt) thanks
 &M_M &Who|M_M God is Candy King For Life!
 &cool &koen &Who|Does it look like I care...!?
-&Rudy &Who|Rudy is the Trench Wars ban administrator. He has a short temper and a shorter attention span. Do not waste his time with trivialities or (un)pleasantries, get to the point!
+&Rudy &Who|Rudy was a Trench Wars ban administrator. He has a short temper and a shorter attention span. Do not waste his time with trivialities or (un)pleasantries, get to the point!
 &dameon &angell &Who|Dameon Angell spawns frequently and with extreme prejudice during DDs.  Because, he feels that all the spawns make up for all the eats that come from you and your crappy 56k connections.  ?buy broadband, kthx.
 &Kim &Who|^______I AM KIMCHI, OVERMIND OF ENDLESS RICE FIELDS______^
 &Pascone &Who|Pascone is the elim king, season 11 twld winner, and has more usage than you'll ever attain
@@ -495,6 +497,8 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Witness &Who|I bet your Mommy still thinks your cute. ROFL Your Mom is one funny person. 
 &Warthog &Who|Warthog is a benighted ninja dwarf searching for his wife's true killer. She's a disco-crazy kleptomaniac doctor with the power to bend men's minds. They fight crime!
 &Zazu &Who|Zazu needs your money as he is addicted to beer. So go to www.trenchwars.org/donations and donate NOW!
+&Horatio &Who|Ginger King of Crime and Space
+&Qan &Who|qan is a criminal injury lawyer and a creative consulantant for BET. (HAVE YOU BEEN HURT AT WORK WHILE COMMITTING A CRIME? ARE YOU ALSO PRODUCING AND DIRECTING A SHOW TARGETED FOR AFRICAN AMERICANS? CONTACT QAN FOR A FREE CONSULTATION TODAY) 
 
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
