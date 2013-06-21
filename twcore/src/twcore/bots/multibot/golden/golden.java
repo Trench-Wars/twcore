@@ -89,11 +89,15 @@ public class golden extends MultiModule {
 						startGame(hasGun);
 						isRunning = true;
 					}
-				} else if (message.startsWith("!start ")) {  // lets host pick gunner like !startgun WillBy (uses fuzzy name so !startgun will should work too
+				} else if (message.startsWith("!start ")) {  // lets host pick gunner like !startgun WillBy (uses fuzzy name so !startgun will should work too)
 					if (isRunning)
 						m_botAction.sendPrivateMessage(name, "Golden Gun already started.");
 					else {
 					hasGun = (message.substring(7));
+					if (opList.isBot(hasGun)) {
+						m_botAction.sendPrivateMessage(name, "Invalid player. Please try again.");
+						return;
+					}
     					if (!hasGun.isEmpty()) { 
     				        hasGun = m_botAction.getFuzzyPlayerName(hasGun);
     					    if (hasGun != null){ 
@@ -107,13 +111,18 @@ public class golden extends MultiModule {
 					if (!isRunning)
 						m_botAction.sendPrivateMessage(name, "Golden Gun needs to be running first!");
 					else {
-					hasGun = message.substring(8);
-					if (!hasGun.isEmpty()) { 
-						hasGun = m_botAction.getFuzzyPlayerName(hasGun);
-						if (hasGun != null)
-							setGun(hasGun);
+						hasGun = message.substring(8);
+						if (opList.isBot(hasGun)) {
+							m_botAction.sendPrivateMessage(name, "Invalid player. Please try again.");
+							return;
+						}
+						if (!hasGun.isEmpty()) { 
+							hasGun = m_botAction.getFuzzyPlayerName(hasGun);
+							if (hasGun != null)
+								setGun(hasGun);
 					}
 					}
+					
 					
 				} else if (message.startsWith("!guncoords")) {
 					if (!isRunning) {
@@ -182,7 +191,7 @@ public class golden extends MultiModule {
 	   // Generates a random player String to be used in startGame or if the host just wants to generate a random name 
 	   Player p;
        StringBag randomPlayerBag = new StringBag();
-      Iterator<Player> i = m_botAction.getPlayerIterator();
+      Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
        if (i == null)
            return null;
        while (i.hasNext()) {
