@@ -460,6 +460,10 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Her &Nice &Ass|Whoa mama!!! You have a nice posterior!!
 &Stop &Slacking|Please pick up your monthly stats and get more active or you will get the axe from one of the deans! :-[
 &Drinking &And &Driving|Please take care when operating your ship while under the influence of alcohol.
+&Distension &Site|The site for Distension is: http://trenchwars.org/distension/
+&Distension &When|Distension schedule as of 6/21/13: MON, WED, THUR @ 5PM-7PM EDT (GMT-4)  For the most current schedule see: http://trenchwars.org/distension/schedule.php
+&Distension &Schedule|Distension schedule as of 6/21/13: MON, WED, THUR @ 5PM-7PM EDT (GMT-4)  For the most current schedule see: http://trenchwars.org/distension/schedule.php
+&Distension &What|Distension is an RPG-style action game using TW ship settings, and can be found in ?go distension
 
 # !tell who <staffmember>
 # LINE LENGTH: |                                                      |
