@@ -263,8 +263,8 @@ public class bannerboy extends SubspaceBot {
 			} else
 
 			if(message.startsWith("!tsay ")) {
-			    if(message.length()>0)
-			        m_botAction.sendTeamMessage( message );
+			    if(message.substring(6).length()>0)
+			        m_botAction.sendTeamMessage( message.substring(6) );
 			} else
 
 			 if(message.startsWith("!talk")) {
