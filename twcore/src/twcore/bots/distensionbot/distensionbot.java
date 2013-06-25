@@ -3934,7 +3934,7 @@ public class distensionbot extends SubspaceBot {
 
         float cost = 0;
         if( !DEBUG && ( p.isSpecialized() || p.getRank() > distensionbot.ShipTypeProfile.rankForPaidTypeChoice ) )
-            cost = (float)p.getRankPoints() * .03f;
+            cost = (float)p.getRankPoints() * .01f;
         String[] args = msg.split(":");
         boolean realDeal = false;
         if( args.length == 2 )
@@ -3968,7 +3968,7 @@ public class distensionbot extends SubspaceBot {
 
         if( !realDeal ) {
             String specmsg = "So, you'd like to specialize to " + sp.getTypeName() + "?";
-            String costmsg = "It'll cost you " + (int)cost + " RP -- 3% of all the total RP you've ever earned -- to do it.";
+            String costmsg = "It'll cost you " + (int)cost + " RP -- 1% of all the total RP you've ever earned -- to do it.";
             String confirmmsg = "Use !specialize " + typeToChangeTo + ":YES if you're sure.";
             if( !p.isSpecialized() ) {
                 if( cost > 0 ) {
@@ -3998,7 +3998,7 @@ public class distensionbot extends SubspaceBot {
         p.calculateRechargeAndEnergyLevels();
 
         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You have specialized to " + sp.getTypeName().toUpperCase() + "!" );
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Cost: " + (int)cost + "RP  (3% of your total RP earned)  You now have " + p.getUpgradePoints() + " UP to spend." );
+        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Cost: " + (int)cost + "RP  (1% of your total RP earned)  You now have " + p.getUpgradePoints() + " UP to spend." );
         p.prizeDefaultUpgrades();
     }
 
