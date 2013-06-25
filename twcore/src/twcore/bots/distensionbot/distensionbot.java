@@ -101,10 +101,15 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
-    private final int RANK_0_STRENGTH = 50;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
-    private final float TERR_STRENGTH_MULTIPLIER = 1.75f;  // How much a terr's strength is multiplied by (for calculation purposes)
-    private final float SHARK_STRENGTH_MULTIPLIER = 1.4f;  // How much a terr's strength is multiplied by
-    private final float OPS_STRENGTH_MULTIPLIER = 1.5f;    // How much a terr's strength is multiplied by
+    private final int RANK_0_STRENGTH = 80;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final int TERR_RANK_0_STRENGTH = 120;
+    private final int SHARK_RANK_0_STRENGTH = 100;
+    private final int OPS_RANK_0_STRENGTH = 90;
+    /*
+    private final float TERR_STRENGTH_MULTIPLIER = 1.3f;  // How much a terr's strength is multiplied by (for calculation purposes)
+    private final float SHARK_STRENGTH_MULTIPLIER = 1.2f;  // How much a shark's strength is multiplied by
+    private final float OPS_STRENGTH_MULTIPLIER = 1.2f;    // How much op's strength is multiplied by
+    */
 
     private final int ARMY_SYSTEM_STATIC = 0;              // Armies recorded in DB and do not change
     @SuppressWarnings("unused")
@@ -10057,13 +10062,12 @@ public class distensionbot extends SubspaceBot {
          * @return Returns strength of ship (upgrade level + default player strength) * ship multiplier.
          */
         public int getStrength() {
-            float str = getRank() + RANK_0_STRENGTH;
             switch(shipNum) {
-            case 5: return (int)(str * TERR_STRENGTH_MULTIPLIER);
-            case 8: return (int)(str * SHARK_STRENGTH_MULTIPLIER);
-            case 9: return (int)(str * OPS_STRENGTH_MULTIPLIER);
+            case 5: return getRank() + TERR_RANK_0_STRENGTH;
+            case 8: return getRank() + SHARK_RANK_0_STRENGTH;
+            case 9: return getRank() + OPS_RANK_0_STRENGTH;
+            default: return getRank() + RANK_0_STRENGTH;
             }
-            return (int)str;
         }
 
         /**
