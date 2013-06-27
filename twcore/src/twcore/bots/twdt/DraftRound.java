@@ -421,8 +421,10 @@ public class DraftRound {
     public void cancel()
     {
             ba.cancelTasks();
-            objects.hideAllObjects();
-            ba.setObjects();
+            if (objects != null) {
+                objects.hideAllObjects();
+                ba.setObjects();
+            }
     }
   
     /**
