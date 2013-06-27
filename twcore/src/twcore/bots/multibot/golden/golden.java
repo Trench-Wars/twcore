@@ -21,8 +21,6 @@ public class golden extends MultiModule {
 
    boolean isRunning = false;
    boolean coordsOn = false;
-   String hasGun = "";
-   //String killMessage = " has got the Golden Gun! Run!";
    int gunShip = 1;
    int gunFreq = 1;
    int humanShip = 1;
@@ -34,11 +32,11 @@ public class golden extends MultiModule {
    int y;
    char xCoord;
    int yCoord;
+   String hasGun = "";
+   String oldGun;
+   String newGun;
    String addPlayerName;
    String playerName;
-   //int specPlayers = 25;
-   //int resetDelay = 5;
-   //TimerTask resetPlayer;
    TimerTask coords;
    TimerTask goldenPrizes;
    
@@ -49,12 +47,6 @@ public class golden extends MultiModule {
        events.request(this, EventRequester.PLAYER_DEATH);
    }
 
-   /**
-    * This method switchs ships and freqs and specs depending
-    * on if guy with gun died and limit and such.
-    *
-    * @param event is the player death event.
-    */
    public void handleEvent( PlayerDeath event ){
        if( !isRunning ) return;
        else if (isRunning) {
@@ -111,18 +103,19 @@ public class golden extends MultiModule {
 					if (!isRunning)
 						m_botAction.sendPrivateMessage(name, "Golden Gun needs to be running first!");
 					else {
+						oldGun = hasGun;
 						hasGun = message.substring(8);
-						if (opList.isBot(hasGun)) {
+						
+						if (!hasGun.isEmpty()) { 
+							if (opList.isBot(hasGun)) {
 							m_botAction.sendPrivateMessage(name, "Invalid player. Please try again.");
 							return;
-						}
-						if (!hasGun.isEmpty()) { 
-							hasGun = m_botAction.getFuzzyPlayerName(hasGun);
-							if (hasGun != null)
-								setGun(hasGun);
+							}
+							newGun = m_botAction.getFuzzyPlayerName(hasGun);
+							if (newGun != null)
+								switchGun(newGun,oldGun);
 					}
 					}
-					
 					
 				} else if (message.startsWith("!guncoords")) {
 					if (!isRunning) {
@@ -134,12 +127,23 @@ public class golden extends MultiModule {
 				} else if (message.startsWith("!coordson")) { // command to start periodic *Arena messages of gunners coordinates using a TimerTask
 					if (!isRunning) {
 						m_botAction.sendPrivateMessage(name, "Golden Gun isn't running yet. You have to !start it first!");
-					} else 
+					} else {
 						coordsOn = true;
-
+						m_botAction.sendPrivateMessage(name, "Coordinate mode: ON");
+					}
 				} else if (message.startsWith("!coordsoff")) { // cancels timertask for coordinates
 					m_botAction.cancelTask(coords);
 					coordsOn = false;
+					m_botAction.sendPrivateMessage(name, "Coordinate mode: OFF");
+					
+				} else if (message.startsWith("!setmode ")) {
+					String mode = message.substring(9);
+					if (!isRunning) {
+						if (mode != null)
+							setMode(mode);
+					} else {
+						m_botAction.sendPrivateMessage(name, "Golden Gun already running, can't change modes now.");
+					}
 					
 				} else if( message.startsWith( "!stop" )) {
 					if( !isRunning ) {
@@ -183,7 +187,7 @@ public class golden extends MultiModule {
 							m_botAction.sendArenaMessage(killer + " is located at " + xCoord + yCoord,2);
 						}
 					};
-					m_botAction.scheduleTaskAtFixedRate(coords, 5 * Tools.TimeInMillis.SECOND, 15 * Tools.TimeInMillis.SECOND);
+					m_botAction.scheduleTaskAtFixedRate(coords, 5 * Tools.TimeInMillis.SECOND, 20 * Tools.TimeInMillis.SECOND);
          
    }
     
@@ -213,13 +217,6 @@ public class golden extends MultiModule {
 	   switchGun(playerName,null);
 	   m_botAction.sendArenaMessage("Golden Gun has started! " + playerName + " has the Golden Gun!",104);
    }
-   
-	public void setGun (String playerName) {
-		// performs a switch without a kill happening. A similar process to what will happen with startGame, except its coded independently
-		Player newGun = m_botAction.getFuzzyPlayer(playerName);
-		Player oldGun = m_botAction.getFuzzyPlayer(hasGun);
-		switchGun(newGun.getPlayerName(),oldGun.getPlayerName());
-	}
 	
 	public String getCoords(String playerName) {
 		// method that will generate in-game coordinates (A1, T20, etc) 
@@ -229,22 +226,34 @@ public class golden extends MultiModule {
 			return null;
 		x = p.getXTileLocation();
 		y = p.getYTileLocation();
-		int tempX = x/52 + 64; 
+		int tempX = x/52 + 65; 
 		xCoord = ((char) tempX);
 		yCoord = y/52 + 1;
 		return "" + xCoord + yCoord;
 	} 
 	
+	public void setMode(String parameters) { 
+		// by default, parameters would equal "0 1 1 1"
+		parameters.trim();
+		humanFreq = parameters.charAt(0);
+		humanShip = parameters.charAt(2);
+		gunFreq = parameters.charAt(4);
+		gunShip = parameters.charAt(6);
+		
+	}
+	
    public String[] getModHelpMessage() {
        String[] GoldenHelp = {
-               "!start           - starts Golden Gun with random gunner",
-               "!start <name>    - starts Golden Gun with name as gunner",
-               "!setgun <name>   - sets a new gunner",
-               "!randomplayer    - PMs you with name of random player" ,
-               "!stop            - stops Golden Gun mode",   
-               "!guncoords       - PMs you with the location of the Golden Gunner",
-               "!coordson        - sends periodic arena messages of the Gunner's coordinates",
-               "!coordsoff       - turns off periodic coordinate arena messages"
+               "!start            - starts Golden Gun with random gunner",
+               "!start <name>     - starts Golden Gun with name as gunner",
+               "!setgun <name>    - sets a new gunner",
+               "!randomplayer     - PMs you with name of random player" ,
+               "!stop             - stops Golden Gun mode",   
+               "!guncoords        - PMs you with the location of the Golden Gunner",
+               "!coordson         - sends periodic arena messages of the Gunner's coordinates",
+               "!coordsoff        - turns off periodic coordinate arena messages",
+               "!setmode <params> - changes human and gunner freqs and ships",
+               " params: <humanFreq> <humanShip> <gunFreq> <gunShip>  (default 0 1 1 1)"
        };
        return GoldenHelp;
    }
