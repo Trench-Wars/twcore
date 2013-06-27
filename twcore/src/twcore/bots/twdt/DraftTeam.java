@@ -136,6 +136,8 @@ public class DraftTeam {
                     cmd_remove(name, msg);
                 else if (msg.startsWith("!stars"))
                     cmd_stars(name);
+                else if (msg.startsWith("!addtime"))
+                    round.cmd_addTime(name);
             }
         }
     }

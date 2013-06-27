@@ -342,4 +342,9 @@ public class DraftGame {
     public GameType getType() {
         return type;
     }
+    
+    public void cancel() {
+        if (currentRound != null)
+            currentRound.cancel();
+    }    
 }

@@ -125,6 +125,18 @@ public class twdt extends SubspaceBot {
             if (oplist.isModerator(name)) {
                 if (msg.equals("!reset"))
                     cmd_reset(name);
+                else if (msg.equals("!killgame") && game != null)  {
+                        m_botAction.sendArenaMessage("The game has been brutally killed by " + name);
+                        game.cancel();
+                        game = null;
+                        try { Thread.sleep(100); } catch (Exception e) {};
+                            command_unlock(name);                        
+                    } else if (msg.equals("!unload") && game != null)  {
+                        game.cancel();
+                        game = null;
+                        try { Thread.sleep(100); } catch (Exception e) {};
+                            command_unlock(name);
+                    }
             }
         }
         if (game != null)
@@ -288,14 +300,24 @@ public class twdt extends SubspaceBot {
     
     /** Moves bot to a different arena */
     public void cmd_go(String name, String cmd) {
+        if (game != null) {
+            ba.sendSmartPrivateMessage(name, "Cannot leave with a game still in progress. Please !unlock to unload the current game");
+            return;
+        } else {
         if (cmd.length() < 5) return;
         ba.changeArena(cmd.substring(cmd.indexOf(" ") + 1));
+        }
     }
     
     /** Kills bot */
     public void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Killing myself...");
         handleDisconnect();
+    }
+    
+    public void command_unlock(String name) {
+        m_botAction.sendPrivateMessage(name, "Unlocked, going to ?go twl");
+        m_botAction.changeArena("twdt");
     }
     
     /** Helper requests the required events */

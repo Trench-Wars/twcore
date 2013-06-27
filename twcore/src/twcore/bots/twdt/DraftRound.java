@@ -418,6 +418,13 @@ public class DraftRound {
         ba.arenaMessageSpam(stats.toArray(new String[stats.size()]));
     }
     
+    public void cancel()
+    {
+            ba.cancelTasks();
+            objects.hideAllObjects();
+            ba.setObjects();
+    }
+  
     /**
      * MasterControl is a game ticker task that runs every second to update time related
      * data as well as check for various game player and team states.
@@ -452,7 +459,7 @@ public class DraftRound {
             state = RoundState.LINEUPS;
             int time = rules.getInt("LineupTime");
             timer = time * 60;
-            ba.sendArenaMessage("Captains, you will have " + time + " minutes to setup your team correctly");
+            ba.sendArenaMessage("Captains, you have " + time + " minutes to setup your team correctly");
             ba.setTimer(time);
         }
         
