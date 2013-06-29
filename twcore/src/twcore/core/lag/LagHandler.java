@@ -26,7 +26,7 @@ public class LagHandler {
     int sessionTime;
     int c2SSlowPackets;
     int s2CSlowPackets;
-    int spikeSize = 100;
+    int spikeSize = 75;
     int numSpikes;
     double s2C;
     double c2S;
