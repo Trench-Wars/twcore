@@ -27,11 +27,11 @@ public class golden extends MultiModule {
    int humanFreq = 0;
    int killerID;
    int killeeID;
-   int arenaSize;
    int x;
    int y;
    char xCoord;
    int yCoord;
+   int coordTime = 20 * Tools.TimeInMillis.SECOND;
    String hasGun = "";
    String oldGun;
    String newGun;
@@ -105,13 +105,13 @@ public class golden extends MultiModule {
 					else {
 						oldGun = hasGun;
 						hasGun = message.substring(8);
-						
-						if (!hasGun.isEmpty()) { 
-							if (opList.isBot(hasGun)) {
+						newGun = m_botAction.getFuzzyPlayerName(hasGun);
+						if (!newGun.isEmpty()) { 
+							if (opList.isBot(newGun)) {
 							m_botAction.sendPrivateMessage(name, "Invalid player. Please try again.");
 							return;
 							}
-							newGun = m_botAction.getFuzzyPlayerName(hasGun);
+							
 							if (newGun != null)
 								switchGun(newGun,oldGun);
 					}
@@ -124,23 +124,29 @@ public class golden extends MultiModule {
 					m_botAction.sendPrivateMessage(name,hasGun + " is located at: " + getCoords(hasGun));
 					}
 					
-				} else if (message.startsWith("!coordson")) { // command to start periodic *Arena messages of gunners coordinates using a TimerTask
+				} else if (message.startsWith("!coordson ")) { // command to start periodic *Arena messages of gunners coordinates using a TimerTask
 					if (!isRunning) {
 						m_botAction.sendPrivateMessage(name, "Golden Gun isn't running yet. You have to !start it first!");
 					} else {
 						coordsOn = true;
+						coordTime = Integer.parseInt(message.substring(10));
 						m_botAction.sendPrivateMessage(name, "Coordinate mode: ON");
 					}
+					
 				} else if (message.startsWith("!coordsoff")) { // cancels timertask for coordinates
+					if (coordsOn) {
 					m_botAction.cancelTask(coords);
 					coordsOn = false;
 					m_botAction.sendPrivateMessage(name, "Coordinate mode: OFF");
+					} else {m_botAction.sendPrivateMessage(name, "Coordinate mode already off.");
+						
+					}
 					
 				} else if (message.startsWith("!setmode ")) {
 					String mode = message.substring(9);
 					if (!isRunning) {
-						if (mode != null)
-							setMode(mode);
+						if (mode != null) 
+							setMode(name, mode);
 					} else {
 						m_botAction.sendPrivateMessage(name, "Golden Gun already running, can't change modes now.");
 					}
@@ -156,13 +162,23 @@ public class golden extends MultiModule {
 						
 				} else if (message.equalsIgnoreCase("!randomplayer")) {
 					m_botAction.sendPrivateMessage(name, randomPlayer());
+					
+				} else if( message.startsWith( "!status" )){
+			           // Testing feature from original golden gun module
+	           m_botAction.sendPrivateMessage(name, hasGun + " has the gun.");
+		           if( isRunning )
+		           m_botAction.sendPrivateMessage(name, "Golden Gun is running.");
+		           if( !isRunning )
+		           m_botAction.sendPrivateMessage(name, "Golden Gun is NOT running.");
+		           m_botAction.sendPrivateMessage(name, "Humans: Freq " + humanFreq + " Ship " + humanShip);
+		           m_botAction.sendPrivateMessage(name, "Gunner: Freq " + gunFreq + " Ship " + gunShip);
 				}
 	   }  	
    }
 	 
        
    public void switchGun(final String killer, String killee) {
-	   // This method switches which player is the gunner...
+	   // This method switches which player is the gunner, as well has timertasks for prizes and coordinate mode
        if (killee != null) {
            m_botAction.setShip(killee,humanShip);
            m_botAction.setFreq(killee,humanFreq);
@@ -173,22 +189,23 @@ public class golden extends MultiModule {
        }    	   hasGun = killer;
        				m_botAction.setShip(killer,gunShip);
     	           m_botAction.setFreq(killer,gunFreq);
-    	           goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner hopefully
+    	           goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner 
     	               @Override
     	               public void run() {
     	                   m_botAction.specificPrize(killer, Tools.Prize.SUPER);
     	               }
     	          };
     	          m_botAction.scheduleTask(goldenPrizes, 100, Tools.TimeInMillis.SECOND * 5);
-    	          coords = new TimerTask() {
-    	        	  @Override
-						public void run() {
-							getCoords(killer);
-							m_botAction.sendArenaMessage(killer + " is located at " + xCoord + yCoord,2);
-						}
-					};
-					m_botAction.scheduleTaskAtFixedRate(coords, 5 * Tools.TimeInMillis.SECOND, 20 * Tools.TimeInMillis.SECOND);
-         
+    	          if (coordsOn) { 
+    	        	  coords = new TimerTask() { // coordinate mode timertask
+    	        		  @Override
+    	        		  public void run() {
+    	        			  getCoords(killer);
+    	        			  m_botAction.sendArenaMessage(killer + " is located at " + xCoord + yCoord,2);
+    	        		  }
+    	        	  };
+    	        	  m_botAction.scheduleTaskAtFixedRate(coords, 5 * Tools.TimeInMillis.SECOND, 20 * Tools.TimeInMillis.SECOND);
+    	          }
    }
     
    public String randomPlayer() {
@@ -226,20 +243,23 @@ public class golden extends MultiModule {
 			return null;
 		x = p.getXTileLocation();
 		y = p.getYTileLocation();
-		int tempX = x/52 + 65; 
+		int tempX = x/52 + 64; 
 		xCoord = ((char) tempX);
 		yCoord = y/52 + 1;
 		return "" + xCoord + yCoord;
 	} 
 	
-	public void setMode(String parameters) { 
+	public void setMode(String name, String mode) { 
 		// by default, parameters would equal "0 1 1 1"
-		parameters.trim();
-		humanFreq = parameters.charAt(0);
-		humanShip = parameters.charAt(2);
-		gunFreq = parameters.charAt(4);
-		gunShip = parameters.charAt(6);
-		
+		String[] parameters = Tools.stringChopper(mode, ' ');
+		try {
+			humanFreq = Integer.parseInt(parameters[0]);
+			humanShip = Integer.parseInt(parameters[1]);
+			gunFreq = Integer.parseInt(parameters[2]);
+			gunShip = Integer.parseInt(parameters[3]);
+		} catch (Exception e) {
+			m_botAction.sendPrivateMessage(name,"Error in formatting your command.  Please separate your parameters with a space (such as 0 1 1 1)");
+		}
 	}
 	
    public String[] getModHelpMessage() {
