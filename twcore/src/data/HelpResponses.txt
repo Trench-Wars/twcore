@@ -515,7 +515,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Who &Verm|.::sips tea::
 &Who &Gazo|#Yolo!
 &Who &Reckful|PINKPOWAH \o/
-$Who $Sheriff|For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life. -John 3:16
+&Who &Sheriff|For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life. -John 3:16
 
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
