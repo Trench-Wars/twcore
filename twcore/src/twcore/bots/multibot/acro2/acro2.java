@@ -43,6 +43,8 @@ public class acro2 extends MultiModule {
         registerCommands();
         generator = new Random();
         racismSpy = new Spy(m_botAction);
+        
+        m_botAction.sendUnfilteredPublicMessage( "?chat=acro,games" );
     }
 
     public void requestEvents(ModuleEventRequester events) {
@@ -57,11 +59,26 @@ public class acro2 extends MultiModule {
         gamereset();
         m_botAction.cancelTasks();
     }
-
+    
+    private void spamChats(String message) {
+        m_botAction.sendChatMessage(1, message);
+        m_botAction.sendChatMessage(2, message);
+    }
+    
+    private void spamMessage(String message) {
+        spamMessage(message);
+        spamChats(message);
+    }
+    
+    private void spamMessage(String message, int sound) {
+        spamMessage(message, sound);
+        spamChats(message);
+    }
+    
     public void registerCommands() {
         int acceptedMessages;
 
-        acceptedMessages = Message.PRIVATE_MESSAGE;
+        acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         m_commandInterpreter.registerCommand("!start", acceptedMessages, this, "doStartGame");
         m_commandInterpreter.registerCommand("!startcustom", acceptedMessages, this, "doStartCustom");
         m_commandInterpreter.registerCommand("!setacro", acceptedMessages, this, "doSetAcro");
@@ -73,7 +90,7 @@ public class acro2 extends MultiModule {
         m_commandInterpreter.registerCommand("!ignore", acceptedMessages, this, "doAddIgnore");
         m_commandInterpreter.registerCommand("!unignore", acceptedMessages, this, "doRemoveIgnore");
         m_commandInterpreter.registerCommand("!listIgnore", acceptedMessages, this, "doListIgnore");
-        m_commandInterpreter.registerDefaultCommand(Message.PRIVATE_MESSAGE, this, "doCheckPrivate");
+        m_commandInterpreter.registerDefaultCommand(acceptedMessages, this, "doCheckPrivate");
     }
 
     public void doStartGame(String name, String message) {
@@ -87,10 +104,10 @@ public class acro2 extends MultiModule {
                 if (intCustom == 1) {
                     gameState = 3;
                     CustomHost = name;
-                    m_botAction.sendArenaMessage("ACROMANIA BEGINS! Your host will submit acronyms - prepare your wit!  PM me with !rules to learn how to play. " + m_botAction.getBotName(), 22);
-                    m_botAction.sendPrivateMessage(name, "Custom Game Initalized.  Send !setacro LETTERS to set the letters for Round #1.");
+                    spamMessage("ACROMANIA BEGINS! Your host will submit acronyms - prepare your wit!  PM me with !rules to learn how to play. " + m_botAction.getBotName(), 22);
+                    m_botAction.sendSmartPrivateMessage(name, "Custom Game Initalized.  Send !setacro LETTERS to set the letters for Round #1.");
                 } else {
-                    m_botAction.sendArenaMessage("ACROMANIA BEGINS! Random acronyms will be generated - prepare your wit!  PM me with !rules to learn how to play. -" + m_botAction.getBotName(), 22);
+                    spamMessage("ACROMANIA BEGINS! Random acronyms will be generated - prepare your wit!  PM me with !rules to learn how to play. -" + m_botAction.getBotName(), 22);
                     TimerTask preStart = new TimerTask() {
                         public void run() {
                             setUpShow();
@@ -110,7 +127,7 @@ public class acro2 extends MultiModule {
                     message = message.toUpperCase();
                     message = message.replaceAll(" ", "");
                     if (message.length() > 8) {
-                        m_botAction.sendPrivateMessage(name, "Please submit an acronym 8 characters or less.");
+                        m_botAction.sendSmartPrivateMessage(name, "Please submit an acronym 8 characters or less.");
                     } else {
                         curAcro = "";
                         // convert LETTERS to L E T T E R S
@@ -122,10 +139,10 @@ public class acro2 extends MultiModule {
                         setUpShow();
                     }
                 } else {
-                    m_botAction.sendPrivateMessage(name, "Round is not complete, please wait to submit next acronym.");
+                    m_botAction.sendSmartPrivateMessage(name, "Round is not complete, please wait to submit next acronym.");
                 }
             } else {
-                m_botAction.sendPrivateMessage(name, "Game is currently running in regular mode (!start).  Host-submitted acronyms are not allowed.");
+                m_botAction.sendSmartPrivateMessage(name, "Game is currently running in regular mode (!start).  Host-submitted acronyms are not allowed.");
             }
         }
     }
@@ -139,7 +156,7 @@ public class acro2 extends MultiModule {
         if (m_botAction.getOperatorList().isER(name)) {
             gamereset();
             m_botAction.cancelTasks();
-            m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
+            spamMessage("This game has been slaughtered by: " + name);
         }
     }
 
@@ -167,10 +184,10 @@ public class acro2 extends MultiModule {
                 while (it.hasNext()) {
                     player = it.next();
                     answer = playerIdeas.get(player);
-                    m_botAction.sendPrivateMessage(name, player + ":  " + answer);
+                    m_botAction.sendSmartPrivateMessage(name, player + ":  " + answer);
                 }
             } else {
-                m_botAction.sendPrivateMessage(name, "Currently the game isn't in the voting stage.");
+                m_botAction.sendSmartPrivateMessage(name, "Currently the game isn't in the voting stage.");
             }
         }
     }
@@ -182,26 +199,26 @@ public class acro2 extends MultiModule {
             curAcro = generateAcro(length);
         } // otherwise, the curAcro global has already been set by doSetAcro
 
-        m_botAction.sendArenaMessage("TO ENTER, PM me a phrase that matches the challenge letters! -" + m_botAction.getBotName());
-        m_botAction.sendArenaMessage("ACROMANIA Challenge #" + round + ": " + curAcro);
+        spamMessage("TO ENTER, PM me a phrase that matches the challenge letters! -" + m_botAction.getBotName());
+        spamMessage("ACROMANIA Challenge #" + round + ": " + curAcro);
 
         TimerTask end = new TimerTask() {
             public void run() {
                 gameState = 2;
-                m_botAction.sendArenaMessage("ACROMANIA Entries: ");
+                spamMessage("ACROMANIA Entries: ");
                 int i = 0;
                 while (!playerNames.isEmpty()) {
                     i++;
                     String curPlayer = playerNames.grabAndRemove();
-                    m_botAction.sendArenaMessage("--- " + i + ": " + playerIdeas.get(curPlayer));
+                    spamMessage("--- " + i + ": " + playerIdeas.get(curPlayer));
                     acroDisplay.put(curPlayer, i);
                 }
                 votes = new int[i];
                 intAcroCount = i;
                 if (intAcroCount > 0) {
-                    m_botAction.sendArenaMessage("VOTE: PM me the # of your favorite phrase! -" + m_botAction.getBotName(), 103);
+                    spamMessage("VOTE: PM me the # of your favorite phrase! -" + m_botAction.getBotName(), 103);
                 } else {
-                    m_botAction.sendArenaMessage("--- 0 entries submitted.");
+                    spamMessage("--- 0 entries submitted.");
                 }
                 setUpVotes();
             }
@@ -257,7 +274,7 @@ public class acro2 extends MultiModule {
                 int intPlayerVotes = 0;
                 int intPlayerTotal = 0;
                 int VotedForVotes = 0;
-                m_botAction.sendArenaMessage("ROUND " + round + " RESULTS: ");
+                spamMessage("ROUND " + round + " RESULTS: ");
 
                 acroIT = acroSet.iterator();
                 while (acroIT.hasNext()) {
@@ -308,18 +325,18 @@ public class acro2 extends MultiModule {
                         playerNotes += " [NOVOTE/NOSCORE]";
                     }
                     intPlayerTotal = intPlayerVotes + intPlayerBonus;
-                    m_botAction.sendArenaMessage(playerVotedWinner + " " + Tools.formatString(strCurPlayer, 14) + " " + getPlural(intPlayerTotal, "pt") + " (" + getPlural(intPlayerVotes, "vote")
+                    spamMessage(playerVotedWinner + " " + Tools.formatString(strCurPlayer, 14) + " " + getPlural(intPlayerTotal, "pt") + " (" + getPlural(intPlayerVotes, "vote")
                             + "): " + playerIdeas.get(strCurPlayer) + playerNotes);
                 }
                 if (!strWinners.equals("")) {
-                    m_botAction.sendArenaMessage("* = These players voted for the winner(s).");
+                    spamMessage("* = These players voted for the winner(s).");
                     if (!strFastPlayer.equals("")) {
-                        m_botAction.sendArenaMessage("ROUND WINNER(s): " + strWinners + " (most votes), " + strFastPlayer + " (fastest acro with a vote)");
+                        spamMessage("ROUND WINNER(s): " + strWinners + " (most votes), " + strFastPlayer + " (fastest acro with a vote)");
                     } else {
-                        m_botAction.sendArenaMessage("ROUND WINNER(s): " + strWinners + " with the most votes");
+                        spamMessage("ROUND WINNER(s): " + strWinners + " with the most votes");
                     }
                 } else {
-                    m_botAction.sendArenaMessage("ROUND WINNER(s): None!  You all lose!");
+                    spamMessage("ROUND WINNER(s): None!  You all lose!");
                 }
                 playerIdeas.clear();
                 playerVotes.clear();
@@ -332,7 +349,7 @@ public class acro2 extends MultiModule {
                 } else {
                     if (intCustom == 1) {
                         gameState = 3;
-                        m_botAction.sendPrivateMessage(CustomHost, "Send !setacro LETTERS to set the letters for the next round.");
+                        m_botAction.sendSmartPrivateMessage(CustomHost, "Send !setacro LETTERS to set the letters for the next round.");
                     } else {
                         TimerTask preStart = new TimerTask() {
                             public void run() {
@@ -350,12 +367,12 @@ public class acro2 extends MultiModule {
     public void gameOver() {
         TimerTask game = new TimerTask() {
             public void run() {
-                m_botAction.sendArenaMessage("GAME OVER! FINAL SCORES: ", 5);
+                spamMessage("GAME OVER! FINAL SCORES: ", 5);
                 Set<String> set = playerScores.keySet();
                 Iterator<String> it = set.iterator();
                 while (it.hasNext()) {
                     String curAnswer = it.next();
-                    m_botAction.sendArenaMessage("--- " + Tools.formatString(curAnswer, 14) + ": " + playerScores.get(curAnswer));
+                    spamMessage("--- " + Tools.formatString(curAnswer, 14) + ": " + playerScores.get(curAnswer));
                 }
                 gamereset();
             }
@@ -366,7 +383,7 @@ public class acro2 extends MultiModule {
     public void doCheckPrivate(String name, String message) {
         if (gameState == 1) {
             if (ignoreList.contains(name.toLowerCase())) {
-                m_botAction.sendPrivateMessage(name, "You are restricted from submitting any answers. Please contact host for more details.");
+                m_botAction.sendSmartPrivateMessage(name, "You are restricted from submitting any answers. Please contact host for more details.");
             } else {
 
                 String pieces[] = message.split(" +");
@@ -386,25 +403,25 @@ public class acro2 extends MultiModule {
                     if (valid) {
                         if (racismSpy.isRacist(message)) {
                             m_botAction.sendUnfilteredPublicMessage("?cheater Racist acro: (" + name + "): " + message);
-                            m_botAction.sendPrivateMessage(name, "You have been reported for attempting to use racism in your answer.");
+                            m_botAction.sendSmartPrivateMessage(name, "You have been reported for attempting to use racism in your answer.");
                             return;
                         }
                         if (!playerIdeas.containsKey(name)) {
-                            m_botAction.sendPrivateMessage(name, "Your answer has been recorded.");
+                            m_botAction.sendSmartPrivateMessage(name, "Your answer has been recorded.");
                             playerNames.add(name);
                         } else {
                             playerIdeas.remove(name);
                             playerOrder.remove(name);
-                            m_botAction.sendPrivateMessage(name, "Your answer has been changed.");
+                            m_botAction.sendSmartPrivateMessage(name, "Your answer has been changed.");
                         }
                         intOrder++;
                         playerOrder.put(name, intOrder);
                         playerIdeas.put(name, message);
                     } else {
-                        m_botAction.sendPrivateMessage(name, "You have submitted an invalid acronym.  It must match the letters given and be 70 characters or less.");
+                        m_botAction.sendSmartPrivateMessage(name, "You have submitted an invalid acronym.  It must match the letters given and be 70 characters or less.");
                     }
                 } else
-                    m_botAction.sendPrivateMessage(name, "You must use the correct number of letters!");
+                    m_botAction.sendSmartPrivateMessage(name, "You must use the correct number of letters!");
             }
 
         } else if (gameState == 2) {
@@ -422,17 +439,17 @@ public class acro2 extends MultiModule {
                         int lastVote = playerVotes.get(name);
                         votes[lastVote - 1]--;
                         playerVotes.remove(name);
-                        m_botAction.sendPrivateMessage(name, "Your vote has been changed.");
+                        m_botAction.sendSmartPrivateMessage(name, "Your vote has been changed.");
                     } else {
-                        m_botAction.sendPrivateMessage(name, "Your vote has been counted.");
+                        m_botAction.sendSmartPrivateMessage(name, "Your vote has been counted.");
                     }
                     playerVotes.put(name, vote);
                 } else {
-                    m_botAction.sendPrivateMessage(name, "You cannot vote for your own.");
+                    m_botAction.sendSmartPrivateMessage(name, "You cannot vote for your own.");
                 }
-                //} else {m_botAction.sendPrivateMessage(name,"Only players who submitted an entry may vote this round.");}
+                //} else {m_botAction.sendSmartPrivateMessage(name,"Only players who submitted an entry may vote this round.");}
             } else {
-                m_botAction.sendPrivateMessage(name, "Please enter a valid vote.");
+                m_botAction.sendSmartPrivateMessage(name, "Please enter a valid vote.");
             }
         }
     }
@@ -502,13 +519,13 @@ public class acro2 extends MultiModule {
     public void doAddIgnore(String name, String message) {
         if (m_botAction.getOperatorList().isER(name)) {
             if (message == null) {
-                m_botAction.sendPrivateMessage(name, "Invalid Entry. Please try again.");
+                m_botAction.sendSmartPrivateMessage(name, "Invalid Entry. Please try again.");
             } else {
                 if (ignoreList.contains(message.toLowerCase())) {
-                    m_botAction.sendPrivateMessage(name, "Player is already on the ignore list.");
+                    m_botAction.sendSmartPrivateMessage(name, "Player is already on the ignore list.");
                 } else {
                     ignoreList.add(message.toLowerCase());
-                    m_botAction.sendPrivateMessage(name, "" + message + " was added to the ignore list.");
+                    m_botAction.sendSmartPrivateMessage(name, "" + message + " was added to the ignore list.");
                 }
             }
         }
@@ -518,13 +535,13 @@ public class acro2 extends MultiModule {
         if (m_botAction.getOperatorList().isER(name)) {
 
             if (message == null) {
-                m_botAction.sendPrivateMessage(name, "Invalid Entry. Please try again.");
+                m_botAction.sendSmartPrivateMessage(name, "Invalid Entry. Please try again.");
             } else {
                 if (!ignoreList.contains(message.toLowerCase())) {
-                    m_botAction.sendPrivateMessage(name, "Player is not found on the ignore list.");
+                    m_botAction.sendSmartPrivateMessage(name, "Player is not found on the ignore list.");
                 } else {
                     ignoreList.remove(message.toLowerCase());
-                    m_botAction.sendPrivateMessage(name, "" + message + " was removed from the ignore list.");
+                    m_botAction.sendSmartPrivateMessage(name, "" + message + " was removed from the ignore list.");
                 }
             }
         }
@@ -533,11 +550,11 @@ public class acro2 extends MultiModule {
     public void doListIgnore(String name, String message) {
         if (m_botAction.getOperatorList().isER(name)) {
             if (ignoreList.isEmpty()) {
-                m_botAction.sendPrivateMessage(name, "Ignore List is Empty");
+                m_botAction.sendSmartPrivateMessage(name, "Ignore List is Empty");
             } else {
                 Iterator<String> list = ignoreList.iterator();
                 while (list.hasNext()) {
-                    m_botAction.sendPrivateMessage(name, list.next());
+                    m_botAction.sendSmartPrivateMessage(name, list.next());
                 }
             }
         }
