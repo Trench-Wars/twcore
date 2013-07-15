@@ -71,7 +71,7 @@ public class acro2 extends MultiModule {
     }
     
     private void spamMessage(String message, int sound) {
-        spamMessage(message, sound);
+        m_botAction.sendArenaMessage(message, sound);
         spamChats(message);
     }
     
