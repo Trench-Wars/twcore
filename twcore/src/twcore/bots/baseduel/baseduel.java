@@ -59,28 +59,36 @@ public class baseduel extends SubspaceBot
         events.request(EventRequester.PLAYER_ENTERED);
         //Request chat message events
         events.request(EventRequester.MESSAGE);
+        events.request(EventRequester.ARENA_JOINED);
         //Instantiate your CommandInterpreter
         cmds = new CommandInterpreter(m_botAction);
         //Instantiate your Operator List
         oplist = m_botAction.getOperatorList();
+      
         //Set up your interpreter
         addCommands();
     }
 
     //What to do when the bot logs on
+    public void handleEvent(ArenaJoined event)
+    {
+    	m_botAction.setPlayerPositionUpdating(300);
+    }
     public void handleEvent(LoggedOn event)
     {
         //Get the data from mybot.cfg
+    	  
         BotSettings config = m_botAction.getBotSettings();
         //Get the initial arena from config and enter it
+        
         String initial = config.getString("InitialArena");
         m_botAction.joinArena(initial);
         //NOTE: m_botAction is inherited from SubspaceBot
     }
-
     //What to do when a player enters the arena
     public void handleEvent(PlayerEntered event)
     {
+    	
         //Get the name of player that just entered
         String name = event.getPlayerName();
         //Greet them
@@ -155,22 +163,15 @@ public class baseduel extends SubspaceBot
         cmds.registerCommand("!start",ok,this,"start");
         cmds.registerCommand("!stats",ok,this,"stats");
         cmds.registerCommand("!stop",ok,this,"stop");
-        cmds.registerCommand("!getx",ok,this,"getXplease");
-    }
-    public void getXplease(String name, String msg)
-    {
-    	
-       m_botAction.sendPrivateMessage(name, "X:"+getCoordsX(m_botAction.getPlayer(name))+" Y:"+getCoordsY(m_botAction.getPlayer(name)));
     }
     //Got command: !help
     public int getCoordsX(Player p) {
     	 // method that will generate in-game coordinates (A1, T20, etc)
-    	m_botAction.setPlayerPositionUpdating(300);
+    	
     	      x = p.getXTileLocation();
     	      return x;
     }
     public int getCoordsY(Player p) {
-    	m_botAction.setPlayerPositionUpdating(300);
 	      y = p.getYTileLocation();
 	      return y;
     }
