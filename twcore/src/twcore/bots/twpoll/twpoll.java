@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.TimerTask;
 import java.util.Vector;
 
@@ -37,7 +38,7 @@ public class twpoll extends SubspaceBot {
 	private static final String DB_NAME = "website";
 
 	private HashMap<Integer,Poll> polls;
-	private HashMap<Integer,HashSet<Integer>> votes;
+	private HashMap<Integer,HashMap<Integer, Votes>> votes;
 	private HashMap<String,Integer> userIds;
 	private HashMap<Integer,Integer> openPolls;
 	private HashMap<Integer,Integer> lastPolls;
@@ -55,7 +56,7 @@ public class twpoll extends SubspaceBot {
         requestEvents();
         m_botSettings = m_botAction.getBotSettings();
         polls = new HashMap<Integer,Poll>();
-        votes = new HashMap<Integer,HashSet<Integer>>();
+        votes = new HashMap<Integer,HashMap<Integer, Votes>>();
         userIds = new HashMap<String,Integer>();
         openPolls = new HashMap<Integer,Integer>();
         lastPolls = new HashMap<Integer,Integer>();
@@ -148,11 +149,21 @@ public class twpoll extends SubspaceBot {
 	        }
 	        else {
 	        	Integer userId = getUserID(name);
+	        	 Integer choice = -1;
+	        	 String comment = "none";
 	        	try {
-	        		Integer choice = Integer.parseInt(message.trim());
+	        	    String[] splitCmd;	        	    
+	        	            if (message.trim().contains(":")) {
+	        	                    splitCmd = message.split(":");
+    	        	                    if(splitCmd[0].length() >= 1)
+    	        	                         choice = Integer.parseInt(message.trim());
+    	        	                    if(splitCmd[1].length() >= 1)
+    	        	                         comment = splitCmd[1];
+	        	            } else
+	        	                choice = Integer.parseInt(message.trim());
 	        		if (userId != null) {
 	        			if (openPolls.get(userId) != null) {
-	        				vote(openPolls.get(userId), name, choice);
+	        				vote(openPolls.get(userId), name, choice, comment);
 	        				return;
 	        			} else {
 	        				showHelp(name);
@@ -271,7 +282,7 @@ public class twpoll extends SubspaceBot {
     	int userId = getUserID(playerName);
     	for(int pollId: polls.keySet()) {
     		Poll poll = polls.get(pollId);
-    		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
+    		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).containsKey(userId))) {
     			count++;
     		}
     	}
@@ -303,18 +314,18 @@ public class twpoll extends SubspaceBot {
         	Poll poll = polls.get(pollId);
         	if (poll == null) {
         		spam.add("Poll not found.");
-        	} else if (votes.containsKey(pollId) && votes.get(pollId).contains(userId)) {
+        	} else if (votes.containsKey(pollId) && votes.get(pollId).containsKey(userId)) {
         		spam.add("You have already voted.");
         	} else {
     			openPolls.put(userId, poll.id);
-    			spam.add("(Q." + poll.id + ") " + poll.question);
+    			spam.add("(#." + poll.id + ") " + poll.question);
     			int i=0;
     			for(PollOption option: poll.options) {
-    				String pad = Tools.rightString("", ("(Q." + poll.id + ") ").length(), ' ');
+    				String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
     				spam.add(pad + (++i) + ". " + option.option);
     			}
     			spam.add(" ");
-    			spam.add("HELP: To vote, pm me your choice (type the number only).");
+    			spam.add("HELP: To vote, pm me your choice. You can follow up your choice with a comment by typing <choice>:<comment>");
         	}
 
         	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
@@ -333,16 +344,16 @@ public class twpoll extends SubspaceBot {
         	int userId = getUserID(playerName);
         	for(int pollId: polls.keySet()) {
         		Poll poll = polls.get(pollId);
-        		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
+        		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).containsKey(userId))) {
         			openPolls.put(userId, poll.id);
-        			spam.add("(Q." + poll.id + ") " + poll.question);
+        			spam.add("(#" + poll.id + ") " + poll.question);
         			int i=0;
         			for(PollOption option: poll.options) {
-        				String pad = Tools.rightString("", ("(Q." + poll.id + ") ").length(), ' ');
+        				String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
         				spam.add(pad + (++i) + ". " + option.option);
         			}
         			spam.add(" ");
-        			spam.add("HELP: To vote, pm me your choice.");
+        			spam.add("HELP: To vote, pm me your choice. You can follow up your choice with a comment by typing <choice>:<comment>");
         			break;
         		}
         	}
@@ -372,11 +383,11 @@ public class twpoll extends SubspaceBot {
         	boolean pollExist = false;
         	for(int pollId: polls.keySet()) {
         		Poll poll = polls.get(pollId);
-        		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
-        			spam.add("(Q." + poll.id + ") " + poll.question);
+        		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).containsKey(userId))) {
+        			spam.add("(#" + poll.id + ") " + poll.question);
         			int i=0;
         			for(PollOption option: poll.options) {
-        				String pad = Tools.rightString("", ("(Q." + poll.id + ") ").length(), ' ');
+        				String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
         				spam.add(pad + (++i) + ". " + option.option);
         			}
         			spam.add(" ");
@@ -387,7 +398,7 @@ public class twpoll extends SubspaceBot {
         		intro.add("Earn up to $1000 by voting.");
         		intro.add(" ");
         		spam.add("To SELECT a poll, pm !poll <number>.");
-        		spam.add("To VOTE, select a poll and pm your choice.");
+        		spam.add("To VOTE, select a poll and pm your choice. You can follow up your choice with a comment by typing <choice>:<comment>");
         	} else {
         		intro.clear();
         		spam.add("There is no poll for you at the moment.");
@@ -428,7 +439,7 @@ public class twpoll extends SubspaceBot {
 
     }
 
-    private boolean vote(int pollId, String playerName, int optionId) {
+    private boolean vote(int pollId, String playerName, int optionId, String comment) {
 
     	int userId = getUserID(playerName);
     	if (userId == 0 || hasVotedAlready(pollId, userId)) {
@@ -445,7 +456,7 @@ public class twpoll extends SubspaceBot {
     	try {
 			m_botAction.SQLQueryAndClose(DB_NAME, "" +
 				"INSERT INTO tblPollVote " +
-				"VALUES (null, "+pollId+","+pollOption.id+","+userId+",NOW())"
+				"VALUES (null, "+pollId+","+pollOption.id+","+userId+","+Tools.addSlashes(comment)+ ", NOW())"
 			);
 
 			// If no duplicate found, we can proceed, else SQLException
@@ -459,11 +470,11 @@ public class twpoll extends SubspaceBot {
 
 		}
 
-		HashSet<Integer> users = votes.get(pollId);
+    	HashMap<Integer, Votes> users = votes.get(pollId);
 		if (users == null) {
-			users = new HashSet<Integer>();
+		    users = new HashMap<Integer, Votes>();
 		}
-		users.add(userId);
+		users.put(userId, new Votes(userId,pollId,optionId,comment));
 		votes.put(pollId, users);
 		openPolls.remove(userId);
 		return true;
@@ -472,7 +483,7 @@ public class twpoll extends SubspaceBot {
 
     private boolean hasVotedAlready(int pollId, int userId) {
 
-		if (votes.get(pollId) != null && votes.get(pollId).contains(userId)) {
+		if (votes.get(pollId) != null && votes.get(pollId).containsKey(userId)) {
 			return true;
 		} else {
 			return false;
@@ -523,7 +534,7 @@ public class twpoll extends SubspaceBot {
 
     private void loadVotes() {
 
-        votes = new HashMap<Integer,HashSet<Integer>>();
+        votes = new HashMap<Integer,HashMap<Integer, Votes>>();
 
     	String pollList = "";
     	for(int pollId: polls.keySet()) {
@@ -535,17 +546,27 @@ public class twpoll extends SubspaceBot {
 	    	pollList = pollList.substring(1);
 	    	try {
 				ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
-					"SELECT fnPollID, fnUserID " +
+					"SELECT fnPollID, fnUserID,fnPollOptionID, fcComment " +
 					"FROM tblPollVote " +
 					"WHERE fnPollID IN (" + pollList + ")"
 				);
 
 				while(rs.next()) {
-					HashSet<Integer> users = votes.get(rs.getInt("fnPollID"));
+				    HashMap<Integer, Votes> users = votes.get(rs.getInt("fnPollID"));
+				    int userID = -1;
+				    int pollID = -1;
+				    int optionID = -1;
+				    String comment = "";
+				    
+				    userID = rs.getInt("fnUserID");
+				    pollID =  rs.getInt("fnPollID");
+				    optionID = rs.getInt("fnPollOptionID");
+				    comment = rs.getString("comment");
+				    
 					if (users == null) {
-						users = new HashSet<Integer>();
+						users = new HashMap<Integer, Votes>();
 					}
-					users.add(rs.getInt("fnUserID"));
+					users.put(userID, new Votes(userID,pollID,optionID,comment));
 					votes.put(rs.getInt("fnPollID"), users);
 				}
 
@@ -578,7 +599,7 @@ public class twpoll extends SubspaceBot {
 		            	for(int pollId: polls.keySet()) {
 		            		if (next)
 		            			continue;
-		            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
+		            		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).containsKey(userId))) {
 		            			m_botAction.sendSmartPrivateMessage(p, "There is at least 1 poll you have not voted yet.");
 		            			m_botAction.sendSmartPrivateMessage(p, " ");
 		            			showPoll(p, pollId);
@@ -601,6 +622,37 @@ public class twpoll extends SubspaceBot {
 			t.start();
         }
     }
+    
+    private class Votes {
+        int userID;
+        int pollID;
+        int optionID;
+        String comment;
+        
+        public Votes(int userID, int pollID, int optionID, String comment) {
+            this.userID = userID;
+            this.pollID = pollID;
+            this.optionID = optionID;
+            this.comment = comment;
+        }
+        
+        public int getUserID() {
+            return userID;
+        }
+        
+        public int getPollID() {
+            return pollID;
+        }
+    
+        public int getOptionID() {
+            return optionID;
+        }
+        
+        public String getComment() { 
+            return comment;
+        }
+    }
+    
 
     private class Poll {
     	public int id;
