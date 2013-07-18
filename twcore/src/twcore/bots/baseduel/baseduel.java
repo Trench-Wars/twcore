@@ -165,12 +165,12 @@ public class baseduel extends SubspaceBot
     //Got command: !help
     public int getCoordsX(Player p) {
     	 // method that will generate in-game coordinates (A1, T20, etc)
-    	      m_botAction.spectatePlayer(p.getPlayerName());
+    	m_botAction.setPlayerPositionUpdating(300);
     	      x = p.getXTileLocation();
     	      return x;
     }
     public int getCoordsY(Player p) {
-	      m_botAction.spectatePlayer(p.getPlayerName());
+    	m_botAction.setPlayerPositionUpdating(300);
 	      y = p.getYTileLocation();
 	      return y;
     }
@@ -389,15 +389,17 @@ public class baseduel extends SubspaceBot
         	{
         		if (secondsLeft == secondsLeft)
         		{
+        	
 				Iterator<Player> i = m_botAction.getPlayerIterator();
 				while (i.hasNext()) {
 				
 					Player pl = i.next();
 					if (!pl.getPlayerName().equals(m_botAction.getBotName())) {
 						player = pl;
-						//m_botAction.sendArenaMessage("Playername: "+m_botAction.getPlayer(player.getPlayerID()).getPlayerName()+" X:"+getCoordsX(player)+" Y:"+getCoordsY(player));
+						m_botAction.sendArenaMessage("Playername: "+m_botAction.getPlayer(player.getPlayerID()).getPlayerName()+" X:"+getCoordsX(player)+" Y:"+getCoordsY(player));
               	if (closeto(player, 512, 272, 10))
             	{
+              	  
               	   if (player.getFrequency() == 1)
               	   {
               	   m_botAction.sendPrivateMessage(player.getPlayerName(), "*warpto "+currentx[1]+" "+currenty[1]);
