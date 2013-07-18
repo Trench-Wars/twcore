@@ -153,13 +153,13 @@ public class twpoll extends SubspaceBot {
 	        	Integer userId = getUserID(name);
 	        	 Integer choice = -1;
 	        	 String comment = "none";
-	        	try {
-	        	    String[] splitCmd;	        	    
-	        	            if (message.trim().contains(":")) {
+	        	    String[] splitCmd;   
+	        	try {	        	        	    
+	        	            if (message.contains(":")) {
 	        	                    splitCmd = message.split(":");
-    	        	                    if(splitCmd[0].length() >= 1)
-    	        	                         choice = Integer.parseInt(message.trim());
-    	        	                    if(splitCmd[1].length() >= 1)
+    	        	                    if(!splitCmd[0].isEmpty())
+    	        	                         choice = Integer.parseInt(splitCmd[0]);
+    	        	                    if(!splitCmd[1].isEmpty())
     	        	                         comment = splitCmd[1];
 	        	            } else
 	        	                choice = Integer.parseInt(message.trim());
