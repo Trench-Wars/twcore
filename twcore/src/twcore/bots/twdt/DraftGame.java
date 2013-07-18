@@ -174,7 +174,7 @@ public class DraftGame {
             if (msg.equals("!status"))
                 cmd_status(name);
             
-            if (opList.isER(name)) {
+            if (opList.isZH(name)) {
                 if (msg.startsWith("!start"))
                     cmd_startPick(name);
                 else if (msg.equals("!zone"))
