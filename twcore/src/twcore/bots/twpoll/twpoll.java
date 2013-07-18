@@ -320,7 +320,7 @@ public class twpoll extends SubspaceBot {
         		spam.add("You have already voted.");
         	} else {
     			openPolls.put(userId, poll.id);
-    			spam.add("(#." + poll.id + ") " + poll.question);
+    			spam.add("(#" + poll.id + ") " + poll.question);
     			int i=0;
     			for(PollOption option: poll.options) {
     				String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
@@ -388,19 +388,17 @@ public class twpoll extends SubspaceBot {
         		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
         			spam.add("(#" + poll.id + ") " + poll.question);
         			int i=0;
-        			for(PollOption option: poll.options) {
+        			/*for(PollOption option: poll.options) {
         				String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
         				spam.add(pad + (++i) + ". " + option.option);
-        			}
+        			}*/
         			spam.add(" ");
         			pollExist = true;
         		}
         	}
         	if (pollExist) {
-        		intro.add("Earn up to $1000 by voting.");
-        		intro.add(" ");
         		spam.add("To SELECT a poll, pm !poll <number>.");
-        		spam.add("To VOTE, select a poll and pm your choice. You can follow up your choice with a comment by typing <choice>:<comment>");
+        		spam.add("To VOTE or COMMENT, select a poll with !poll <number> then pm me again with your <choice>:<comments>");
         	} else {
         		intro.clear();
         		spam.add("There is no poll for you at the moment.");
@@ -465,7 +463,6 @@ public class twpoll extends SubspaceBot {
 			lastPolls.put(userId, pollId);
 			//m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted (!undo to undo).");
 			m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted.");
-			giveMoney(playerName, ((int)(Math.random()*1000)));
 			m_botAction.sendSmartPrivateMessage(playerName, "Type !next to answer another poll.");
 
 		} catch (SQLException e) {
