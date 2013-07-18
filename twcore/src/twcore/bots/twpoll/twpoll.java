@@ -458,7 +458,7 @@ public class twpoll extends SubspaceBot {
     	try {
 			m_botAction.SQLQueryAndClose(DB_NAME, "" +
 				"INSERT INTO tblPollVote " +
-				"VALUES (null, "+pollId+","+pollOption.id+","+userId+","+Tools.addSlashes(comment)+ ", NOW())"
+				"VALUES (null, "+pollId+","+pollOption.id+","+userId+",'"+Tools.addSlashesToString(comment)+ "', NOW())"
 			);
 
 			// If no duplicate found, we can proceed, else SQLException
