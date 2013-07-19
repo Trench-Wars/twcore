@@ -25,7 +25,6 @@ public class pointrace extends MultiModule {
     @Override
     public void requestEvents(ModuleEventRequester eventRequester) {
         eventRequester.request(this, EventRequester.SCORE_UPDATE);
-        eventRequester.request(this, EventRequester.MESSAGE);
     }
     
     public void handleEvent(ScoreUpdate event) {
