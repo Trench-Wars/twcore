@@ -73,6 +73,7 @@ public class pointrace extends MultiModule {
         timer = new PointTimer();
         ba.scheduleTask(timer, time * Tools.TimeInMillis.MINUTE);
         ba.sendArenaMessage("Point race to " + time + " minutes. GO GO GO!!!", 105);
+        ba.setTimer(time);
     }
     
     /**
