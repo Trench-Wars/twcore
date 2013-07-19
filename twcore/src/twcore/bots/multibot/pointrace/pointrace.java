@@ -37,6 +37,7 @@ public class pointrace extends MultiModule {
     }
     
     public void handleEvent(Message event) {
+        if (event == null) return;
         String msg = event.getMessage().toLowerCase();
         String name = event.getMessager();
         if (name == null)
