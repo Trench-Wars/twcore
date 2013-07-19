@@ -24,6 +24,7 @@ public class pointrace extends MultiModule {
 
     @Override
     public void requestEvents(ModuleEventRequester eventRequester) {
+        eventRequester.request(this, EventRequester.MESSAGE);
         eventRequester.request(this, EventRequester.SCORE_UPDATE);
     }
     
@@ -37,19 +38,20 @@ public class pointrace extends MultiModule {
     
     public void handleEvent(Message event) {
         int type = event.getMessageType();
-        if (type != Message.PRIVATE_MESSAGE) return;
-        
         String msg = event.getMessage().toLowerCase();
-        String name = event.getMessager();
-        if (name == null)
-            name = ba.getPlayerName(event.getPlayerID());
-        if (ba.getOperatorList().isER(name)) {
-            if (msg.startsWith("!start "))
-                cmd_start(name, msg);
-            else if (msg.equals("!stop"))
-                cmd_stop(name);
-            else if (msg.equals("!score"))
-                cmd_score(name);
+
+        if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
+            String name = ba.getPlayerName(event.getPlayerID());
+            if (name == null)
+                name = event.getMessager();
+            if (ba.getOperatorList().isER(name)) {
+                if (msg.startsWith("!start "))
+                    cmd_start(name, msg);
+                else if (msg.equals("!stop"))
+                    cmd_stop(name);
+                else if (msg.equals("!score"))
+                    cmd_score(name);
+            }
         }
     }
     
