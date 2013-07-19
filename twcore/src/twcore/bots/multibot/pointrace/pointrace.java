@@ -3,6 +3,7 @@ package twcore.bots.multibot.pointrace;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
+import twcore.core.BotAction;
 import twcore.core.EventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.ScoreUpdate;
@@ -13,6 +14,7 @@ public class pointrace extends MultiModule {
 
     private PointTimer timer;
     private int[] points;
+    private BotAction ba = m_botAction;
 
     @Override
     public void init() {
