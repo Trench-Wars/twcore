@@ -12,6 +12,7 @@ public abstract class MultiModule
     private static final String TRUE_STRING = "true";
 
     public BotAction m_botAction;
+    public BotAction ba;
     public OperatorList opList;
     public BotSettings moduleSettings;
     public boolean autoStart = false;
@@ -32,6 +33,7 @@ public abstract class MultiModule
             throw new IllegalArgumentException("Invalid Module Settings.");
 
         m_botAction = botAction;
+        ba = botAction;
         this.moduleSettings = moduleSettings;
         opList = m_botAction.getOperatorList();
         init();
