@@ -94,6 +94,7 @@ public class ElimGame {
     public ElimGame(elim bot, ShipType type, int deaths, boolean shrap) {
         this.bot = bot;
         ba = bot.ba;
+        bot.checkStatements();
         comp = new CompareAll();
         compDeath = new CompareDeaths();
         compName = new CompareNames();

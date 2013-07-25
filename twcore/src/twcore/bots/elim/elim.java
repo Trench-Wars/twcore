@@ -116,14 +116,39 @@ public class elim extends SubspaceBot {
         gameType = ELIM;
         allowRace = true;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
+        prepareStatements();
+        ba.joinArena(arena);
+    }
+    
+    public void prepareStatements() {  
+        if (updateStats != null || storeGame != null || showLadder != null) {
+            ba.closePreparedStatement(db, connectionID, updateStats);
+            ba.closePreparedStatement(db, connectionID, storeGame);
+            ba.closePreparedStatement(db, connectionID, showLadder);
+        }
+        
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
-        showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank ASC LIMIT ?");
-        if (updateStats == null) {
+        showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank ASC LIMIT ?");  
+        if (updateStats == null || storeGame == null || showLadder == null) {
             debug("Update was null.");
+            ba.closePreparedStatement(db, connectionID, updateStats);
+            ba.closePreparedStatement(db, connectionID, storeGame);
+            ba.closePreparedStatement(db, connectionID, showLadder);
             this.handleDisconnect();
         }
-        ba.joinArena(arena);
+    }
+    
+    public void checkStatements() {
+        try {
+            if (updateStats == null || storeGame == null || showLadder == null || updateStats.isClosed() || storeGame.isClosed() || showLadder.isClosed()) {
+                prepareStatements();
+                ba.sendSmartPrivateMessage("WingZero", "Statements were null or closed...");
+            }
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+            ba.sendSmartPrivateMessage("WingZero", "Statements were null or closed AND EXCEPTION...");
+        }
     }
     
     /** Handles ArenaJoined event which initializes bot startup */
@@ -1343,10 +1368,10 @@ public class elim extends SubspaceBot {
     
     @Override
     public void handleDisconnect() {
-        ba.cancelTasks();
         ba.closePreparedStatement(db, connectionID, this.updateStats);
         ba.closePreparedStatement(db, connectionID, this.storeGame);
         ba.closePreparedStatement(db, connectionID, this.showLadder);
+        ba.cancelTasks();
         TimerTask die = new TimerTask() {
             public void run() {
                 ba.die();
