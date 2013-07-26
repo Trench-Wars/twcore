@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.TimerTask;
 
 import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.util.ModuleEventRequester;
@@ -48,6 +49,7 @@ public class acro2 extends MultiModule {
 
     @Override
     public void requestEvents(ModuleEventRequester events) {
+        events.request(this, EventRequester.MESSAGE);
     }
 
     @Override
