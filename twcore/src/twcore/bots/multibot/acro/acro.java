@@ -1,4 +1,4 @@
-package twcore.bots.multibot.acro2;
+package twcore.bots.multibot.acro;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,7 +16,7 @@ import twcore.core.util.Spy;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
-public class acro2 extends MultiModule {
+public class acro extends MultiModule {
 
     CommandInterpreter m_commandInterpreter;
     Random generator;
