@@ -81,7 +81,10 @@ public class acro2 extends MultiModule {
     
     public void parseMessage(Message event) {
         String message = event.getMessage();
-        String name = event.getMessager();
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+        
+        m_botAction.sendSmartPrivateMessage("SpookedOne", "name: " + 
+                    event.getMessager() + ", message: " + event.getMessage());
         
         String lower = message.toLowerCase();
         if (lower.startsWith("!start")) {
@@ -627,8 +630,6 @@ public class acro2 extends MultiModule {
     public void handleEvent(Message event) {
         if (event.getMessageType() == Message.PRIVATE_MESSAGE ||
                 event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
-            m_botAction.sendPrivateMessage("SpookedOne", "name: " + 
-                    event.getMessager() + ", message: " + event.getMessage());
             parseMessage(event);
         }
     }
