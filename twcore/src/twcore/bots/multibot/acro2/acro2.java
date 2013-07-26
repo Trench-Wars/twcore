@@ -83,9 +83,6 @@ public class acro2 extends MultiModule {
         String message = event.getMessage();
         String name = event.getMessager();
         
-        m_botAction.sendPrivateMessage("SpookedOne", "name: " + name + 
-                ", message: " + message);
-        
         String lower = message.toLowerCase();
         if (lower.startsWith("!start")) {
             doStartGame(name, message);
@@ -112,24 +109,6 @@ public class acro2 extends MultiModule {
         } else if (gameState == 2) {
             doVote(name, message);
         }
-    }
-    
-    public void registerCommands() {
-        int acceptedMessages;
-
-        acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
-        m_commandInterpreter.registerCommand("!start", acceptedMessages, this, "doStartGame");
-        m_commandInterpreter.registerCommand("!startcustom", acceptedMessages, this, "doStartCustom");
-        m_commandInterpreter.registerCommand("!setacro", acceptedMessages, this, "doSetAcro");
-        m_commandInterpreter.registerCommand("!showanswers", acceptedMessages, this, "doShowAnswers");
-        m_commandInterpreter.registerCommand("!stop", acceptedMessages, this, "doStopGame");
-        m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "doShowHelp");
-        m_commandInterpreter.registerCommand("!rules", acceptedMessages, this, "doShowRules");
-        m_commandInterpreter.registerCommand("!changes", acceptedMessages, this, "doShowChanges");
-        m_commandInterpreter.registerCommand("!ignore", acceptedMessages, this, "doAddIgnore");
-        m_commandInterpreter.registerCommand("!unignore", acceptedMessages, this, "doRemoveIgnore");
-        m_commandInterpreter.registerCommand("!listIgnore", acceptedMessages, this, "doListIgnore");
-        m_commandInterpreter.registerDefaultCommand(acceptedMessages, this, "doCheckPrivate");
     }
 
     public void doStartGame(String name, String message) {
@@ -648,6 +627,8 @@ public class acro2 extends MultiModule {
     public void handleEvent(Message event) {
         if (event.getMessageType() == Message.PRIVATE_MESSAGE ||
                 event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
+            m_botAction.sendPrivateMessage("SpookedOne", "name: " + 
+                    event.getMessager() + ", message: " + event.getMessage());
             parseMessage(event);
         }
     }
