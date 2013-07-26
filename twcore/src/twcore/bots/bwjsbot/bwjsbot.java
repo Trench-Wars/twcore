@@ -469,8 +469,8 @@ public class bwjsbot extends SubspaceBot {
         
         /* Staff commands ZH+ */
         if (m_botAction.getOperatorList().isZH(name)) {
-            if (cmd.equals("!start")) {
-                cmd_start(name);
+            if (cmd.startsWith("!start")) {
+                cmd_start(name, command);
             } else if (cmd.equals("!stop")) {
                 cmd_stop(name);
             } else if (cmd.startsWith("!zone") && !cfg.getAllowAutoCaps()) {
@@ -1448,9 +1448,9 @@ public class bwjsbot extends SubspaceBot {
      * 
      * @param name player that issued the !start command
      */
-    private void cmd_start(String name) {
+    private void cmd_start(String name, String command) {
         if (state.getCurrentState() == BWJSState.OFF) {
-            start();
+            start(command);
         } else {
             m_botAction.sendPrivateMessage(name, "Error: Bot is already ON");
         }
@@ -1783,10 +1783,14 @@ public class bwjsbot extends SubspaceBot {
      * Game modes
      */
     
+    private void start() {
+        start(null);
+    }
+    
     /**
      * Starts the bot
      */
-    private void start() {
+    private void start(String command) {
         lockLastGame = false;
         lockArena();
         lockDoors();
@@ -1794,6 +1798,18 @@ public class bwjsbot extends SubspaceBot {
         startGameTicker();
                 
         startWaitingForCaps();
+        
+        if (command != null && command.length() > "!start ".length()) {
+            String names = command.substring("!start ".length());
+            m_botAction.sendPrivateMessage("SpookedOne", "names: " + names);
+            String[] teamName = names.split(":", 2);
+            team[0].setName(teamName[0]);
+            team[1].setName(teamName[1]);
+            m_botAction.sendPrivateMessage("SpookedOne", "teamname0: " 
+                    + team[0].getName());
+            m_botAction.sendPrivateMessage("SpookedOne", "teamname1: " 
+                    + team[1].getName());
+        }
     }
 
     /**
@@ -4011,6 +4027,14 @@ public class bwjsbot extends SubspaceBot {
          */
         private String getName() {
             return teamName;
+        }
+        
+        /**
+         * Sets the team name
+         * @param name 
+         */
+        private void setName(String name) {
+            this.teamName = name;
         }
         
         /**
