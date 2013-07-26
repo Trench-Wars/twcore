@@ -38,23 +38,25 @@ public class acro2 extends MultiModule {
     int votes[];
     Spy racismSpy;
 
+    @Override
     public void init() {
-        m_commandInterpreter = new CommandInterpreter(m_botAction);
-        registerCommands();
         generator = new Random();
         racismSpy = new Spy(m_botAction);
         
-        m_botAction.sendUnfilteredPublicMessage( "?chat=acro,games" );
+        m_botAction.sendUnfilteredPublicMessage("?chat=acro,games");
     }
 
+    @Override
     public void requestEvents(ModuleEventRequester events) {
     }
 
+    @Override
     public boolean isUnloadable() {
         return true;
     }
 
     /*** This method is called when this module is unloaded. */
+    @Override
     public void cancel() {
         gamereset();
         m_botAction.cancelTasks();
@@ -100,8 +102,10 @@ public class acro2 extends MultiModule {
             doRemoveIgnore(name, message);
         } else if (lower.startsWith("!listignore")) {
             doListIgnore(name, message);
-        } else {
-            doCheckPrivate(name, message);
+        } else if (gameState == 1){
+            doEntry(name, message);
+        } else if (gameState == 2) {
+            doVote(name, message);
         }
     }
     
@@ -410,10 +414,8 @@ public class acro2 extends MultiModule {
         m_botAction.scheduleTask(game, 10000);
     }
 
-    public void doCheckPrivate(String name, String message) {
-        spamMessage("doCheckPrivate, name: " + name + ", message: " + message);  //TODO: remove
-        if (gameState == 1) {
-            if (ignoreList.contains(name.toLowerCase())) {
+    private void doEntry(String name, String message) {
+        if (ignoreList.contains(name.toLowerCase())) {
                 m_botAction.sendSmartPrivateMessage(name, "You are restricted from submitting any answers. Please contact host for more details.");
             } else {
 
@@ -454,9 +456,10 @@ public class acro2 extends MultiModule {
                 } else
                     m_botAction.sendSmartPrivateMessage(name, "You must use the correct number of letters!");
             }
-
-        } else if (gameState == 2) {
-            int vote = 0;
+    }
+    
+    private void doVote(String name, String message) {
+        int vote = 0;
             int intAcroNum = 0;
             try {
                 vote = Integer.parseInt(message);
@@ -482,7 +485,6 @@ public class acro2 extends MultiModule {
             } else {
                 m_botAction.sendSmartPrivateMessage(name, "Please enter a valid vote.");
             }
-        }
     }
 
     public String generateAcro(int size) {
@@ -637,9 +639,12 @@ public class acro2 extends MultiModule {
         m_botAction.smartPrivateMessageSpam(name, help);
     }
 
+    @Override
     public void handleEvent(Message event) {
-        //m_commandInterpreter.handleEvent(event);
-        parseMessage(event);
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE ||
+                event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
+            parseMessage(event);
+        }
     }
 
 }
