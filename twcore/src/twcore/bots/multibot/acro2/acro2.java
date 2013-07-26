@@ -81,6 +81,9 @@ public class acro2 extends MultiModule {
         String message = event.getMessage();
         String name = event.getMessager();
         
+        m_botAction.sendPrivateMessage("SpookedOne", "name: " + name + 
+                ", message: " + message);
+        
         String lower = message.toLowerCase();
         if (lower.startsWith("!start")) {
             doStartGame(name, message);
