@@ -608,6 +608,7 @@ public class acro2 extends MultiModule {
     }
 
     public void handleEvent(Message event) {
+        spamMessage("gotMessage: " + event.getMessage());
         m_commandInterpreter.handleEvent(event);
     }
 
