@@ -1,344 +1,634 @@
-package twcore.bots.multibot.acro;
+package twcore.bots.multibot.acro2;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimerTask;
-import java.util.Vector;
 
 import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.Message;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Spy;
+import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
-public class acro extends MultiModule{
+public class acro2 extends MultiModule {
 
-    CommandInterpreter  m_commandInterpreter;
-    Random              generator;
-    // -1 = pregame; 0 = not playing; 1 = entering acro; 2 = voting
-    int                 gameState = 0;
-    int                 length = 0;
-    int                 numIdeas = 0;
-    int                 maxVote = -1;
-    int                 round = 1;
-    String              curAcro = "";
+    CommandInterpreter m_commandInterpreter;
+    Random generator;
+    // gameState   -1 = pregame; 0 = not playing; 1 = entering acro; 2 = voting, 3 = waiting for host to submit acro
+    int gameState = 0;
+    int length = 0;
+    int intOrder = 0;
+    int intAcroCount = 0;
+    int round = 1;
+    int intCustom = 0; // is set to 1 if each rounds acro will be submitted by host
+    String curAcro = "";
+    String CustomHost = "";
+    HashSet<String> ignoreList = new HashSet<String>();
     HashMap<String, String> playerIdeas = new HashMap<String, String>();
-    HashMap<String, String> playerVotes = new HashMap<String, String>();
-    HashMap<String, String> playerScores = new HashMap<String, String>();
-    Vector<String>      phrases;
-    int                 votes[];
-    Spy                 racismSpy;
+    HashMap<String, Integer> playerVotes = new HashMap<String, Integer>();
+    HashMap<String, Integer> playerScores = new HashMap<String, Integer>();
+    HashMap<String, Integer> playerOrder = new HashMap<String, Integer>();
+    HashMap<String, Integer> acroDisplay = new HashMap<String, Integer>();
+    StringBag playerNames = new StringBag();
+    int votes[];
+    Spy racismSpy;
 
-    public void init()    {
-        m_commandInterpreter = new CommandInterpreter( m_botAction );
-        registerCommands();
+    @Override
+    public void init() {
         generator = new Random();
-        racismSpy = new Spy( m_botAction );
-
-        //for testing over chat
-        m_botAction.sendUnfilteredPublicMessage( "?chat=acro,games" );
+        racismSpy = new Spy(m_botAction);
+        
+        m_botAction.sendUnfilteredPublicMessage("?chat=acro,games");
     }
 
-    public void requestEvents(ModuleEventRequester events)    {
+    @Override
+    public void requestEvents(ModuleEventRequester events) {
+        events.request(this, EventRequester.MESSAGE);
     }
 
-    public boolean isUnloadable()   {
+    @Override
+    public boolean isUnloadable() {
         return true;
     }
-    
-    /**
-     * This method is called when this module is unloaded.
-     */
-    public void cancel(){
-    	m_botAction.cancelTasks();
-        gameState = 0;
-    }
 
-    private void spamChatMessage(String message) {
+    /*** This method is called when this module is unloaded. */
+    @Override
+    public void cancel() {
+        gamereset();
+        m_botAction.cancelTasks();
+    }
+    
+    private void spamChats(String message) {
         m_botAction.sendChatMessage(1, message);
         m_botAction.sendChatMessage(2, message);
     }
-
-    public void registerCommands()  {
-        int acceptedMessages;
-
-        acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
-        m_commandInterpreter.registerCommand( "!start", acceptedMessages, this, "doStartGame" );
-        m_commandInterpreter.registerCommand( "!stop", acceptedMessages, this, "doStopGame" );
-        m_commandInterpreter.registerCommand( "!showanswers", acceptedMessages, this, "doShowAnswers" );
-        m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "doShowHelp" );
-        m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "doCheckPrivate" );
-
-        acceptedMessages = Message.CHAT_MESSAGE | Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
-        m_commandInterpreter.registerCommand( "!pm", acceptedMessages, this, "doPm" );
+    
+    private void spamMessage(String message) {
+        m_botAction.sendArenaMessage(message);
+        spamChats(message);
+    }
+    
+    private void spamMessage(String message, int sound) {
+        m_botAction.sendArenaMessage(message, sound);
+        spamChats(message);
+    }
+    
+    public void parseMessage(Message event) {
+        String message = event.getMessage();
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+        
+        String lower = message.toLowerCase();
+        if (lower.startsWith("!start")) {
+            doStartGame(name, message);
+        } else if (lower.startsWith("!startcustom")) {
+            doStartCustom(name, message);
+        } else if (lower.startsWith("!setacro")) {
+            doSetAcro(name, message);
+        } else if (lower.startsWith("!stop")) {
+            doStopGame(name, message);
+        } else if (lower.startsWith("!help")) {
+            doShowHelp(name, message);
+        } else if (lower.startsWith("!rules")) {
+            doShowRules(name, message);
+        } else if (lower.startsWith("!changes")) {
+            doShowChanges(name, message);
+        } else if (lower.startsWith("!ignore")) {
+            doAddIgnore(name, message);
+        } else if (lower.startsWith("!unignore")) {
+            doRemoveIgnore(name, message);
+        } else if (lower.startsWith("!listignore")) {
+            doListIgnore(name, message);
+        } else if (gameState == 1){
+            doEntry(name, message);
+        } else if (gameState == 2) {
+            doVote(name, message);
+        }
     }
 
-    public void doStartGame( String name, String message ) {
-        if( m_botAction.getOperatorList().isER( name ) ) {
-            if( gameState == 0 ) {
+    public void doStartGame(String name, String message) {
+        initGame(name);
+    }
+
+    public void initGame(String name) {
+        if (m_botAction.getOperatorList().isER(name)) {
+            if (gameState == 0) {
                 gameState = -1;
-                m_botAction.sendArenaMessage( "A randomly generated Acronym will be displayed, your goal is to write a sentence/phrase that matches the acronym then vote for the best! -" + m_botAction.getBotName(), 22 );
-                spamChatMessage( "A randomly generated Acronym will be displayed, your goal is to write a sentence/phrase that matches the acronym then vote for the best! -" + m_botAction.getBotName());
-                TimerTask preStart = new TimerTask() {
-                    public void run() {
-                        setUpShow();
-                    }
-                };
-                m_botAction.scheduleTask( preStart, 10000 );
+                if (intCustom == 1) {
+                    gameState = 3;
+                    CustomHost = name;
+                    spamMessage("ACROMANIA BEGINS! Your host will submit acronyms - prepare your wit!  PM me with !rules to learn how to play. " + m_botAction.getBotName(), 22);
+                    m_botAction.sendSmartPrivateMessage(name, "Custom Game Initalized.  Send !setacro LETTERS to set the letters for Round #1.");
+                } else {
+                    spamMessage("ACROMANIA BEGINS! Random acronyms will be generated - prepare your wit!  PM me with !rules to learn how to play. -" + m_botAction.getBotName(), 22);
+                    TimerTask preStart = new TimerTask() {
+                        public void run() {
+                            setUpShow();
+                        }
+                    };
+                    m_botAction.scheduleTask(preStart, 10000);
+                }
             }
         }
     }
 
-    public void doStopGame(String name, String message) {
-        if(m_botAction.getOperatorList().isER( name )) {
-            m_botAction.cancelTasks();
-            gameState = 0;
-            m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
-            spamChatMessage("This game has been slaughtered by: " + name);
+    public void doSetAcro(String name, String message) {
+        if (m_botAction.getOperatorList().isER(name)) {
+            if (intCustom == 1) {
+                if (gameState == 3) {
+                    message = message.trim();
+                    message = message.toUpperCase();
+                    message = message.replaceAll(" ", "");
+                    if (message.length() > 8) {
+                        m_botAction.sendSmartPrivateMessage(name, "Please submit an acronym 8 characters or less.");
+                    } else {
+                        curAcro = "";
+                        // convert LETTERS to L E T T E R S
+                        char letters[] = message.toCharArray();
+                        for (int x = 0; x < letters.length; x++) {
+                            curAcro = curAcro + " " + letters[x];
+                        }
+                        curAcro = curAcro.trim();
+                        setUpShow();
+                    }
+                } else {
+                    m_botAction.sendSmartPrivateMessage(name, "Round is not complete, please wait to submit next acronym.");
+                }
+            } else {
+                m_botAction.sendSmartPrivateMessage(name, "Game is currently running in regular mode (!start).  Host-submitted acronyms are not allowed.");
+            }
         }
     }
 
+    public void doStartCustom(String name, String message) {
+        intCustom = 1;
+        initGame(name);
+    }
+
+    public void doStopGame(String name, String message) {
+        if (m_botAction.getOperatorList().isER(name)) {
+            gamereset();
+            m_botAction.cancelTasks();
+            spamMessage("This game has been slaughtered by: " + name);
+        }
+    }
+
+    public void gamereset() {
+        intCustom = 0;
+        intOrder = 0;
+        round = 1;
+        gameState = 0;
+        curAcro = "";
+        CustomHost = "";
+
+        playerScores.clear();
+        playerIdeas.clear();
+        playerVotes.clear();
+        playerOrder.clear();
+        acroDisplay.clear();
+        ignoreList.clear();
+    }
+
     public void doShowAnswers(String name, String message) {
-        if(m_botAction.getOperatorList().isModerator( name )) {
-            if( gameState == 2 ) {
+        if (m_botAction.getOperatorList().isModerator(name)) {
+            if (gameState == 2) {
                 Iterator<String> it = playerIdeas.keySet().iterator();
                 String player, answer;
                 while (it.hasNext()) {
                     player = it.next();
                     answer = playerIdeas.get(player);
-                    m_botAction.sendSmartPrivateMessage( name, player + ":  " + answer );
+                    m_botAction.sendSmartPrivateMessage(name, player + ":  " + answer);
                 }
             } else {
-                m_botAction.sendSmartPrivateMessage( name, "Currently the game isn't in the voting stage." );
+                m_botAction.sendSmartPrivateMessage(name, "Currently the game isn't in the voting stage.");
             }
         }
     }
 
     public void setUpShow() {
         gameState = 1;
-        length = Math.abs( generator.nextInt() ) % 2 + 4;
-        m_botAction.sendArenaMessage( "Challenge #" + round + " : " + generateAcro( length ) );
-        spamChatMessage( "Challenge #" + round + " : " + generateAcro( length ) );
+        if (intCustom == 0) {
+            length = Math.abs(generator.nextInt()) % 2 + 4;
+            curAcro = generateAcro(length);
+        } // otherwise, the curAcro global has already been set by doSetAcro
+
+        spamMessage("TO ENTER, PM me a phrase that matches the challenge letters! -" + m_botAction.getBotName());
+        spamMessage("ACROMANIA Challenge #" + round + ": " + curAcro);
 
         TimerTask end = new TimerTask() {
             public void run() {
-                phrases = new Vector<String>();
                 gameState = 2;
-                m_botAction.sendArenaMessage( "Submitted Answers: " );
-                spamChatMessage( "Submitted Answers: " );
+                spamMessage("ACROMANIA Entries: ");
                 int i = 0;
-                Set<String> set = playerIdeas.keySet();
-                Iterator<String> it = set.iterator();
-                while (it.hasNext()) {
+                while (!playerNames.isEmpty()) {
                     i++;
-                    String curAnswer = (String) it.next();
-                    m_botAction.sendArenaMessage( " " + i + "- " + playerIdeas.get( curAnswer ) );
-                    spamChatMessage( " " + i + "- " + playerIdeas.get( curAnswer ) );
-                    phrases.addElement( curAnswer + "%" + playerIdeas.get( curAnswer ) );
+                    String curPlayer = playerNames.grabAndRemove();
+                    spamMessage("--- " + i + ": " + playerIdeas.get(curPlayer));
+                    acroDisplay.put(curPlayer, i);
                 }
                 votes = new int[i];
-                numIdeas = i;
-                m_botAction.sendArenaMessage( "Vote: Private Message me the # of your favorite phrase! -" + m_botAction.getBotName(), 103 );
-                spamChatMessage( "Vote: Private Message me the # of your favorite phrase! -" + m_botAction.getBotName());
+                intAcroCount = i;
+                if (intAcroCount > 0) {
+                    spamMessage("VOTE: PM me the # of your favorite phrase! -" + m_botAction.getBotName(), 103);
+                } else {
+                    spamMessage("--- 0 entries submitted.");
+                }
                 setUpVotes();
             }
         };
-        m_botAction.scheduleTask( end, 46000 );
+        m_botAction.scheduleTask(end, 46000);
+    }
+
+    public String getPlural(Integer intCount, String strWord) {
+        if (intCount > 1 || intCount == 0) {
+            strWord += "s";
+        } else {
+            strWord += " ";
+        }
+        return intCount + " " + strWord;
     }
 
     public void setUpVotes() {
         TimerTask vote = new TimerTask() {
             public void run() {
-                m_botAction.sendArenaMessage( "Round Winners: " );
-                spamChatMessage( "Round Winners: " );
-                for( int i = 0; i < phrases.size(); i++ ) {
-                    if( votes[i] == maxVote ) {
-                        String piece[] = Tools.stringChopper( phrases.elementAt( i ), '%' );
-                        if( playerVotes.containsKey( piece[0] ) ) {
+                String strFastPlayer = "";
+                String strWinners = "";
+                int intMostVotes = 0;
+                int numVotes = 0;
+                int i = 0;
 
-                            if( playerScores.containsKey( piece[0] ) ) {
-                                int s = Integer.parseInt( playerScores.get( piece[0] ) );
-                                s += 10;
-                                playerScores.put( piece[0], ""+s );
-                            } else
-                                playerScores.put( piece[0], "10" );
-                            m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
-                            spamChatMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) );
-                        } else {
-                            //TODO happens every message
-                            m_botAction.sendArenaMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) + " (no vote/score)" );
-                            spamChatMessage( Tools.formatString(piece[0], 25 )+ " - " + piece[1].substring(1) + " (no vote/score)" );
+                numVotes = votes.length;
+                // Determine the highest # of votes any acro received
+                for (i = 0; i < numVotes; i++) {
+                    if (votes[i] > intMostVotes) {
+                        intMostVotes = votes[i];
+                    }
+                }
+
+                // Determine the fastest ACRO that received at least one vote
+                int intCurAcro = 0;
+                int intCurOrder = 0;
+                int intFastest = 100;
+                String strCurPlayer = "";
+                Set<String> acroSet = acroDisplay.keySet();
+                Iterator<String> acroIT = acroSet.iterator();
+                while (acroIT.hasNext()) {
+                    strCurPlayer = acroIT.next();
+                    intCurAcro = acroDisplay.get(strCurPlayer);
+                    intCurOrder = playerOrder.get(strCurPlayer);
+                    if ((intCurOrder < intFastest) && votes[intCurAcro - 1] > 0) {
+                        intFastest = intCurOrder;
+                        strFastPlayer = strCurPlayer;
+                    }
+                }
+
+                int intPlayerScore = 0;
+                int intPlayerBonus = 0;
+                int intPlayerVotes = 0;
+                int intPlayerTotal = 0;
+                int VotedForVotes = 0;
+                spamMessage("ROUND " + round + " RESULTS: ");
+
+                acroIT = acroSet.iterator();
+                while (acroIT.hasNext()) {
+                    strCurPlayer = acroIT.next();
+                    intCurAcro = acroDisplay.get(strCurPlayer);
+                    intPlayerVotes = votes[intCurAcro - 1];
+
+                    String playerVotedWinner = "-";
+                    String playerNotes = "";
+
+                    // Calculate bonus points
+                    intPlayerBonus = 0;
+
+                    // +5 pts for receiving the most votes (round winner)
+                    if (intPlayerVotes == intMostVotes) {
+                        intPlayerBonus += 5;
+                        if (strWinners.length() > 0) {
+                            strWinners += ", ";
+                        }
+                        strWinners += strCurPlayer;
+                    }
+
+                    // +1 pt for voting for round winner
+                    if (playerVotes.containsKey(strCurPlayer)) {
+                        VotedForVotes = votes[playerVotes.get(strCurPlayer) - 1];
+                        if (VotedForVotes == intMostVotes) {
+                            intPlayerBonus += 1;
+                            playerVotedWinner = "*";
                         }
                     }
+
+                    // +2 pts if this was the fastest entry with any votes
+                    if (strCurPlayer.equals(strFastPlayer)) {
+                        intPlayerBonus += 2;
+                    }
+
+                    // Update players running score, only if they voted
+                    if (playerVotes.containsKey(strCurPlayer)) {
+                        if (!playerScores.containsKey(strCurPlayer)) {
+                            intPlayerScore = 0;
+                        } else {
+                            intPlayerScore = playerScores.get(strCurPlayer);
+                        }
+                        // Score for round = bonus + number of votes their acro received
+                        intPlayerScore += intPlayerBonus + intPlayerVotes;
+                        playerScores.put(strCurPlayer, intPlayerScore);
+                    } else {
+                        playerNotes += " [NOVOTE/NOSCORE]";
+                    }
+                    intPlayerTotal = intPlayerVotes + intPlayerBonus;
+                    spamMessage(playerVotedWinner + " " + Tools.formatString(strCurPlayer, 14) + " " + getPlural(intPlayerTotal, "pt") + " (" + getPlural(intPlayerVotes, "vote")
+                            + "): " + playerIdeas.get(strCurPlayer) + playerNotes);
+                }
+                if (!strWinners.equals("")) {
+                    spamMessage("* = These players voted for the winner(s).");
+                    if (!strFastPlayer.equals("")) {
+                        spamMessage("ROUND WINNER(s): " + strWinners + " (most votes), " + strFastPlayer + " (fastest acro with a vote)");
+                    } else {
+                        spamMessage("ROUND WINNER(s): " + strWinners + " with the most votes");
+                    }
+                } else {
+                    spamMessage("ROUND WINNER(s): None!  You all lose!");
                 }
                 playerIdeas.clear();
                 playerVotes.clear();
-                phrases.clear();
-                maxVote = -1;
+                playerOrder.clear();
+                acroDisplay.clear();
+
                 round++;
-                if( round > 10 ) {
+                if (round > 10) {
                     gameOver();
                 } else {
-                    TimerTask preStart = new TimerTask() {
-                        public void run() {
-                            setUpShow();
-                        }
-                    };
-                    m_botAction.scheduleTask( preStart, 10000 );
+                    if (intCustom == 1) {
+                        gameState = 3;
+                        m_botAction.sendSmartPrivateMessage(CustomHost, "Send !setacro LETTERS to set the letters for the next round.");
+                    } else {
+                        TimerTask preStart = new TimerTask() {
+                            public void run() {
+                                setUpShow();
+                            }
+                        };
+                        m_botAction.scheduleTask(preStart, 10000);
+                    }
                 }
             }
         };
-        m_botAction.scheduleTask( vote, 30000 );
+        m_botAction.scheduleTask(vote, 36000);
     }
 
     public void gameOver() {
         TimerTask game = new TimerTask() {
             public void run() {
-                m_botAction.sendArenaMessage( "Game Over, Scores: ", 5 );
-                spamChatMessage( "Game Over, Scores: ");
+                spamMessage("GAME OVER! FINAL SCORES: ", 5);
                 Set<String> set = playerScores.keySet();
                 Iterator<String> it = set.iterator();
                 while (it.hasNext()) {
-                    String curAnswer = (String) it.next();
-                    m_botAction.sendArenaMessage( Tools.formatString( curAnswer, 30 ) +"- " + playerScores.get( curAnswer ) );
-                    spamChatMessage( Tools.formatString( curAnswer, 30 ) +"- " + playerScores.get( curAnswer ) );
+                    String curAnswer = it.next();
+                    spamMessage("--- " + Tools.formatString(curAnswer, 14) + ": " + playerScores.get(curAnswer));
                 }
-                playerScores.clear();
-                gameState = 0;
-                round = 1;
+                gamereset();
             }
         };
-        m_botAction.scheduleTask( game, 10000 );
+        m_botAction.scheduleTask(game, 10000);
     }
 
-    public void doCheckPrivate( String name, String message ) {
-        if( gameState == 1 ) {
-            String pieces[] = message.split( " +" );
-            String pieces2[] = curAcro.split( " " );
-            if( pieces.length == pieces2.length ) {
-                boolean valid = true;
-                for( int i = 0; i < pieces.length; i++ ) {
-                    if( pieces[i].length() == 0 || pieces[i].toLowerCase().charAt(0) != pieces2[i].toLowerCase().charAt(0) )
-                        valid = false;
-                    if( pieces[i].contains("_") || pieces[i].contains("-") )
-                        valid = false;
-                }
+    private void doEntry(String name, String message) {
+        if (ignoreList.contains(name.toLowerCase())) {
+                m_botAction.sendSmartPrivateMessage(name, "You are restricted from submitting any answers. Please contact host for more details.");
+            } else {
 
-                if( valid ) {
-                	if( racismSpy.isRacist(message) ) {
-                        m_botAction.sendUnfilteredPublicMessage("?cheater Racist acro: (" + name + "): " + message);
-                        m_botAction.sendSmartPrivateMessage( name, "You have been reported for attempting to use racism in your answer." );
-                		return;
-                	}
-                    if( !playerIdeas.containsKey( name ) ) {
-                        playerIdeas.put( name, message );
-                        m_botAction.sendSmartPrivateMessage( name, "Your answer has been recorded." );
+                String pieces[] = message.split(" +");
+                String pieces2[] = curAcro.split(" ");
+                if (pieces.length == pieces2.length) {
+                    boolean valid = true;
+                    if (message.length() > 70) {
+                        valid = false;
                     } else {
-                        playerIdeas.remove( name );
-                        playerIdeas.put( name, message );
-                        m_botAction.sendSmartPrivateMessage( name, "Your answer has been changed." );
-                    }
-                } else m_botAction.sendSmartPrivateMessage( name, "You have submitted an invalid acronym.  It must match the letters and not contain dashes/underscores." );
-
-            } else m_botAction.sendSmartPrivateMessage( name, "You must use the correct number of letters!" );
-        } else if( gameState == 2 ) {
-            int vote = 0;
-            try { vote = Integer.parseInt( message ); } catch (Exception e ) {}
-            if( vote > 0 && vote <= numIdeas ) {
-                try {
-                    String cur     = phrases.elementAt( vote - 1);
-                    String parts[] = Tools.stringChopper( cur, '%' );
-
-                    if( playerVotes.containsKey( name.toLowerCase() ) ) {
-                        m_botAction.sendSmartPrivateMessage( name, "You have already voted!." );
-                        return;
+                        for (int i = 0; i < pieces.length; i++) {
+                            if (pieces[i].length() == 0 || pieces[i].toLowerCase().charAt(0) != pieces2[i].toLowerCase().charAt(0)) {
+                                valid = false;
+                            }
+                        }
                     }
 
-                    if( !parts[0].toLowerCase().equals( name.toLowerCase() ) ) {
-                        votes[vote-1]++;
-                        playerVotes.put( name.toLowerCase(), name );
-                        if( votes[vote-1] > maxVote ) maxVote = votes[vote-1];
-                        m_botAction.sendSmartPrivateMessage( name, "Your vote has been counted." );
-                    } else m_botAction.sendSmartPrivateMessage( name, "You cannot vote for your own." );
-                } catch (Exception e) {
-                    m_botAction.sendSmartPrivateMessage( name, "Unable to process your vote!  Please notify the host." );
+                    if (valid) {
+                        if (racismSpy.isRacist(message)) {
+                            m_botAction.sendUnfilteredPublicMessage("?cheater Racist acro: (" + name + "): " + message);
+                            m_botAction.sendSmartPrivateMessage(name, "You have been reported for attempting to use racism in your answer.");
+                            return;
+                        }
+                        if (!playerIdeas.containsKey(name)) {
+                            m_botAction.sendSmartPrivateMessage(name, "Your answer has been recorded.");
+                            playerNames.add(name);
+                        } else {
+                            playerIdeas.remove(name);
+                            playerOrder.remove(name);
+                            m_botAction.sendSmartPrivateMessage(name, "Your answer has been changed.");
+                        }
+                        intOrder++;
+                        playerOrder.put(name, intOrder);
+                        playerIdeas.put(name, message);
+                    } else {
+                        m_botAction.sendSmartPrivateMessage(name, "You have submitted an invalid acronym.  It must match the letters given and be 70 characters or less.");
+                    }
+                } else
+                    m_botAction.sendSmartPrivateMessage(name, "You must use the correct number of letters!");
+            }
+    }
+    
+    private void doVote(String name, String message) {
+        int vote = 0;
+            int intAcroNum = 0;
+            try {
+                vote = Integer.parseInt(message);
+            } catch (Exception e) {}
+            if (vote > 0 && vote <= intAcroCount) {
+                //if (playerIdeas.containsKey(name)) {
+                boolean valid = acroDisplay.containsKey(name) ? acroDisplay.get(name) != vote : true;
+                if (valid) {
+                    votes[vote - 1]++;
+                    if (playerVotes.containsKey(name)) {
+                        int lastVote = playerVotes.get(name);
+                        votes[lastVote - 1]--;
+                        playerVotes.remove(name);
+                        m_botAction.sendSmartPrivateMessage(name, "Your vote has been changed.");
+                    } else {
+                        m_botAction.sendSmartPrivateMessage(name, "Your vote has been counted.");
+                    }
+                    playerVotes.put(name, vote);
+                } else {
+                    m_botAction.sendSmartPrivateMessage(name, "You cannot vote for your own.");
                 }
-            } else m_botAction.sendSmartPrivateMessage( name, "Please enter a valid vote." );
-        }
+                //} else {m_botAction.sendSmartPrivateMessage(name,"Only players who submitted an entry may vote this round.");}
+            } else {
+                m_botAction.sendSmartPrivateMessage(name, "Please enter a valid vote.");
+            }
     }
 
-    public String generateAcro( int size ) {
+    public String generateAcro(int size) {
         String acro = "";
-        for( int i = 0; i < size; i ++ ) {
-            int x = Math.abs( generator.nextInt() ) % 72;
-            if( x > -1 && x < 3 ) acro += "A ";
-            else if( x > 2 && x < 6 ) acro += "B ";
-            else if( x > 5 && x < 9 ) acro += "C ";
-            else if( x > 8 && x < 12 ) acro += "D ";
-            else if( x > 11 && x < 15 ) acro += "E ";
-            else if( x > 14 && x < 18 ) acro += "F ";
-            else if( x > 17 && x < 21 ) acro += "G ";
-            else if( x > 20 && x < 24 ) acro += "H ";
-            else if( x > 23 && x < 27 ) acro += "I ";
-            else if( x > 26 && x < 30 ) acro += "J ";
-            else if( x > 29 && x < 31 ) acro += "K ";  //third as likely
-            else if( x > 30 && x < 34 ) acro += "L ";
-            else if( x > 33 && x < 37 ) acro += "M ";
-            else if( x > 36 && x < 40 ) acro += "N ";
-            else if( x > 39 && x < 43 ) acro += "O ";
-            else if( x > 42 && x < 46 ) acro += "P ";
-            else if( x > 45 && x < 49 ) acro += "Q ";
-            else if( x > 48 && x < 52 ) acro += "R ";
-            else if( x > 51 && x < 55 ) acro += "S ";
-            else if( x > 54 && x < 59 ) acro += "T ";
-            else if( x > 58 && x < 62 ) acro += "U ";
-            else if( x > 61 && x < 64 ) acro += "V "; //two-third as likely
-            else if( x > 63 && x < 67 ) acro += "W ";
-            else if( x > 66 && x < 68 ) acro += "X "; //third as likely
-            else if( x > 67 && x < 71 ) acro += "Y ";
-            else if( x > 70 && x < 72 ) acro += "Z "; //third as likely
+        for (int i = 0; i < size; i++) {
+            int x = Math.abs(generator.nextInt()) % 72;
+            if (x > -1 && x < 3)
+                acro += "A ";
+            else if (x > 2 && x < 6)
+                acro += "B ";
+            else if (x > 5 && x < 9)
+                acro += "C ";
+            else if (x > 8 && x < 12)
+                acro += "D ";
+            else if (x > 11 && x < 15)
+                acro += "E ";
+            else if (x > 14 && x < 18)
+                acro += "F ";
+            else if (x > 17 && x < 21)
+                acro += "G ";
+            else if (x > 20 && x < 24)
+                acro += "H ";
+            else if (x > 23 && x < 27)
+                acro += "I ";
+            else if (x > 26 && x < 30)
+                acro += "J ";
+            else if (x > 29 && x < 31)
+                acro += "K ";  //third as likely
+            else if (x > 30 && x < 34)
+                acro += "L ";
+            else if (x > 33 && x < 37)
+                acro += "M ";
+            else if (x > 36 && x < 40)
+                acro += "N ";
+            else if (x > 39 && x < 43)
+                acro += "O ";
+            else if (x > 42 && x < 46)
+                acro += "P ";
+            else if (x > 45 && x < 49)
+                acro += "Q ";
+            else if (x > 48 && x < 52)
+                acro += "R ";
+            else if (x > 51 && x < 55)
+                acro += "S ";
+            else if (x > 54 && x < 59)
+                acro += "T ";
+            else if (x > 58 && x < 62)
+                acro += "U ";
+            else if (x > 61 && x < 64)
+                acro += "V "; //two-third as likely
+            else if (x > 63 && x < 67)
+                acro += "W ";
+            else if (x > 66 && x < 68)
+                acro += "X "; //third as likely
+            else if (x > 67 && x < 71)
+                acro += "Y ";
+            else if (x > 70 && x < 72)
+                acro += "Z "; //third as likely
         }
         curAcro = acro;
         return acro;
 
     }
 
-    public void doShowHelp( String name, String message ) {
-        if( ! m_botAction.getOperatorList().isER( name ) )
-            m_botAction.privateMessageSpam(name, getPlayerHelpMessage());
+    public void doAddIgnore(String name, String message) {
+        if (m_botAction.getOperatorList().isER(name)) {
+            if (message == null) {
+                m_botAction.sendSmartPrivateMessage(name, "Invalid Entry. Please try again.");
+            } else {
+                if (ignoreList.contains(message.toLowerCase())) {
+                    m_botAction.sendSmartPrivateMessage(name, "Player is already on the ignore list.");
+                } else {
+                    ignoreList.add(message.toLowerCase());
+                    m_botAction.sendSmartPrivateMessage(name, "" + message + " was added to the ignore list.");
+                }
+            }
+        }
     }
 
-    @Override
+    public void doRemoveIgnore(String name, String message) {
+        if (m_botAction.getOperatorList().isER(name)) {
+
+            if (message == null) {
+                m_botAction.sendSmartPrivateMessage(name, "Invalid Entry. Please try again.");
+            } else {
+                if (!ignoreList.contains(message.toLowerCase())) {
+                    m_botAction.sendSmartPrivateMessage(name, "Player is not found on the ignore list.");
+                } else {
+                    ignoreList.remove(message.toLowerCase());
+                    m_botAction.sendSmartPrivateMessage(name, "" + message + " was removed from the ignore list.");
+                }
+            }
+        }
+    }
+
+    public void doListIgnore(String name, String message) {
+        if (m_botAction.getOperatorList().isER(name)) {
+            if (ignoreList.isEmpty()) {
+                m_botAction.sendSmartPrivateMessage(name, "Ignore List is Empty");
+            } else {
+                Iterator<String> list = ignoreList.iterator();
+                while (list.hasNext()) {
+                    m_botAction.sendSmartPrivateMessage(name, list.next());
+                }
+            }
+        }
+    }
+
+    public void doShowHelp(String name, String message) {
+        if (!m_botAction.getOperatorList().isER(name))
+            m_botAction.smartPrivateMessageSpam(name, getPlayerHelpMessage());
+    }
+
     public String[] getModHelpMessage() {
-        String[] help = {
-                "!start       - Starts a game of Acromania.",
+        String[] help = { 
+                "ACROMANIA v2.0 BOT COMMANDS", "!start       - Starts a game of acromania.",
                 "!stop        - Stops a game currently in progress.",
+                "!startcustom - Starts a game of acromania.  Host must",
+                "               !setacro each round.",
+                "!setacro     - Used to set the acronym for the next round",
+                "               (can be used only during a !startcustom game.",
+                "!rules   - Displays game rules.", "!changes - Display changes since v1.0.",
                 "!showanswers - Shows who has entered which answer.",
-                "NOTE: This event should only be hosted by Mod+!"
-        };
+                "!ignore <name> - Prevents the player from submitting any answers for this game.",
+                "!unignore <name> - Removes player from the ignore list and allows submissions.",
+                "!listIgnore - Lists the current players added to the ignore list."
+                 };
         return help;
     }
 
     public String[] getPlayerHelpMessage() {
-        String[] help = {
-                "Rules for Acromania: compose a sentence with the letters provided.",
-                "PM your answers to me before the timer is up!",
-                "Then vote for your favorite answer.  You can't vote for your own!",
-                "If you don't vote for someone else's acro, you can't win."
-        };
+        String[] help = { "ACROMANIA v2.0 BOT COMMANDS", "!help    - Displays this help message.", "!rules   - Displays game rules.", "!changes - Display changes since v1.0." };
         return help;
     }
 
-    public void doPm( String name, String message ){
-        m_botAction.sendSmartPrivateMessage( name, "Now you can use :: to submit your answers." );
+    public void doShowRules(String name, String message) {
+        String[] help = { "ACROMANIA v2.0 RULES:", "Each game consists of 10 rounds.  At the start of each round,", "a randomly generated acronym will be displayed.  PM me a phrase",
+                "that matches the letters provided.  Then vote for your favorite", "phrase.  You must submit an acro each round to be able to vote",
+                "during that round.  Points will be given as follows:", "+1 point for each vote that your acro receives", "+1 bonus point if you voted for the winning acro",
+                "+2 bonus points for the fastest acro that received a vote", "+5 bonus points for receiving the most votes for the round",
+                "After votes are tallied, all submitted acros are displayed along", "with the # of votes received + the bonus points received.",
+                "Players marked with an asterisk (*) voted for the winning acro.", "NO POINTS are given to players that did not vote.", "Win the game by earning the most points in 10 rounds." };
+        m_botAction.smartPrivateMessageSpam(name, help);
+    }
+
+    public void doShowChanges(String name, String message) {
+        String[] help = { "ACROMANIA CHANGES v1.0 to v2.0:", " - underscore and dash characters now allowed in acros", " - can now change your vote during the voting round",
+                " - only players who submitted an acro can vote each round", " - new scoring system, see !rules", " - voting period now 36 seconds (was 30)",
+                " - fixed end of round display of acros to match original entries", "   (punctuation no longer stripped)", " - length of submitted acros can be no more than 70 characters",
+                " - added option for host to specify each rounds acros, based", "   on user request, random names in the channel, a theme, etc.",
+                " - current entries are now randomized before being displayed." };
+        m_botAction.smartPrivateMessageSpam(name, help);
     }
 
     @Override
-    public void handleEvent( Message event ) {
-        m_commandInterpreter.handleEvent( event );
+    public void handleEvent(Message event) {
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE ||
+                event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
+            parseMessage(event);
+        }
     }
 
 }
