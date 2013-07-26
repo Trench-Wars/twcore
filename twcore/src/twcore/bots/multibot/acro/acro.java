@@ -81,7 +81,11 @@ public class acro extends MultiModule {
     
     public void parseMessage(Message event) {
         String message = event.getMessage();
-        String name = m_botAction.getPlayerName(event.getPlayerID());
+        
+        String name = event.getMessager();
+        if (name == null || name.isEmpty()) {
+            name = m_botAction.getPlayerName(event.getPlayerID());
+        }
         
         String lower = message.toLowerCase();
         if (lower.startsWith("!start")) {
