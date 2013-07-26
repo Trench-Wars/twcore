@@ -1801,14 +1801,9 @@ public class bwjsbot extends SubspaceBot {
         
         if (command != null && command.length() > "!start ".length()) {
             String names = command.substring("!start ".length());
-            m_botAction.sendPrivateMessage("SpookedOne", "names: " + names);
             String[] teamName = names.split(":", 2);
             team[0].setName(teamName[0]);
             team[1].setName(teamName[1]);
-            m_botAction.sendPrivateMessage("SpookedOne", "teamname0: " 
-                    + team[0].getName());
-            m_botAction.sendPrivateMessage("SpookedOne", "teamname1: " 
-                    + team[1].getName());
         }
     }
 
