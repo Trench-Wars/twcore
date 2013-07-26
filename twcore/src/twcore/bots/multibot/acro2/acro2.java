@@ -75,6 +75,36 @@ public class acro2 extends MultiModule {
         spamChats(message);
     }
     
+    public void parseMessage(Message event) {
+        String message = event.getMessage();
+        String name = event.getMessager();
+        
+        String lower = message.toLowerCase();
+        if (lower.startsWith("!start")) {
+            doStartGame(name, message);
+        } else if (lower.startsWith("!startcustom")) {
+            doStartCustom(name, message);
+        } else if (lower.startsWith("!setacro")) {
+            doSetAcro(name, message);
+        } else if (lower.startsWith("!stop")) {
+            doStopGame(name, message);
+        } else if (lower.startsWith("!help")) {
+            doShowHelp(name, message);
+        } else if (lower.startsWith("!rules")) {
+            doShowRules(name, message);
+        } else if (lower.startsWith("!changes")) {
+            doShowChanges(name, message);
+        } else if (lower.startsWith("!ignore")) {
+            doAddIgnore(name, message);
+        } else if (lower.startsWith("!unignore")) {
+            doRemoveIgnore(name, message);
+        } else if (lower.startsWith("!listignore")) {
+            doListIgnore(name, message);
+        } else {
+            doCheckPrivate(name, message);
+        }
+    }
+    
     public void registerCommands() {
         int acceptedMessages;
 
@@ -563,7 +593,7 @@ public class acro2 extends MultiModule {
 
     public void doShowHelp(String name, String message) {
         if (!m_botAction.getOperatorList().isER(name))
-            m_botAction.privateMessageSpam(name, getPlayerHelpMessage());
+            m_botAction.smartPrivateMessageSpam(name, getPlayerHelpMessage());
     }
 
     public String[] getModHelpMessage() {
@@ -595,7 +625,7 @@ public class acro2 extends MultiModule {
                 "+2 bonus points for the fastest acro that received a vote", "+5 bonus points for receiving the most votes for the round",
                 "After votes are tallied, all submitted acros are displayed along", "with the # of votes received + the bonus points received.",
                 "Players marked with an asterisk (*) voted for the winning acro.", "NO POINTS are given to players that did not vote.", "Win the game by earning the most points in 10 rounds." };
-        m_botAction.privateMessageSpam(name, help);
+        m_botAction.smartPrivateMessageSpam(name, help);
     }
 
     public void doShowChanges(String name, String message) {
@@ -604,11 +634,12 @@ public class acro2 extends MultiModule {
                 " - fixed end of round display of acros to match original entries", "   (punctuation no longer stripped)", " - length of submitted acros can be no more than 70 characters",
                 " - added option for host to specify each rounds acros, based", "   on user request, random names in the channel, a theme, etc.",
                 " - current entries are now randomized before being displayed." };
-        m_botAction.privateMessageSpam(name, help);
+        m_botAction.smartPrivateMessageSpam(name, help);
     }
 
     public void handleEvent(Message event) {
-        m_commandInterpreter.handleEvent(event);
+        //m_commandInterpreter.handleEvent(event);
+        parseMessage(event);
     }
 
 }
