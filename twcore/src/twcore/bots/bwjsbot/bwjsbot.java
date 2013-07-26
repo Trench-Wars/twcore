@@ -69,7 +69,6 @@ public class bwjsbot extends SubspaceBot {
     
     //Static variables
     private static final int ZONER_WAIT_TIME = 15;
-    private static final int ZONER_MAX_POP = 8;
     
     //Game ticker
     private Gameticker gameticker;                          //The beating heart of the game
@@ -2050,10 +2049,7 @@ public class bwjsbot extends SubspaceBot {
      * @return True if a zoner can be send, else false
      */
     private boolean allowZoner() {
-        int maxpop = ZONER_MAX_POP;
-        if (ba.getArenaName().toLowerCase().startsWith("base"))
-            maxpop += 9;
-        if (((System.currentTimeMillis() - zonerTimestamp) <= (ZONER_WAIT_TIME * Tools.TimeInMillis.MINUTE)) || m_botAction.getArenaSize() > maxpop) {
+        if ((System.currentTimeMillis() - zonerTimestamp) <= (ZONER_WAIT_TIME * Tools.TimeInMillis.MINUTE)) {
             return false;
         } else {
             return true;
@@ -2066,7 +2062,7 @@ public class bwjsbot extends SubspaceBot {
      * @return True if a zoner can be send, else false
      */
     private boolean allowManualZoner() {
-        if (((System.currentTimeMillis() - manualZonerTimestamp) <= (10 * Tools.TimeInMillis.MINUTE) || m_botAction.getArenaSize() > ZONER_MAX_POP)) {
+        if ((System.currentTimeMillis() - manualZonerTimestamp) <= (10 * Tools.TimeInMillis.MINUTE)) {
             return false;
         } else {
             return true;
