@@ -381,6 +381,7 @@ public class acro2 extends MultiModule {
     }
 
     public void doCheckPrivate(String name, String message) {
+        spamMessage("doCheckPrivate, name: " + name + ", message: " + message);  //TODO: remove
         if (gameState == 1) {
             if (ignoreList.contains(name.toLowerCase())) {
                 m_botAction.sendSmartPrivateMessage(name, "You are restricted from submitting any answers. Please contact host for more details.");
