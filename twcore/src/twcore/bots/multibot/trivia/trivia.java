@@ -70,7 +70,7 @@ public class trivia extends MultiModule {
         registerCommands();
         m_rnd = new Random();
         BotSettings m_botSettings = moduleSettings;
-        m_botAction.sendUnfilteredPublicMessage( "?chat=trivia,games" );
+        m_botAction.sendUnfilteredPublicMessage( "?chat=games" );
 
         //Gets variables from .cfg
         m_timeQuestion =  m_botSettings.getInt("QuestionTime");

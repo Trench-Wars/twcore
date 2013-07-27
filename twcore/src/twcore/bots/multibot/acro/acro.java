@@ -44,7 +44,7 @@ public class acro extends MultiModule {
         generator = new Random();
         racismSpy = new Spy(m_botAction);
         
-        m_botAction.sendUnfilteredPublicMessage("?chat=acro,games");
+        m_botAction.sendUnfilteredPublicMessage("?chat=games");
     }
 
     @Override

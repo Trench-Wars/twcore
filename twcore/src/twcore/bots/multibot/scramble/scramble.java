@@ -93,7 +93,7 @@ public class scramble extends MultiModule {
         m_rnd = new Random();
         BotSettings m_botSettings = moduleSettings;
 
-        m_botAction.sendUnfilteredPublicMessage( "?chat=scramble,games" );
+        m_botAction.sendUnfilteredPublicMessage( "?chat=games" );
 
         String access[] = m_botSettings.getString("SpecialAccess").split(":");
         for (int i = 0; i < access.length; i++)
