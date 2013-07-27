@@ -1804,6 +1804,9 @@ public class bwjsbot extends SubspaceBot {
             String[] teamName = names.split(":", 2);
             team[0].setName(teamName[0]);
             team[1].setName(teamName[1]);
+        } else {
+            team[0].setName("Freq 0");
+            team[1].setName("Freq 1");
         }
     }
 
