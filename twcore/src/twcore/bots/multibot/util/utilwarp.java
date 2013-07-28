@@ -109,25 +109,23 @@ public class utilwarp extends MultiUtil {
     }
     
     public void doWarpFreqCmd(String sender, String argString) {
-        StringTokenizer argTokens = getArgTokens(argString);
+        String[] args = argString.split(":");
         
-        if (argTokens == null || argTokens.countTokens() < 3 || argTokens.countTokens() > 4)
+        if (args == null || args.length < 3 || args.length > 4) {
             m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpFreq <Freq>:<X>:<Y>:<Radius>.");
-        try {
-            int freq = Integer.parseInt(argTokens.nextToken());
-            int xCoord = Integer.parseInt(argTokens.nextToken());
-            int yCoord = Integer.parseInt(argTokens.nextToken());
+        } else {
+            int freq = Integer.parseInt(args[0]);
+            int xCoord = Integer.parseInt(args[1]);
+            int yCoord = Integer.parseInt(args[2]);
             double radius = 0;
-            if (argTokens.countTokens() == 4)
-                radius = Double.parseDouble(argTokens.nextToken());
+            if (args.length == 4)
+                radius = Double.parseDouble(args[3]);
             String result = doWarp(WARP_FREQ, freq, xCoord, yCoord, radius, false);
             if (result != null)
                 m_botAction.sendSmartPrivateMessage(sender, result);
             else
                 m_botAction.sendSmartPrivateMessage(sender, getWarpString(WARP_FREQ, freq, xCoord, yCoord, radius));
-        } catch (NumberFormatException e) {
-            m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpFreq <Freq>:<X>:<Y>:<Radius>.");
-        }
+        }            
     }
     
     public void doWarpShipCmd(String sender, String argString) {
