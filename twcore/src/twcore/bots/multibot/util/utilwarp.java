@@ -110,16 +110,15 @@ public class utilwarp extends MultiUtil {
     
     public void doWarpFreqCmd(String sender, String argString) {
         StringTokenizer argTokens = getArgTokens(argString);
-        int numTokens = argTokens.countTokens();
         
-        if (numTokens < 3 || numTokens > 4)
+        if (argTokens == null || argTokens.countTokens() < 3 || argTokens.countTokens() > 4)
             m_botAction.sendPrivateMessage(sender, "Please use the following format: !WarpFreq <Freq>:<X>:<Y>:<Radius>.");
         try {
             int freq = Integer.parseInt(argTokens.nextToken());
             int xCoord = Integer.parseInt(argTokens.nextToken());
             int yCoord = Integer.parseInt(argTokens.nextToken());
             double radius = 0;
-            if (numTokens == 4)
+            if (argTokens.countTokens() == 4)
                 radius = Double.parseDouble(argTokens.nextToken());
             String result = doWarp(WARP_FREQ, freq, xCoord, yCoord, radius, false);
             if (result != null)
