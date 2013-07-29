@@ -123,13 +123,32 @@ public class prez extends MultiModule {
      * @param message
      */
     public void doStartGame(String name, String message) {
-        //verify is staff member
+        //lock arena
+        m_botAction.toggleLocked();
 
-        if (isAllSet(name)) {
-            //initiates the game
-            initGame();
+        //randomize players and assign to freqs
+        createIncrementingTeams();
+
+        //set all players to citz ship
+        for (Player p : m_botAction.getPlayingPlayers()) {
+            m_botAction.setShip(p.getPlayerID(), citzShip);
         }
 
+        //pick random person from each freq and set to prez ship
+        for (int i = 0; i < numOfFreqs - 1; i++) {
+            pickPresident(i);
+        }
+
+        //warp freqs to were they assigned
+        for (int freq : freqWarpPoints.keySet()) {
+            Point p = freqWarpPoints.get(freq);
+            m_botAction.warpFreqToLocation(freq, p.x, p.y);
+        }
+
+        m_botAction.sendArenaMessage("GOGOGO!!!", 104);
+
+        //set game state to on to start listening to messages
+        isRunning = true;
     }
     
     /**
@@ -138,7 +157,7 @@ public class prez extends MultiModule {
      * @param message 
      */
     public void doStopGame(String name, String message) {
-        gamereset();
+        reset();
         m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
     }
     
@@ -256,82 +275,14 @@ public class prez extends MultiModule {
         }
     }
     // </editor-fold>
-    
-    /**
-     * Verifies all members set for module.
-     *
-     * @param name name of staffer to notify if members invalid
-     * @return boolean representing that all members set and appropriate
-     */
-    public boolean isAllSet(String name) {
-        boolean valid = true;
-
-        //verify number of freqs
-        if (numOfFreqs < 2) {
-            valid = false;
-            m_botAction.sendPrivateMessage(name, "Number of frequencies not set!");
-        }
-
-        //verify warps set for each freq
-        for (int i = 0; i < numOfFreqs - 1; i++) {
-            if (!freqWarpPoints.containsKey(i)) {
-                valid = false;
-                m_botAction.sendPrivateMessage(name, "Freq [" + i + "] warp point not set!");
-            }
-        }
-
-        //verify citz ship set
-        if (citzShip < 1 || citzShip > 8) {
-            valid = false;
-            m_botAction.sendPrivateMessage(name, "Citizen ship not set!");
-        }
-
-        //verify prez ship set
-        if (prezShip < 1 || prezShip > 8) {
-            valid = false;
-            m_botAction.sendPrivateMessage(name, "President ship not set!");
-        }
-        return valid;
-    }
-
-    /**
-     * Initiates the module to start game
-     */
-    public void initGame() {
-        //lock arena
-        m_botAction.toggleLocked();
-
-        //randomize players and assign to freqs
-        createIncrementingTeams();
-
-        //set all players to citz ship
-        for (Player p : m_botAction.getPlayingPlayers()) {
-            m_botAction.setShip(p.getPlayerID(), citzShip);
-        }
-
-        //pick random person from each freq and set to prez ship
-        for (int i = 0; i < numOfFreqs - 1; i++) {
-            pickPresident(i);
-        }
-
-        //warp freqs to were they assigned
-        for (int freq : freqWarpPoints.keySet()) {
-            Point p = freqWarpPoints.get(freq);
-            m_botAction.warpFreqToLocation(freq, p.x, p.y);
-        }
-
-        m_botAction.sendArenaMessage("GOGOGO!!!", 104);
-
-        //set game state to on to start listening to messages
-        isRunning = true;
-    }
 
     /**
      * Reset the module to it's default state
      */
-    public void gamereset() {
+    public void reset() {
         m_botAction.toggleLocked();
         freqPrezs.clear();
+        isRunning = false;
     }
 
     /**
@@ -341,7 +292,7 @@ public class prez extends MultiModule {
     public void gameOver(Player prez) {
         m_botAction.sendArenaMessage("Congrats to President [" + prez.getPlayerName()
                 + "] and the winning freq [" + prez.getFrequency() + "]!");
-        gamereset();
+        reset();
     }
 
     @Override
@@ -499,7 +450,7 @@ public class prez extends MultiModule {
     public void pickPresident(int freq) {
         StringBag plist = new StringBag();
 
-        Iterator<Player> i = m_botAction.getFreqPlayerIterator(numOfFreqs);
+        Iterator<Player> i = m_botAction.getFreqPlayerIterator(freq);
         while (i.hasNext()) {
             plist.add(i.next().getPlayerName());
         }
