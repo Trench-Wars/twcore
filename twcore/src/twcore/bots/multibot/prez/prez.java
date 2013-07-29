@@ -3,6 +3,7 @@ package twcore.bots.multibot.prez;
 import java.util.HashMap;
 import java.util.Iterator;
 import twcore.bots.MultiModule;
+import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.command.CommandInterpreter;
 import twcore.core.events.FrequencyShipChange;
@@ -16,7 +17,7 @@ import twcore.core.util.StringBag;
 import twcore.core.util.Tools.Ship;
 
 /**
- * Multibot Module - President
+ * Multibot Module - President (Prez)
  *
  * Assists in hosting of president type games.
  *
@@ -26,26 +27,53 @@ import twcore.core.util.Tools.Ship;
 public class prez extends MultiModule {
 
     private CommandInterpreter m_commandInterpreter;
-    private int numOfFreqs;
-    private int citzShip;
-    private int prezShip;
-    private HashMap<Integer, Point> freqWarpPoints;
-    private HashMap<Integer, String> freqPrezs;
+    
+    private int numOfFreqs; //total number of frequencies
+    private int citzShip;   //citizen ship
+    private int prezShip;   //president ship
+    
+    private HashMap<Integer, Point> freqWarpPoints; //warp point for freq
+    private HashMap<Integer, String> freqPrezs;     //presidents for freq
+    
     private boolean isRunning;
 
+    /**
+     * Initialize the module
+     */
     @Override
     public void init() {
         m_commandInterpreter = new CommandInterpreter(m_botAction);
         registerCommands();
+        
+        numOfFreqs = 2;
+        citzShip = 3;
+        prezShip = 5;
+        
+        freqWarpPoints = new HashMap<>();
+        freqPrezs = new HashMap<>();
+        
+        isRunning = false;
     }
 
+    /**
+     * Request certain event types for module
+     * @param events 
+     */
     @Override
     public void requestEvents(ModuleEventRequester events) {
+        events.request(this, EventRequester.PLAYER_DEATH);
+        events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+        events.request(this, EventRequester.PLAYER_LEFT);
+        events.request(this, EventRequester.MESSAGE);
     }
 
+    /**
+     * Specifies if module can be unloaded
+     * @return
+     */
     @Override
     public boolean isUnloadable() {
-        return true;
+        return !isRunning;
     }
 
     /**
@@ -77,6 +105,8 @@ public class prez extends MultiModule {
                 this, "doSetFreqWarp", accessRequired);
         m_commandInterpreter.registerCommand("!save", acceptedMessages,
                 this, "doSave", accessRequired);
+        m_commandInterpreter.registerCommand("!load", acceptedMessages,
+                this, "doLoad", accessRequired);
         m_commandInterpreter.registerCommand("!stop", acceptedMessages,
                 this, "doStopGame", accessRequired);
         m_commandInterpreter.registerCommand("!help", acceptedMessages,
@@ -101,7 +131,19 @@ public class prez extends MultiModule {
         }
 
     }
-
+    
+    /**
+     * Command handler for !stop, resets the module and notifies arena
+     * @param name
+     * @param message 
+     */
+    public void doStopGame(String name, String message) {
+        gamereset();
+        m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
+    }
+    
+    //<editor-fold defaultstate="collapsed" desc="Database">
+    
     /**
      * Command handler for !save Saves the freqs and their warps to database for
      * later use.
@@ -110,19 +152,35 @@ public class prez extends MultiModule {
      * @param message
      */
     public void doSave(String name, String message) {
+        /* TODO: save info to database table trench_TrenchWars:tblPrezFreqWarps
+         *      fields: fnID (auto), fcArena, fnFreq, fnX, fnY
+         */
+        m_botAction.sendPrivateMessage(name, "[!] Not implemented at this time."
+                + " http://www.twcore.org/ticket/739");
     }
 
-    /*
-     * Command handler for !stop
+    /**
+     * Command handler for !load Loads the freqs and their warps from database
+     * to use.
+     *
+     * @param name
+     * @param message
      */
-    public void doStopGame(String name, String message) {
-        //verify is staff member
-
-        gamereset();
-        m_botAction.sendArenaMessage("This game has been slaughtered by: " + name);
-
+    public void doLoad(String name, String message) {
+        /* TODO: load info to database table trench_TrenchWars:tblPrezFreqWarps
+         *      fields: fnID (auto), fcArena, fnFreq, fnX, fnY
+         */
+        m_botAction.sendPrivateMessage(name, "[!] Not implemented at this time."
+                + " http://www.twcore.org/ticket/739");
     }
+    // </editor-fold>
 
+    // <editor-fold defaultstate="collapsed" desc="Accessors">
+    /**
+     * Command handler (accessor) for !setfreqs
+     * @param name
+     * @param message 
+     */
     public void doSetFreqs(String name, String message) {
 
         try {
@@ -136,8 +194,7 @@ public class prez extends MultiModule {
     }
 
     /**
-     * Command handler for !setcitzship
-     *
+     * Command handler (accessor) for !setcitzship
      * @param name
      * @param message
      */
@@ -154,8 +211,7 @@ public class prez extends MultiModule {
     }
 
     /**
-     * Command handler for !setprezship
-     *
+     * Command handler (accessor) for !setprezship
      * @param name
      * @param message
      */
@@ -172,8 +228,7 @@ public class prez extends MultiModule {
     }
 
     /**
-     * Command handler for !setfreqwarp
-     *
+     * Command handler (accessor) for !setfreqwarp
      * @param name
      * @param message
      */
@@ -199,9 +254,9 @@ public class prez extends MultiModule {
         } catch (NumberFormatException e) {
             m_botAction.sendPrivateMessage(name, "Unable to parse set freq warp!");
         }
-
     }
-
+    // </editor-fold>
+    
     /**
      * Verifies all members set for module.
      *
@@ -276,6 +331,7 @@ public class prez extends MultiModule {
      */
     public void gamereset() {
         m_botAction.toggleLocked();
+        freqPrezs.clear();
     }
 
     /**
@@ -295,6 +351,7 @@ public class prez extends MultiModule {
             "!start         - Starts a game of Prez.",
             "!stop          - Stops a game currently in progress.",
             "!save          - Saves the freq numbers and warps for this arena.",
+            "!load          - Loads the freq numbers and warps for this arena.",
             "!setfreqs      - Sets number of frequencies to use.",
             "!setcitzship   - Sets citizen ship type.",
             "!setprezship   - Sets president ship type.",
@@ -319,6 +376,7 @@ public class prez extends MultiModule {
         m_botAction.privateMessageSpam(name, help);
     }
 
+    // <editor-fold defaultstate="collapsed" desc="Events">
     @Override
     public void handleEvent(Message event) {
         m_commandInterpreter.handleEvent(event);
@@ -401,7 +459,8 @@ public class prez extends MultiModule {
             }
         }
     }
-
+    // </editor-fold>
+    
     /**
      * Creates incremented team frequencies with non-spectating players.
      */
