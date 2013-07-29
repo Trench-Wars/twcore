@@ -126,20 +126,20 @@ public class prez extends MultiModule {
         //lock arena
         m_botAction.toggleLocked();
 
-        //randomize players and assign to freqs
-        createIncrementingTeams();
-
         //set all players to citz ship
         for (Player p : m_botAction.getPlayingPlayers()) {
             m_botAction.setShip(p.getPlayerID(), citzShip);
         }
+        
+        //randomize players and assign to freqs
+        createIncrementingTeams();
 
         //pick random person from each freq and set to prez ship
         for (int i = 0; i < numOfFreqs - 1; i++) {
             pickPresident(i);
         }
 
-        //warp freqs to were they assigned
+        //warp freqs to where they're assigned
         for (int freq : freqWarpPoints.keySet()) {
             Point p = freqWarpPoints.get(freq);
             m_botAction.warpFreqToLocation(freq, p.x, p.y);
@@ -450,9 +450,14 @@ public class prez extends MultiModule {
     public void pickPresident(int freq) {
         StringBag plist = new StringBag();
 
+        m_botAction.sendPrivateMessage("SpookedOne", "[DEBUG] Picking Prez's for"
+                + " Freq [" + freq + "].");
+        
         Iterator<Player> i = m_botAction.getFreqPlayerIterator(freq);
         while (i.hasNext()) {
             plist.add(i.next().getPlayerName());
+            m_botAction.sendPrivateMessage("SpookedOne", "[DEBUG] Adding Player: "
+                    + i.next().getPlayerName());
         }
 
         if (!plist.isEmpty()) {
