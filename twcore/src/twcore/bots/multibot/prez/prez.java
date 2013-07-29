@@ -49,8 +49,8 @@ public class prez extends MultiModule {
         citzShip = 3;
         prezShip = 5;
         
-        freqWarpPoints = new HashMap<>();
-        freqPrezs = new HashMap<>();
+        freqWarpPoints = new HashMap<Integer, Point>();
+        freqPrezs = new HashMap<Integer, String>();
         
         isRunning = false;
     }
