@@ -46,8 +46,8 @@ public class prez extends MultiModule {
         registerCommands();
         
         numOfFreqs = 2;
-        citzShip = 3;
-        prezShip = 5;
+        citzShip = 2;
+        prezShip = 4;
         
         freqWarpPoints = new HashMap<Integer, Point>();
         freqPrezs = new HashMap<Integer, String>();
@@ -134,9 +134,16 @@ public class prez extends MultiModule {
         //randomize players and assign to freqs
         createIncrementingTeams();
 
+        //may fail due to not enough ppl for num of freqs, flag
+        boolean error = false;
+        
         //pick random person from each freq and set to prez ship
         for (int i = 0; i < numOfFreqs - 1; i++) {
-            pickPresident(i);
+            if (m_botAction.getFrequencySize(i) != 0) {
+                pickPresident(i);
+            } else {
+                error = true;
+            }
         }
 
         //warp freqs to where they're assigned
@@ -145,10 +152,15 @@ public class prez extends MultiModule {
             m_botAction.warpFreqToLocation(freq, p.x, p.y);
         }
 
-        m_botAction.sendArenaMessage("GOGOGO!!!", 104);
-
-        //set game state to on to start listening to messages
-        isRunning = true;
+        if (!error) {
+            //set game state to on to start listening to messages
+            isRunning = true;
+            m_botAction.sendArenaMessage("GOGOGO!!!", 104);
+        } else {
+            reset();
+            m_botAction.sendPrivateMessage(name, "[!] Not enough players to "
+                    + "support [" + numOfFreqs + "] frequencies.");
+        }
     }
     
     /**
