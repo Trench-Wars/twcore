@@ -133,17 +133,10 @@ public class prez extends MultiModule {
         
         //randomize players and assign to freqs
         createIncrementingTeams();
-
-        //may fail due to not enough ppl for num of freqs, flag
-        boolean error = false;
         
         //pick random person from each freq and set to prez ship
         for (int i = 0; i < numOfFreqs - 1; i++) {
-            if (m_botAction.getFrequencySize(i) != 0) {
-                pickPresident(i);
-            } else {
-                error = true;
-            }
+            pickPresident(i);
         }
 
         //warp freqs to where they're assigned
@@ -152,7 +145,8 @@ public class prez extends MultiModule {
             m_botAction.warpFreqToLocation(freq, p.x, p.y);
         }
 
-        if (!error) {
+        //verify amount of prezs equals amount of freqs
+        if (freqPrezs.keySet().size() == numOfFreqs) {
             //set game state to on to start listening to messages
             isRunning = true;
             m_botAction.sendArenaMessage("GOGOGO!!!", 104);
@@ -466,7 +460,7 @@ public class prez extends MultiModule {
                 + " Freq [" + freq + "].");
         
         Iterator<Player> i = m_botAction.getFreqPlayerIterator(freq);
-        while (i.hasNext()) {
+        while (i != null && i.hasNext()) {
             plist.add(i.next().getPlayerName());
             m_botAction.sendPrivateMessage("SpookedOne", "[DEBUG] Adding Player: "
                     + i.next().getPlayerName());
