@@ -85,6 +85,7 @@ public class HubBot extends SubspaceBot {
         int accessRequired = OperatorList.BOT_LEVEL; 
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage", accessRequired );
         m_commandInterpreter.registerCommand( "!totalbots", acceptedMessages, this, "handleTotalBots", accessRequired );
+        m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess", accessRequired );
 
         // Outsider+
         accessRequired = OperatorList.ER_LEVEL; 
