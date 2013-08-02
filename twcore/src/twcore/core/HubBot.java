@@ -367,6 +367,9 @@ public class HubBot extends SubspaceBot {
         initOperators();
         m_botAction.sendSmartPrivateMessage( messager, "Updating access levels..." );
         m_botAction.sendChatMessage( 1, "Updating access levels at " + messager + "'s request" );
+        String[] cores = m_botAction.getBotSettings().getString("Alt Logins").split(",");
+        for (String c : cores)
+            m_botAction.sendPrivateMessage(c, "!updateacess");
     }
 
     /**
