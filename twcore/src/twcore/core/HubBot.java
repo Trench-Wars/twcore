@@ -28,9 +28,6 @@ public class HubBot extends SubspaceBot {
 	
 	private final static String SOCKET_CHANNEL = "HUB";
 	
-	private String coreName = "TWCore";
-	private String[] altCores = new String[] { "TWCore-Events", "TWCore-League", "TWCore-Pub" };
-	
     private BotQueue            m_botQueue;             // Queue of bots to spawn
     private ThreadGroup         m_kingGroup;            // Thread grouping the
                                                         // hub belongs to
@@ -371,9 +368,9 @@ public class HubBot extends SubspaceBot {
         initOperators();
         m_botAction.sendSmartPrivateMessage( messager, "Updating access levels..." );
         m_botAction.sendChatMessage( 1, "Updating access levels at " + messager + "'s request" );
-        if (m_botAction.getBotName().equals(coreName))
-            for (String c : altCores)
-                m_botAction.sendPrivateMessage(c, "!updateacess");
+        String[] cores = m_botAction.getCoreData().getGeneralSettings().getString("Alt Logins").split(",");
+        for (String c : cores)
+            m_botAction.sendPrivateMessage(c, "!updateaccess");
     }
 
     /**
