@@ -192,7 +192,7 @@ public class zonerbot extends SubspaceBot {
                 else if (msg.toLowerCase().startsWith("!cred"))
                     cmd_credit(name, msg);
             }
-            if (oplist.isOwner(name) || name.equalsIgnoreCase("WillBy")) {
+            if (oplist.isOwner(name)) {
                 if (msg.toLowerCase().startsWith("!zone "))
                     cmd_zone(name, msg);
             }
