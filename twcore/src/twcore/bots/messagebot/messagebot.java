@@ -1466,6 +1466,8 @@ public class messagebot extends SubspaceBot
                         isCapAss = true;
                     }
                 }
+                
+                result.close();
             } catch (SQLException ex) {
                 Logger.getLogger(Channel.class.getName()).log(Level.WARNING, null, ex);
             }
@@ -1489,6 +1491,8 @@ public class messagebot extends SubspaceBot
                     fnTeamID = teamResult.getInt(1);
                 }
                 
+                teamResult.close();
+                
                 if (fnTeamID == -1) {
                     throw new SQLException();
                 }
@@ -1505,6 +1509,8 @@ public class messagebot extends SubspaceBot
                     players.add(userResult.getString(1));
                 }
                 
+                userResult.close();
+                
             } catch (SQLException ex) {
                 Logger.getLogger(Channel.class.getName()).log(Level.WARNING, null, ex);
             }
@@ -1516,8 +1522,31 @@ public class messagebot extends SubspaceBot
             if (isCaptainOrAssistant(name)) {
                 List<String> players = getSquadPlayers(name);
                 if (!players.isEmpty()) {
-                    for (String p : players) {
-                        leaveMessage(name, p +  ":" + message);
+                    for (String player : players) {
+                        try {
+                            m_botAction.SQLClose(m_botAction.SQLQuery(database, 
+                                    "INSERT INTO tblMessageSystem (fnID, fcName"
+                                    + ", fcMessage, fcSender, fnRead, fdTimeStamp)"
+                                    + " VALUES(0, '"+Tools.addSlashesToString(player)
+                                    +"', '"+Tools.addSlashesToString(message)+
+                                    "', '"+Tools.addSlashesToString(name)+
+                                    "', 0, NOW())"));
+                            
+                            checkPlayerOnline(player);
+                            
+                            if(playersOnline.contains(player)) {
+                                m_botAction.sendSmartPrivateMessage(name, "You "
+                                        + "have a new message, type :MessageBot"
+                                        + ":!read to check");
+                            } else {
+                                m_botAction.sendUnfilteredPublicMacro("?message"
+                                        + " " + player + ":You have a new messa"
+                                        + "ge, type :MessageBot:!read to check");
+                            }
+                        } catch (SQLException ex) {
+                            Logger.getLogger(Channel.class.getName()).log(
+                                    Level.WARNING, null, ex);
+                        }
                     }
                     m_botAction.sendSmartPrivateMessage(name, "Message sent to " + 
                             players.size() + " members on your squad.");
