@@ -1538,11 +1538,7 @@ public class messagebot extends SubspaceBot
                                 m_botAction.sendSmartPrivateMessage(name, "You "
                                         + "have a new message, type :MessageBot"
                                         + ":!read to check");
-                            } else {
-                                m_botAction.sendUnfilteredPublicMacro("?message"
-                                        + " " + player + ":You have a new messa"
-                                        + "ge, type :MessageBot:!read to check");
-                            }
+                            } 
                         } catch (SQLException ex) {
                             Logger.getLogger(Channel.class.getName()).log(
                                     Level.WARNING, null, ex);
