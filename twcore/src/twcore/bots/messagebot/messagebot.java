@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.TimerTask;
 import java.util.Date;
 import java.text.SimpleDateFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
@@ -192,6 +194,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!unignore",	 acceptedMessages, this, "unignorePlayer");
         m_CI.registerCommand( "!ignored",	 acceptedMessages, this, "whoIsIgnored");
         m_CI.registerCommand( "!lmessage",	 acceptedMessages, this, "leaveMessage");
+        m_CI.registerCommand("!smessage",        acceptedMessages, this, "squadMessage");
         m_CI.registerCommand( "!regall",	 acceptedMessages, this, "registerAll");
         m_CI.registerCommand( "!memberof",   acceptedMessages, this, "memberOfChannels");
 
@@ -795,6 +798,7 @@ public class messagebot extends SubspaceBot
             m_botAction.sendSmartPrivateMessage(name, "    !delete read                  - Deletes messages already read.");
             m_botAction.sendSmartPrivateMessage(name, "    !delete all                   - Deletes all messages.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !lmessage <name>:<message>    - Leaves <message> for <name>.");
+                m_botAction.sendSmartPrivateMessage(name, "    !smessage <message>    - Leaves <message> for everyone on squad. (Ass/Cap Only)");
 	    } else if(message.toLowerCase().startsWith("c")) {
 	        m_botAction.sendSmartPrivateMessage(name, "    !me                           - Tells you what channels you have joined.");
 	        if(m_botAction.getOperatorList().isBot(name)) m_botAction.sendSmartPrivateMessage(name, "    !memberof <name>              - Lists all the channels on which <name> is a member.");
@@ -1440,6 +1444,90 @@ public class messagebot extends SubspaceBot
      	return false;
      }
 
+     private boolean isCaptainOrAssistant(String name) {
+            boolean isCapAss = false;
+            String query = "SELECT fnRankID\n" +
+                "FROM tblUserRank\n" +
+                "WHERE fnUserID\n" +
+                "IN (\n" +
+                "\n" +
+                "SELECT tu.fnUserID\n" +
+                "FROM tblTeamUser AS tu\n" +
+                "JOIN tblUser AS u ON tu.fnUserID = u.fnUserID\n" +
+                "WHERE fcUserName = \"" + name + "\"\n" +
+                "AND fnCurrentTeam =1\n" +
+                ")";
+            
+            try {
+                ResultSet result = m_botAction.SQLQuery(database, query);
+                while (result.next()) {
+                    int rank = result.getInt(0);
+                    if (rank == 3 || rank == 4) {
+                        isCapAss = true;
+                    }
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(Channel.class.getName()).log(Level.WARNING, null, ex);
+            }
+            
+            return isCapAss;
+        }
+        
+        private List<String> getSquadPlayers(String name) {
+            List<String> players = new ArrayList<String>();
+            
+            try {
+                String selectTeamID = " SELECT fnTeamID\n" +
+                "FROM tblTeamUser AS tu\n" +
+                "JOIN tblUser AS u ON tu.fnUserID = u.fnUserID\n" +
+                "WHERE fcUserName = \"" + name + "\"\n" +
+                "AND fnCurrentTeam =1";
+                
+                ResultSet teamResult = m_botAction.SQLQuery(database, selectTeamID);
+                int fnTeamID = -1;
+                if (teamResult.next()) {
+                    fnTeamID = teamResult.getInt(0);
+                }
+                
+                if (fnTeamID == -1) {
+                    throw new SQLException();
+                }
+                
+                String selectUsernames = "SELECT u.fcUserName\n" +
+                    "FROM tblTeamUser AS tu\n" +
+                    "JOIN tblUser AS u ON tu.fnUserID = u.fnUserID\n" +
+                    "WHERE fnTeamID =" +  fnTeamID + "\n" +
+                    "AND fnCurrentTeam = 1";
+                
+                ResultSet userResult = m_botAction.SQLQuery(database, selectUsernames);
+                
+                while (userResult.next()) {
+                    players.add(userResult.getString(0));
+                }
+                
+            } catch (SQLException ex) {
+                Logger.getLogger(Channel.class.getName()).log(Level.WARNING, null, ex);
+            }
+            
+            return players;
+        }
+        
+        public void squadMessage(String name, String message) {
+            if (isCaptainOrAssistant(name)) {
+                List<String> players = getSquadPlayers(name);
+                if (!players.isEmpty()) {
+                    for (String p : players) {
+                        leaveMessage(name, p +  ":" + message);
+                    }
+                    m_botAction.sendSmartPrivateMessage(name, "Message sent to " + 
+                            players.size() + " members on your squad.");
+                }
+            } else {
+                m_botAction.sendSmartPrivateMessage(name, "You must be an "
+                        + "assistant or captain of your squad to use this command.");
+            }
+        }
+     
      public void leaveMessage(String name, String message) {
      	if(message.indexOf(":") == -1) {
      		m_botAction.sendSmartPrivateMessage(name, "Correct usage: !lmessage <name>:<message>");
@@ -1970,7 +2058,7 @@ class Channel
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 		  catch(NullPointerException npe) { System.out.println("Silly debugging...."); }
 	}
-
+        
 	/** Leaves a message from for a player in the database.
 	 *  @param Name of player leaving the message.
 	 *  @param Name of player recieving the message.
