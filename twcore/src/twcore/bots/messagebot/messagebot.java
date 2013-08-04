@@ -1461,7 +1461,7 @@ public class messagebot extends SubspaceBot
             try {
                 ResultSet result = m_botAction.SQLQuery(database, query);
                 while (result.next()) {
-                    int rank = result.getInt(0);
+                    int rank = result.getInt(1);
                     if (rank == 3 || rank == 4) {
                         isCapAss = true;
                     }
@@ -1486,7 +1486,7 @@ public class messagebot extends SubspaceBot
                 ResultSet teamResult = m_botAction.SQLQuery(database, selectTeamID);
                 int fnTeamID = -1;
                 if (teamResult.next()) {
-                    fnTeamID = teamResult.getInt(0);
+                    fnTeamID = teamResult.getInt(1);
                 }
                 
                 if (fnTeamID == -1) {
@@ -1502,7 +1502,7 @@ public class messagebot extends SubspaceBot
                 ResultSet userResult = m_botAction.SQLQuery(database, selectUsernames);
                 
                 while (userResult.next()) {
-                    players.add(userResult.getString(0));
+                    players.add(userResult.getString(1));
                 }
                 
             } catch (SQLException ex) {
