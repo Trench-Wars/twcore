@@ -267,7 +267,7 @@ public class zonerbot extends SubspaceBot {
         String[] msg = { ",-- ZonerBot Commands --------------------------------------------------------------------------.",
                 "| !hosted                - Lists the hosted event counts for last 24 hours                      |",
                 "| !hosted <hours>        - Lists the hosted event counts for last <hours> hours                 |",
-                "| !hosted yyyy-MM        -  Lists the hosted event counts for the specified month                 |",
+                "| !hosted MM-yyyy         -  Lists the hosted event counts for the specified month                 |",
                 "| !status                - Reports your current advert status                                   |",
                 "| !claim                 - Claims an advert by adding you to the advert queue                   |",
                 "| !free                  - Releases your advert and removes you from the queue                  |",
@@ -485,14 +485,14 @@ public class zonerbot extends SubspaceBot {
                 String enddate = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
 
                 if ((cmdSplit[0].length() > 0 && cmdSplit[1].length() > 0) && Integer.valueOf(cmdSplit[0]) != null && Integer.valueOf(cmdSplit[1]) != null){
-                    int mnth = Integer.parseInt(cmdSplit[0]);
-                    int yr = Integer.parseInt(cmdSplit[1]);                     
+                    int mnth = Integer.valueOf(cmdSplit[0]);
+                    int yr = Integer.valueOf(cmdSplit[1]);                     
                     Calendar tmp = Calendar.getInstance();
-                    tmp.set(yr, mnth, 1, 00, 00, 00);
+                    tmp.set(yr, mnth, 01, 00, 00, 00);
                     date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
                     tmp.set(yr, mnth + 1, 01, 00,00,00);
                     enddate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
-                        ba.SQLBackgroundQuery(db, "" + name + ":00", "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN " + date + " AND " + enddate + " ORDER BY fdTime");                     
+                        ba.SQLBackgroundQuery(db, "" + name + ":00", "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN '" + date + "' AND '" + enddate + "' ORDER BY fdTime");                     
                 }
             } else {
                 if (Integer.valueOf(message) != null) {
