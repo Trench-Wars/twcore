@@ -483,23 +483,16 @@ public class zonerbot extends SubspaceBot {
                 String[] cmdSplit = message.split("-");
                 String date = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
                 String enddate = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
-                Calendar thisTime = Calendar.getInstance();
-                java.util.Date day = thisTime.getTime();
-                String year = new SimpleDateFormat("yyyy").format(day);
 
-                if (cmdSplit[0].length() > 0 && cmdSplit[1].length() > 0) {
+                if ((cmdSplit[0].length() > 0 && cmdSplit[1].length() > 0) && Integer.valueOf(cmdSplit[0]) != null && Integer.valueOf(cmdSplit[1]) != null){
                     int mnth = Integer.parseInt(cmdSplit[0]);
-                    int yr = Integer.parseInt(cmdSplit[1]);
-                     
-                  if ((Integer.valueOf(cmdSplit[0]) >= 1 && Integer.valueOf(cmdSplit[0]) <= 12) && 
-                     (Integer.valueOf(cmdSplit[1]) >= 1996 && Integer.valueOf(cmdSplit[1]) <= Integer.valueOf(year))) {                      
-                        Calendar tmp = Calendar.getInstance();
-                        tmp.set(yr, mnth, 1, 00, 00, 00);
-                        date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
-                        tmp.set(yr, mnth + 1, 01, 00,00,00);
-                        enddate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
-                        ba.SQLBackgroundQuery(db, "" + name + ":" + date, "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN " + date + " AND " + enddate + " ORDER BY fdTime"); 
-                     }
+                    int yr = Integer.parseInt(cmdSplit[1]);                     
+                    Calendar tmp = Calendar.getInstance();
+                    tmp.set(yr, mnth, 1, 00, 00, 00);
+                    date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
+                    tmp.set(yr, mnth + 1, 01, 00,00,00);
+                    enddate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
+                        ba.SQLBackgroundQuery(db, "" + name + ":00", "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN " + date + " AND " + enddate + " ORDER BY fdTime");                     
                 }
             } else {
                 if (Integer.valueOf(message) != null) {
