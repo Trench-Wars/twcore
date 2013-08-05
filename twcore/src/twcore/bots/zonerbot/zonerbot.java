@@ -493,7 +493,7 @@ public class zonerbot extends SubspaceBot {
                     tmp.clear();
                     tmp.set(yr, mnth, 01, 00,00,00);
                     enddate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
-                        ba.SQLBackgroundQuery(db, "" + name + ":00", "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN '" + date + "' AND '" + enddate + "' ORDER BY fdTime");                     
+                        ba.SQLBackgroundQuery(db, "" + name + ":00", "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN '" + date + "' AND '" + enddate + "' ORDER BY fcEventName ASC");                     
                 }
             } else {
                 if (Integer.valueOf(message) != null) {
