@@ -488,12 +488,12 @@ public class zonerbot extends SubspaceBot {
                     int mnth = Integer.valueOf(cmdSplit[0]);
                     int yr = Integer.valueOf(cmdSplit[1]);                     
                     Calendar tmp = Calendar.getInstance();
-                    tmp.set(yr, mnth, 01, 00, 00, 00);
+                    tmp.set(yr, mnth - 1, 01, 00, 00, 00);
                     date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
                     tmp.clear();
-                    tmp.set(yr, mnth + 1, 01, 00,00,00);
+                    tmp.set(yr, mnth, 01, 00,00,00);
                     enddate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
-                        m_botAction.sendSmartPrivateMessage(name, "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN '" + date + "' AND '" + enddate + "' ORDER BY fdTime");                     
+                        ba.SQLBackgroundQuery(db, "" + name + ":00", "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN '" + date + "' AND '" + enddate + "' ORDER BY fdTime");                     
                 }
             } else {
                 if (Integer.valueOf(message) != null) {
