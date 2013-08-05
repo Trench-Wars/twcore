@@ -220,6 +220,7 @@ public class zonerbot extends SubspaceBot {
             }
             ba.SQLClose(rs);
             if (events.size() > 0) {
+                ba.sendSmartPrivateMessage(name, "Events hosted:");
                 for (int i = 0; i < events.size(); i++)
                     ba.sendSmartPrivateMessage(name, " " + padString(events.getKey(i), 15) + " " + events.get(i));
             } else
@@ -266,6 +267,7 @@ public class zonerbot extends SubspaceBot {
         String[] msg = { ",-- ZonerBot Commands --------------------------------------------------------------------------.",
                 "| !hosted                - Lists the hosted event counts for last 24 hours                      |",
                 "| !hosted <hours>        - Lists the hosted event counts for last <hours> hours                 |",
+                "| !hosted yyyy-MM        -  Lists the hosted event counts for the specified month                 |",
                 "| !status                - Reports your current advert status                                   |",
                 "| !claim                 - Claims an advert by adding you to the advert queue                   |",
                 "| !free                  - Releases your advert and removes you from the queue                  |",
