@@ -205,7 +205,6 @@ public class zonerbot extends SubspaceBot {
         String[] args = event.getIdentifier().split(":");
         if (args.length == 2) {
             String name = args[0];
-            String hours = args[1];
             Vectoid<String, Integer> events = new Vectoid<String, Integer>();
             ResultSet rs = event.getResultSet();
             try {
@@ -221,11 +220,10 @@ public class zonerbot extends SubspaceBot {
             }
             ba.SQLClose(rs);
             if (events.size() > 0) {
-                ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: ");
                 for (int i = 0; i < events.size(); i++)
                     ba.sendSmartPrivateMessage(name, " " + padString(events.getKey(i), 15) + " " + events.get(i));
             } else
-                ba.sendSmartPrivateMessage(name, "Events hosted in the last " + hours + " hours: none");
+                ba.sendSmartPrivateMessage(name, "No Results Avaliable");
         } else if (args.length == 1) {
             String name = args[0];
             boolean total = false;
@@ -476,19 +474,49 @@ public class zonerbot extends SubspaceBot {
 
     /** Handles the !hosted command **/
     private void cmd_hosted(String name, String cmd) {
-        int hours = 24;
-        try {
-            if (cmd.length() > 7) {
-                hours = Integer.valueOf(cmd.substring(8).trim());
-                if (hours < 1 || hours > 48)
-                    hours = 24;
+        if (cmd.length() > 7) {
+            String message = cmd.substring(8).trim();
+            
+            if (message.contains("-")) {
+                String[] cmdSplit = message.split("-");
+                String date = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
+                String enddate = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
+                Calendar thisTime = Calendar.getInstance();
+                java.util.Date day = thisTime.getTime();
+                String year = new SimpleDateFormat("yyyy").format(day);
+
+                if (cmdSplit[0].length() > 0 && cmdSplit[1].length() > 0) {
+                    int mnth = Integer.parseInt(cmdSplit[0]);
+                    int yr = Integer.parseInt(cmdSplit[1]);
+                     
+                  if ((Integer.valueOf(cmdSplit[0]) >= 1 && Integer.valueOf(cmdSplit[0]) <= 12) && 
+                     (Integer.valueOf(cmdSplit[1]) >= 1996 && Integer.valueOf(cmdSplit[1]) <= Integer.valueOf(year))) {                      
+                        Calendar tmp = Calendar.getInstance();
+                        tmp.set(yr, mnth, 1, 00, 00, 00);
+                        date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
+                        tmp.set(yr, mnth + 1, 01, 00,00,00);
+                        enddate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
+                        ba.SQLBackgroundQuery(db, "" + name + ":" + date, "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN '" + date + "' AND '" + enddate + "' ORDER BY fdTime"); 
+                     }
+                }
+            } else {
+                if (Integer.valueOf(message) != null) {
+                    int hours = 24;
+                    try {
+                            if (hours < 1 || hours > 48)
+                                hours = 24;                        
+                    } catch (NumberFormatException e) {
+                        hours = 24;
+                    }
+                    ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT * FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours
+                            + " HOUR) ORDER BY fdTime DESC LIMIT " + (hours * 6));                    
+                }                    
             }
-        } catch (NumberFormatException e) {
-            hours = 24;
         }
-        ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT * FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours
-                + " HOUR) ORDER BY fdTime DESC LIMIT " + (hours * 6));
     }
+
+    
+
 
     /** Handles the !grants <name> and !grants <name>:yyyy-MM commands **/
     private void cmd_grants(String name, String cmd) {
