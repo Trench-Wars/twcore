@@ -497,7 +497,7 @@ public class zonerbot extends SubspaceBot {
                 }
             } else {
                 if (Integer.valueOf(message) != null) {
-                    int hours = 24;
+                    int hours = Integer.valueOf(message);
                     try {
                             if (hours < 1 || hours > 48)
                                 hours = 24;                        
