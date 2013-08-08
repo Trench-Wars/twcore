@@ -672,8 +672,15 @@ public class elim extends SubspaceBot {
                 if (high > 0) {
                     int num = random.nextInt(wins.size());
                     ship = wins.toArray(new Integer[wins.size()])[num];
-                } else
-                    ship = random.nextInt(2) + 1;
+                } else {
+                    //defaulting to alternating game types
+                    if (shipType == ShipType.JAVELIN)
+                        ship = 1;
+                    else if (shipType == ShipType.WARBIRD)
+                        ship = 2;
+                    else
+                        ship = random.nextInt(2) + 1;  
+                }
             } else
                 ship = wins.first();
             // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
@@ -718,6 +725,7 @@ public class elim extends SubspaceBot {
                     int num = random.nextInt(wins.size());
                     this.goal = wins.toArray(new Integer[wins.size()])[num];
                 } else {
+                    /* going to default to 5 deaths instead of randomizing it
                     int r = random.nextInt(3);
                     if (r > 1)
                         this.goal = random.nextInt(rules.getInt("MaxDeaths") + 20) + 1;
@@ -726,6 +734,8 @@ public class elim extends SubspaceBot {
 
                     if (this.goal > 10 && this.goal < 16)
                         this.goal += 5;
+                    */
+                    this.goal = 5;
                 }
             } else
                 this.goal = wins.iterator().next();
