@@ -140,7 +140,9 @@ public class ElimPlayer {
     public void handlePosition(PlayerPosition event) {
         if (getLastDeath() < SPAWN_TIME || !isPlaying()) return; 
         int y = event.getYLocation();
+        // not applicable for FR game (weasel)
         if (ship != 6) { 
+            // is y coord above the boundary?
             if (y < BOUNDARY) {
                 // inside base
                 if (game.getState() == GameState.PLAYING) { 
@@ -448,6 +450,7 @@ public class ElimPlayer {
         
         public void returned() {
             bounds = null;
+            ba.sendPrivateMessage(name, "Thank you for returning to base!");
             ba.cancelTask(this);
         }
     }
