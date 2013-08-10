@@ -42,6 +42,8 @@ public class twpoll extends SubspaceBot {
 
 	public static final String DB_NAME = "website";
 
+    private static final String poll = null;
+
 	public TreeMap<Integer,Poll> polls;
 	public TreeMap<Integer,Updates> updates;
 	public TreeMap<Integer,TreeSet<Integer>> votes;
@@ -182,6 +184,10 @@ public class twpoll extends SubspaceBot {
                 cmd_home(name);
             } else if (message.startsWith("!back")) {
                 cmd_back(name);
+            } else if (message.startsWith("!about")) {
+                cmd_about(name);
+            } else if (message.startsWith("!vote ") && message.substring(6) != null) {
+                cmd_vote(name, message.substring(6));
             }
            
            if (m_botAction.getOperatorList().isER(name)) {
@@ -192,8 +198,12 @@ public class twpoll extends SubspaceBot {
         }
     }
     
+    public void cmd_about(String name) {
+        m_botAction.sendSmartPrivateMessage(name, "Bot made by K A N E. Command under construction");
+    }
     
     public void cmd_ignore(String name) {
+        m_botAction.sendSmartPrivateMessage(name, "command under construction");
         //TODO TO DO THIS LATER
         
        /* if (ignore.contains(name)) {
@@ -219,7 +229,12 @@ public class twpoll extends SubspaceBot {
     public void cmd_view(String name, String message) {
         PlayerData p = playerdata.get(getUserID(name));
         int[] window = p.getWindow();
-        int entryID = Integer.parseInt(message);
+        int entryID = -1;
+                
+        if (Tools.isAllDigits(message))
+            entryID = Integer.parseInt(message);
+        else 
+            return;
         
         if ((window[0] == 1 || window[0] == 2) && polls.containsKey(entryID)) {
             showPoll(name, entryID);
@@ -230,6 +245,17 @@ public class twpoll extends SubspaceBot {
     }
     
     public void cmd_com(String name, String message) {
+        PlayerData p = playerdata.get(getUserID(name));
+        int[] window = p.getWindow();
+        String comment = message;
+        
+        if ((window[0] == 3) && polls.containsKey(window[1])) {
+            p.setComments(window[1], comment, 1);
+            showPoll(name, window[1]);
+        } else if ((window[0] == 7) && updates.containsKey(window[1])) {
+            p.setComments(window[1], comment, 2);
+            showUpdate(name, window[1]);
+        } 
     }
     
     public void cmd_home(String name) {
@@ -267,13 +293,30 @@ public class twpoll extends SubspaceBot {
                  break;
         }        
     }
+    
+    private void cmd_vote(String name, String message) {
+        int vote = -1;
+        PlayerData p = playerdata.get(getUserID(name));
+        int[] window = p.getWindow();
+        
+        if (window[0] != 3 && window [0] != 7)
+            return;
+        
+        if (Tools.isAllDigits(message))
+            vote = Integer.parseInt(message);
+        else 
+            return;
+        
+        vote(window[1], name, vote);
+    }
+    
 
     private void loadPolls() {
         try {
             ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
                 "SELECT fnPollID, fcQuestion, fbMultiSelect, fdBegin, fdEnd, fdCreated, fnUserPosterID, fcUserName, fnPollOptionID, fcOption, fnOrder " +
-                "FROM tblPoll p " +
-                "JOIN tblPollOptions po USING (fnPollID) " +
+                "FROM tblPoll__Poll p " +
+                "JOIN tblPoll__PollOptions po USING (fnPollID) " +
                 "JOIN tblUser u ON p.fnUserPosterID = u.fnUserID " +
                 "WHERE NOW() BETWEEN fdBegin AND fdEnd " +
                 "ORDER BY fnPollID,fnOrder"
@@ -311,8 +354,8 @@ public class twpoll extends SubspaceBot {
             pollList = pollList.substring(1);
             try {
                 ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
-                    "SELECT fnPollID, fnUserID,fnPollOptionID, fcComment " +
-                    "FROM tblPollVote " +
+                    "SELECT fnPollID, fnUserID,fnPollOptionID " +
+                    "FROM tblPoll__PollVote " +
                     "WHERE fnPollID IN (" + pollList + ")"
                 );
 
@@ -320,11 +363,10 @@ public class twpoll extends SubspaceBot {
                     int userID = rs.getInt("fnUserID");
                     int pollID =  rs.getInt("fnPollID");
                     int optionID = rs.getInt("fnPollOptionID");
-                    String comments = rs.getString("fcComment");
                     Poll poll = polls.get(pollID);
                     
                     if (poll != null && !poll.pvotes.containsKey(userID)) {
-                        poll.addVote(userID, optionID, comments);
+                        poll.addVote(userID, optionID);
                     }
                 }
                 rs.close();
@@ -339,7 +381,7 @@ public class twpoll extends SubspaceBot {
         try {
             ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
                 "SELECT * " +
-                "FROM tblUpdates p " +
+                "FROM tblPoll__Updates p " +
                 "JOIN tblUser u ON p.fnPosterID = u.fnUserID " +
                 "WHERE NOW() BETWEEN fdBegin AND fdEnd " +
                 "ORDER BY fnUpdateID"
@@ -468,34 +510,44 @@ public class twpoll extends SubspaceBot {
 
     private void showPoll(String playerName, int pollId) {
 
+        
+        PlayerData p = playerdata.get(getUserID(playerName));
+        
+        if (p != null) 
+        p.setWindow(3, pollId);
+        
        	if (polls.isEmpty()) {
     		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at the moment.");
-    	}
-    	else {
+    	} else {
 
-    		ArrayList<String> spam = new ArrayList();
-
-        	int userId = getUserID(playerName);
-        	Poll poll = polls.get(pollId);
-        	if (poll == null) {
-        		spam.add("Poll not found.");
-        	} else if (votes.containsKey(pollId) && votes.get(pollId).contains(userId)) {
-        		spam.add("You have already voted.");
-        	} else {
-    			openPolls.put(userId, poll.id);
-    			spam.add("(#" + poll.id + ") " + poll.question);
-    			int i=0;
-    			for(PollOption option: poll.options) {
-    				String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
-    				spam.add(pad + (++i) + ". " + option.option);
-    			}
-    			spam.add(" ");
-    			spam.add("HELP: To vote, pm me your choice. You can follow up your choice with a comment by typing <choice>:<comment>");
-        	}
-
-        	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
+        ArrayList<String> spam = new ArrayList<String>();
+        int userId = getUserID(playerName);
+        Poll poll = polls.get(pollId);
+                if (poll.pvotes.containsKey(userId))
+                    spam.add("[Poll #" + pollId + "]" + " Your Vote: " + poll.pvotes.get(userId).getOptionID());
+                else
+                    spam.add("[Poll #" + pollId + "]");
+                spam.add("(" + poll.id + ") " + poll.question);
+                int i=0;
+                for(PollOption option: poll.options) {
+                    String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
+                    spam.add(pad + (++i) + ". " + option.option);
+                }
+                spam.add(" ");                
+                
+                if (p.isCommented(pollId,1)) {
+                    spam.add("Your comments: " + p.getComment(pollId, 1));
+                    spam.add(" ");
+                    spam.add("To REPLACE a comment, use !com <your new comment>. To SELECT VOTE OPTION, use !vote <num>");
+                } else {
+                    spam.add(" ");
+                    spam.add("To COMMENT on this, use !com <your comment>. To SELECT VOTE OPTION, use !vote <num>");
+                }
+                    spam.add("To RETURN HOME, use !home. To go BACK a menu, use !back");                                
+                    m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
     	}
     }
+    
 
     private void showNextPoll(String playerName) {
 
@@ -532,44 +584,61 @@ public class twpoll extends SubspaceBot {
 
     }
 
-    private void showPollsMain(String name, Boolean unread) {
-
+    private void showPollsMain(String name, Boolean showNew) {
+        ArrayList<String> intro = new ArrayList<String>();
+        ArrayList<String> spam = new ArrayList<String>();
+        
+        PlayerData p = playerdata.get(getUserID(name));
+        
+        if (p != null) {
+            p.setWindow(2, 0);
+        
     	if (polls.isEmpty()) {
     		m_botAction.sendSmartPrivateMessage(name, "There is no poll at the moment.");
     	} else {
-    		ArrayList<String> intro = new ArrayList();
-    		ArrayList<String> spam = new ArrayList();
-
-    		intro.add("[Polls]");
-
-        	int userId = getUserID(name);
-
-        	for(int pollId: polls.keySet()) {
-        		Poll poll = polls.get(pollId);
-        		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
-        			spam.add("(#" + poll.id + ") " + poll.question);
-        			int i=0;
-        			/*for(PollOption option: poll.options) {
-        				String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
-        				spam.add(pad + (++i) + ". " + option.option);
-        			}*/
-        			spam.add(" ");
-
-        		}
-        	}
-        		spam.add("To SELECT a poll, pm !poll <number>.");
-        		spam.add("To VOTE or COMMENT, select a poll with !poll <number> then pm me again with your <choice>:<comments>");
-        	} else {
-        		intro.clear();
-        		spam.add("There is no poll for you at the moment.");
-        	}
-
+    	     if (showNew) {
+                 intro.add("[New Polls]");
+                 int userId = getUserID(name);
+                 for(int pollId: polls.keySet()) {
+                     Poll poll = polls.get(pollId);
+                 if (!p.oldPolls.contains(pollId)) {                
+                     spam.add("(" + poll.id + ") " + poll.question);
+                     p.addEntry(pollId, 1, "none");
+                 }
+             }                 
+                 if (spam.isEmpty()) {
+                     intro.clear();
+                     showPollsMain(name,false);
+                     return;
+                 }
+            spam.add(" ");
+            if (!p.oldPolls.isEmpty())
+                spam.add("[" + p.oldPolls.size() + " Polls(s) not shown]");
+            spam.add(" ");
+            spam.add("to VOTE or COMMENT on a poll, select it. To SELECT an poll, use !view <number>.");
+            spam.add("To VIEW ALL polls, use !viewall. To RETURN home, use !home");        	
         	intro.addAll(spam);
-
-        	m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
+        	m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));    	    
+        } else {
+                 intro.add("[All polls]");
+                 
+                 for(int pollId: polls.keySet()) {
+                     Poll poll = polls.get(pollId);
+                     spam.add("(" + poll.id + ") " + poll.question);
+                 }
+                 spam.add(" ");
+                 spam.add("to VOTE or COMMENT on a poll, select it. To SELECT an poll, use !view <number>.");
+                 spam.add("To RETURN home, use !home");
+                 intro.addAll(spam);                
+                 m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
+             }
     	}
-
+    	} else {
+            playerdata.put(getUserID(name), new PlayerData(getUserID(name), name));
+            showPollsMain(name, true);
+            }
     }
+
 
     private void showUpdatesMain(String name, Boolean showNew) {
         ArrayList<String> intro = new ArrayList();
@@ -628,7 +697,7 @@ public class twpoll extends SubspaceBot {
     
     private void showUpdate(String name, int updateID) {
         PlayerData p = playerdata.get(getUserID(name));
-        p.setWindow(6, updateID);
+        p.setWindow(7, updateID);
         ArrayList<String> spam = new ArrayList();
         
                 spam.add("[Update #" + updateID + "]");
@@ -647,12 +716,9 @@ public class twpoll extends SubspaceBot {
                     m_botAction.smartPrivateMessageSpam(name, spam.toArray(new String[spam.size()]));
     }
 
-    private boolean vote(int pollID, String playerName, int optionID, String comment) {
+    private boolean vote(int pollID, String playerName, int optionID) {
 
     	int userID = getUserID(playerName);
-    	if (userID == 0 || hasVotedAlready(pollID, userID)) {
-    		return false;
-    	}
 
     	PollOption pollOption = null;
 
@@ -661,18 +727,21 @@ public class twpoll extends SubspaceBot {
     		pollOption = poll.options.get(optionID-1);
     	} catch(Exception e) { return false; }
 
-    	try {
-			m_botAction.SQLQueryAndClose(DB_NAME, "" +
-				"INSERT INTO tblPollVote " +
-				"VALUES (null, "+pollID+","+pollOption.id+","+userID+",'"+Tools.addSlashesToString(comment)+ "', NOW())"
-			);
-
-			// If no duplicate found, we can proceed, else SQLException
-			lastPolls.put(userID, pollID);
-			//m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted (!undo to undo).");
+        	try {
+        	    if (hasVotedAlready(pollID, userID)) {
+        	        m_botAction.SQLQueryAndClose(DB_NAME, "" +
+        	                "UPDATE tblPoll__PollVote " +
+        	                "SET fnPollOptionID  = '" + optionID + "' " +
+        	                "WHERE fnUserID = '" + userID + "' "  +
+        	                "AND fnPollID = '" + pollID + "'"
+        	            );
+        	    } else {
+    			m_botAction.SQLQueryAndClose(DB_NAME, "" +
+    				"INSERT INTO tblPoll__PollVote " +
+    				"VALUES (null, "+pollID+","+pollOption.id+","+userID+", NOW())"
+    			);
+    	    }
 			m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted.");
-			m_botAction.sendSmartPrivateMessage(playerName, "Type !next to answer another poll.");
-
 		} catch (SQLException e) {
 
 		}
@@ -684,13 +753,14 @@ public class twpoll extends SubspaceBot {
             
             Poll poll = polls.get(pollID);
             
-            if (poll != null && !poll.pvotes.containsKey(userID)) {
-                poll.addVote(userID, optionID, comment);
+            if (poll != null) {
+                poll.addVote(userID, optionID);
             }
             
 		users.add(userID);
 		votes.put(pollID, users);
 		openPolls.remove(userID);
+		showPoll(playerName, pollID);
 		return true;
 
     }
@@ -807,8 +877,8 @@ public class twpoll extends SubspaceBot {
     	    options = new ArrayList<PollOption>();
     	}
     	
-        public void addVote(int userID, int optionID, String comment) {
-                pvotes.put(userID, new PlayerVotes(userID,optionID, comment));
+        public void addVote(int userID, int optionID) {
+                pvotes.put(userID, new PlayerVotes(userID,optionID));
         }
         
         public void addOption(int pollOptionID, String Option) {
@@ -819,12 +889,10 @@ public class twpoll extends SubspaceBot {
     	 public class PlayerVotes {
     	        int userID;
                 int optionID;
-                String comment;
     	        
-    	        public PlayerVotes(int userID, int optionID, String comment) {
+    	        public PlayerVotes(int userID, int optionID) {
     	            this.userID = userID;
     	            this.optionID = optionID;
-    	            this.comment = comment;
     	        }
     	        
     	        public int getUserID() {
@@ -834,10 +902,6 @@ public class twpoll extends SubspaceBot {
     	        public int getOptionID() {
                     return this.optionID;
                 }
-                
-                public String getComment() { 
-                    return this.comment;
-                }    	        
     	    }
     	
     }
@@ -870,7 +934,7 @@ public class twpoll extends SubspaceBot {
              this.userName = name;
             setPlayerEntryData();
             sendMessage();
-      //      setComments();
+           // setComments();
             
         }
         
@@ -919,7 +983,7 @@ public class twpoll extends SubspaceBot {
                     // First, filter with UserAccount to avoid double (it happens)
                     ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
                         "SELECT * " +
-                        "FROM tblEntry  " +
+                        "FROM tblPoll__Entry  " +
                         "WHERE fnUserID = " + userID + 
                         " AND fnEntryID IN (" + pollList + ")"
                     );
@@ -948,15 +1012,13 @@ public class twpoll extends SubspaceBot {
         }
         
         public void setComments(int ID, String comment, int type) {
-         /*   if (poll && pollComments.containsKey(ID)) {
-                
-            } else if (poll && !pollComments.containsKey(ID)) {
-                
-            } else if (!poll && updateComments.containsKey(ID)) {
-                
-            } else if (!poll && !updateComments.containsKey(ID)) {
-                
-            }*/            
+            try {
+                m_botAction.SQLQueryAndClose(DB_NAME, "UPDATE tblPoll__Entry SET fcComment = '"+Tools.addSlashesToString(comment)+"' WHERE fnUserID  = '" + userID +"' AND fnType = '" + type +"'");
+                if (type == 1)
+                    pollComments.put(ID,  comment);
+                else 
+                    updateComments.put(ID,  comment);
+} catch(Exception e) { Tools.printStackTrace( e );}   
         }
         
         public Boolean isCommented(int ID, int type) {
@@ -969,18 +1031,22 @@ public class twpoll extends SubspaceBot {
         }
         
         public String getComment(int ID, int type) {
-            if (type == 1 && pollComments.containsKey(ID))
-                return pollComments.get(ID);
-            if (type == 2 && updateComments.containsKey(ID))
-                return updateComments.get(ID);
+            if (type == 1) {
+               for(String comment : pollComments.values())
+                   return comment;
+            }
+            if (type == 2) {
+                for(String comment : updateComments.values())
+                    return comment;
+            }
             
-            return null;
+            return " ";
         }
         
         public void addEntry(int ID, int type, String comment) {
             try {
                 m_botAction.SQLQueryAndClose(DB_NAME, "" +
-                    "INSERT INTO tblentry " +
+                    "INSERT INTO tblPoll__Entry " +
                     "VALUES (null, "+type+","+ID+","+this.userID+",'"+Tools.addSlashesToString(comment)+ "',1 , NOW())"
                 );
                 if(type == 1) 
