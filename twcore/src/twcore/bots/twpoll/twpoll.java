@@ -960,19 +960,15 @@ public class twpoll extends SubspaceBot {
                      
                     
                     if (newPolls != 0 && newUpdates != 0) {
-                        message1 = message1 + newPolls + " Poll(s) and " + newUpdates + " Zone update(s) has been added since you last checked.";
-                        message2 = message2 + "To view them, use !polls for polls and !updates for updates.";
+                        m_botAction.sendSmartPrivateMessage(userName,  message1 + newPolls + " Poll(s) and " + newUpdates + " Zone update(s) has been added since you last checked.");
+                        m_botAction.sendSmartPrivateMessage(userName, message2 + "To view them, use !polls for polls and !updates for updates.");
                     } else if (newPolls == 0 && newUpdates != 0) {
-                        message1 = message1 +  newUpdates + " Zone Update(s) has been added since you last checked.";
-                        message2 = message2 + "!updates to view the latest zone updates.";
+                        m_botAction.sendSmartPrivateMessage(userName,  message1 +  newUpdates + " Zone Update(s) has been added since you last checked.");
+                        m_botAction.sendSmartPrivateMessage(userName, message2 + "!updates to view the latest zone updates.");
                     } else if (newPolls  != 0 && newUpdates == 0) {
-                        message1 = message1 + newPolls + " Poll(s) has been added since you last checked.";
-                        message2 = message2 + "!polls to view the latest poll questions.";
-                    } else 
-                       return;
-                    
-                    m_botAction.sendSmartPrivateMessage(userName, message1);
-                    m_botAction.sendSmartPrivateMessage(userName, message2);                    
+                        m_botAction.sendSmartPrivateMessage(userName, message1 + newPolls + " Poll(s) has been added since you last checked.");
+                        m_botAction.sendSmartPrivateMessage(userName, message2 + "!polls to view the latest poll questions.");
+                    }               
                 }
             }; m_botAction.scheduleTask(updateMessage, Tools.TimeInMillis.MINUTE);
         }
