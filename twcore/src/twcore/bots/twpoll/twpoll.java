@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import javax.print.PrintException;
+
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -953,23 +955,25 @@ public class twpoll extends SubspaceBot {
                 updateMessage = new TimerTask() {   
                 @Override
                 public void run() {
-                    int newPolls = getCounts(userName, true, 1);
-                    int newUpdates = getCounts(userName, true, 2);
-                    String message1 = "Hello, ";
-                    String message2 = "Type ";      
-                     
-                    
-                    if (newPolls != 0 && newUpdates != 0) {
-                        m_botAction.sendSmartPrivateMessage(userName,  message1 + newPolls + " Poll(s) and " + newUpdates + " Zone update(s) has been added since you last checked.");
-                        m_botAction.sendSmartPrivateMessage(userName, message2 + "To view them, use !polls for polls and !updates for updates.");
-                    } else if (newPolls == 0 && newUpdates != 0) {
-                        m_botAction.sendSmartPrivateMessage(userName,  message1 +  newUpdates + " Zone Update(s) has been added since you last checked.");
-                        m_botAction.sendSmartPrivateMessage(userName, message2 + "!updates to view the latest zone updates.");
-                    } else if (newPolls  != 0 && newUpdates == 0) {
-                        m_botAction.sendSmartPrivateMessage(userName, message1 + newPolls + " Poll(s) has been added since you last checked.");
-                        m_botAction.sendSmartPrivateMessage(userName, message2 + "!polls to view the latest poll questions.");
-                    }               
-                }
+                    try {
+                        int newPolls = getCounts(userName, true, 1);
+                        int newUpdates = getCounts(userName, true, 2);
+                        String message1 = "Hello, ";
+                        String message2 = "Type ";      
+                         
+                        
+                        if (newPolls != 0 && newUpdates != 0) {
+                            m_botAction.sendSmartPrivateMessage(userName,  message1 + newPolls + " Poll(s) and " + newUpdates + " Zone update(s) has been added since you last checked.");
+                            m_botAction.sendSmartPrivateMessage(userName, message2 + "To view them, use !polls for polls and !updates for updates.");
+                        } else if (newPolls == 0 && newUpdates != 0) {
+                            m_botAction.sendSmartPrivateMessage(userName,  message1 +  newUpdates + " Zone Update(s) has been added since you last checked.");
+                            m_botAction.sendSmartPrivateMessage(userName, message2 + "!updates to view the latest zone updates.");
+                        } else if (newPolls  != 0 && newUpdates == 0) {
+                            m_botAction.sendSmartPrivateMessage(userName, message1 + newPolls + " Poll(s) has been added since you last checked.");
+                            m_botAction.sendSmartPrivateMessage(userName, message2 + "!polls to view the latest poll questions.");
+                        }               
+                    } catch (NullPointerException e) {Tools.printStackTrace(e);}
+                } 
             }; m_botAction.scheduleTask(updateMessage, Tools.TimeInMillis.MINUTE);
         }
     }
