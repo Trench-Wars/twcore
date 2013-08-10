@@ -461,8 +461,9 @@ public class twpoll extends SubspaceBot {
         
         if (type == 1) {
         for(int pollId: polls.keySet()) {
-            Poll poll = polls.get(pollId);
-            if (poll != null && poll.pvotes.containsKey(userID))
+            if (!unread && p.oldPolls.contains(pollId))
+                count++;
+            if (unread && !p.oldPolls.contains(pollId))
                 count++;
             }
         } else {
