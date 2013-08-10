@@ -461,19 +461,19 @@ public class twpoll extends SubspaceBot {
         
         if (type == 1) {
         for(int pollId: polls.keySet()) {
-            if (!unread && p.oldPolls.contains(pollId))
-                count++;
-            if (unread && !p.oldPolls.contains(pollId))
-                count++;
-            }
-        } else {
-            for (int updateID: updates.keySet()) {
-                if (!unread && p.oldUpdates.contains(updateID))
-                        count++;
-                if (unread && !p.oldUpdates.contains(updateID))
-                        count++;
-            }
-        }        
+                if (!unread && !p.oldPolls.isEmpty() && p.oldPolls.contains(pollId))
+                    count++;
+                if (unread && !p.oldPolls.contains(pollId))
+                    count++;
+                }
+        } else {            
+                for (int updateID: updates.keySet()) {
+                    if (!unread && !p.oldUpdates.isEmpty() && p.oldUpdates.contains(updateID))
+                            count++;
+                    if (unread && !p.oldUpdates.contains(updateID))
+                            count++;
+                }
+        }  
         return count;
     }
 
