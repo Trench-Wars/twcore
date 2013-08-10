@@ -604,6 +604,9 @@ public class twpoll extends SubspaceBot {
     	     if (showNew) {
                  intro.add("[New Polls]");
                  int userId = getUserID(name);
+                 int oldpolls = 0;
+                 if (!p.oldPolls.isEmpty())
+                     oldpolls = p.oldPolls.size(); 
                  for(int pollId: polls.keySet()) {
                      Poll poll = polls.get(pollId);
                  if (!p.oldPolls.contains(pollId)) {                
@@ -617,8 +620,8 @@ public class twpoll extends SubspaceBot {
                      return;
                  }
             spam.add(" ");
-            if (!p.oldPolls.isEmpty())
-                spam.add("[" + p.oldPolls.size() + " Polls(s) not shown]");
+            if (oldpolls != 0)
+                spam.add("[" + oldpolls + " Polls(s) not shown]");
             spam.add(" ");
             spam.add("to VOTE or COMMENT on a poll, select it. To SELECT an poll, use !view <number>.");
             spam.add("To VIEW ALL polls, use !viewall. To RETURN home, use !home");        	
@@ -655,6 +658,9 @@ public class twpoll extends SubspaceBot {
 
             if (showNew) {
                 intro.add("[New Updates]");
+                int oldupdates = 0;
+                if (!p.oldUpdates.isEmpty())
+                    oldupdates = p.oldUpdates.size();                
                 for(int updateID : updates.keySet()) 
                     if (!p.oldUpdates.contains(updateID)) {
                         spam.add(updates.get(updateID).getStartingDateString() + "  " + updates.get(updateID).getUpdateString(1));
@@ -667,8 +673,8 @@ public class twpoll extends SubspaceBot {
                     return;
                 }        
                 spam.add(" ");
-                if (!p.oldUpdates.isEmpty())
-                    spam.add("[" + p.oldUpdates.size() + " Update(s) not shown]");
+                if (oldupdates != 0)
+                    spam.add("[" + oldupdates + " Update(s) not shown]");
                 spam.add(" ");
                 spam.add("View detailed information or comment on an update by selecting it.");
                 spam.add("To SELECT an update, use !view <number>. To VIEW ALL updates, use !viewall.");
@@ -686,7 +692,6 @@ public class twpoll extends SubspaceBot {
                     m_botAction.sendSmartPrivateMessage(name, "No updates avaliable");
                     return;
                 }
-                spam.add(" ");
                 spam.add(" ");
                 spam.add("View detailed information or comment on an update by selecting it.");
                 spam.add("To SELECT an update, use !view <number>.");
