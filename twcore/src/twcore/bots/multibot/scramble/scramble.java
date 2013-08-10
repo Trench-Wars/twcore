@@ -150,7 +150,8 @@ public class scramble extends MultiModule {
         acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE | Message.CHAT_MESSAGE;
         m_commandInterpreter.registerCommand("!pm", acceptedMessages, this, "doPm");
 
-        m_commandInterpreter.registerDefaultCommand(Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE, this, "doCheckPrivate");
+        m_commandInterpreter.registerDefaultCommand(Message.PRIVATE_MESSAGE, this, "doCheckPrivate");
+        m_commandInterpreter.registerDefaultCommand(Message.REMOTE_PRIVATE_MESSAGE, this, "doCheckPrivate");
     }
     
     /** ************************************************************* */
