@@ -466,10 +466,10 @@ public class twpoll extends SubspaceBot {
                 count++;
             }
         } else {
-            for (int updateID: updates.keySet()) {                
-                if (!unread && p.oldPolls.contains(updateID))
+            for (int updateID: updates.keySet()) {
+                if (!unread && p.oldUpdates.contains(updateID))
                         count++;
-                if (unread && !p.oldPolls.contains(updateID))
+                if (unread && !p.oldUpdates.contains(updateID))
                         count++;
             }
         }        
