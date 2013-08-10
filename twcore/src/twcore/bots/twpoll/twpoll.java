@@ -847,7 +847,7 @@ public class twpoll extends SubspaceBot {
         }
         
         public String getStartingDateString() {
-            String date = new SimpleDateFormat("MM/dd/YY").format(begin);
+            String date = new SimpleDateFormat("MM/dd").format(begin);
             return date;
         }
     }
