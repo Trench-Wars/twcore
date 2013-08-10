@@ -463,9 +463,13 @@ public class twpoll extends SubspaceBot {
         for(int pollId: polls.keySet()) {
                 if (!unread && !p.oldPolls.isEmpty() && p.oldPolls.contains(pollId))
                     count++;
-                if (unread && !p.oldPolls.contains(pollId))
+                
+                if (unread && !p.oldPolls.isEmpty() && !p.oldPolls.contains(pollId)) 
                     count++;
-                }
+           
+                if (unread && p.oldPolls.isEmpty())
+                    count++;     
+        }
         } else {            
                 for (int updateID: updates.keySet()) {
                     if (!unread && !p.oldUpdates.isEmpty() && p.oldUpdates.contains(updateID))
@@ -940,7 +944,7 @@ public class twpoll extends SubspaceBot {
         }
         
         public void sendMessage() {
-            if (updateMessage == null) {              
+            if (updateMessage == null) {
                 updateMessage = new TimerTask() {   
                 @Override
                 public void run() {
