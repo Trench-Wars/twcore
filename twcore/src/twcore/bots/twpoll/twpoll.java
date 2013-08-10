@@ -168,7 +168,7 @@ public class twpoll extends SubspaceBot {
            if (message.startsWith("!ignore")) { //TODO IGNORE COMMAND
                cmd_ignore(name);               
             }  else if (message.startsWith("!polls")) {
-                showPollsMain(name, false);
+                showPollsMain(name, true);
             }  else if (message.startsWith("!updates")) {
                 showUpdatesMain(name, true);
             } else if (message.startsWith("!help")) {
