@@ -88,8 +88,10 @@ public class elim extends SubspaceBot {
     String arena;
     ElimPlayer lastWinner;
     ElimPlayer winner;
-    int goal;
+    String lastWinnerZoned;
+    int lastWinStreak;
     int winStreak;
+    int goal;
     int voteTime;
     long lastZoner, lastAlert;
     int[] voteStats;                       // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
@@ -964,8 +966,10 @@ public class elim extends SubspaceBot {
         ba.receiveAllPlayerDeaths();
         ba.setPlayerPositionUpdating(300);
         winStreak = 0;
+        lastWinStreak = 0;
         lastWinner = null;
         winner = null;
+        lastWinnerZoned = "";
         arenaLock = false;
         hiderCheck = true;
         ba.toggleLocked();
@@ -1341,11 +1345,15 @@ public class elim extends SubspaceBot {
             return;
         else if (lastWinner != null && lastWinner.getKills() < 1)
             return;
-
-        if (winStreak == 1)
+        else if (winStreak > 0 && winStreak == lastWinStreak && lastWinnerZoned.equalsIgnoreCase(lastWinner.name)) {
+            // prevent zoning for the same streak twice after a non-game
+            m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
+        } else if (winStreak == 1) {
             ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena
                     + " to play -" + ba.getBotName());
-        else if (winStreak > 1)
+            lastWinStreak = winStreak;
+            lastWinnerZoned = lastWinner.name;
+        } else if (winStreak > 1) {
             switch (winStreak) {
                 case 2:
                     ba.sendZoneMessage("Next elim is starting. " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") has won 2 back to back! Type ?go " + arena
@@ -1368,7 +1376,9 @@ public class elim extends SubspaceBot {
                             + " consecutive wins! Type ?go " + arena + " to redeem yourselves! -" + ba.getBotName(), Tools.Sound.INCONCEIVABLE);
                     break;
             }
-        else
+            lastWinStreak = winStreak;
+            lastWinnerZoned = lastWinner.name;
+        } else
             m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
         lastZoner = System.currentTimeMillis();
     }

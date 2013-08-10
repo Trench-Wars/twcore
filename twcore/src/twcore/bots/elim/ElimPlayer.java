@@ -185,7 +185,7 @@ public class ElimPlayer {
     }
     
     public boolean handleLagout() {
-        if (getLagouts() > 0) {
+        if (getRemainingLagouts() > 0) {
             status = Status.LAGGED;
             cancelTasks();
             return false;
@@ -287,7 +287,7 @@ public class ElimPlayer {
     }
 
     /** Returns the remaining lagouts left */
-    public int getLagouts() {
+    public int getRemainingLagouts() {
         return lagouts;
     }
     
@@ -338,7 +338,7 @@ public class ElimPlayer {
             game.freq += 2;
         }
         lagouts--;
-        ba.sendPrivateMessage(name, "You have " + getLagouts() + " lagouts remaining.");
+        ba.sendPrivateMessage(name, "You have " + getRemainingLagouts() + " lagouts remaining.");
         game.handleSpawn(this, true);
         if (game.ship.inBase() && ship != 6) {
             spawn = new Spawn(false);
