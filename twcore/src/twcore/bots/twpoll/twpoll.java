@@ -157,7 +157,7 @@ public class twpoll extends SubspaceBot {
         }
         String message = event.getMessage();
         
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE || event.getMessageType() == Message.PUBLIC_MESSAGE) {
             handleCommand(name, message);
         }
     }
