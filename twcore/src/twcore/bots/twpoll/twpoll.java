@@ -358,8 +358,9 @@ public class twpoll extends SubspaceBot {
             pollList = pollList.substring(1);
             try {
                 ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
-                    "SELECT fnPollID, fnUserID,fnPollOptionID " +
-                    "FROM tblPoll__PollVote " +
+                    "SELECT pv.fnPollID, fcOption, fnUserID, pv.fnPollOptionID " +
+                    "FROM tblPoll__PollVote AS pv " +
+                    "JOIN tblPoll__PollOptions AS po ON pv.fnPollOptionID = po.fnPollOptionID " +
                     "WHERE fnPollID IN (" + pollList + ")"
                 );
 
@@ -367,6 +368,7 @@ public class twpoll extends SubspaceBot {
                     int userID = rs.getInt("fnUserID");
                     int pollID =  rs.getInt("fnPollID");
                     int optionID = rs.getInt("fnPollOptionID");
+                    String option = rs.getString("fcOption");
                     Poll poll = polls.get(pollID);
                     
                     if (poll != null && !poll.pvotes.containsKey(userID)) {
@@ -533,7 +535,7 @@ public class twpoll extends SubspaceBot {
         int userId = getUserID(playerName);
         Poll poll = polls.get(pollId);
                 if (poll.pvotes.containsKey(userId))
-                    spam.add("[Poll #" + pollId + "]" + " Your Vote: " + poll.pvotes.get(userId).getOptionID());
+                    spam.add("[Poll #" + pollId + "]" + " Your Vote: " + poll.options.get((poll.pvotes.get(userId).getOptionID())).getOption());
                 else
                     spam.add("[Poll #" + pollId + "]");
                 spam.add("(" + poll.id + ") " + poll.question);
@@ -745,7 +747,7 @@ public class twpoll extends SubspaceBot {
         	    if (hasVotedAlready(pollID, userID)) {
         	        m_botAction.SQLQueryAndClose(DB_NAME, "" +
         	                "UPDATE tblPoll__PollVote " +
-        	                "SET fnPollOptionID  = '" + optionID + "' " +
+        	                "SET fnPollOptionID  = '" + pollOption.id + "' " +
         	                "WHERE fnUserID = '" + userID + "' "  +
         	                "AND fnPollID = '" + pollID + "'"
         	            );
@@ -926,6 +928,10 @@ public class twpoll extends SubspaceBot {
     	public PollOption(int id, String option) {
     		this.id = id;
     		this.option = option;
+    	}
+    	
+    	public String getOption() {
+    	    return option;
     	}
     }
 
