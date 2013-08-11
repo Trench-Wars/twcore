@@ -535,7 +535,7 @@ public class twpoll extends SubspaceBot {
         int userId = getUserID(playerName);
         Poll poll = polls.get(pollId);
                 if (poll.pvotes.containsKey(userId))
-                    spam.add("[Poll #" + pollId + "]" + "   : " + poll.pvotes.get(userId).getOption());
+                    spam.add("[Poll #" + pollId + "]" + "   Your Vote: " + poll.pvotes.get(userId).getOption());
                 else
                     spam.add("[Poll #" + pollId + "]");
                 spam.add("(" + poll.id + ") " + poll.question);
@@ -925,7 +925,7 @@ public class twpoll extends SubspaceBot {
     	                ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
     	                    "SELECT * " +
     	                    "FROM tblPoll__PollOptions  " +
-    	                    "WHERE fnPollOptionID  = " + optionID
+    	                    "WHERE fnPollOptionID  = '" + optionID + "'"
     	                );    	                
     	                while (rs.next()) {
     	                    option = rs.getString("fcOption");                    
