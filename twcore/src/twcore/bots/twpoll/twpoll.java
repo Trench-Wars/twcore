@@ -928,7 +928,7 @@ public class twpoll extends SubspaceBot {
     	                    "WHERE fnPollOptionID  = " + optionID
     	                );    	                
     	                while (rs.next()) {
-    	                    option = rs.getString("fcOption ");                    
+    	                    option = rs.getString("fcOption");                    
     	                }
     	                rs.close();
     	            } catch (SQLException e) {
