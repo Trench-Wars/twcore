@@ -535,7 +535,7 @@ public class twpoll extends SubspaceBot {
         int userId = getUserID(playerName);
         Poll poll = polls.get(pollId);
                 if (poll.pvotes.containsKey(userId))
-                    spam.add("[Poll #" + pollId + "]" + " Your Vote: " + poll.options.get((poll.pvotes.get(userId).getOptionID())).getOption());
+                    spam.add("[Poll #" + pollId + "]" + "   : " + poll.pvotes.get(userId).getOption());
                 else
                     spam.add("[Poll #" + pollId + "]");
                 spam.add("(" + poll.id + ") " + poll.question);
@@ -898,8 +898,7 @@ public class twpoll extends SubspaceBot {
         }
         
         public void addOption(int pollOptionID, String Option) {
-            options.add(new PollOption(pollOptionID,Option));
-            
+            options.add(new PollOption(pollOptionID,Option));            
         }
     	
     	 public class PlayerVotes {
@@ -918,8 +917,26 @@ public class twpoll extends SubspaceBot {
     	        public int getOptionID() {
                     return this.optionID;
                 }
-    	    }
-    	
+    	        
+    	        public String getOption() { 
+    	            String option = " ";
+    	            try {
+    	                // First, filter with UserAccount to avoid double (it happens)
+    	                ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
+    	                    "SELECT * " +
+    	                    "FROM tblPoll__PollOptions  " +
+    	                    "WHERE fnPollOptionID  = " + optionID
+    	                );    	                
+    	                while (rs.next()) {
+    	                    option = rs.getString("fcOption ");                    
+    	                }
+    	                rs.close();
+    	            } catch (SQLException e) {
+    	                e.printStackTrace();
+    	            }    	            
+    	            return option;
+    	        }    	        
+    	    }    	
     }
 
     private class PollOption {
