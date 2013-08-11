@@ -1043,20 +1043,26 @@ public class twpoll extends SubspaceBot {
         }
         
         public String getComment(int ID, int type) {
-            if (type == 1) {
-               for(String comment : pollComments.values()) {
-                   if (pollComments.equals(ID))
-                       return comment;
-               }
-            }
-            if (type == 2) {
-                for(String comment : updateComments.values()) {
-                    if (updateComments.equals(ID))
-                        return comment;
+            String comment = " ";
+            try {
+                // First, filter with UserAccount to avoid double (it happens)
+                ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
+                    "SELECT * " +
+                    "FROM tblPoll__Entry  " +
+                    "WHERE fnUserID = " + userID + 
+                    " AND fnType = " + type + 
+                    " AND fnEntryID = " + ID 
+                );
+                
+                while (rs.next()) {                    
+                    comment = rs.getString("fcComment");                    
                 }
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
             
-            return " ";
+            return comment;
         }
         
         public void addEntry(int ID, int type, String comment) {
@@ -1065,11 +1071,14 @@ public class twpoll extends SubspaceBot {
                     "INSERT INTO tblPoll__Entry " +
                     "VALUES (null, "+type+","+ID+","+this.userID+",'"+Tools.addSlashesToString(comment)+ "',1 , NOW())"
                 );
-                if(type == 1) 
-                    oldPolls.add(ID);
-                if(type == 2)
-                    oldUpdates.add(ID);
-                
+                if(type == 1) {
+                    if (!oldPolls.contains(ID))
+                        oldPolls.add(ID);
+                }
+                if(type == 2) {
+                    if (!oldUpdates.contains(ID))
+                        oldUpdates.add(ID);
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }            
