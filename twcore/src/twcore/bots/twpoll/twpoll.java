@@ -194,6 +194,8 @@ public class twpoll extends SubspaceBot {
            
            if (m_botAction.getOperatorList().isER(name)) {
                if (message.startsWith("!reload")) {
+                   polls.clear();
+                   updates.clear();
                    loadData();
                 m_botAction.sendSmartPrivateMessage(name, "Polls and Updates locked and loaded. Lets play.");
             }
@@ -1007,7 +1009,7 @@ public class twpoll extends SubspaceBot {
                             if (!comment.equals("none"))
                                     pollComments.put(entryID, comment);
                             oldPolls.add(entryID);
-                        } else { 
+                        } else {
                             if (!comment.equals("none"))
                                 updateComments.put(entryID, comment);
                             oldUpdates.add(entryID);
@@ -1023,7 +1025,7 @@ public class twpoll extends SubspaceBot {
         
         public void setComments(int ID, String comment, int type) {
             try {
-                m_botAction.SQLQueryAndClose(DB_NAME, "UPDATE tblPoll__Entry SET fcComment = '"+Tools.addSlashesToString(comment)+"' WHERE fnUserID  = '" + userID +"' AND fnType = '" + type +"'");
+                m_botAction.SQLQueryAndClose(DB_NAME, "UPDATE tblPoll__Entry SET fcComment = '"+Tools.addSlashesToString(comment)+"' WHERE fnUserID  = '" + userID +"' AND fnType = '" + type +"' AND fnEntryID = '" + ID + "'");
                 if (type == 1)
                     pollComments.put(ID,  comment);
                 else 
@@ -1042,12 +1044,16 @@ public class twpoll extends SubspaceBot {
         
         public String getComment(int ID, int type) {
             if (type == 1) {
-               for(String comment : pollComments.values())
-                   return comment;
+               for(String comment : pollComments.values()) {
+                   if (pollComments.equals(ID))
+                       return comment;
+               }
             }
             if (type == 2) {
-                for(String comment : updateComments.values())
-                    return comment;
+                for(String comment : updateComments.values()) {
+                    if (updateComments.equals(ID))
+                        return comment;
+                }
             }
             
             return " ";
