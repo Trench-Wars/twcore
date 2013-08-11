@@ -535,7 +535,7 @@ public class twpoll extends SubspaceBot {
         int userId = getUserID(playerName);
         Poll poll = polls.get(pollId);
                 if (poll.pvotes.containsKey(userId))
-                    spam.add("[Poll #" + pollId + "]" + "   Your Vote: " + poll.pvotes.get(userId).getOption());
+                    spam.add("[Poll #" + pollId + "]" + "   Your Vote: " + poll.options.get(poll.pvotes.get(userId).getOptionID() - 1).option);
                 else
                     spam.add("[Poll #" + pollId + "]");
                 spam.add("(" + poll.id + ") " + poll.question);
@@ -916,26 +916,7 @@ public class twpoll extends SubspaceBot {
     	        
     	        public int getOptionID() {
                     return this.optionID;
-                }
-    	        
-    	        public String getOption() { 
-    	            String option = " ";
-    	            try {
-    	                // First, filter with UserAccount to avoid double (it happens)
-    	                ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
-    	                    "SELECT * " +
-    	                    "FROM tblPoll__PollOptions  " +
-    	                    "WHERE fnPollOptionID  = '" + optionID + "'"
-    	                );    	                
-    	                while (rs.next()) {
-    	                    option = rs.getString("fcOption");                    
-    	                }
-    	                rs.close();
-    	            } catch (SQLException e) {
-    	                e.printStackTrace();
-    	            }    	            
-    	            return option;
-    	        }    	        
+                }  	        
     	    }    	
     }
 
@@ -945,10 +926,6 @@ public class twpoll extends SubspaceBot {
     	public PollOption(int id, String option) {
     		this.id = id;
     		this.option = option;
-    	}
-    	
-    	public String getOption() {
-    	    return option;
     	}
     }
 
