@@ -88,7 +88,7 @@ public class acro extends MultiModule {
         }
         
         String lower = message.toLowerCase();
-        if (lower.startsWith("!start")) {
+        if (lower.equals("!start")) {
             doStartGame(name, message);
         } else if (lower.startsWith("!startcustom")) {
             doStartCustom(name, message);
