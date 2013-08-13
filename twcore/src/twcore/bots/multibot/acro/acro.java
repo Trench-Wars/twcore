@@ -92,8 +92,8 @@ public class acro extends MultiModule {
             doStartGame(name, message);
         } else if (lower.startsWith("!startcustom")) {
             doStartCustom(name, message);
-        } else if (lower.startsWith("!setacro")) {
-            doSetAcro(name, message);
+        } else if (lower.startsWith("!setacro ")) {
+            doSetAcro(name, message.substring(8));
         } else if (lower.startsWith("!stop")) {
             doStopGame(name, message);
         } else if (lower.startsWith("!help")) {
