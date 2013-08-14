@@ -245,7 +245,7 @@ public class acro extends MultiModule {
                 setUpVotes();
             }
         };
-        m_botAction.scheduleTask(end, 46000);
+        m_botAction.scheduleTask(end, Tools.TimeInMillis.MINUTE);
     }
 
     public String getPlural(Integer intCount, String strWord) {
