@@ -374,7 +374,7 @@ public class zonerbot extends SubspaceBot {
     	}
     	ResultSet rs = null;
     	try {
-    		rs = ba.SQLQuery(db, "SELECT fcUserName as s, fcArena as a FROM tblZHGrants WHERE fcZH = '" + Tools.addSlashesToString(zh) + "'");
+    		rs = ba.SQLQuery(db, "SELECT fcUserName as s, fcArena as a FROM tblZHGrants WHERE fcZH like '" + Tools.addSlashesToString(zh) + "'");
     		if (rs.next()) {
     			do {
     				ba.sendSmartPrivateMessage(name, "" + padString(rs.getString("a"), 20) + " by " + rs.getString("s"));
@@ -418,7 +418,7 @@ public class zonerbot extends SubspaceBot {
     	{
     		if (args[1].toLowerCase().equals("all"))
     			args[1] = "%";
-    		ba.SQLBackgroundQuery("website", null, "DELETE FROM tblZHGrants where fcZH='"+args[0].toLowerCase()+"' and fcArena='"+args[1].toLowerCase()+"'");    		
+    		ba.SQLBackgroundQuery("website", null, "DELETE FROM tblZHGrants where fcZH='"+args[0].toLowerCase()+"' and fcArena like '"+args[1].toLowerCase()+"'");    		
     		ba.sendSmartPrivateMessage(name, "Arena has been removed from unsupervised access for " + args[1]);
     	}
     }
