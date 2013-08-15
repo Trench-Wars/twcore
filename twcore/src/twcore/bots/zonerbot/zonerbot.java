@@ -171,12 +171,14 @@ public class zonerbot extends SubspaceBot {
                     cmd_grants(name, msg);
                 else if (msg.toLowerCase().startsWith("!give "))
                     cmd_give(name, msg);
-            }
-            if (oplist.isSmod(name)) {
-                if (msg.toLowerCase().startsWith("!add "))
-                    cmd_add(name, msg);
                 else if (msg.toLowerCase().startsWith("!remove "))
                     cmd_remove(name, msg);
+            }
+            if (oplist.isSmod(name)) {
+                if (msg.toLowerCase().startsWith("!addop "))
+                    cmd_addop(name, msg);
+                else if (msg.toLowerCase().startsWith("!delop "))
+                    cmd_delop(name, msg);
                 else if (msg.toLowerCase().equals("!ops"))
                     cmd_ops(name);
                 else if (msg.toLowerCase().startsWith("!per "))
@@ -292,7 +294,8 @@ public class zonerbot extends SubspaceBot {
                     "| !grants yyyy-MM        - Displays the total number of grants given for yyyy-MM                |",
                     "| !grants <name>         - Displays the total adverts granted by <name> this month              |",
                     "| !grants <name>:yyyy-MM - Displays total grants by <name> in month MM of year yyyy             |",
-                    "| !give <ZH>:<Arena>     - Adds the arena and ZH who is allowed to host unsupervised.           |",};
+                    "| !give <ZH>:<Arena>     - Adds the arena to a ZH to allow them to host unsupervised.           |",
+                    "| !remove <ZH>:<Arena>   - Removes the arena from a ZH so they can't host unsupervised.         |" };
             ba.smartPrivateMessageSpam(name, msg);
         }
         if (oplist.isSmod(name)) {
@@ -301,8 +304,8 @@ public class zonerbot extends SubspaceBot {
                     "| !remper <index>        - Removes the periodic zoner at <index>                                |",
                     "| !list                  - List of the currently active periodic zoners                         |",
                     "| !ops                   - List of the current staff trainers                                   |",
-                    "| !add <name>            - Adds <name> to the trainer list (allows zh advert granting)          |",
-                    "| !remove <name>         - Removes <name> from the trainer list                                 |",
+                    "| !addop <name>          - Adds <name> to the trainer list (allows zh advert granting)          |",
+                    "| !delop <name>          - Deletes <name> from the trainer list                                 |",
                     "| !autozone              - Toggle periodic zoners to instant-zone when loaded from database     |",
                     "| !cred <name>:#:<arena> - Gives # weekend event hosting credits to <name> for <arena>          |",
                     "| !reload                - Reloads all the periodic messages from the database                  |", };
@@ -392,6 +395,26 @@ public class zonerbot extends SubspaceBot {
         }
     }
 
+    /** Handles the remove command which is used to remove a ZH's unsupervised access to host a certain arena */
+    private void cmd_remove(String name, String msg)
+    {
+    	String[] args = msg.substring(msg.indexOf(" ") + 1).split(":");
+    	if (args.length != 2)
+    		ba.sendSmartPrivateMessage(name, "Syntax format. Need to know the ZH and arena!");
+    	else
+    	{
+    		try
+    		{
+    			ba.SQLQueryAndClose("website", "DELETE FROM tblZHGrants where fcZH='"+args[0]+"' and fcArena='"+args[1]+"'");
+    			ba.sendSmartPrivateMessage(name, args[0] + " has been removed from unsupervised access for " + args[1]);
+    		}
+    		catch (SQLException e)
+    		{
+    			Tools.printStackTrace(e);
+    		}
+    	}
+    }
+
     /** Handles a ZH claim request for a specific arena */
     private void cmd_claim(String name, String msg) {
         String msgs = msg.substring(msg.indexOf(" ") + 1);
@@ -419,8 +442,8 @@ public class zonerbot extends SubspaceBot {
         }
     }
 
-    /** Handles the !add trainer command **/
-    private void cmd_add(String name, String cmd) {
+    /** Handles the !addop trainer command **/
+    private void cmd_addop(String name, String cmd) {
         if (cmd.length() < 5)
             return;
         String staff = cmd.substring(5).trim().toLowerCase();
@@ -439,8 +462,8 @@ public class zonerbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "" + staff + " is already a trainer.");
     }
 
-    /** Handles the !remove trainer command **/
-    private void cmd_remove(String name, String cmd) {
+    /** Handles the !delop trainer command **/
+    private void cmd_delop(String name, String cmd) {
         if (cmd.length() < 8)
             return;
         String staff = cmd.substring(8).trim().toLowerCase();
