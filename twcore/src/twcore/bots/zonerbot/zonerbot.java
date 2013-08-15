@@ -116,7 +116,8 @@ public class zonerbot extends SubspaceBot {
             name = ba.getPlayerName(event.getPlayerID());
         String msg = event.getMessage();
         int type = event.getMessageType();
-        name = name.toLowerCase();
+        if (name!= null)
+        	name = name.toLowerCase();
 
         if (type == Message.ALERT_MESSAGE && event.getAlertCommandType().equals("advert") && oplist.isER(name)) {
             if (msg.toLowerCase().contains(" free"))
