@@ -191,8 +191,10 @@ public class zonerbot extends SubspaceBot {
                     cmd_autoZone(name);
                 else if (msg.toLowerCase().equals("!reload"))
                     cmd_reload(name);
-                else if (msg.toLowerCase().startsWith("!cred"))
+                else if (msg.toLowerCase().startsWith("!cred "))
                     cmd_credit(name, msg);
+                else if (msg.toLowerCase().startsWith("!credtrainer") || msg.toLowerCase().startsWith("!ct"))
+                    cmd_credtrainer(name, msg);
             }
             if (oplist.isOwner(name)) {
                 if (msg.toLowerCase().startsWith("!zone "))
@@ -299,16 +301,18 @@ public class zonerbot extends SubspaceBot {
             ba.smartPrivateMessageSpam(name, msg);
         }
         if (oplist.isSmod(name)) {
-            msg = new String[] { "+-- ZonerBot Smod Commands ---------------------------------------------------------------------+",
-                    "| !per <del>;<dur>;<msg> - Sets a periodic zoner to repeat every <del> min for <dur> hr  %%#    |",
-                    "| !remper <index>        - Removes the periodic zoner at <index>                                |",
-                    "| !list                  - List of the currently active periodic zoners                         |",
-                    "| !ops                   - List of the current staff trainers                                   |",
-                    "| !addop <name>          - Adds <name> to the trainer list (allows zh advert granting)          |",
-                    "| !delop <name>          - Deletes <name> from the trainer list                                 |",
-                    "| !autozone              - Toggle periodic zoners to instant-zone when loaded from database     |",
-                    "| !cred <name>:#:<arena> - Gives # weekend event hosting credits to <name> for <arena>          |",
-                    "| !reload                - Reloads all the periodic messages from the database                  |", };
+            msg = new String[] { "+-- ZonerBot Smod Commands -----------------------------------------------------------------------------+",
+                    "| !per <del>;<dur>;<msg>          - Sets a periodic zoner to repeat every <del> min for <dur> hr  %%#    |",
+                    "| !remper <index>                 - Removes the periodic zoner at <index>                                |",
+                    "| !list                           - List of the currently active periodic zoners                         |",
+                    "| !ops                            - List of the current staff trainers                                   |",
+                    "| !addop <name>                   - Adds <name> to the trainer list (allows zh advert granting)          |",
+                    "| !delop <name>                   - Deletes <name> from the trainer list                                 |",
+                    "| !autozone                       - Toggle periodic zoners to instant-zone when loaded from database     |",
+                    "| !cred <name>:#:<arena>          - Gives # weekend event hosting credits to <name> for <arena>          |",
+                    "| !credtrainer <name>:#:<reason>  - Gives # training credits to <name> for <reason>. (!ct for short)     |",
+                    "| !credtrainer <name>:<reason>    - Gives 1 training credits to <name> for <reason>. (!ct for short)     |",
+                    "| !reload                         - Reloads all the periodic messages from the database                  |", };
             ba.smartPrivateMessageSpam(name, msg);
         }
         ba.sendSmartPrivateMessage(name, "`-----------------------------------------------------------------------------------------------+");
@@ -913,6 +917,7 @@ public class zonerbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "No periodic zoner listed at index: " + index);
     }
     
+    /** Handles the !cred command to give credit to hosters for weekend events **/
     private void cmd_credit(String name, String cmd) {
         if (!cmd.contains(" ")) return;
         try {
@@ -936,6 +941,50 @@ public class zonerbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Invalid command syntax, please use !cred staffer:amount:arena");
         }
     }
+
+    /** Handles the !credtrainer / !ct command to give points to trainers. **/
+    private void cmd_credtrainer(String name, String cmd) {
+        if (!cmd.contains(" ")) 
+        	return;
+        try {
+            String[] args = splitArgs(cmd);
+            if (args != null)
+            {
+                //!credtrainer name:#:reason or !credtrainer name:reason
+
+            	if (args.length!=2 && args.length!=3)
+            		throw new NumberFormatException();
+            	int pts = 1;
+            	String reason;
+            	if (args.length == 3)
+            	{
+            		pts = Integer.valueOf(args[1]);
+            		reason = args[2];            		
+            	}
+            	else
+            		reason = args[1];
+
+            	if (reason.length() > 150)
+            	{
+            		ba.sendSmartPrivateMessage(name, "The reason cannot be more than 150 characters. Points not added.");
+            		return;
+            	}
+            	
+                if (oplist.isZH(args[0])) 
+                {
+                	String query = "INSERT INTO tblCallTrainer (fcTrainer, fcAssigner, fcReason, fnCredits) VALUES('" + Tools.addSlashesToString(args[0]) + "', '" + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(reason) + "', " +pts+")";
+                	ba.SQLBackgroundQuery(db, null, query);
+                	ba.sendSmartPrivateMessage(name, args[0] + " has successfully been given " + pts + " training credits for " + reason + ".");
+                } 
+                else
+                    ba.sendSmartPrivateMessage(name, args[0] + " is not a staff member.");
+            } else
+                throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Invalid command syntax, please use !credtrainer staffer:amount:reason");
+        }
+    }
+
 
     /** Handles the !die command **/
     private void cmd_die(String name) {
