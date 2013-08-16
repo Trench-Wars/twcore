@@ -374,10 +374,10 @@ public class zonerbot extends SubspaceBot {
     	}
     	ResultSet rs = null;
     	try {
-    		rs = ba.SQLQuery(db, "SELECT fcUserName as s, fcArena as a FROM tblZHGrants WHERE fcZH like '" + Tools.addSlashesToString(zh) + "'");
+    		rs = ba.SQLQuery(db, "SELECT fcZH, fcUserName as s, fcArena as a FROM tblZHGrants WHERE fcZH like '" + Tools.addSlashesToString(zh) + "' ORDER BY fcZH");
     		if (rs.next()) {
     			do {
-    				ba.sendSmartPrivateMessage(name, "" + padString(rs.getString("a"), 20) + " by " + rs.getString("s"));
+    				ba.sendSmartPrivateMessage(name, padString(rs.getString("fcZH"), 20) + " - " + padString(rs.getString("a"), 20) + " by " + rs.getString("s"));
     			} while (rs.next());
     		} else
     			ba.sendSmartPrivateMessage(name, "No arenas found for " + zh + ".");
