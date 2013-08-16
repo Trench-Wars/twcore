@@ -286,7 +286,8 @@ public class zonerbot extends SubspaceBot {
                 "| !readvert <sub-event>  - Sends a readvert about <sub-event> for the arena in your !advert     |",
                 "| !renew                 - Prolongs the expiration of the advert for an extra 2 minutes         |",
                 "| !claim <arena>         - For ZHs who are allowed to host unsupervised in a certain arena      |", 
-                "| !arenas                - Shows a ZH what arenas are available or shows a specified ZH         |" };
+                "| !arenas                - Shows a ZH what arenas are available or shows a specified ZH         |",
+                "| !arenas all            - Shows all arenas assigned to all ZHs.                                |"};
         ba.smartPrivateMessageSpam(name, msg);
         if (trainers.contains(name) || oplist.isSmod(name)) {
             msg = new String[] { "+-- ZonerBot Trainer Commands ------------------------------------------------------------------+",
@@ -299,7 +300,8 @@ public class zonerbot extends SubspaceBot {
                     "| !grants <name>         - Displays the total adverts granted by <name> this month              |",
                     "| !grants <name>:yyyy-MM - Displays total grants by <name> in month MM of year yyyy             |",
                     "| !give <ZH>:<Arena>     - Adds the arena to a ZH to allow them to host unsupervised.           |",
-                    "| !remove <ZH>:<Arena>   - Removes the arena from a ZH so they can't host unsupervised.         |" };
+                    "| !remove <ZH>:<Arena>   - Removes the arena from a ZH so they can't host unsupervised.         |",
+                    "|                          <Arena> can be 'all' to remove all their accesses.                   |"};
             ba.smartPrivateMessageSpam(name, msg);
         }
         if (oplist.isSmod(name)) {
