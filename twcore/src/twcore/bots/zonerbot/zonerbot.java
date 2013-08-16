@@ -419,7 +419,7 @@ public class zonerbot extends SubspaceBot {
     		if (args[1].toLowerCase().equals("all"))
     			args[1] = "%";
     		ba.SQLBackgroundQuery("website", null, "DELETE FROM tblZHGrants where fcZH='"+args[0].toLowerCase()+"' and fcArena like '"+args[1].toLowerCase()+"'");    		
-    		ba.sendSmartPrivateMessage(name, "Arena has been removed from unsupervised access for " + args[1]);
+    		ba.sendSmartPrivateMessage(name, "Arena has been removed from unsupervised access for " + args[0]);
     	}
     }
 
@@ -468,7 +468,7 @@ public class zonerbot extends SubspaceBot {
         	return;
         }
 
-        if (!trainers.contains(name)) {
+        if (!trainers.contains(staff)) {
             BotSettings settings = ba.getBotSettings();
             String ops = settings.getString("Trainers");
 
