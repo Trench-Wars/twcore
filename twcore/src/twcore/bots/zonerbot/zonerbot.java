@@ -116,8 +116,8 @@ public class zonerbot extends SubspaceBot {
             name = ba.getPlayerName(event.getPlayerID());
         String msg = event.getMessage();
         int type = event.getMessageType();
-        if (name!= null)
-        	name = name.toLowerCase();
+        //if (name!= null)
+        //	name = name.toLowerCase();
 
         if (type == Message.ALERT_MESSAGE && event.getAlertCommandType().equals("advert") && oplist.isER(name)) {
             if (msg.toLowerCase().contains(" free"))
@@ -401,7 +401,7 @@ public class zonerbot extends SubspaceBot {
 
             try {
                 ba.SQLQueryAndClose("website", "INSERT INTO tblZHGrants(fcUserName, fcArena, fcZH, fdCreated) VALUES ('"
-                        + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(arena) + "', '" + Tools.addSlashesToString(zh)
+                        + Tools.addSlashesToString(name.toLowerCase()) + "', '" + Tools.addSlashesToString(arena) + "', '" + Tools.addSlashesToString(zh)
                         + "', NOW())");
                 ba.sendSmartPrivateMessage(name, zh + " has now has been granted unsupervised access to advert in the arena " + arena);
             } catch (SQLException e) {
@@ -436,21 +436,22 @@ public class zonerbot extends SubspaceBot {
         }
         
         try {
-            ResultSet result = ba.SQLQuery(db, "SELECT fcArena FROM tblZHGrants WHERE fcZH = '" + Tools.addSlashesToString(name)
+        	String namelc = name.toLowerCase();
+            ResultSet result = ba.SQLQuery(db, "SELECT fcArena FROM tblZHGrants WHERE fcZH = '" + Tools.addSlashesToString(namelc)
                     + "' AND fcArena = '" + Tools.addSlashesToString(msgs) + "'");
             if (!result.next())
                 ba.sendSmartPrivateMessage(name, "That arena has not been found to give you permission to host unsupervised.");
             else {
-                if (!queue.containsKey(name)) {
+                if (!queue.containsKey(namelc)) {
                     debug("Queueing new Advert");
-                    queue.put(name, new Advert(name));
-                    if (queue.indexOfKey(name) == 0)
+                    queue.put(namelc, new Advert(name));
+                    if (queue.indexOfKey(namelc) == 0)
                         prepareNext();
                     else
-                        sendQueuePosition(name);
+                        sendQueuePosition(namelc);
                 } else {
                     ba.sendSmartPrivateMessage(name, "You have already claimed an advert and cannot claim another until it is used.");
-                    sendQueuePosition(name);
+                    sendQueuePosition(namelc);
                 }
             }
             ba.SQLClose(result);
@@ -630,7 +631,7 @@ public class zonerbot extends SubspaceBot {
 
     /** Handles the !status command **/
     private void cmd_status(String name) {
-        int i = queue.indexOfKey(name);
+        int i = queue.indexOfKey(name.toLowerCase());
         if (i > 0 && advertTimer != null)
             ba.sendSmartPrivateMessage(name, "The current advert belongs to: " + queue.firstValue().getName() + " Next advert: "
                     + advertTimer.getTime());
@@ -647,16 +648,17 @@ public class zonerbot extends SubspaceBot {
             return;
         }
 
-        if (!queue.containsKey(name)) {
+        String namelc = name.toLowerCase();
+        if (!queue.containsKey(namelc)) {
             debug("Queueing new Advert");
-            queue.put(name, new Advert(name));
-            if (queue.indexOfKey(name) == 0)
+            queue.put(namelc, new Advert(name));
+            if (queue.indexOfKey(namelc) == 0)
                 prepareNext();
             else
-                sendQueuePosition(name);
+                sendQueuePosition(namelc);
         } else {
             ba.sendSmartPrivateMessage(name, "You have already claimed an advert and cannot claim another until it is used.");
-            sendQueuePosition(name);
+            sendQueuePosition(namelc);
         }
     }
 
@@ -664,7 +666,8 @@ public class zonerbot extends SubspaceBot {
     private void cmd_grant(String name, String cmd) 
     {
     	cmd = cmd.trim();
-        String zh = cmd.substring(cmd.indexOf(" ") + 1).toLowerCase();
+        String zh = cmd.substring(cmd.indexOf(" ") + 1);
+        String zhlc = zh.toLowerCase();
         if (zh.isEmpty())
         {
         	ba.sendSmartPrivateMessage(name, "You need to specify a zh to grant to with this command...");
@@ -675,24 +678,25 @@ public class zonerbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Adverts can only be granted to ZHs. Use !claim instead.");
             return;
         }
-        if (!queue.containsKey(zh)) {
-            queue.put(zh, new Advert(zh, name));
+        if (!queue.containsKey(zhlc)) {
+            queue.put(zhlc, new Advert(zh, name));
             ba.sendSmartPrivateMessage(name, "Advert granted to " + zh + ".");
             ba.sendSmartPrivateMessage(zh, "You have been granted an advert by " + name + ". Advert must be approved before it can be used.");
-            if (queue.indexOfKey(zh) == 0)
+            if (queue.indexOfKey(zhlc) == 0)
                 prepareNext();
             else
-                sendQueuePosition(zh);
+                sendQueuePosition(zhlc);
         }
     }
 
     /** Handles the !free command or ?advert free **/
     private void cmd_free(String name) 
     {
-        if (queue.containsKey(name)) {
-            Advert advert = queue.get(name);
+    	String namelc = name.toLowerCase();
+        if (queue.containsKey(namelc)) {
+            Advert advert = queue.get(namelc);
             if (advert.getStatus() < Advert.ZONED) {
-                int index = queue.indexOfKey(name);
+                int index = queue.indexOfKey(namelc);
                 if (index == 0) {
                     queue.remove(0);
                     if (expireTimer != null && !expireTimer.hasExpired()) {
@@ -724,8 +728,8 @@ public class zonerbot extends SubspaceBot {
         	return;
         }
 
-        if (queue.containsKey(name))
-            ba.sendSmartPrivateMessage(name, queue.get(name).setAdvert(msg));
+        if (queue.containsKey(name.toLowerCase()))
+            ba.sendSmartPrivateMessage(name, queue.get(name.toLowerCase()).setAdvert(msg));
         else
             ba.sendSmartPrivateMessage(name, "You must have claimed or been granted an advert before you can set its message.");
     }
@@ -742,8 +746,8 @@ public class zonerbot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "The sound must be a number.");
             return;
         }
-        if (queue.containsKey(name))
-            ba.sendSmartPrivateMessage(name, queue.get(name).setSound(sound));
+        if (queue.containsKey(name.toLowerCase()))
+            ba.sendSmartPrivateMessage(name, queue.get(name.toLowerCase()).setSound(sound));
         else
             ba.sendSmartPrivateMessage(name, "You must have claimed or been granted an advert before you can set its sound.");
     }
@@ -758,8 +762,8 @@ public class zonerbot extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "Sound: " + advert.getSound());
             } else
                 ba.sendSmartPrivateMessage(name, adverter + " does not have an advert.");
-        } else if (queue.containsKey(name)) {
-            Advert advert = queue.get(name);
+        } else if (queue.containsKey(name.toLowerCase())) {
+            Advert advert = queue.get(name.toLowerCase());
             ba.sendSmartPrivateMessage(name, advert.getMessage());
             ba.sendSmartPrivateMessage(name, "Sound: " + advert.getSound());
         } else
@@ -770,8 +774,8 @@ public class zonerbot extends SubspaceBot {
     private void cmd_approve(String name, String cmd) {
         if (cmd.length() > 8 && cmd.contains(" ")) {
             String zh = cmd.substring(cmd.indexOf(" ") + 1);
-            if (queue.containsKey(zh))
-                ba.sendSmartPrivateMessage(name, queue.get(zh).approve());
+            if (queue.containsKey(zh.toLowerCase()))
+                ba.sendSmartPrivateMessage(name, queue.get(zh.toLowerCase()).approve());
             else
                 ba.sendSmartPrivateMessage(name, "No advert found for " + zh + ".");
         } else if (cmd.length() == 8) {
@@ -787,12 +791,14 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !advert command which executes the current advert if possible **/
-    private void cmd_advert(String name, String cmd) {
-        if (queue.containsKey(name)) {
-            if (queue.indexOfKey(name) > 0)
-                sendQueuePosition(name);
+    private void cmd_advert(String name, String cmd) 
+    {
+    	String namelc = name.toLowerCase();
+        if (queue.containsKey(namelc)) {
+            if (queue.indexOfKey(namelc) > 0)
+                sendQueuePosition(namelc);
             else if (advertTimer != null && !advertTimer.hasExpired())
-                sendQueuePosition(name);
+                sendQueuePosition(namelc);
             else {
                 Advert advert = queue.firstValue();
 
@@ -853,7 +859,7 @@ public class zonerbot extends SubspaceBot {
             cmd = cmd.substring(10);
         else
             cmd = null;
-        if (queue.containsKey(name))
+        if (queue.containsKey(name.toLowerCase()))
             ba.sendSmartPrivateMessage(name, "The initial advert must be used before readvert can be used.");
         else if (usedAdverts.isEmpty())
             ba.sendSmartPrivateMessage(name, "An advert must be claimed and used before a readvert can be used.");
@@ -879,11 +885,13 @@ public class zonerbot extends SubspaceBot {
     }
 
     /** Handles the !renew command which if the advert hasn't been zoned or expired, prolongs the expire time **/
-    private void cmd_renew(String name) {
-        if (!queue.containsKey(name))
+    private void cmd_renew(String name) 
+    {
+    	String namelc = name.toLowerCase();
+        if (!queue.containsKey(namelc))
             ba.sendSmartPrivateMessage(name, "There is no advert available for renewal.");
-        else if (queue.indexOfKey(name) != 0)
-            sendQueuePosition(name);
+        else if (queue.indexOfKey(namelc) != 0)
+            sendQueuePosition(namelc);
         else if (advertTimer != null && !advertTimer.hasExpired())
             sendQueuePosition(0);
         else if (expireTimer != null && !expireTimer.hasExpired()) {
@@ -1053,7 +1061,7 @@ public class zonerbot extends SubspaceBot {
     /** Helper removes the current advert from the queue due to a missing adverter **/
     private void removeMissing() {
         debug("Removing Advert of offline person");
-        if (queue.indexOfKey(currentUser) != 0)
+        if (queue.indexOfKey(currentUser.toLowerCase()) != 0)
             return;
         if (expireTimer != null)
             expireTimer.endNow();
