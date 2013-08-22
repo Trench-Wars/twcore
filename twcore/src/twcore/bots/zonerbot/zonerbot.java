@@ -160,7 +160,7 @@ public class zonerbot extends SubspaceBot {
                 else if (msg.toLowerCase().startsWith("!arenas"))
                 	cmd_arenas(name, msg);
             }
-            if (oplist.isHighmod(name) || trainers.contains(name)) {
+            if (oplist.isHighmod(name) || trainers.contains(name.toLowerCase())) {
                 if (msg.toLowerCase().startsWith("!grant "))
                     cmd_grant(name, msg);
                 else if (msg.toLowerCase().startsWith("!approve"))
@@ -289,7 +289,7 @@ public class zonerbot extends SubspaceBot {
                 "| !arenas                - Shows a ZH what arenas are available or shows a specified ZH         |",
                 "| !arenas all            - Shows all arenas assigned to all ZHs.                                |"};
         ba.smartPrivateMessageSpam(name, msg);
-        if (trainers.contains(name) || oplist.isSmod(name)) {
+        if (trainers.contains(name.toLowerCase()) || oplist.isSmod(name)) {
             msg = new String[] { "+-- ZonerBot Trainer Commands ------------------------------------------------------------------+",
                     "| !grant <name>          - Grants an advert to a ZH allowing them to do a zoner once approved   |",
                     "| !view <name>           - Views the current advert message and sound of <name>                 |",
