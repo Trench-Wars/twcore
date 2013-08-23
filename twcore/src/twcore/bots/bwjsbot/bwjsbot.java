@@ -1917,6 +1917,9 @@ public class bwjsbot extends SubspaceBot {
     private void gameOver() {
         int winningFreq;
         
+        // Additional update to prevent the 'lag' at the end of a basing game
+        updateScoreboard();
+        
         state.setState(BWJSState.GAME_OVER);
         winningFreq = -1;
         
@@ -6020,12 +6023,9 @@ public class bwjsbot extends SubspaceBot {
                 }
             }
             
-            updateScoreboard();
-            
             if (cfg.getTimeTarget() != 0) {
                 for (BWJSTeam t : team) {
                     t.addTimePoint();
-                    
                     if (t.getFlagTime() == (cfg.getTimeTarget() * 60)) {
                         gameOver();
                     }
@@ -6039,6 +6039,8 @@ public class bwjsbot extends SubspaceBot {
             if (timeLeft <= 0) {
                 gameOver();
             }
+            
+            updateScoreboard();
         }
         
         private void doGameOver() {
