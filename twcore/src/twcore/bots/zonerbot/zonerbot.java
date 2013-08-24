@@ -21,6 +21,7 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.util.Tools;
+import twcore.core.util.Vectoid;
 import twcore.core.util.ipc.IPCMessage;
 
 /**
