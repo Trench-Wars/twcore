@@ -57,7 +57,7 @@ public class ModuleHandler
                 loader.reinstantiate();
             Module module = (Module) loader.loadClass("twcore.bots." + moduleGroup + "." + moduleGroup + moduleName).newInstance();
             module.initializeModule(m_botAction);
-            moduleList.put(moduleName, module);
+            moduleList.put(lowerName, module);
         }
         catch(Exception e)
         {
@@ -74,10 +74,11 @@ public class ModuleHandler
 
     public void unloadModule(String moduleName)
     {
-        if(!moduleList.containsKey(moduleName))
+    	String lowerName = moduleName.toLowerCase();
+        if(!moduleList.containsKey(lowerName))
             throw new IllegalArgumentException("ERROR: Module: " + moduleName + " is not loaded.");
-        moduleList.get(moduleName).cancel();
-        moduleList.remove(moduleName);
+        moduleList.get(lowerName).cancel();
+        moduleList.remove(lowerName);
     }
 
     /**
