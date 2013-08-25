@@ -450,7 +450,7 @@ public class ElimPlayer {
         
         public void returned() {
             bounds = null;
-            ba.sendPrivateMessage(name, "Thank you for returning to base!");
+            ba.sendPrivateMessage(name, "Thank you for returning to base! NOTE: Leaving again will result in automatic disqualification.");
             ba.cancelTask(this);
         }
     }
