@@ -450,6 +450,7 @@ public class ElimPlayer {
         
         public void returned() {
             bounds = null;
+            status = Status.IN;
             ba.sendPrivateMessage(name, "Thank you for returning to base!");
             ba.cancelTask(this);
         }
