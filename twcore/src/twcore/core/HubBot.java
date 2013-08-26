@@ -1137,10 +1137,10 @@ public class HubBot extends SubspaceBot {
                 m_botAction.remotePrivateMessageSpam(name, twcore);
                 }
             
-            else if(botname.equals("TWCore-Events")){
+            else if(botname.equals("TWCore-Event")){
                 String[] twcoreEvents = {
                         "------------------------------------",
-                        "========= TWCore-Events ============",
+                        "========== TWCore-Event ============",
                         " ",
                         "List of bots that can be spawned:",
                         " ",
