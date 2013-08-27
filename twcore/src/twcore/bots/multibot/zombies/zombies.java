@@ -1,7 +1,9 @@
 package twcore.bots.multibot.zombies;
 
-import java.util.TreeSet;
+import java.util.HashSet;
 import java.util.ArrayList;
+
+import org.omg.CORBA.REBIND;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
@@ -28,8 +30,8 @@ public class zombies extends MultiModule {
 		events.request(this, EventRequester.PLAYER_DEATH);
 	}
 
-    TreeSet <Integer>m_srcship = new TreeSet<Integer>();
-    TreeSet <Integer>m_rbkship = new TreeSet<Integer>();
+    HashSet <Integer>m_srcship = new HashSet<Integer>();
+    HashSet <Integer>m_rbkship = new HashSet<Integer>();
     int m_humanfreq;
     int m_killerShip;
     int m_zombiefreq;
@@ -38,12 +40,10 @@ public class zombies extends MultiModule {
     int m_lives;
     int m_rebirthkills;
     StringBag killmsgs;
-    public boolean isRunning = false;
-    public boolean modeSet = false;
+    boolean isRunning = false;
+    boolean modeSet = false;
     boolean killerShipSet = false;
     boolean rebK = false;
-    public boolean debug = true;
-    public String debugger = "K A N E";
 
     public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives, int rebirthkills ){
         m_humanfreq = srcfreq;
@@ -57,8 +57,6 @@ public class zombies extends MultiModule {
         else
         	rebK = false;
         modeSet = true;
-        m_botAction.sendPrivateMessage(debugger, "Never give up. Never surrender - BuzzLightYear" );
-        m_botAction.sendPrivateMessage(debugger, "HFreq: " + m_humanfreq + " HShip: " + m_srcship.size() + "ZFreq: " + m_zombiefreq + "ZShip: " + m_zombieship + "Lives: " + m_lives + "RBK: " + m_rebirthkills );
     }
 
     public void addShip(int srcship, String name)
@@ -177,17 +175,6 @@ public class zombies extends MultiModule {
     }
 
     public void handleCommand( String name, String message ){
-        
-        if(message.startsWith("!debug ") && opList.isDeveloper(name.toLowerCase())) {
-            if (!message.substring(7).isEmpty()) {
-                debugger = message.substring(7);
-                m_botAction.sendRemotePrivateMessage(debugger, "You are now set to the debugger for zombies");
-                debug = true;
-            }
-        } else if (message.equals("!debug")) {
-            m_botAction.sendRemotePrivateMessage(debugger, "debugging turned off");
-        }
-        
         if( message.startsWith( "!list" )){
             listKillMessages( name );
         } else if( message.startsWith( "!add " )){
@@ -284,17 +271,12 @@ public class zombies extends MultiModule {
         if( modeSet && isRunning ){
             Player p = m_botAction.getPlayer( event.getKilleeID() );
             Player p2 = m_botAction.getPlayer( event.getKillerID() );
-            if( p == null || p2 == null ) {
-                    m_botAction.sendRemotePrivateMessage(debugger, "Kilee or Killer player object is null");                    
+            if( p == null || p2 == null )
                 return;
-            }
             try {
                 if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq && p2.getFrequency() != m_humanfreq){
                     m_botAction.setShip( event.getKilleeID(), m_zombieship );
                     m_botAction.setFreq( event.getKilleeID(), m_zombiefreq );
-                    
-                        m_botAction.sendRemotePrivateMessage(debugger, "Zombies: " + p2.getPlayerName() + " has killed " + p.getPlayerName() + " (" + p.getLosses() + ") ");
-                    
                     if(rebK)
                     	m_botAction.scoreReset( event.getKilleeID() );
                     String killmsg = killmsgs.toString();
@@ -340,9 +322,7 @@ public class zombies extends MultiModule {
                     m_botAction.scoreReset( p2.getPlayerName() );
                 }
             } catch (Exception e) {
-                if (debug)
-                    m_botAction.sendRemotePrivateMessage(debugger, "Zombies: Error in switching ships:" + e);            
-                return;
+
             }
         }
     }
