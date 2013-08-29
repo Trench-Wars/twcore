@@ -563,6 +563,7 @@ public class welcomebot extends SubspaceBot {
     }
     
     private void cmd_alert(String name) {
+        if (!trusted.containsKey(name)) return;
         boolean b = !trusted.get(name);
         trusted.put(name, b);
         ba.sendSmartPrivateMessage(name, "New player alerts: " + (b ? "ENABLED" : "DISABLED"));
