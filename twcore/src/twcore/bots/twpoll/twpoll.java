@@ -60,7 +60,6 @@ public class twpoll extends SubspaceBot {
 
 	public BotSettings m_botSettings;
 
-
     public twpoll(BotAction botAction) {
         super(botAction);
         requestEvents();
@@ -76,7 +75,6 @@ public class twpoll extends SubspaceBot {
         players = new Vector<String>();
         ignore = new TreeSet<String>();
     }    
-
 
     /**
      * This method requests event information from any events your bot wishes
@@ -116,7 +114,6 @@ public class twpoll extends SubspaceBot {
 		if (!players.contains(event.getPlayerName()))
 			players.add(event.getPlayerName());
     }
-
    
     public void handleEvent(ArenaList event) {
     	String[] arenaNames = event.getArenaNames();
@@ -189,7 +186,7 @@ public class twpoll extends SubspaceBot {
             } else if (message.startsWith("!about")) {
                 cmd_about(name);
             } else if (message.startsWith("!vote ") && message.substring(6) != null) {
-                cmd_vote(name, message.substring(6));
+                cmd_vote(name, message.substring(6));                
             }
            
            if (m_botAction.getOperatorList().isER(name)) {
@@ -223,9 +220,9 @@ public class twpoll extends SubspaceBot {
         PlayerData p = playerdata.get(getUserID(name));
         int[] window = p.getWindow();
         
-        if (window[0] == 2) {
+        if (window[0] == 2 || window[0] == 1) {
             showPollsMain(name, false);
-        } else if (window[0] == 5) {
+        } else if (window[0] == 5 || window[0] == 4) {
             showUpdatesMain(name, false);
         }
     }
@@ -314,7 +311,6 @@ public class twpoll extends SubspaceBot {
         vote(window[1], name, vote);
     }
     
-
     private void loadPolls() {
         try {
             ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
@@ -407,9 +403,6 @@ public class twpoll extends SubspaceBot {
 
     }
 
-   
-    
-
     public int getUserID(String playerName) {
 
     	// Cache system
@@ -458,7 +451,6 @@ public class twpoll extends SubspaceBot {
 
     }
 
-
     public int getCounts(String playerName, Boolean unread, int type) {
         //TODO count read and unread for polls and updates
         int count = 0;
@@ -486,8 +478,6 @@ public class twpoll extends SubspaceBot {
         }  
         return count;
     }
-
-   
     
     /**
      * Formating the help text using a method. Do I look like a designer to you?
@@ -510,10 +500,10 @@ public class twpoll extends SubspaceBot {
                 outputString = Tools.formatString(input, 33, " ") + " |"; //Help Menu Right Text
                 break;
             case 3:
-                outputString = Tools.centerString(input, 50, '-'); //Footer
+                outputString = Tools.centerString(input, 50, '-');  //Footer
                 break;
             case 4:
-                outputString = Tools.formatString(input, 5, " ");
+                outputString = Tools.formatString(input, 5, " ");                
                 break;
         }
         return outputString;
@@ -558,7 +548,6 @@ public class twpoll extends SubspaceBot {
                     m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
     	}
     }
-    
 
     private void showNextPoll(String playerName) {
 
@@ -653,7 +642,6 @@ public class twpoll extends SubspaceBot {
             }
     }
 
-
     private void showUpdatesMain(String name, Boolean showNew) {
         ArrayList<String> intro = new ArrayList();
         ArrayList<String> spam = new ArrayList();
@@ -663,13 +651,27 @@ public class twpoll extends SubspaceBot {
             p.setWindow(5, 0);            
 
             if (showNew) {
-                intro.add("[New Updates]");
+
                 int oldupdates = 0;
                 if (!p.oldUpdates.isEmpty())
-                    oldupdates = p.oldUpdates.size();                
+                    oldupdates = p.oldUpdates.size();
+                if (oldupdates != 0)
+                    intro.add("");
+                else
+                    intro.add("Date  #  Update   [" + oldupdates + " Update(s) not shown]");
+                
                 for(int updateID : updates.keySet()) 
                     if (!p.oldUpdates.contains(updateID)) {
-                        spam.add(updates.get(updateID).getStartingDateString() + "  " + updates.get(updateID).getUpdateString(1));
+                        String msg = updates.get(updateID).getUpdateString(1);
+                        int totalLength = msg.length();
+                        
+                        for (int i=0;i <= (totalLength / 20) - 1;i++) {
+                            if (i == 0) {
+                                spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*20),( i*20+20)));
+                            } else
+                            spam.add(Tools.rightString(msg.substring((i*20),( i*20+20)), 25, ' '));
+                        }
+                        spam.add(Tools.rightString(msg.substring((totalLength / 20) * 20, totalLength - (totalLength / 20) * 20), ' '));                      
                         p.addEntry(updateID, 2, "none");
                     }
                 
@@ -679,29 +681,33 @@ public class twpoll extends SubspaceBot {
                     return;
                 }        
                 spam.add(" ");
-                if (oldupdates != 0)
-                    spam.add("[" + oldupdates + " Update(s) not shown]");
                 spam.add(" ");
-                spam.add("View detailed information or comment on an update by selecting it.");
-                spam.add("To SELECT an update, use !view <number>. To VIEW ALL updates, use !viewall.");
-                spam.add("To RETURN home, use !home");
+                spam.add("Use !view <number> for more details on a specific update.");
+                spam.add("Use !viewall to show previously read updates.");
                 intro.addAll(spam);                
                 m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
             } else {
-                intro.add("[All Updates]");
-                
+                intro.add("Date  #  Update");                
                 for(int updateID : updates.keySet()) {
-                    spam.add(updates.get(updateID).getStartingDateString() + "  " +updates.get(updateID).getUpdateString(1));
-                }
+                    String msg = updates.get(updateID).getUpdateString(1);
+                    int totalLength = msg.length();
+                    
+                    for (int i=0;i <= (totalLength / 20) - 1;i++) {
+                        if (i == 0) {
+                            spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*20),( i*20+20)));
+                        } else
+                        spam.add(Tools.rightString(msg.substring((i*20),( i*20+20)), 25, ' '));
+                    }
+                    spam.add(Tools.rightString(msg.substring((totalLength / 20) * 20, totalLength - (totalLength / 20) * 20), ' '));
+                }  
                 
                 if (spam.isEmpty()) {
                     m_botAction.sendSmartPrivateMessage(name, "No updates avaliable");
                     return;
                 }
                 spam.add(" ");
-                spam.add("View detailed information or comment on an update by selecting it.");
-                spam.add("To SELECT an update, use !view <number>.");
-                spam.add("To RETURN home, use !home");
+                spam.add(" ");
+                spam.add("Use !view <number> for more details on a specific update.");
                 intro.addAll(spam);                
                 m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
             }
@@ -716,19 +722,19 @@ public class twpoll extends SubspaceBot {
         p.setWindow(7, updateID);
         ArrayList<String> spam = new ArrayList();
         
-                spam.add("[Update #" + updateID + "]");
+                spam.add("Update #" + updateID);
                 spam.add("  " +updates.get(updateID).getUpdateString(2));
                 spam.add(" ");                
                 
                 if (p.isCommented(updateID,2)) {
                     spam.add("Your comments: " + p.getComment(updateID, 2));
                     spam.add(" ");
-                    spam.add("To REPLACE a comment, use !com <your new comment>");
+                    spam.add("Replace your comment on this with !com <comment>.");
                 } else {
                     spam.add(" ");
-                    spam.add("To COMMENT on this, use !com <your comment>");
+                    spam.add("Leave a comment on this with !com <comment>.");
                 }
-                    spam.add("To RETURN HOME, use !home. To go BACK a menu, use !back");                                
+                    spam.add("Reply with !back to go back to Update List.");                                
                     m_botAction.smartPrivateMessageSpam(name, spam.toArray(new String[spam.size()]));
     }
 
