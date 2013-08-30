@@ -671,7 +671,7 @@ public class twpoll extends SubspaceBot {
                             } else
                             spam.add(Tools.rightString(msg.substring((i*20),( i*20+20)), 25, ' '));
                         }
-                        spam.add(Tools.rightString(msg.substring((totalLength / 20) * 20, totalLength - (totalLength / 20) * 20), ' '));                      
+                        spam.add(Tools.rightString(msg.substring((totalLength / 20) * 20, totalLength),totalLength - ((totalLength / 20) * 20), ' '));                   
                         p.addEntry(updateID, 2, "none");
                     }
                 
@@ -698,9 +698,10 @@ public class twpoll extends SubspaceBot {
                         } else
                         spam.add(Tools.rightString(msg.substring((i*20),( i*20+20)), 25, ' '));
                     }
-                    spam.add(Tools.rightString(msg.substring((totalLength / 20) * 20, totalLength - (totalLength / 20) * 20), ' '));
+                    spam.add(Tools.rightString(msg.substring((totalLength / 20) * 20, totalLength),totalLength - ((totalLength / 20) * 20), ' '));
+                    
                 }  
-                
+             
                 if (spam.isEmpty()) {
                     m_botAction.sendSmartPrivateMessage(name, "No updates avaliable");
                     return;
