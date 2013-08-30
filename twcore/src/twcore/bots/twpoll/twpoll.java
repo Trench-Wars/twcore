@@ -667,7 +667,7 @@ public class twpoll extends SubspaceBot {
                         
                         for (int i=0;i <= (totalLength / 51) - 1;i++) {
                             if (i == 0) {
-                                spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*48),( i*48+48)));
+                                spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*51),( i*51+51)));
                             } else
                             spam.add(Tools.rightString(msg.substring((i*51),( i*51+51)), 56, ' '));
                         }
@@ -694,7 +694,7 @@ public class twpoll extends SubspaceBot {
                     
                     for (int i=0;i <= (totalLength / 51) - 1;i++) {
                         if (i == 0) {
-                            spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*48),( i*48+48)));
+                            spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*51),( i*51+51)));
                         } else
                         spam.add(Tools.rightString(msg.substring((i*51),( i*51+51)), 56, ' '));
                     }
