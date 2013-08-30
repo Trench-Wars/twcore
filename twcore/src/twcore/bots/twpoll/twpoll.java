@@ -658,7 +658,7 @@ public class twpoll extends SubspaceBot {
                 if (oldupdates != 0)
                     intro.add("");
                 else
-                    intro.add("Date  #  Update   [" + oldupdates + " Update(s) not shown]");
+                    intro.add("Date    #  Update   [" + oldupdates + " Update(s) not shown]");
                 
                 for(int updateID : updates.keySet()) 
                     if (!p.oldUpdates.contains(updateID)) {
@@ -670,10 +670,10 @@ public class twpoll extends SubspaceBot {
                                 spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*51),( i*51+51)));
                             } else
                             spam.add(Tools.rightString(msg.substring((i*51),( i*51+51)), 56, ' '));
-                        }
-                        spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51), ' '));                   
-                        p.addEntry(updateID, 2, "none");
-                    }
+                        }    
+                        spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51) +8, ' '));
+                        p.addEntry(updateID, 2, "none");           
+                    }                      
                 
                 if (spam.isEmpty()) {
                     intro.clear();
@@ -687,7 +687,7 @@ public class twpoll extends SubspaceBot {
                 intro.addAll(spam);                
                 m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
             } else {
-                intro.add("Date  #  Update");                
+                intro.add("Date    #  Update");                
                 for(int updateID : updates.keySet()) {
                     String msg = updates.get(updateID).getUpdateString(1);
                     int totalLength = msg.length();
@@ -697,9 +697,8 @@ public class twpoll extends SubspaceBot {
                             spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*51),( i*51+51)));
                         } else
                         spam.add(Tools.rightString(msg.substring((i*51),( i*51+51)), 56, ' '));
-                    }
-                    spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51), ' '));
-                    
+                    }    
+                    spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51) +8, ' '));     
                 }  
              
                 if (spam.isEmpty()) {
