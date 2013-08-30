@@ -357,7 +357,7 @@ public class twpoll extends SubspaceBot {
                     "SELECT pv.fnPollID, fcOption, fnUserID, pv.fnPollOptionID " +
                     "FROM tblPoll__PollVote AS pv " +
                     "JOIN tblPoll__PollOptions AS po ON pv.fnPollOptionID = po.fnPollOptionID " +
-                    "WHERE fnPollID IN (" + pollList + ")"
+                    "WHERE pv.fnPollID IN (" + pollList + ")"
                 );
 
                 while(rs.next()) {
