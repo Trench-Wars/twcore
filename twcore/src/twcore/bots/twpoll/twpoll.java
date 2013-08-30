@@ -665,13 +665,13 @@ public class twpoll extends SubspaceBot {
                         String msg = updates.get(updateID).getUpdateString(1);
                         int totalLength = msg.length();
                         
-                        for (int i=0;i <= (totalLength / 48) - 1;i++) {
+                        for (int i=0;i <= (totalLength / 51) - 1;i++) {
                             if (i == 0) {
                                 spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*48),( i*48+48)));
                             } else
-                            spam.add(Tools.rightString(msg.substring((i*48),( i*48+48)), 48, ' '));
+                            spam.add(Tools.rightString(msg.substring((i*51),( i*51+51)), 56, ' '));
                         }
-                        spam.add(Tools.rightString(msg.substring((totalLength / 48) * 48, totalLength),totalLength - ((totalLength / 48) * 48), ' '));                   
+                        spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51), ' '));                   
                         p.addEntry(updateID, 2, "none");
                     }
                 
@@ -692,13 +692,13 @@ public class twpoll extends SubspaceBot {
                     String msg = updates.get(updateID).getUpdateString(1);
                     int totalLength = msg.length();
                     
-                    for (int i=0;i <= (totalLength / 20) - 1;i++) {
+                    for (int i=0;i <= (totalLength / 51) - 1;i++) {
                         if (i == 0) {
-                            spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*20),( i*20+20)));
+                            spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*48),( i*48+48)));
                         } else
-                        spam.add(Tools.rightString(msg.substring((i*20),( i*20+20)), 25, ' '));
+                        spam.add(Tools.rightString(msg.substring((i*51),( i*51+51)), 56, ' '));
                     }
-                    spam.add(Tools.rightString(msg.substring((totalLength / 20) * 20, totalLength),totalLength - ((totalLength / 20) * 20), ' '));
+                    spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51), ' '));
                     
                 }  
              
