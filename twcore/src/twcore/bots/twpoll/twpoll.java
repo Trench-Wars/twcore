@@ -646,62 +646,70 @@ public class twpoll extends SubspaceBot {
         ArrayList<String> intro = new ArrayList();
         ArrayList<String> spam = new ArrayList();
         PlayerData p = playerdata.get(getUserID(name));
+        String msg = "empty";
+        int totalLength = -1;
+        int totalSections = -1;
         
         if (p != null) {
             p.setWindow(5, 0);            
 
             if (showNew) {
-
                 int oldupdates = 0;
+                
                 if (!p.oldUpdates.isEmpty())
-                    oldupdates = p.oldUpdates.size();
+                    oldupdates = p.oldUpdates.size();                
                 if (oldupdates != 0)
-                    intro.add("");
+                    intro.add("Date    #  Update");
                 else
                     intro.add("Date    #  Update   [" + oldupdates + " Update(s) not shown]");
                 
-                for(int updateID : updates.keySet()) 
+                for(int updateID : updates.keySet()) {
                     if (!p.oldUpdates.contains(updateID)) {
-                        String msg = updates.get(updateID).getUpdateString(1);
-                        int totalLength = msg.length();
+                        msg = updates.get(updateID).getUpdateString(1);
+                        totalLength = msg.length();
+                        totalSections = totalLength / 60;
                         
-                        for (int i=0;i <= (totalLength / 51);i++) {
-                            if (i == 0) 
-                                spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*51),( i*51+51)));
-                            else if (i==totalLength / 51)
-                                spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51) +11, ' '));
+                        for(int i=0;i <= totalSections;i++) {
+                            if (i == 0) {
+                                spam.add( "" + updates.get(updateID).getStartingDateString() + "  " + msg.substring((i*60), ( i*60+60)) );
+                            } else {
+                                spam.add(Tools.rightString(msg.substring(i * 60, totalLength),totalLength - ((i*60)+9), ' '));
+                            }
                         }
-
                         p.addEntry(updateID, 2, "none");           
-                    }                      
-                
+                    }             
+                }                
                 if (spam.isEmpty()) {
                     intro.clear();
                     showUpdatesMain(name,false);
                     return;
-                }        
+                }                 
                 spam.add(" ");
                 spam.add(" ");
                 spam.add("Use !view <number> for more details on a specific update.");
                 spam.add("Use !viewall to show previously read updates.");
                 intro.addAll(spam);                
                 m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
+                
             } else {
                 intro.add("Date    #  Update");                
                 for(int updateID : updates.keySet()) {
-                    String msg = updates.get(updateID).getUpdateString(1);
-                    int totalLength = msg.length();
-                    
-                    for (int i=0;i <= (totalLength / 51);i++) {
-                        if (i == 0) 
-                            spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*51),( i*51+51)));
-                        else if (i==totalLength / 51)
-                            spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51) +11, ' '));
+                     msg = updates.get(updateID).getUpdateString(1);
+                     totalLength = msg.length();
+                     totalSections = totalLength / 60;
+                     
+                    for(int i=0;i <= totalSections;i++) {
+                        if (i == 0) {
+                            spam.add( "" + updates.get(updateID).getStartingDateString() + "  " + msg.substring((i*60), ( i*60+60)) );
+                        } else {
+                            spam.add(Tools.rightString(msg.substring(i * 60, totalLength),totalLength - ((i*60)+9), ' '));
+                        }
                     }
                 }
              
                 if (spam.isEmpty()) {
                     m_botAction.sendSmartPrivateMessage(name, "No updates avaliable");
+                    intro.clear();
                     return;
                 }
                 spam.add(" ");
