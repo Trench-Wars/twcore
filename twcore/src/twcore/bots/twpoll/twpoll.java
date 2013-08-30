@@ -692,14 +692,14 @@ public class twpoll extends SubspaceBot {
                     String msg = updates.get(updateID).getUpdateString(1);
                     int totalLength = msg.length();
                     
-                    for (int i=0;i <= (totalLength / 51) - 1;i++) {
+                    for (int i=0;i <= (totalLength / 51);i++) {
                         if (i == 0) {
                             spam.add(updates.get(updateID).getStartingDateString() + "  " +msg.substring((i*51),( i*51+51)));
                         } else
                         spam.add(Tools.rightString(msg.substring((i*51),( i*51+51)), 56, ' '));
                     }    
-                    spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51) +8, ' '));     
-                }  
+                    spam.add(Tools.rightString(msg.substring((totalLength / 51) * 51, totalLength),totalLength - ((totalLength / 51) * 51) +11, ' '));
+                }
              
                 if (spam.isEmpty()) {
                     m_botAction.sendSmartPrivateMessage(name, "No updates avaliable");
