@@ -220,9 +220,9 @@ public class twpoll extends SubspaceBot {
         PlayerData p = playerdata.get(getUserID(name));
         int[] window = p.getWindow();
         
-        if (window[0] == 2 || window[0] == 1) {
+        if (window[0] >= 1 && window[0] <= 4) {
             showPollsMain(name, false);
-        } else if (window[0] == 5 || window[0] == 4) {
+        } else if (window[0] >= 5 && window[0] <= 8) {
             showUpdatesMain(name, false);
         }
     }
@@ -237,9 +237,9 @@ public class twpoll extends SubspaceBot {
         else 
             return;
         
-        if ((window[0] == 1 || window[0] == 2) && polls.containsKey(entryID)) {
+        if ((window[0] >= 1 && window[0] <= 4) && polls.containsKey(entryID)) {
             showPoll(name, entryID);
-        } else if ((window[0] == 5 || window[0] == 6) && updates.containsKey(entryID)) {
+        } else if ((window[0] >= 5 && window[0] <= 8) && updates.containsKey(entryID)) {
             showUpdate(name, entryID);
         } else
             m_botAction.sendSmartPrivateMessage(name, "Invalid selection please try again");
@@ -730,7 +730,7 @@ public class twpoll extends SubspaceBot {
         ArrayList<String> spam = new ArrayList();
         
                 spam.add("Update #" + updateID);
-                spam.add("  " +updates.get(updateID).getUpdateString(2));
+                spam.add(" " +updates.get(updateID).getUpdateString(2));
                 spam.add(" ");                
                 
                 if (p.isCommented(updateID,2)) {
