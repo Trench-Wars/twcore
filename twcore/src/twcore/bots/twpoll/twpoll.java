@@ -519,9 +519,9 @@ public class twpoll extends SubspaceBot {
     		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at the moment.");
     	} else {
         Poll poll = polls.get(pollId);
-                if (poll.pvotes.containsKey(userId))
-                    spam.add("[Poll #" + pollId + "]" + "   Your Vote: " + poll.options.get(poll.pvotes.get(userId).getOptionID() - 1).option);
-                else
+              //  if (poll.pvotes.containsKey(userId))
+             //       spam.add("[Poll #" + pollId + "]" + "   Your Vote: " + poll.options.get(poll.pvotes.get(userId).getOptionID() - 1).option);
+            //    else
                     spam.add("[Poll #" + pollId + "]");
                 spam.add("(" + poll.id + ") " + poll.question);
                 int i=0;
