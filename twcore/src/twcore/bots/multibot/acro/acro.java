@@ -500,7 +500,7 @@ public class acro extends MultiModule {
             else if (x > 26 && x < 30)
                 acro += "J ";
             else if (x > 29 && x < 33)
-                acro += "K ";  //third as likely
+                acro += "K ";  
             else if (x > 32 && x < 36)
                 acro += "L ";
             else if (x > 35 && x < 39)
@@ -512,7 +512,7 @@ public class acro extends MultiModule {
             else if (x > 44 && x < 48)
                 acro += "P ";
             else if (x > 47 && x < 49)
-                acro += "Q ";
+                acro += "Q ";//third as likely
             else if (x > 48 && x < 52)
                 acro += "R ";
             else if (x > 51 && x < 55)
