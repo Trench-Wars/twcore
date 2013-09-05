@@ -103,9 +103,9 @@ public class acro extends MultiModule {
         } else if (lower.startsWith("!changes")) {
             doShowChanges(name, message);
         } else if (lower.startsWith("!ignore")) {
-            doAddIgnore(name, message);
+            doAddIgnore(name, message.substring(8));
         } else if (lower.startsWith("!unignore")) {
-            doRemoveIgnore(name, message);
+            doRemoveIgnore(name, message.substring(10));
         } else if (lower.startsWith("!listignore")) {
             doListIgnore(name, message);
         } else if (gameState == 1){
@@ -554,7 +554,6 @@ public class acro extends MultiModule {
 
     public void doRemoveIgnore(String name, String message) {
         if (m_botAction.getOperatorList().isER(name)) {
-
             if (message == null) {
                 m_botAction.sendSmartPrivateMessage(name, "Invalid Entry. Please try again.");
             } else {
