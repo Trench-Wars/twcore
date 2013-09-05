@@ -499,19 +499,19 @@ public class acro extends MultiModule {
                 acro += "I ";
             else if (x > 26 && x < 30)
                 acro += "J ";
-            else if (x > 29 && x < 31)
+            else if (x > 29 && x < 33)
                 acro += "K ";  //third as likely
-            else if (x > 30 && x < 34)
+            else if (x > 32 && x < 36)
                 acro += "L ";
-            else if (x > 33 && x < 37)
+            else if (x > 35 && x < 39)
                 acro += "M ";
-            else if (x > 36 && x < 40)
+            else if (x > 38 && x < 42)
                 acro += "N ";
-            else if (x > 39 && x < 43)
+            else if (x > 41 && x < 45)
                 acro += "O ";
-            else if (x > 42 && x < 46)
+            else if (x > 44 && x < 48)
                 acro += "P ";
-            else if (x > 45 && x < 49)
+            else if (x > 47 && x < 49)
                 acro += "Q ";
             else if (x > 48 && x < 52)
                 acro += "R ";
@@ -527,9 +527,9 @@ public class acro extends MultiModule {
                 acro += "W ";
             else if (x > 66 && x < 68)
                 acro += "X "; //third as likely
-            else if (x > 67 && x < 71)
+            else if (x > 67 && x < 69)
                 acro += "Y ";
-            else if (x > 70 && x < 72)
+            else if (x > 68 && x < 70)
                 acro += "Z "; //third as likely
         }
         curAcro = acro;
