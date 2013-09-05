@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimerTask;
+import java.util.TreeMap;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
@@ -35,14 +36,41 @@ public class acro extends MultiModule {
     HashMap<String, Integer> playerScores = new HashMap<String, Integer>();
     HashMap<String, Integer> playerOrder = new HashMap<String, Integer>();
     HashMap<String, Integer> acroDisplay = new HashMap<String, Integer>();
+    TreeMap<Integer, Character> chanceTable = new TreeMap<Integer, Character>();    // Lookup table for letter generation.
     StringBag playerNames = new StringBag();
     int votes[];
     Spy racismSpy;
 
+    /**
+     * This table contains the relative weights of each letter. As long as the total value of the supplied numbers
+     * are between 0 and 2,147,483,647 (inclusive), and the individual numbers are whole and positive, then it will work.
+     * Putting a 0 in a field disables the letter.
+     * <p>
+     * Example: (Taken from http://en.wikipedia.org/wiki/Letter_frequency, first letter frequencies.)
+     * <pre>private static final int[] letterWeights = {
+     * //      A,     B,     C,     D,     E,     F,     G,     H,     I,     J,
+     *     11602,  4702,  3511,  2670,  2007,  3779,  1950,  7232,  6286,   597,
+     * //      K,     L,     M,     N,     O,     P,     Q,     R,     S,     T,
+     *       590,  2705,  4374,  2365,  6264,  2545,   173,  1653,  7755, 16671,
+     * //      U,     V,     W,     X,     Y,     Z
+     *      1487,   649,  6753,    37,  1620,    34
+     * };</pre>
+     */
+    private static final int[] letterWeights = {
+    //  A, B, C, D, E, F, G, H, I, J,  
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    //  K, L, M, N, O, P, Q, R, S, T,  
+        3, 3, 3, 3, 3, 3, 1, 3, 4, 3,
+    //  U, V, W, X, Y, Z  
+        3, 2, 3, 1, 1, 1
+    }; 
+    
     @Override
     public void init() {
         generator = new Random();
         racismSpy = new Spy(m_botAction);
+        
+        fillChanceTable();
         
         m_botAction.sendUnfilteredPublicMessage("?chat=games");
     }
@@ -477,61 +505,19 @@ public class acro extends MultiModule {
 
     public String generateAcro(int size) {
         String acro = "";
+        int total = chanceTable.lastKey();  // Total of all the weights in chanceTable.
+        
         for (int i = 0; i < size; i++) {
-            int x = Math.abs(generator.nextInt()) % 72;
-            if (x > -1 && x < 3)
-                acro += "A ";
-            else if (x > 2 && x < 6)
-                acro += "B ";
-            else if (x > 5 && x < 9)
-                acro += "C ";
-            else if (x > 8 && x < 12)
-                acro += "D ";
-            else if (x > 11 && x < 15)
-                acro += "E ";
-            else if (x > 14 && x < 18)
-                acro += "F ";
-            else if (x > 17 && x < 21)
-                acro += "G ";
-            else if (x > 20 && x < 24)
-                acro += "H ";
-            else if (x > 23 && x < 27)
-                acro += "I ";
-            else if (x > 26 && x < 30)
-                acro += "J ";
-            else if (x > 29 && x < 33)
-                acro += "K ";  
-            else if (x > 32 && x < 36)
-                acro += "L ";
-            else if (x > 35 && x < 39)
-                acro += "M ";
-            else if (x > 38 && x < 42)
-                acro += "N ";
-            else if (x > 41 && x < 45)
-                acro += "O ";
-            else if (x > 44 && x < 48)
-                acro += "P ";
-            else if (x > 47 && x < 49)
-                acro += "Q ";//third as likely
-            else if (x > 48 && x < 52)
-                acro += "R ";
-            else if (x > 51 && x < 55)
-                acro += "S ";
-            else if (x > 54 && x < 59)
-                acro += "T ";
-            else if (x > 58 && x < 62)
-                acro += "U ";
-            else if (x > 61 && x < 64)
-                acro += "V "; //two-third as likely
-            else if (x > 63 && x < 67)
-                acro += "W ";
-            else if (x > 66 && x < 68)
-                acro += "X "; //third as likely
-            else if (x > 67 && x < 69)
-                acro += "Y ";
-            else if (x > 68 && x < 70)
-                acro += "Z "; //third as likely
-        }
+            // Generate a number between 1 and total.
+            int x = Math.abs(generator.nextInt(total)) + 1;
+            try {
+                // Grab the letter for which range the randomly generated x is in.
+                acro += (chanceTable.get(chanceTable.ceilingKey(x)) + " ");
+            } catch (Exception e) {
+                // Something went wrong. Try again.
+                i--;
+            }
+        }    
         curAcro = acro;
         return acro;
 
@@ -631,6 +617,26 @@ public class acro extends MultiModule {
         if (event.getMessageType() == Message.PRIVATE_MESSAGE ||
                 event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
             parseMessage(event);
+        }
+    }
+    
+    /**
+     * Fills up the lookup table for the letter generation with the weights defined in {@link #letterWeights}.
+     */
+    private void fillChanceTable() {
+        char counter = 65;  // Letter A.
+        int total = 0;      // Total value of weights up to and including the current letter.
+        
+        // Clears the table.
+        chanceTable.clear();
+        
+        for(int current : letterWeights) {
+            // Skip the letter, if the weight is 0 or less.
+            if(current > 0) {
+                total += current;
+                chanceTable.put(total, counter);
+            }
+            counter++;  // Go to the next letter (A -> B -> C -> ...)
         }
     }
 
