@@ -510,19 +510,14 @@ public class twpoll extends SubspaceBot {
     }
 
     private void showPoll(String playerName, int pollId) {
-
-        
         PlayerData p = playerdata.get(getUserID(playerName));
-        
-        if (p != null) 
         p.setWindow(3, pollId);
+        int userId = getUserID(playerName);
+        ArrayList<String> spam = new ArrayList();
         
-       	if (polls.isEmpty()) {
+             	if (polls.isEmpty()) {
     		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at the moment.");
     	} else {
-
-        ArrayList<String> spam = new ArrayList<String>();
-        int userId = getUserID(playerName);
         Poll poll = polls.get(pollId);
                 if (poll.pvotes.containsKey(userId))
                     spam.add("[Poll #" + pollId + "]" + "   Your Vote: " + poll.options.get(poll.pvotes.get(userId).getOptionID() - 1).option);
@@ -544,7 +539,7 @@ public class twpoll extends SubspaceBot {
                     spam.add(" ");
                     spam.add("To COMMENT on this, use !com <your comment>. To SELECT VOTE OPTION, use !vote <num>");
                 }
-                    spam.add("To RETURN HOME, use !home. To go BACK a menu, use !back");                                
+                    spam.add("To RETURN HOME, use !home. To go BACK a menu, use !back");
                     m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
     	}
     }
