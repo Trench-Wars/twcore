@@ -58,11 +58,11 @@ public class acro extends MultiModule {
      */
     private static final int[] letterWeights = {
     //  A, B, C, D, E, F, G, H, I, J,  
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        10, 10, 10, 10, 10, 10, 10, 10, 10, 6,
     //  K, L, M, N, O, P, Q, R, S, T,  
-        3, 3, 3, 3, 3, 3, 1, 3, 4, 3,
+        3, 10, 10, 10, 7, 10, 1, 10, 10, 10,
     //  U, V, W, X, Y, Z  
-        3, 2, 3, 1, 1, 1
+        5, 3, 10, 1, 3, 1
     }; 
     
     @Override
