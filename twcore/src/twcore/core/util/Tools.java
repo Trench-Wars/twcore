@@ -137,6 +137,8 @@ public final class Tools {
 
         try {
             FileWriter fileWriter = new FileWriter(connectionLogFile, true);
+            //Debugging purposes
+            //fileWriter.write(new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()) + ": ");            
             fileWriter.write(line + "\n");
             fileWriter.close();
         } catch(IOException ioe) {
@@ -608,7 +610,7 @@ public final class Tools {
         } else {
             if( diffTime != 0 ) {
                 if( !response.equals("") )
-                    response += " and ";
+                    response += ", and ";
                 response += diffTime + " second" + (diffTime==1?"":"s");
             } else {
                 if( !response.equals("") )
