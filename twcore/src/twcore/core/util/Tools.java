@@ -8,7 +8,6 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedList;
 
 import twcore.core.OperatorList;
@@ -576,10 +575,8 @@ public final class Tools {
     public static String getTimeDiffString( long dateInMillis, boolean abbrev ) {
     	long diffTime = 0;
 
-    	if(dateInMillis <= new Date().getTime())	// timestamp is in past
-    		diffTime = Math.round((new Date().getTime() - dateInMillis )/1000);
-    	else	// timestamp is in future
-    		diffTime = Math.round((dateInMillis - new Date().getTime())/1000);
+    	// Get the absolute time difference.
+    	diffTime = Math.abs(System.currentTimeMillis() - dateInMillis) / 1000;
 
         String response = new String();
         if(diffTime > (24*60*60)) {   // Days
