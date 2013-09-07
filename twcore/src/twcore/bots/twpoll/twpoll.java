@@ -522,8 +522,8 @@ public class twpoll extends SubspaceBot {
               //  if (poll.pvotes.containsKey(userId))
              //       spam.add("[Poll #" + pollId + "]" + "   Your Vote: " + poll.options.get(poll.pvotes.get(userId).getOptionID() - 1).option);
             //    else
-                    spam.add("[Poll #" + pollId + "]");
-                spam.add("(" + poll.id + ") " + poll.question);
+                    spam.add("Poll #" + pollId);
+                spam.addAll(chopString(poll.question,60));                
                 int i=0;
                 for(PollOption option: poll.options) {
                     String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
@@ -534,7 +534,7 @@ public class twpoll extends SubspaceBot {
                 if (p.isCommented(pollId,1)) {
                     spam.add("Your comments: " + p.getComment(pollId, 1));
                     spam.add(" ");
-                    spam.add("To REPLACE a comment, use !com <your new comment>. To SELECT VOTE OPTION, use !vote <num>");
+                    spam.add("To REPLACE a comment, use !com <your comment>. To SELECT VOTE OPTION, use !vote <num>");
                 } else {
                     spam.add(" ");
                     spam.add("To COMMENT on this, use !com <your comment>. To SELECT VOTE OPTION, use !vote <num>");
@@ -543,42 +543,7 @@ public class twpoll extends SubspaceBot {
                     m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
     	}
     }
-
-    private void showNextPoll(String playerName) {
-
-       	if (polls.isEmpty()) {
-    		m_botAction.sendSmartPrivateMessage(playerName, "There is no poll at the moment.");
-    	}
-    	else {
-
-    		ArrayList<String> spam = new ArrayList();
-
-        	int userId = getUserID(playerName);
-        	for(int pollId: polls.keySet()) {
-        		Poll poll = polls.get(pollId);
-        		if (!votes.containsKey(pollId) ||  (votes.containsKey(pollId) && !votes.get(pollId).contains(userId))) {
-        			openPolls.put(userId, poll.id);
-        			spam.add("(#" + poll.id + ") " + poll.question);
-        			int i=0;
-        			for(PollOption option: poll.options) {
-        				String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
-        				spam.add(pad + (++i) + ". " + option.option);
-        			}
-        			spam.add(" ");
-        			spam.add("HELP: To vote, pm me your choice. You can follow up your choice with a comment by typing <choice>:<comment>");
-        			break;
-        		}
-        	}
-
-        	if (spam.isEmpty()) {
-        		spam.add("There is no poll for you at the moment.");
-        	}
-
-        	m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
-    	}
-
-    }
-
+    
     private void showPollsMain(String name, Boolean showNew) {
         ArrayList<String> intro = new ArrayList<String>();
         ArrayList<String> spam = new ArrayList<String>();
@@ -592,15 +557,29 @@ public class twpoll extends SubspaceBot {
     		m_botAction.sendSmartPrivateMessage(name, "There is no poll at the moment.");
     	} else {
     	     if (showNew) {
-                 intro.add("[New Polls]");
-                 int userId = getUserID(name);
+    	         int userId = getUserID(name);
                  int oldpolls = 0;
                  if (!p.oldPolls.isEmpty())
                      oldpolls = p.oldPolls.size(); 
+                 
+    	         if (oldpolls != 0)
+    	             intro.add("Unread Polls Only" + "[" + oldpolls + " Polls(s) not shown]");
+    	         else
+    	             intro.add("Unread Polls Only");               
+                 
                  for(int pollId: polls.keySet()) {
                      Poll poll = polls.get(pollId);
-                 if (!p.oldPolls.contains(pollId)) {                
-                     spam.add("(" + poll.id + ") " + poll.question);
+                 if (!p.oldPolls.contains(pollId)) {
+                     Vector<String> entryText = new Vector<String>();
+                     
+                     entryText = chopString(poll.question,60);
+                     
+                     for (int i = 0; i < entryText.size();i++) {
+                         if(i==0)
+                             spam.add("(" + poll.id + ") " + entryText.get(i));
+                         else 
+                             spam.add(i, Tools.formatString(" ", 3, " ") + entryText.get(i));
+                     }
                      p.addEntry(pollId, 1, "none");
                  }
              }                 
@@ -609,24 +588,30 @@ public class twpoll extends SubspaceBot {
                      showPollsMain(name,false);
                      return;
                  }
+                 
             spam.add(" ");
-            if (oldpolls != 0)
-                spam.add("[" + oldpolls + " Polls(s) not shown]");
-            spam.add(" ");
-            spam.add("to VOTE or COMMENT on a poll, select it. To SELECT an poll, use !view <number>.");
-            spam.add("To VIEW ALL polls, use !viewall. To RETURN home, use !home");        	
+            spam.add("Use !view <number> for more details or to vote on a specific polls.");
+            spam.add("To VIEW ALL polls, use !viewall.");        	
         	intro.addAll(spam);
         	m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));    	    
         } else {
-                 intro.add("[All polls]");
+                 intro.add("Polls");
                  
                  for(int pollId: polls.keySet()) {
                      Poll poll = polls.get(pollId);
-                     spam.add("(" + poll.id + ") " + poll.question);
+                     Vector<String> entryText = new Vector<String>();
+                     
+                     entryText = chopString(poll.question,60);
+                     
+                     for (int i = 0; i < entryText.size();i++) {
+                         if(i==0)
+                             spam.add("(" + poll.id + ") " + entryText.get(i));
+                         else 
+                             spam.add(i, Tools.formatString(" ", 3, " ") + entryText.get(i));
+                     }
                  }
                  spam.add(" ");
-                 spam.add("to VOTE or COMMENT on a poll, select it. To SELECT an poll, use !view <number>.");
-                 spam.add("To RETURN home, use !home");
+                 spam.add("Use !view <number> for more details on a specific poll.");
                  intro.addAll(spam);                
                  m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
              }
@@ -637,7 +622,7 @@ public class twpoll extends SubspaceBot {
             }
     }
 
-    private Vector<String> testString(String content, int limiter) {
+    private Vector<String> chopString(String content, int limiter) {
         Vector<String> entryText = new Vector<String>();
         String messageString = content;
         int limit = limiter;
@@ -687,13 +672,13 @@ public class twpoll extends SubspaceBot {
                     if (!p.oldUpdates.contains(updateID)) {
                         Vector<String> entryText = new Vector<String>();
                         
-                        entryText = testString(updates.get(updateID).getUpdateString(1),60);
+                        entryText = chopString(updates.get(updateID).getUpdateString(1),60);
                         
                         for (int i = 0; i < entryText.size();i++) {
                             if(i==0)
                                 spam.add(updates.get(updateID).getStartingDateString() + "  " + entryText.get(i));
                             else 
-                                spam.add(i, Tools.formatString(" ", 4, " ") + entryText.get(i));
+                                spam.add(i, Tools.formatString(" ", 5, " ") + entryText.get(i));
                         }
                         p.addEntry(updateID, 2, "none");           
                     }             
@@ -715,13 +700,13 @@ public class twpoll extends SubspaceBot {
                 for(int updateID : updates.keySet()) {
                      Vector<String> entryText = new Vector<String>();
                      
-                     entryText = testString(updates.get(updateID).getUpdateString(1),60);
+                     entryText = chopString(updates.get(updateID).getUpdateString(1),60);
                      
                      for (int i = 0; i < entryText.size();i++) {
                          if(i==0)
-                             spam.add(updates.get(updateID).getStartingDateString() + " " + entryText.get(i));
+                             spam.add(updates.get(updateID).getStartingDateString() + "  " + entryText.get(i));
                          else 
-                             spam.add(i, Tools.formatString(" ", 4, " ") + entryText.get(i));
+                             spam.add(i, Tools.formatString(" ", 5, " ") + entryText.get(i));
                      }                   
                 }
              
@@ -748,7 +733,7 @@ public class twpoll extends SubspaceBot {
         ArrayList<String> spam = new ArrayList();
         
                 spam.add("Update #" + updateID);
-                spam.addAll(testString(updates.get(updateID).getUpdateString(2),60));
+                spam.addAll(chopString(updates.get(updateID).getUpdateString(2),60));
                 
                 if (p.isCommented(updateID,2)) {
                     spam.add("Your comments: " + p.getComment(updateID, 2));
