@@ -62,7 +62,7 @@ public class acro extends MultiModule {
     //  K, L, M, N, O, P, Q, R, S, T,  
         3, 10, 10, 10, 7, 10, 1, 10, 10, 10,
     //  U, V, W, X, Y, Z  
-        5, 3, 10, 1, 3, 1
+        4, 3, 9, 1, 3, 1
     }; 
     
     @Override
@@ -479,7 +479,9 @@ public class acro extends MultiModule {
             int intAcroNum = 0;
             try {
                 vote = Integer.parseInt(message);
-            } catch (Exception e) {}
+            } catch (NumberFormatException e) {
+                return;
+            }
             if (vote > 0 && vote <= intAcroCount) {
                 //if (playerIdeas.containsKey(name)) {
                 boolean valid = acroDisplay.containsKey(name) ? acroDisplay.get(name) != vote : true;
