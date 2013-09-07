@@ -189,6 +189,10 @@ public class twpoll extends SubspaceBot {
                 cmd_vote(name, message.substring(6));                
             }
            
+           if (name.equals("K A N E") && message.startsWith("!test ")) 
+               testString(name, message.substring(6));
+           
+           
            if (m_botAction.getOperatorList().isER(name)) {
                if (message.startsWith("!reload")) {
                    polls.clear();
@@ -637,6 +641,30 @@ public class twpoll extends SubspaceBot {
             }
     }
 
+    private void testString(String name, String content) {
+        Vector<String> entryText = new Vector<String>();
+        String messageString = content;
+        
+        while(messageString.length() > 30) {
+            String splitMessage[] = messageString.split(" ");
+            String tempString = "";
+                
+                for(int i = 0; tempString.length() < 30;i++) {
+                    tempString += " " + splitMessage[i];
+                }
+                
+            entryText.add(messageString.substring(0,30));
+            messageString = messageString.substring(31);
+        }
+        
+        if(messageString.length() != 0)
+            entryText.add(messageString);
+        
+        if(!entryText.isEmpty()) 
+        m_botAction.smartPrivateMessageSpam(name, entryText.toArray(new String[entryText.size()]));
+        
+    }
+    
     private void showUpdatesMain(String name, Boolean showNew) {
         ArrayList<String> intro = new ArrayList();
         ArrayList<String> spam = new ArrayList();
