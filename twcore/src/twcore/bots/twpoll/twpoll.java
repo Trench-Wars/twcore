@@ -649,9 +649,8 @@ public class twpoll extends SubspaceBot {
                 for(int i = 0; tempString.length() < limit;i++) {
                     tempString += " " + splitMessage[i];
                 }
-                
-            entryText.add(tempString.substring(0,limit));
-            messageString = messageString.substring(limit+1);
+            entryText.add(tempString);
+            messageString = messageString.substring(tempString.length());
         }
         
         if(messageString.length() != 0)
@@ -692,21 +691,10 @@ public class twpoll extends SubspaceBot {
                         
                         for (int i = 0; i < entryText.size();i++) {
                             if(i==0)
-                                spam.add(updates.get(updateID).getStartingDateString() + entryText.get(i));
+                                spam.add(updates.get(updateID).getStartingDateString() + "  " + entryText.get(i));
                             else 
                                 spam.add(i, Tools.formatString(" ", 4, " ") + entryText.get(i));
                         }
-                    /*    msg = updates.get(updateID).getUpdateString(1);
-                        totalLength = msg.length();
-                        totalSections = totalLength / 60;
-                        
-                        for(int i=0;i <= totalSections;i++) {
-                            if (i == 0) 
-                                spam.add( Tools.formatString(updates.get(updateID).getStartingDateString() + "  " + msg.substring(0, msg.length()),65));
-                            else 
-                                spam.add(Tools.rightString(msg.substring(i * 60, totalLength),totalLength - ((i*60)+9), ' '));                            
-                        }*/
-                        
                         p.addEntry(updateID, 2, "none");           
                     }             
                 }                
@@ -731,22 +719,10 @@ public class twpoll extends SubspaceBot {
                      
                      for (int i = 0; i < entryText.size();i++) {
                          if(i==0)
-                             spam.add(updates.get(updateID).getStartingDateString() + entryText.get(i));
+                             spam.add(updates.get(updateID).getStartingDateString() + " " + entryText.get(i));
                          else 
                              spam.add(i, Tools.formatString(" ", 4, " ") + entryText.get(i));
-                     }
-                    /* 
-                     msg = updates.get(updateID).getUpdateString(1);
-                     totalLength = msg.length();
-                     totalSections = totalLength / 60;
-                     
-                    for(int i=0;i <= totalSections;i++) {
-                        if (i == 0) {
-                            spam.add( Tools.formatString(updates.get(updateID).getStartingDateString() + "  " + msg.substring(0, msg.length()),65));
-                        } else {
-                            spam.add(Tools.rightString(msg.substring(i * 60, totalLength),totalLength - ((i*60)+9), ' '));
-                        }
-                    }*/
+                     }                   
                 }
              
                 if (spam.isEmpty()) {
@@ -755,7 +731,7 @@ public class twpoll extends SubspaceBot {
                     return;
                 }
                 spam.add(" ");
-                spam.add(" ");
+
                 spam.add("Use !view <number> for more details on a specific update.");
                 intro.addAll(spam);                
                 m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
@@ -773,7 +749,6 @@ public class twpoll extends SubspaceBot {
         
                 spam.add("Update #" + updateID);
                 spam.addAll(testString(updates.get(updateID).getUpdateString(2),60));
-                spam.add(" "); 
                 
                 if (p.isCommented(updateID,2)) {
                     spam.add("Your comments: " + p.getComment(updateID, 2));
