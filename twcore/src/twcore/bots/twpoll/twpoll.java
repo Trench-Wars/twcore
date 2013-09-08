@@ -23,6 +23,7 @@ import javax.print.PrintException;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
+import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.ArenaList;
@@ -55,7 +56,9 @@ public class twpoll extends SubspaceBot {
 	public TreeMap<Integer,Integer> lastPolls;
 	public TreeMap<Integer,Long> lastSpam;
 	public TreeSet<String> ignore;
-
+	
+	public OperatorList oplist;
+	
 	public Vector<String> players;
 
 	public BotSettings m_botSettings;
@@ -74,6 +77,7 @@ public class twpoll extends SubspaceBot {
         lastSpam = new TreeMap<Integer,Long>();
         players = new Vector<String>();
         ignore = new TreeSet<String>();
+        oplist = m_botAction.getOperatorList();
     }    
 
     /**
@@ -189,13 +193,13 @@ public class twpoll extends SubspaceBot {
                 cmd_vote(name, message.substring(6));                
             }
            
-           if (m_botAction.getOperatorList().isZH(name)) {
+           if (oplist.isZH(name)) {
                if (message.startsWith("!info ") && message.substring(6) != null) {
                    cmd_info(name, message.substring(6));
                }                  
             }
            
-           if (m_botAction.getOperatorList().isSmod(name)) {
+           if (oplist.isSmod(name)) {
                if (message.startsWith("!reload")) {
                    polls.clear();
                    updates.clear();
@@ -583,7 +587,7 @@ public class twpoll extends SubspaceBot {
 
         while(rs.next()) {
             voteCount.add(rs.getInt("fnOrder"), rs.getInt("Count"));    
-        }        
+        }
         rs.close();
         
         } catch (SQLException e) {
