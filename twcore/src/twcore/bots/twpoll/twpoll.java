@@ -189,7 +189,13 @@ public class twpoll extends SubspaceBot {
                 cmd_vote(name, message.substring(6));                
             }
            
-           if (m_botAction.getOperatorList().isER(name)) {
+           if (m_botAction.getOperatorList().isZH(name)) {
+               if (message.startsWith("!info ") && message.substring(6) != null) {
+                   cmd_info(name, message.substring(6));
+               }                  
+            }
+           
+           if (m_botAction.getOperatorList().isSmod(name)) {
                if (message.startsWith("!reload")) {
                    polls.clear();
                    updates.clear();
@@ -245,6 +251,20 @@ public class twpoll extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Invalid selection please try again");
     }
     
+    public void cmd_info(String name, String message) {       
+        int entryID = -1;
+        
+        if (Tools.isAllDigits(message))
+            entryID = Integer.parseInt(message);
+        else 
+            return;
+        
+        if (polls.containsKey(entryID)) 
+            showPollResults(name, entryID);
+         else
+            m_botAction.sendSmartPrivateMessage(name, "Invalid selection please try again");
+    }
+    
     public void cmd_com(String name, String message) {
         PlayerData p = playerdata.get(getUserID(name));
         int[] window = p.getWindow();
@@ -267,6 +287,8 @@ public class twpoll extends SubspaceBot {
                 spam.add(formatMessage("!updates",1) + formatMessage("Shows active updates.",2));
                 spam.add(formatMessage("!ignore",1) + formatMessage("Turns off automessages for you.",2));
                 spam.add(formatMessage("!about",1) + formatMessage("Information about this bot.",2));
+                if (m_botAction.getOperatorList().isZH(name)) 
+                    spam.add(formatMessage("!info ",1) + formatMessage("Information and results for a poll.",2));
                 spam.add(formatMessage("-",3));
 
         m_botAction.smartPrivateMessageSpam(name, spam.toArray(new String[spam.size()]));
@@ -321,7 +343,7 @@ public class twpoll extends SubspaceBot {
                 "WHERE NOW() BETWEEN fdBegin AND fdEnd " +
                 "ORDER BY fnPollID,fnOrder"
             );
-
+            
             while(rs.next()) {
                 int pollID = rs.getInt("fnPollID");
                 if (!polls.containsKey(pollID)) {
@@ -542,6 +564,47 @@ public class twpoll extends SubspaceBot {
                     spam.add("To RETURN HOME, use !home. To go BACK a menu, use !back");
                     m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
     	}
+    }
+    
+    private void showPollResults(String name, int pollID) {
+        Vector<Integer> voteCount = new Vector<Integer>();
+        ArrayList<String> spam = new ArrayList();
+
+        try {
+            ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
+                "SELECT PO.fnOrder, PO.fnPollOptionID,  COUNT(PV.fnPollOptionID) as Count " +
+               " FROM tblPoll__PollVote as PV " +
+                "JOIN tblPoll__PollOptions as PO on PV.fnPollOptionID = PO.fnPollOptionID " +
+                "WHERE PO.fnPollID = " + pollID +
+                " AND PO.fnPollID = PV.fnPollID " +
+                "GROUP BY PO.fnPollOptionID " +
+               " ORDER BY PO.fnOrder "
+        );
+
+        while(rs.next()) {
+            voteCount.add(rs.getInt("fnOrder"), rs.getInt("Count"));    
+        }        
+        rs.close();
+        
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        if (polls.isEmpty()) {
+            m_botAction.sendSmartPrivateMessage(name, "There is no poll at the moment.");
+        } else {
+        Poll poll = polls.get(pollID);
+                spam.add("Poll Info #" + pollID);
+                spam.addAll(chopString(poll.question,60));                
+                int i=0;
+                for(PollOption option: poll.options) {
+                    spam.add(Tools.centerString("" + voteCount.get(i), 6) + (++i) + ". " + option.option);
+                }
+                spam.add(" ");
+                spam.add("Start Date: " + poll.getStartingDate());
+                spam.add("End Date: " + poll.getEndingDate());
+                m_botAction.smartPrivateMessageSpam(name, spam.toArray(new String[spam.size()]));
+        }
     }
     
     private void showPollsMain(String name, Boolean showNew) {
@@ -914,6 +977,16 @@ public class twpoll extends SubspaceBot {
         
         public void addOption(int pollOptionID, String Option) {
             options.add(new PollOption(pollOptionID,Option));            
+        }
+        
+        public String getStartingDate() {
+            String date = new SimpleDateFormat("MM/dd/yy, hh:mm aaa").format(begin);
+            return date;
+        }
+        
+        public String getEndingDate() {
+            String date = new SimpleDateFormat("MM/dd/yy, hh:mm aaa").format(end);
+            return date;
         }
     	
     	 public class PlayerVotes {
