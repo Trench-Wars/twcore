@@ -287,7 +287,7 @@ public class twpoll extends SubspaceBot {
                 spam.add(formatMessage("!updates",1) + formatMessage("Shows active updates.",2));
                 spam.add(formatMessage("!ignore",1) + formatMessage("Turns off automessages for you.",2));
                 spam.add(formatMessage("!about",1) + formatMessage("Information about this bot.",2));
-                if (m_botAction.getOperatorList().isZH(name)) 
+                if (m_botAction.getOperatorList().isZH(name))
                     spam.add(formatMessage("!info ",1) + formatMessage("Information and results for a poll.",2));
                 spam.add(formatMessage("-",3));
 
