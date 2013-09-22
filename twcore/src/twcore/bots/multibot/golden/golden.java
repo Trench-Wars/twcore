@@ -31,7 +31,7 @@ public class golden extends MultiModule {
     int y;
     char xCoord;
     int yCoord;
-    int coordTime = 20 * Tools.TimeInMillis.SECOND;
+    int coordTime = 20;             // Repeat time for the message of !coordson in seconds.
     String hasGun = "";
     String oldGun;
     String newGun;
@@ -128,9 +128,25 @@ public class golden extends MultiModule {
                 if (!isRunning) {
                     m_botAction.sendPrivateMessage(name, "Golden Gun isn't running yet. You have to !start it first!");
                 } else {
+                    // Check if any paramaters were given.
+                    if(message.length() > 10) {
+                        try {
+                            // And if so, check if there is a valid number.
+                            coordTime = Integer.parseInt(message.substring(10));
+                        } catch (NumberFormatException e) {
+                            // Resetting to default.
+                            coordTime = 20;
+                        }
+                    } else {
+                        // Otherwise, restore the default 20 seconds.
+                        coordTime = 20;
+                    }
+                    
+                    // Display the result to the issuer.
+                    m_botAction.sendPrivateMessage(name, "Coordinate mode: ON; Interval: " + coordTime);
+                    
+                    // Enable it.
                     coordsOn = true;
-                    coordTime = Integer.parseInt(message.substring(10));
-                    m_botAction.sendPrivateMessage(name, "Coordinate mode: ON");
                 }
 
             } else if (message.startsWith("!coordsoff")) { // cancels timertask for coordinates
@@ -138,8 +154,8 @@ public class golden extends MultiModule {
                     m_botAction.cancelTask(coords);
                     coordsOn = false;
                     m_botAction.sendPrivateMessage(name, "Coordinate mode: OFF");
-                } else {m_botAction.sendPrivateMessage(name, "Coordinate mode already off.");
-
+                } else {
+                    m_botAction.sendPrivateMessage(name, "Coordinate mode already off.");
                 }
 
             } else if (message.startsWith("!setmode ")) {
@@ -204,7 +220,7 @@ public class golden extends MultiModule {
                     m_botAction.sendArenaMessage(killer + " is located at " + xCoord + yCoord,2);
                 }
             };
-            m_botAction.scheduleTaskAtFixedRate(coords, 5 * Tools.TimeInMillis.SECOND, 20 * Tools.TimeInMillis.SECOND);
+            m_botAction.scheduleTaskAtFixedRate(coords, 5 * Tools.TimeInMillis.SECOND, coordTime * Tools.TimeInMillis.SECOND);
         }
     }
 
@@ -271,6 +287,7 @@ public class golden extends MultiModule {
                 "!stop             - stops Golden Gun mode",   
                 "!guncoords        - PMs you with the location of the Golden Gunner",
                 "!coordson         - sends periodic arena messages of the Gunner's coordinates",
+                "!coordson <#time> - same as above, but makes the period <#time> seconds instead of 20s",
                 "!coordsoff        - turns off periodic coordinate arena messages",
                 "!setmode <params> - changes human and gunner freqs and ships",
                 " params: <humanFreq> <humanShip> <gunFreq> <gunShip>  (default 0 1 1 1)"
