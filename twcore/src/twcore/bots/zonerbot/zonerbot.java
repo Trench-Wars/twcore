@@ -445,7 +445,10 @@ public class zonerbot extends SubspaceBot {
             else {
                 if (!queue.containsKey(namelc)) {
                     debug("Queueing new Advert");
-                    queue.put(namelc, new Advert(name));
+                    Advert tempAdvert = new Advert(name);
+                    // Passing the claimed arena to the advert.
+                    tempAdvert.setArena(msgs);
+                    queue.put(namelc, tempAdvert);
                     if (queue.indexOfKey(namelc) == 0)
                         prepareNext();
                     else
@@ -1260,6 +1263,7 @@ public class zonerbot extends SubspaceBot {
         String name;
         String granter;
         String advert;
+        String zhArena;
         int sound;
         int status;
         boolean granted;
@@ -1288,6 +1292,7 @@ public class zonerbot extends SubspaceBot {
             this.name = name;
             granter = null;
             advert = null;
+            zhArena = null;
             sound = DEFAULT_SOUND;
             status = APPROVE;
             granted = false;
@@ -1303,6 +1308,7 @@ public class zonerbot extends SubspaceBot {
             this.name = name;
             this.granter = granter;
             advert = null;
+            zhArena = null;
             sound = DEFAULT_SOUND;
             status = APPROVE;
             granted = true;
@@ -1340,6 +1346,8 @@ public class zonerbot extends SubspaceBot {
                 return "Advert must be less than " + MAX_ADVERT_LENGTH + " characters long.";
             if (!str.contains("?go "))
                 return "Advert is required to have ?go ArenaName at the end or towards the end.";
+            if (zhArena != null && zhArena != "" && !str.toLowerCase().contains("?go " + zhArena))
+                return "Advert cannot have ?go ArenaName for an unclaimed arena.";
             if (str.toLowerCase().contains("-" + name.toLowerCase()))
                 return "Do not include a tag (-Name) at the end because it will be added automatically.";
             if (status == READY) {
@@ -1432,6 +1440,11 @@ public class zonerbot extends SubspaceBot {
                 return "No arena found or advert not set.";
         }
 
+        /** Sets zhArena to the specified parameter **/
+        public void setArena(String arena) {
+            zhArena = arena.toLowerCase();
+        }
+        
         /** Checks if readvert has expired **/
         public boolean canReadvert() {
             return ((System.currentTimeMillis() - zoned) < (READVERT_MAX * Tools.TimeInMillis.MINUTE));
