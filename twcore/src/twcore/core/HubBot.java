@@ -1182,6 +1182,22 @@ public class HubBot extends SubspaceBot {
                 m_botAction.remotePrivateMessageSpam(name, twcoreLeague);
             }
             
+            else if(botname.equals("TWCore-Public")){
+                String[] twcoreLeague = {
+                        "------------------------------------",
+                        "========= TWCore-Public ============",
+                        " ",
+                        "List of bots that can be spawned:",
+                        " ",
+                        "- Use !spawn <typebot> to spawn it -",
+                        " ",
+                        "------- NickName / typebot ---------",
+                        "",
+                        "TW-PubSystem - [pubsystem]",
+                };
+                m_botAction.remotePrivateMessageSpam(name, twcoreLeague);
+            }
+            
         } catch(Exception e){
             e.printStackTrace();
             m_botAction.sendPrivateMessage(name, "Exception.");
