@@ -6,6 +6,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.TimerTask;
@@ -679,9 +680,19 @@ public class zonerbot extends SubspaceBot {
         }
 
         if (!oplist.isZHExact(zh)) {
-            ba.sendSmartPrivateMessage(name, "Adverts can only be granted to ZHs. Use !claim instead.");
-            return;
+            // Do a fuzzy-like check for a potential partial match.
+            zh = getFuzzyZH(zh);
+            
+            if(zh == null) {
+                // Nothing found.
+                ba.sendSmartPrivateMessage(name, "Adverts can only be granted to ZHs. Use !claim instead.");
+                return;
+            }
+            
+            // Something found. Update the lowercase name.
+            zhlc = zh.toLowerCase();
         }
+        
         if (!queue.containsKey(zhlc)) {
             queue.put(zhlc, new Advert(zh, name));
             ba.sendSmartPrivateMessage(name, "Advert granted to " + zh + ".");
@@ -759,13 +770,21 @@ public class zonerbot extends SubspaceBot {
     /** Handles the !view command as well as the !view <name> command **/
     private void cmd_view(String name, String cmd) {
         if (cmd.contains(" ") && cmd.length() > 6) {
-            String adverter = cmd.substring(cmd.indexOf(" ") + 1).toLowerCase();
-            if (queue.containsKey(adverter)) {
-                Advert advert = queue.get(adverter);
+            // Save the old value, just in case.
+            cmd = cmd.substring(cmd.indexOf(" ") + 1);
+            String adverter = cmd.toLowerCase();
+            
+            if(!queue.containsKey(adverter)) {
+                // Name aint in the list. Do a fuzzy check to be sure.
+                adverter = getFuzzyZH(adverter);
+            }
+            
+            if (adverter != null && queue.containsKey(adverter.toLowerCase())) {
+                Advert advert = queue.get(adverter.toLowerCase());
                 ba.sendSmartPrivateMessage(name, advert.getMessage());
                 ba.sendSmartPrivateMessage(name, "Sound: " + advert.getSound());
             } else
-                ba.sendSmartPrivateMessage(name, adverter + " does not have an advert.");
+                ba.sendSmartPrivateMessage(name, (adverter==null?cmd:adverter) + " does not have an advert.");
         } else if (queue.containsKey(name.toLowerCase())) {
             Advert advert = queue.get(name.toLowerCase());
             ba.sendSmartPrivateMessage(name, advert.getMessage());
@@ -1238,6 +1257,29 @@ public class zonerbot extends SubspaceBot {
     /** Returns true if the sound is legal **/
     private boolean soundCheck(int s) {
         return (s != Advert.REGAN_SOUND && s != Advert.SEX_SOUND && s != Advert.PM_SOUND && s != Advert.MUSIC1_SOUND && s != Advert.MUSIC2_SOUND);
+    }
+    
+    /**
+     * This function mimics {@link BotAction#getFuzzyPlayerName(String)} but for ZH names.
+     * 
+     * @param name The partial name to be looked for.
+     * @return Either the first matching name that is found, or null if nothing is found.
+     */
+    private String getFuzzyZH(String name) {
+        // Do a fuzzy-like check for a potential partial match.
+        HashSet<String> zhlist = new HashSet<String>();
+        String zh = null;
+        
+        name = name.toLowerCase();
+        zhlist = oplist.getAllOfAccessLevel(OperatorList.ZH_LEVEL);
+        for(String zhName : zhlist) {
+            if(zhName.toLowerCase().contains(name)) {
+                zh = zhName;
+                break;
+            }
+        }
+        
+        return zh;
     }
 
     /** Zones an array of messages but only using a sound on the first message unless there is none **/
