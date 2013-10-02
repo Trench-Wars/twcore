@@ -18,6 +18,13 @@ public class heli extends MultiModule {
     TimerTask nextWall;
     TimerTask nextBarrier;
     Random rand = new Random();
+    //private final static int xMin = 256 * 16;
+    private final static int xMax = 767 * 16;
+    private final static int yMin = 467 * 16;
+    private final static int yMax = 556 * 16;
+    private final static int xStart = 260 * 16;
+    private final static int yStart = 512 * 16;
+    
     int y = 0;
     int x = 0;
     int Slope = 3;
@@ -79,7 +86,7 @@ public class heli extends MultiModule {
     public void startThing() {
         Ship ship = m_botAction.getShip();
         ship.setShip(7);
-        ship.move(260*16, 512*16);
+        ship.move(xStart, yStart);
         y = ship.getY();
         x = ship.getX();
         yDiff = 0;
@@ -110,13 +117,23 @@ public class heli extends MultiModule {
         for (int k = 0; k < distance; k++) {
             ship.moveAndFire(x, y, getWeapon('#'));
             try {
+                // Delay tactics!
                 Thread.sleep(speed/(2*distance));
             } catch (Exception e) {}
             ship.moveAndFire(x, y + 25 * 16, getWeapon('#'));
+            try {
+                // Delay tactics!
+                Thread.sleep(speed/(2*distance));
+            } catch (Exception e) {}
             x += move;
             y -= slope;
+            // Check height restrictions
+            if(y < yMin || (y + 25*16) > yMax) {
+                y += 2*slope;
+            }
+            
             yDiff += slope / 16;
-            if (x >= (764 * 16)) {
+            if (x >= (xMax)) {
                 m_botAction.cancelTasks();
             }
         }
@@ -132,6 +149,10 @@ public class heli extends MultiModule {
         int xStart = x;
         for (int k = 0; k < length; k++) {
             ship.moveAndFire(xStart, yStart + tiles * 16 + k * 16, getWeapon('*'));
+            try {
+                // Delay tactics!
+                Thread.sleep(speed/(2*length));
+            } catch (Exception e) {}
         }
     }
 
