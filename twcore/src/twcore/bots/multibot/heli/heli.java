@@ -16,6 +16,7 @@ public class heli extends MultiModule {
     int move = 48;
     int speed = 100;
     int height = 15;
+    int wallheight = 6;
     TimerTask nextWall;
     TimerTask nextBarrier;
     Random rand = new Random();
@@ -36,13 +37,16 @@ public class heli extends MultiModule {
     }
 
     public String[] getModHelpMessage() {
-        String[] blah = { "!start             -DURRRRRRRRRRRRRRRRRRRRR",
+        String[] blah = {
+                "!start             -DURRRRRRRRRRRRRRRRRRRRR",
                 "!setmove #         -Sets distance between barrier mines.",
                 "!setslope #        -Sets difficulty increases in difficulty as you get higher.",
                 "!setspeed #        -Sets bot's speed in milliseconds.",
                 "!setheight #       -Sets the height of the tunnel.",
+                "!setwallheight #   -Sets the height of the wall.",
                 "!stop              -DURRRRRRRRRRRRRRRRRRRRR",
-                "!specbot           -Puts bot into spectator mode." };
+                "!specbot           -Puts bot into spectator mode."
+        };
         return blah;
     }
 
@@ -85,7 +89,12 @@ public class heli extends MultiModule {
         } else if (message.toLowerCase().startsWith("!setheight ")) {
             try {
                 height = Integer.parseInt(message.substring(11));
-                m_botAction.sendPrivateMessage(name, "Set height to: " + height);
+                m_botAction.sendPrivateMessage(name, "Set height of the tunnel to: " + height);
+            } catch (Exception e) {}
+        } else if (message.toLowerCase().startsWith("!setwallheight ")) {
+            try {
+                wallheight = Integer.parseInt(message.substring(15));
+                m_botAction.sendPrivateMessage(name, "Set height of the wall to: " + wallheight);
             } catch (Exception e) {}
         } else if (message.toLowerCase().startsWith("!stop")) {
             m_botAction.sendPrivateMessage(name, "Stopping...");
@@ -115,7 +124,7 @@ public class heli extends MultiModule {
     }
 
     public void nextWall() {
-        int slope = (rand.nextInt(200) - 100) / (100 / Slope);
+        int slope = Slope * (rand.nextInt(200) - 100) / 100;
         if (yDiff > height && slope > 0) {
             slope *= -1;
         } else if (yDiff < -height && slope < 0) {
@@ -138,12 +147,12 @@ public class heli extends MultiModule {
             x += move;
             y -= slope;
             // Check height restrictions
-            if(y < yMin || (y + 25*16) > yMax) {
+            if(y < yMin || (y + height*16) > yMax) {
                 y += 2*slope;
             }
             
             yDiff += slope / 16;
-            if (x >= (xMax)) {
+            if (x >= xMax) {
                 m_botAction.cancelTasks();
             }
         }
@@ -151,10 +160,10 @@ public class heli extends MultiModule {
 
     public void nextBarrier() {
         Ship ship = m_botAction.getShip();
-        int tiles = rand.nextInt(25);
-        int length = 6;
-        if (19 - tiles < 0)
-            length += 19 - tiles;
+        int tiles = rand.nextInt(height);
+        int length = wallheight;
+        if ((height - length) - tiles < 0)
+            length += (height - length) - tiles;
         int yStart = y;
         int xStart = x;
         for (int k = 0; k < length; k++) {
