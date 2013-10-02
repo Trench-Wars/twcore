@@ -109,11 +109,14 @@ public class heli extends MultiModule {
         Ship ship = m_botAction.getShip();
         for (int k = 0; k < distance; k++) {
             ship.moveAndFire(x, y, getWeapon('#'));
+            try {
+                Thread.sleep(speed/(2*distance));
+            } catch (Exception e) {}
             ship.moveAndFire(x, y + 25 * 16, getWeapon('#'));
             x += move;
             y -= slope;
             yDiff += slope / 16;
-            if (x >= (1024 * 16)) {
+            if (x >= (764 * 16)) {
                 m_botAction.cancelTasks();
             }
         }
