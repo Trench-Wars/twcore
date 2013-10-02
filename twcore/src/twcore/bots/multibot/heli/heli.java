@@ -15,6 +15,7 @@ public class heli extends MultiModule {
     public OperatorList opList;
     int move = 48;
     int speed = 100;
+    int height = 15;
     TimerTask nextWall;
     TimerTask nextBarrier;
     Random rand = new Random();
@@ -23,7 +24,7 @@ public class heli extends MultiModule {
     private final static int yMin = 467 * 16;
     private final static int yMax = 556 * 16;
     private final static int xStart = 260 * 16;
-    private final static int yStart = 512 * 16;
+    private final static int yStart = 515 * 16;
     
     int y = 0;
     int x = 0;
@@ -35,9 +36,13 @@ public class heli extends MultiModule {
     }
 
     public String[] getModHelpMessage() {
-        String[] blah = { "!start             -DURRRRRRRRRRRRRRRRRRRRR", "!setmove #         -Sets distance between barrier mines.",
-                "!setslope #        -Sets difficulty increases in difficulty as you get higher.", "!setspeed #        -Sets bot's speed in milliseconds.",
-                "!stop              -DURRRRRRRRRRRRRRRRRRRRR", "!specbot           -Puts bot into spectator mode." };
+        String[] blah = { "!start             -DURRRRRRRRRRRRRRRRRRRRR",
+                "!setmove #         -Sets distance between barrier mines.",
+                "!setslope #        -Sets difficulty increases in difficulty as you get higher.",
+                "!setspeed #        -Sets bot's speed in milliseconds.",
+                "!setheight #       -Sets the height of the tunnel.",
+                "!stop              -DURRRRRRRRRRRRRRRRRRRRR",
+                "!specbot           -Puts bot into spectator mode." };
         return blah;
     }
 
@@ -77,6 +82,11 @@ public class heli extends MultiModule {
                 Slope = Integer.parseInt(message.substring(10));
                 m_botAction.sendPrivateMessage(name, "Set slope to: " + Slope);
             } catch (Exception e) {}
+        } else if (message.toLowerCase().startsWith("!setheight ")) {
+            try {
+                height = Integer.parseInt(message.substring(11));
+                m_botAction.sendPrivateMessage(name, "Set height to: " + height);
+            } catch (Exception e) {}
         } else if (message.toLowerCase().startsWith("!stop")) {
             m_botAction.sendPrivateMessage(name, "Stopping...");
             m_botAction.cancelTasks();
@@ -86,7 +96,7 @@ public class heli extends MultiModule {
     public void startThing() {
         Ship ship = m_botAction.getShip();
         ship.setShip(7);
-        ship.move(xStart, yStart);
+        ship.move(xStart, yStart - height * 16);
         y = ship.getY();
         x = ship.getX();
         yDiff = 0;
@@ -106,9 +116,9 @@ public class heli extends MultiModule {
 
     public void nextWall() {
         int slope = (rand.nextInt(200) - 100) / (100 / Slope);
-        if (yDiff > 25 && slope > 0) {
+        if (yDiff > height && slope > 0) {
             slope *= -1;
-        } else if (yDiff < -25 && slope < 0) {
+        } else if (yDiff < -height && slope < 0) {
             slope *= -1;
         }
         slope *= 16;
@@ -120,7 +130,7 @@ public class heli extends MultiModule {
                 // Delay tactics!
                 Thread.sleep(speed/(2*distance));
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + 25 * 16, getWeapon('#'));
+            ship.moveAndFire(x, y + height * 16, getWeapon('#'));
             try {
                 // Delay tactics!
                 Thread.sleep(speed/(2*distance));
