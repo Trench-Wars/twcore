@@ -105,7 +105,8 @@ public class heli extends MultiModule {
     public void startThing() {
         Ship ship = m_botAction.getShip();
         ship.setShip(7);
-        ship.move(xStart, yStart - height * 16);
+        // Instead of 16, 12 is used to make the top 3/4th above the platform, and the bottom stick 1/4th underneath it.
+        ship.move(xStart, yStart - height * 12);
         y = ship.getY();
         x = ship.getX();
         yDiff = 0;
