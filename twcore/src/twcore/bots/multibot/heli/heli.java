@@ -2,23 +2,26 @@ package twcore.bots.multibot.heli;
 
 import java.util.Random;
 import java.util.TimerTask;
+import java.util.Vector;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.OperatorList;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
 import twcore.core.events.Message;
 import twcore.core.game.Ship;
 
 public class heli extends MultiModule {
 
     public OperatorList opList;
-    int move = 48;
+    int move = 3;
     int speed = 100;
-    int height = 15;
+    int height = 20;
     int wallheight = 6;
     TimerTask nextWall;
     TimerTask nextBarrier;
+    TimerTask timerDelayedStart;
     Random rand = new Random();
     //private final static int xMin = 256 * 16;
     private final static int xMax = 767 * 16;
@@ -38,12 +41,15 @@ public class heli extends MultiModule {
 
     public String[] getModHelpMessage() {
         String[] blah = {
+                "!manual            -Make an educated guess!",
                 "!start             -DURRRRRRRRRRRRRRRRRRRRR",
+                "!start #           -Delayed start in #seconds.",
                 "!setmove #         -Sets distance between barrier mines.",
                 "!setslope #        -Sets difficulty increases in difficulty as you get higher.",
                 "!setspeed #        -Sets bot's speed in milliseconds.",
                 "!setheight #       -Sets the height of the tunnel.",
-                "!setwallheight #   -Sets the height of the wall.",
+                "!setwallheight #   -Sets the height of the barriers.",
+                "!settings          -Displays the current settings.",
                 "!stop              -DURRRRRRRRRRRRRRRRRRRRR",
                 "!specbot           -Puts bot into spectator mode."
         };
@@ -65,46 +71,80 @@ public class heli extends MultiModule {
     }
 
     public void handleCommand(String name, String message) {
-        if (message.toLowerCase().startsWith("!start")) {
+        message = message.toLowerCase();
+        if (message.startsWith("!manual")) {
+            dispManual(name);
+        } else if (message.equals("!start")) {
             m_botAction.sendPrivateMessage(name, "Starting...");
             startThing();
-        } else if (message.toLowerCase().startsWith("!specbot")) {
+        } else if (message.startsWith("!start ")) {
+            try {
+                Integer delay = Integer.parseInt(message.substring(7));
+                m_botAction.sendPrivateMessage(name, "Starting in " + delay + " seconds.");
+                delayedStart(delay);
+            } catch (Exception e) {}
+        } else if (message.startsWith("!specbot")) {
             m_botAction.spec(m_botAction.getBotName());
             m_botAction.spec(m_botAction.getBotName());
-        } else if (message.toLowerCase().startsWith("!setmove ")) {
+        } else if (message.startsWith("!setmove ")) {
             try {
                 move = Integer.parseInt(message.substring(9));
                 m_botAction.sendPrivateMessage(name, "Set move to: " + move);
             } catch (Exception e) {}
-        } else if (message.toLowerCase().startsWith("!setspeed ")) {
+        } else if (message.startsWith("!setspeed ")) {
             try {
                 speed = Integer.parseInt(message.substring(10));
                 m_botAction.sendPrivateMessage(name, "Set speed to: " + speed);
             } catch (Exception e) {}
-        } else if (message.toLowerCase().startsWith("!setslope ")) {
+        } else if (message.startsWith("!setslope ")) {
             try {
                 Slope = Integer.parseInt(message.substring(10));
                 m_botAction.sendPrivateMessage(name, "Set slope to: " + Slope);
             } catch (Exception e) {}
-        } else if (message.toLowerCase().startsWith("!setheight ")) {
+        } else if (message.startsWith("!setheight ")) {
             try {
                 height = Integer.parseInt(message.substring(11));
                 m_botAction.sendPrivateMessage(name, "Set height of the tunnel to: " + height);
             } catch (Exception e) {}
-        } else if (message.toLowerCase().startsWith("!setwallheight ")) {
+        } else if (message.startsWith("!setwallheight ")) {
             try {
                 wallheight = Integer.parseInt(message.substring(15));
-                m_botAction.sendPrivateMessage(name, "Set height of the wall to: " + wallheight);
+                m_botAction.sendPrivateMessage(name, "Set height of the bariers to: " + wallheight);
             } catch (Exception e) {}
-        } else if (message.toLowerCase().startsWith("!stop")) {
+        } else if (message.startsWith("!settings")) {
+            dispSettings(name);
+        } else if (message.startsWith("!stop")) {
             m_botAction.sendPrivateMessage(name, "Stopping...");
             m_botAction.cancelTasks();
         }
     }
 
+    public void delayedStart(Integer delay) {
+        if(delay == null || delay < 0 || delay > 60)
+            return;
+
+        if(delay == 0) {
+            m_botAction.sendArenaMessage("GOGOGO!!!", Tools.Sound.GOGOGO);
+            startThing();
+        } else {
+            m_botAction.sendArenaMessage("Get ready. Starting in " + delay + " seconds...");
+            timerDelayedStart = new TimerTask() {
+                
+                @Override
+                public void run() {
+                    m_botAction.sendArenaMessage("GOGOGO!!!", Tools.Sound.GOGOGO);
+                    startThing();                   
+                }
+            };
+            m_botAction.scheduleTask(timerDelayedStart, delay * Tools.TimeInMillis.SECOND);
+        }
+        
+    }
+    
     public void startThing() {
         Ship ship = m_botAction.getShip();
         ship.setShip(7);
+        ship.setFreq(8000);
         // Instead of 16, 12 is used to make the top 3/4th above the platform, and the bottom stick 1/4th underneath it.
         ship.move(xStart, yStart - height * 12);
         y = ship.getY();
@@ -126,6 +166,7 @@ public class heli extends MultiModule {
 
     public void nextWall() {
         int slope = Slope * (rand.nextInt(200) - 100) / 100;
+        int move = this.move*16;                        // Conversion tiles -> points.
         if (yDiff > height && slope > 0) {
             slope *= -1;
         } else if (yDiff < -height && slope < 0) {
@@ -207,5 +248,31 @@ public class heli extends MultiModule {
     }
 
     public void cancel() {
+    }
+    
+    public void dispManual(String name) {
+        Vector<String> spam = new Vector<String>();
+        spam.add("Manual:");
+        spam.add("This is the heli module, designed for ?go helicotper and originally written by Ikrit.");
+        spam.add("The goal of this game is for a group of players to rocket their way through a path of mines created by the bot.");
+        spam.add("While doing this, they must stay between the top and bottom wall of the 'tunnel', avoiding any barries of yellow mines.");
+        spam.add("For maximum enjoyment, you want all the players on the same freq, but not on 8000, which is the freq the bot uses.");
+        spam.add("Some practice is advised with changing the difficutly/settings, so please try it privately beforehand.");
+        spam.add("At this moment, you MUST manually handle the rocket prizing, announcing and warping and such.");
+        spam.add("We hope you'll enjoy hosting this game!");
+        
+        m_botAction.privateMessageSpam(name, spam);        
+    }
+    
+    public void dispSettings(String name) {
+        Vector<String> spam = new Vector<String>();
+        spam.add("Current settings:");
+        spam.add("Move: " + move + " tiles (default: 3);");
+        spam.add("Speed: " + speed + "ms (default: 100);");
+        spam.add("Slope: " + Slope + "% (default: 3);");
+        spam.add("Tunnel height: " + height + " tiles (default: 20);");
+        spam.add("Barrier height: " + wallheight + " tiles (default: 6).");
+        
+        m_botAction.privateMessageSpam(name, spam);
     }
 }
