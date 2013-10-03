@@ -127,7 +127,7 @@ public class heli extends MultiModule {
             m_botAction.sendArenaMessage("GOGOGO!!!", Tools.Sound.GOGOGO);
             startThing();
         } else {
-            m_botAction.sendArenaMessage("Get ready. Starting in " + delay + " seconds...");
+            m_botAction.sendArenaMessage("Get ready. Starting in " + delay + " seconds...", Tools.Sound.BEEP1);
             timerDelayedStart = new TimerTask() {
                 
                 @Override
@@ -253,7 +253,7 @@ public class heli extends MultiModule {
     public void dispManual(String name) {
         Vector<String> spam = new Vector<String>();
         spam.add("Manual:");
-        spam.add("This is the heli module, designed for ?go helicotper and originally written by Ikrit.");
+        spam.add("This is the heli module, designed for ?go helicopter and originally written by Ikrit.");
         spam.add("The goal of this game is for a group of players to rocket their way through a path of mines created by the bot.");
         spam.add("While doing this, they must stay between the top and bottom wall of the 'tunnel', avoiding any barries of yellow mines.");
         spam.add("For maximum enjoyment, you want all the players on the same freq, but not on 8000, which is the freq the bot uses.");
