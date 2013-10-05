@@ -22,12 +22,13 @@ public class heli extends MultiModule {
     TimerTask nextWall;
     TimerTask nextBarrier;
     TimerTask timerDelayedStart;
+    TimerTask rocketPrizing;
     Random rand = new Random();
-    //private final static int xMin = 256 * 16;
+    private final static int xMin = 256 * 16;
     private final static int xMax = 767 * 16;
     private final static int yMin = 467 * 16;
     private final static int yMax = 556 * 16;
-    private final static int xStart = 260 * 16;
+    //private final static int xStart = 260 * 16;
     private final static int yStart = 515 * 16;
     
     int y = 0;
@@ -84,8 +85,10 @@ public class heli extends MultiModule {
                 delayedStart(delay);
             } catch (Exception e) {}
         } else if (message.startsWith("!specbot")) {
+            m_botAction.cancelTasks();
             m_botAction.spec(m_botAction.getBotName());
             m_botAction.spec(m_botAction.getBotName());
+            m_botAction.resetReliablePositionUpdating();
         } else if (message.startsWith("!setmove ")) {
             try {
                 move = Integer.parseInt(message.substring(9));
@@ -123,7 +126,21 @@ public class heli extends MultiModule {
         if(delay == null || delay < 0 || delay > 60)
             return;
 
+        if(rocketPrizing != null) {
+            m_botAction.cancelTask(rocketPrizing);
+        }
+        
+        rocketPrizing = new TimerTask() {
+            @Override
+            public void run() {
+                m_botAction.prizeAll(Tools.Prize.ROCKET);
+            }
+        };
+        
         if(delay == 0) {
+            m_botAction.changeAllShips(Tools.Ship.WARBIRD);
+            m_botAction.setAlltoFreq(0);
+            m_botAction.scheduleTask(rocketPrizing, 0, 500);
             m_botAction.sendArenaMessage("GOGOGO!!!", Tools.Sound.GOGOGO);
             startThing();
         } else {
@@ -132,6 +149,9 @@ public class heli extends MultiModule {
                 
                 @Override
                 public void run() {
+                    m_botAction.changeAllShips(Tools.Ship.WARBIRD);
+                    m_botAction.setAlltoFreq(0);
+                    m_botAction.scheduleTask(rocketPrizing, 0, 500);
                     m_botAction.sendArenaMessage("GOGOGO!!!", Tools.Sound.GOGOGO);
                     startThing();                   
                 }
@@ -142,11 +162,12 @@ public class heli extends MultiModule {
     }
     
     public void startThing() {
+        m_botAction.setPlayerPositionUpdating(0);
         Ship ship = m_botAction.getShip();
         ship.setShip(7);
         ship.setFreq(8000);
         // Instead of 16, 12 is used to make the top 3/4th above the platform, and the bottom stick 1/4th underneath it.
-        ship.move(xStart, yStart - height * 12);
+        ship.move(xMin, yStart - height * 12);
         y = ship.getY();
         x = ship.getX();
         yDiff = 0;
