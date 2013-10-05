@@ -213,6 +213,8 @@ public class heli extends MultiModule {
             yDiff += slope / 16;
             if (x >= xMax) {
                 m_botAction.cancelTasks();
+                // Just to make sure he aint glitching on the wall.
+                ship.move(xMax + 80, yStart);
             }
         }
     }
