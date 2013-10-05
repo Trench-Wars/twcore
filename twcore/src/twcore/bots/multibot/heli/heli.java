@@ -44,7 +44,7 @@ public class heli extends MultiModule {
         String[] blah = {
                 "!manual            -Make an educated guess!",
                 "!start             -DURRRRRRRRRRRRRRRRRRRRR",
-                "!start #           -Delayed start in #seconds.",
+                "!start #           -Delayed start in #seconds. Everything automated except winner detection.",
                 "!setmove #         -Sets distance between barrier mines.",
                 "!setslope #        -Sets difficulty increases in difficulty as you get higher.",
                 "!setspeed #        -Sets bot's speed in milliseconds.",
@@ -151,6 +151,11 @@ public class heli extends MultiModule {
     }
     
     public void startThing() {
+        try {
+            // Delay tactics! Give the bot time to counter the all ship change stuff, if needed.
+            Thread.sleep(100);
+        } catch (Exception e) {}
+        
         m_botAction.setPlayerPositionUpdating(0);
         Ship ship = m_botAction.getShip();
         ship.setShip(7);
