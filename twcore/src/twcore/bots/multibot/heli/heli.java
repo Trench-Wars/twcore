@@ -22,7 +22,7 @@ public class heli extends MultiModule {
     TimerTask nextWall;
     TimerTask nextBarrier;
     TimerTask timerDelayedStart;
-    TimerTask rocketPrizing;
+    
     Random rand = new Random();
     private final static int xMin = 256 * 16;
     private final static int xMax = 767 * 16;
@@ -125,22 +125,11 @@ public class heli extends MultiModule {
     public void delayedStart(Integer delay) {
         if(delay == null || delay < 0 || delay > 60)
             return;
-
-        if(rocketPrizing != null) {
-            m_botAction.cancelTask(rocketPrizing);
-        }
-        
-        rocketPrizing = new TimerTask() {
-            @Override
-            public void run() {
-                m_botAction.prizeAll(Tools.Prize.ROCKET);
-            }
-        };
         
         if(delay == 0) {
             m_botAction.changeAllShips(Tools.Ship.WARBIRD);
             m_botAction.setAlltoFreq(0);
-            m_botAction.scheduleTask(rocketPrizing, 0, 500);
+            m_botAction.prizeAll(Tools.Prize.ROCKET);
             m_botAction.sendArenaMessage("GOGOGO!!!", Tools.Sound.GOGOGO);
             startThing();
         } else {
@@ -151,7 +140,7 @@ public class heli extends MultiModule {
                 public void run() {
                     m_botAction.changeAllShips(Tools.Ship.WARBIRD);
                     m_botAction.setAlltoFreq(0);
-                    m_botAction.scheduleTask(rocketPrizing, 0, 500);
+                    m_botAction.prizeAll(Tools.Prize.ROCKET);
                     m_botAction.sendArenaMessage("GOGOGO!!!", Tools.Sound.GOGOGO);
                     startThing();                   
                 }
@@ -166,6 +155,7 @@ public class heli extends MultiModule {
         Ship ship = m_botAction.getShip();
         ship.setShip(7);
         ship.setFreq(8000);
+        ship.sendPositionPacket();
         // Instead of 16, 12 is used to make the top 3/4th above the platform, and the bottom stick 1/4th underneath it.
         ship.move(xMin, yStart - height * 12);
         y = ship.getY();
