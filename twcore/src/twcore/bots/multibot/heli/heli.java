@@ -131,6 +131,7 @@ public class heli extends MultiModule {
             return;
         
         m_botAction.specAllOnFreq(8000);
+        m_botAction.changeAllShips(Tools.Ship.WARBIRD);
         
         if(delay == 0) {
             m_botAction.changeAllShips(Tools.Ship.WARBIRD);
