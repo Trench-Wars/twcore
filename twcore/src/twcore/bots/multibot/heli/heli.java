@@ -1,5 +1,6 @@
 package twcore.bots.multibot.heli;
 
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -43,6 +44,7 @@ public class heli extends MultiModule {
     public String[] getModHelpMessage() {
         String[] blah = {
                 "!manual            -Make an educated guess!",
+                "!rules             -Displays the rules etc of the game to the players.",
                 "!start             -DURRRRRRRRRRRRRRRRRRRRR",
                 "!start #           -Delayed start in #seconds. Everything automated except winner detection.",
                 "!setmove #         -Sets distance between barrier mines.",
@@ -75,6 +77,8 @@ public class heli extends MultiModule {
         message = message.toLowerCase();
         if (message.startsWith("!manual")) {
             dispManual(name);
+        } else if (message.equals("!rules")) {
+            dispRules();
         } else if (message.equals("!start")) {
             m_botAction.sendPrivateMessage(name, "Starting...");
             startThing();
@@ -126,6 +130,8 @@ public class heli extends MultiModule {
         if(delay == null || delay < 0 || delay > 60)
             return;
         
+        m_botAction.specAllOnFreq(8000);
+        
         if(delay == 0) {
             m_botAction.changeAllShips(Tools.Ship.WARBIRD);
             m_botAction.setAlltoFreq(0);
@@ -151,11 +157,6 @@ public class heli extends MultiModule {
     }
     
     public void startThing() {
-        try {
-            // Delay tactics! Give the bot time to counter the all ship change stuff, if needed.
-            Thread.sleep(100);
-        } catch (Exception e) {}
-        
         m_botAction.setPlayerPositionUpdating(0);
         Ship ship = m_botAction.getShip();
         ship.setShip(7);
@@ -278,6 +279,14 @@ public class heli extends MultiModule {
         spam.add("We hope you'll enjoy hosting this game!");
         
         m_botAction.privateMessageSpam(name, spam);        
+    }
+    
+    public void dispRules() {
+        ArrayList<String> spam = new ArrayList<String>();
+        spam.add("Welcome to Helicopter!");
+        spam.add("The rules are simple. Dodge all the mines and be the first at the other side.");
+        spam.add("For this you will only get one rocket. Good luck!");
+        m_botAction.arenaMessageSpam(spam.toArray(new String[spam.size()]));
     }
     
     public void dispSettings(String name) {
