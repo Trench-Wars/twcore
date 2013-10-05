@@ -1625,6 +1625,9 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Last " + num + " new player alerts:");
             for (int i = 0; i < num; i++) {
                 NewbCall newb = newbHistory.get(newbNames.get(i).toLowerCase());
+                //TODO Search for the real cause of the NPE. Assuming that the two lists above aren't always synced up.
+                if(newb == null)
+                    continue;
                 String m = "" + t.format(newb.getTime()) + " ";
                 m += stringHelper("" + newb.playerName, 23);
                 if (newb.claimType == NewbCall.FREE)
