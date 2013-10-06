@@ -46,7 +46,7 @@ public class heli extends MultiModule {
                 "!manual            -Make an educated guess!",
                 "!rules             -Displays the rules etc of the game to the players.",
                 "!start             -DURRRRRRRRRRRRRRRRRRRRR",
-                "!start #           -Delayed start in #seconds. Everything automated except winner detection.",
+//                "!start #           -Delayed start in #seconds. Everything automated except winner detection.",
                 "!setmove #         -Sets distance between barrier mines.",
                 "!setslope #        -Sets difficulty increases in difficulty as you get higher.",
                 "!setspeed #        -Sets bot's speed in milliseconds.",
@@ -82,12 +82,14 @@ public class heli extends MultiModule {
         } else if (message.equals("!start")) {
             m_botAction.sendPrivateMessage(name, "Starting...");
             startThing();
+/*      Intended use: Debug mode for live testing by dev without an ER+ present.      
         } else if (message.startsWith("!start ")) {
             try {
                 Integer delay = Integer.parseInt(message.substring(7));
                 m_botAction.sendPrivateMessage(name, "Starting in " + delay + " seconds.");
                 delayedStart(delay);
             } catch (Exception e) {}
+*/
         } else if (message.startsWith("!specbot")) {
             m_botAction.cancelTasks();
             m_botAction.spec(m_botAction.getBotName());
