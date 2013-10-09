@@ -36,7 +36,7 @@ public class utiletc extends MultiUtil {
     boolean turret = true;
     boolean fire = false;
     double speed = 4000;
-    int delayMS = 50;
+    int delayMS = 20;       // Delay for !draw between moves.
     int weapon = 1;
     int     id = -1;
     long time = 0;
@@ -144,7 +144,10 @@ public class utiletc extends MultiUtil {
         } else if(message.toLowerCase().startsWith("!draw ")) {
             download(name, message.substring(6));
         } else if(message.toLowerCase().startsWith("!setdelay ")) {
-            try { delayMS = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
+            try { 
+                delayMS = Integer.parseInt( message.split( " " )[1] );
+                m_botAction.sendSmartPrivateMessage(name, "Draw delay set to "+ delayMS +"ms. (Default: 20)");
+            } catch (Exception e ){}
         } else if(message.toLowerCase().startsWith("!specbot")) {
             m_botAction.spec(m_botAction.getBotName());
             m_botAction.spec(m_botAction.getBotName());
