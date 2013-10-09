@@ -290,11 +290,11 @@ public class utiletc extends MultiUtil {
                             } else {
                                 ship.moveAndFire(ship.getX() + move, ship.getY() + 0, getWeapon(inString.charAt(k)));
                             }
+                            try {
+                                Thread.sleep(50);
+                            } catch (Exception e) {}
                         }
                         ship.move(xNormal, ship.getY() + move);
-                        try {
-                            Thread.sleep(50);
-                        } catch (Exception e) {}
                     }
                 }
             }
