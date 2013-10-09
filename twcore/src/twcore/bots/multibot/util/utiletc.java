@@ -292,6 +292,9 @@ public class utiletc extends MultiUtil {
                             }
                         }
                         ship.move(xNormal, ship.getY() + move);
+                        try {
+                            Thread.sleep(50);
+                        } catch (Exception e) {}
                     }
                 }
             }
