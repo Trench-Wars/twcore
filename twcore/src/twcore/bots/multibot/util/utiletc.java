@@ -36,6 +36,7 @@ public class utiletc extends MultiUtil {
     boolean turret = true;
     boolean fire = false;
     double speed = 4000;
+    int delayMS = 50;
     int weapon = 1;
     int     id = -1;
     long time = 0;
@@ -142,6 +143,8 @@ public class utiletc extends MultiUtil {
             m_botAction.requestArenaList();
         } else if(message.toLowerCase().startsWith("!draw ")) {
             download(name, message.substring(6));
+        } else if(message.toLowerCase().startsWith("!setdelay ")) {
+            try { delayMS = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
         } else if(message.toLowerCase().startsWith("!specbot")) {
             m_botAction.spec(m_botAction.getBotName());
             m_botAction.spec(m_botAction.getBotName());
@@ -291,7 +294,7 @@ public class utiletc extends MultiUtil {
                                 ship.moveAndFire(ship.getX() + move, ship.getY() + 0, getWeapon(inString.charAt(k)));
                             }
                             try {
-                                Thread.sleep(50);
+                                Thread.sleep(delayMS);
                             } catch (Exception e) {}
                         }
                         ship.move(xNormal, ship.getY() + move);
