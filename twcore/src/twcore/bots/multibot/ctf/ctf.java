@@ -56,39 +56,53 @@ public class ctf extends MultiModule {
     public void init() {
         ba = m_botAction;
         movingFlag = false;
-        DEBUG = false;
-        debugger = "";
+        DEBUG = true;
+        debugger = "ThePAP";
         toWin = 5;
         ba.setLowPriorityPacketCap(8);
         
         players = new HashMap<String, FlagPlayer>();
+        debug("01");
         Iterator<Player> j = ba.getPlayerIterator();
         while (j.hasNext())
             new FlagPlayer(j.next());
+        debug("02");
         ba.shipResetAll();
+        debug("03");
         Flag flag1 = null, flag2 = null;
+        debug("04");
         Iterator<Flag> i = ba.getFlagIterator();
+        debug("05");
         if (i.hasNext()) flag1 = i.next();
         else {
             ba.sendPublicMessage("CTF module failed to detect flags...");
             throw new NullPointerException();
         }
+        debug("06");
         if (i.hasNext()) flag2 = i.next();
         else {
             ba.sendPublicMessage("CTF module failed to detect flags...");
             throw new NullPointerException();
         }
+        debug("07");
         if (i.hasNext()) {
             ba.sendPublicMessage("CTF module failed to detect flags...");
             throw new NullPointerException();
         }
+        debug("08");
         flag = new FlagTask[] { new FlagTask(flag1, 0), new FlagTask(flag2, 1) };
+        debug("09");
         ba.scheduleTask(flag[0], 1000, 1000);
         ba.scheduleTask(flag[1], 1000, 1000);
+        debug("10");
         team = new Team[] { new Team(0, flag[0], GOALS[0], GOALS[1]), new Team(1, flag[1], GOALS[2], GOALS[3]) };
+        debug("11");
         resetFlags();
+        debug("12");
         spec = new SpecTask();
+        debug("13");
         ba.scheduleTask(spec, 1000, 2000);
+        debug("14");
     }
 
     @Override
