@@ -39,11 +39,10 @@ public class pointrace extends MultiModule {
     public void handleEvent(Message event) {
         int type = event.getMessageType();
         String msg = event.getMessage().toLowerCase();
+        short sender = event.getPlayerID();
 
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
-            String name = ba.getPlayerName(event.getPlayerID());
-            if (name == null)
-                name = event.getMessager();
+            String name = event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE ? event.getMessager() : m_botAction.getPlayerName(sender);
             if (ba.getOperatorList().isER(name)) {
                 if (msg.startsWith("!start "))
                     cmd_start(name, msg);
