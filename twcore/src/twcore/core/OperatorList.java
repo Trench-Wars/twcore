@@ -196,7 +196,7 @@ public class OperatorList {
 
                     while (( line = buffer.readLine()) != null) {
 
-                        if( line.startsWith("*")) {
+                        if( line.startsWith("-")) {
                             if(line.contains("TW Marketing/Player Retention Department:"))
                                 sectionMarketing = true;
                             else if(line.contains("End note for Marketing staff - DO NOT REMOVE"))
