@@ -168,6 +168,9 @@ public class OperatorList {
         // 1. Cycle the autoAssign hashmap
         //
 
+        // Section dependent flag. Used for new rank Marketing staff. Has ZH access levels, but no tag.
+        boolean sectionMarketing = false;
+        
         for(int level:autoAssign.keySet()) {
             String autoAssignSetting = autoAssign.get(level);
 
@@ -193,6 +196,12 @@ public class OperatorList {
 
                     while (( line = buffer.readLine()) != null) {
 
+                        if( line.startsWith("*")) {
+                            if(line.contains("TW Marketing/Player Retention Department:"))
+                                sectionMarketing = true;
+                            else if(line.contains("End note for Marketing staff - DO NOT REMOVE"))
+                                sectionMarketing = false;
+                        }
                         if( line.startsWith(" ") ||
                             line.startsWith("-") ||
                             line.startsWith("+") ||
@@ -209,7 +218,8 @@ public class OperatorList {
                         }
 
                         // if we're not using auto-assign options "tag" or "line"
-                        if(autoAssignSetting2 == null || autoAssignSetting2.replace(":", "").length() == 0) {
+                        if(!sectionMarketing 
+                                && (autoAssignSetting2 == null || autoAssignSetting2.replace(":", "").length() == 0)) {
                             if(operators.containsKey(name) && operators.get(name) >= level) {
                                 continue;
                             } else {
@@ -223,6 +233,13 @@ public class OperatorList {
                         if(autoAssignSetting2 != null && autoAssignSetting2.startsWith(":tag ") && autoAssignSetting2.length() > 6) {
                             if(name.contains(autoAssignSetting2.toLowerCase().substring(5))) {
                                 operators.put(name, level);
+                            }
+                        }
+                        if(sectionMarketing) {
+                            if(operators.containsKey(name) && operators.get(name) >= ZH_LEVEL) {
+                                continue;
+                            } else {
+                                operators.put(name, ZH_LEVEL);
                             }
                         }
                         if(autoAssignSetting2 != null && autoAssignSetting2.startsWith(":line")) {
