@@ -12,6 +12,8 @@ import twcore.core.command.TempSettingsManager;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerPosition;
 import twcore.core.util.ModuleEventRequester;
+import twcore.core.util.Tools;
+
 import java.util.HashMap;
 
 /**
@@ -55,13 +57,17 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		"| !set DelaySeconds=0-1000, How long to wait before acting   |",
 		"|                                                            |",
 		"| !get <Value>- Get the value for one of the above settings  |",
+		"|                                                            |",
+		"| !default <Arena>- Applies default arena settings.          |",
+		"|       Blank resets to original values.                     |",
+		"|       Currently supported arenas: brickman, pipe           |",
 		"+------------------------------------------------------------+"
 	};
 
 
 	// Cached game settings to increase speed
 	private boolean specPlayer = false, changeShip = false, changeFreq = false;
-	private int targetFreq = 1, targetShip = 3, delaySeconds = 0;
+	private int targetFreq = 1, targetShip = Tools.Ship.SPIDER, delaySeconds = 0;
 	private String speccedMsg = "none", shipChgMsg = "none", freqChgMsg= "none";
 
 	/**
@@ -129,18 +135,22 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	public void handleEvent(Message event)
 	{
 		m_tsm.handleEvent(event);
+		
+		String msg = event.getMessage().toLowerCase();
 
 		String name = m_botAction.getPlayerName(event.getPlayerID());
 		if(event.getMessageType() == Message.PRIVATE_MESSAGE && m_opList.isER(name))
 		{
-			if(event.getMessage().equalsIgnoreCase("!safeson"))
+			if(msg.equals("!safeson"))
 			{
 				c_Activate(name, true);
 			}
-			else if(event.getMessage().equalsIgnoreCase("!safesoff"))
+			else if(msg.equals("!safesoff"))
 			{
 				c_Activate(name, false);
 				m_entryTimes.clear();
+			} else if(msg.startsWith("!default")) {
+			    cmd_default(name, msg);
 			}
 		}
 	}
@@ -228,6 +238,66 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		}
 	}
 
+	/**
+	 * Command: !default
+	 * <p>
+	 * Changes the settings to a predetermined set for a specific arena.
+	 * @param name Sender
+	 * @param msg Message
+	 */
+	private void cmd_default(String name, String msg) {
+	    String arenaName = "";
+	    
+	    if(msg.length() > 9) {
+	        arenaName = msg.substring(9);
+	    }
+	    
+	    if(!arenaName.isEmpty()) {
+	        if(arenaName.equals("pipe")) {
+	            // Arena: Pipe
+	            specPlayer = false;
+	            changeShip = true;
+	            changeFreq = true;
+	            targetFreq = 1;
+	            targetShip = Tools.Ship.SHARK;
+	            delaySeconds = 0;
+	            speccedMsg = "none";
+	            shipChgMsg = "slipped and fell into a safe! %22";
+	            freqChgMsg = "none";
+	            m_botAction.sendSmartPrivateMessage(name, "Arenasettings applied for pipe.");
+	            return;
+	        } else if(arenaName.equals("brickman")) {
+	            // Arena: Brickman
+                specPlayer = true;
+                changeShip = false;
+                changeFreq = false;
+                targetFreq = 1;
+                targetShip = Tools.Ship.SPIDER;
+                delaySeconds = 0;
+                speccedMsg = "slipped and fell into a safe! %22";
+                shipChgMsg = "none";
+                freqChgMsg = "none";
+                m_botAction.sendSmartPrivateMessage(name, "Arenasettings applied for brickman.");
+                return;
+	        }
+	    }
+	    
+	    // Default arena settings.
+	    specPlayer = false;
+	    changeShip = false;
+	    changeFreq = false;
+	    targetFreq = 1;
+	    targetShip = Tools.Ship.SPIDER;
+	    delaySeconds = 0;
+	    speccedMsg = "none";
+	    shipChgMsg = "none";
+	    freqChgMsg = "none";
+	    if(!arenaName.isEmpty())
+	        m_botAction.sendSmartPrivateMessage(name, "Arena " + arenaName + " not found. Reverting to default settings.");
+	    else
+	        m_botAction.sendSmartPrivateMessage(name, "Reverting to default settings.");
+	}
+	
 	/**
 	 * Establishes all of the settings with the TempSettings Manager
 	 */
