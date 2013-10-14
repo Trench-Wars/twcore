@@ -55,6 +55,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		"| !set FreqChgMsg=\"text\", Arena message when freq changed    |",
 		"|      (Set the msg's to \"none\" for no message displayed)    |",
 		"| !set DelaySeconds=0-1000, How long to wait before acting   |",
+		"| !set EnableMS=on/off, Use MS instead of seconds for delay  |",
 		"|                                                            |",
 		"| !get <Value>- Get the value for one of the above settings  |",
 		"|                                                            |",
@@ -70,6 +71,8 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	private int targetFreq = 1, targetShip = Tools.Ship.SPIDER, delaySeconds = 0;
 	private String speccedMsg = "none", shipChgMsg = "none", freqChgMsg= "none";
 
+	private boolean enableMS = false;
+	
 	/**
 	 * Creates a new instance of the Extended Safes Module
 	 */
@@ -126,6 +129,8 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 			freqChgMsg = (String)value;
 		else if(setting.equals("delayseconds"))
 			delaySeconds = (Integer)value;
+		else if(setting.equals("enablems"))
+		    enableMS = (Boolean)value;
 	}
 
 	/**
@@ -177,7 +182,10 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 					{
 						long entryTime = m_entryTimes.get(name);
 						int delta = (int)(currentTime - entryTime);
-						delta /= 1000;
+						if(!enableMS) {
+						    // Do the delay in seconds.
+						    delta /= Tools.TimeInMillis.SECOND;
+						}
 						if(delta < delaySeconds)
 						{
 							delayExceeded = false;
@@ -206,6 +214,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 
 					if(changeShip && ship != targetShip)
 					{
+					    m_botAction.sendArenaMessage("Current: " + ship + " ; New: " + targetShip);
 						m_botAction.setShip(event.getPlayerID(), targetShip);
 						if(!shipChgMsg.equalsIgnoreCase("none"))
 							m_botAction.sendArenaMessage(name + " " + shipChgMsg);
@@ -213,6 +222,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 
 					if(changeFreq && freq != targetFreq)
 					{
+					    m_botAction.sendArenaMessage("Current: " + freq + " ; New: " + targetFreq);
 						m_botAction.setFreq(event.getPlayerID(), targetFreq);
 						if(!freqChgMsg.equalsIgnoreCase("none"))
 							m_botAction.sendArenaMessage(name + " " + freqChgMsg);
@@ -260,7 +270,8 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	            changeFreq = true;
 	            targetFreq = 1;
 	            targetShip = Tools.Ship.SHARK;
-	            delaySeconds = 0;
+	            delaySeconds = 100;
+	            enableMS = true;
 	            speccedMsg = "none";
 	            shipChgMsg = "slipped and fell into a safe! %22";
 	            freqChgMsg = "none";
@@ -273,7 +284,8 @@ public class utilsafes extends MultiUtil implements TSChangeListener
                 changeFreq = false;
                 targetFreq = 1;
                 targetShip = Tools.Ship.SPIDER;
-                delaySeconds = 0;
+                delaySeconds = 100;
+                enableMS = true;
                 speccedMsg = "slipped and fell into a safe! %22";
                 shipChgMsg = "none";
                 freqChgMsg = "none";
@@ -289,6 +301,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	    targetFreq = 1;
 	    targetShip = Tools.Ship.SPIDER;
 	    delaySeconds = 0;
+	    enableMS = false;
 	    speccedMsg = "none";
 	    shipChgMsg = "none";
 	    freqChgMsg = "none";
@@ -315,6 +328,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		m_tsm.addSetting(STRING,  "FreqChgMsg", "none");
 
 		m_tsm.addSetting(INT,     "DelaySeconds", "0");
+		m_tsm.addSetting(BOOLEAN, "EnableMS", "off");
 
 		m_tsm.restrictSetting("TargetShip", 1, 8);
 		m_tsm.restrictSetting("TargetFreq", 0, 9999);
@@ -335,6 +349,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		m_tsm.removeSetting("TargetShip");
 		m_tsm.removeSetting("TargetFreq");
 		m_tsm.removeSetting("DelaySeconds");
+		m_tsm.removeSetting("EnableMS");
         m_botAction.resetReliablePositionUpdating();
 	}
 }
