@@ -298,8 +298,8 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	        if(arenaName.equals("pipe")) {
 	            // Arena: Pipe
 	            specPlayer = false;
-	            changeShip = false;
-	            changeFreq = true;
+	            changeShip = true;
+	            changeFreq = false;
 	            targetFreq = 7;
 	            targetShip = Tools.Ship.SHARK;
 	            delaySeconds = 100;
