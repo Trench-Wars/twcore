@@ -70,7 +70,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	private boolean specPlayer = false, changeShip = false, changeFreq = false;
 	private int targetFreq = 1, targetShip = Tools.Ship.SPIDER, delaySeconds = 0;
 	private String speccedMsg = "none", shipChgMsg = "none", freqChgMsg= "none";
-
+	private int speccedSound = 0, shipSound = 0, freqSound = 0;
 	private boolean enableMS = false;
 	
 	/**
@@ -113,26 +113,46 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		setting = setting.toLowerCase();
 		if(setting.equals("specplayer"))
 			specPlayer = (Boolean)value;
-		else if(setting.equals("speccedmsg"))
-			speccedMsg = (String)value;
-		else if(setting.equals("changeship"))
+		else if(setting.equals("speccedmsg")) {
+		    Pair msg = parseText((String)value);
+			speccedMsg = msg.getKey();
+			speccedSound = msg.getValue();
+		} else if(setting.equals("changeship"))
 			changeShip = (Boolean)value;
 		else if(setting.equals("targetship"))
 			targetShip = (Integer)value;
-		else if(setting.equals("shipchgmsg"))
-			shipChgMsg = (String)value;
-		else if(setting.equals("changefreq"))
+		else if(setting.equals("shipchgmsg")) {
+		    Pair msg = parseText((String)value);
+			shipChgMsg = msg.getKey();
+			shipSound = msg.getValue();
+		} else if(setting.equals("changefreq"))
 			changeFreq = (Boolean)value;
 		else if(setting.equals("targetfreq"))
 			targetFreq = (Integer)value;
-		else if(setting.equals("freqchgmsg"))
-			freqChgMsg = (String)value;
-		else if(setting.equals("delayseconds"))
+		else if(setting.equals("freqchgmsg")) {
+		    Pair msg = parseText((String)value);
+			freqChgMsg = msg.getKey();
+			freqSound = msg.getValue();
+		} else if(setting.equals("delayseconds"))
 			delaySeconds = (Integer)value;
 		else if(setting.equals("enablems"))
 		    enableMS = (Boolean)value;
 	}
 
+	public Pair parseText(String msg) {
+        int soundPos = msg.indexOf('%');
+        int soundCode = 0;
+
+        if( soundPos != -1){
+            try{
+                soundCode = Integer.parseInt(msg.substring(soundPos + 1));
+            } catch( Exception e ){
+                soundCode = 0;
+            }
+            if(soundCode == 12) {soundCode = 1;} //no naughty sounds
+        }
+        return new Pair(msg, soundCode);
+	}
 	/**
 	 * Event: Message
 	 * Check and pass to appropriate commands
@@ -208,24 +228,38 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 					{
 						m_botAction.spec(event.getPlayerID());
 						m_botAction.spec(event.getPlayerID());
-						if(!speccedMsg.equalsIgnoreCase("none"))
-							m_botAction.sendArenaMessage(name + " " + speccedMsg);
+						if(!speccedMsg.equalsIgnoreCase("none")) {
+                            if(speccedSound != 0)
+                                m_botAction.sendArenaMessage(name + " " + speccedMsg, speccedSound);
+                            else
+                                m_botAction.sendArenaMessage(name + " " + speccedMsg);
+						}
 					}
 
 					if(changeShip && ship != targetShip)
 					{
 					    m_botAction.sendArenaMessage("Current: " + ship + " ; New: " + targetShip);
 						m_botAction.setShip(event.getPlayerID(), targetShip);
-						if(!shipChgMsg.equalsIgnoreCase("none"))
-							m_botAction.sendArenaMessage(name + " " + shipChgMsg);
+						
+						if(!shipChgMsg.equalsIgnoreCase("none")) {
+						    if(shipSound != 0)
+						        m_botAction.sendArenaMessage(name + " " + shipChgMsg, shipSound);
+						    else
+						        m_botAction.sendArenaMessage(name + " " + shipChgMsg);
+						}
+							
 					}
 
 					if(changeFreq && freq != targetFreq)
 					{
 					    m_botAction.sendArenaMessage("Current: " + freq + " ; New: " + targetFreq);
 						m_botAction.setFreq(event.getPlayerID(), targetFreq);
-						if(!freqChgMsg.equalsIgnoreCase("none"))
-							m_botAction.sendArenaMessage(name + " " + freqChgMsg);
+						if(!freqChgMsg.equalsIgnoreCase("none")) {
+                            if(freqSound != 0)
+                                m_botAction.sendArenaMessage(name + " " + freqChgMsg, freqSound);
+                            else
+                                m_botAction.sendArenaMessage(name + " " + freqChgMsg);
+                        }
 					}
 				}
 			}
@@ -273,8 +307,11 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	            delaySeconds = 100;
 	            enableMS = true;
 	            speccedMsg = "none";
-	            shipChgMsg = "slipped and fell into a safe! %22";
+	            speccedSound = 0;
+	            shipChgMsg = "slipped and fell into a safe!";
+	            shipSound = Tools.Sound.CROWD_AWW;
 	            freqChgMsg = "none";
+	            freqSound = 0;
 	            m_botAction.sendSmartPrivateMessage(name, "Arenasettings applied for pipe.");
 	            return;
 	        } else if(arenaName.equals("brickman")) {
@@ -286,9 +323,12 @@ public class utilsafes extends MultiUtil implements TSChangeListener
                 targetShip = Tools.Ship.SPIDER;
                 delaySeconds = 100;
                 enableMS = true;
-                speccedMsg = "slipped and fell into a safe! %22";
+                speccedMsg = "slipped and fell into a safe!";
+                speccedSound = Tools.Sound.CROWD_AWW;
                 shipChgMsg = "none";
+                shipSound = 0;
                 freqChgMsg = "none";
+                freqSound = 0;
                 m_botAction.sendSmartPrivateMessage(name, "Arenasettings applied for brickman.");
                 return;
 	        }
@@ -303,8 +343,11 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	    delaySeconds = 0;
 	    enableMS = false;
 	    speccedMsg = "none";
+	    speccedSound = 0;
 	    shipChgMsg = "none";
+	    shipSound = 0;
 	    freqChgMsg = "none";
+	    freqSound = 0;
 	    if(!arenaName.isEmpty())
 	        m_botAction.sendSmartPrivateMessage(name, "Arena " + arenaName + " not found. Reverting to default settings.");
 	    else
@@ -351,5 +394,23 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 		m_tsm.removeSetting("DelaySeconds");
 		m_tsm.removeSetting("EnableMS");
         m_botAction.resetReliablePositionUpdating();
+	}
+	
+	public class Pair {
+	    private String key;
+	    private Integer value;
+	    
+	    public Pair(String key, Integer value) {
+	        this.key = key;
+	        this.value = value;
+	    }
+	    
+	    public String getKey() {
+	        return this.key;
+	    }
+	    
+	    public Integer getValue() {
+	        return this.value;
+	    }
 	}
 }
