@@ -3,8 +3,6 @@ package twcore.bots.multibot.zombies;
 import java.util.HashSet;
 import java.util.ArrayList;
 
-import org.omg.CORBA.REBIND;
-
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
