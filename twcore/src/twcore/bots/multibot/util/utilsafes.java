@@ -238,7 +238,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 
 					if(changeShip && ship != targetShip)
 					{
-					    m_botAction.sendArenaMessage("Current: " + ship + " ; New: " + targetShip);
+					    m_botAction.sendArenaMessage("Current ship: " + ship + " ; New ship: " + targetShip);
 						m_botAction.setShip(event.getPlayerID(), targetShip);
 						
 						if(!shipChgMsg.equalsIgnoreCase("none")) {
@@ -252,7 +252,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 
 					if(changeFreq && freq != targetFreq)
 					{
-					    m_botAction.sendArenaMessage("Current: " + freq + " ; New: " + targetFreq);
+					    m_botAction.sendArenaMessage("Current freq: " + freq + " ; New freq: " + targetFreq);
 						m_botAction.setFreq(event.getPlayerID(), targetFreq);
 						if(!freqChgMsg.equalsIgnoreCase("none")) {
                             if(freqSound != 0)
@@ -302,7 +302,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
 	            specPlayer = false;
 	            changeShip = true;
 	            changeFreq = true;
-	            targetFreq = 1;
+	            targetFreq = 7;
 	            targetShip = Tools.Ship.SHARK;
 	            delaySeconds = 100;
 	            enableMS = true;
@@ -319,7 +319,7 @@ public class utilsafes extends MultiUtil implements TSChangeListener
                 specPlayer = true;
                 changeShip = false;
                 changeFreq = false;
-                targetFreq = 1;
+                targetFreq = 2;
                 targetShip = Tools.Ship.SPIDER;
                 delaySeconds = 100;
                 enableMS = true;
