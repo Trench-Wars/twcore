@@ -26,6 +26,7 @@ import twcore.core.lvz.Objset;
 import twcore.core.net.GamePacketGenerator;
 import twcore.core.net.Email;
 import twcore.core.util.InterProcessCommunicator;
+import twcore.core.util.Point;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
@@ -1343,7 +1344,49 @@ public class BotAction
         }
         warpTo(playerName, x, y);
     }
+    
+    /**
+     * Point version of {@link #warpTo(int, int, int)}
+     * @param playerID PlayerID of the player to be warped
+     * @param coordTiles Set of coordinates. (1 to 1024)
+     * @see BotAction#warpTo(int, int, int)
+     */
+    public void warpTo(int playerID, Point coordTiles) {
+        warpTo(playerID, coordTiles.x, coordTiles.y);
+    }
+ 
+    /**
+     * Point version of {@link #warpTo(String, int, int)}
+     * @param playerName Name of the player to be warped.
+     * @param coordTiles Set of coordinates. (1 to 1024)
+     * @see BotAction#warpTo(String, int, int)
+     */
+    public void warpTo(String playerName, Point coordTiles) {
+        warpTo(playerName, coordTiles.x, coordTiles.y);
+    }
+ 
+    /**
+     * Point version of {@link #warpTo(int, int, int, int)}
+     * @param playerID PlayerID of the player to be warped
+     * @param coordTiles Set of coordinates. (1 to 1024)
+     * @param radius Radius from Point player can be warped.
+     * @see BotAction#warpTo(int, int, int, int)
+     */
+    public void warpTo(int playerID, Point coordTiles, int radius) {
+        warpTo(playerID, coordTiles.x, coordTiles.y, radius);
+    }
 
+    /**
+     * Point version of {@link #warpTo(String, int, int, int)}
+     * @param playerName Name of the player to be warped.
+     * @param coordTiles Set of coordinates. (1 to 1024)
+     * @param radius Radius from Point player can be warped.
+     * @see BotAction#warpTo(String, int, int, int)
+     */
+    public void warpTo(String playerName, Point coordTiles, int radius) {
+        warpTo(playerName, coordTiles.x, coordTiles.y, radius);
+    }
+    
     /**
      * Warps player to a random location as defined in the CFG, and then sets to
      * spectate on them in order to update their position.

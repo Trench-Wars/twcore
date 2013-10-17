@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import twcore.core.util.Point;
 import twcore.core.util.Tools;
 
 /**
@@ -209,6 +210,67 @@ public class BotSettings {
     	} else {
     		return null;
     	}
+    }
+    
+    /**
+     * Returns data associated with a specified field.
+     * @param keyName Field to fetch from.
+     * @param separator Separator between the X and Y component of a point.
+     * @return Data associated with a specified field; null if anything bad happens.
+     */
+    public Point getPoint( String keyName, String separator ) {
+        String      value = m_data.get( keyName.toLowerCase() );
+        if(value != null){
+            String[] values = value.split(separator);
+            Point p;
+            if(values.length != 2)
+                return null;
+            try{
+                p = new Point(Integer.parseInt(values[0]), Integer.parseInt(values[1]));
+            }catch(NumberFormatException e){
+                return null;
+            }
+            return p;
+        } else {
+            return null;
+        }        
+    }
+    
+    /**
+     * Returns data associated with a specified field.
+     * <p>
+     * Example of a field and how to parse it:
+     * <pre> DummyCoords=512:512,241:444,566:400
+     * Point[] dummyPoints = getPointArray("DummyCoords", ",", ":");</pre>
+     * <p>
+     * Note: When any of the intermittent points are invalid, they are simply skipped.
+     * @param keyName Field to fetch from.
+     * @param delimiter Delimited to parse points from by field.
+     * @param separator Separator between the X and Y component of a point.
+     * @return Data associated with a specified field; null if anything bad happens.
+     */
+    public Point[] getPointArray( String keyName, String delimiter, String separator ) {
+        String      value = m_data.get( keyName.toLowerCase() );
+        if(value != null){
+            String[] values = value.split(delimiter);
+            Point[] pArray = new Point[values.length];
+            try{
+                for(int i=0, offset = 0;i<values.length;i++) {
+                    String[] subSet = values[i].split(separator);
+                    if(subSet.length != 2) {
+                        offset++;
+                        continue;
+                    }
+                    pArray[i - offset] = new Point(Integer.parseInt(subSet[0]), Integer.parseInt(subSet[1]));
+                }
+            }catch(NumberFormatException e){
+                return null;
+            }
+            return pArray;
+        } else {
+            return null;
+        }
+
     }
 
     /**
