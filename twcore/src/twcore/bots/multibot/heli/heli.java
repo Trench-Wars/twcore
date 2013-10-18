@@ -136,6 +136,7 @@ public class heli extends MultiModule {
             } catch (Exception e) {}
         } else if (message.startsWith("!togglesmooth") && debugEnabled && debugger.equals(name)) {
             smoothTunnel = !smoothTunnel;
+            m_botAction.sendSmartPrivateMessage(name, "Smooth walls are now " + (smoothTunnel ? "enabled" : "disabled"));
         } else if (message.startsWith("!settings")) {
             dispSettings(name);
         } else if (message.startsWith("!stop")) {
@@ -294,10 +295,7 @@ public class heli extends MultiModule {
             
             // Update the current slope.
             if(smoothTunnel) {
-                if(currentSlope < targetSlope)
-                    currentSlope++;
-                else if(currentSlope > targetSlope)
-                    currentSlope--;
+                currentSlope += (targetSlope - currentSlope + 1) / 2;
             }
             
             x += move;
@@ -416,7 +414,7 @@ public class heli extends MultiModule {
         spam.add("slope: " + slope + "% (default: 3);");
         spam.add("Tunnel height: " + tunnelHeight + " tiles (default: 20);");
         spam.add("Barrier height: " + barrierHeight + " tiles (default: 6);");
-        spam.add("Smooth walls: " + (smoothTunnel ? "enabled" : "disabled") + "(default: disabled).");
+        spam.add("Smooth walls: " + (smoothTunnel ? "enabled" : "disabled") + " (default: disabled).");
         
         m_botAction.privateMessageSpam(name, spam);
     }
