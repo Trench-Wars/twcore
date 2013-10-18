@@ -21,6 +21,7 @@ public class heli extends MultiModule {
     private final static int yMin = 467 * 16;
     private final static int yMax = 556 * 16;
     private final static int yStart = 515 * 16;
+    private final static int startTunnelHeight = 20;
     
     public OperatorList opList;
     
@@ -43,8 +44,6 @@ public class heli extends MultiModule {
     private int x = 0;
     private int slope = 3;
     private int yDiff = 0;
-    
-    private int startTunnelHeight = 20;
     private int currentSlope = 0;
     
     // Debug related variables for live testing.
@@ -134,7 +133,7 @@ public class heli extends MultiModule {
                 barrierHeight = Integer.parseInt(message.substring(15));
                 m_botAction.sendPrivateMessage(name, "Set height of the bariers to: " + barrierHeight);
             } catch (Exception e) {}
-        } else if (message.startsWith("!togglesmooth") && debugEnabled && debugger.equals(name)) {
+        } else if (message.startsWith("!togglesmooth")) {
             smoothTunnel = !smoothTunnel;
             m_botAction.sendSmartPrivateMessage(name, "Smooth walls are now " + (smoothTunnel ? "enabled" : "disabled"));
         } else if (message.startsWith("!settings")) {
@@ -218,6 +217,7 @@ public class heli extends MultiModule {
      */
     public void smoothStartWallSection() {
         int mineDistance = mineInterval * 16;
+        int currentTunnelHeight = startTunnelHeight;
         Ship ship = m_botAction.getShip();
         
         // For the first five mines, go straight.
@@ -226,7 +226,7 @@ public class heli extends MultiModule {
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + startTunnelHeight * 16, getWeapon('#'));
+            ship.moveAndFire(x, y + currentTunnelHeight * 16, getWeapon('#'));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
@@ -235,24 +235,24 @@ public class heli extends MultiModule {
         }
         
         // Now, slope until we are at the correct height
-        while(startTunnelHeight < tunnelHeight) {
+        while(currentTunnelHeight < tunnelHeight) {
             ship.moveAndFire(x, --y, getWeapon('#'));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + (++startTunnelHeight) * 16, getWeapon('#'));
+            ship.moveAndFire(x, y + (++currentTunnelHeight) * 16, getWeapon('#'));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
             
             x += mineDistance;             
         }
-        while(startTunnelHeight > tunnelHeight) {
+        while(currentTunnelHeight > tunnelHeight) {
             ship.moveAndFire(x, ++y, getWeapon('#'));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + (--startTunnelHeight) * 16, getWeapon('#'));
+            ship.moveAndFire(x, y + (--currentTunnelHeight) * 16, getWeapon('#'));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
