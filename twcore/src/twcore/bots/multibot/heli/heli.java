@@ -15,27 +15,41 @@ import twcore.core.game.Ship;
 
 public class heli extends MultiModule {
 
+    // Static settings
+    private final static int xMin = 256 * 16;
+    private final static int xMax = 767 * 16;
+    private final static int yMin = 467 * 16;
+    private final static int yMax = 556 * 16;
+    private final static int yStart = 515 * 16;
+    
     public OperatorList opList;
-    int move = 3;
-    int speed = 100;
-    int height = 20;
-    int wallheight = 6;
+    
+    // Timers
     TimerTask nextWall;
     TimerTask nextBarrier;
     TimerTask timerDelayedStart;
     
     Random rand = new Random();
-    private final static int xMin = 256 * 16;
-    private final static int xMax = 767 * 16;
-    private final static int yMin = 467 * 16;
-    private final static int yMax = 556 * 16;
-    //private final static int xStart = 260 * 16;
-    private final static int yStart = 515 * 16;
     
-    int y = 0;
-    int x = 0;
-    int Slope = 3;
-    int yDiff = 0;
+    // Adaptable settings
+    private int mineInterval = 3;
+    private int speed = 100;
+    private int tunnelHeight = 20;
+    private int barrierHeight = 6;
+    private boolean smoothTunnel;
+    
+    // Internally used tracking variables.
+    private int y = 0;
+    private int x = 0;
+    private int slope = 3;
+    private int yDiff = 0;
+    
+    private int startTunnelHeight = 20;
+    private int currentSlope = 0;
+    
+    // Debug related variables for live testing.
+    private boolean debugEnabled = false;
+    private String debugger = "";
 
     public void init() {
         opList = m_botAction.getOperatorList();
@@ -52,6 +66,7 @@ public class heli extends MultiModule {
                 "!setspeed #        -Sets bot's speed in milliseconds.",
                 "!setheight #       -Sets the height of the tunnel.",
                 "!setwallheight #   -Sets the height of the barriers.",
+                "!togglesmooth      -Toggles smooth transitions on slope changes.",
                 "!settings          -Displays the current settings.",
                 "!stop              -DURRRRRRRRRRRRRRRRRRRRR",
                 "!specbot           -Puts bot into spectator mode."
@@ -82,14 +97,13 @@ public class heli extends MultiModule {
         } else if (message.equals("!start")) {
             m_botAction.sendPrivateMessage(name, "Starting...");
             startThing();
-/*      Intended use: Debug mode for live testing by dev without an ER+ present.      
-        } else if (message.startsWith("!start ")) {
+        } else if (message.startsWith("!start ") && debugEnabled && debugger.equals(name)) {
+          //Intended use: Debug mode for live testing by dev without an ER+ present.
             try {
                 Integer delay = Integer.parseInt(message.substring(7));
                 m_botAction.sendPrivateMessage(name, "Starting in " + delay + " seconds.");
                 delayedStart(delay);
             } catch (Exception e) {}
-*/
         } else if (message.startsWith("!specbot")) {
             m_botAction.cancelTasks();
             m_botAction.spec(m_botAction.getBotName());
@@ -97,8 +111,8 @@ public class heli extends MultiModule {
             m_botAction.resetReliablePositionUpdating();
         } else if (message.startsWith("!setmove ")) {
             try {
-                move = Integer.parseInt(message.substring(9));
-                m_botAction.sendPrivateMessage(name, "Set move to: " + move);
+                mineInterval = Integer.parseInt(message.substring(9));
+                m_botAction.sendPrivateMessage(name, "Set tile distance between mines to: " + mineInterval);
             } catch (Exception e) {}
         } else if (message.startsWith("!setspeed ")) {
             try {
@@ -107,24 +121,28 @@ public class heli extends MultiModule {
             } catch (Exception e) {}
         } else if (message.startsWith("!setslope ")) {
             try {
-                Slope = Integer.parseInt(message.substring(10));
-                m_botAction.sendPrivateMessage(name, "Set slope to: " + Slope);
+                slope = Integer.parseInt(message.substring(10));
+                m_botAction.sendPrivateMessage(name, "Set slope to: " + slope);
             } catch (Exception e) {}
         } else if (message.startsWith("!setheight ")) {
             try {
-                height = Integer.parseInt(message.substring(11));
-                m_botAction.sendPrivateMessage(name, "Set height of the tunnel to: " + height);
+                tunnelHeight = Integer.parseInt(message.substring(11));
+                m_botAction.sendPrivateMessage(name, "Set height of the tunnel to: " + tunnelHeight);
             } catch (Exception e) {}
         } else if (message.startsWith("!setwallheight ")) {
             try {
-                wallheight = Integer.parseInt(message.substring(15));
-                m_botAction.sendPrivateMessage(name, "Set height of the bariers to: " + wallheight);
+                barrierHeight = Integer.parseInt(message.substring(15));
+                m_botAction.sendPrivateMessage(name, "Set height of the bariers to: " + barrierHeight);
             } catch (Exception e) {}
+        } else if (message.startsWith("!togglesmooth") && debugEnabled && debugger.equals(name)) {
+            smoothTunnel = !smoothTunnel;
         } else if (message.startsWith("!settings")) {
             dispSettings(name);
         } else if (message.startsWith("!stop")) {
             m_botAction.sendPrivateMessage(name, "Stopping...");
             m_botAction.cancelTasks();
+        } else if (message.equals("!debug") && opList.isSysop(name)) {
+            cmd_debug(name);
         }
     }
 
@@ -161,17 +179,27 @@ public class heli extends MultiModule {
     public void startThing() {
         m_botAction.setPlayerPositionUpdating(0);
         Ship ship = m_botAction.getShip();
+        // Spec the bot to clear any remaining mines.
+        ship.setShip(8);
+        try {
+            // Giving it some time to update.
+            Thread.sleep(100);
+        } catch (Exception e) {}  
+        
         ship.setShip(7);
         ship.setFreq(8000);
         ship.sendPositionPacket();
         // Instead of 16, 12 is used to make the top 3/4th above the platform, and the bottom stick 1/4th underneath it.
-        ship.move(xMin, yStart - height * 12);
+        ship.move(xMin, yStart - startTunnelHeight * 12);
         y = ship.getY();
         x = ship.getX();
         yDiff = 0;
+        
+        smoothStartWallSection();
+        
         nextWall = new TimerTask() {
             public void run() {
-                nextWall();
+                nextWallSection();
             }
         };
         nextBarrier = new TimerTask() {
@@ -183,50 +211,121 @@ public class heli extends MultiModule {
         m_botAction.scheduleTaskAtFixedRate(nextBarrier, speed * 8 + speed / 2, speed * 8);
     }
 
-    public void nextWall() {
-        int slope = Slope * (rand.nextInt(200) - 100) / 100;
-        int move = this.move*16;                        // Conversion tiles -> points.
-        if (yDiff > height && slope > 0) {
-            slope *= -1;
-        } else if (yDiff < -height && slope < 0) {
-            slope *= -1;
+    /**
+     * Creates an initial section with a gradual slope to the set tunnel height.
+     * This is to prevent players from being instantly killed when using narrow tunnels.
+     */
+    public void smoothStartWallSection() {
+        int mineDistance = mineInterval * 16;
+        Ship ship = m_botAction.getShip();
+        
+        // For the first five mines, go straight.
+        for(int i = 0; i < 5; i++) {
+            ship.moveAndFire(x, y, getWeapon('#'));
+            try {
+                Thread.sleep(speed / 10);
+            } catch (Exception e) {}
+            ship.moveAndFire(x, y + startTunnelHeight * 16, getWeapon('#'));
+            try {
+                Thread.sleep(speed / 10);
+            } catch (Exception e) {}
+            
+            x += mineDistance;
         }
-        slope *= 16;
+        
+        // Now, slope until we are at the correct height
+        while(startTunnelHeight < tunnelHeight) {
+            ship.moveAndFire(x, --y, getWeapon('#'));
+            try {
+                Thread.sleep(speed / 10);
+            } catch (Exception e) {}
+            ship.moveAndFire(x, y + (++startTunnelHeight) * 16, getWeapon('#'));
+            try {
+                Thread.sleep(speed / 10);
+            } catch (Exception e) {}
+            
+            x += mineDistance;             
+        }
+        while(startTunnelHeight > tunnelHeight) {
+            ship.moveAndFire(x, ++y, getWeapon('#'));
+            try {
+                Thread.sleep(speed / 10);
+            } catch (Exception e) {}
+            ship.moveAndFire(x, y + (--startTunnelHeight) * 16, getWeapon('#'));
+            try {
+                Thread.sleep(speed / 10);
+            } catch (Exception e) {}
+            
+            x += mineDistance;
+        }
+
+    }
+    
+    /**
+     * Places the next section of the wall.
+     */
+    public void nextWallSection() {
+        int targetSlope = slope * (rand.nextInt(200) - 100) / 100;
+        int move = this.mineInterval*16;                        // Conversion tiles -> points.
+        if (yDiff > tunnelHeight && targetSlope > 0) {
+            targetSlope *= -1;
+        } else if (yDiff < -tunnelHeight && targetSlope < 0) {
+            targetSlope *= -1;
+        }
+        targetSlope *= 16;
+        
+        if(!smoothTunnel)
+            currentSlope = targetSlope;
+        
         int distance = rand.nextInt(50) / 10;
         Ship ship = m_botAction.getShip();
+        
         for (int k = 0; k < distance; k++) {
             ship.moveAndFire(x, y, getWeapon('#'));
             try {
                 // Delay tactics!
                 Thread.sleep(speed/(2*distance));
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + height * 16, getWeapon('#'));
+            ship.moveAndFire(x, y + tunnelHeight * 16, getWeapon('#'));
             try {
                 // Delay tactics!
                 Thread.sleep(speed/(2*distance));
             } catch (Exception e) {}
-            x += move;
-            y -= slope;
-            // Check height restrictions
-            if(y < yMin || (y + height*16) > yMax) {
-                y += 2*slope;
+            
+            // Update the current slope.
+            if(smoothTunnel) {
+                if(currentSlope < targetSlope)
+                    currentSlope++;
+                else if(currentSlope > targetSlope)
+                    currentSlope--;
             }
             
-            yDiff += slope / 16;
+            x += move;
+            y -= currentSlope;
+            // Check height restrictions
+            if(y < yMin || (y + tunnelHeight*16) > yMax) {
+                y += 2*currentSlope;
+            }
+            
+            yDiff += currentSlope / 16;
             if (x >= xMax) {
                 m_botAction.cancelTasks();
                 // Just to make sure he aint glitching on the wall.
                 ship.move(xMax + 80, yStart);
+                break;
             }
         }
     }
 
+    /**
+     * Places the next barrier.
+     */
     public void nextBarrier() {
         Ship ship = m_botAction.getShip();
-        int tiles = rand.nextInt(height);
-        int length = wallheight;
-        if ((height - length) - tiles < 0)
-            length += (height - length) - tiles;
+        int tiles = rand.nextInt(tunnelHeight);
+        int length = barrierHeight;
+        if ((tunnelHeight - length) - tiles < 0)
+            length += (tunnelHeight - length) - tiles;
         int yStart = y;
         int xStart = x;
         for (int k = 0; k < length; k++) {
@@ -238,6 +337,11 @@ public class heli extends MultiModule {
         }
     }
 
+    /**
+     * Fetches a weapon based on a symbol.
+     * @param c Provided symbol.
+     * @return Weapon number.
+     */
     public int getWeapon(char c) {
         Ship s = m_botAction.getShip();
 
@@ -271,6 +375,10 @@ public class heli extends MultiModule {
     public void cancel() {
     }
     
+    /**
+     * Displays a short makeshift manual.
+     * @param name Player who requested the manual.
+     */
     public void dispManual(String name) {
         Vector<String> spam = new Vector<String>();
         spam.add("Manual:");
@@ -285,6 +393,9 @@ public class heli extends MultiModule {
         m_botAction.privateMessageSpam(name, spam);        
     }
     
+    /**
+     * Displays the rules to all the players.
+     */
     public void dispRules() {
         ArrayList<String> spam = new ArrayList<String>();
         spam.add("Welcome to Helicopter!");
@@ -293,15 +404,38 @@ public class heli extends MultiModule {
         m_botAction.arenaMessageSpam(spam.toArray(new String[spam.size()]));
     }
     
+    /**
+     * Displays the current and default settings.
+     * @param name Person who requested this.
+     */
     public void dispSettings(String name) {
         Vector<String> spam = new Vector<String>();
         spam.add("Current settings:");
-        spam.add("Move: " + move + " tiles (default: 3);");
+        spam.add("Mine interval: " + mineInterval + " tiles (default: 3);");
         spam.add("Speed: " + speed + "ms (default: 100);");
-        spam.add("Slope: " + Slope + "% (default: 3);");
-        spam.add("Tunnel height: " + height + " tiles (default: 20);");
-        spam.add("Barrier height: " + wallheight + " tiles (default: 6).");
+        spam.add("slope: " + slope + "% (default: 3);");
+        spam.add("Tunnel height: " + tunnelHeight + " tiles (default: 20);");
+        spam.add("Barrier height: " + barrierHeight + " tiles (default: 6);");
+        spam.add("Smooth walls: " + (smoothTunnel ? "enabled" : "disabled") + "(default: disabled).");
         
         m_botAction.privateMessageSpam(name, spam);
+    }
+    
+    /**
+     * Enables/disables debug mode.
+     * @param name Person requesting debug mode.
+     */
+    public void cmd_debug(String name) {
+        if(debugEnabled && debugger.equals(name)) {
+            debugEnabled = false;
+            debugger = "";
+            m_botAction.sendSmartPrivateMessage(name, "Debugging disabled.");
+        } else if(debugEnabled) {
+            m_botAction.sendSmartPrivateMessage(name, "Sorry, " + debugger + " is already using the debug mode.");
+        } else {
+            debugEnabled = true;
+            debugger = name;
+            m_botAction.sendSmartPrivateMessage(name, "Debugging mode enabled.");
+        }
     }
 }
