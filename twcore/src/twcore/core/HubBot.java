@@ -84,17 +84,19 @@ public class HubBot extends SubspaceBot {
         // Bot+
         int accessRequired = OperatorList.BOT_LEVEL; 
         m_commandInterpreter.registerCommand( "!spawn", acceptedMessages, this, "handleSpawnMessage", accessRequired );
+        m_commandInterpreter.registerCommand( "+", acceptedMessages, this, "handleSpawnMessage", accessRequired );
         m_commandInterpreter.registerCommand( "!totalbots", acceptedMessages, this, "handleTotalBots", accessRequired );
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess", accessRequired );
 
         // Outsider+
         accessRequired = OperatorList.ER_LEVEL; 
         m_commandInterpreter.registerCommand( "!help", acceptedMessages, this, "handleHelp", accessRequired );
-        m_commandInterpreter.registerCommand( "!listOnbots", acceptedMessages, this, "handleListBots", accessRequired );
+        m_commandInterpreter.registerCommand( "?", acceptedMessages, this, "handleHelp", accessRequired );
+        m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "handleListBots", accessRequired );
+        m_commandInterpreter.registerCommand( "!lb", acceptedMessages, this, "handleListBots", accessRequired );
         m_commandInterpreter.registerCommand( "!waitinglist", acceptedMessages, this, "handleShowWaitingList", accessRequired );
         m_commandInterpreter.registerCommand( "!billerdown", acceptedMessages, this, "handleBillerDownCommand", accessRequired );
-        m_commandInterpreter.registerCommand( "!listbots", acceptedMessages, this, "displayListBots", accessRequired );
-        m_commandInterpreter.registerCommand( "!lb", acceptedMessages, this, "displayListBots", accessRequired );
+        m_commandInterpreter.registerCommand( "!bottypes", acceptedMessages, this, "handleBotTypes", accessRequired );
         // Moderator+
         m_commandInterpreter.registerCommand( "!uptime", acceptedMessages, this, "handleUptimeCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!dbstatus", acceptedMessages, this, "handleDbStatus", accessRequired );
@@ -111,6 +113,7 @@ public class HubBot extends SubspaceBot {
         // Smod+
         accessRequired = OperatorList.SMOD_LEVEL;
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess", accessRequired );
+        m_commandInterpreter.registerCommand( "!ua", acceptedMessages, this, "handleUpdateAccess", accessRequired );
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators", accessRequired );
         m_commandInterpreter.registerCommand( "!recycleserver", acceptedMessages, this, "handleRecycleCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdowncore", acceptedMessages, this, "handleShutdownCommand", accessRequired );
@@ -833,14 +836,14 @@ public class HubBot extends SubspaceBot {
 	    	
 	    		m_botAction.sendSmartPrivateMessage( messager, "-----------------------------------------------");
 	    	if(operatorList.isOutsider(messager) && !operatorList.isHighmod(messager)) {
-	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !waitinglist !listbots !listonbots");
+	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !waitinglist !listbots !bottypes");
 	    	}
 	    	if(operatorList.isHighmod(messager) && !operatorList.isSysop(messager)) {
-	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !waitinglist !listbots !listonbots");
+	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !waitinglist !listbots !bottypes");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !removetype");
 	    	}
 	    	if(operatorList.isSysop(messager)) {
-	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots !listonbots");
+	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots !bottypes");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !smartshutdown !shutdownidlebots !shutdownallbots");
 	    	}
@@ -875,7 +878,7 @@ public class HubBot extends SubspaceBot {
 	    	else if (argument.equalsIgnoreCase("spawn")) {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Spawns a new bot of the specified bot type.");
 	    		m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.OUTSIDER_LEVEL));
-	    		m_botAction.sendSmartPrivateMessage( messager , " !spawn <bot type>");
+	    		m_botAction.sendSmartPrivateMessage( messager , " !spawn <bot type>  OR  + <bot type>");
 	    		
 	    	}
 	    	// !spawnmax
@@ -906,8 +909,15 @@ public class HubBot extends SubspaceBot {
 	    	else if (argument.equalsIgnoreCase("listbots")) {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Returns current spawned bot types or the spawned bots of specified bot type, including arena and who spawned it.");
 	    		m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.OUTSIDER_LEVEL));
-	    		m_botAction.sendSmartPrivateMessage( messager , " !listbots [bot type]");
+	    		m_botAction.sendSmartPrivateMessage( messager , " !listbots [bot type]  OR !lb");
 	    	}
+           // !bottypes
+            else if (argument.equalsIgnoreCase("bottypes")) {
+                m_botAction.sendSmartPrivateMessage( messager , "Shows static list of some of the bots you may spawn from this core.");
+                m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.OUTSIDER_LEVEL));
+                m_botAction.sendSmartPrivateMessage( messager , " !bottypes");
+            }
+
 	    	// !remove
 	    	else if (argument.equalsIgnoreCase("remove")) {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Forces a removal of the specified bot from the zone.");
@@ -1105,7 +1115,7 @@ public class HubBot extends SubspaceBot {
     	m_botAction.sendSmartPrivateMessage( messager , "More information about the latest change on http://www.twcore.org/changeset/"+version);
     }
     
-    public void displayListBots(String name, String message){
+    public void handleBotTypes(String name, String message){
         //method to display the list of bots from the .txt files
         try {
             
@@ -1151,7 +1161,6 @@ public class HubBot extends SubspaceBot {
                         "RoboBot*  - [multibot]",
                         "Robo Ref  - [elim]",
                         "Basebot/Wbduelbot/Javduelbot/Spiderduelbot - [bwjsbot]",
-                        "TW-Pub1   - [pubsystem]",
                         "GammaBot2 - [octabot]",
                         "HockeyBot - [hockeybot]"
                 };
