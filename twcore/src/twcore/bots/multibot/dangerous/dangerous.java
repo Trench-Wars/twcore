@@ -3,7 +3,6 @@
  *
  * 2/29/05
  *
- *
  * DESC: Elimination match based on time.
  *
  *       - Each person starts with 60 seconds.
