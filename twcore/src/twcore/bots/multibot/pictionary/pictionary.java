@@ -12,6 +12,7 @@ import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
+import twcore.core.game.ShipRestrictor;
 import twcore.core.stats.PlayerProfile;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.StringBag;
@@ -198,18 +199,48 @@ public class pictionary extends MultiModule {
         else if (msg.equalsIgnoreCase("!rules"))
             m_botAction.smartPrivateMessageSpam(name, regrules);
         else if (msg.equalsIgnoreCase("!help"))
-            m_botAction.smartPrivateMessageSpam(name, helpmsg);
-        else if (msg.equalsIgnoreCase("!red"))
+            m_botAction.smartPrivateMessageSpam(name, helpmsg);  
+       	else if (msg.equalsIgnoreCase("!red"))
             doChangeColour(name, 1);
         else if (msg.equalsIgnoreCase("!yellow"))
             doChangeColour(name, 2);
         else if (msg.equalsIgnoreCase("!blue"))
             doChangeColour(name, 3);
+        else if (msg.startsWith("!ship "))
+        	doShipSet(name, msg.substring(6));        	
         else
-            doCustomWord(name, msg);
-
+            doCustomWord(name, msg); 
     }
-
+    /**
+     * Added a feature to allow players to change ships by using !ship <shipnumber>.
+     * @param name
+     * @param ShipType
+     */
+        public void doShipSet(String name, String ShipType) {
+        	int realShipType = 0;
+        if(!name.equals(curArtist)) return;
+        	//Empty check
+        	if (ShipType.isEmpty())return;
+        
+        	//Convert shiptype to number
+        	try {
+        		realShipType = Integer.parseInt(ShipType);
+        	} catch (NumberFormatException e) {
+        		//This happens when not a vaild number has been found.
+        		return;        	
+        	}
+        	
+        	//Check if shiptype is a valid shiptype
+        	if (realShipType < 1 || realShipType > 8)return;
+        	
+        	//Action to setship
+        	m_botAction.setShip(name, realShipType);
+        	
+        	//check if player is drawer
+        	
+        }
+            
+    
     /** ************************************************************* */
     /** * Toggles between default/custom game types. ** */
     /** ************************************************************* */
