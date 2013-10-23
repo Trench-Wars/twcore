@@ -55,7 +55,7 @@ public class pictionary extends MultiModule {
             "!lagout             -- puts you back in the game if you're drawing.", "!pass               -- gives your drawing turn to a random player.",
             "!reset              -- resets your mines if drawing.", "!score              -- displays the current scores.", "!repeat             -- will repeat the hint or answer.",
             "!stats              -- will display your statistics.", "!stats <name>       -- displays <name>'s statistics.", "!topten             -- displays top ten player stats.",
-            "!red/!yellow!/!blue -- changes your mine colours." };
+            "!red/!yellow!/!blue -- changes your mine colours.",    "!ship  <shipnumber> -- will change ship type"};
     public String[] opmsg = { "Moderator Commands:", "!start         -- Starts a default game of Pictionary to 10.", "!start <num>   -- Starts a game to <num> points.",
             "!gametype      -- Toggles between player pick or bot pick.", "!cancel        -- Cancels this game of Pictionary.", "!showanswer    -- Shows you the answer(You can't win that round).",
             "!displayrules  -- Shows the rules in *arena messages.", "!reset         -- Resets the current artist's mines.", "!pass          -- gives your drawing turn to a random player.",
