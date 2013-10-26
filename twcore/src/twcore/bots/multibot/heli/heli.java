@@ -35,7 +35,7 @@ public class heli extends MultiModule {
     
     // Adaptable settings
     private int mineInterval = 3;
-    private int speed = 100;
+    private int speed = 150;
     private int tunnelHeight = 20;
     private int barrierHeight = 6;
     private int maxSectionLength = 5;
@@ -185,6 +185,8 @@ public class heli extends MultiModule {
     }
     
     public void startThing() {
+        final char weaponType = weaponTypeList[rand.nextInt(weaponTypeList.length)];
+        
         m_botAction.setPlayerPositionUpdating(0);
         Ship ship = m_botAction.getShip();
         // Spec the bot to clear any remaining mines.
@@ -203,18 +205,18 @@ public class heli extends MultiModule {
         x = ship.getX();
         yDiff = 0;
         
-        smoothStartWallSection();
+        smoothStartWallSection(weaponType);
         
         nextWall = new TimerTask() {
-            private final char weaponType = weaponTypeList[rand.nextInt(weaponTypeList.length)];
+            private final char wallWeaponType = weaponType;
             public void run() {
-                nextWallSection(weaponType);
+                nextWallSection(wallWeaponType);
             }
         };
         nextBarrier = new TimerTask() {
-            private final char weaponType = weaponTypeList[rand.nextInt(weaponTypeList.length)];
+            private final char barrierWeaponType = weaponTypeList[rand.nextInt(weaponTypeList.length)];
             public void run() {
-                nextBarrier(weaponType);
+                nextBarrier(barrierWeaponType);
             }
         };
         m_botAction.scheduleTaskAtFixedRate(nextWall, speed, speed);
@@ -225,18 +227,18 @@ public class heli extends MultiModule {
      * Creates an initial section with a gradual slope to the set tunnel height.
      * This is to prevent players from being instantly killed when using narrow tunnels.
      */
-    public void smoothStartWallSection() {
+    public void smoothStartWallSection(char weaponType) {
         int mineDistance = mineInterval * 16;
         int currentTunnelHeight = startTunnelHeight;
         Ship ship = m_botAction.getShip();
         
         // For the first five mines, go straight.
         for(int i = 0; i < 5; i++) {
-            ship.moveAndFire(x, y, getWeapon('#'));
+            ship.moveAndFire(x, y, getWeapon(weaponType));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + currentTunnelHeight * 16, getWeapon('#'));
+            ship.moveAndFire(x, y + currentTunnelHeight * 16, getWeapon(weaponType));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
@@ -246,11 +248,11 @@ public class heli extends MultiModule {
         
         // Now, slope until we are at the correct height
         while(currentTunnelHeight < tunnelHeight) {
-            ship.moveAndFire(x, --y, getWeapon('#'));
+            ship.moveAndFire(x, --y, getWeapon(weaponType));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + (++currentTunnelHeight) * 16, getWeapon('#'));
+            ship.moveAndFire(x, y + (++currentTunnelHeight) * 16, getWeapon(weaponType));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
@@ -258,11 +260,11 @@ public class heli extends MultiModule {
             x += mineDistance;             
         }
         while(currentTunnelHeight > tunnelHeight) {
-            ship.moveAndFire(x, ++y, getWeapon('#'));
+            ship.moveAndFire(x, ++y, getWeapon(weaponType));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + (--currentTunnelHeight) * 16, getWeapon('#'));
+            ship.moveAndFire(x, y + (--currentTunnelHeight) * 16, getWeapon(weaponType));
             try {
                 Thread.sleep(speed / 10);
             } catch (Exception e) {}
@@ -420,7 +422,7 @@ public class heli extends MultiModule {
         Vector<String> spam = new Vector<String>();
         spam.add("Current settings:");
         spam.add("Mine interval: " + mineInterval + " tiles (default: 3);");
-        spam.add("Speed: " + speed + "ms (default: 100);");
+        spam.add("Speed: " + speed + "ms (default: 150);");
         spam.add("slope: " + slope + "% (default: 3);");
         spam.add("Tunnel height: " + tunnelHeight + " tiles (default: 20);");
         spam.add("Barrier height: " + barrierHeight + " tiles (default: 6);");
