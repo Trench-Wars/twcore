@@ -274,6 +274,7 @@ public class heli extends MultiModule {
      */
     public void nextWallSection() {
         int targetSlope = slope * (rand.nextInt(200) - 100) / 100;
+        char[] weaponType = {'#', '^' };
         int move = this.mineInterval*16;                        // Conversion tiles -> points.
         if (yDiff > tunnelHeight && targetSlope > 0) {
             targetSlope *= -1;
@@ -289,12 +290,12 @@ public class heli extends MultiModule {
         Ship ship = m_botAction.getShip();
         
         for (int k = 0; k < distance; k++) {
-            ship.moveAndFire(x, y, getWeapon('#'));
+            ship.moveAndFire(x, y, getWeapon(weaponType[2*x / xMax]));
             try {
                 // Delay tactics!
                 Thread.sleep(speed/(2*distance));
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + tunnelHeight * 16, getWeapon('#'));
+            ship.moveAndFire(x, y + tunnelHeight * 16, getWeapon(weaponType[2*x / xMax]));
             try {
                 // Delay tactics!
                 Thread.sleep(speed/(2*distance));
@@ -309,7 +310,7 @@ public class heli extends MultiModule {
             y -= currentSlope;
             // Check height restrictions
             if(y < yMin || (y + tunnelHeight*16) > yMax) {
-                y += 2*currentSlope;
+                break;
             }
             
             yDiff += currentSlope / 16;
@@ -421,7 +422,7 @@ public class heli extends MultiModule {
         spam.add("slope: " + slope + "% (default: 3);");
         spam.add("Tunnel height: " + tunnelHeight + " tiles (default: 20);");
         spam.add("Barrier height: " + barrierHeight + " tiles (default: 6);");
-        spam.add("Max. section length: " + maxSectionLength + " tiles (default: 5);");
+        spam.add("Max. section length: " + maxSectionLength + " mines (default: 5);");
         spam.add("Smooth walls: " + (smoothTunnel ? "enabled" : "disabled") + " (default: enabled).");
         
         m_botAction.privateMessageSpam(name, spam);
