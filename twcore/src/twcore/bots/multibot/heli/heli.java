@@ -22,6 +22,7 @@ public class heli extends MultiModule {
     private final static int yMax = 556 * 16;
     private final static int yStart = 515 * 16;
     private final static int startTunnelHeight = 20;
+    private final static char[] weaponTypeList = {'.', '*', '#', '^', '1', '2', '3', '4' };
     
     public OperatorList opList;
     
@@ -66,7 +67,7 @@ public class heli extends MultiModule {
                 "!setspeed #        -Sets bot's speed in milliseconds.",
                 "!setheight #       -Sets the height of the tunnel.",
                 "!setwallheight #   -Sets the height of the barriers.",
-                "!setlength #       -Sets the max length of a section with the same slope.",
+//                "!setlength #       -Sets the max length of a section with the same slope.",
                 "!togglesmooth      -Toggles smooth transitions on slope changes.",
                 "!settings          -Displays the current settings.",
                 "!stop              -DURRRRRRRRRRRRRRRRRRRRR",
@@ -135,7 +136,7 @@ public class heli extends MultiModule {
                 barrierHeight = Integer.parseInt(message.substring(15));
                 m_botAction.sendPrivateMessage(name, "Set height of the bariers to: " + barrierHeight);
             } catch (Exception e) {}
-        } else if (message.startsWith("!setlength ")) {
+        } else if (message.startsWith("!setlength ") && debugEnabled && debugger.equals(name)) {
             try {
                 maxSectionLength = Integer.parseInt(message.substring(11));
                 m_botAction.sendSmartPrivateMessage(name, "Set the maximum section length to: " + maxSectionLength);
@@ -205,13 +206,15 @@ public class heli extends MultiModule {
         smoothStartWallSection();
         
         nextWall = new TimerTask() {
+            private final char weaponType = weaponTypeList[rand.nextInt(weaponTypeList.length)];
             public void run() {
-                nextWallSection();
+                nextWallSection(weaponType);
             }
         };
         nextBarrier = new TimerTask() {
+            private final char weaponType = weaponTypeList[rand.nextInt(weaponTypeList.length)];
             public void run() {
-                nextBarrier();
+                nextBarrier(weaponType);
             }
         };
         m_botAction.scheduleTaskAtFixedRate(nextWall, speed, speed);
@@ -272,9 +275,8 @@ public class heli extends MultiModule {
     /**
      * Places the next section of the wall.
      */
-    public void nextWallSection() {
+    public void nextWallSection(char weaponType) {
         int targetSlope = slope * (rand.nextInt(200) - 100) / 100;
-        char[] weaponType = {'#', '^' };
         int move = this.mineInterval*16;                        // Conversion tiles -> points.
         if (yDiff > tunnelHeight && targetSlope > 0) {
             targetSlope *= -1;
@@ -290,12 +292,12 @@ public class heli extends MultiModule {
         Ship ship = m_botAction.getShip();
         
         for (int k = 0; k < distance; k++) {
-            ship.moveAndFire(x, y, getWeapon(weaponType[2*x / xMax]));
+            ship.moveAndFire(x, y, getWeapon(weaponType));
             try {
                 // Delay tactics!
                 Thread.sleep(speed/(2*distance));
             } catch (Exception e) {}
-            ship.moveAndFire(x, y + tunnelHeight * 16, getWeapon(weaponType[2*x / xMax]));
+            ship.moveAndFire(x, y + tunnelHeight * 16, getWeapon(weaponType));
             try {
                 // Delay tactics!
                 Thread.sleep(speed/(2*distance));
@@ -310,7 +312,7 @@ public class heli extends MultiModule {
             y -= currentSlope;
             // Check height restrictions
             if(y < yMin || (y + tunnelHeight*16) > yMax) {
-                break;
+                y += currentSlope;
             }
             
             yDiff += currentSlope / 16;
@@ -326,7 +328,7 @@ public class heli extends MultiModule {
     /**
      * Places the next barrier.
      */
-    public void nextBarrier() {
+    public void nextBarrier(char weaponType) {
         Ship ship = m_botAction.getShip();
         int tiles = rand.nextInt(tunnelHeight);
         int length = barrierHeight;
@@ -335,7 +337,7 @@ public class heli extends MultiModule {
         int yStart = y;
         int xStart = x;
         for (int k = 0; k < length; k++) {
-            ship.moveAndFire(xStart, yStart + tiles * 16 + k * 16, getWeapon('*'));
+            ship.moveAndFire(xStart, yStart + tiles * 16 + k * 16, getWeapon(weaponType));
             try {
                 // Delay tactics!
                 Thread.sleep(speed/(2*length));
@@ -422,7 +424,8 @@ public class heli extends MultiModule {
         spam.add("slope: " + slope + "% (default: 3);");
         spam.add("Tunnel height: " + tunnelHeight + " tiles (default: 20);");
         spam.add("Barrier height: " + barrierHeight + " tiles (default: 6);");
-        spam.add("Max. section length: " + maxSectionLength + " mines (default: 5);");
+        if(debugEnabled && debugger.equals(name))
+            spam.add("Max. section length: " + maxSectionLength + " mines (default: 5);");
         spam.add("Smooth walls: " + (smoothTunnel ? "enabled" : "disabled") + " (default: enabled).");
         
         m_botAction.privateMessageSpam(name, spam);
