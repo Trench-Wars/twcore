@@ -37,7 +37,8 @@ public class heli extends MultiModule {
     private int speed = 100;
     private int tunnelHeight = 20;
     private int barrierHeight = 6;
-    private boolean smoothTunnel;
+    private int maxSectionLength = 5;
+    private boolean smoothTunnel = true;
     
     // Internally used tracking variables.
     private int y = 0;
@@ -65,6 +66,7 @@ public class heli extends MultiModule {
                 "!setspeed #        -Sets bot's speed in milliseconds.",
                 "!setheight #       -Sets the height of the tunnel.",
                 "!setwallheight #   -Sets the height of the barriers.",
+                "!setlength #       -Sets the max length of a section with the same slope.",
                 "!togglesmooth      -Toggles smooth transitions on slope changes.",
                 "!settings          -Displays the current settings.",
                 "!stop              -DURRRRRRRRRRRRRRRRRRRRR",
@@ -132,6 +134,11 @@ public class heli extends MultiModule {
             try {
                 barrierHeight = Integer.parseInt(message.substring(15));
                 m_botAction.sendPrivateMessage(name, "Set height of the bariers to: " + barrierHeight);
+            } catch (Exception e) {}
+        } else if (message.startsWith("!setlength ")) {
+            try {
+                maxSectionLength = Integer.parseInt(message.substring(11));
+                m_botAction.sendSmartPrivateMessage(name, "Set the maximum section length to: " + maxSectionLength);
             } catch (Exception e) {}
         } else if (message.startsWith("!togglesmooth")) {
             smoothTunnel = !smoothTunnel;
@@ -278,7 +285,7 @@ public class heli extends MultiModule {
         if(!smoothTunnel)
             currentSlope = targetSlope;
         
-        int distance = rand.nextInt(50) / 10;
+        int distance = rand.nextInt(maxSectionLength) + 1;
         Ship ship = m_botAction.getShip();
         
         for (int k = 0; k < distance; k++) {
@@ -414,7 +421,8 @@ public class heli extends MultiModule {
         spam.add("slope: " + slope + "% (default: 3);");
         spam.add("Tunnel height: " + tunnelHeight + " tiles (default: 20);");
         spam.add("Barrier height: " + barrierHeight + " tiles (default: 6);");
-        spam.add("Smooth walls: " + (smoothTunnel ? "enabled" : "disabled") + " (default: disabled).");
+        spam.add("Max. section length: " + maxSectionLength + " tiles (default: 5);");
+        spam.add("Smooth walls: " + (smoothTunnel ? "enabled" : "disabled") + " (default: enabled).");
         
         m_botAction.privateMessageSpam(name, spam);
     }
