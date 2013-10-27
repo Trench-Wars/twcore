@@ -462,12 +462,6 @@ public class strikebot extends SubspaceBot {
     public void dropBall() {
         ba.cancelTask(fo_botUpdateTimer);
         ba.getShip().setShip(Ship.INTERNAL_SPECTATOR);
-        TimerTask delayedFreq = new TimerTask() {
-            @Override
-            public void run() {
-                ba.getShip().setFreq(FREQ_NOTPLAYING);
-            }
-        }; ba.scheduleTask(delayedFreq, Tools.TimeInMillis.SECOND);
         ball.holding = false;
     }
 
