@@ -467,7 +467,7 @@ public class strikebot extends SubspaceBot {
             public void run() {
                 ba.getShip().setFreq(FREQ_NOTPLAYING);
             }
-        }; ba.scheduleTask(delayedFreq, 100);
+        }; ba.scheduleTask(delayedFreq, Tools.TimeInMillis.SECOND);
         ball.holding = false;
     }
 
