@@ -450,7 +450,6 @@ public class strikebot extends SubspaceBot {
         
         if (ba.getShip().getShip() != Ship.INTERNAL_WARBIRD || !ball.holding) {
             ba.getShip().setShip(Ship.INTERNAL_SPIDER);
-            //ba.getShip().setFreq(FREQ_NOTPLAYING);
             ba.getShip().move(location.x, location.y);
             ba.getBall(ball.getBallID(), ball.getTimeStamp());
             ball.holding = true;
@@ -463,7 +462,12 @@ public class strikebot extends SubspaceBot {
     public void dropBall() {
         ba.cancelTask(fo_botUpdateTimer);
         ba.getShip().setShip(Ship.INTERNAL_SPECTATOR);
-        //ba.getShip().setFreq(FREQ_NOTPLAYING);
+        TimerTask delayedFreq = new TimerTask() {
+            @Override
+            public void run() {
+                ba.getShip().setFreq(FREQ_NOTPLAYING);
+            }
+        }; ba.scheduleTask(delayedFreq, 100);
         ball.holding = false;
     }
 
