@@ -445,10 +445,10 @@ public class strikebot extends SubspaceBot {
                 if (ba.getShip().needsToBeSent())
                     ba.getShip().sendPositionPacket();
             }
-        }; ba.scheduleTask(fo_botUpdateTimer, 0, 5);
+        }; ba.scheduleTask(fo_botUpdateTimer, 0, 500);
         
         if (ba.getShip().getShip() != 0 || !ball.holding) {
-            ba.getShip().setShip(0);
+            ba.getShip().setShip(2);
             ba.getShip().setFreq(FREQ_NOTPLAYING);
             ba.getShip().move(location.x, location.y);
             ba.getBall(ball.getBallID(), ball.getTimeStamp());
