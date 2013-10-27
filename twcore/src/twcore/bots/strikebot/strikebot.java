@@ -23,6 +23,7 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.events.PlayerLeft;
 import twcore.core.events.SoccerGoal;
 import twcore.core.game.Player;
+import twcore.core.game.Ship;
 import twcore.core.lvz.Objset;
 import twcore.core.util.Point;
 import twcore.core.util.Spy;
@@ -447,9 +448,9 @@ public class strikebot extends SubspaceBot {
             }
         }; ba.scheduleTask(fo_botUpdateTimer, 0, 500);
         
-        if (ba.getShip().getShip() != 0 || !ball.holding) {
-            ba.getShip().setShip(2);
-            ba.getShip().setFreq(FREQ_NOTPLAYING);
+        if (ba.getShip().getShip() != Ship.INTERNAL_WARBIRD || !ball.holding) {
+            ba.getShip().setShip(Ship.INTERNAL_SPIDER);
+            //ba.getShip().setFreq(FREQ_NOTPLAYING);
             ba.getShip().move(location.x, location.y);
             ba.getBall(ball.getBallID(), ball.getTimeStamp());
             ball.holding = true;
@@ -461,8 +462,8 @@ public class strikebot extends SubspaceBot {
      */
     public void dropBall() {
         ba.cancelTask(fo_botUpdateTimer);
-        ba.getShip().setShip(8);
-        ba.getShip().setFreq(FREQ_NOTPLAYING);
+        ba.getShip().setShip(Ship.INTERNAL_SPECTATOR);
+        //ba.getShip().setFreq(FREQ_NOTPLAYING);
         ball.holding = false;
     }
 
