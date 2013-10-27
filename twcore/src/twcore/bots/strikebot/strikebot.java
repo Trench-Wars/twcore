@@ -74,7 +74,7 @@ public class strikebot extends SubspaceBot {
     private int maxTimeouts;                                //Maximum allowed timeouts per game.
     
     // Frequencies
-    private static final int FREQ_SPEC = 8025;              //Frequency of specced players.
+    private static final int FREQ_SPEC = 416;               //Frequency of specced players.
     private static final int FREQ_NOTPLAYING = 2;           //Frequency of players that are !np
     
 
@@ -149,18 +149,18 @@ public class strikebot extends SubspaceBot {
         teams.add(team1);
         teams.trimToSize();
         
-        maxTimeouts = 1;                                // Default value of maximum timeouts.
+        maxTimeouts = 1;                            // Default value of maximum timeouts.
 
-        racismWatcher = new Spy(ba);           //Racism watcher
+        racismWatcher = new Spy(ba);                //Racism watcher
 
-        listNotplaying = new ArrayList<String>();       // List of not-playing players,
-        listNotplaying.add(ba.getBotName());   // including the bot.
-        listAlert = new ArrayList<String>();            // List of the players who want to get alerts.
+        listNotplaying = new ArrayList<String>();   // List of not-playing players,
+        listNotplaying.add(ba.getBotName());        // including the bot.
+        listAlert = new ArrayList<String>();        // List of the players who want to get alerts.
 
         lockArena = true;
         lockLastGame = false;
         
-        scoreOverlay = new Overlay();                   // LVZ display overlay.
+        scoreOverlay = new Overlay();               // LVZ display overlay.
 
     }
 
