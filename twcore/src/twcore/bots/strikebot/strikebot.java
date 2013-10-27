@@ -448,7 +448,7 @@ public class strikebot extends SubspaceBot {
             }
         }; ba.scheduleTask(fo_botUpdateTimer, 0, 500);
         
-        if (ba.getShip().getShip() != Ship.INTERNAL_WARBIRD || !ball.holding) {
+        if (ba.getShip().getShip() != Ship.INTERNAL_SPIDER || !ball.holding) {
             ba.getShip().setShip(Ship.INTERNAL_SPIDER);
             ba.getShip().move(location.x, location.y);
             ba.getBall(ball.getBallID(), ball.getTimeStamp());
