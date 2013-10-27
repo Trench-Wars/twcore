@@ -74,7 +74,7 @@ public class strikebot extends SubspaceBot {
     private int maxTimeouts;                                //Maximum allowed timeouts per game.
     
     // Frequencies
-    private static final int FREQ_SPEC = 416;               //Frequency of specced players.
+    private static final int FREQ_SPEC = 8025;              //Frequency of specced players.
     private static final int FREQ_NOTPLAYING = 2;           //Frequency of players that are !np
     
 
