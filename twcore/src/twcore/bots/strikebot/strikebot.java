@@ -401,7 +401,7 @@ public class strikebot extends SubspaceBot {
         if(isRestarted >= 1)
             isRestarted++;
         
-        if(isRestarted > 2) {
+        if(isRestarted > 5) {
             isRestarted = 0;
             ba.sendSmartPrivateMessage("ThePAP", "Update received");
             
