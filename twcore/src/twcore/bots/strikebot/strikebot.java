@@ -115,13 +115,13 @@ public class strikebot extends SubspaceBot {
      *
      */
     private static enum SBState {
-        OFF, WAITING_FOR_CAPS, ADDING_PLAYERS, FACE_OFF,
-        GAME_IN_PROGRESS, TIMEOUT, GAME_OVER, 
+        OFF, WAITING_FOR_CAPS, ADDING_PLAYERS, PRE_FACE_OFF, 
+        FACE_OFF, GAME_IN_PROGRESS, TIMEOUT, GAME_OVER, 
         WAIT;
         
         // Collection of commonly together used SBStates.
         private static final EnumSet<SBState> ACTIVEGAME = EnumSet.of(ADDING_PLAYERS,
-                FACE_OFF, GAME_IN_PROGRESS, TIMEOUT, WAIT);
+                PRE_FACE_OFF, FACE_OFF, GAME_IN_PROGRESS, TIMEOUT, WAIT);
         
         private static final EnumSet<SBState> MIDGAME = EnumSet.of(FACE_OFF, GAME_IN_PROGRESS);
         
@@ -412,8 +412,8 @@ public class strikebot extends SubspaceBot {
         }
         
         if(isRestarted == 2) {
-            isRestarted = 0;
             doRemoveBall();
+            isRestarted = 3;
         }
     }
 
@@ -1758,6 +1758,14 @@ public class strikebot extends SubspaceBot {
         determineTurn();
     }
 
+    private void startPreFaceOff() {
+        currentState = SBState.WAIT;
+        
+        ba.sendArenaMessage("Waiting for the ball to respawn, one moment please.");
+        
+        currentState = SBState.PRE_FACE_OFF;
+    }
+    
     /**
      * Starts pre game
      * 
@@ -2394,7 +2402,7 @@ public class strikebot extends SubspaceBot {
             team1.timeout = maxTimeouts;
             scoreOverlay.updateAll(null);
 
-            startFaceOff();
+            startPreFaceOff();
             return;
         }
         
@@ -4220,6 +4228,9 @@ public class strikebot extends SubspaceBot {
                 case ADDING_PLAYERS:
                     doAddingPlayers();
                     break;
+                case PRE_FACE_OFF:
+                    doPreFaceOff();
+                    break;
                 case FACE_OFF:
                     doFaceOff();
                     break;
@@ -4286,6 +4297,14 @@ public class strikebot extends SubspaceBot {
             }
         }
 
+        
+        private void doPreFaceOff() {
+            if(isRestarted == 3) {
+                isRestarted = 0;
+                startFaceOff();
+            }
+        }
+        
         /**
          * During the faceoff, this function checks the following:
          * <ul>
