@@ -66,7 +66,7 @@ public class strikebot extends SubspaceBot {
     private long timeStamp;                                 // Used to track the time of various key-moments.
     private int roundTime;                                  // Currently referred to in the code, but never read out. Will be used in the future.
     private int gameTime;                                   // Total (active) game time.
-    private boolean isRestarted = false;                    // Check for the *restart command.
+    private int isRestarted = 0;                    // Check for the *restart command.
     
     // Zoner related stuff
     private long zonerTimestamp;                            //Timestamp of the last zoner
@@ -398,8 +398,12 @@ public class strikebot extends SubspaceBot {
     public void handleEvent(BallPosition event) {
         ball.update(event);
         
-        if(isRestarted) {
-            isRestarted = false;
+        if(isRestarted >= 1)
+            isRestarted++;
+        
+        if(isRestarted > 2) {
+            isRestarted = 0;
+            ba.sendSmartPrivateMessage("ThePAP", "Update received");
             
             if(ballRemovalDelay != null)
                 ba.cancelTask(ballRemovalDelay);
@@ -1727,7 +1731,7 @@ public class strikebot extends SubspaceBot {
                
         lockArena();
         ba.sendUnfilteredPublicMessage("*restart");
-        isRestarted = true;
+        isRestarted = 1;
         
         ba.specAll();
         timeStamp = System.currentTimeMillis();
