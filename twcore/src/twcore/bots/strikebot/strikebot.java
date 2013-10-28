@@ -4285,7 +4285,7 @@ public class strikebot extends SubspaceBot {
             // When looking at startFaceOff(), this code seems to be redundant.
             // However, due to the bot not always having the latest ball positions, this 
             // safeguard is needed to make it function properly.
-            if(!ball.holding) {
+            if(!ball.holding && time < ball.dropDelay) {
                 doGetBall(config.getBallDrop());
             }
             
@@ -4298,7 +4298,7 @@ public class strikebot extends SubspaceBot {
             if (time >= ball.dropDelay && ball.holding) {
                 dropBall();
 
-                startGame();
+                //startGame();
             }
         }
 
