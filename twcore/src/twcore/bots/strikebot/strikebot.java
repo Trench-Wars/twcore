@@ -695,7 +695,7 @@ public class strikebot extends SubspaceBot {
         
         ba.sendPrivateMessage(name, "Ball was located at: " + xCoord
                 + ", " + yCoord);
-        doGetBall(new Point(xCoord, yCoord));
+        doGetBall(config.getBallDrop());
     }
     
     /**
