@@ -398,11 +398,7 @@ public class strikebot extends SubspaceBot {
     public void handleEvent(BallPosition event) {
         ball.update(event);
         
-        if(isRestarted >= 1)
-            isRestarted++;
-        
-        if(isRestarted > 5) {
-            isRestarted = 0;
+        if(isRestarted == 1) {
             ba.sendSmartPrivateMessage("ThePAP", "Update received");
             
             if(ballRemovalDelay != null)
@@ -411,10 +407,14 @@ public class strikebot extends SubspaceBot {
             ballRemovalDelay = new TimerTask() {
                 @Override
                 public void run() {
-                    doRemoveBall();
+                    isRestarted = 2;
                 }
             };
-            ba.scheduleTask(ballRemovalDelay, Tools.TimeInMillis.SECOND);
+            ba.scheduleTask(ballRemovalDelay, 5 * Tools.TimeInMillis.SECOND);
+        }
+        
+        if(isRestarted == 2) {
+            doRemoveBall();
         }
     }
 
