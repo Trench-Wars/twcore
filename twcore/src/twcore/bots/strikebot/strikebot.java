@@ -58,6 +58,7 @@ public class strikebot extends SubspaceBot {
     
     // Game tickers & other time related stuff
     private Gameticker gameticker;                          // General ticker of the statemachine for this bot.
+    private TimerTask ballRemovalDelay;                     // Timer that removes the ball from the court after a *restart
     private TimerTask fo_botUpdateTimer;                    // Timer that runs during the face off.
     private TimerTask ballDelay;                            // Delay for when the ball is brought into play. (Face off)
     private TimerTask statsDelay;                           // Timer that delays the display of the stats at the end of a game.
@@ -65,6 +66,7 @@ public class strikebot extends SubspaceBot {
     private long timeStamp;                                 // Used to track the time of various key-moments.
     private int roundTime;                                  // Currently referred to in the code, but never read out. Will be used in the future.
     private int gameTime;                                   // Total (active) game time.
+    private boolean isRestarted = false;                    // Check for the *restart command.
     
     // Zoner related stuff
     private long zonerTimestamp;                            //Timestamp of the last zoner
@@ -77,8 +79,6 @@ public class strikebot extends SubspaceBot {
     // Frequencies
     private static final int FREQ_SPEC = 8025;              //Frequency of specced players.
     private static final int FREQ_NOTPLAYING = 2;           //Frequency of players that are !np
-    
-    private boolean debugTest = false;
 
     /**
      * Game states.
@@ -397,6 +397,21 @@ public class strikebot extends SubspaceBot {
     @Override
     public void handleEvent(BallPosition event) {
         ball.update(event);
+        
+        if(isRestarted) {
+            isRestarted = false;
+            
+            if(ballRemovalDelay != null)
+                ba.cancelTask(ballRemovalDelay);
+            
+            ballRemovalDelay = new TimerTask() {
+                @Override
+                public void run() {
+                    doRemoveBall();
+                }
+            };
+            ba.scheduleTask(ballRemovalDelay, Tools.TimeInMillis.SECOND);
+        }
     }
 
     /**
@@ -481,9 +496,6 @@ public class strikebot extends SubspaceBot {
         String cmd = command.toLowerCase();
         String args = "";
 
-        if(cmd.equals("!tralala")) {
-            debugTest = !debugTest;
-        }
         //Separate the command from its arguments if applicable.
         if(command.contains(" ")) {
             int index = command.indexOf(" ");
@@ -1714,6 +1726,9 @@ public class strikebot extends SubspaceBot {
         currentState = SBState.WAIT;
                
         lockArena();
+        ba.sendUnfilteredPublicMessage("*restart");
+        isRestarted = true;
+        
         ba.specAll();
         timeStamp = System.currentTimeMillis();
         ba.sendArenaMessage("Captains you have 10 minutes to set up your lineup correctly!",
@@ -2364,7 +2379,6 @@ public class strikebot extends SubspaceBot {
             ba.sendArenaMessage("Teams are unequal. " +
                     "(Freq 0: " + sizeTeam0 + " players; Freq 1: " + sizeTeam1 + " players)");
         } else {
-            ba.sendUnfilteredPublicMessage("*restart");
             
             currentState = SBState.FACE_OFF;
             ba.sendArenaMessage("Lineups are ok! Game will start in 30 seconds!", Tools.Sound.CROWD_OOO);
