@@ -1818,9 +1818,10 @@ public class strikebot extends SubspaceBot {
                 && (team0.getScore() >= config.getScoreTarget() 
                     || team1.getScore() >= config.getScoreTarget())) {
             gameOver();
-        } else {
+        /*} else {
             for(int i = 0; i <= 1; i++)
                 ba.warpFreqToLocation(teams.get(i).getFrequency(), config.getTeamEntryPoint(i).x, config.getTeamEntryPoint(i).y);
+        */
         }
     }
     
@@ -2532,7 +2533,7 @@ public class strikebot extends SubspaceBot {
             arena = botSettings.getString("Arena");
             
             //Allow Zoner
-            allowZoner = (botSettings.getInt("SendZoner") == 1);
+            allowZoner = (botSettings.getInt("AllowZoner") == 1);
 
             //Allow automation of captains
             allowAutoCaps = (botSettings.getInt("AllowAuto") == 1);
