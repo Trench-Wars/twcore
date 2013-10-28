@@ -4298,14 +4298,8 @@ public class strikebot extends SubspaceBot {
             if (time >= ball.dropDelay && ball.holding) {
                 dropBall();
 
-                TimerTask delayedStart = new TimerTask() {
-                    @Override
-                    public void run() {
-                        startGame();
-                    }
-                };
-                ba.scheduleTask(delayedStart, 5 * Tools.TimeInMillis.SECOND);
-                
+                ba.sendArenaMessage("test");
+                //startGame();
             }
         }
 
