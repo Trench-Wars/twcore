@@ -399,8 +399,6 @@ public class strikebot extends SubspaceBot {
         ball.update(event);
         
         if(isRestarted == 1) {
-            ba.sendSmartPrivateMessage("ThePAP", "Update received");
-            
             if(ballRemovalDelay != null)
                 ba.cancelTask(ballRemovalDelay);
             
@@ -414,6 +412,7 @@ public class strikebot extends SubspaceBot {
         }
         
         if(isRestarted == 2) {
+            isRestarted = 0;
             doRemoveBall();
         }
     }
