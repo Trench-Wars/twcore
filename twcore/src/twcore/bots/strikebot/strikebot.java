@@ -9,6 +9,8 @@ import java.util.Stack;
 import java.util.TimerTask;
 import java.util.TreeMap;
 
+import org.omg.CORBA.INTERNAL;
+
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -4325,7 +4327,7 @@ public class strikebot extends SubspaceBot {
             // When looking at startFaceOff(), this code seems to be redundant.
             // However, due to the bot not always having the latest ball positions, this 
             // safeguard is needed to make it function properly.
-            if(!ball.holding && time < ball.dropDelay) {
+            if(!ball.holding || ba.getShip().getShip() != Ship.INTERNAL_SPIDER) {
                 doGetBall(config.getBallDrop());
             }
             
