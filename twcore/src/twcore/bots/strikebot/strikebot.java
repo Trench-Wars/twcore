@@ -4300,14 +4300,10 @@ public class strikebot extends SubspaceBot {
 
             //CHECK PENALTIES AND DROP
             if (time >= ball.dropDelay && ball.holding) {
-                
-                if(debugTest)
-                    ba.sendArenaMessage("test");
-                
                 dropBall();
 
                 //ba.sendArenaMessage("test");
-                //startGame();
+                startGame();
             }
         }
 
