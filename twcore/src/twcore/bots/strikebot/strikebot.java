@@ -78,6 +78,7 @@ public class strikebot extends SubspaceBot {
     private static final int FREQ_SPEC = 8025;              //Frequency of specced players.
     private static final int FREQ_NOTPLAYING = 2;           //Frequency of players that are !np
     
+    private boolean debugTest = false;
 
     /**
      * Game states.
@@ -480,6 +481,9 @@ public class strikebot extends SubspaceBot {
         String cmd = command.toLowerCase();
         String args = "";
 
+        if(cmd.equals("!tralala")) {
+            debugTest = !debugTest;
+        }
         //Separate the command from its arguments if applicable.
         if(command.contains(" ")) {
             int index = command.indexOf(" ");
@@ -4296,9 +4300,13 @@ public class strikebot extends SubspaceBot {
 
             //CHECK PENALTIES AND DROP
             if (time >= ball.dropDelay && ball.holding) {
+                
+                if(debugTest)
+                    ba.sendArenaMessage("test");
+                
                 dropBall();
 
-                ba.sendArenaMessage("test");
+                //ba.sendArenaMessage("test");
                 //startGame();
             }
         }
