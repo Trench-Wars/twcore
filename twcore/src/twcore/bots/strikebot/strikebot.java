@@ -461,9 +461,9 @@ public class strikebot extends SubspaceBot {
      */
     public void dropBall() {
         ba.cancelTask(fo_botUpdateTimer);
-        ba.specFreqAndKeepFreq(FREQ_NOTPLAYING);
-        //ba.getShip().setShip(Ship.INTERNAL_SPECTATOR);
-        //ba.getShip().setFreq(FREQ_NOTPLAYING);
+        //ba.specFreqAndKeepFreq(FREQ_NOTPLAYING);
+        ba.getShip().setShip(Ship.INTERNAL_SPECTATOR);
+        ba.getShip().setFreq(FREQ_NOTPLAYING);
         ball.holding = false;
     }
 
