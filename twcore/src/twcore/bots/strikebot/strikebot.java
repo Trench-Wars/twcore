@@ -1133,6 +1133,7 @@ public class strikebot extends SubspaceBot {
                         ba.sendArenaMessage(name + " has been removed from the game. (not playing)");
                         t.removePlayer(name);
                     }
+                    determineTurn();
                 }
 
                 /* Check if a player was in and set him to "out but subable" status */
@@ -1148,7 +1149,6 @@ public class strikebot extends SubspaceBot {
                 }
 
                 ba.setFreq(name, FREQ_NOTPLAYING);     //Set the player to the notplaying frequency
-                determineTurn();
             }
         }
     }
