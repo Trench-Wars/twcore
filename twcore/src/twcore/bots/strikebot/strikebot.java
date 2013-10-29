@@ -9,8 +9,6 @@ import java.util.Stack;
 import java.util.TimerTask;
 import java.util.TreeMap;
 
-import org.omg.CORBA.INTERNAL;
-
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -60,7 +58,6 @@ public class strikebot extends SubspaceBot {
     
     // Game tickers & other time related stuff
     private Gameticker gameticker;                          // General ticker of the statemachine for this bot.
-    private TimerTask ballRemovalDelay;                     // Timer that removes the ball from the court after a *restart
     private TimerTask fo_botUpdateTimer;                    // Timer that runs during the face off.
     private TimerTask ballDelay;                            // Delay for when the ball is brought into play. (Face off)
     private TimerTask statsDelay;                           // Timer that delays the display of the stats at the end of a game.
@@ -68,7 +65,6 @@ public class strikebot extends SubspaceBot {
     private long timeStamp;                                 // Used to track the time of various key-moments.
     private int roundTime;                                  // Currently referred to in the code, but never read out. Will be used in the future.
     private int gameTime;                                   // Total (active) game time.
-    private int isRestarted = 0;                    // Check for the *restart command.
     
     // Zoner related stuff
     private long zonerTimestamp;                            //Timestamp of the last zoner
@@ -127,7 +123,32 @@ public class strikebot extends SubspaceBot {
         
         private static final EnumSet<SBState> MIDGAME = EnumSet.of(FACE_OFF, GAME_IN_PROGRESS);
         
-    };    
+    };
+    
+    /**
+     * Ball states.
+     * <p>
+     * Due to the way the command *restart works, for this bot it is needed to keep track of the current ball state.
+     * After a *restart is done, the ball will disappear for a semi-random amount of time. This enum class will help
+     * keeping track whether ot not the ball can be interacted with again.
+     * <p>
+     * Currently it consists out of the following states:
+     * <ul>
+     *  <li>InGame:         Ball is currently inside the arena, and reachable for normal players.
+     *  <li>PreRespawn:     A *restart has just been issued, the ball is about to disappear.
+     *  <li>Respawning:     The ball is currently being respawned. (No ball present in the arena.)
+     *  <li>PostRespawn:    The ball has just respawned in the arena, after it disappeared.
+     *  <li>OutOfGame:      The ball has been placed outside of the arena, unreachable to normal players.
+     *  <li>FaceOff:        The ball is currently being held by the bot for the initial face off.
+     * </ul>
+     * @author Trancid
+     *
+     */
+    private static enum BallStates {
+        InGame, PreRespawn, Respawning, PostRespawn, OutOfGame, FaceOff;
+        
+        private static final EnumSet<BallStates> ISRESPAWNING = EnumSet.of(PreRespawn, Respawning, PostRespawn);
+    };
 
     private SBState currentState;   // This keeps track of the current, active state.
     
@@ -399,24 +420,6 @@ public class strikebot extends SubspaceBot {
     @Override
     public void handleEvent(BallPosition event) {
         ball.update(event);
-        
-        if(isRestarted == 1) {
-            if(ballRemovalDelay != null)
-                ba.cancelTask(ballRemovalDelay);
-            
-            ballRemovalDelay = new TimerTask() {
-                @Override
-                public void run() {
-                    isRestarted = 2;
-                }
-            };
-            ba.scheduleTask(ballRemovalDelay, 5 * Tools.TimeInMillis.SECOND);
-        }
-        
-        if(isRestarted == 2) {
-            doRemoveBall();
-            isRestarted = 3;
-        }
     }
 
     /**
@@ -535,6 +538,8 @@ public class strikebot extends SubspaceBot {
             cmd_lagout(name);
         } else if (cmd.equals("!list")) {
             cmd_list(name);
+        } else if (cmd.equals("!myfreq")) {
+            cmd_myfreq(name);
         } else if (cmd.equals("!notplaying") || cmd.equals("!np")) {
             cmd_notplaying(name);
         } else if (cmd.equals("!status")) {
@@ -851,8 +856,10 @@ public class strikebot extends SubspaceBot {
             help.add("-----------------------------------------------------------------------");
             help.add("!notplaying                       Toggles not playing mode  (short !np)");
             help.add("!cap                                            shows current captains!");
+            help.add("                     NOTE: When autocaps is on, this will make you cap!");
             help.add("!lagout              Puts you back into the game if you have lagged out");
             help.add("!list                                    Lists all players on this team");
+            help.add("!myfreq                                   Puts you on your team's freq.");
             help.add("!status                                        Display status and score");
             help.add("!subscribe                           Toggles alerts in private messages");
             help.add("-----------------------------------------------------------------------");
@@ -937,7 +944,9 @@ public class strikebot extends SubspaceBot {
         
         // If the host requests a timeout, check if the current phase allows it.   
         if(!(SBState.MIDGAME.contains(currentState))) {
-            ba.sendPrivateMessage(name, "This is currently only available during a FaceOff.");
+            ba.sendPrivateMessage(name, "This is currently only available when the game is active.");
+        } else if(ball.isRespawning()) {
+            ba.sendSmartPrivateMessage(name, "The ball is currently respawning. Please try again in a moment.");
         } else {
             // Send a nice message ...
             ba.sendArenaMessage(name + 
@@ -1056,6 +1065,23 @@ public class strikebot extends SubspaceBot {
         return list;
     }
 
+    /**
+     * Handles the !myfreq command.
+     * <p>
+     * Puts the player on his/her team's frequency.
+     * @param name name of the player that issued the !myfreq command
+     */
+    private void cmd_myfreq(String name) {
+        SBTeam t;
+        
+        if (currentState != SBState.OFF) {
+            t = getTeam(name);
+            if(t != null) {
+                ba.setFreq(name, t.getFrequency());
+            }
+        }
+    }
+    
     /**
      * Handles the !notplaying command
      *
@@ -1634,6 +1660,8 @@ public class strikebot extends SubspaceBot {
             // Checks if the captain has any timeouts left to use
             ba.sendPrivateMessage(name, "You have already used your timeout" + 
                     ((maxTimeouts > 1)?"s":"") + ".");
+        } else if(ball.isRespawning()) {
+            ba.sendSmartPrivateMessage(name, "The ball is currently respawning. Please try again in a moment.");
         } else {
             // Good to go. Lower the amount of available timeouts ...
             t.useTimeOut();
@@ -1731,8 +1759,7 @@ public class strikebot extends SubspaceBot {
         currentState = SBState.WAIT;
                
         lockArena();
-        ba.sendUnfilteredPublicMessage("*restart");
-        isRestarted = 1;
+        ball.respawn();
         
         ba.specAll();
         timeStamp = System.currentTimeMillis();
@@ -1760,10 +1787,17 @@ public class strikebot extends SubspaceBot {
         determineTurn();
     }
 
+    /**
+     * Added security routine that starts the PreFaceOff.
+     * <p>
+     * The main intent for this extra phase is to allow the ball to respawn after a *restart, in case the captains
+     * were too quick setting up their teams.
+     */
     private void startPreFaceOff() {
         currentState = SBState.WAIT;
         
-        ba.sendArenaMessage("Waiting for the ball to respawn, one moment please.");
+        if(!ball.isOut())
+            ba.sendArenaMessage("Waiting for the ball to respawn, one moment please.");
         
         currentState = SBState.PRE_FACE_OFF;
     }
@@ -2624,6 +2658,9 @@ public class strikebot extends SubspaceBot {
             return allowAutoCaps;
         }
         
+        /**
+         * Toggles the current state of auto caps.
+         */
         private void toggleAllowAutoCaps() {
             allowAutoCaps = !allowAutoCaps;
         }
@@ -2655,10 +2692,18 @@ public class strikebot extends SubspaceBot {
             return maxSubs;
         }
 
+        /**
+         * Returns the default goals target.
+         * @return scoreTarget
+         */
         private int getScoreTarget() {
             return scoreTarget;
         }
         
+        /**
+         * Returns the "win by X goals" amount
+         * @return scoreDifference
+         */
         private int getScoreDifference() {
             return scoreDifference;
         }
@@ -2721,8 +2766,8 @@ public class strikebot extends SubspaceBot {
         //Player statistics.
         private int assists = 0;                            // Assists on clean goals.
         private int goals = 0;                              // Clean goals made.
-        private int kills = 0;
-        private int deaths = 0;
+        private int kills = 0;                              // Amount of kills made.
+        private int deaths = 0;                             // How often the player faced the Grim Reaper.
 
         /** Class constructor */
         private SBPlayer(String player, int shipType, int frequency) {
@@ -2955,6 +3000,9 @@ public class strikebot extends SubspaceBot {
             p_timestampSub = System.currentTimeMillis();
         }
         
+        /*
+         * Default getters and setters below.
+         */
         private int getGoals() {
             return goals;
         }
@@ -2978,6 +3026,10 @@ public class strikebot extends SubspaceBot {
             return deaths;
         }
         
+        /**
+         * Calculates the player's Kill/Death ratio.
+         * @return K/D ratio or null if the player hasn't died yet.
+         */
         private Float getKDRatio() {
             if(deaths == 0)
                 return null;
@@ -3005,19 +3057,19 @@ public class strikebot extends SubspaceBot {
      */
     private class SBTeam {
 
-        private boolean turnToPick;                         // True if it's this team's turn to pick a player.
-        private boolean ready;                              // True if this team has finished its line up and is ready to begin.
-        private int timeout;                                // Amount of time outs this team is still able to use. This is set at the start of a game.
-        private int frequency;                              // Frequency of this team.
+        private boolean turnToPick;                     // True if it's this team's turn to pick a player.
+        private boolean ready;                          // True if this team has finished its line up and is ready to begin.
+        private int timeout;                            // Amount of time outs this team is still able to use. This is set at the start of a game.
+        private int frequency;                          // Frequency of this team.
         private TreeMap<String, SBPlayer> players;      // List of names the players on this team, linked to their SBPlayer class object.
-        private TreeMap<Short, String> captains;
-        private short captainsIndex;
-        private String captainName;                         // Current captain's name.
-        private String lastCaptainName;                     // Last captain's name.
-        private String teamName;                            // Team name.
-        private long captainTimestamp;
-        private int substitutesLeft;                        // Amount of substitutes left for this team.
-        private int teamScore;                              // Current score for this team.
+        private TreeMap<Short, String> captains;        // List of captains, previous and current, of this team.
+        private short captainsIndex;                    // Index to the name of the currently active captain.
+        private String captainName;                     // Current captain's name.
+        private String lastCaptainName;                 // Last captain's name.
+        private String teamName;                        // Team name.
+        private long captainTimestamp;                  // Timestamp when the current captain was assigned.
+        private int substitutesLeft;                    // Amount of substitutes left for this team.
+        private int teamScore;                          // Current score for this team.
         
         /** Class constructor */
         private SBTeam(int frequency) {
@@ -3045,7 +3097,6 @@ public class strikebot extends SubspaceBot {
             teamScore = 0;
             
         }
-
 
         /**
          * Increases team score by 1.
@@ -3757,6 +3808,8 @@ public class strikebot extends SubspaceBot {
         private Stack<Point> releases;          // List of points (X- and Y-coordinate) of where the ball was previously released. 
         private boolean holding;                // True if the bot is currently carrying the ball.
         private int dropDelay;                  // Delay before the ball is being dropped during face off.
+        private BallStates ballState;           // Current state the ball is in.
+        private TimerTask ballRemovalDelay;     // Timer that removes the ball from the court after a *restart
 
         /** Class constructor */
         public SBBall() {
@@ -3765,6 +3818,7 @@ public class strikebot extends SubspaceBot {
             releases = new Stack<Point>();
             carried = false;
             holding = false;
+            ballState = BallStates.InGame;
         }
 
         /**
@@ -3789,6 +3843,39 @@ public class strikebot extends SubspaceBot {
             ballX = event.getXLocation();
             ballY = event.getYLocation();
             short carrierID = event.getCarrier();
+            
+            // Update ball state
+            switch(ballState) {
+            case PreRespawn:
+                // The actual start of the respawn triggers a ball update, this kinda needs to be ignored by the bot.
+                if(ballRemovalDelay != null)
+                    ba.cancelTask(ballRemovalDelay);
+                
+                ballRemovalDelay = new TimerTask() {
+                    @Override
+                    public void run() {
+                        ballState = BallStates.Respawning;
+                    }
+                };
+                ba.scheduleTask(ballRemovalDelay, 5 * Tools.TimeInMillis.SECOND);
+                
+                break;
+            case Respawning:
+                // This will be triggered after the ball has been respawned.
+                ballState = BallStates.PostRespawn;
+                doRemoveBall();
+                ballState = BallStates.OutOfGame;
+                break;
+            case InGame:
+            case PostRespawn:
+            case OutOfGame:
+            case FaceOff:
+            default:
+                // For now, do nothing.
+                break;
+            }
+            
+            // Updating other lists.
             if (carrierID != -1) {
                 carrier = ba.getPlayerName(carrierID);
             } else {
@@ -3813,7 +3900,6 @@ public class strikebot extends SubspaceBot {
                 }
                 holding = false;
             }
-
         }
 
         /**
@@ -3870,6 +3956,48 @@ public class strikebot extends SubspaceBot {
                 id = carriers.pop();
             }
             return id;
+        }
+        
+        /**
+         * Initiates the respawning of the ball.
+         */
+        public void respawn() {
+            if(ballState == BallStates.InGame) {
+                ba.sendUnfilteredPublicMessage("*restart");
+                ballState = BallStates.PreRespawn;
+            }
+        }
+        
+        /**
+         * Checks if the ball is currently being respawned.
+         * @return true if the ball is being respawedn, false otherwise.
+         */
+        public boolean isRespawning() {
+            return BallStates.ISRESPAWNING.contains(ballState);
+        }
+        
+        /**
+         * Sets the state of the ball to the faceoff state.
+         */
+        public void doFaceOff() {
+            if(!BallStates.ISRESPAWNING.contains(ballState)) {
+                ballState = BallStates.FaceOff;
+            }
+        }
+        
+        /**
+         * Sets the state of the ball to the in game state.
+         */
+        public void postFaceOff() {
+            ballState = BallStates.InGame;
+        }
+        
+        /**
+         * Checks whether or not the ball is currently located in a spot that is reachable by normal players.
+         * @return true when the ball is outside of the arena. (Read: ball is still inside the map.)
+         */
+        public boolean isOut() {
+            return (ballState == BallStates.OutOfGame);
         }
     }
     
@@ -4301,9 +4429,14 @@ public class strikebot extends SubspaceBot {
         }
 
         
+        /**
+         * Handles the pre-faceoff state.
+         * <p>
+         * Game will be stuck in this face until the ball has been respawned.
+         */
         private void doPreFaceOff() {
-            if(isRestarted == 3) {
-                isRestarted = 0;
+            if(ball.isOut()) {
+                ball.doFaceOff();
                 startFaceOff();
             }
         }
@@ -4337,11 +4470,10 @@ public class strikebot extends SubspaceBot {
                 ba.sendArenaMessage("Get READY! THE BALL WILL BE DROPPED SOON.", 1);
             }
 
-            //CHECK PENALTIES AND DROP
+            //DROP
             if (time >= ball.dropDelay && ball.holding) {
                 dropBall();
-
-                //ba.sendArenaMessage("test");
+                ball.postFaceOff();
                 startGame();
             }
         }
