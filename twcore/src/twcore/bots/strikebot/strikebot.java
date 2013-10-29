@@ -600,6 +600,14 @@ public class strikebot extends SubspaceBot {
                 cmd_allowZoner(name);
             }
         }
+        
+        if(ba.getOperatorList().isOwner(name)) {
+            if (cmd.equals("!restart")) {
+                ball.respawn();
+            } else if(cmd.equals("!getstate")) {
+                ba.sendSmartPrivateMessage(name, ball.ballState.toString());
+            }
+        }
     }
 
     /** 
@@ -1140,6 +1148,7 @@ public class strikebot extends SubspaceBot {
                 }
 
                 ba.setFreq(name, FREQ_NOTPLAYING);     //Set the player to the notplaying frequency
+                determineTurn();
             }
         }
     }
@@ -2457,6 +2466,7 @@ public class strikebot extends SubspaceBot {
                     + "Captains, fix your lineups and try again.", Tools.Sound.CROWD_GEE);
             team0.ready();
             team1.ready();
+            determineTurn();
         }
 
     }
