@@ -474,6 +474,7 @@ public class strikebot extends SubspaceBot {
         
         if (ba.getShip().getShip() != Ship.INTERNAL_SPIDER || !ball.holding) {
             ba.getShip().setShip(Ship.INTERNAL_SPIDER);
+            ba.getShip().setShip(Ship.INTERNAL_SPIDER);
             ba.getShip().move(location.x, location.y);
             ba.getBall(ball.getBallID(), ball.getTimeStamp());
             ball.holding = true;
@@ -486,6 +487,7 @@ public class strikebot extends SubspaceBot {
     public void dropBall() {
         ba.cancelTask(fo_botUpdateTimer);
         //ba.specFreqAndKeepFreq(FREQ_NOTPLAYING);
+        ba.getShip().setShip(Ship.INTERNAL_SPECTATOR);
         ba.getShip().setShip(Ship.INTERNAL_SPECTATOR);
         ba.getShip().setFreq(FREQ_NOTPLAYING);
         ball.holding = false;
@@ -2797,7 +2799,8 @@ public class strikebot extends SubspaceBot {
 
             // Puts the player in an actual ship and in the right frequency.
             ba.setShip(p_name, p_currentShip);
-            ba.setFreq(p_name, p_frequency);
+            ba.setShip(p_name, p_currentShip);
+            //ba.setFreq(p_name, p_frequency);
 
             // Warps the player to the correct warp in point.
             ba.warpTo(p_name, config.getTeamEntryPoint(p_frequency));
@@ -3912,6 +3915,7 @@ public class strikebot extends SubspaceBot {
                 releases.clear();
             } catch (Exception e) {
             }
+            ballState = BallStates.InGame;
         }
 
         /**
