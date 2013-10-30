@@ -1964,6 +1964,7 @@ public class strikebot extends SubspaceBot {
         mvpDelay = new TimerTask() {
             @Override
             public void run() {
+                ba.sendArenaMessage("Winner: " + teams.get((team0.getScore() > team1.getScore()?0:1)).getName() + "!");
                 ba.sendArenaMessage("MVP: " + getMVP() + "!", Tools.Sound.INCONCEIVABLE);
             }
         }; ba.scheduleTask(mvpDelay, Tools.TimeInMillis.SECOND * 5);
@@ -2004,20 +2005,12 @@ public class strikebot extends SubspaceBot {
     private ArrayList<String> addTeamStats(SBTeam team) {
         ArrayList<String> stats = new ArrayList<String>();
         for (SBPlayer p : team.players.values()) {
-            // Short piece of code in case the K/D ratio is well, a division by zero.
-            String kdRatio = "";
-            Float f = p.getKDRatio();
-            if(f == null)
-                kdRatio = "Infinite";
-            else
-                kdRatio = Float.toString(f);
-            
             stats.add("| " + Tools.formatString(p.getName(), 20)
                     + " |" + Tools.rightString(Integer.toString(p.getGoals()), 6)
                     + " |" + Tools.rightString(Integer.toString(p.getAssists()), 8)
                     + " |" + Tools.rightString(Integer.toString(p.getKills()), 6)
                     + " |" + Tools.rightString(Integer.toString(p.getDeaths()), 7)
-                    + " |" + Tools.rightString(kdRatio, 10)
+                    + " |" + Tools.rightString(p.getKDRatio(), 10)
                     + " |" + Tools.rightString(Integer.toString(p.getTotalRating()), 7)
                     + " |");
         }
@@ -3062,11 +3055,11 @@ public class strikebot extends SubspaceBot {
          * Calculates the player's Kill/Death ratio.
          * @return K/D ratio or null if the player hasn't died yet.
          */
-        private Float getKDRatio() {
+        private String getKDRatio() {
             if(deaths == 0)
-                return null;
+                return "0.00";
             
-            return (float) kills/deaths;
+            return String.format("%.2f", (float) kills/deaths);
         }
         
         /**
