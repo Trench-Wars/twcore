@@ -474,6 +474,7 @@ public class strikebot extends SubspaceBot {
         }; ba.scheduleTask(fo_botUpdateTimer, 0, 500);
         
         if (ba.getShip().getShip() != Ship.INTERNAL_SPIDER || !ball.holding) {
+            // Need to do this twice due to arena settings.
             ba.getShip().setShip(Ship.INTERNAL_SPIDER);
             ba.getShip().setShip(Ship.INTERNAL_SPIDER);
             ba.getShip().move(location.x, location.y);
@@ -487,7 +488,7 @@ public class strikebot extends SubspaceBot {
      */
     public void dropBall() {
         ba.cancelTask(fo_botUpdateTimer);
-        //ba.specFreqAndKeepFreq(FREQ_NOTPLAYING);
+        // Need to do this twice due to arena settings.
         ba.getShip().setShip(Ship.INTERNAL_SPECTATOR);
         ba.getShip().setShip(Ship.INTERNAL_SPECTATOR);
         ba.getShip().setFreq(FREQ_NOTPLAYING);
@@ -1597,6 +1598,12 @@ public class strikebot extends SubspaceBot {
                 return;
             }
 
+            /* Idiot check */
+            if (playerA.getName().equals(playerBnew)) {
+                ba.sendPrivateMessage(name, "Error: You cannot substitute a player with him/herself");
+                return;
+            }
+            
             /* Check if sub is a bot */
             if (ba.getOperatorList().isBotExact(playerBnew.getPlayerName())) {
                 ba.sendPrivateMessage(name, "Error: Bots are not allowed to play.");
@@ -2819,6 +2826,7 @@ public class strikebot extends SubspaceBot {
             }
 
             // Puts the player in an actual ship and in the right frequency.
+            // Need to do this twice due to arena settings.
             ba.setShip(p_name, p_currentShip);
             ba.setShip(p_name, p_currentShip);
             //ba.setFreq(p_name, p_frequency);
