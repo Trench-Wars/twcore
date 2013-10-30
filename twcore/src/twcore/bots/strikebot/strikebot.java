@@ -3870,7 +3870,7 @@ public class strikebot extends SubspaceBot {
                         ballState = BallStates.Respawning;
                     }
                 };
-                ba.scheduleTask(ballRemovalDelay, 5 * Tools.TimeInMillis.SECOND);
+                ba.scheduleTask(ballRemovalDelay, Tools.TimeInMillis.SECOND);
                 
                 break;
             case Respawning:
