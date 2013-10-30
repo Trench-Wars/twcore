@@ -297,6 +297,7 @@ public class strikebot extends SubspaceBot {
         
         if (messageType == Message.ARENA_MESSAGE) {
             checkArenaLock(message);    //Checks if the arena should be locked
+            checkRestart(message);
         } else if (messageType == Message.PRIVATE_MESSAGE) {
             if (sender != null) {
                 handleCommand(sender, message);   //Handle commands
@@ -2385,6 +2386,16 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
+     * Checks whether or not the arena message was a message that indicates that the ball is being removed.
+     * @param message Arena message
+     */
+    private void checkRestart(String message) {
+        if (message.startsWith("Soccer game over.") && !ball.isRespawning()) {
+            ball.setState(BallStates.PreRespawn);
+        }
+    }
+    
+    /**
      * Checks if name is a captain on one of the teams
      * Returns true if true, else false
      *
@@ -3980,6 +3991,14 @@ public class strikebot extends SubspaceBot {
                 ba.sendUnfilteredPublicMessage("*restart");
                 ballState = BallStates.PreRespawn;
             }
+        }
+        
+        /**
+         * Forces the ball into a specific state.
+         * @param newState New state the ball will be in.
+         */
+        public void setState(BallStates newState) {
+            ballState = newState;
         }
         
         /**
