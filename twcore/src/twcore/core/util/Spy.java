@@ -152,7 +152,7 @@ public class Spy {
      */
     public boolean isRacist(String message)
     {
-      StringTokenizer words = new StringTokenizer(message.toLowerCase(), " !?:;.,@#$%^&*()[]{}-_=+~`\"\'|\\<>/");
+      StringTokenizer words = new StringTokenizer(message.toLowerCase(), " !?:;.,@#$%^&()[]{}-_=+~`\"\'|\\<>/");
       String word = "";
       
       while(words.hasMoreTokens()) {
