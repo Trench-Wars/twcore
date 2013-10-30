@@ -1141,11 +1141,11 @@ public class HubBot extends SubspaceBot {
                         "ForumBot      - [forumbot]",
                         "WhoBot        - [whobot]",
                         "TW-Chat       - [twchat]",
-                        "TW-WelcomeBot -[welcomebot]"
+                        "TW-WelcomeBot - [welcomebot]"
                         
                 };
                 m_botAction.remotePrivateMessageSpam(name, twcore);
-                }
+            }
             
             else if(botname.equals("TWCore-Event")){
                 String[] twcoreEvents = {
@@ -1158,11 +1158,12 @@ public class HubBot extends SubspaceBot {
                         " ",
                         "------- NickName / typebot ---------",
                         " ",
-                        "RoboBot*  - [multibot]",
-                        "Robo Ref  - [elim]",
+                        "RoboBot*   - [multibot]",
+                        "Robo Ref   - [elim]",
                         "Basebot/Wbduelbot/Javduelbot/Spiderduelbot - [bwjsbot]",
-                        "GammaBot2 - [octabot]",
-                        "HockeyBot - [hockeybot]"
+                        "GammaBot2  - [octabot]",
+                        "HockeyBot  - [hockeybot]",
+                        "RoboStrike - [strikebot]"
                 };
                 m_botAction.remotePrivateMessageSpam(name, twcoreEvents);
             }
@@ -1178,14 +1179,14 @@ public class HubBot extends SubspaceBot {
                         " ",
                         "------- NickName / typebot ---------",
                         "",
-                        "TW-Duel1 -  [duelbot]",
-                        "TW-Duel2 -  [duel2bot]",
+                        "TW-Duel1  - [duelbot]",
+                        "TW-Duel2  - [duel2bot]",
                         "MatchBot* - [matchbot]",
-                        "TWDBot -    [twdbot]",
-                        "TWDHub -    [twdhub]",
+                        "TWDBot    - [twdbot]",
+                        "TWDHub    - [twdhub]",
                         "Tournybot - [tournybot]",
-                        "TWLBot* -   [twl]",
-                        "TWDTBot -   [twdtbot]",
+                        "TWLBot*   - [twl]",
+                        "TWDTBot   - [twdtbot]",
                         "MatchBot* - [twdt]"
                 };
                 m_botAction.remotePrivateMessageSpam(name, twcoreLeague);
@@ -1203,6 +1204,7 @@ public class HubBot extends SubspaceBot {
                         "------- NickName / typebot ---------",
                         "",
                         "TW-PubSystem - [pubsystem]",
+                        "TW-Bot*      - [pubautobot]"
                 };
                 m_botAction.remotePrivateMessageSpam(name, twcoreLeague);
             }
