@@ -40,8 +40,8 @@ public final class Ship extends Thread {
 
     private short       shipType = INTERNAL_SPECTATOR;       // 0-7 in-game ship; 8 spectating
 
-    private long m_mAge;   // Last time position updated
-    private long m_pAge;   // Last time packet sent
+    private long        m_mAge;   // Last time position updated
+    private long        m_pAge;   // Last time packet sent
 
     private GamePacketGenerator m_gen;			// Packet generator
     private Arena				m_arenaTracker;	// for getting next id to spectate on
@@ -125,7 +125,7 @@ public final class Ship extends Thread {
             x += (short)(xVel * getAge() / VELOCITY_TIME );
             y += (short)(yVel * getAge() / VELOCITY_TIME );
         }
-        m_mAge = (int)System.currentTimeMillis();
+        m_mAge = System.currentTimeMillis();
 
         if (needsToBeSent())
         {
@@ -145,7 +145,7 @@ public final class Ship extends Thread {
      */
     public boolean needsToBeSent()
     {
-        return xVel != lastXV || yVel != lastYV || lastD != direction || System.currentTimeMillis() - m_pAge >= m_unmovingUpdateTime;
+        return xVel != lastXV || yVel != lastYV || lastD != direction || (System.currentTimeMillis() - m_pAge) >= m_unmovingUpdateTime;
     }
 
     /**
@@ -154,7 +154,7 @@ public final class Ship extends Thread {
     public void sendPositionPacket()
     {
         m_gen.sendPositionPacket( direction, xVel, y, togglables, x, yVel, bounty, energy, (short)0 );
-        m_pAge = (int)System.currentTimeMillis();
+        m_pAge = System.currentTimeMillis();
     }
 
     /**
@@ -165,7 +165,7 @@ public final class Ship extends Thread {
      */
     public void fire( int weapon ){
         m_gen.sendPositionPacket( direction, xVel, y, togglables, x, yVel, bounty, energy, (short)weapon );
-        m_pAge = (int)System.currentTimeMillis();
+        m_pAge = System.currentTimeMillis();
     }
     
     /**
@@ -173,7 +173,7 @@ public final class Ship extends Thread {
      */
     public void dropBrick(){
     	m_gen.sendDropBrick(this.x/16, this.y/16);
-    	m_pAge = (int)System.currentTimeMillis();
+    	m_pAge = System.currentTimeMillis();
     }
     
     /**
@@ -183,7 +183,7 @@ public final class Ship extends Thread {
      */
     public void dropBrick( int xLocation, int yLocation){
     	m_gen.sendDropBrick(xLocation, yLocation);
-    	m_pAge = (int)System.currentTimeMillis();
+    	m_pAge = System.currentTimeMillis();
     }
 
     /**
@@ -370,7 +370,7 @@ public final class Ship extends Thread {
     /**
      * Sets ship type from 0-8.  0 is warbird.  If set to 8, the bot will
      * become a spectator, and cease sending any kind of position packet.
-     * @param shipType Type of ship to set to (1-8 in-game, 0 spectator)
+     * @param shipType Type of ship to set to (0-7 in-game, 8 spectator)
      */
     public void setShip( int shipType ){
         this.shipType = (short)shipType;
@@ -506,27 +506,27 @@ public final class Ship extends Thread {
      * @return Time in ms since last position update (regardless of packet sent or not)
      */
     public long getAge() {
-        return (int)(System.currentTimeMillis() - m_mAge);
+        return (System.currentTimeMillis() - m_mAge);
     }
 
     /**
      * @return Interval in ms between position packet sendings while ship is moving
      */
-    public int getMovingUpdateTime() {
-        return (int)m_movingUpdateTime;
+    public long getMovingUpdateTime() {
+        return m_movingUpdateTime;
     }
 
     /**
      * @return Interval in ms between position packet sendings while ship is moving
      */
-    public int getUnmovingUpdateTime() {
-        return (int)m_unmovingUpdateTime;
+    public long getUnmovingUpdateTime() {
+        return m_unmovingUpdateTime;
     }
 
     /**
      * @return Interval in ms between player switching while ship is spectator
      */
-    public synchronized int getSpectatorUpdateTime() {
-    	return (int)m_spectatorUpdateTime;
+    public synchronized long getSpectatorUpdateTime() {
+    	return m_spectatorUpdateTime;
     }
 }
