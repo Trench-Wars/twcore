@@ -102,7 +102,7 @@ public class twpoll extends SubspaceBot {
     public void loadData() {
         loadPolls();
         loadVotes();
-        //loadUpdates();
+        loadUpdates();
     }
     
     public void handleEvent(PlayerEntered event) {
