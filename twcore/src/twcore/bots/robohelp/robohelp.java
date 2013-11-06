@@ -342,7 +342,7 @@ public class robohelp extends SubspaceBot {
     @Override
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena("#robopark");
-        m_botAction.sendUnfilteredPublicMessage("?chat=" + m_botAction.getGeneralSettings().getString("Staff Chat") + "," + ALERT_CHAT + "," + ba.getGeneralSettings().getString("TWDChat"));
+        m_botAction.sendUnfilteredPublicMessage("?chat=" + m_botAction.getGeneralSettings().getString("Staff Chat") + "," + ALERT_CHAT + "," + ba.getBotSettings().getString("TWDChat"));
         m_botAction.sendUnfilteredPublicMessage("?blogin " + m_botSettings.getString("Banpassword"));
         m_botAction.ipcSubscribe(ZONE_CHANNEL);
     }
