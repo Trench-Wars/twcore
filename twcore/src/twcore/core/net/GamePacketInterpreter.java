@@ -11,6 +11,8 @@ import twcore.core.Session;
 import twcore.core.SubspaceBot;
 import twcore.core.events.*;
 import twcore.core.game.Arena;
+import twcore.core.game.ArenaSettings;
+import twcore.core.game.LvlMap;
 import twcore.core.util.ByteArray;
 import twcore.core.util.MessageLimiter;
 import twcore.core.util.Tools;
@@ -30,6 +32,7 @@ public class GamePacketInterpreter {
     private SubspaceBot             m_subspaceBot;          // Ref to bot class
     private SSEncryption            m_ssEncryption;         // Encryption scheme
     private Arena                   m_arenaTracker;         // Current arena info
+    private ArenaSettings           m_arenaSettings;        // Arena settings
     private String                  m_playerPassword;       // Bot's password
     private GamePacketGenerator     m_packetGenerator;      // Packet gen ref
     private int                     m_massiveChunkCount;    // Handles chunk pkt sizes
@@ -37,8 +40,17 @@ public class GamePacketInterpreter {
     private ReliablePacketHandler   m_reliablePacketHandler;// Reliable receives
     private EventRequester          m_requester;            // Checks if event req.
     private MessageLimiter          m_limiter = null;       // Limits msgs sent
+    private LvlMap                  m_arenaMap;             // Map information for checksums etc.
     private int                     m_verboseLogin;         // 1: send verbose login msg
+    private int                     m_weaponTracker = 0;    // Used for checksums mainly.
+    private long[]                  m_dictionary;           // Dictionary for file checksums.
     private boolean					m_registerNewUser;		// Register new user
+    private boolean                 m_autoAdjustSyncTime;   // Adjust synchronization interval requests to the arena's setting.
+    private boolean                 m_securitySync;         // Enables responding to the security checksum packet.
+    private boolean                 m_autoMap;              // Enables automatic map retrieval.
+    
+    //private static final String map_path = "/home/bots/maps/";
+    private String                  m_mapPath;              // Location where the map files will reside.
 
     /**
      * Creates a new instance of GamePacketInterpreter.
@@ -65,6 +77,17 @@ public class GamePacketInterpreter {
         m_packetGenerator = packetGenerator;
         m_verboseLogin = session.getCoreData().getGeneralSettings().getInt("VerboseLogin");
         m_registerNewUser = registerNewUser;
+        m_arenaMap = null;
+        m_autoMap = (m_session.getCoreData().getGeneralSettings().getInt("AutoMap") == 1);
+        m_securitySync = (m_session.getCoreData().getGeneralSettings().getInt("SecuritySync") == 1);
+        m_autoAdjustSyncTime = (m_session.getCoreData().getGeneralSettings().getInt("AutoAdjustSyncTime") == 1);
+        
+        
+        m_dictionary = new long[256];
+        if(m_autoMap)
+            m_dictionary = ChecksumGenerator.generateDictionary();
+        if(m_securitySync || m_autoMap)
+            m_mapPath = m_session.getCoreData().getGeneralSettings().getString("MapLocation").trim();
     }
 
     /**
@@ -149,9 +172,9 @@ public class GamePacketInterpreter {
         switch( index ){
             // 0x00 - Special packet (see translateSpecialPacket())
             case 0x01:
+                // 0x01 - Bot's player ID has changed: Unhandled
                 Tools.printConnectionLog("RECV    : (0x01) PlayerID Change (" + m_session.getBotName() + ")");
                 break;
-            // 0x01 - Bot's player ID has changed: Unhandled
             case 0x02:
                 Tools.printConnectionLog("RECV    : (0x02) You are now in the game (" + m_session.getBotName() + ")");
                 handleArenaJoined( array, alreadyDecrypted );
@@ -193,9 +216,9 @@ public class GamePacketInterpreter {
                 handleSoccerGoal( array, alreadyDecrypted );
                 break;
             case 0x0C:
+                // 0x0C - Player Voice: Unhandled
                 Tools.printConnectionLog("RECV    : (0x0C) Player Voice (" + m_session.getBotName() + ")");
                 break;
-            // 0x0C - Player Voice: Unhandled
             case 0x0D:
                 Tools.printConnectionLog("RECV    : (0x0D) Player Changed Frequency (" + m_session.getBotName() + ")");
                 handleFreqChange( array, alreadyDecrypted );
@@ -213,9 +236,9 @@ public class GamePacketInterpreter {
                 handleFileArrived( array, alreadyDecrypted );
                 break;
             case 0x11:
+                // 0x11 - NOP?: Unhandled
                 Tools.printConnectionLog("RECV    : (0x11) Unknown (" + m_session.getBotName() + ")");
                 break;
-            // 0x11 - NOP?: Unhandled
             case 0x12:
                 Tools.printConnectionLog("RECV    : (0x12) Flag Position (" + m_session.getBotName() + ")");
                 handleFlagPosition( array, alreadyDecrypted );
@@ -229,22 +252,24 @@ public class GamePacketInterpreter {
                 handleFlagVictory( array, alreadyDecrypted );
                 break;
             case 0x15:
+                // 0x15 - Destroy Turret Link (player hits F7 to detach anyone attached): Unhandled
                 Tools.printConnectionLog("RECV    : (0x15) Destroy Turret Link (" + m_session.getBotName() + ")");
                 break;
-            // 0x15 - Destroy Turret Link (player hits F7 to detach anyone attached): Unhandled
             case 0x16:
                 Tools.printConnectionLog("RECV    : (0x16) Drop Flag (" + m_session.getBotName() + ")");
                 handleFlagDropped( array, alreadyDecrypted );
                 break;
             case 0x17:
+                // 0x17 - NOP?: Unhandled
                 Tools.printConnectionLog("RECV    : (0x17) Unknown (" + m_session.getBotName() + ")");
                 break;
-            // 0x17 - NOP?: Unhandled
             case 0x18:
+                // 0x18 - Synchronization Request: Optionally handled. See setup.cfg: SecuritySync (This is why bot must be a sysop when it's disabled.)
+                //        On Sync request, send 0x1A - Security checksum
                 Tools.printConnectionLog("RECV    : (0x18) Synchronization Request (" + m_session.getBotName() + ")");
+                if(m_securitySync)
+                    handleSyncRequest( array, alreadyDecrypted );
                 break;
-            // 0x18 - Synchronization Request: Unhandled (This is why bot must be a sysop)
-            //        On Sync request, send 0x1A - Security checksum
             case 0x19:
                 Tools.printConnectionLog("RECV    : (0x19) Request File (" + m_session.getBotName() + ")");
                 handleFileRequest( array, alreadyDecrypted );
@@ -254,19 +279,19 @@ public class GamePacketInterpreter {
                 handleScoreReset( array, alreadyDecrypted );
                 break;
             case 0x1B:
+                // 0x1B - Personal ship reset: Unhandled
                 Tools.printConnectionLog("RECV    : (0x1B) Personal Ship Reset (" + m_session.getBotName() + ")");
                 break;
-            // 0x1B - Personal ship reset: Unhandled
             case 0x1C:
+                // 0x1C - Put player in spectator mode: Unhandled
                 Tools.printConnectionLog("RECV    : (0x1C) Put Player in Spectator Mode (" + m_session.getBotName() + ")");
                 break;
-            // 0x1C - Put player in spectator mode: Unhandled
             case 0x1D:
                 Tools.printConnectionLog("RECV    : (0x1D) Player Team and Ship Changed (" + m_session.getBotName() + ")");
                 handleShipFreqChange( array, alreadyDecrypted );
                 break;
-            // 0x1E - Personal banner changed: Unhandled
             case 0x1E:
+                // 0x1E - Personal banner changed: Unhandled
                 Tools.printConnectionLog("RECV    : (0x1E) Personal Banner Changed (" + m_session.getBotName() + ")");
                 break;
             case 0x1F:
@@ -274,11 +299,11 @@ public class GamePacketInterpreter {
                 handlePlayerBanner( array, alreadyDecrypted );
                 break;
             case 0x20:
+                // 0x20 - Bot picked up a prize: Unhandled
                 Tools.printConnectionLog("RECV    : (0x20) Collected Prize (Client got one) (" + m_session.getBotName() + ")");
                 break;
-            // 0x20 - Bot picked up a prize: Unhandled
-            // 0x21 - A player dropped a brick: Unhandled
             case 0x21:
+                // 0x21 - A player dropped a brick: Unhandled
                 Tools.printConnectionLog("RECV    : (0x21) Brick Dropped (" + m_session.getBotName() + ")");
                 break;
             case 0x22:
@@ -289,44 +314,49 @@ public class GamePacketInterpreter {
                 Tools.printConnectionLog("RECV    : (0x23) Flag Reward Granted (" + m_session.getBotName() + ")");
                 handleFlagReward( array, alreadyDecrypted );
                 break;
-            // 0x24 - Speed game over: Unhandled
             case 0x24:
+                // 0x24 - Speed game over: Unhandled
                 Tools.printConnectionLog("RECV    : (0x24) Speed Game Over (" + m_session.getBotName() + ")");
                 break;
-            // 0x25 - Bot's UFO flag toggled: Unhandled
             case 0x25:
+                // 0x25 - Bot's UFO flag toggled: Unhandled
                 Tools.printConnectionLog("RECV    : (0x25) Toggle UFO Ship (" + m_session.getBotName() + ")");
                 break;
-            // 0x26 - Unknown (probably NOP): Unhandled
             case 0x26:
+                // 0x26 - Unknown (probably NOP): Unhandled
                 Tools.printConnectionLog("RECV    : (0x26) Unknown (" + m_session.getBotName() + ")");
                 break;
-            // 0x27 - "Keep-Alive": Unhandled
             case 0x27:
+                // 0x27 - "Keep-Alive": Unhandled
                 Tools.printConnectionLog("RECV    : (0x27) Keep-Alive (" + m_session.getBotName() + ")");
                 break;
             case 0x28:
                 Tools.printConnectionLog("RECV    : (0x28) Small Position Packet (" + m_session.getBotName() + ")");
                 handlePlayerPosition( array, alreadyDecrypted );
                 break;
-            // 0x29 - Map information (basic): Unhandled
             case 0x29:
+                // 0x29 - Map information (basic): Optionally handled. setup.cfg: AutoMap
                 Tools.printConnectionLog("RECV    : (0x29) Map Information (" + m_session.getBotName() + ")");
+                if(m_autoMap)
+                    handleMapInformation( array, alreadyDecrypted );
                 break;
-            // 0x2A - Compressed map file: Unhandled
             case 0x2A:
+                // 0x2A - Compressed map file: Optionally handled. setup.cfg: AutoMap
                 Tools.printConnectionLog("RECV    : (0x2A) Compressed Map File (" + m_session.getBotName() + ")");
+                if(m_autoMap)
+                    handleCompressedMapFile( array, alreadyDecrypted );
                 break;
-            // 0x2B - Set bot's KotH timer: Unhandled
             case 0x2B:
+                // 0x2B - Set bot's KotH timer: Unhandled
                 Tools.printConnectionLog("RECV    : (0x2B) Set Personal KotH Timer (" + m_session.getBotName() + ")");
                 break;
-            case 0x2C:  // KotH Game Reset
+            case 0x2C:
+                // KotH game reset
                 Tools.printConnectionLog("RECV    : (0x2C) KotH Game Reset (" + m_session.getBotName() + ")");
                 handleKotHReset( array, alreadyDecrypted );
                 break;
-            // 0x2D - Add KotH time: Unhandled
             case 0x2D:
+                // 0x2D - Add KotH time: Unhandled
                 Tools.printConnectionLog("RECV    : (0x2D) Add KotH time (" + m_session.getBotName() + ")");
                 break;
             case 0x2E:
@@ -337,41 +367,41 @@ public class GamePacketInterpreter {
                 Tools.printConnectionLog("RECV    : (0x2F) Arena Directory Listing (" + m_session.getBotName() + ")");
                 handleArenaList( array, alreadyDecrypted );
                 break;
-            // 0x30 - Received zone banner ads: Unhandled
             case 0x30:
+                // 0x30 - Received zone banner ads: Unhandled
                 Tools.printConnectionLog("RECV    : (0x30) Got Zone Banner Advertisements (" + m_session.getBotName() + ")");
                 break;
-            // 0x31 - Bot is past the login sequence: Unhandled
             case 0x31:
+                // 0x31 - Bot is past the login sequence: Unhandled
                 Tools.printConnectionLog("RECV    : (0x31) You are now past the login sequence (" + m_session.getBotName() + ")");
                 break;
             // ** CONTINUUM SPECIFIC PACKETS BELOW **
-            // 0x32 - Change bot's ship coords: Unhandled
             case 0x32:
+                // 0x32 - Change bot's ship coords: Unhandled
                 Tools.printConnectionLog("RECV    : (0x32) Change Personal Ship Coordinates (" + m_session.getBotName() + ")");
                 break;
-            // 0x33 - Custom login failure message: Unhandled
             case 0x33:
+                // 0x33 - Custom login failure message: Unhandled
                 Tools.printConnectionLog("RECV    : (0x33) Custom Login Failure Message (" + m_session.getBotName() + ")");
                 break;
-            // 0x34 - Continuum version packet: Unhandled
             case 0x34:
+                // 0x34 - Continuum version packet: Unhandled
                 Tools.printConnectionLog("RECV    : (0x34) Continuum Version Packet (" + m_session.getBotName() + ")");
                 break;
-            // 0x35 - Object toggling: Unhandled
             case 0x35:
+                // 0x35 - Object toggling: Unhandled
                 Tools.printConnectionLog("RECV    : (0x35) Object toggling (" + m_session.getBotName() + ")");
                 break;
-            // 0x36 - Received object (further info unknown): Unhandled
             case 0x36:
+                // 0x36 - Received object (further info unknown): Unhandled
                 Tools.printConnectionLog("RECV    : (0x36) Received object (further info unknown) (" + m_session.getBotName() + ")");
                 break;
-            // 0x37 - Toggle whether to send damage info: Unhandled
             case 0x37:
+                // 0x37 - Toggle whether to send damage info: Unhandled
                 Tools.printConnectionLog("RECV    : (0x37) Toggle Send Damage (" + m_session.getBotName() + ")");
                 break;
-            // 0x38 - Watch damage info: Unhandled
             case 0x38:
+                // 0x38 - Watch damage info.
                 Tools.printConnectionLog("RECV    : (0x38) Watch Damage (" + m_session.getBotName() + ")");
                 handleWatchDamage( array, alreadyDecrypted );
                 break;
@@ -418,10 +448,13 @@ public class GamePacketInterpreter {
                 break;
             case 0x05:              // Sync request
                 Tools.printConnectionLog("RECV BI : (0x05) Sync Request (" + m_session.getBotName() + ")");
+                // This packet can be either 6 bytes or 14 bytes in length. In either case, only bytes 2 - 6 is used.
+                m_packetGenerator.updateSyncTime( array.readLittleEndianInt( 2 ) );
                 m_packetGenerator.sendSyncResponse( array.readLittleEndianInt( 2 ) );
                 break;
             case 0x06:              // Sync response
                 Tools.printConnectionLog("RECV BI : (0x06) Sync Response (" + m_session.getBotName() + ")");
+                m_packetGenerator.updatePingTimes( array.readLittleEndianInt( 2 ), array.readLittleEndianInt( 6 ));
                 m_packetGenerator.setServerTimeDifference( array.readLittleEndianInt( 6 ) - array.readLittleEndianInt( 2 ) );
                 break;
             case 0x07:              // Order to disconnect
@@ -441,13 +474,13 @@ public class GamePacketInterpreter {
                 Tools.printConnectionLog("RECV BI : (0x0A) HUGE Chunk (" + m_session.getBotName() + ")");
                 handleMassiveChunkMessage( array );
                 break;
-            case 0x0B:
+            case 0x0B:              // 0B "Nevermind about the 00 0a transfer stuff i was sending you" (Snrrrub)
                 Tools.printConnectionLog("RECV BI : (0x0B) Unknown (" + m_session.getBotName() + ")");
                 break;
-            case 0x0C:
+            case 0x0C:              // 0C "Cancel received successfully" (Snrrrub)
                 Tools.printConnectionLog("RECV BI : (0x0C) Unknown (" + m_session.getBotName() + ")");
                 break;
-            case 0x0D:
+            case 0x0D:              // 00 0d no operation server->client
                 Tools.printConnectionLog("RECV BI : (0x0D) Unknown (" + m_session.getBotName() + ")");
                 break;
             // 0x0B-0x0D - Unknown (unused in protocol?)
@@ -868,6 +901,7 @@ public class GamePacketInterpreter {
 
             if( m_requester.check( EventRequester.WEAPON_FIRED )){
                 if( playerPosition.containsWeaponsInfo()){
+                    m_weaponTracker++;
                     m_subspaceBot.handleEvent( new WeaponFired( message ));
                 }
             }
@@ -1157,7 +1191,125 @@ public class GamePacketInterpreter {
             m_subspaceBot.handleEvent( new ArenaList( message ) );
         }
     }
+    
+    /**
+     * Translates packet into appropiate event.
+     * <p>
+     * Checks if the local version of a map file is equal to that of the one located on the server through the checksum.
+     * When it matches, the file is loaded into memory for other checksum generation related tasks. Otherwise, a request
+     * is sent back to the server to transfer over the new level file.
+     * @param message Original packet
+     * @param alreadyDecrypted True if the packet has already been decrypted
+     */
+    void handleMapInformation( ByteArray message, boolean alreadyDecrypted ) { 
+        if(!m_autoMap)
+            return;
+        
+        if(message.size() != 21) {
+            // Not a subspace packet, check if it's a continuum packet.
+            if(message.size() < 25 || ((message.size() - 1) % 24 != 0))
+                return;
+        }
+        
+        if(!alreadyDecrypted)
+            m_ssEncryption.decrypt( message, message.size() - 1, 1 );
+        
+        MapInformation mapInfo = new MapInformation( message );
+        
+        // Checksum is actually an unsigned 32 bit integer. Unfornately we need to use longs in Java to mimic this correctly.
+        long checksum = ChecksumGenerator.getFileChecksum(m_mapPath + mapInfo.getMapName(), m_dictionary); 
+        
+        if(mapInfo.getMapChecksum() != checksum) {
+            // Request map download
+            Tools.printLog(m_session.getBotName() +": " + mapInfo.getMapName() + " not present or out of date. Requesting download.");
+            m_packetGenerator.sendLevelRequest();
+        } else {
+            // load map data
+            m_arenaMap = new LvlMap(m_mapPath + mapInfo.getMapName());
+        }
+    }
+    
+    /**
+     * Translates packet into appropiate event.
+     * <p>
+     * Uncompresses a received compressed map file, parses it, saves it to disk and loads it into the memory for
+     * checksum generation elsewhere.
+     * @param message Original packet data.
+     * @param alreadyDecrypted Whether or not it has already been decrypted.
+     */
+    void handleCompressedMapFile( ByteArray message, boolean alreadyDecrypted) {
+        if(!m_autoMap)
+            return;
+        
+        if(message.size() <= 17)
+            return;
+        
+        if(!alreadyDecrypted)
+            m_ssEncryption.decrypt( message, message.size() - 1, 1 );
+        
+        CompressedMapFile compMap = new CompressedMapFile( message );
+        
+        if(LvlMap.saveMap(m_mapPath + compMap.getMapName(), compMap.getCompressedMapData(), compMap.getMapSize())) {
+            Tools.printLog(m_session.getBotName() + ": Saved " + compMap.getMapName() + " to disk.");
+            m_arenaMap = new LvlMap(m_mapPath + compMap.getMapName());
+        } else {
+            Tools.printLog(m_session.getBotName() +": Error while decompressing or storing " + compMap.getMapName());
+        }
+    }
+    
+    /**
+     * Translates packet into the appropriate event.
+     * <p>
+     * When possible, this will send a security checksum as a response to the security synchronization request.
+     * To do this, several checksums will be generated as well as ping/packetloss related data. When this function is
+     * not used, the bot must be placed on the sysop list to prevent a flood of server errors and warnings.
+     * <p>
+     * @param message Packet data
+     * @param alreadyDecrypted True if packet has already been decrypted
+     */
+    void handleSyncRequest( ByteArray message, boolean alreadyDecrypted ){
+     // Check for valid message
+        if( message.size() < 17 ) {
+            return;
+        }
+        
+        if( alreadyDecrypted == false ){
+            m_ssEncryption.decrypt( message, message.size()-1, 1 );
+        }
+        try{
+            SyncRequest syncRequest = new SyncRequest( message );
+            
+            if(syncRequest.getCheckSumKey() != 0) {   
+                
+                // When security sync response is enabled, but the automatic downloading of the maps isn't, then we will have to attempt to reload it here.
+                if(m_securitySync && !m_autoMap && m_arenaMap == null) {
+                    m_arenaMap = new LvlMap(m_mapPath + m_session.getBotAction().getArenaName() + ".lvl");
+                }
 
+                if(m_securitySync && m_arenaMap != null && m_arenaMap.haveMap()) {
+                    short messagesReceived = (short) m_session.getInboundQueue().getNumPacketsReceived();
+                    m_packetGenerator.sendSecurityChecksum(
+                            ChecksumGenerator.generateParameterChecksum(syncRequest.getCheckSumKey(), m_arenaSettings.getRawSettings()), 
+                            ChecksumGenerator.generateEXEChecksum(syncRequest.getCheckSumKey()), 
+                            ChecksumGenerator.generateLevelChecksum(syncRequest.getCheckSumKey(), m_arenaMap.getMap()), 
+                            messagesReceived,
+                            m_weaponTracker,
+                            (short) 0,
+                            messagesReceived,
+                            (short) 0,
+                            messagesReceived,
+                            false);
+                }
+                
+            }
+            
+            
+            
+        } catch( Exception e ){
+            Tools.printStackTrace( e );
+        }
+    }
+    
     /**
      * Translates a password packet response, verifying that the connection has
      * indeed logged in correctly, or if not, sends an error and disconnects.
@@ -1206,6 +1358,10 @@ public class GamePacketInterpreter {
         	m_packetGenerator.sendRegistrationForm(realname, email, state, city, age);
         }
 
+        if (ppResponse.getSSChecksum() != -1 && ppResponse.getSSChecksumSeed() != ChecksumGenerator.generateEXEChecksum(0)) {
+            Tools.printLog( m_session.getBotName() + ": WARNING: SS EXE checksum mismatch on login.  May require privileged access to remain connected.");
+        }
+        
         if (ppResponse.getSSChecksum() == -1 && ppResponse.getSSChecksumSeed() == -1 && m_verboseLogin == 1) {
     		Tools.printLog( m_session.getBotName() + ": Subspace.exe checksum and (random) server checksum were sent (VIP access)");
     	} else if(ppResponse.getSSChecksum() == 0) {
@@ -1214,7 +1370,7 @@ public class GamePacketInterpreter {
 
         if(m_registerNewUser && ppResponse.getResponseValue() == PasswordPacketResponse.response_NewUser) {
         		Tools.printLog( m_session.getBotName() + ": Creating account");
-        		m_packetGenerator.sendPasswordPacket(true, m_playerName, m_playerPassword);
+    		    m_packetGenerator.sendPasswordPacket(true, m_playerName, m_playerPassword);
         		return;
         } else if( ppResponse.isFatal() ) {
         	
@@ -1285,6 +1441,12 @@ public class GamePacketInterpreter {
     }
 
     /**
+     * Translates the packet into the appropiate event.
+     * <p>
+     * Loads the content into memory for further use like generating checksums and adjusting the speed at which
+     * keep-alive packets are being sent. In our case, the keep-alive packet will be the synchronization packet.
+     * <p>
+     * Original comments:<br>
      * STUB METHOD: For translating a settings packet.  Unfortunately,
      * settings can take up a fairly large amount of space, and it may be
      * impractical for a bot to hold them in memory.  d1st0rt has a settings
@@ -1294,7 +1456,15 @@ public class GamePacketInterpreter {
      * @param alreadyDecrypted True if packet has already been decrypted
      */
     void handleArenaSettings( ByteArray message, boolean alreadyDecrypted ){
-        if(message.size() < 1428) return;
-        //TODO: add this at some point, 2dragons said he had a settings class
+        if(message.size() != 1428) return;
+        
+        if(m_arenaSettings == null)
+            m_arenaSettings = new ArenaSettings(message);
+        else
+            m_arenaSettings.updateSettings(message);
+        
+        if(m_autoAdjustSyncTime) {
+            m_session.setSyncTime(m_arenaSettings.getS2CNoDataKickoutDelay());
+        }
     }
 }

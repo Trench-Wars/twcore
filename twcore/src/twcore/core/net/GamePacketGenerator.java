@@ -18,19 +18,28 @@ import twcore.core.util.Tools;
  */
 public class GamePacketGenerator {
 
-    private Timer                  m_timer;          // Schedules clustered packets
-    private TimerTask              m_timerTask;      // Clustered packet send task
-    private DelayedPacketList<ByteArray> m_messageList;  // Packets waiting to be sent in clusters
-    private SSEncryption           m_ssEncryption;   // Encryption class
-    private Sender                 m_outboundQueue;  // Outgoing packet queue
-    private int                    m_serverTimeDifference;   // Diff (*tinfo)
-    private ReliablePacketHandler  m_reliablePacketHandler;  // Handles reliable sends
-    private LinkedList<ByteArray>  m_lvzToggleCluster;       // LVZ obj toggle group
+    private Timer                  m_timer;                     // Schedules clustered packets
+    private TimerTask              m_timerTask;                 // Clustered packet send task
+    private DelayedPacketList<ByteArray> m_messageList;         // Packets waiting to be sent in clusters
+    private SSEncryption           m_ssEncryption;              // Encryption class
+    private Sender                 m_outboundQueue;             // Outgoing packet queue
+    private int                    m_serverTimeDifference;      // Diff (*tinfo)
+    private ReliablePacketHandler  m_reliablePacketHandler;     // Handles reliable sends
+    private LinkedList<ByteArray>  m_lvzToggleCluster;          // LVZ obj toggle group
     private Map<Integer,LinkedList<ByteArray>> m_lvzPlayerToggleCluster;   // Toggle clusters for
                                                                            // individual playerIDs
-    private long                   m_sendDelay = 75;         // Delay between packet sends
-    private final static int       DEFAULT_PACKET_CAP = 45;  // Default # low-priority packets allowed
-                                                             // per clustered send
+    private long                   m_sendDelay = 75;            // Delay between packet sends
+    private final static int       DEFAULT_PACKET_CAP = 45;     // Default # low-priority packets allowed
+                                                                // per clustered send
+    
+    private long m_lastSyncRecv;                   // Used by subspace to invalidate slow or fast time syncs
+    private long m_timeDiff;                       // Delta T between server and client - changes over time
+    private int m_syncPing;                        // Average host response time to sync requests
+    private int m_accuPing;                        // Ping time accumulator for average ping time
+    private int m_countPing;                       // Ping count accumulator for average ping time
+    private int m_avgPing;                         // Average ping time
+    private int m_highPing;                        // Highest ping outlier
+    private int m_lowPing;                         // Lowest ping outlier
 
     /**
      * Creates a new instance of GamePacketGenerator.
@@ -254,6 +263,61 @@ public class GamePacketGenerator {
      */
     public int getServerTimeDifference() {
     	return m_serverTimeDifference;
+    }
+    
+    /**
+     * Updates the last time a normal synchronization request was sent to the client.
+     * @param syncTime The new synchronization time.
+     */
+    public void updateSyncTime(int syncTime) {
+        m_lastSyncRecv = syncTime;
+    }
+    
+    /**
+     * Updates the various ping times based on the synchronization response packet.
+     * Used to accurately display the statistics for ?lag and *lag.
+     * @param pingTime
+     * @param pongTime
+     */
+    public void updatePingTimes(int pingTime, int pongTime) {
+        long ticks = System.currentTimeMillis() / 10;   // One tick is 10 ms.
+        int roundTrip = (int) (ticks - pingTime);
+        
+        // Update the running average.
+        m_accuPing += roundTrip;
+        ++m_countPing;
+        m_avgPing = m_accuPing / m_countPing;
+
+        // High ping
+        if (roundTrip > m_highPing) {
+            m_highPing = roundTrip;
+        }
+
+        // Low ping
+        if ((m_lowPing == 0) || (roundTrip < m_lowPing)) {
+            m_lowPing = roundTrip;
+        }
+
+        // Slow pings get ignored until the next security check.
+        if (roundTrip > m_syncPing + 1) {
+            if (ticks - m_lastSyncRecv <= 12000)
+                return;
+        }
+
+        // Ping spikes get ignored
+        if (roundTrip >= m_syncPing * 2) {
+            if (ticks - m_lastSyncRecv <= 60000)
+                return;
+        }
+
+        // Calculate the relative time difference.
+        m_timeDiff = ((roundTrip * 3) / 5) + pongTime - ticks;
+
+        if (m_timeDiff >= -10 && m_timeDiff <= 10) m_timeDiff = 0;
+
+        m_lastSyncRecv = ticks;
+        m_syncPing = roundTrip;
+        
     }
 
     /**
@@ -508,7 +572,6 @@ public class GamePacketGenerator {
         
         Tools.printConnectionLog("SEND    : (0x03) Position packet");
 
-        byte           checksum = 0;
         ByteArray      bytearray = new ByteArray( 22 );
 
         bytearray.addByte( 0x03 );      // Type byte
@@ -524,11 +587,8 @@ public class GamePacketGenerator {
         bytearray.addLittleEndianShort( energy );
         bytearray.addLittleEndianShort( weapon );
 
-        for( int i=0; i<22; i++ ){
-            checksum ^= bytearray.readByte( i );
-        }
-
-        bytearray.addByte( checksum, 10 );
+        // Add the checksum
+        bytearray.addByte( ChecksumGenerator.simpleChecksum(bytearray, bytearray.size()) , 10 );
 
         m_ssEncryption.encrypt( bytearray, 21, 1 );
 
@@ -1067,7 +1127,77 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
         objPacket.addByte( 0x1E );
         composePacket(objPacket);
     }
+    
+    /**
+     * Sends a packet to the server to request the transfer of a level file.
+     * The level that will be sent is the one that is linked to the arena the bot is in.
+     */
+    public void sendLevelRequest() {
+        Tools.printConnectionLog("SEND    : (0x0C) Request level file.");
+        
+        ByteArray message = new ByteArray( 1 );
+        message.addByte( 0x0C );
+        composeImmediatePacket(message, 1);
+    }
 
+    /**
+     * Sends a security checksum packet as a response to a security synchronization request. This is generally
+     * received every two minutes. If this packet is not answered or answered incorrectly, the server will
+     * generate an error, unless the bot is on the sysop list.
+     * @param parameterChecksum Checksum based on the arena settings.
+     * @param EXEChecksum Checksum based on the continuum/subspace executable.
+     * @param levelChecksum Checksum based on the current arena the bot is in.
+     * @param S2CRelOut Amount of reliable packets received by the client?
+     * @param weaponCount Amount of position packets received that contained weapon data.
+     * @param S2CSlowCurrent Amount of slow packets received since the last check?
+     * @param S2CFastCurrent Amount of fast packets received since the last check?
+     * @param S2CSlowTotal Amount of slow packets received in total.
+     * @param S2CFastTotal Amount of fast packets received in total.
+     * @param slowFrame Is slow frame detected?
+     */
+    public void sendSecurityChecksum(int parameterChecksum, int EXEChecksum, int levelChecksum, short S2CRelOut, int weaponCount, 
+            short S2CSlowCurrent, short S2CFastCurrent, short S2CSlowTotal, short S2CFastTotal, boolean slowFrame) {
+        Tools.printConnectionLog("SEND    : (0x1A) Security Checksum");
+        
+        /*  Field   Length  Description
+        0       1       Type byte
+        1       4       Weapon count
+        5       4       Parameter checksum
+        9       4       EXE checksum
+        13      4       Level checksum
+        17      4       S2CSlowTotal
+        21      4       S2CFastTotal
+        25      2       S2CSlowCurrent
+        27      2       S2CFastCurrent
+        29      2       ? S2CRelOut
+        31      2       Ping
+        33      2       Average ping
+        35      2       Low ping
+        37      2       High ping
+        39      1       Boolean: Slow frame detected
+    */
+        
+        ByteArray      data;
+
+        data = new ByteArray( 40 );
+        data.addByte( 0x1A );  // Type byte
+        data.addLittleEndianInt( weaponCount );
+        data.addLittleEndianInt( parameterChecksum );
+        data.addLittleEndianInt( EXEChecksum );
+        data.addLittleEndianInt( levelChecksum );
+        data.addLittleEndianInt( S2CSlowTotal );
+        data.addLittleEndianInt( S2CFastTotal );
+        data.addLittleEndianShort( S2CSlowCurrent );
+        data.addLittleEndianShort( S2CFastCurrent );
+        data.addLittleEndianShort( S2CRelOut );
+        data.addLittleEndianShort( (short) m_syncPing );
+        data.addLittleEndianShort( (short) m_avgPing );
+        data.addLittleEndianShort( (short) m_lowPing );
+        data.addLittleEndianShort( (short) m_highPing );
+        data.addByte( (slowFrame ? 0x01 : 0x00) );
+        
+        sendReliableMessage( data );
+    }
     /**
      * Implementation to send out most packets as normal, while placing a cap
      * on the number of less-important packets (generally messages) that are

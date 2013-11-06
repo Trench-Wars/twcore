@@ -30,9 +30,9 @@ public class Session extends Thread {
     private String          m_name;
     private int             m_state;
     private int				m_botNumber;
-    public ThreadGroup     m_group;
+    public ThreadGroup      m_group;
     private Timer           m_timer;
-    public DatagramSocket  m_socket;
+    public DatagramSocket   m_socket;
     private PrintWriter		m_chatLog;
     private FileWriter 		m_chatLogWriter;
     private CoreData        m_coreData;
@@ -51,6 +51,7 @@ public class Session extends Thread {
     private int				m_serverPort;
     private String			m_localIPAddress;
     private boolean			m_registerNewUser;
+    private volatile int    m_syncTime;
 
     private GamePacketGenerator     m_packetGenerator;
     private GamePacketInterpreter   m_packetInterpreter;
@@ -234,6 +235,14 @@ public class Session extends Thread {
     public SubspaceBot getSubspaceBot(){
         return m_subspaceBot;
     }
+    
+    public Receiver getInboundQueue() {
+        return m_inboundQueue;
+    }
+    
+    public void setSyncTime(int delay) {
+        m_syncTime = delay;
+    }
 
     public void finalize(){
         Tools.printLog( m_name + " is going away. (Being garbage-collected; no references remain.)" );
@@ -350,12 +359,11 @@ public class Session extends Thread {
         Integer set = null;
         if( settings != null )
             set = settings.getInteger( "dbg-SyncTime" );
-        int SYNC_TIME;
-        if( set == null )
-            SYNC_TIME = 30000;
+        if(set == null)
+            m_syncTime = 30000;
         else
-            SYNC_TIME = set;
-
+            m_syncTime = set;
+        
         long lastResendTime = 0;
         set = null;
         if( settings != null )
@@ -431,7 +439,7 @@ public class Session extends Thread {
                     return;
                 }
  
-                if( currentTime - lastSyncTime > SYNC_TIME ){
+                if( currentTime - lastSyncTime > m_syncTime ){
                     lastSyncTime = currentTime;
                     m_packetGenerator.sendSyncPacket( m_outboundQueue.getNumPacketsSent(), m_inboundQueue.getNumPacketsReceived() );
                 }
