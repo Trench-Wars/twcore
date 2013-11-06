@@ -707,7 +707,7 @@ public class robohelp extends SubspaceBot {
         else if (message.equalsIgnoreCase("on it") || message.equalsIgnoreCase("got it")) {
             handleClaim(name, message);
             if(twdchat == true){
-                m_botAction.sendChatMessage("A TWD-Op has taken this call. Name: " + name + " ID: " + id);
+                m_botAction.sendChatMessage("A TWD-Op has taken call " + id + " Name: " + name);
             }
             
             return;
@@ -717,8 +717,9 @@ public class robohelp extends SubspaceBot {
             } catch (NumberFormatException e) {
                 handleClaim(name, message);
                 if(twdchat == true){
-                    m_botAction.sendChatMessage("A TWD-Op has taken this call. Name: " + name + " ID: " + id);
+                    m_botAction.sendChatMessage("A TWD-Op has taken call " + id + " Name: " + name);
                 }
+                
                 
                 return;
             }
@@ -754,12 +755,7 @@ public class robohelp extends SubspaceBot {
                 } else if (message.startsWith("on") && help.getCallType() == -1)
                     help.setCallType(0);
                 lastStafferClaimedCall = name;
-                m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " claimed.");
-                
-                if(twdchat == true){
-                    m_botAction.sendChatMessage("A TWD-Op has taken this call. Name: " + name + " ID: " + id);
-                }
-                
+                m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " claimed.");              
                 recordHelp(help);
             }
         }
