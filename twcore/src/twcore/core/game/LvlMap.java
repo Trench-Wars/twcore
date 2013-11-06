@@ -175,9 +175,12 @@ public class LvlMap {
             return;
         
         int length = rawData.size();
+        
+        if(length == 0)
+            return;
 
         // BMP format, this means we can skip a bit of data.
-        if(rawData.readString(0, 2).equals("BM"))
+        if(length >= 6 && rawData.readString(0, 2).equals("BM"))
             index = rawData.readLittleEndianInt(2);
         
         // One tile, including coordinates in raw form is 4 bytes.
