@@ -706,12 +706,20 @@ public class robohelp extends SubspaceBot {
             }
         else if (message.equalsIgnoreCase("on it") || message.equalsIgnoreCase("got it")) {
             handleClaim(name, message);
+            if(twdchat == true){
+                m_botAction.sendChatMessage("A TWD-Op has taken this call. Name: " + name + " ID: " + id);
+            }
+            
             return;
         } else if (message.startsWith("on it ") || message.startsWith("got it "))
             try {
                 id = Integer.valueOf(message.substring(message.indexOf("it") + 3));
             } catch (NumberFormatException e) {
                 handleClaim(name, message);
+                if(twdchat == true){
+                    m_botAction.sendChatMessage("A TWD-Op has taken this call. Name: " + name + " ID: " + id);
+                }
+                
                 return;
             }
         else
@@ -747,6 +755,11 @@ public class robohelp extends SubspaceBot {
                     help.setCallType(0);
                 lastStafferClaimedCall = name;
                 m_botAction.sendSmartPrivateMessage(name, "Call #" + id + " claimed.");
+                
+                if(twdchat == true){
+                    m_botAction.sendChatMessage("A TWD-Op has taken this call. Name: " + name + " ID: " + id);
+                }
+                
                 recordHelp(help);
             }
         }
@@ -782,9 +795,6 @@ public class robohelp extends SubspaceBot {
                         if (info != null && info.getLastCall() > -1)
                             lastHelpMessage = callList.get(info.getLastCall()).getMessage();
                         
-                        if(twdchat == true){
-                            m_botAction.sendChatMessage("A TWD-Op has taken this call. Name: " + name);
-                        }
                         
                         if (lastHelpMessage != null && lastHelpMessage.contains("TK Report: ")) {
                             String namep = lastHelpMessage.substring(lastHelpMessage.indexOf("TK Report: ") + 11, lastHelpMessage.indexOf(" is reporting"));
@@ -2370,7 +2380,7 @@ public class robohelp extends SubspaceBot {
                     twdchat = true;
                     handleClaims(name, message);
                 } else {
-                    
+                    twdchat = false;
                 handleClaims(name, message);
                 
                 }
