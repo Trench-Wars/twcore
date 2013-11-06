@@ -52,6 +52,7 @@ public class robohelp extends SubspaceBot {
     public static final String WBOT = "TW-WelcomeBot";
 
     boolean m_banPending = false;
+    boolean twdchat = false;
     boolean m_strictOnIts = true;
     String m_lastBanner = null;
     BotSettings m_botSettings;
@@ -341,7 +342,7 @@ public class robohelp extends SubspaceBot {
     @Override
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena("#robopark");
-        m_botAction.sendUnfilteredPublicMessage("?chat=" + m_botAction.getGeneralSettings().getString("Staff Chat") + "," + ALERT_CHAT);
+        m_botAction.sendUnfilteredPublicMessage("?chat=" + m_botAction.getGeneralSettings().getString("Staff Chat") + "," + ALERT_CHAT + "," + ba.getGeneralSettings().getString("TWDChat"));
         m_botAction.sendUnfilteredPublicMessage("?blogin " + m_botSettings.getString("Banpassword"));
         m_botAction.ipcSubscribe(ZONE_CHANNEL);
     }
@@ -780,7 +781,11 @@ public class robohelp extends SubspaceBot {
                         String lastHelpMessage = null;
                         if (info != null && info.getLastCall() > -1)
                             lastHelpMessage = callList.get(info.getLastCall()).getMessage();
-
+                        
+                        if(twdchat == true){
+                            m_botAction.sendChatMessage("A TWD-Op has taken this call. Name: " + name);
+                        }
+                        
                         if (lastHelpMessage != null && lastHelpMessage.contains("TK Report: ")) {
                             String namep = lastHelpMessage.substring(lastHelpMessage.indexOf("TK Report: ") + 11, lastHelpMessage.indexOf(" is reporting"));
                             m_botAction.sendSmartPrivateMessage(namep, "Hello " + namep + ", we have received your TK Report. Staffer " + name + " will be handling your call. Please use :" + name
@@ -2350,8 +2355,6 @@ public class robohelp extends SubspaceBot {
                 handleClaims(name, message);
             else if (!message.contains("that") && message.contains("#") && (message.startsWith("on") || message.startsWith("got") || message.startsWith("claim") || message.startsWith("have")))
                 handleClaims(name, message);
-            else if ((message.startsWith("on it") || message.startsWith("got it")))
-                handleClaims(name, message);
             else if (message.startsWith("on that") || message.startsWith("got that"))
                 handleThat(name, null);
             else if (message.startsWith("ihave"))
@@ -2362,7 +2365,18 @@ public class robohelp extends SubspaceBot {
                 handleForget(name, event.getMessage());
             else if (message.startsWith("mine"))
                 handleMine(name, event.getMessage());
+            else if ((message.startsWith("on it") || message.startsWith("got it")))
+                if(event.getChatNumber() == 3){
+                    twdchat = true;
+                    handleClaims(name, message);
+                } else {
+                    
+                handleClaims(name, message);
+                
+                }
+            
         }
+    
     }
 
     class EventData {
