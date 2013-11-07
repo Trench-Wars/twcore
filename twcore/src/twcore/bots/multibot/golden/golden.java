@@ -21,6 +21,7 @@ public class golden extends MultiModule {
 
     boolean isRunning = false;
     boolean coordsOn = false;
+    boolean superEnabled = true;
     int gunShip = 1;
     int gunFreq = 1;
     int humanShip = 1;
@@ -188,6 +189,9 @@ public class golden extends MultiModule {
                     m_botAction.sendPrivateMessage(name, "Golden Gun is NOT running.");
                 m_botAction.sendPrivateMessage(name, "Humans: Freq " + humanFreq + " Ship " + humanShip);
                 m_botAction.sendPrivateMessage(name, "Gunner: Freq " + gunFreq + " Ship " + gunShip);
+            } else if(message.equalsIgnoreCase("!togglesuper")) {
+                superEnabled = !superEnabled;
+                m_botAction.sendSmartPrivateMessage(name, "Giving super is now "+ (superEnabled?"en":"dis") + "abled.");
             }
         }  	
     }
@@ -205,13 +209,15 @@ public class golden extends MultiModule {
         }    	   hasGun = killer;
         m_botAction.setShip(killer,gunShip);
         m_botAction.setFreq(killer,gunFreq);
-        goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner 
-            @Override
-            public void run() {
-                m_botAction.specificPrize(killer, Tools.Prize.SUPER);
-            }
-        };
-        m_botAction.scheduleTask(goldenPrizes, 100, Tools.TimeInMillis.SECOND * 5);
+        if(superEnabled) {
+            goldenPrizes = new TimerTask() { // timertask that prizes super to golden gunner 
+                @Override
+                public void run() {
+                    m_botAction.specificPrize(killer, Tools.Prize.SUPER);
+                }
+            };
+            m_botAction.scheduleTask(goldenPrizes, 100, Tools.TimeInMillis.SECOND * 5);
+        }
         if (coordsOn) { 
             coords = new TimerTask() { // coordinate mode timertask
                 @Override
@@ -290,7 +296,8 @@ public class golden extends MultiModule {
                 "!coordson <#time> - same as above, but makes the period <#time> seconds instead of 20s",
                 "!coordsoff        - turns off periodic coordinate arena messages",
                 "!setmode <params> - changes human and gunner freqs and ships",
-                " params: <humanFreq> <humanShip> <gunFreq> <gunShip>  (default 0 1 1 1)"
+                " params: <humanFreq> <humanShip> <gunFreq> <gunShip>  (default 0 1 1 1)",
+                "!togglesuper      - Whether or not the actual golden gun is prized."
         };
         return GoldenHelp;
     }
