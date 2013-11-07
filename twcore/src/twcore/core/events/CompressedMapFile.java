@@ -24,7 +24,7 @@ public class CompressedMapFile {
     /** CompressedMapFile constructor */
     public CompressedMapFile( ByteArray array ) {
         m_mapSize = array.size() - 17;
-        m_mapName = array.readString(1, 16);
+        m_mapName = array.readString(1, 16).toLowerCase();
         m_compressedMapData = array.readByteArray(17, array.size() - 1);
     }
 

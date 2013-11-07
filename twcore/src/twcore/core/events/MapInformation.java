@@ -40,7 +40,7 @@ public class MapInformation {
 
     /** MapInformation constructor */
     public MapInformation( ByteArray array ) {
-        m_mapName = array.readString(1, 16);
+        m_mapName = array.readString(1, 16).toLowerCase();
         // Have to take the annoying route to ensure the checksum is an unsigned integer.
         m_mapChecksum = (((long)(array.readByte(20) & 0xff)<<24) | ((array.readByte(19) & 0xff)<<16) 
                 | ((array.readByte(18) & 0xff)<<8) | (array.readByte(17) & 0xff));
@@ -59,7 +59,7 @@ public class MapInformation {
             m_lvzChecksums = new int[m_lvzCount];
             m_lvzSizes = new int[m_lvzCount];
             for(int i = 0; i < m_lvzCount; i ++) {
-                m_lvzNames[i] = array.readString(25 + i * 24, 16);
+                m_lvzNames[i] = array.readString(25 + i * 24, 16).toLowerCase();
                 m_lvzChecksums[i] = array.readLittleEndianInt(41 + i * 24);
                 m_lvzSizes[i] = array.readLittleEndianInt(45 + i * 24);
             }

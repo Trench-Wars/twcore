@@ -1283,7 +1283,7 @@ public class GamePacketInterpreter {
                 
                 // When security sync response is enabled, but the automatic downloading of the maps isn't, then we will have to attempt to reload it here.
                 if(m_securitySync && !m_autoMap && m_arenaMap == null) {
-                    m_arenaMap = new LvlMap(m_mapPath + m_session.getBotAction().getArenaName() + ".lvl");
+                    m_arenaMap = new LvlMap(m_mapPath + m_session.getBotAction().getArenaName().toLowerCase() + ".lvl");
                 }
 
                 if(m_securitySync && m_arenaMap != null && m_arenaMap.haveMap()) {
@@ -1300,11 +1300,7 @@ public class GamePacketInterpreter {
                             messagesReceived,
                             false);
                 }
-                
             }
-            
-            
-            
         } catch( Exception e ){
             Tools.printStackTrace( e );
         }
