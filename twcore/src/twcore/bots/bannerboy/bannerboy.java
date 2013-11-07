@@ -66,15 +66,6 @@ public class bannerboy extends SubspaceBot {
 	 	byte[] banner = event.getBanner();
 
 	 	m_toCheck.add( new BannerCheck( player, banner ) );
-
-		if( System.currentTimeMillis() - m_lastBannerSet < 60000*5 ) return;
-
-		m_botAction.setBanner( event.getBanner() );
-		m_lastBannerSet = System.currentTimeMillis();
-
-		if( m_talk )
-			m_botAction.sendSmartPrivateMessage( m_botAction.getPlayerName( event.getPlayerID() ), "Hope you don't mind if I wear your banner.  Looks good on me, doesn't it?  See http://www.trenchwars.org/ssbe/ to see what I'll do with it." );
-
 	}
 
     /**
@@ -317,8 +308,17 @@ public class bannerboy extends SubspaceBot {
 				String player = bc.getPlayer();
 
 			 	//If banner isn't in db save it
-			 	if( !bannerExists( banner ) )
+			 	if( !bannerExists( banner ) ) {
 			 		saveBanner( player, banner);
+			 	    
+			 		// And start wearing it if has been more than 5 minutes since the last banner got set.
+			 		if( System.currentTimeMillis() - m_lastBannerSet >= 5 * Tools.TimeInMillis.MINUTE ) {
+			 		    m_botAction.setBanner(bc.getBanner());
+			 		    m_lastBannerSet = System.currentTimeMillis();
+			 		    if( m_talk )
+			 		        m_botAction.sendSmartPrivateMessage( bc.getPlayer(), "Hope you don't mind if I wear your banner.  Looks good on me, doesn't it?  See http://www.trenchwars.org/ssbe/ to see what I'll do with it." );
+			 		}
+			 	}
 				markSeen( player, banner );
 			}
 		};
