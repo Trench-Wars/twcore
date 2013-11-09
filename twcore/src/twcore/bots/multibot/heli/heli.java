@@ -16,12 +16,13 @@ import twcore.core.game.Ship;
 public class heli extends MultiModule {
 
     // Static settings
-    private final static int xMin = 256 * 16;
-    private final static int xMax = 767 * 16;
-    private final static int yMin = 467 * 16;
-    private final static int yMax = 556 * 16;
-    private final static int yStart = 515 * 16;
-    private final static int startTunnelHeight = 20;
+    private final static int xMin = 256 * 16;           // Starting X-coordinate.
+    private final static int xMax = 767 * 16;           // End X-coordinate.
+    private final static int xRest = 785 * 16;          // Safe place out of the game for the bot to reside.
+    private final static int yMin = 467 * 16;           // Y-coordinate of top wall.
+    private final static int yMax = 556 * 16;           // Y-coordinate of bottom wall.
+    private final static int yStart = 515 * 16;         // Y-coordinate starting location.
+    private final static int startTunnelHeight = 20;    // Default height of tunnel.
     private final static char[] weaponTypeList = {'.', '*', '#', '^', '1', '2', '3', '4' };
     
     public OperatorList opList;
@@ -52,10 +53,16 @@ public class heli extends MultiModule {
     private boolean debugEnabled = false;
     private String debugger = "";
 
+    /**
+     * Default initialization.
+     */
     public void init() {
         opList = m_botAction.getOperatorList();
     }
 
+    /**
+     * !help menu for staff.
+     */
     public String[] getModHelpMessage() {
         String[] blah = {
                 "!manual            -Make an educated guess!",
@@ -90,6 +97,11 @@ public class heli extends MultiModule {
             handleCommand(name, message);
     }
 
+    /**
+     * Command parsing.
+     * @param name Person who send the command.
+     * @param message Original command.
+     */
     public void handleCommand(String name, String message) {
         message = message.toLowerCase();
         if (message.startsWith("!manual")) {
@@ -154,6 +166,10 @@ public class heli extends MultiModule {
         }
     }
 
+    /**
+     * Delayed start for the lazy developer.
+     * @param delay Delay amount in seconds.
+     */
     public void delayedStart(Integer delay) {
         if(delay == null || delay < 0 || delay > 60)
             return;
@@ -184,6 +200,9 @@ public class heli extends MultiModule {
         
     }
     
+    /**
+     * Starts the laying down of the mines.
+     */
     public void startThing() {
         final char weaponType = weaponTypeList[rand.nextInt(weaponTypeList.length)];
         
@@ -320,8 +339,7 @@ public class heli extends MultiModule {
             yDiff += currentSlope / 16;
             if (x >= xMax) {
                 m_botAction.cancelTasks();
-                // Just to make sure he aint glitching on the wall.
-                ship.move(xMax + 80, yStart);
+                endWall(weaponType);
                 break;
             }
         }
@@ -347,6 +365,24 @@ public class heli extends MultiModule {
         }
     }
 
+    public void endWall(char weaponType) {
+        // Just to make sure he aint glitching on the wall.
+        Ship ship = m_botAction.getShip();
+        int yStart = y;
+        int yEnd = y + (tunnelHeight << 4);
+        for(int y = yMin + 16; y <= yMax; y+=32) {
+            if(y < yStart || y > yEnd) {
+                ship.moveAndFire(xMax, y, getWeapon(weaponType));
+                try {
+                    Thread.sleep(20);
+                } catch (Exception e) {}
+            }
+        }
+        
+        ship.move(xRest, yStart);
+        
+    }
+    
     /**
      * Fetches a weapon based on a symbol.
      * @param c Provided symbol.
