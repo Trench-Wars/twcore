@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
@@ -33,7 +34,7 @@ public class acro extends MultiModule {
     HashSet<String> ignoreList = new HashSet<String>();
     HashMap<String, String> playerIdeas = new HashMap<String, String>();
     HashMap<String, Integer> playerVotes = new HashMap<String, Integer>();
-    HashMap<String, Integer> playerScores = new HashMap<String, Integer>();
+    HashMap<String, AcroScore> playerScores = new HashMap<String, AcroScore>();
     HashMap<String, Integer> playerOrder = new HashMap<String, Integer>();
     HashMap<String, Integer> acroDisplay = new HashMap<String, Integer>();
     TreeMap<Integer, Character> chanceTable = new TreeMap<Integer, Character>();    // Lookup table for letter generation.
@@ -72,7 +73,7 @@ public class acro extends MultiModule {
         
         fillChanceTable();
         
-        m_botAction.sendUnfilteredPublicMessage("?chat=games");
+        m_botAction.sendUnfilteredPublicMessage("?chat=games,acro");
     }
 
     @Override
@@ -319,7 +320,7 @@ public class acro extends MultiModule {
                     }
                 }
 
-                int intPlayerScore = 0;
+                //int intPlayerScore = 0;
                 int intPlayerBonus = 0;
                 int intPlayerVotes = 0;
                 int intPlayerTotal = 0;
@@ -363,14 +364,17 @@ public class acro extends MultiModule {
 
                     // Update players running score, only if they voted
                     if (playerVotes.containsKey(strCurPlayer)) {
+                        AcroScore sc;
                         if (!playerScores.containsKey(strCurPlayer)) {
-                            intPlayerScore = 0;
+                            sc = new AcroScore(strCurPlayer, 0);
                         } else {
-                            intPlayerScore = playerScores.get(strCurPlayer);
+                            sc = playerScores.get(strCurPlayer);                            
                         }
                         // Score for round = bonus + number of votes their acro received
-                        intPlayerScore += intPlayerBonus + intPlayerVotes;
-                        playerScores.put(strCurPlayer, intPlayerScore);
+                        if( sc == null )
+                            sc = new AcroScore(strCurPlayer, 0);                            
+                        sc.updateScore( intPlayerBonus + intPlayerVotes );
+                        playerScores.put(strCurPlayer, sc);
                     } else {
                         playerNotes += " [NOVOTE/NOSCORE]";
                     }
@@ -417,13 +421,19 @@ public class acro extends MultiModule {
     public void gameOver() {
         TimerTask game = new TimerTask() {
             public void run() {
-                spamMessage("GAME OVER! FINAL SCORES: ", 5);
-                Set<String> set = playerScores.keySet();
-                Iterator<String> it = set.iterator();
+                
+                TreeSet<AcroScore> finals = (TreeSet<AcroScore>)playerScores.values();
+                AcroScore winner = finals.last();
+                if (winner != null)
+                    spamMessage("ACRO GAME OVER! The winner is: >>> " + winner.getName() + " <<<", 5);
+                
+                Iterator<AcroScore> it = finals.descendingIterator();
                 while (it.hasNext()) {
-                    String curAnswer = it.next();
-                    spamMessage("--- " + Tools.formatString(curAnswer, 14) + ": " + playerScores.get(curAnswer));
+                    AcroScore sc = it.next();
+                    if (sc != null)
+                        spamMessage("--- " + Tools.formatString(sc.getName(), 14) + ": " + sc.getScore());
                 }
+                
                 gamereset();
             }
         };
@@ -456,7 +466,7 @@ public class acro extends MultiModule {
                             return;
                         }
                         if (!playerIdeas.containsKey(name)) {
-                            m_botAction.sendSmartPrivateMessage(name, "Your answer has been recorded.");
+                            m_botAction.sendSmartPrivateMessage(name, "Your answer has been recorded. Vote for another player's to receive points.");
                             playerNames.add(name);
                         } else {
                             playerIdeas.remove(name);
@@ -476,39 +486,38 @@ public class acro extends MultiModule {
     
     private void doVote(String name, String message) {
         int vote = 0;
-            int intAcroNum = 0;
-            try {
-                vote = Integer.parseInt(message);
-            } catch (NumberFormatException e) {
-                return;
-            }
-            if (vote > 0 && vote <= intAcroCount) {
-                //if (playerIdeas.containsKey(name)) {
-                boolean valid = acroDisplay.containsKey(name) ? acroDisplay.get(name) != vote : true;
-                if (valid) {
-                    votes[vote - 1]++;
-                    if (playerVotes.containsKey(name)) {
-                        int lastVote = playerVotes.get(name);
-                        votes[lastVote - 1]--;
-                        playerVotes.remove(name);
-                        m_botAction.sendSmartPrivateMessage(name, "Your vote has been changed.");
-                    } else {
-                        m_botAction.sendSmartPrivateMessage(name, "Your vote has been counted.");
-                    }
-                    playerVotes.put(name, vote);
+        try {
+            vote = Integer.parseInt(message);
+        } catch (NumberFormatException e) {
+            return;
+        }
+        if (vote > 0 && vote <= intAcroCount) {
+            //if (playerIdeas.containsKey(name)) {
+            boolean valid = acroDisplay.containsKey(name) ? acroDisplay.get(name) != vote : true;
+            if (valid) {
+                votes[vote - 1]++;
+                if (playerVotes.containsKey(name)) {
+                    int lastVote = playerVotes.get(name);
+                    votes[lastVote - 1]--;
+                    playerVotes.remove(name);
+                    m_botAction.sendSmartPrivateMessage(name, "Your vote has been changed.");
                 } else {
-                    m_botAction.sendSmartPrivateMessage(name, "You cannot vote for your own.");
+                    m_botAction.sendSmartPrivateMessage(name, "Your vote has been counted.");
                 }
-                //} else {m_botAction.sendSmartPrivateMessage(name,"Only players who submitted an entry may vote this round.");}
+                playerVotes.put(name, vote);
             } else {
-                m_botAction.sendSmartPrivateMessage(name, "Please enter a valid vote.");
+                m_botAction.sendSmartPrivateMessage(name, "You cannot vote for your own.");
             }
+            //} else {m_botAction.sendSmartPrivateMessage(name,"Only players who submitted an entry may vote this round.");}
+        } else {
+            m_botAction.sendSmartPrivateMessage(name, "Please enter a valid vote.");
+        }
     }
 
     public String generateAcro(int size) {
         String acro = "";
         int total = chanceTable.lastKey();  // Total of all the weights in chanceTable.
-        
+
         for (int i = 0; i < size; i++) {
             // Generate a number between 1 and total.
             int x = Math.abs(generator.nextInt(total)) + 1;
@@ -575,17 +584,19 @@ public class acro extends MultiModule {
 
     public String[] getModHelpMessage() {
         String[] help = { 
-                "ACROMANIA v2.0 BOT COMMANDS", "!start       - Starts a game of acromania.",
+                "ACROMANIA v2.0 BOT COMMANDS",
+                "!start       - Starts a game of acromania.",
                 "!stop        - Stops a game currently in progress.",
                 "!startcustom - Starts a game of acromania.  Host must",
                 "               !setacro each round.",
                 "!setacro     - Used to set the acronym for the next round",
-                "               (can be used only during a !startcustom game.",
-                "!rules   - Displays game rules.", "!changes - Display changes since v1.0.",
+                "               (can be used only during a !startcustom game)",
+                "!rules       - Displays game rules.",
+                "!changes     - Display changes since v1.0.",
                 "!showanswers - Shows who has entered which answer.",
                 "!ignore <name> - Prevents the player from submitting any answers for this game.",
                 "!unignore <name> - Removes player from the ignore list and allows submissions.",
-                "!listIgnore - Lists the current players added to the ignore list."
+                "!listIgnore  - Lists the current players added to the ignore list."
                  };
         return help;
     }
@@ -641,5 +652,36 @@ public class acro extends MultiModule {
             counter++;  // Go to the next letter (A -> B -> C -> ...)
         }
     }
-
+    
+    
+    private class AcroScore implements Comparable<AcroScore> {
+        String name;
+        int score;
+        
+        public AcroScore( String name, int score ) {
+            this.name = name;
+            this.score = score;
+        }
+        
+        public void updateScore( int amt ) {
+            score += amt;
+        }
+        
+        public int getScore() {
+            return score;
+        }
+        
+        public String getName() {
+            return name;
+        }
+        
+        public int compareTo( AcroScore sc2 ) {
+            if( this.getScore() > sc2.getScore() )
+                return 1;
+            if( this.getScore() < sc2.getScore() )
+                return -1;
+            return 0;            
+        }
+    }
 }
+
