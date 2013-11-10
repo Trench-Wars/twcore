@@ -1,5 +1,6 @@
 package twcore.bots.multibot.zombies;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +10,9 @@ import twcore.core.EventRequester;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
+import twcore.core.events.PlayerPosition;
 import twcore.core.game.Player;
+import twcore.core.util.Point;
 import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
@@ -27,6 +30,7 @@ public class zombies extends MultiModule {
 
     public void requestEvents(ModuleEventRequester events)	{
 		events.request(this, EventRequester.PLAYER_DEATH);
+		events.request(this, EventRequester.PLAYER_POSITION);
 	}
 
     HashSet <Integer>m_srcship = new HashSet<Integer>();
@@ -43,6 +47,11 @@ public class zombies extends MultiModule {
     boolean modeSet = false;
     boolean killerShipSet = false;
     boolean rebK = false;
+    boolean evaEnabled = false;
+    
+    Point evaRespawn = new Point(400 * 16, 600 * 16);
+    HashMap<Short, Point> evaSpawnLocation;
+    
 
     public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives, int rebirthkills ){
         m_humanfreq = srcfreq;
@@ -180,15 +189,20 @@ public class zombies extends MultiModule {
         if( !m_botAction.getArenaName().equalsIgnoreCase("eva") && !m_botAction.getArenaName().equalsIgnoreCase("#eva"))
             return;
         
+        evaEnabled = true;
+        evaSpawnLocation = new HashMap<Short, Point>();
+                
         int sizeHumans = m_botAction.getPlayingFrequencySize(m_humanfreq);
         int humansWarped = 0;
         List<Player> players = m_botAction.getPlayingPlayers();
         
         for(Player p : players) {
             if(p.getFrequency() == m_humanfreq) {
-                m_botAction.warpTo(p.getPlayerID(), 
-                        (int) (54 * Math.cos(2 * Math.PI * humansWarped / sizeHumans) + 512), 
-                        (int) (54 * Math.sin(2 * Math.PI * humansWarped / sizeHumans) + 512) ); 
+                short pID = p.getPlayerID();
+                evaSpawnLocation.put(pID, 
+                        new Point((int) (54 * Math.cos(2 * Math.PI * humansWarped / sizeHumans) + 512), 
+                                (int) (54 * Math.sin(2 * Math.PI * humansWarped / sizeHumans) + 512)));
+                m_botAction.warpTo(pID, evaSpawnLocation.get(pID)); 
                 humansWarped++;
             } else if(p.getFrequency() == m_zombiefreq) {
                 m_botAction.warpTo(p.getPlayerID(), 512, 256);
@@ -349,6 +363,21 @@ public class zombies extends MultiModule {
 
             }
         }
+    }
+    
+    public void handleEvent(PlayerPosition event) {
+        short pID = event.getPlayerID();
+
+        if(!evaEnabled)
+            return;
+        
+        if(m_botAction.getPlayer(pID).getFrequency() != m_humanfreq)
+            return;
+        
+        if(event.getXLocation() > evaRespawn.x || event.getYLocation() < evaRespawn.y)
+            return;
+        
+        m_botAction.warpTo(pID, evaSpawnLocation.get(pID));
     }
 
     public String[] getModHelpMessage() {
