@@ -205,7 +205,7 @@ public class zombies extends MultiModule {
                 m_botAction.warpTo(pID, evaSpawnLocation.get(pID)); 
                 humansWarped++;
             } else if(p.getFrequency() == m_zombiefreq) {
-                m_botAction.warpTo(p.getPlayerID(), 512, 256);
+                m_botAction.warpTo(p.getPlayerID(), 511, 255);
             }
         }
     }
