@@ -2,6 +2,7 @@ package twcore.bots.multibot.zombies;
 
 import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.List;
 
 import twcore.bots.MultiModule;
 import twcore.core.EventRequester;
@@ -171,6 +172,29 @@ public class zombies extends MultiModule {
             modeSet = false;
         }
     }
+    
+    /**
+     * Special on start warp routine for the map eva and #eva. (Earth vs. Aliens)
+     */
+    public void evaWarp() {
+        if( !m_botAction.getArenaName().equalsIgnoreCase("eva") && !m_botAction.getArenaName().equalsIgnoreCase("#eva"))
+            return;
+        
+        int sizeHumans = m_botAction.getPlayingFrequencySize(m_humanfreq);
+        int humansWarped = 0;
+        List<Player> players = m_botAction.getPlayingPlayers();
+        
+        for(Player p : players) {
+            if(p.getFrequency() == m_humanfreq) {
+                m_botAction.warpTo(p.getPlayerID(), 
+                        (int) (54 * Math.cos(2 * Math.PI * humansWarped / sizeHumans) + 512), 
+                        (int) (54 * Math.sin(2 * Math.PI * humansWarped / sizeHumans) + 512) ); 
+                humansWarped++;
+            } else if(p.getFrequency() == m_zombiefreq) {
+                m_botAction.warpTo(p.getPlayerID(), 512, 256);
+            }
+        }
+    }
 
     public void handleCommand( String name, String message ){
         if( message.startsWith( "!list" )){
@@ -183,12 +207,14 @@ public class zombies extends MultiModule {
         } else if( message.startsWith( "!start " )){
             String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
             start( name, parameters );
+            evaWarp();
             m_botAction.scoreResetAll();
             m_botAction.sendPrivateMessage( name, "Zombies mode started" );
         } else if( message.startsWith( "!start" )){
             setMode( 0, 1, 2, 3, 1, 0 );
             isRunning = true;
             modeSet = true;
+            evaWarp();
             m_botAction.scoreResetAll();
             m_botAction.sendPrivateMessage( name, "Zombies mode started" );
         } else if( message.startsWith( "!del " ))
