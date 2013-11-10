@@ -186,8 +186,10 @@ public class zombies extends MultiModule {
      * Special on start warp routine for the map eva and #eva. (Earth vs. Aliens)
      */
     public void evaWarp() {
-        if( !m_botAction.getArenaName().equalsIgnoreCase("eva") && !m_botAction.getArenaName().equalsIgnoreCase("#eva"))
+        if( !m_botAction.getArenaName().equalsIgnoreCase("eva") && !m_botAction.getArenaName().equalsIgnoreCase("#eva")) {
+            evaEnabled = false;
             return;
+        }
         
         evaEnabled = true;
         evaSpawnLocation = new HashMap<Short, Point>();
@@ -218,6 +220,7 @@ public class zombies extends MultiModule {
         } else if( message.startsWith( "!stop" )){
             m_botAction.sendPrivateMessage( name, "Zombies mode stopped" );
             isRunning = false;
+            evaEnabled = false;
         } else if( message.startsWith( "!start " )){
             String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
             start( name, parameters );
