@@ -249,8 +249,10 @@ public class bannerboy extends SubspaceBot {
 			    //!say <>:<>
 			    //012345
 			    String pieces[] = message.split( ":" );
-		        m_botAction.sendSmartPrivateMessage( pieces[0].substring(5), pieces[1] );
-		        m_botAction.sendSmartPrivateMessage( player, "PM send to "+pieces[0].substring(5));
+			    if (pieces.length == 2) {
+			        m_botAction.sendSmartPrivateMessage( pieces[0].substring(5), pieces[1] );
+		            m_botAction.sendSmartPrivateMessage( player, "PM send to "+pieces[0].substring(5));
+			    }
 			} else
 
 			if(message.startsWith("!tsay ")) {
