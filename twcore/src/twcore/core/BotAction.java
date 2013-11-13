@@ -3935,6 +3935,17 @@ public class BotAction
     }
 
     /**
+     * This should ONLY be used to initiate a synchronized() block.<br>
+     * Never EVER alter the map through this method!
+     * @return A map of all the player IDs linked to their player objects.
+     */
+    public Map<Integer, Player> getPlayerMap()
+    {
+        //TODO Make this into returning a copy of the map, to prevent direct alteration?
+        return m_arenaTracker.getPlayerMap();
+    }
+    
+    /**
      * @return An Iterator of the IDs of all players in the arena, both spec'd and playing.
      */
     public Iterator<Integer> getPlayerIDIterator()
