@@ -2,6 +2,7 @@ package twcore.bots.multibot.acro;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
@@ -422,7 +423,9 @@ public class acro extends MultiModule {
         TimerTask game = new TimerTask() {
             public void run() {
                 
-                TreeSet<AcroScore> finals = (TreeSet<AcroScore>)playerScores.values();
+                Collection<AcroScore> collfinals = playerScores.values();                
+                TreeSet<AcroScore> finals = new TreeSet<AcroScore>(collfinals);
+                
                 AcroScore winner = finals.last();
                 if (winner != null)
                     spamMessage("ACRO GAME OVER! The winner is: >>> " + winner.getName() + " <<<", 5);
