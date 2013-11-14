@@ -41,6 +41,7 @@ public class heli extends MultiModule {
     private int barrierHeight = 6;
     private int maxSectionLength = 5;
     private boolean smoothTunnel = true;
+    private boolean bombs = false;
     
     // Internally used tracking variables.
     private int y = 0;
@@ -141,11 +142,15 @@ public class heli extends MultiModule {
         } else if (message.startsWith("!setheight ")) {
             try {
                 tunnelHeight = Integer.parseInt(message.substring(11));
+                if(tunnelHeight > (yMax - yMin))
+                    tunnelHeight = (yMax - yMin);
                 m_botAction.sendPrivateMessage(name, "Set height of the tunnel to: " + tunnelHeight);
             } catch (Exception e) {}
         } else if (message.startsWith("!setwallheight ")) {
             try {
                 barrierHeight = Integer.parseInt(message.substring(15));
+                if(barrierHeight > (yMax - yMin))
+                    barrierHeight = (yMax - yMin);
                 m_botAction.sendPrivateMessage(name, "Set height of the bariers to: " + barrierHeight);
             } catch (Exception e) {}
         } else if (message.startsWith("!setlength ") && debugEnabled && debugger.equals(name)) {
@@ -156,6 +161,9 @@ public class heli extends MultiModule {
         } else if (message.startsWith("!togglesmooth")) {
             smoothTunnel = !smoothTunnel;
             m_botAction.sendSmartPrivateMessage(name, "Smooth walls are now " + (smoothTunnel ? "enabled" : "disabled"));
+        } else if (message.equals("!togglebombs")) {
+            bombs = !bombs;
+            m_botAction.sendSmartPrivateMessage(name, "Bombs are now " + (bombs ? "enabled" : "disabled"));
         } else if (message.startsWith("!settings")) {
             dispSettings(name);
         } else if (message.startsWith("!stop")) {
@@ -204,7 +212,7 @@ public class heli extends MultiModule {
      * Starts the laying down of the mines.
      */
     public void startThing() {
-        final char weaponType = weaponTypeList[rand.nextInt(3) + 1];
+        final char weaponType = weaponTypeList[rand.nextInt((bombs?8:4)) + 1];
         
         m_botAction.setPlayerPositionUpdating(0);
         Ship ship = m_botAction.getShip();
@@ -233,7 +241,7 @@ public class heli extends MultiModule {
             }
         };
         nextBarrier = new TimerTask() {
-            private final char barrierWeaponType = weaponTypeList[rand.nextInt(rand.nextInt(3) + 1)];
+            private final char barrierWeaponType = weaponTypeList[rand.nextInt((bombs?8:4)) + 1];
             public void run() {
                 nextBarrier(barrierWeaponType);
             }
