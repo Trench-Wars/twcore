@@ -212,7 +212,7 @@ public class heli extends MultiModule {
      * Starts the laying down of the mines.
      */
     public void startThing() {
-        final char weaponType = weaponTypeList[rand.nextInt((bombs?8:4)) + 1];
+        final char weaponType = weaponTypeList[rand.nextInt((bombs?8:4))];
         
         m_botAction.setPlayerPositionUpdating(0);
         Ship ship = m_botAction.getShip();
@@ -241,7 +241,7 @@ public class heli extends MultiModule {
             }
         };
         nextBarrier = new TimerTask() {
-            private final char barrierWeaponType = weaponTypeList[rand.nextInt((bombs?8:4)) + 1];
+            private final char barrierWeaponType = weaponTypeList[rand.nextInt((bombs?8:4))];
             public void run() {
                 nextBarrier(barrierWeaponType);
             }
