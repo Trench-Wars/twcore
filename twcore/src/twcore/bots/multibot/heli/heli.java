@@ -214,6 +214,8 @@ public class heli extends MultiModule {
     public void startThing() {
         final char weaponType = weaponTypeList[rand.nextInt((bombs?8:4))];
         
+        debugPM("Weapon: " + weaponType);
+        
         m_botAction.setPlayerPositionUpdating(0);
         Ship ship = m_botAction.getShip();
         // Spec the bot to clear any remaining mines.
@@ -493,5 +495,10 @@ public class heli extends MultiModule {
             debugger = name;
             m_botAction.sendSmartPrivateMessage(name, "Debugging mode enabled.");
         }
+    }
+    
+    public void debugPM(String message) {
+        if(debugEnabled)
+            m_botAction.sendSmartPrivateMessage(debugger, message);
     }
 }
