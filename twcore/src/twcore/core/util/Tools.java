@@ -544,7 +544,7 @@ public final class Tools {
     	if( fragment == null )
             fragment = "";
         if(fragment.length() > length)
-            fragment = fragment.substring(length,-length);
+            fragment = fragment.substring(0, length);
         else {
             for(int i=fragment.length();i<length;i++)
                 fragment = padding + fragment;
