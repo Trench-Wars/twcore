@@ -44,8 +44,8 @@ public class cleverbot extends SubspaceBot
         events.request(EventRequester.MESSAGE);
         
         //Create our hashmaps.
-        mapSessions = new HashMap<>();
-        mapSessionTime = new HashMap<>();
+        mapSessions = new HashMap<String, ChatterBotSession>();
+        mapSessionTime = new HashMap<String, Long>();
         
 	}
 	
