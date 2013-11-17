@@ -2,14 +2,13 @@ package twcore.bots.cleverbot;
 
 import java.util.HashMap;
 
-import javax.management.timer.Timer;
-
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
 import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
+import twcore.core.util.Tools;
 
 import com.google.code.chatterbotapi.*;
 
@@ -67,7 +66,7 @@ public class cleverbot extends SubspaceBot
 		}
 		catch (Exception e) 
 		{
-			e.printStackTrace();
+			Tools.printStackTrace(e);
 		}
 		//Sets the bot to the chat channel for chat use.
         m_botAction.sendUnfilteredPublicMessage("?chat=CleverBot");
@@ -95,7 +94,7 @@ public class cleverbot extends SubspaceBot
     		long recordedTime = mapSessionTime.get(player);
     		if(recordedTime != 0L)
     		{
-    			if((currentTime - recordedTime) > Timer.ONE_MINUTE * 10)
+    			if((currentTime - recordedTime) > Tools.TimeInMillis.MINUTE * 10)
     			{
     				mapSessions.remove(player);
     			}
@@ -121,7 +120,7 @@ public class cleverbot extends SubspaceBot
 		}
 		catch (Exception e) 
 		{
-			e.printStackTrace();
+		    Tools.printStackTrace(e);
 		}
 		if(cleverBotResponse != null)
 		{
