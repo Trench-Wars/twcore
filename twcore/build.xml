@@ -10,12 +10,14 @@
 	<property name="gson.jar" value="lib/gson.jar"/>
 	<property name="facebook4j" value="lib/facebook4j-core-1.1.3.jar"/>
 	<property name="twitter4j" value="lib/twitter4j-core-3.0.3.jar"/>
+	<property name="chatterbot" value="lib/chatter-bot-api-r40.jar"/>
 	<path id="build.path">
 		<pathelement location="${mail.jar}"/>
 		<pathelement location="${activation.jar}"/>
 		<pathelement location="${gson.jar}"/>
 		<pathelement location="${facebook4j}"/>
 		<pathelement location="${twitter4j}"/>
+		<pathelement location="${chatterbot}"/>
 	</path>
 	
     <target name="core" description="Builds the TWCore core" depends="configCopy">
@@ -36,7 +38,7 @@
       
     <target name="bots" description="Builds the TWCore bots" depends="configCopy">
     	<echo>Compiling Bots (this may take a moment)</echo>
-    	<javac classpath="bin/twcore.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar;lib/twitter4j-core-3.0.3.jar" srcdir="src/twcore/bots" destdir="bin" debug="on" debuglevel="lines,vars,source" /> 
+    	<javac classpath="bin/twcore.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar;lib/twitter4j-core-3.0.3.jar;lib/chatter-bot-api-r40.jar" srcdir="src/twcore/bots" destdir="bin" debug="on" debuglevel="lines,vars,source" /> 
     </target> 
 
     <target name="clean" description="Deletes the jar and all class files">
@@ -53,7 +55,7 @@
 	
 	<target name="botdir" description="Builds a specific directory under twcore/bots. Specify the directory name on the environment variable 'botdir' (with -D on command line)" depends="configCopy">
 		<echo>Compiling bot directory ${botdir}</echo>
-		<javac classpath="bin/twcore.jar;lib/gson.jar;lib/twitter4j-core-3.0.3.jar;lib/facebook4j-core-1.1.3.jar" srcdir="src/twcore/bots/${botdir}" destdir="bin" debug="on" debuglevel="lines,vars,source" />
+		<javac classpath="bin/twcore.jar;lib/gson.jar;lib/twitter4j-core-3.0.3.jar;lib/facebook4j-core-1.1.3.jar;lib/chatter-bot-api-r40.jar" srcdir="src/twcore/bots/${botdir}" destdir="bin" debug="on" debuglevel="lines,vars,source" />
 	</target>
 	
 	<target name="configCopy" description="Copies all the .cfg files from the src directory to the bin directory if file doesn't exist">
@@ -70,7 +72,7 @@
 		<javadoc 
 			access="package" 
 			author="true" 
-			classpath="lib/mysql-connector-java-5.0.7-bin.jar;lib/googleapi.jar;lib/aim.jar;lib/mail.jar;lib/activation.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar;lib/twitter4j-core-3.0.3.jar" 
+			classpath="lib/mysql-connector-java-5.0.7-bin.jar;lib/googleapi.jar;lib/aim.jar;lib/mail.jar;lib/activation.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar;lib/twitter4j-core-3.0.3.jar;lib/chatter-bot-api-r40.jar" 
 			destdir="javadoc" 
 			doctitle="Trench Wars Bot Core (TWCore) API Documentation" 
 			nodeprecated="false" 
