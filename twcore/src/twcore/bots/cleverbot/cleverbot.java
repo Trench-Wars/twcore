@@ -10,7 +10,7 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
-import com.google.code.chatterbotapi.*;
+import chatterbot.*;
 
 /**
  * The best way to waste my time. Simple cleverbot.
