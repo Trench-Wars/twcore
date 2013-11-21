@@ -21,6 +21,7 @@ import twcore.core.events.*;
 import twcore.core.util.Tools;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.game.Player;
+import twcore.core.game.Ship;
 
 /**
  * Bot designed for single-event hosting and event utility management.
@@ -300,6 +301,10 @@ public class multibot extends SubspaceBot {
         
         if (isPublicArena(targetArena) && m_opList.getAccessLevel(sender) < OperatorList.SYSOP_LEVEL)
             throw new IllegalArgumentException("Bot can not go into public arenas.");
+        
+        // Multibots seem to have problems when they are still in a ship. Perhaps this will solve that.
+        if (m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR)
+            throw new IllegalArgumentException("Please ensure I am specced first, before sending me away.");
         
         if(!targetArena.isEmpty()) {
         	m_botAction.changeArena(argString);
