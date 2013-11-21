@@ -53,6 +53,8 @@ public class heli extends MultiModule {
     // Debug related variables for live testing.
     private boolean debugEnabled = false;
     private String debugger = "";
+    
+    private boolean isActive = false;
 
     /**
      * Default initialization.
@@ -121,9 +123,9 @@ public class heli extends MultiModule {
             } catch (Exception e) {}
         } else if (message.startsWith("!specbot")) {
             m_botAction.cancelTasks();
-            m_botAction.spec(m_botAction.getBotName());
-            m_botAction.spec(m_botAction.getBotName());
+            m_botAction.getShip().setShip(Ship.INTERNAL_SPECTATOR);
             m_botAction.resetReliablePositionUpdating();
+            isActive = false;
         } else if (message.startsWith("!setmove ")) {
             try {
                 mineInterval = Integer.parseInt(message.substring(9));
@@ -214,19 +216,20 @@ public class heli extends MultiModule {
     public void startThing() {
         //final char weaponType = weaponTypeList[rand.nextInt((bombs?8:4))];
         final char weaponType = weaponTypeList[rand.nextInt(3) + 1];
+        isActive = true;
         
         debugPM("Weapon: " + weaponType);
         
         m_botAction.setPlayerPositionUpdating(0);
         Ship ship = m_botAction.getShip();
         // Spec the bot to clear any remaining mines.
-        ship.setShip(8);
+        ship.setShip(Ship.INTERNAL_SPECTATOR);
         try {
             // Giving it some time to update.
             Thread.sleep(100);
         } catch (Exception e) {}  
         
-        ship.setShip(7);
+        ship.setShip(Ship.INTERNAL_SHARK);
         ship.setFreq(8000);
         ship.sendPositionPacket();
         // Instead of 16, 12 is used to make the top 3/4th above the platform, and the bottom stick 1/4th underneath it.
@@ -423,7 +426,7 @@ public class heli extends MultiModule {
     }
 
     public boolean isUnloadable() {
-        return true;
+        return !isActive;
     }
 
     public void requestEvents(ModuleEventRequester req) {
