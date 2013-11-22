@@ -130,55 +130,52 @@ public class utiletc extends MultiUtil {
     }
 
     public void handleCommand( String name, String message ) {
-        String cmd = message.toLowerCase();
-        if( cmd.startsWith( "!botattach" ))
-            turretPlayer( message.substring( 11, message.length() ) );
-        else if( cmd.startsWith( "!botunattach" ))
-            unAttach();
-        else if( cmd.startsWith( "!setbotship" ))
-            setShip( message );
-        else if( cmd.startsWith( "!setbotfreq" ))
-            setFreq( message );
-        else if( cmd.startsWith( "!fire" ) )
-            fire = !fire;
-        else if( cmd.startsWith( "!shoot" ) )
-            shoot( message );
-        else if( cmd.startsWith( "!speed" ) ) {
-            try { speed = Integer.parseInt( message.split( " " )[1] ); } catch ( Exception e ){}
-        } else if( cmd.startsWith( "!setweapon" )) {
-            cmd_setWeapon(name, cmd.substring(10).trim());
-        } else if(cmd.equalsIgnoreCase("!list")) {
-            requester = name;
-            m_botAction.requestArenaList();
-        } else if(cmd.startsWith("!draw ")) {
-            download(name, message.substring(6));
-        } else if(cmd.startsWith("!setdelay ")) {
-            try { 
-                delayMS = Integer.parseInt( message.split( " " )[1] );
-                m_botAction.sendSmartPrivateMessage(name, "Draw delay set to "+ delayMS +"ms. (Default: 20)");
-            } catch (Exception e ){}
-        } else if(cmd.startsWith("!specbot")) {
-            m_botAction.spec(m_botAction.getBotName());
-            m_botAction.spec(m_botAction.getBotName());
-            m_botAction.sendSmartPrivateMessage( name, "Spec'd." );
-        } else if(cmd.startsWith("!setdist ")) {
-            try {
-                move = Integer.parseInt(message.substring(9));
-                m_botAction.sendSmartPrivateMessage( name, "Distance set to " + move );
-            } catch(Exception e) {}
-        } else if(cmd.startsWith("!movebot ")) {
-            doMoveBotCmd(name, message.substring(9));
-        } else if(cmd.startsWith("!printcoords")) {
-            printCoords = !printCoords;
-            if( printCoords )
-                m_botAction.sendSmartPrivateMessage( name, "Now printing coordinates to chat." );
-            else
-                m_botAction.sendSmartPrivateMessage( name, "No longer printing coordinates to public chat." );
-        }
-            
-
         if( m_opList.isSmod(name) ) {
-            if( cmd.startsWith( "!listdonated" ) ) {
+            String cmd = message.toLowerCase();
+            if( cmd.startsWith( "!botattach" ))
+                turretPlayer( message.substring( 11, message.length() ) );
+            else if( cmd.startsWith( "!botunattach" ))
+                unAttach();
+            else if( cmd.startsWith( "!setbotship" ))
+                setShip( message );
+            else if( cmd.startsWith( "!setbotfreq" ))
+                setFreq( message );
+            else if( cmd.startsWith( "!fire" ) )
+                fire = !fire;
+            else if( cmd.startsWith( "!shoot" ) )
+                shoot( message );
+            else if( cmd.startsWith( "!speed" ) ) {
+                try { speed = Integer.parseInt( message.split( " " )[1] ); } catch ( Exception e ){}
+            } else if( cmd.startsWith( "!setweapon" )) {
+                cmd_setWeapon(name, cmd.substring(10).trim());
+            } else if(cmd.equalsIgnoreCase("!list")) {
+                requester = name;
+                m_botAction.requestArenaList();
+            } else if(cmd.startsWith("!draw ")) {
+                download(name, message.substring(6));
+            } else if(cmd.startsWith("!setdelay ")) {
+                try { 
+                    delayMS = Integer.parseInt( message.split( " " )[1] );
+                    m_botAction.sendSmartPrivateMessage(name, "Draw delay set to "+ delayMS +"ms. (Default: 20)");
+                } catch (Exception e ){}
+            } else if(cmd.startsWith("!specbot")) {
+                m_botAction.spec(m_botAction.getBotName());
+                m_botAction.spec(m_botAction.getBotName());
+                m_botAction.sendSmartPrivateMessage( name, "Spec'd." );
+            } else if(cmd.startsWith("!setdist ")) {
+                try {
+                    move = Integer.parseInt(message.substring(9));
+                    m_botAction.sendSmartPrivateMessage( name, "Distance set to " + move );
+                } catch(Exception e) {}
+            } else if(cmd.startsWith("!movebot ")) {
+                doMoveBotCmd(name, message.substring(9));
+            } else if(cmd.startsWith("!printcoords")) {
+                printCoords = !printCoords;
+                if( printCoords )
+                    m_botAction.sendSmartPrivateMessage( name, "Now printing coordinates to chat." );
+                else
+                    m_botAction.sendSmartPrivateMessage( name, "No longer printing coordinates to public chat." );
+            } else if( cmd.startsWith( "!listdonated" ) ) {
                 do_listDonations( name, message );
             } else if( cmd.startsWith( "!donated " ) ) {
                 do_addDonation( name, message.substring( 9, message.length() ) );
@@ -520,6 +517,7 @@ public class utiletc extends MultiUtil {
 
     public String[] getHelpMessages() {
         String help[] = {
+                "All commands listed are SMod only!",
                 "!movebot <x> <y>          - Moves bot to a location.  If in spec, bot will spec",
                 "                            this location and receive player position info.",
                 "!printcoords              - Toggles whether to print player coords rcv'd or not.",
@@ -532,7 +530,7 @@ public class utiletc extends MultiUtil {
                 "!shoot <degree>           - Fires in direction of degree (0-359)",
                 "!speed <speed>            - Sets how fast bot tracks using !fire",
                 "!setweapon [options]      - Sets bot's weapon, use without options for full details",
-                "!weapon <weapon>          - Changes to weapon # (16 bit vector) (SMod+)",
+                "!weapon <weapon>          - Changes to weapon # (16 bit vector)",
                 "!list                     - Lists all arenas to you in PM.",
                 "!draw <url>               - Draws pic from text file at url containing chars .*#^",
                 "!setdist                  - Sets distance between mines drawn (def: 16; one tile)",
