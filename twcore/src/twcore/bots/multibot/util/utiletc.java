@@ -28,9 +28,13 @@ import twcore.core.util.Tools;
  * Compiled from twbot modules list, art, remote, donations, and part of flags. 
  */
 public class utiletc extends MultiUtil {
+    private static final double SS_CONSTANT = 0.1111111;   // Constant related to angles.
+    private static double REACTION_TIME = 0.075;           // Reaction time of the bot?
+    
     private String requester = null;
     private int move = 16;
     private boolean printCoords = false;
+    
     public static final int MIN_COORD = 0;
     public static final int MAX_COORD = 1024;
     boolean turret = true;
@@ -88,13 +92,14 @@ public class utiletc extends MultiUtil {
             if( (int)(System.currentTimeMillis()/100) - time > 2 ) {
                 time = (int)(System.currentTimeMillis()/100);
                 if( !fire || id == event.getPlayerID() ) return;
-                int degrees = 0;
-                degrees += (int)Math.toDegrees((Math.atan( (event.getYLocation() - ourY + 0.0)/(event.getXLocation()-ourX+0.0) )));
-                int newDegree = (int)Math.toDegrees((Math.atan( (event.getYLocation()+event.getYVelocity() - ourY + 0.0)/(event.getXLocation()+event.getXVelocity()-ourX+0.0) )));
-                int doppler = getDoppler( event, degrees );
-                if( ourX > event.getXLocation() ) { degrees += 180; newDegree += 180; }
-                int adjust = (int)Math.toDegrees( Math.atan( doppler / speed ) );
-                m_botAction.getShip().rotateDegrees( degrees+adjust );
+                
+                double diffY, diffX, angle;
+                
+                diffX = (event.getXLocation() + (event.getXVelocity() * REACTION_TIME)) - m_botAction.getShip().getX();
+                diffY = (event.getYLocation() + (event.getYVelocity() * REACTION_TIME)) - m_botAction.getShip().getY();
+                angle = (180 - (Math.atan2(diffX, diffY)*180/Math.PI)) * SS_CONSTANT;
+                
+                m_botAction.getShip().setRotation( (int) angle );
                 m_botAction.getShip().fire( weapon );
             }
         }
@@ -109,8 +114,8 @@ public class utiletc extends MultiUtil {
     }
     
     public int getDoppler( PlayerPosition event, double d ) {
-        int x = (int)(Math.sin( Math.toRadians(d) ) * event.getXVelocity() );
-        int y = (int)(Math.cos( Math.toRadians(d) ) * event.getYVelocity() );
+        int x = (int)(Math.sin( Math.toRadians( d ) ) * event.getXVelocity() );
+        int y = (int)(Math.cos( Math.toRadians( d ) ) * event.getYVelocity() );
         int dop = (int)Math.sqrt( Math.pow( x, 2 ) + Math.pow( y, 2 ) );
         return dop;
     }
@@ -125,41 +130,45 @@ public class utiletc extends MultiUtil {
     }
 
     public void handleCommand( String name, String message ) {
-        if( message.toLowerCase().startsWith( "!botattach" )) turretPlayer( message.substring( 11, message.length() ) );
-        if( message.toLowerCase().startsWith( "!botunattach" )) unAttach();
-        if( message.toLowerCase().startsWith( "!setbotship" )) setShip( message );
-        if( message.toLowerCase().startsWith( "!setbotfreq" )) setFreq( message );
-        if( message.toLowerCase().startsWith( "!fire" ) ) fire = !fire;
-        if( message.toLowerCase().startsWith( "!shoot" ) ) shoot( message );
-        if( message.toLowerCase().startsWith( "!speed" ) ) {
-            try { speed = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
-        }
-        if( message.toLowerCase().startsWith( "!weapon" ) ) {
-            try { weapon = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
-        }
-
-        if(message.toLowerCase().equalsIgnoreCase("!list")) {
+        String cmd = message.toLowerCase();
+        if( cmd.startsWith( "!botattach" ))
+            turretPlayer( message.substring( 11, message.length() ) );
+        else if( cmd.startsWith( "!botunattach" ))
+            unAttach();
+        else if( cmd.startsWith( "!setbotship" ))
+            setShip( message );
+        else if( cmd.startsWith( "!setbotfreq" ))
+            setFreq( message );
+        else if( cmd.startsWith( "!fire" ) )
+            fire = !fire;
+        else if( cmd.startsWith( "!shoot" ) )
+            shoot( message );
+        else if( cmd.startsWith( "!speed" ) ) {
+            try { speed = Integer.parseInt( message.split( " " )[1] ); } catch ( Exception e ){}
+        } else if( cmd.startsWith( "!setweapon" )) {
+            cmd_setWeapon(name, cmd.substring(10).trim());
+        } else if(cmd.equalsIgnoreCase("!list")) {
             requester = name;
             m_botAction.requestArenaList();
-        } else if(message.toLowerCase().startsWith("!draw ")) {
+        } else if(cmd.startsWith("!draw ")) {
             download(name, message.substring(6));
-        } else if(message.toLowerCase().startsWith("!setdelay ")) {
+        } else if(cmd.startsWith("!setdelay ")) {
             try { 
                 delayMS = Integer.parseInt( message.split( " " )[1] );
                 m_botAction.sendSmartPrivateMessage(name, "Draw delay set to "+ delayMS +"ms. (Default: 20)");
             } catch (Exception e ){}
-        } else if(message.toLowerCase().startsWith("!specbot")) {
+        } else if(cmd.startsWith("!specbot")) {
             m_botAction.spec(m_botAction.getBotName());
             m_botAction.spec(m_botAction.getBotName());
             m_botAction.sendSmartPrivateMessage( name, "Spec'd." );
-        } else if(message.toLowerCase().startsWith("!setdist ")) {
+        } else if(cmd.startsWith("!setdist ")) {
             try {
                 move = Integer.parseInt(message.substring(9));
                 m_botAction.sendSmartPrivateMessage( name, "Distance set to " + move );
             } catch(Exception e) {}
-        } else if(message.toLowerCase().startsWith("!movebot ")) {
+        } else if(cmd.startsWith("!movebot ")) {
             doMoveBotCmd(name, message.substring(9));
-        } else if(message.toLowerCase().startsWith("!printcoords")) {
+        } else if(cmd.startsWith("!printcoords")) {
             printCoords = !printCoords;
             if( printCoords )
                 m_botAction.sendSmartPrivateMessage( name, "Now printing coordinates to chat." );
@@ -169,12 +178,14 @@ public class utiletc extends MultiUtil {
             
 
         if( m_opList.isSmod(name) ) {
-            if( message.toLowerCase().startsWith( "!listdonated" ) ) {
+            if( cmd.startsWith( "!listdonated" ) ) {
                 do_listDonations( name, message );
-            } else if( message.toLowerCase().startsWith( "!donated " ) ) {
+            } else if( cmd.startsWith( "!donated " ) ) {
                 do_addDonation( name, message.substring( 9, message.length() ) );
-            } else if( message.toLowerCase().startsWith( "!removedonated " ) ) {
+            } else if( cmd.startsWith( "!removedonated " ) ) {
                 do_removeDonation( name, message.substring( 15, message.length() ) );
+            } else if( cmd.startsWith( "!weapon" ) ) {
+                try { weapon = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
             }
         }
     }
@@ -312,14 +323,14 @@ public class utiletc extends MultiUtil {
     public int getWeapon(char c) {
         Ship s = m_botAction.getShip();
 
-        if(c == '.') return s.getWeaponNumber((byte)3, (byte)0, false, false, true, (byte)8, true);
-        if(c == '*') return s.getWeaponNumber((byte)3, (byte)1, false, false, true, (byte)8, true);
-        if(c == '#') return s.getWeaponNumber((byte)3, (byte)2, false, false, true, (byte)8, true);
-        if(c == '^') return s.getWeaponNumber((byte)3, (byte)3, false, false, true, (byte)8, true);
-        if(c == '1') return s.getWeaponNumber((byte)4, (byte)0, false, false, true, (byte)8, true);
-        if(c == '2') return s.getWeaponNumber((byte)4, (byte)1, false, false, true, (byte)8, true);
-        if(c == '3') return s.getWeaponNumber((byte)4, (byte)2, false, false, true, (byte)8, true);
-        if(c == '4') return s.getWeaponNumber((byte)4, (byte)3, false, false, true, (byte)8, true);
+        if(c == '.') return s.getWeaponNumber((byte)3, (byte)0, false, (byte)3, (byte)8, true);
+        if(c == '*') return s.getWeaponNumber((byte)3, (byte)1, false, (byte)3, (byte)8, true);
+        if(c == '#') return s.getWeaponNumber((byte)3, (byte)2, false, (byte)3, (byte)8, true);
+        if(c == '^') return s.getWeaponNumber((byte)3, (byte)3, false, (byte)3, (byte)8, true);
+        if(c == '1') return s.getWeaponNumber((byte)4, (byte)0, false, (byte)3, (byte)8, true);
+        if(c == '2') return s.getWeaponNumber((byte)4, (byte)1, false, (byte)3, (byte)8, true);
+        if(c == '3') return s.getWeaponNumber((byte)4, (byte)2, false, (byte)3, (byte)8, true);
+        if(c == '4') return s.getWeaponNumber((byte)4, (byte)3, false, (byte)3, (byte)8, true);
         return 0;
     }
 
@@ -400,6 +411,110 @@ public class utiletc extends MultiUtil {
         m_botAction.getShip().setFreq( x );
     }
 
+    public void cmd_setWeapon( String name, String args) {
+        if( args == null || args.isEmpty() ) {
+            setWeaponHelp(name);
+            return;
+        }
+        
+        byte weaponType = 0;
+        byte weaponLevel = 0;
+        boolean shrapBouncing = false;
+        byte shrapLevel = 0;
+        byte shrapAmount = 0;
+        boolean alternate = false;
+        
+        int temp = 0;
+        
+        String[] splitArgs = args.split(":");
+        
+        try {
+            switch(splitArgs.length) {
+            // Intended fall-throughs
+            default:
+            case 6:
+                if(splitArgs[5].equals("1"))
+                    alternate = true;
+                else
+                    alternate = false;
+                
+            case 5:
+                temp = Integer.parseInt(splitArgs[4]);
+                if(temp < 0)
+                    shrapAmount = 0;
+                else if(temp > 31)
+                    shrapAmount = 0x1F;
+                else
+                    shrapAmount = (byte) temp;
+                
+            case 4:
+                temp = Integer.parseInt(splitArgs[3]);
+                if(temp < 0)
+                    shrapLevel = 0x00;
+                else if(temp > 3)
+                    shrapLevel = 0x03;
+                else
+                    shrapLevel = (byte) temp;
+                
+            case 3:
+                if(splitArgs[2].equals("1"))
+                    shrapBouncing = true;
+                else
+                    shrapBouncing = false;
+                
+            case 2:
+                temp = Integer.parseInt(splitArgs[1]);
+                if(temp < 0)
+                    weaponLevel = 0x00;
+                else if(temp > 3)
+                    weaponLevel = 0x03;
+                else
+                    weaponLevel = (byte) temp;
+                
+            case 1:
+                temp = Integer.parseInt(splitArgs[0]);
+                if(temp < 0)
+                    weaponType = 0x00;
+                else if(temp > 31)
+                    weaponType = 0x1F;
+                else
+                    weaponType = (byte) temp;
+                break;
+                
+            case 0:
+                m_botAction.sendSmartPrivateMessage(name, "Invalid parameters provided. Please consult !setweapon without giving parameters.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            m_botAction.sendSmartPrivateMessage(name, "Invalid parameters provided. Please consult !setweapon without giving parameters.");
+            return;
+        }
+        
+        weapon = m_botAction.getShip().getWeaponNumber(weaponType, weaponLevel, 
+                shrapBouncing, shrapLevel, shrapAmount, alternate);
+        
+        m_botAction.sendSmartPrivateMessage(name, "Weapon set to given options.");
+    }
+    
+    public void setWeaponHelp(String name) {
+        String[] help = {
+                "!setweapon <type>:<level>:<sbounce>:<slevel>:<samount>:<alt-fire>",
+                " <type>':      - Weapon type of the following list:",
+                "                   0: None               3: Bomb             6: Decoy",
+                "                   1: Bullet             4: Proximity Bomb   7: Burst",
+                "                   2: Bouncing bullet    5: Repel            8: Thor",
+                " <level>^:     - Weapon level: 0: L1, 1: L2, 2: L3, 3: L4",
+                " <sbounce>*:   - Bouncing shrap: 0: disabled, 1: enabled",
+                " <slevel>*:    - Shrap level. 0: L1, 1: L2, 2: L3, 3: L4",
+                " <samount>*:   - Amount of shrap. (0 - 31)",
+                " <alt-fire>*:  - Alternative fire mode. 0: disabled, 1: enabled",
+                "                   Changes: Bombs -> Mines, Bullets -> Multifire",
+                " Legend:       ' Required, ^ Required for types 1-4, * optional",
+                " When specifying an optional paramater, all preceding optional parameters must be specified!"
+        };
+        m_botAction.smartPrivateMessageSpam(name, help);
+    }
+    
     public void cancel() {
     }
 
@@ -409,14 +524,15 @@ public class utiletc extends MultiUtil {
                 "                            this location and receive player position info.",
                 "!printcoords              - Toggles whether to print player coords rcv'd or not.",
                 "!specbot                  - Puts bot in spectator mode.",
-                "!setbotship <ship>        - Place the bot in a ship",
+                "!setbotship <ship>        - Place the bot in a ship (0: WB .. 7: Shark, 8: Spec)",
                 "!setbotfreq <freq>        - Set the bot to a specific freq",
                 "!botattach <player>       - Attach bot to player, if in game",
                 "!botunattach              - Detach the bot",
                 "!fire                     - Toggles firing at close players",
                 "!shoot <degree>           - Fires in direction of degree (0-359)",
                 "!speed <speed>            - Sets how fast bot tracks using !fire",
-                "!weapon <weapon>          - Changes to weapon # (16 bit vector)",
+                "!setweapon [options]      - Sets bot's weapon, use without options for full details",
+                "!weapon <weapon>          - Changes to weapon # (16 bit vector) (SMod+)",
                 "!list                     - Lists all arenas to you in PM.",
                 "!draw <url>               - Draws pic from text file at url containing chars .*#^",
                 "!setdist                  - Sets distance between mines drawn (def: 16; one tile)",
