@@ -28,27 +28,28 @@ import twcore.core.util.Tools;
  * Compiled from twbot modules list, art, remote, donations, and part of flags. 
  */
 public class utiletc extends MultiUtil {
-    private static final double SS_CONSTANT = 0.1111111;   // Constant related to angles.
-    private static double REACTION_TIME = 0.075;           // Reaction time of the bot?
     
-    private String requester = null;
-    private int move = 16;
-    private boolean printCoords = false;
-    
-    public static final int MIN_COORD = 0;
-    public static final int MAX_COORD = 1024;
-    boolean turret = true;
-    boolean fire = false;
-    double speed = 4000;
-    int delayMS = 20;       // Delay for !draw between moves.
-    int weapon = 1;
-    int     id = -1;
-    long time = 0;
-    int ourX = 0, ourY = 0;
-    Random generator = new Random();
+    private static final double SS_CONSTANT     = 0.1111111;    // Constant related to angles.
+    private static final double REACTION_TIME   = 0.075;        // Reaction time of the bot?
+    private static final int    MIN_COORD       = 0;            // Minimum X or Y in tiles.
+    private static final int    MAX_COORD       = 1023;         // Maximum X or Y in tiles.
 
-    String database = "website";
+    Random generator = new Random();
+    private String database = "website";
+    private String requester = null;
     
+    private long lastRotation = 0;          // Time tracker for last rotation update.
+    private long lastFire = 0;              // Time tracker for last fire update.
+    private int rotSpeed = 100;             // Rate of rotation/tracking, in ms.
+    private int fireSpeed = 1000;           // Rate of fire, in ms.
+    private int move = 16;                  // Distance between mines for !draw in pixels.
+    private int delayMS = 20;               // Delay for !draw between moves.
+    private int weapon = 1;                 // Weapon the bot will use to fire.
+    private int attachID = -1;
+    
+    private boolean printCoords = false;    // Whether or not coords of players in range will be messaged.
+    private boolean fire = false;           // Will the bot auto-fire on potential targets?
+
     public void init() {
     }
 
@@ -82,42 +83,38 @@ public class utiletc extends MultiUtil {
     }
 
     public void handleEvent(PlayerPosition event) {
+        int pID = event.getPlayerID();
+        int xCoord = event.getXLocation();
+        int yCoord = event.getYLocation();
+        
         if( fire ) { 
-            if( id == event.getPlayerID() ) {
-                ourX = event.getXLocation();
-                ourY = event.getYLocation();
-                m_botAction.getShip().move( event.getXLocation(), event.getYLocation(), event.getXVelocity(), event.getYVelocity() );
+            if( attachID == event.getPlayerID() ) {
+                m_botAction.getShip().move( xCoord, yCoord, event.getXVelocity(), event.getYVelocity() );
             }
-
-            if( (int)(System.currentTimeMillis()/100) - time > 2 ) {
-                time = (int)(System.currentTimeMillis()/100);
-                if( !fire || id == event.getPlayerID() ) return;
-                
-                double diffY, diffX, angle;
-                
-                diffX = (event.getXLocation() + (event.getXVelocity() * REACTION_TIME)) - m_botAction.getShip().getX();
-                diffY = (event.getYLocation() + (event.getYVelocity() * REACTION_TIME)) - m_botAction.getShip().getY();
-                angle = (180 - (Math.atan2(diffX, diffY)*180/Math.PI)) * SS_CONSTANT;
-                
-                m_botAction.getShip().setRotation( (int) angle );
-                m_botAction.getShip().fire( weapon );
+            else {
+                if( m_botAction.getPlayer(pID).getFrequency() != m_botAction.getPlayer(m_botAction.getBotName()).getFrequency()
+                        && System.currentTimeMillis() - lastRotation > rotSpeed ) {
+                    lastRotation = System.currentTimeMillis();
+                    
+                    double diffY, diffX, angle;
+                    
+                    diffX = (xCoord + (event.getXVelocity() * REACTION_TIME)) - m_botAction.getShip().getX();
+                    diffY = (yCoord + (event.getYVelocity() * REACTION_TIME)) - m_botAction.getShip().getY();
+                    angle = (180 - (Math.atan2(diffX, diffY)*180/Math.PI)) * SS_CONSTANT;
+                    
+                    m_botAction.getShip().setRotation( (int) angle );
+                }
+                if( System.currentTimeMillis() - lastFire > fireSpeed ) {
+                    lastFire = System.currentTimeMillis();
+                    m_botAction.getShip().fire( weapon );
+                }
             }
         }
 
         if( printCoords ) {
-            int playerID = event.getPlayerID();
-            int xCoord = event.getXLocation();
-            int yCoord = event.getYLocation();
-            String playerName = m_botAction.getPlayerName(playerID);
+            String playerName = m_botAction.getPlayerName(pID);
             m_botAction.sendPublicMessage(playerName + " is at: " + xCoord + ", " + yCoord + ".");
         }
-    }
-    
-    public int getDoppler( PlayerPosition event, double d ) {
-        int x = (int)(Math.sin( Math.toRadians( d ) ) * event.getXVelocity() );
-        int y = (int)(Math.cos( Math.toRadians( d ) ) * event.getYVelocity() );
-        int dop = (int)Math.sqrt( Math.pow( x, 2 ) + Math.pow( y, 2 ) );
-        return dop;
     }
 
     public void handleEvent( Message event ){
@@ -132,20 +129,38 @@ public class utiletc extends MultiUtil {
     public void handleCommand( String name, String message ) {
         if( m_opList.isSmod(name) ) {
             String cmd = message.toLowerCase();
-            if( cmd.startsWith( "!botattach" ))
+            if( cmd.startsWith( "!botattach" )) {
                 turretPlayer( message.substring( 11, message.length() ) );
-            else if( cmd.startsWith( "!botunattach" ))
+            } else if( cmd.startsWith( "!botunattach" )) {
                 unAttach();
-            else if( cmd.startsWith( "!setbotship" ))
+            } else if( cmd.startsWith( "!setbotship" )) {
                 setShip( message );
-            else if( cmd.startsWith( "!setbotfreq" ))
+            } else if( cmd.startsWith( "!setbotfreq" )) {
                 setFreq( message );
-            else if( cmd.startsWith( "!fire" ) )
+            } else if( cmd.startsWith( "!fire" ) ) {
                 fire = !fire;
-            else if( cmd.startsWith( "!shoot" ) )
+            } else if( cmd.startsWith( "!shoot" ) ) {
                 shoot( message );
-            else if( cmd.startsWith( "!speed" ) ) {
-                try { speed = Integer.parseInt( message.split( " " )[1] ); } catch ( Exception e ){}
+            } else if( cmd.startsWith( "!speed" ) ) {
+                try { 
+                    int temp = Integer.parseInt( message.split( " " )[1] );
+                    if( temp < 10 )
+                        rotSpeed = 10;
+                    else if(temp > 100 * Tools.TimeInMillis.SECOND)
+                        rotSpeed = 100 * Tools.TimeInMillis.SECOND;
+                    else
+                        rotSpeed = temp;
+                } catch ( Exception e ) {}
+            } else if( cmd.startsWith( "!firespeed" )) {
+                try {
+                    int temp = Integer.parseInt( message.split( " " )[1] );
+                    if(temp < 100)
+                        fireSpeed = 100;
+                    else if(temp > 100 * Tools.TimeInMillis.SECOND)
+                        fireSpeed = 100 * Tools.TimeInMillis.SECOND;
+                    else
+                        fireSpeed = temp;
+                } catch ( Exception e ) {}
             } else if( cmd.startsWith( "!setweapon" )) {
                 cmd_setWeapon(name, cmd.substring(10).trim());
             } else if(cmd.equalsIgnoreCase("!list")) {
@@ -314,7 +329,10 @@ public class utiletc extends MultiUtil {
             }
             else
                 m_botAction.sendPrivateMessage(name, "That file contains too many mines. You should try reducing it so I can draw all of it.");
-        } catch(Exception e) {m_botAction.sendPrivateMessage(name, "error... check URL and try again."); e.printStackTrace();}
+        } catch(Exception e) {
+            m_botAction.sendPrivateMessage(name, "error... check URL and try again."); 
+            e.printStackTrace();
+        }
     }
 
     public int getWeapon(char c) {
@@ -363,12 +381,9 @@ public class utiletc extends MultiUtil {
     {
         int coord;
 
-        try
-        {
+        try {
             coord = Integer.parseInt(string);
-        }
-        catch(NumberFormatException e)
-        {
+        } catch(NumberFormatException e) {
             throw new IllegalArgumentException("Invalid coordinate specified.");
         }
 
@@ -386,26 +401,29 @@ public class utiletc extends MultiUtil {
     }
 
     public void turretPlayer( String name ) {
-        turret = true;
-        m_botAction.getShip().attach( m_botAction.getPlayerID( name ) );
-        id = m_botAction.getPlayerID( name );
+        attachID = m_botAction.getPlayerID( name );
+        m_botAction.getShip().attach( attachID );
     }
 
     public void unAttach() {
-        turret = false;
         m_botAction.getShip().unattach();
+        attachID = -1;
     }
 
     public void setShip( String message ) {
         int x = 0;
         try { x = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e) {}
         m_botAction.getShip().setShip( x );
+        if(attachID != -1)
+            m_botAction.getShip().attach( attachID );
     }
 
     public void setFreq( String message ) {
         int x = 0;
         try { x = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e) {}
         m_botAction.getShip().setFreq( x );
+        if(attachID != -1)
+            unAttach();
     }
 
     public void cmd_setWeapon( String name, String args) {
@@ -528,7 +546,8 @@ public class utiletc extends MultiUtil {
                 "!botunattach              - Detach the bot",
                 "!fire                     - Toggles firing at close players",
                 "!shoot <degree>           - Fires in direction of degree (0-359)",
-                "!speed <speed>            - Sets how fast bot tracks using !fire",
+                "!speed <speed>            - Sets how fast bot tracks using !fire (>10, in ms)",
+                "!firespeed <speed>        - How fast the bot fires using !fire (>100, in ms)",
                 "!setweapon [options]      - Sets bot's weapon, use without options for full details",
                 "!weapon <weapon>          - Changes to weapon # (16 bit vector)",
                 "!list                     - Lists all arenas to you in PM.",
