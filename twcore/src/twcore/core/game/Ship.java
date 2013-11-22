@@ -456,14 +456,35 @@ public final class Ship extends Thread {
     /**
      * Returns a weapon number as used by the SS protocol based on information provided.
      * @param weaponType Type of weapon (0-15)
-     * @param weaponLevel Level of weapon (0-15)
+     * <ul>
+     *  <li>0: None;
+     *  <li>1: Bullet;
+     *  <li>2: Bouncing bullet;
+     *  <li>3: Bomb;
+     *  <li>4: Proximity bomb;
+     *  <li>5: Repel;
+     *  <li>6: Decoy;
+     *  <li>7: Burst;
+     *  <li>8: Thor;
+     *  <li>9+: Unknown, use at own risk.
+     * </ul>
+     * @param weaponLevel Level of weapon (0-3)
+     * <ul>
+     *  <li>0: L1;
+     *  <li>1: L2;
+     *  <li>2: L3;
+     *  <li>3: L4.
+     * </ul>
      * @param bouncing True for a bouncing effect
      * @param isEMP True if weapon causes EMP damage
      * @param isBomb True if weapon is a bomb
-     * @param shrap Amount of shrap (0-15)
-     * @param alternate Unknown
+     * @param shrap Amount of shrap (0-31)
+     * @param alternate Bombs -> Mines, Bullets -> Multifire
      * @return An int bitvector representing the weapon specified
+     * @deprecated Seems the fields were invalid. On top of that, it is a rather over-elaborate implementation.
+     * Use {@link #getWeaponNumber(byte, byte, boolean, byte, byte, boolean)} instead.
      */
+    @Deprecated
     public int getWeaponNumber(byte weaponType, byte weaponLevel, boolean bouncing, boolean isEMP, boolean isBomb, byte shrap, boolean alternate)
     {
     	BitSet bits = new BitSet(16);
@@ -501,6 +522,69 @@ public final class Ship extends Thread {
 
     	return total;
     }
+    
+    /**
+     * Returns a weapon number as used by the SS protocol based on information provided.
+     * <p>
+     * Programmer's comment: Yes, this function can be done in a single line, all behind the return,
+     * however, to make it more clear how the structure works, I've chosen to break it down into several
+     * lines of code. CPU-wise it will probably make close to no difference in cycles.
+     * @param weaponType Type of weapon (0-31)
+     * <ul>
+     *  <li>0: None;
+     *  <li>1: Bullet;
+     *  <li>2: Bouncing bullet;
+     *  <li>3: Bomb;
+     *  <li>4: Proximity bomb;
+     *  <li>5: Repel;
+     *  <li>6: Decoy;
+     *  <li>7: Burst;
+     *  <li>8: Thor;
+     *  <li>9+: Unknown, use at own risk. (Seems to be a normal-ish bullet.)
+     * </ul>
+     * @param weaponLevel Level of weapon (0-3)
+     * <ul>
+     *  <li>0: L1;
+     *  <li>1: L2;
+     *  <li>2: L3;
+     *  <li>3: L4.
+     * </ul>
+     * @param shrapBouncing True if you want the shrapnel to bounce. (Seems to be chance based, when enabled.)
+     * @param shrapLevel (0-3)
+     * <ul>
+     *  <li>0: L1;
+     *  <li>1: L2;
+     *  <li>2: L3;
+     *  <li>3: L4;
+     * </ul>
+     * @param shrapAmount Amount of shrap (0-31)
+     * @param alternate Bombs -> Mines, Bullets -> Multifire
+     * @return An int bitvector representing the weapon specified
+     */
+    public int getWeaponNumber(byte weaponType, byte weaponLevel, boolean shrapBouncing, byte shrapLevel, byte shrapAmount, boolean alternate)
+    {
+        int result = 0;
+        
+        // Bit 0 ~ 4: Weapon type
+        result |= (weaponType & 0x1F);
+        
+        // Bit 5 ~ 6: Weapon level
+        result |= ((weaponLevel & 0x03) << 5);
+        
+        // Bit 7: Bouncing shrap
+        result |= ((shrapBouncing ? 1 : 0) << 7);
+        
+        // Bit 8 ~ 9: Shrap level
+        result |= ((shrapLevel & 0x03) << 8);
+        
+        // Bit 10 ~ 14: Shrap amount
+        result |= ((shrapAmount & 0x1F) << 10);
+        
+        // Bit 15: Alternate firing mode
+        result |= ((alternate ? 1 : 0) << 15);
+        
+        return result;
+    }   
 
     /**
      * @return Time in ms since last position update (regardless of packet sent or not)
