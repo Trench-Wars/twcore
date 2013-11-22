@@ -498,6 +498,10 @@ public class GamePacketInterpreter {
                     i += size + 1;
                 }
                 break;
+            case 0x10:
+                // 0x10: Continuum Encryption Response. Unhandled
+                Tools.printConnectionLog("RECV BI : (0x10) Continuum Encryption Response (" + m_session.getBotName() + ")");
+                break;
              default:
                  Tools.printLog("Received unknown packet 0x"+(index<10?"0":"")+index);
                  break;
@@ -982,6 +986,13 @@ public class GamePacketInterpreter {
 
         if( m_requester.check( EventRequester.FREQUENCY_SHIP_CHANGE )){
             m_subspaceBot.handleEvent( update );
+        }
+        
+        // Update the internally set ship of the bot, if this packet is about him.
+        if( m_arenaTracker.getPlayerID(m_playerName) == update.getPlayerID()  &&
+                m_session.getShip().getShip() != update.getShipTypeRaw() ) {
+            System.out.println("Received personal ship update: " + m_session.getShip().getShip() + " -> " + update.getShipTypeRaw());
+            m_session.getShip().setShip( update.getShipTypeRaw() );
         }
     }
 
