@@ -137,7 +137,7 @@ public class utiletc extends MultiUtil {
                 setShip( message );
             } else if( cmd.startsWith( "!setbotfreq" )) {
                 setFreq( message );
-            } else if( cmd.startsWith( "!fire" ) ) {
+            } else if( cmd.equals( "!fire" ) ) {
                 fire = !fire;
             } else if( cmd.startsWith( "!shoot" ) ) {
                 shoot( message );
