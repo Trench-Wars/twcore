@@ -5,6 +5,7 @@ import java.io.IOException;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
+import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
@@ -23,6 +24,8 @@ public class cleverbot extends SubspaceBot
 	//Requests all of the events from the core
     private EventRequester events;
     
+    OperatorList opList;
+    
     //Main chatterBotSession instance.
     private ChatterBotSession mainSession;
     
@@ -38,6 +41,7 @@ public class cleverbot extends SubspaceBot
 		super(botAction);
         events = m_botAction.getEventRequester();
         events.request(EventRequester.MESSAGE);
+        opList = m_botAction.getOperatorList();
         
 	}
 	
@@ -70,6 +74,11 @@ public class cleverbot extends SubspaceBot
     
     public void handleEvent(Message event)
     {
+    	if(event.getMessage().contains("!die") && opList.isModerator(event.getMessager()))
+    	{
+    		m_botAction.die(event.getMessager() + " executed !die");
+    		return;
+    	}
     	//If it's either private or chat-recieved message.
     	if(event.getMessageType() != Message.CHAT_MESSAGE && event.getMessageType() != Message.PRIVATE_MESSAGE)
     	{
