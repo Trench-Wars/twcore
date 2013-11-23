@@ -16,7 +16,8 @@ import com.google.code.chatterbotapi.ChatterBotSession;
 import com.google.code.chatterbotapi.ChatterBotType;
 
 /**
- * The best way to waste my time. Simple cleverbot.
+ * Cleverbot is a bot designed to link player messaging to the CleverBot API to work
+ * as a medium to the cleverbot service.
  * @author JabJabJab
  *
  */
@@ -30,6 +31,8 @@ public class cleverbot extends SubspaceBot
 	
 	//Requests all of the events from the core
     private EventRequester events;
+    
+    private ChatterBotSession mainSession;
     
     //Object factory for Cleverbot.
     ChatterBotFactory factory;
@@ -45,9 +48,8 @@ public class cleverbot extends SubspaceBot
         events.request(EventRequester.PLAYER_ENTERED);
         events.request(EventRequester.MESSAGE);
         
-        //Create our hashmaps.
-        mapSessions = new HashMap<String, ChatterBotSession>();
-        mapSessionTime = new HashMap<String, Long>();
+        //Creates our main session.
+        mainSession = cleverBot.createSession();
         
 	}
 	
@@ -77,23 +79,37 @@ public class cleverbot extends SubspaceBot
     
     public void handleEvent(Message event)
     {
+    	//If it's either private or chat-recieved message.
     	if(event.getMessageType() != Message.CHAT_MESSAGE && event.getMessageType() != Message.PRIVATE_MESSAGE)
     	{
     		return;
     	}
     	
+    	//if the message is null.
     	if(event.getMessage() == null)
     	{
     		return;
     	}
-    	if(event.getMessage().isEmpty())
+
+    	//Grabs the user's name.
+    	String messenger = event.getMessager();
+    	
+    	if(messenger == null)
     	{
-    		return;
+    		short playerID = event.getPlayerID();
+    		messenger = m_botAction.getPlayerName(playerID);
     	}
     	
-    	long currentTime = System.currentTimeMillis();
-    	for(String player : mapSessions.keySet())
+    	//if someone sends a blank message
+    	if(event.getMessage().isEmpty()) 
     	{
+<<<<<<< .mine
+    		if(event.getMessage().contains("!help") && event.getMessageType() == Message.PRIVATE_MESSAGE)
+	    	{
+	    		m_botAction.sendSmartPrivateMessage(messenger,"Hi, I'm Cleverbot! If you want to use me, either PM me a message, or use ?chat=Cleverbot and type a message there. I'll surely enjoy your company there. :)");
+	    	}
+    	 return;
+=======
     		long recordedTime = mapSessionTime.get(player);
     		if(recordedTime != 0L)
     		{
@@ -102,36 +118,36 @@ public class cleverbot extends SubspaceBot
     				mapSessions.remove(player);
     			}
     		}
+>>>>>>> .r8085
     	}
-    	String messenger = event.getMessager();
-    	short playerID = event.getPlayerID();
-    	if(messenger == null)
-    	{
-    		messenger = m_botAction.getPlayerName(playerID);
-    	}
-		ChatterBotSession session = mapSessions.get(messenger);
-		if(session == null)
-		{
-			session = cleverBot.createSession();
-			mapSessions.put(messenger, session);
-		}
-		mapSessionTime.put(messenger, currentTime);
+    	
+    	//String to pass back to player.
         String cleverBotResponse = null;
-		try 
+		
+        //executes the cleverbot api to respond to statement.
+        try 
 		{
-			cleverBotResponse = session.think(event.getMessage());
+			cleverBotResponse = mainSession.think(event.getMessage());
 		}
 		catch (Exception e) 
 		{
+<<<<<<< .mine
+			Tools.printStackTrace(e);
+=======
 		    Tools.printStackTrace(e);
+>>>>>>> .r8085
 		}
 		if(cleverBotResponse != null)
 		{
+			//Chat message response.
 			String chatMessageResponse = "(To " + messenger + ") ";
+			
+			//Returns message through chat system.
 			if(event.getMessageType() == Message.CHAT_MESSAGE)
 			{					
 				m_botAction.sendChatMessage(chatMessageResponse + cleverBotResponse);
 			}
+			//Returns message through privsate messaging.
 			else if(event.getMessageType() == Message.PRIVATE_MESSAGE)
 			{
 				m_botAction.sendSmartPrivateMessage(messenger, cleverBotResponse);
