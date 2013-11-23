@@ -116,16 +116,12 @@ public class cleverbot extends SubspaceBot
 		{
 			if(e instanceof IOException)
 			{
-				if(event.getMessageType() == Message.CHAT_MESSAGE)
-				{
-					m_botAction.sendChatMessage(chatMessageResponse + "lol");
-				}
-				else
-				{
-					m_botAction.sendSmartPrivateMessage(messenger, "lol");
-				}
+				cleverBotResponse = "lol";
 			}
-			Tools.printStackTrace(e);
+			else
+			{				
+				Tools.printStackTrace(e);
+			}
 		}
 		if(cleverBotResponse != null)
 		{
