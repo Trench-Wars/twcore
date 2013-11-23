@@ -116,7 +116,42 @@ public class cleverbot extends SubspaceBot
 		{
 			if(e instanceof IOException)
 			{
-				cleverBotResponse = "lol";
+				try 
+				{
+					
+					Thread.sleep(Tools.TimeInMillis.SECOND);
+				}
+				catch (InterruptedException e2) 
+				{
+					Tools.printStackTrace(e2);
+				}
+				for(byte x = 0; x < 3; x++)
+				{
+					try 
+					{
+						cleverBotResponse = mainSession.think(event.getMessage());
+					} 
+					catch (Exception e1) 
+					{
+						try 
+						{
+							Thread.sleep(Tools.TimeInMillis.SECOND);
+						}
+						catch (InterruptedException e2) 
+						{
+							Tools.printStackTrace(e2);
+						}
+						continue;
+					}
+					if(cleverBotResponse != null)
+					{
+						break;
+					}
+				}
+				if(cleverBotResponse == null)
+				{					
+					cleverBotResponse = "lol";
+				}
 			}
 			else
 			{				
