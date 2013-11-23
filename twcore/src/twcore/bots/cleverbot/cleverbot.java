@@ -1,8 +1,6 @@
 package twcore.bots.cleverbot;
 
-import java.util.HashMap;
-
-import javax.management.timer.Timer;
+import java.io.IOException;
 
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -22,15 +20,10 @@ import com.google.code.chatterbotapi.*;
  */
 public class cleverbot extends SubspaceBot 
 {
-	//HashMap to store session objects created by our cleverbot.
-	private HashMap<String,ChatterBotSession> mapSessions;
-	
-	//HashMap to store session time to end inactive sessions.
-	private HashMap<String,Long> mapSessionTime;
-	
 	//Requests all of the events from the core
     private EventRequester events;
     
+    //Main chatterBotSession instance.
     private ChatterBotSession mainSession;
     
     //Object factory for Cleverbot.
@@ -44,7 +37,6 @@ public class cleverbot extends SubspaceBot
 		//TWCore stuff.
 		super(botAction);
         events = m_botAction.getEventRequester();
-        events.request(EventRequester.PLAYER_ENTERED);
         events.request(EventRequester.MESSAGE);
         
 	}
@@ -112,6 +104,9 @@ public class cleverbot extends SubspaceBot
     	//String to pass back to player.
         String cleverBotResponse = null;
 		
+        //Chat message response.
+		String chatMessageResponse = "(To " + messenger + ") ";
+		
         //executes the cleverbot api to respond to statement.
         try 
 		{
@@ -119,13 +114,21 @@ public class cleverbot extends SubspaceBot
 		}
 		catch (Exception e) 
 		{
+			if(e instanceof IOException)
+			{
+				if(event.getMessageType() == Message.CHAT_MESSAGE)
+				{
+					m_botAction.sendChatMessage(chatMessageResponse + "lol");
+				}
+				else
+				{
+					m_botAction.sendSmartPrivateMessage(messenger, "lol");
+				}
+			}
 			Tools.printStackTrace(e);
 		}
 		if(cleverBotResponse != null)
 		{
-			//Chat message response.
-			String chatMessageResponse = "(To " + messenger + ") ";
-			
 			//Returns message through chat system.
 			if(event.getMessageType() == Message.CHAT_MESSAGE)
 			{					
