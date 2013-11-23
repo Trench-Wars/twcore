@@ -2,6 +2,8 @@ package twcore.bots.cleverbot;
 
 import java.util.HashMap;
 
+import javax.management.timer.Timer;
+
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
@@ -10,10 +12,7 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
-import com.google.code.chatterbotapi.ChatterBot;
-import com.google.code.chatterbotapi.ChatterBotFactory;
-import com.google.code.chatterbotapi.ChatterBotSession;
-import com.google.code.chatterbotapi.ChatterBotType;
+import com.google.code.chatterbotapi.*;
 
 /**
  * Cleverbot is a bot designed to link player messaging to the CleverBot API to work
@@ -48,9 +47,6 @@ public class cleverbot extends SubspaceBot
         events.request(EventRequester.PLAYER_ENTERED);
         events.request(EventRequester.MESSAGE);
         
-        //Creates our main session.
-        mainSession = cleverBot.createSession();
-        
 	}
 	
     public void handleEvent(LoggedOn event)
@@ -71,10 +67,13 @@ public class cleverbot extends SubspaceBot
 		}
 		catch (Exception e) 
 		{
-			Tools.printStackTrace(e);
+			e.printStackTrace();
 		}
 		//Sets the bot to the chat channel for chat use.
         m_botAction.sendUnfilteredPublicMessage("?chat=CleverBot");
+        
+        //Creates our main session.
+        mainSession = cleverBot.createSession();
     }
     
     public void handleEvent(Message event)
@@ -103,22 +102,11 @@ public class cleverbot extends SubspaceBot
     	//if someone sends a blank message
     	if(event.getMessage().isEmpty()) 
     	{
-<<<<<<< .mine
     		if(event.getMessage().contains("!help") && event.getMessageType() == Message.PRIVATE_MESSAGE)
 	    	{
 	    		m_botAction.sendSmartPrivateMessage(messenger,"Hi, I'm Cleverbot! If you want to use me, either PM me a message, or use ?chat=Cleverbot and type a message there. I'll surely enjoy your company there. :)");
 	    	}
     	 return;
-=======
-    		long recordedTime = mapSessionTime.get(player);
-    		if(recordedTime != 0L)
-    		{
-    			if((currentTime - recordedTime) > Tools.TimeInMillis.MINUTE * 10)
-    			{
-    				mapSessions.remove(player);
-    			}
-    		}
->>>>>>> .r8085
     	}
     	
     	//String to pass back to player.
@@ -131,11 +119,7 @@ public class cleverbot extends SubspaceBot
 		}
 		catch (Exception e) 
 		{
-<<<<<<< .mine
 			Tools.printStackTrace(e);
-=======
-		    Tools.printStackTrace(e);
->>>>>>> .r8085
 		}
 		if(cleverBotResponse != null)
 		{
