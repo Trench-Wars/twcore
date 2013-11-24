@@ -479,7 +479,7 @@ public class bwjsbot extends SubspaceBot {
                 cmd_off(name);
             } else if (cmd.startsWith("!forcenp ")) {
                 cmd_forcenp(name, cmd);
-            } else if (cmd.startsWith("!setcaptain")) {
+            } else if (cmd.startsWith("!setcaptain") || cmd.startsWith("!sc")) {
                 cmd_setCaptain(name, cmd, override);
             } else if (cmd.startsWith("!t1") || cmd.startsWith("!t2")) {
                 cmd_overrideCmd(name, cmd);
@@ -937,7 +937,7 @@ public class bwjsbot extends SubspaceBot {
             }
             help.add("!forcenp <player>                 -- Sets <player> to !notplaying");
             if (state.getCurrentState() > BWJSState.OFF) {
-                help.add("!setcaptain <# freq>:<player>     -- Sets <player> as captain for <# freq>");
+                help.add("!setcaptain <# freq>:<player>     -- Sets <player> as captain for <# freq> (short: !sc)");
                 help.add("-- Prepend your command with !t1- for 'Freq 0', !t2- for 'Freq 1' --");
                 if ( state.getCurrentState() >= BWJSState.ADDING_PLAYERS) {
                     help.add("!add <player>             -- Adds player");
@@ -954,7 +954,7 @@ public class bwjsbot extends SubspaceBot {
                         help.add("!switch <player>:<player> -- Exchanges the ship of both players");
                     }
                 }
-                help.add("!setcaptain <player>      -- Sets <player> to captain");
+                help.add("!setcaptain <player>      -- Sets <player> to captain (short: !sc)");
                 help.add("!removecap                -- Removes the cap of team !t#");
             }
         }
@@ -1391,19 +1391,21 @@ public class bwjsbot extends SubspaceBot {
         Player p;
         String[] splitCmd;
         
-        /* Alter command if overriden */
-        if (override != -1) {
-            cmd = "!setcaptain " + override + ":" + cmd.substring(11).trim();
-        }
-        
         if (state.getCurrentState() > BWJSState.OFF && state.getCurrentState() < BWJSState.GAME_OVER) {
-            cmd = cmd.substring(11).trim(); //Cut of !setcaptain part
-            
-            /* Check command syntax */
-            if (cmd.isEmpty()) {
+            //Separate the command from its arguments if applicable.
+            if(!cmd.isEmpty() && cmd.contains(" ")) {
+                int index = cmd.indexOf(" ");
+                if(cmd.length() > ++index)
+                    cmd = cmd.substring(index).trim();
+            } else {
                 m_botAction.sendPrivateMessage(name, "Error: please specify a player, " +
-                    "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
-                return;
+                        "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
+                    return;                
+            }
+            
+            /* Alter command if overriden */
+            if (override != -1) {
+                cmd = override + ":" + cmd;
             }
             
             splitCmd = cmd.split(":"); //Split parameters
