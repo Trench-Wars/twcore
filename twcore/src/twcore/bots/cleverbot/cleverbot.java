@@ -63,7 +63,7 @@ public class cleverbot extends SubspaceBot
 		}
 		catch (Exception e) 
 		{
-			e.printStackTrace();
+			Tools.printStackTrace(e);
 		}
 		//Sets the bot to the chat channel for chat use.
         m_botAction.sendUnfilteredPublicMessage("?chat=CleverBot");
@@ -74,40 +74,39 @@ public class cleverbot extends SubspaceBot
     
     public void handleEvent(Message event)
     {
-    	if(event.getMessage().contains("!die") && opList.isModerator(event.getMessager()))
+        //if the message is null.
+        if(event.getMessage() == null)
+        {
+            return;
+        }
+
+        //If it's either private or chat-recieved message.
+        if(event.getMessageType() != Message.CHAT_MESSAGE && event.getMessageType() != Message.PRIVATE_MESSAGE)
+        {
+            return;
+        }
+        
+        //Grabs the user's name.
+        String messenger = event.getMessager();
+        
+        if(messenger == null)
+        {
+            short playerID = event.getPlayerID();
+            messenger = m_botAction.getPlayerName(playerID);
+        }
+        
+    	if(event.getMessage().contains("!die") && opList.isModerator(messenger))
     	{
     		m_botAction.die(event.getMessager() + " executed !die");
     		return;
     	}
-    	//If it's either private or chat-recieved message.
-    	if(event.getMessageType() != Message.CHAT_MESSAGE && event.getMessageType() != Message.PRIVATE_MESSAGE)
-    	{
-    		return;
-    	}
-    	
-    	//if the message is null.
-    	if(event.getMessage() == null)
-    	{
-    		return;
-    	}
 
-    	//Grabs the user's name.
-    	String messenger = event.getMessager();
-    	
-    	if(messenger == null)
-    	{
-    		short playerID = event.getPlayerID();
-    		messenger = m_botAction.getPlayerName(playerID);
-    	}
-    	
     	//if someone sends a blank message
-    	if(event.getMessage().isEmpty()) 
+    	if(event.getMessage().isEmpty() || 
+    	        (event.getMessage().contains("!help") && event.getMessageType() == Message.PRIVATE_MESSAGE) ) 
     	{
-    		if(event.getMessage().contains("!help") && event.getMessageType() == Message.PRIVATE_MESSAGE)
-	    	{
-	    		m_botAction.sendSmartPrivateMessage(messenger,"Hi, I'm Cleverbot! If you want to use me, either PM me a message, or use ?chat=Cleverbot and type a message there. I'll surely enjoy your company there. :)");
-	    	}
-    	 return;
+    		m_botAction.sendSmartPrivateMessage(messenger,"Hi, I'm Cleverbot! If you want to use me, either PM me a message, or use ?chat=Cleverbot and type a message there. I'll surely enjoy your company there. :)");
+    		return;
     	}
     	
     	//String to pass back to player.
