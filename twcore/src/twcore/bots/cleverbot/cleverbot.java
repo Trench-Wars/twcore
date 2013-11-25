@@ -97,7 +97,7 @@ public class cleverbot extends SubspaceBot
         
     	if(event.getMessage().contains("!die") && opList.isModerator(messenger))
     	{
-    		m_botAction.die(event.getMessager() + " executed !die");
+    		m_botAction.die(messenger + " executed !die");
     		return;
     	}
 
