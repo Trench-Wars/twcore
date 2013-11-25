@@ -95,15 +95,17 @@ public class cleverbot extends SubspaceBot
             messenger = m_botAction.getPlayerName(playerID);
         }
         
-    	if(event.getMessage().startsWith("!die") && opList.isModerator(messenger))
+    	if(event.getMessageType() == Message.PRIVATE_MESSAGE
+    	        && event.getMessage().startsWith("!die")
+    	        && opList.isModerator(messenger))
     	{
     		m_botAction.die(messenger + " executed !die");
     		return;
     	}
 
     	//if someone sends a blank message
-    	if(event.getMessage().isEmpty() || 
-    	        (event.getMessage().contains("!help") && event.getMessageType() == Message.PRIVATE_MESSAGE) ) 
+    	if(event.getMessage().isEmpty()
+    	        || (event.getMessage().contains("!help") && event.getMessageType() == Message.PRIVATE_MESSAGE) ) 
     	{
     		m_botAction.sendSmartPrivateMessage(messenger,"Hi, I'm Cleverbot! If you want to use me, either PM me a message, or use ?chat=Cleverbot and type a message there. I'll surely enjoy your company there. :)");
     		return;
