@@ -840,7 +840,7 @@ public class HubBot extends SubspaceBot {
 	    	}
 	    	if(operatorList.isHighmod(messager) && !operatorList.isSysop(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !waitinglist !listbots !bottypes");
-	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !removetype");
+	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype !shutdowncore");
 	    	}
 	    	if(operatorList.isSysop(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots !bottypes");
@@ -928,6 +928,8 @@ public class HubBot extends SubspaceBot {
 	    	// !removetype
 	    	else if (argument.equalsIgnoreCase("removetype")) {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Forces a removal of all bots of the specified type from the zone and resets the bot's count.");
+	    		m_botAction.sendSmartPrivateMessage( messager , "WARNING: Do not use this command on types which have high amounts online, as this may");
+	    		m_botAction.sendSmartPrivateMessage( messager , "disconnect the core. Examples of forbidden types: pubbot, matchbot, etc.");
 	    		m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.HIGHMOD_LEVEL));
 	    		m_botAction.sendSmartPrivateMessage( messager , " !removetype <bottype>");
 	    	}
