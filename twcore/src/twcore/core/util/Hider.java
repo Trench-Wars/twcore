@@ -128,7 +128,9 @@ public class Hider {
     public void updateDB() {
         while (!update.isEmpty()) {
             String n = update.remove(0);
-            ba.SQLBackgroundQuery(db, null, "INSERT INTO tblAlias (fnUserID, ");
+            //XXX: Badly formed query, does nothing. I'm afraid to make it work properly
+            //because I know nothing about this system.
+            //ba.SQLBackgroundQuery(db, null, "INSERT INTO tblAlias (fnUserID, ");
         }
     }
     
