@@ -159,28 +159,28 @@ public class multibot extends SubspaceBot {
 	            }
 	        }
         }else if(isER && message.startsWith("!") && (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE))
-        	m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive " + Tools.staffName(m_accessLevel) + " use.");
-        
-	        // In Follow mode: decipher *locate report and change to arena
-	        if( (m_followEnabled || m_doCome) && messageType == Message.ARENA_MESSAGE && !m_isLocked ) {
-	            if( message.startsWith(m_owner + " - ") ) {
-	                try {
-	                    String arena = message.substring( message.indexOf("- ") + 2 );
-	                    if( arena.equalsIgnoreCase( m_botAction.getArenaName()) ) {
-	                        m_botAction.sendSmartPrivateMessage(m_owner, "I'm already here." );
-	                        m_doCome = false;
-	                        return;
-	                    } else if( isPublicArena(arena) && m_accessLevel < OperatorList.SYSOP_LEVEL ) {
-	                        m_botAction.sendSmartPrivateMessage(m_owner, "Sorry, I can't go to public arenas." );
-	                        m_doCome = false;
-	                        return;
-	                    }
-	                    m_botAction.changeArena( arena );
-	                    m_doCome = false;
-	                } catch (Exception e) {
-	                }
-	            }
-	        }
+            m_botAction.sendSmartPrivateMessage( sender, "This bot is currently locked for exclusive " + Tools.staffName(m_accessLevel) + " use.");
+
+        // In Follow mode: decipher *locate report and change to arena
+        if( (m_followEnabled || m_doCome) && messageType == Message.ARENA_MESSAGE && !m_isLocked ) {
+            if( message.startsWith(m_owner + " - ") ) {
+                try {
+                    String arena = message.substring( message.indexOf("- ") + 2 );
+                    if( arena.equalsIgnoreCase( m_botAction.getArenaName()) ) {
+                        m_botAction.sendSmartPrivateMessage(m_owner, "I'm already here." );
+                        m_doCome = false;
+                        return;
+                    } else if( isPublicArena(arena) && m_accessLevel < OperatorList.SYSOP_LEVEL ) {
+                        m_botAction.sendSmartPrivateMessage(m_owner, "Sorry, I can't go to public arenas." );
+                        m_doCome = false;
+                        return;
+                    }
+                    m_botAction.changeArena( arena );
+                    m_doCome = false;
+                } catch (Exception e) {
+                }
+            }
+        }
 
         if( !foundCmd )
             handleEvent((SubspaceEvent) event);
