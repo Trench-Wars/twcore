@@ -15,6 +15,15 @@ import twcore.core.util.Tools;
 /**
  * Generates packets that correspond to the Subspace / Continuum protocol, and
  * requests to encrypt and send them out to the SS server.
+ * 
+ * 
+ * XXX: Connection logging of frequently-sent packets commented out rather than
+ * disabled in Tools, because each packet created requires a new String object
+ * to be constructed, and a method called. Normally not a big issue, this
+ * becomes costly when done often, which is the case.
+ * 
+ * Uncomment to use the connection logging feature. If you're editing GPG you
+ * shouldn't need to be told this anyhow. :)
  */
 public class GamePacketGenerator {
 
@@ -327,7 +336,7 @@ public class GamePacketGenerator {
      */
     public void sendClientKey( int clientKey ){
         
-        Tools.printConnectionLog("SEND BI : (0x01) Encryption Request");
+        //Tools.printConnectionLog("SEND BI : (0x01) Encryption Request");
 
         ByteArray      bytearray = new ByteArray( 8 );
 
@@ -348,7 +357,7 @@ public class GamePacketGenerator {
      */
     public void sendSyncPacket( int numPacketsSent, int numPacketsReceived ){
         
-        Tools.printConnectionLog("SEND BI : (0x05) Sync Request");
+        //Tools.printConnectionLog("SEND BI : (0x05) Sync Request");
 
         ByteArray      bytearray = new ByteArray( 14 );
 
@@ -370,7 +379,7 @@ public class GamePacketGenerator {
      */
     public void sendSyncResponse( int syncTime ){
         
-        Tools.printConnectionLog("SEND BI : (0x06) Sync Response");
+        //Tools.printConnectionLog("SEND BI : (0x06) Sync Response");
 
         ByteArray      bytearray = new ByteArray( 10 );
 
@@ -513,7 +522,7 @@ public class GamePacketGenerator {
      */
     public void sendAck( int ackID ){
         
-        Tools.printConnectionLog("SEND BI : (0x04) Reliable ACK");
+        //Tools.printConnectionLog("SEND BI : (0x04) Reliable ACK");
         
         ByteArray      bytearray = new ByteArray( 6 );
 
@@ -570,7 +579,7 @@ public class GamePacketGenerator {
     public void sendPositionPacket( byte direction, short xVelocity, short yPosition, byte toggle,
     short xPosition, short yVelocity, short bounty, short energy, short weapon ){
         
-        Tools.printConnectionLog("SEND    : (0x03) Position packet");
+        //Tools.printConnectionLog("SEND    : (0x03) Position packet");
 
         ByteArray      bytearray = new ByteArray( 22 );
 
@@ -604,7 +613,7 @@ public class GamePacketGenerator {
      */
     public void sendChatPacket( byte messageType, byte soundCode, short userID, String message ){
         
-        Tools.printConnectionLog("SEND    : (0x06) Chat message");
+        //Tools.printConnectionLog("SEND    : (0x06) Chat message");
         
     	if( message.length() > 243 )
     		message = message.substring(0, 242);		// (hack) Don't send more than SS can handle
@@ -633,7 +642,7 @@ public class GamePacketGenerator {
         ByteArray           tempMessage;
         boolean             done = false;
         
-        Tools.printConnectionLog("SEND BI : (0x0E) Cluster");
+        //Tools.printConnectionLog("SEND BI : (0x0E) Cluster");
 
         bytearray = new ByteArray( 500 );
         bytearray.addByte( 0x00 ); // Type byte (specifies bidirectional)
@@ -721,7 +730,7 @@ public class GamePacketGenerator {
      */
     public void sendSpectatePacket( short playerID ) {
         
-        Tools.printConnectionLog("SEND    : (0x08) Spectate player");
+        //Tools.printConnectionLog("SEND    : (0x08) Spectate player");
         
         ByteArray   bytearray = new ByteArray( 3 );
         bytearray.addByte( 0x08 );  // Type byte
@@ -741,7 +750,7 @@ public class GamePacketGenerator {
      */
     public void sendImmediateSpectatePacket( short playerID ) {
         
-        Tools.printConnectionLog("SEND IMM: (0x08) Spectate player");
+        //Tools.printConnectionLog("SEND IMM: (0x08) Spectate player");
         
         ByteArray   bytearray = new ByteArray( 3 );
         bytearray.addByte( 0x08 );  // Type byte
@@ -922,7 +931,7 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
      */
     public void sendMassiveChunkPacket( ByteArray data ){
         
-        Tools.printConnectionLog("SEND BI : (0x0A) HUGE Chunk");
+        //Tools.printConnectionLog("SEND BI : (0x0A) HUGE Chunk");
         
         int            i, totalSize, size;
         ByteArray      bytearray;
@@ -984,7 +993,9 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
         data.addLittleEndianShort( (short)playerID );
         data.addLittleEndianShort( (short)bounty );
 
-        composePacket( data );
+        // Sending reliably so that it's sent ASAP, and also confirmed, as
+        // bot death is triggered only by code, and is important.
+        sendReliableMessage( data );
     }
 
     /**
@@ -1069,7 +1080,7 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
      */
     public void sendLVZObjectCluster( int playerID ) {
         
-        Tools.printConnectionLog("SEND    : (0x0A) LVZ Object Cluster");
+        //Tools.printConnectionLog("SEND    : (0x0A) LVZ Object Cluster");
         
         if( playerID == -1 ) {
             if( m_lvzToggleCluster.size() > 0 ) {
@@ -1105,7 +1116,7 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
      */
     public void sendSingleLVZObjectToggle( int playerID, int objID, boolean objVisible ) {
         
-        Tools.printConnectionLog("SEND    : (0x0A) LVZ Object Toggle");
+        //Tools.printConnectionLog("SEND    : (0x0A) LVZ Object Toggle");
         
         ByteArray objPacket = new ByteArray( 6 );
         objPacket.addByte( 0x0A );  // Type byte
