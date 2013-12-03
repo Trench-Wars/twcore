@@ -26,14 +26,21 @@ public class cleverbot extends SubspaceBot
     
     OperatorList opList;
     
-    //Main chatterBotSession instance.
-    private ChatterBotSession mainSession;
-    
     //Object factory for Cleverbot.
     ChatterBotFactory factory;
 
     //Our Cleverbot instance.
     ChatterBot cleverBot;
+
+    //Main chatterBotSession instance.
+    private ChatterBotSession cleverBotSession,
+    						  jabberwackyBotSession,
+    						  pandoraBotSession;
+
+	private ChatterBot jabberwackyBot;
+
+	private ChatterBot pandoraBot;
+    
     
 	public cleverbot(BotAction botAction) 
 	{
@@ -60,6 +67,8 @@ public class cleverbot extends SubspaceBot
 		try 
 		{
 			cleverBot = factory.create(ChatterBotType.CLEVERBOT);
+			pandoraBot = factory.create(ChatterBotType.PANDORABOTS);
+			jabberwackyBot = factory.create(ChatterBotType.JABBERWACKY);
 		}
 		catch (Exception e) 
 		{
@@ -69,7 +78,9 @@ public class cleverbot extends SubspaceBot
         m_botAction.sendUnfilteredPublicMessage("?chat=CleverBot");
         
         //Creates our main session.
-        mainSession = cleverBot.createSession();
+        cleverBotSession = cleverBot.createSession();
+        jabberwackyBotSession = jabberwackyBot.createSession();
+        pandoraBotSession = pandoraBot.createSession();
     }
     
     public void handleEvent(Message event)
@@ -120,7 +131,7 @@ public class cleverbot extends SubspaceBot
         //executes the cleverbot api to respond to statement.
         try 
 		{
-			cleverBotResponse = mainSession.think(event.getMessage());
+			cleverBotResponse = cleverBotSession.think(event.getMessage());
 		}
 		catch (Exception e) 
 		{
@@ -139,7 +150,7 @@ public class cleverbot extends SubspaceBot
 				{
 					try 
 					{
-						cleverBotResponse = mainSession.think(event.getMessage());
+						cleverBotResponse = cleverBotSession.think(event.getMessage());
 					} 
 					catch (Exception e1) 
 					{
@@ -158,16 +169,114 @@ public class cleverbot extends SubspaceBot
 						break;
 					}
 				}
-				if(cleverBotResponse == null)
-				{					
-					cleverBotResponse = "lol";
-				}
 			}
 			else
 			{				
 				Tools.printStackTrace(e);
 			}
 		}
+        if(cleverBotResponse == null)
+        {
+            try 
+    		{
+    			cleverBotResponse = pandoraBotSession.think(event.getMessage());
+    		}
+    		catch (Exception e) 
+    		{
+    			if(e instanceof IOException)
+    			{
+    				try 
+    				{
+    					
+    					Thread.sleep(Tools.TimeInMillis.SECOND);
+    				}
+    				catch (InterruptedException e2) 
+    				{
+    					Tools.printStackTrace(e2);
+    				}
+    				for(byte x = 0; x < 3; x++)
+    				{
+    					try 
+    					{
+    						cleverBotResponse = pandoraBotSession.think(event.getMessage());
+    					} 
+    					catch (Exception e1) 
+    					{
+    						try 
+    						{
+    							Thread.sleep(Tools.TimeInMillis.SECOND);
+    						}
+    						catch (InterruptedException e2) 
+    						{
+    							Tools.printStackTrace(e2);
+    						}
+    						continue;
+    					}
+    					if(cleverBotResponse != null)
+    					{
+    						break;
+    					}
+    				}
+    			}
+    			else
+    			{				
+    				Tools.printStackTrace(e);
+    			}
+    		}
+        }
+        if(cleverBotResponse == null)
+        {
+            try 
+    		{
+    			cleverBotResponse = jabberwackyBotSession.think(event.getMessage());
+    		}
+    		catch (Exception e) 
+    		{
+    			if(e instanceof IOException)
+    			{
+    				try 
+    				{
+    					
+    					Thread.sleep(Tools.TimeInMillis.SECOND);
+    				}
+    				catch (InterruptedException e2) 
+    				{
+    					Tools.printStackTrace(e2);
+    				}
+    				for(byte x = 0; x < 3; x++)
+    				{
+    					try 
+    					{
+    						cleverBotResponse = jabberwackyBotSession.think(event.getMessage());
+    					} 
+    					catch (Exception e1) 
+    					{
+    						try 
+    						{
+    							Thread.sleep(Tools.TimeInMillis.SECOND);
+    						}
+    						catch (InterruptedException e2) 
+    						{
+    							Tools.printStackTrace(e2);
+    						}
+    						continue;
+    					}
+    					if(cleverBotResponse != null)
+    					{
+    						break;
+    					}
+    				}
+    			}
+    			else
+    			{				
+    				Tools.printStackTrace(e);
+    			}
+    		}
+        }
+        if(cleverBotResponse == null)
+        {
+        	cleverBotResponse = "Cleverbot is down.";
+        }
 		if(cleverBotResponse != null)
 		{
 			//Returns message through chat system.
