@@ -407,21 +407,21 @@ public class heli extends MultiModule {
         Ship s = m_botAction.getShip();
 
         if (c == '.')
-            return s.getWeaponNumber((byte) 3, (byte) 0, false, false, true, (byte) 8, true);
+            return s.getWeaponNumber((byte) 3, (byte) 0, false, (byte) 1, (byte) 8, true);
         if (c == '*')
-            return s.getWeaponNumber((byte) 3, (byte) 1, false, false, true, (byte) 8, true);
+            return s.getWeaponNumber((byte) 3, (byte) 1, false, (byte) 1, (byte) 8, true);
         if (c == '#')
-            return s.getWeaponNumber((byte) 3, (byte) 2, false, false, true, (byte) 8, true);
+            return s.getWeaponNumber((byte) 3, (byte) 2, false, (byte) 1, (byte) 8, true);
         if (c == '^')
-            return s.getWeaponNumber((byte) 3, (byte) 3, false, false, true, (byte) 8, true);
+            return s.getWeaponNumber((byte) 3, (byte) 3, false, (byte) 1, (byte) 8, true);
         if (c == '1')
-            return s.getWeaponNumber((byte) 4, (byte) 0, false, false, true, (byte) 8, true);
+            return s.getWeaponNumber((byte) 4, (byte) 0, false, (byte) 1, (byte) 8, true);
         if (c == '2')
-            return s.getWeaponNumber((byte) 4, (byte) 1, false, false, true, (byte) 8, true);
+            return s.getWeaponNumber((byte) 4, (byte) 1, false, (byte) 1, (byte) 8, true);
         if (c == '3')
-            return s.getWeaponNumber((byte) 4, (byte) 2, false, false, true, (byte) 8, true);
+            return s.getWeaponNumber((byte) 4, (byte) 2, false, (byte) 1, (byte) 8, true);
         if (c == '4')
-            return s.getWeaponNumber((byte) 4, (byte) 3, false, false, true, (byte) 8, true);
+            return s.getWeaponNumber((byte) 4, (byte) 3, false, (byte) 1, (byte) 8, true);
         return 0;
     }
 
