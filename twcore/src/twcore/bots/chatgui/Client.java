@@ -20,7 +20,6 @@ import javax.swing.JToolBar;
 
 import twcore.core.BotAction;
 import twcore.core.EventRequester;
-import twcore.core.Session;
 import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.ArenaList;
