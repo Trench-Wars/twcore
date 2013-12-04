@@ -378,6 +378,19 @@ public final class Ship extends Thread {
     }
 
     /**
+     * Updates ship type from 0-8.  0 is warbird, 8 being spectator.
+     * IMPORTANT: This should only be used in rare, specific cases to internally
+     * synchronize the shipType. This function does not actually send a ship change
+     * packet to the server. If your intent is to change the bot's ship, please use
+     * {@link #setShip(int)} instead. (Read: Never call upon this from inside a bot.)
+     * @param shipType Type of ship to set to (0-7 in-game, 8 spectator)
+     * @see #setShip(int)
+     */
+    public void updateShipInternal( int shipType ){
+        this.shipType = (short)shipType;
+    }
+    
+    /**
      * Sets the freq of the bot.
      * @param freq Freq to set to
      */

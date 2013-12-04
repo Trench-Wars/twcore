@@ -995,7 +995,7 @@ public class GamePacketInterpreter {
         // Update the internally set ship of the bot, if this packet is about him.
         if( m_arenaTracker.getPlayerID(m_playerName) == update.getPlayerID()  &&
                 m_session.getShip().getShip() != update.getShipTypeRaw() )
-            m_session.getShip().setShip( update.getShipTypeRaw() );
+            m_session.getShip().updateShipInternal( update.getShipTypeRaw() );
     }
 
     /**

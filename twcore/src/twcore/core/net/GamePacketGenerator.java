@@ -993,12 +993,9 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
         data.addLittleEndianShort( (short)playerID );
         data.addLittleEndianShort( (short)bounty );
 
-        /* 02Dec2013: Temporary disabled to track down a bug - Trancid
         // Sending reliably so that it's sent ASAP, and also confirmed, as
         // bot death is triggered only by code, and is important.
         sendReliableMessage( data );
-        */
-        composePacket(data);
     }
 
     /**
