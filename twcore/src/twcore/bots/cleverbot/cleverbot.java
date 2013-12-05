@@ -67,7 +67,7 @@ public class cleverbot extends SubspaceBot
 		try 
 		{
 			cleverBot = factory.create(ChatterBotType.CLEVERBOT);
-			pandoraBot = factory.create(ChatterBotType.PANDORABOTS);
+			pandoraBot = factory.create(ChatterBotType.PANDORABOTS, "b0dafd24ee35a477");
 			jabberwackyBot = factory.create(ChatterBotType.JABBERWACKY);
 		}
 		catch (Exception e) 
