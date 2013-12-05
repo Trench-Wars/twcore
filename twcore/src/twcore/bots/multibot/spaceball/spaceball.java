@@ -67,6 +67,8 @@ public class spaceball extends MultiModule {
 	int botVY = 0;
 
 	int botMass = 2200;
+	
+	int inertia = 100;
 
 	int winner;
 
@@ -103,7 +105,7 @@ public class spaceball extends MultiModule {
 	public String[] getModHelpMessage() {
 		String[] bleh = {
 				"+------------------------------------------------------------+",
-				"| SpaceBallBot v.0.96                         - author Sika  |",
+				"| SpaceBallBot v.0.97                         - author Sika  |",
 				"+------------------------------------------------------------+",
 				"| SpaceBall objectives:                                      |",
 				"|   Prevent the SpaceBall (bot) from reaching your planet's  |",
@@ -112,12 +114,15 @@ public class spaceball extends MultiModule {
 				"|   will malfunction!!                                       |",
 				"+------------------------------------------------------------+",
 				"| Commands:                                                  |",
-				"|   !help OR !about OR !rules     - Brings up this message   |",
-				"|   !return OR !lagout OR !play   - Get in the game          |",
+				"|   !help OR !about OR !rules    - Brings up this message    |",
+				"|   !return OR !lagout OR !play  - Get in the game           |",
 				"+------------------------------------------------------------+",
 				"| Host Commands:                                             |",
-				"|   !start                        - Starts/stops the event   |",
-				"|   !die                          - Kills the bot            |",
+				"|   !start                       - Starts/stops the event    |",
+                "|   !intertia <x>                - Sets inertia factor to x% |",
+                "|      This determines how much energy is transfered of the  |",
+                "|      projectile at maximum distance. (0~100%, def: 100%)   |",
+				"|   !die                         - Kills the bot             |",
 				"+------------------------------------------------------------+"
 				
 		};
@@ -171,14 +176,26 @@ public class spaceball extends MultiModule {
 			}
 		}
 
-		if (message.startsWith("!speed ")) {
+		if (message.startsWith("!speed ") && message.length() > 7) {
 			try{
 			BULLET_SPEED = Integer.parseInt(event.getMessage().substring(7));
 			}catch(NumberFormatException e){
 				m_botAction.sendSmartPrivateMessage(name, "Invalid speed!");
 			}
 		}
-		if (message.startsWith("!mass ")) {
+		if (message.startsWith("!inertia ") && message.length() > 9) {
+		    try {
+		        inertia = Integer.parseInt(event.getMessage().substring(9));
+		        if(inertia < 0)
+		            inertia = 0;
+		        else if(inertia > 100)
+		            inertia = 100;
+		        m_botAction.sendSmartPrivateMessage(name, "Inertia factor set to: " + inertia);
+		    } catch (NumberFormatException e) {
+		        m_botAction.sendSmartPrivateMessage(name, "Invalid inertia!");
+		    }
+		}
+		if (message.startsWith("!mass ") && message.length() > 6) {
 			try{
 			botMass = Integer.parseInt(event.getMessage().substring(6));
 			}catch(NumberFormatException e){
@@ -373,7 +390,7 @@ public class spaceball extends MultiModule {
 	public void handleHelp(String name) {
 		String[] out = {
 			"+------------------------------------------------------------+",
-			"| SpaceBallBot v.0.96                         - author Sika  |",
+			"| SpaceBallBot v.0.97                         - author Sika  |",
 			"+------------------------------------------------------------+",
 			"| SpaceBall objectives:                                      |",
 			"|   Prevent the SpaceBall (bot) from reaching your planet's  |",
@@ -382,8 +399,8 @@ public class spaceball extends MultiModule {
 			"|   will malfunction!!                                       |",
 			"+------------------------------------------------------------+",
 			"| Commands:                                                  |",
-			"|   !help OR !about OR !rules     - Brings up this message   |",
-			"|   !return OR !lagout OR !play   - Get in the game          |",
+			"|   !help OR !about OR !rules    - Brings up this message    |",
+			"|   !return OR !lagout OR !play  - Get in the game           |",
 			"+------------------------------------------------------------+"
 		};
 		m_botAction.privateMessageSpam(name, out);
@@ -391,8 +408,11 @@ public class spaceball extends MultiModule {
 		if (m_botAction.getOperatorList().isER(name)) {
 			String[] out2 = {
 				"| Host Commands:                                             |",
-				"|   !start                        - Starts/stops the event   |",
-				"|   !die                          - Kills the bot            |",
+				"|   !start                       - Starts/stops the event    |",
+				"|   !intertia <x>                - Sets inertia factor to x% |",
+				"|      This determines how much energy is transfered of the  |",
+				"|      projectile at maximum distance. (0~100%, def: 100%)   |",
+				"|   !die                         - Kills the bot             |",
 				"+------------------------------------------------------------+"
 			};
 			m_botAction.privateMessageSpam(name, out2);
@@ -740,8 +760,13 @@ public class spaceball extends MultiModule {
 		lBotX = bX;
 		lBotY = bY;
 
-		double nXV = (botVX * botMass + b.getXVelocity() * b.getMass()) / (botMass + b.getMass());
-		double nYV = (botVY * botMass + b.getYVelocity() * b.getMass()) / (botMass + b.getMass());
+		// Distance compensation.
+		// Original formula: factor = (d / dmax) ( 1 - inertia / 100)
+		// Remaining inertia factor = 1 - factor.
+		// Correction value, optimized for low amount of divisions: (100 * d + inertia * dmax - inertia * d) / (100 * dmax)
+		double factor = ( 100.0 * b.getAge() + (double) inertia * (5000.0 - b.getAge()) ) / (100.0 * 5000.0);
+		double nXV = (botVX * botMass + b.getXVelocity() * b.getMass() * factor) / (botMass + b.getMass());
+		double nYV = (botVY * botMass + b.getYVelocity() * b.getMass() * factor) / (botMass + b.getMass());
 		botVX = (int)nXV;
 		botVY = (int)nYV;
 	}
