@@ -274,7 +274,7 @@ public class utilstandard extends MultiUtil {
         while(it.hasNext()) {
             Player p = (Player)it.next();
             Ship s = m_botAction.getShip();
-            s.moveAndFire(p.getXLocation(), p.getYLocation(), s.getWeaponNumber((byte)4, (byte)2, false, false, true, (byte)8, false));
+            s.moveAndFire(p.getXLocation(), p.getYLocation(), s.getWeaponNumber((byte)4, (byte)2, false, (byte)1, (byte)8, false));
         }
         m_botAction.resetReliablePositionUpdating();
     }
