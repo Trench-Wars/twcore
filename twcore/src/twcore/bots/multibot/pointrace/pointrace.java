@@ -14,10 +14,11 @@ public class pointrace extends MultiModule {
 
     private PointTimer timer;
     private int[] points;
-    private BotAction ba = m_botAction;
+    private BotAction ba;
 
     @Override
     public void init() {
+        ba = m_botAction;
         points = new int[] {0, 0};
         timer = null;
     }
