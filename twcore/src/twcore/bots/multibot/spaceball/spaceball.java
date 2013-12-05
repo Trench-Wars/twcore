@@ -761,10 +761,10 @@ public class spaceball extends MultiModule {
 		lBotY = bY;
 
 		// Distance compensation.
-		// Original formula: factor = (d / dmax) ( 1 - inertia / 100)
+		// Original formula: factor = (1 - d / dmax) ( 1 - inertia / 100)
 		// Remaining inertia factor = 1 - factor.
 		// Correction value, optimized for low amount of divisions: (100 * d + inertia * dmax - inertia * d) / (100 * dmax)
-		double factor = ( 100.0 * b.getAge() + (double) inertia * (5000.0 - b.getAge()) ) / (100.0 * 5000.0);
+		double factor = ( 100.0 * (double) b.getAge() + (double) inertia * (5000.0 - (double) b.getAge()) ) / (100.0 * 5000.0);
 		double nXV = (botVX * botMass + b.getXVelocity() * b.getMass() * factor) / (botMass + b.getMass());
 		double nYV = (botVY * botMass + b.getYVelocity() * b.getMass() * factor) / (botMass + b.getMass());
 		botVX = (int)nXV;
