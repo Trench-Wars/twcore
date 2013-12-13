@@ -53,8 +53,8 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Shrap +What|Shrap, or shrapnel, are bullets that fly outwards from bomb explosions.  In public arenas, only the Javelin (Ship 2) and the Shark (Ship 8) are able to equip shrap.
 &Antiwarp +What|When activated, antiwarp prevents enemy ships in radar range from warping, attaching or laying portals.  Antiwarp does not work if you are in a safe zone and it drains some of your energy when used.  In public arenas, only the Spider (Ship 3) is able to equip antiwarp and it must be bought.
 &Antiwarp +How -Buy|To toggle antiwarp, press <Shift> and <End> together.  In public arenas, only the Spider (Ship 3) is able to equip antiwarp and it must be bought.
-&Buy +How|To see a list of items that are available for purchase, type ?buy.  To buy an item, type ?buy Item where <Item> is the item that you wish to buy.  Buying things deducts from your points.  In public arenas, items can only be bought in safe zones.
-&Buy +Where|In public arenas, items can only be bought in safe zones.
+&Buy +How|To see a list of items you can buy in the public arena, type :tw-p:!buy  This shows a list of items you can buy from TW-PubSystem anywhere in the arena. However, Leviathans and their Terriers have special restrictions on where they can buy (usually only in safe). 
+&Buy +Where|In public arenas, items can be bought anywhere in the arena from TW-PubSystem by typing :tw-p:!buy -- but Leviathans and their Terriers have special restrictions on where they can buy (usually only in safe).
 &Attach &How|To attach, select a person on the name list using the <Pg Up> and <Pg Dn> buttons then press <F7>.  Pressing <F7> while attached will make you detach.  In public arenas ships may only attach to the Terrier (Ship 5).
 &Detach &How|To detach, press <F7> when attached.
 &Boost &How|Hold on to shift when going forwards or backwards for a boost in speed.  Boosting takes up energy.
@@ -514,14 +514,15 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &JabJabJab &Who|JABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJABJAB
 &Griz &Who|Slacker extraordinaire.
 &Beam &Who|I LUV U ^___________^ <333333333
-&Who &Kane|Can you please calm down? Help is on the way.
-&Who &Lefty|All the time I turn around, brothers gather round!  Always lookin at me up and down look at my UHHHHHHHH!  I just want to say now I ain't tryin to round up drama, little mama!  I don't want to take your man!  And I know I'm comin off just a little bit concieted, and I keep repeating how the boys wanna eat it!  But I'm tryin to tell that I can't be treated like clientele!  Cause they say blow kisses that puts them boys on rock rock!  And they be lining down the block just to watch what I got!  Four!  Tres!  Two!  Uno!  So delicious!  So delicious!  So delicious!  I'm LEFTALICIOUS!
-&Who &Verm|.::sips tea::
-&Who &Gazo|#Yolo!
-&Who &Reckful|PINKPOWAH \o/
-&Who &Sheriff|For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life. -John 3:16
-&Who &Senorita|<3
-&Who &dsb|If you seriously need help with anything, follow me.. i know exactly what im doing!
+&Kane &Who|Can you please calm down? Help is on the way.
+&Lefty &Who|All the time I turn around, brothers gather round!  Always lookin at me up and down look at my UHHHHHHHH!  I just want to say now I ain't tryin to round up drama, little mama!  I don't want to take your man!  And I know I'm comin off just a little bit concieted, and I keep repeating how the boys wanna eat it!  But I'm tryin to tell that I can't be treated like clientele!  Cause they say blow kisses that puts them boys on rock rock!  And they be lining down the block just to watch what I got!  Four!  Tres!  Two!  Uno!  So delicious!  So delicious!  So delicious!  I'm LEFTALICIOUS!
+&Verm &Who|.::sips tea::
+&Gazo &Who|#Yolo!
+&Reckful &Who|PINKPOWAH \o/
+&Sheriff &Who|For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life. -John 3:16
+&Senorita &Who|<3
+&Kian &Who|Being a top player in Trench Wars, it will be my pleasure to show you how to become a better player yourself.
+&dsb &Who|If you seriously need help with anything, follow me.. i know exactly what im doing!
 
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
