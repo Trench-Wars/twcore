@@ -780,7 +780,7 @@ public class ArenaSettings {
      * Whether the flaggers appear on radar in red.
      * @return True when flaggers are marked in red on the radar, otherwise false.
      */
-    public boolean getFlaggerOnRadar() {
+    public boolean isFlaggerOnRadar() {
         return flaggerOnRadar;
     }
 
