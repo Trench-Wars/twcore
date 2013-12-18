@@ -1476,4 +1476,21 @@ public class GamePacketInterpreter {
             m_session.setSyncTime(m_arenaSettings.getS2CNoDataKickoutDelay());
         }
     }
+    
+    /**
+     * Arena settings getter.
+     * @return Current Arena Settings. May be null or outdated!
+     */
+    public ArenaSettings getArenaSettings() {
+        return m_arenaSettings;
+    }
+    
+    /**
+     * Map data getter.
+     * @return Current map data. May be null or outdated!
+     */
+    public LvlMap getMapData() {
+        return m_arenaMap;
+    }
+    
 }

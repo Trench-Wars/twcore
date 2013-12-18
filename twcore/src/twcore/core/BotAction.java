@@ -19,7 +19,9 @@ import java.util.Random;
 
 import twcore.core.command.TempSettingsManager;
 import twcore.core.game.Arena;
+import twcore.core.game.ArenaSettings;
 import twcore.core.game.Flag;
+import twcore.core.game.LvlMap;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
 import twcore.core.lvz.Objset;
@@ -3572,6 +3574,32 @@ public class BotAction
             botName = botName.substring(botName.lastIndexOf(".") + 1);
         }
         return m_botSession.getCoreData().getBotConfigFile(botName);        
+    }
+    
+    /**
+     * Gets a reference to the map data of the arena this bot currently resides in.
+     * This contains all the tile data that the arena is made out of.
+     * <p>
+     * <b>NOTE:</b> The map data may be null or outdated if requested too early. (For 
+     * example, when the bot is in the progress of switching to an arena, or when the 
+     * mapdata is being downloaded.) 
+     * @return Reference to map data, or null if not yet constructed.
+     */
+    public LvlMap getMapData() {
+        return m_botSession.getGamePacketInterpreter().getMapData();
+    }
+    
+    /**
+     * Gets a reference to the arena settings of the arena this bot currently resides in.
+     * This contains all the data that is stored in an arena's cfg file, as sent to a player.
+     * <p>
+     * <b>NOTE:</b> The arena settings may be null or outdated if requested too early. (For
+     * example, when the bot is in the progress of switching to an arena, or when the
+     * arena settings are still being downloaded.)
+     * @return
+     */
+    public ArenaSettings getArenaSettings() {
+        return m_botSession.getGamePacketInterpreter().getArenaSettings();
     }
 
     /**

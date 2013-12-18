@@ -43,6 +43,13 @@ public class LvlMap {
     private static final int TILE_MAX_Y = 0x400;            // Maximum amount of tiles vertically.
     private static final int TILE_MAX_LINEAR = 0x100000;    // Maximum amount of tiles when the array is linearized.
     
+    private static final byte SOLID     = 0x0;
+    private static final byte PERMEABLE = 0x1;
+    private static final byte DOOR      = 0x2;
+    private static final byte WORMHOLE  = 0x3;
+    private static final byte BRICK     = 0x4;
+    
+    
     /*
      * VIE tile constants.
      */
@@ -329,6 +336,86 @@ public class LvlMap {
     
     public boolean haveMap() {
         return gotMap;
+    }
+    
+    /**
+     * Gets the exact tile type that is located at the given coordinate.
+     * @param coordX X-coordinate.
+     * @param coordY Y-coordinate.
+     * @return A vie or ssb constant.
+     */
+    public int getTileInfo(int coordX, int coordY) {
+        return mapData.readByte(getLinear(coordX, coordY));
+    }
+    
+    /**
+     * Checks whether a given coordinate has a solid tile. Possible return types are:
+     * <ul>
+     *  <li>SOLID - Unpassable tile;
+     *  <li>PERMABLE - Passable tile;
+     *  <li>DOOR - Can be passable as well as unpassable;
+     *  <li>WORMHOLE - Passable in a way, but teleports the object;
+     *  <li>BRICK - Can be passable.
+     * </ul>
+     * @param coordX X-coordinate in tiles.
+     * @param coordY Y-coordinate in tiles.
+     * @return One of the constants listed above, PERMEABLE in the case of an error.
+     */
+    public byte isSolid(int coordX, int coordY) {
+        int tile = getTileInfo(coordX, coordY);
+        if((tile >= vieNormalStart && tile <= vieNormalEnd)
+                || (tile >= vieAsteroidStart && tile <= vieStation)) {
+            return SOLID;
+        } else if(tile == vieNoTile
+                || (tile >= vieFlyOverStart && tile <= vieFlyUnderEnd)
+                || (tile >= ssbTeamGoal && tile <= ssbPrize)) {
+            return PERMEABLE;
+        } else if(tile >= vieVDoorStart && tile <= vieHDoorEnd) {
+            return DOOR;
+        } else if(tile == vieWormhole) {
+            return WORMHOLE;
+        } else if(tile == ssbTeamBrick || tile == ssbEnemyBrick) {
+            return BRICK;
+        } else {
+            return PERMEABLE;
+        }
+    }
+    
+    /**
+     * Checks whether the given tile is a door.
+     * @param coordX X-coordinate in tiles.
+     * @param coordY Y-coordinate in tiles.
+     * @return True when the tile is a door.
+     */
+    public boolean isDoor(int coordX, int coordY) {
+        int tile = getTileInfo(coordX, coordY);
+        return (tile >= vieVDoorStart && tile <= vieHDoorEnd);
+    }
+    
+    /**
+     * Checks what kind of door the tile is.
+     * <ul>
+     *  <li> 0: Vertical door type 1;
+     *  <li> 1: Vertical door type 2;
+     *  <li> 2: Vertical door type 3;
+     *  <li> 3: Vertical door type 4;
+     *  <li> 4: Horizontal door type 1;
+     *  <li> 5: Horizontal door type 2;
+     *  <li> 6: Horizontal door type 3;
+     *  <li> 7: Horizontal door type 4;
+     *  <li>-1: Not a door.
+     * </ul>
+     * @param coordX X-coordinate in tiles.
+     * @param coordY Y-coordinate in tiles.
+     * @return One of the values in the list mentioned above.
+     */
+    public int getDoorType(int coordX, int coordY) {
+        int tile = getTileInfo(coordX, coordY);
+        if(tile >= vieVDoorStart && tile <= vieHDoorEnd) {
+            return tile - vieVDoorStart;
+        } else {
+            return -1;
+        }
     }
     
     /**
