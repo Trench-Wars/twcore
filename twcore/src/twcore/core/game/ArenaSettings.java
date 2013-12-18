@@ -92,7 +92,7 @@ public class ArenaSettings {
     private short           repelTime;                  // 1282     | Repel     | RepelTime                     |       |       |        16 | Time players are affected by the repel (in hundredths of a second)
     private short           repelDistance;              // 1284     | Repel     | RepelDistance                 |       |       |        16 | Number of pixels from the player that are affected by a repel.
     private short           helpTickerDelay;            // 1286     | Misc      | TickerDelay                   |       |       |        16 | Amount of time between ticker help messages.
-    private short           flaggerOnRadar;             // 1288     | Flag      | FlaggerOnRadar                |       |       |        16 | Whether the flaggers appear on radar in red 0=no 1=yes
+    private boolean         flaggerOnRadar;             // 1288     | Flag      | FlaggerOnRadar                |       |       |        16 | Whether the flaggers appear on radar in red 0=no 1=yes
     private short           flaggerKillMultiplier;      // 1290     | Flag      | FlaggerKillMultiplier         |       |       |        16 | Number of times more points are given to a flagger (1 = double points, 2 = triple points)
     private short           prizeFactor;                // 1292     | Prize     | PrizeFactor                   |       |       |        16 | Number of prizes hidden is based on number of players in game.  This number adjusts the formula, higher numbers mean more prizes. (*Note: 10000 is max, 10 greens per person)
     private short           prizeDelay;                 // 1294     | Prize     | PrizeDelay                    |       |       |        16 | How often prizes are regenerated (in hundredths of a second)
@@ -258,7 +258,7 @@ public class ArenaSettings {
         this.repelTime                  = data.readLittleEndianShort(1282);
         this.repelDistance              = data.readLittleEndianShort(1284);
         this.helpTickerDelay            = data.readLittleEndianShort(1286);
-        this.flaggerOnRadar             = data.readLittleEndianShort(1288);
+        this.flaggerOnRadar             = (data.readLittleEndianShort(1288) != 0);
         this.flaggerKillMultiplier      = data.readLittleEndianShort(1290);
         this.prizeFactor                = data.readLittleEndianShort(1292);
         this.prizeDelay                 = data.readLittleEndianShort(1294);
@@ -780,8 +780,8 @@ public class ArenaSettings {
      * Whether the flaggers appear on radar in red.
      * @return True when flaggers are marked in red on the radar, otherwise false.
      */
-    public int getFlaggerOnRadar() {
-        return (int) (flaggerOnRadar & MASK_UINT16);
+    public boolean getFlaggerOnRadar() {
+        return flaggerOnRadar;
     }
 
     /**
@@ -1084,8 +1084,8 @@ public class ArenaSettings {
      * Thrust adjustment for flaggers. Note that negative numbers will reduce their thrust.
      * @return Flagger thrust adjustment in an unknown unit. (Range: -128 to 128)
      */
-    public int getFlaggerThrustAdjustment() {
-        return (int) (flaggerThrustAdjustment & MASK_UINT16);
+    public short getFlaggerThrustAdjustment() {
+        return flaggerThrustAdjustment;
     }
 
     /**
@@ -1093,8 +1093,8 @@ public class ArenaSettings {
      * Speed adjustment for flaggers. Note that negative numbers will slow down flaggers.
      * @return Flagger speed adjustment in pixels per 10 seconds. (Range: -128 to 128). 
      */
-    public int getFlaggerSpeedAdjustment() {
-        return (int) (flaggerSpeedAdjustment & MASK_UINT16);
+    public short getFlaggerSpeedAdjustment() {
+        return flaggerSpeedAdjustment;
     }
 
     /**
