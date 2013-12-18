@@ -23,6 +23,8 @@ import twcore.core.util.Tools;
  */
 public class ArenaSettings {
     
+    // The following constants are used to make sure that values that need to be unsigned, are unsigned.
+    // To conserve memory, this conversion is done at runtime. Otherwise, the memory usage would be doubled.
     private static final short  MASK_UINT8  = 0xff;         // Conversion mask UINT8  -> short (INT16)
     private static final int    MASK_UINT16 = 0xffff;       // Conversion mask UINT16 -> int   (INT32)
     private static final long   MASK_UINT32 = 0xffffffff;   // Conversion mask UINT32 -> long  (INT64)
@@ -379,7 +381,7 @@ public class ArenaSettings {
     }
 
     /**
-     * Section of unknown data.
+     * Section of undocumented data.
      * @return pack0.
      */
     public byte[] getPack0() {
@@ -601,7 +603,7 @@ public class ArenaSettings {
     }
 
     /**
-     * Section of unknown data.
+     * Section of undocumented data.
      * @return UNKNOWN0
      */
     public byte[] getUNKNOWN0() {
@@ -1108,7 +1110,7 @@ public class ArenaSettings {
     }
 
     /**
-     * Section of unknown data.
+     * Section of undocumented data.
      * @return UNKNOWN1
      */
     public byte[] getUNKNOWN1() {
@@ -1365,8 +1367,8 @@ public class ArenaSettings {
     }
 
     /**
-     * Section of unknown data.
-     * @return UNKNOWN1
+     * Section of undocumented data.
+     * @return UNKNOWN2
      */
     public byte[] getUNKNOWN2() {
         return UNKNOWN2;
@@ -1433,6 +1435,12 @@ public class ArenaSettings {
 
     /**
      * This class logs all the ship related settings per ship type, obtained from the arena settings.
+     * <p>
+     * These settings determine the properties of each of the eight ships. These go in an arena's .cfg file
+     * for subgame and in arena.conf for ASSS. Ship names themselves can be changed with shipinfo.dat.
+     * <p>
+     * The various section tags, [Warbird] [Javelin] [Spider] [Leviathan] [Terrier] [Weasel] [Lancaster] [Shark],
+     * have been condensed into one tag [All], for documentation purposes.
      * <p>
      * Due to this being a port, I've tried to give credit where credit is due, by trying to keep most of the original
      * comments in tact. Full credit goes to the researchers for and creators of the MervBot.
@@ -1673,364 +1681,849 @@ public class ArenaSettings {
         /*
          * Automatically generated getters.
          */
+        /**
+         * <b>[All] SuperTime</b><br>
+         * How long Superpower lasts for this ship. The actual time is random up to this value.
+         * @return Super time in centiseconds.
+         */
         public int getSuperTime() {
             return (int) (superTime & MASK_UINT16);
         }
 
+        /**
+         * Section of undocumented data, possibly a salt for actual super time.
+         * @return UNKNOWN0
+         */
         public int getUNKNOWN0() {
             return (int) (UNKNOWN0 & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] ShieldsTime</b><br>
+         * How long Shields last for this ship.
+         * @return Shields time in centiseconds.
+         */
         public int getShieldsTime() {
             return (int) (shieldsTime & MASK_UINT16);
         }
 
+        /**
+         * Section of undocumented data, possibly a salt for actual shieds time.
+         * @return UNKNOWN1
+         */
         public int getUNKNOWN1() {
             return (int) (UNKNOWN1 & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] Gravity</b><br>
+         * Modifies radius over which a wormhole's gravity has an effect.<p>
+         * <i>Formula:</i> EffectRadius = 1.325 * Gravity ^ 0.507.<br>
+         * That is, a wormhole will have an effect over 31 tiles if this is set to 500.<p>
+         * The setting for Warbird also controls how far out bombs/mines are effected by wormholes.
+         * @return Gravity as factor.
+         */
         public int getGravity() {
             return (int) (gravity & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] GravityTopSpeed</b><br>
+         * How much this ship's maximum speed is increased when under the influence of a wormhole's gravity.
+         * Note that this does not replace the previous speed.
+         * @return Gravity top speed in pixels per 10 seconds.
+         */
         public int getGravityTopSpeed() {
             return (int) (gravityTopSpeed & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] BulletFireEnergy</b><br>
+         * Base energy it takes a ship to fire a bullet. Formula: EnergyUsed = GunLevel * BulletFireEnergy. 
+         * So this setting is for an L1 bullet, and is doubled for L2, and so on.
+         * @return Bullet fire energy in energy units.
+         */
         public int getBulletFireEnergy() {
             return (int) (bulletFireEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] MultiFireEnergy</b><br>
+         * Energy it takes a ship to fire a set of multifire bullets.
+         * <i>Formula:</i> EnergyUsed = GunLevel * MultiFireEnergy.
+         * @return Multifire energy in energy units.
+         */
         public int getMultiFireEnergy() {
             return (int) (multiFireEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] BombFireEnergy</b><br>
+         * Amount of energy it takes a ship to fire a bomb.
+         * @return Bomb fire energy in energy units.
+         */
         public int getBombFireEnergy() {
             return (int) (bombFireEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] BombFireEnergyUpgrade</b><br>
+         * Extra energy it takes a ship to fire an upgraded bomb.
+         * <i>Formula:</i> EnergyUsed = BombFireEnergy + (BombLevel - 1) * BombFireEnergyUpgrade.
+         * @return Bomb fire energy upgrade in energy units.
+         */
         public int getBombFireEnergyUpgrade() {
             return (int) (bombFireEnergyUpgrade & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] LandmineFireEnergy</b><br>
+         * Energy it takes this ship to place an L1 mine
+         * @return Mine fire energy in energy units.
+         */
         public int getMineFireEnergy() {
             return (int) (mineFireEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] LandmineFireEnergyUpgrade</b><br>
+         * Extra energy it takes to place an upgraded landmine.
+         * <i>Formula:</i> EnergyUsed = LandmineFireEnergy + (BombLevel - 1) * LandmineFireEnergyUpgrade.
+         * @return Mine fire energy upgrade in energy units.
+         */
         public int getMineFireEnergyUpgrade() {
             return (int) (mineFireEnergyUpgrade & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] BulletSpeed</b><br>
+         * How fast bullets travel. Can be negative, which results in shooting from the rear.
+         * @return Bullet speed in pixels per 10 seconds.
+         */
         public short getBulletSpeed() {
             return bulletSpeed;
         }
 
+        /**
+         * <b>[All] BombSpeed</b><br>
+         * How fast bombs fired by this ship travel. Can be negative, which results in shooting from the rear.
+         * @return Bomb speed in pixels per 10 seconds.
+         */
         public short getBombSpeed() {
             return bombSpeed;
         }
 
+        /**
+         * <b>[All] SeeBombLevel</b><br>
+         * Lowest level of bombs this ship can see on radar. Special Value: 0 = no bombs on radar. (Continuum .36+)
+         * Note: 4 means a player can only see L4 bombs. 2 means L2, L3 and L4 bombs are visible on radar.
+         * @return See bomb level with a value ranging from 0 to 4.
+         */
         public byte getSeeBombLevel() {
             return seeBombLevel;
         }
 
+        /**
+         * <b>[All] DisableFastShooting</b><br>
+         * Whether firing bullets, bombs, or thors is disabled after using afterburners. (Continuum .36+)
+         * @return True when fast firing is disabled, false otherwise.
+         */
         public boolean isDisableFastBombs() {
             return disableFastBombs;
         }
 
+        /**
+         * <b>[All] Radius</b><br>
+         * The ship's radius from center to outside. Special Value: 0 = 14 pixels. (Continuum .37+)
+         * Note: This function will return the default value if radius is equal to 0.
+         * Use {@link #getRawRadius()} instead if you want it to not do this.
+         * @return Radius in pixels. If the radius is 0, then 14 will be returned instead.
+         */
         public short getRadius() {
             if(radius == 0)
                 return 14;
             return (short) (radius & MASK_UINT8);
         }
         
+        /**
+         * <b>[All] Radius</b><br>
+         * The ship's radius from center to outside. Special Value: 0 = 14 pixels. (Continuum .37+)
+         * Note: This function will always return the stored radius. If you want the return value to
+         * be converted to the default, when its value is 0, then use {@link #getRadius()} instead.
+         * @return Radius in pixels.
+         */
         public short getRawRadius() {
             return (short) (radius & MASK_UINT8);
         }
 
+        /**
+         * Section of undocumented data. Probably unused.
+         * @return pack0.
+         */
         public byte getPack0() {
             return pack0;
         }
 
+        /**
+         * <b>[All] MultiFireAngle</b><br>
+         * Angle spread between multi-fire bullets and standard forward-firing bullets.
+         * Rotation Points / 1000. (Note: One rotation point equals exactly 9°.)
+         * <p>
+         * Some research might be needed. Initial analysis made it look that you actually
+         * need to divide MultiFireAngle by 1000 to get the Rotation Points. So, 1000 means
+         * a 9° rotation, or one Rotation Point, 40000 is a full 360° or 2PI rad circle (40 Rotation Points).
+         * <p>
+         * The multifire angle is measured from the normal, and mirrored on both sides. Whenever the
+         * speed of a projectile is negative, this is done in regard to the normal sticking out of the backside
+         * of the ship. (I.e. the original mirrored in the relative x-axis.) Also, whether or not a ship has a
+         * double barrel, the amount of multifire angles/shots is still fixed at two.
+         * @return Multifire angle. See above for details.
+         */
         public int getMultiFireAngle() {
             return (int) (multiFireAngle & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] CloakEnergy</b><br>
+         * Amount of energy required to have Cloak activated.
+         * @return Cloak energy in energy units per 10 seconds.
+         */
         public int getCloakEnergy() {
             return (int) (cloakEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] StealthEnergy</b><br>
+         * Amount of energy required to have Stealth activated.
+         * @return Stealth energy in energy units per 10 seconds.
+         */
         public int getStealthEnergy() {
             return (int) (stealthEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] AntiWarpEnergy</b><br>
+         * Amount of energy required to have Anti-Warp activated.
+         * @return Antiwarp energy in energy units per 10 seconds.
+         */
         public int getAntiWarpEnergy() {
             return (int) (antiWarpEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] XRadarEnergy</b><br>
+         * Amount of energy required to have X-Radar activated.
+         * @return X-radar energy in energy units per 10 seconds.
+         */
         public int getxRadarEnergy() {
             return (int) (xRadarEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] MaximumRotation</b><br>
+         * Maximum (with upgrades) rotation rate of the ship.
+         * <i>Formula:</i> 90°/(seconds / 100) (That is, 400 for a full rotation in 1s).
+         * @return Maximum rotation in Rotation Points per 10 seconds.
+         */
         public int getMaximumRotation() {
             return (int) (maximumRotation & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] MaximumThrust</b><br>
+         * Maximum (with upgrades) thrust of ship.
+         * @return Maximum thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s² ?) 
+         */
         public int getMaximumThrust() {
             return (int) (maximumThrust & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] MaximumSpeed</b><br>
+         * Maximum (with upgrades) speed of ship.
+         * @return Maximum speed in pixels per 10 seconds. (1000 means 100 pixels per second.) 
+         */
         public int getMaximumSpeed() {
             return (int) (maximumSpeed & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] MaximumRecharge</b><br>
+         * Maximum (with upgrades) recharge rate, or how quickly this ship recharges its energy.
+         * @return Maximum recharge in energy per 10 seconds. (1000 means 100 energy per second.)
+         */
         public int getMaximumRecharge() {
             return (int) (maximumRecharge & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] MaximumEnergy</b><br>
+         * Maximum (with upgrades) amount of energy that the ship can have.
+         * @return Maximum energy in energy units.
+         */
         public int getMaximumEnergy() {
             return (int) (maximumEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] InitialRotation</b><br>
+         * Initial rotation rate of the ship.
+         * <i>Formula:</i> 90°/(seconds / 100) (That is, 400 for a full rotation in 1s).
+         * @return Initial rotation in Rotation Points per 10 seconds.
+         */
         public int getInitialRotation() {
             return (int) (initialRotation & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] InitialThrust</b><br>
+         * Initial thrust of ship.
+         * @return Initial thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s² ?) 
+         */
         public int getInitialThrust() {
             return (int) (initialThrust & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] InitialSpeed</b><br>
+         * Initial speed of ship. Note that 0 will prevent the ship from moving without afterburners or a speed upgrade.
+         * @return Initial speed in pixels per 10 seconds. (1000 means 100 pixels per second.) 
+         */
         public int getInitialSpeed() {
             return (int) (initialSpeed & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] InitialRecharge</b><br>
+         * Initial recharge rate.
+         * @return Initial recharge in energy per 10 seconds. (1000 means 100 energy per second.)
+         */
         public int getInitialRecharge() {
             return (int) (initialRecharge & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] InitialEnergy</b><br>
+         * Initial amount of energy that the ship can have.
+         * @return Initial energy in energy units.
+         */
         public int getInitialEnergy() {
             return (int) (initialEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] UpgradeRotation</b><br>
+         * Amount added per Rotation Upgrade Prize.
+         * <i>Formula:</i> 90°/(seconds / 100) (That is, 400 for a full rotation in 1s).
+         * @return Upgrade rotation in Rotation Points per 10 seconds.
+         */
         public int getUpgradeRotation() {
             return (int) (upgradeRotation & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] UpgradeThrust</b><br>
+         * Amount added per Thruster Upgrade Prize.
+         * @return Upgrade thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s² ?) 
+         */
         public int getUpgradeThrust() {
             return (int) (upgradeThrust & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] UpgradeSpeed</b><br>
+         * Amount added per Speed Upgrade Prize.
+         * @return Upgrade speed in pixels per 10 seconds. (1000 means 100 pixels per second.) 
+         */
         public int getUpgradeSpeed() {
             return (int) (upgradeSpeed & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] UpgradeRecharge</b><br>
+         * Amount added per Recharge Upgrade Prize.
+         * @return Upgrade recharge in energy per 10 seconds. (1000 means 100 energy per second.)
+         */
         public int getUpgradeRecharge() {
             return (int) (upgradeRecharge & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] UpgradeEnergy</b><br>
+         * Amount added per Energy Upgrade Prize.
+         * @return Upgrade energy in energy units.
+         */
         public int getUpgradeEnergy() {
             return (int) (upgradeEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] AfterburnerEnergy</b><br>
+         * Energy required to have 'Afterburners' activated.
+         * @return Afterburner energy in energy units. (Might be energy units per 10 seconds.)
+         */
         public int getAfterburnerEnergy() {
             return (int) (afterburnerEnergy & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] BombThrust</b><br>
+         * Amount of back-thrust (recoil) this ship receives when firing a bomb.
+         * @return Bomb thrust in an unknown unit. (Possibly in pixels / (10s)²)
+         */
         public int getBombThrust() {
             return (int) (bombThrust & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] BurstSpeed</b><br>
+         * How fast the burst "shrapnel" move for this ship.
+         * @return Burst speed in pixels per 10 seconds.
+         */
         public int getBurstSpeed() {
             return (int) (burstSpeed & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] TurretThrustPenalty</b><br>
+         * This ship's thrust is decreased this much when a turret it riding.
+         * @return Turret thrust penalty in an unknown unit. (Possibly in pixels / (10s)²)
+         */
         public int getTurretThrustPenalty() {
             return (int) (turretThrustPenalty & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] TurretSpeedPenalty</b><br>
+         * This ship's speed is decreased this much when a turret it riding.
+         * @return Turret speed penalty in pixels per 10 seconds.
+         */
         public int getTurretSpeedPenalty() {
             return (int) (turretSpeedPenalty & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] BulletFireDelay</b><br>
+         * Delay before a ship can fire another weapon after it fires a bullet.
+         * @return Bullet fire delay in centiseconds.
+         */
         public int getBulletFireDelay() {
             return (int) (bulletFireDelay & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] MultiFireDelay</b><br>
+         * Delay before a ship can fire another weapon after it fires a set of multifire bullets.
+         * @return Multifire delay in centiseconds.
+         */
         public int getMultiFireDelay() {
             return (int) (multiFireDelay & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] BombFireDelay</b><br>
+         * Delay before this ship can fire another weapon after it fires a bomb.
+         * @return Bomb fire delay in centiseconds.
+         */
         public int getBombFireDelay() {
             return (int) (bombFireDelay & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] LandmineFireDelay</b><br>
+         * Delay before a ship can fire another weapon after it drops a landmine.
+         * @return Landmine fire delay in centiseconds.
+         */
         public int getLandmineFireDelay() {
             return (int) (landmineFireDelay & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] RocketTime</b><br>
+         * How long a Rocket lasts.
+         * @return Rocket time in centiseconds.
+         */
         public int getRocketTime() {
             return (int) (rocketTime & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] InitialBounty</b><br>
+         * Number of prizes given to this ship when it spawns.
+         * @return Initial bounty.
+         */
         public int getInitialBounty() {
             return (int) (initialBounty & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] DamageFactor</b><br>
+         * How likely a the ship is to lose a prize when damaged.
+         * (1 is extremely likely, 5000 is almost never.) Special Value: 0 = never.
+         * @return Damage factor between 1 and 5000. Special case: 0, meaning it will never lose a bounty point.
+         */
         public int getDamageFactor() {
             return (int) (damageFactor & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] PrizeShareLimit</b><br>
+         * Maximum bounty that this ship can receive by Team Prizes.
+         * @return Prize share limit in points.
+         */
         public int getPrizeShareLimit() {
             return (int) (prizeShareLimit & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] AttachBounty</b><br>
+         * Bounty required by ships to attach to another ship to form a turret.
+         * @return Attach bounty in points.
+         */
         public int getAttachBounty() {
             return (int) (attachBounty & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] SoccerThrowTime</b><br>
+         * Time player has to carry soccer ball before it automatically fires (out the back of the ship).
+         * If this is 0 or 32768 or greater then carry time is unlimited and no timer is shown on the players screen.
+         * @return Soccer throw time in centiseconds.
+         */
         public int getSoccerThrowTime() {
             return (int) (soccerThrowTime & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] SoccerBallFriction</b><br>
+         * Amount of friction on the soccer ball when it is not carried by a ship.
+         * @return Soccer ball friction in an unknown unit. Could possibly be a deceleration instead of force, i.e. pixels / (10s)².
+         */
         public int getSoccerBallFriction() {
             return (int) (soccerBallFriction & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] SoccerBallProximity</b><br>
+         * How close the ship must be in order to pick up a ball. Set this to 0 to disallow the ship from picking up a ball.
+         * @return Soccer ball proximity in pixels.
+         */
         public int getSoccerBallProximity() {
             return (int) (soccerBallProximity & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] SoccerBallSpeed</b><br>
+         * Initial speed given to the ball when fired by this ship.
+         * @return Soccer ball speed in pixels per 10 seconds.
+         */
         public int getSoccerBallSpeed() {
             return (int) (soccerBallSpeed & MASK_UINT16);
         }
 
+        /**
+         * <b>[All] TurretLimit</b><br>
+         * Number of turrets allowed on this ship. If you don't want ships to attach, set TurretLimit to 0.
+         * @return Turret limit.
+         */
         public short getTurretLimit() {
             return (short) (turretLimit & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] BurstShrapnel</b><br>
+         * Burst shrapnel released when this ship fires a Burst.
+         * @return Burst shrapnel amount.
+         */
         public short getBurstShrapnel() {
             return (short) (burstShrapnel & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] MaxMines</b><br>
+         * Maximum number of mines this ship can place.
+         * @return Max mines.
+         */
         public short getMaxMines() {
             return (short) (maxMines & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] RepelMax</b><br>
+         * Maximum Repels a ship can store. Any Repel prizes after this will be ignored.
+         * @return Repel max amount.
+         */
         public short getRepelMax() {
             return (short) (repelMax & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] BurstMax</b><br>
+         * Maximum Bursts a ship can store. Any Repel prizes after this will be ignored.
+         * @return Burst max amount.
+         */
         public short getBurstMax() {
             return (short) (burstMax & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] DecoyMax</b><br>
+         * Maximum Decoys a ship can store. Any Repel prizes after this will be ignored.
+         * @return Decoy max amount.
+         */
         public short getDecoyMax() {
             return (short) (decoyMax & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] ThorMax</b><br>
+         * Maximum Thor's Hammers a ship can store. Any Repel prizes after this will be ignored.
+         * @return Thor max amount.
+         */
         public short getThorMax() {
             return (short) (thorMax & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] BrickMax</b><br>
+         * Maximum Bricks a ship can store. Any Repel prizes after this will be ignored.
+         * @return Brick max amount.
+         */
         public short getBrickMax() {
             return (short) (brickMax & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] RocketMax</b><br>
+         * Maximum Rockets a ship can store. Any Repel prizes after this will be ignored.
+         * @return Rocket max amount.
+         */
         public short getRocketMax() {
             return (short) (rocketMax & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] PortalMax</b><br>
+         * Maximum Portals a ship can store. Any Repel prizes after this will be ignored.
+         * @return Portal max amount.
+         */
         public short getPortalMax() {
             return (short) (portalMax & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] InitialRepel</b><br>
+         * Repels given to ships when they spawn.
+         * @return Initial repel amount.
+         */
         public short getInitialRepel() {
             return (short) (initialRepel & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] InitialBurst</b><br>
+         * Bursts given to ships when they spawn.
+         * @return Initial burst amount.
+         */
         public short getInitialBurst() {
             return (short) (initialBurst & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] InitialBrick</b><br>
+         * Bricks given to ships when they spawn.
+         * @return Initial brick amount.
+         */
         public short getInitialBrick() {
             return (short) (initialBrick & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] InitialRocket</b><br>
+         * Rockets given to ships when they spawn.
+         * @return Initial rocket amount.
+         */
         public short getInitialRocket() {
             return (short) (initialRocket & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] InitialThor</b><br>
+         * Thor's Hammers given to ships when they spawn.
+         * @return Initial thor amount.
+         */
         public short getInitialThor() {
             return (short) (initialThor & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] InitialDecoy</b><br>
+         * Decoys given to ships when they spawn.
+         * @return Initial decoy amount.
+         */
         public short getInitialDecoy() {
             return (short) (initialDecoy & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] InitialPortal</b><br>
+         * Portals given to ships when they spawn.
+         * @return Initial portal amount.
+         */
         public short getInitialPortal() {
             return (short) (initialPortal & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] BombBounceCount</b><br>
+         * Times a bomb fired by this ship can bounce before it explodes on impact
+         * @return Bomb bounce count amount.
+         */
         public short getBombBounceCount() {
             return (short) (bombBounceCount & MASK_UINT8);
         }
 
+        /**
+         * <b>[All] ShrapnelMax</b><br>
+         * Maximum shrapnel pieces released from this ship's bombs.
+         * @return Shrapnel max amount.
+         */
         public byte getShrapnelMax() {
             return shrapnelMax;
         }
 
+        /**
+         * <b>[All] ShrapnelRate</b><br>
+         * Additional shrapnel pieces gained by a 'Shrapnel Upgrade' prize.
+         * @return Shrapnel rate amount.
+         */
         public byte getShrapnelRate() {
             return shrapnelRate;
         }
 
+        /**
+         * <b>[All] CloakStatus</b><br>
+         * Whether ships can to receive Cloak.
+         * <li>0: no
+         * <li>1: yes
+         * <li>2: yes & starts with prize
+         * @return One of the above values.
+         */
         public byte getCloakStatus() {
             return cloakStatus;
         }
 
+        /**
+         * <b>[All] StealthStatus</b><br>
+         * Whether ships can to receive Stealth.
+         * <li>0: no
+         * <li>1: yes
+         * <li>2: yes & starts with prize
+         * @return One of the above values.
+         */
         public byte getStealthStatus() {
             return stealthStatus;
         }
 
+        /**
+         * <b>[All] XRadarStatus</b><br>
+         * Whether ships can to receive Stealth.
+         * <li>0: no
+         * <li>1: yes
+         * <li>2: yes & starts with prize
+         * @return One of the above values.
+         */
         public byte getxRadarStatus() {
             return xRadarStatus;
         }
 
+        /**
+         * <b>[All] AntiWarpStatus</b><br>
+         * Whether ships can receive AntiWarp.
+         * <li>0: no
+         * <li>1: yes
+         * <li>2: yes & starts with prize
+         * @return One of the above values.
+         */
         public byte getAntiwarpStatus() {
             return antiwarpStatus;
         }
 
+        /**
+         * <b>[All] InitialGuns</b><br>
+         * Gun level given to ships at respawn. Note that a ship cannot start with L4 guns.
+         * @return Initial guns level, 0 being none.
+         */
         public byte getInitialGuns() {
             return initialGuns;
         }
 
+        /**
+         * <b>[All] MaxGuns</b><br>
+         * Maximum gun level a ship can have. Note that a ship cannot have L4 guns without a flag upgrade.
+         * @return Max guns level, 0 being none.
+         */
         public byte getMaxGuns() {
             return maxGuns;
         }
 
+        /**
+         * <b>[All] InitialBombs</b><br>
+         * Bomb level given to ships at respawn. Note that a ship cannot start with L4 bombs.
+         * @return Initial bombs level, 0 being none.
+         */
         public byte getInitialBombs() {
             return initialBombs;
         }
 
+        /**
+         * <b>[All] MaxBombs</b><br>
+         * Maximum bomb level a ship can have. Note that a ship cannot have L4 bombs without a flag upgrade.
+         * @return Max bombs level, 0 being none.
+         */
         public byte getMaxBombs() {
             return maxBombs;
         }
 
+        /**
+         * <b>[All] DoubleBarrel</b><br>
+         * Whether ships fire double-barrel bullets.
+         * @return True if the ship fires two bullets, false if only one. (Not taking multifire into account.)
+         */
         public boolean isDoubleBarrel() {
             return doubleBarrel;
         }
 
+        /**
+         * <b>[All] EmpBomb</b><br>
+         * Whether this ship fires EMP bombs.
+         * @return True if this ship fires EMP bombs, false otherwise.
+         */
         public boolean isEmpBomb() {
             return empBomb;
         }
 
+        /**
+         * <b>[All] SeeMines</b><br>
+         * Whether ships see mines on radar.
+         * @return True if the ship is allowed to see mines on the radar, false otherwise.
+         */
         public boolean isSeeMines() {
             return seeMines;
         }
 
+        /**
+         * Section of undocumented data.
+         * @return UNKNOWN2
+         */
         public byte getUNKNOWN2() {
             return UNKNOWN2;
         }
 
+        /**
+         * Section of undocumented data.
+         * @return UNKNOWN3
+         */
         public byte[] getUNKNOWN3() {
             return UNKNOWN3;
         }
@@ -2079,6 +2572,10 @@ public class ArenaSettings {
     
     /**
      * This class logs all the prize related settings, obtained from the arena settings.
+     * <p>
+     * These settings determine the random green prize weighting. A higher number means a greater 
+     * chance of a green containing the prize, a lower a lesser chance. Warning: If you set these 
+     * all to 0, subgame will crash when it tries to generate a prize.
      * <p>
      * Due to this being a port, I've tried to give credit where credit is due, by trying to keep most of the original
      * comments in tact. Full credit goes to the researchers for and creators of the MervBot.
@@ -2159,114 +2656,254 @@ public class ArenaSettings {
         /*
          * Automatically generated getters.
          */
+        /**
+         * <b>[PrizeWeight] Recharge</b><br>
+         * Full Charge prize. (Full charge, not recharge.)
+         * @return Recharge weight. (0 to 255)
+         */
         public short getRecharge() {
             return (short) (recharge & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Energy</b><br>
+         * Energy Upgrade prize.
+         * @return weight. (0 to 255)
+         */
         public short getEnergy() {
             return (short) (energy & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Rotation</b><br>
+         * Rotation prize.
+         * @return Rotation weight. (0 to 255)
+         */
         public short getRotation() {
             return (short) (rotation & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Stealth</b><br>
+         * Stealth prize.
+         * @return Stealth weight. (0 to 255)
+         */
         public short getStealth() {
             return (short) (stealth & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Cloak</b><br>
+         * Cloak prize.
+         * @return Cloak weight. (0 to 255)
+         */
         public short getCloak() {
             return (short) (cloak & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] XRadar</b><br>
+         * XRadar prize.
+         * @return XRadar weight. (0 to 255)
+         */
         public short getxRadar() {
             return (short) (xRadar & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Warp</b><br>
+         * Warp prize.
+         * @return Warp weight. (0 to 255)
+         */
         public short getWarp() {
             return (short) (warp & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Gun</b><br>
+         * Gun Upgrade prize.
+         * @return Gun weight. (0 to 255)
+         */
         public short getGun() {
             return (short) (gun & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Bomb</b><br>
+         * Bomb Upgrade prize.
+         * @return Bomb weight. (0 to 255)
+         */
         public short getBomb() {
             return (short) (bomb & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] BouncingBullets</b><br>
+         * Bouncing Bullets prize.
+         * @return Bouncing bullets weight. (0 to 255)
+         */
         public short getBouncingBullets() {
             return (short) (bouncingBullets & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Thruster</b><br>
+         * Thruster prize.
+         * @return Thruster weight. (0 to 255)
+         */
         public short getThruster() {
             return (short) (thruster & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] TopSpeed</b><br>
+         * Speed prize.
+         * @return Top speed weight. (0 to 255)
+         */
         public short getTopSpeed() {
             return (short) (topSpeed & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] QuickCharge</b><br>
+         * Recharge prize.
+         * @return Quick charge weight. (0 to 255)
+         */
         public short getQuickCharge() {
             return (short) (quickCharge & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Glue</b><br>
+         * Engine Shutdown prize.
+         * @return Glue weight. (0 to 255)
+         */
         public short getGlue() {
             return (short) (glue & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] MultiFire</b><br>
+         * MultiFire prize.
+         * @return Multifire weight. (0 to 255)
+         */
         public short getMultiFire() {
             return (short) (multiFire & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Proximity</b><br>
+         * Proximity Bomb prize.
+         * @return Proximity weight. (0 to 255)
+         */
         public short getProximity() {
             return (short) (proximity & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] AllWeapons</b><br>
+         * Super! prize.
+         * @return All weapons weight. (0 to 255)
+         */
         public short getAllWeapons() {
             return (short) (allWeapons & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Shields</b><br>
+         * Shields prize.
+         * @return Shields weight. (0 to 255)
+         */
         public short getShields() {
             return (short) (shields & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Shrapnel</b><br>
+         * Shrapnel Upgrade prize.
+         * @return Shrapnel weight. (0 to 255)
+         */
         public short getShrapnel() {
             return (short) (shrapnel & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] AntiWarp</b><br>
+         * AntiWarp prize.
+         * @return Antiwarp weight. (0 to 255)
+         */
         public short getAntiWarp() {
             return (short) (antiWarp & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Repel</b><br>
+         * Repel prize.
+         * @return Repel weight. (0 to 255)
+         */
         public short getRepel() {
             return (short) (repel & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Burst</b><br>
+         * Burst prize.
+         * @return Burst weight. (0 to 255)
+         */
         public short getBurst() {
             return (short) (burst & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Decoy</b><br>
+         * Decoy prize.
+         * @return Decoy weight. (0 to 255)
+         */
         public short getDecoy() {
             return (short) (decoy & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Thor</b><br>
+         * Thor prize.
+         * @return Thor weight. (0 to 255)
+         */
         public short getThor() {
             return (short) (thor & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] MultiPrize</b><br>
+         * Multi-prize.
+         * @return Multi-prize weight. (0 to 255)
+         */
         public short getMultiPrize() {
             return (short) (multiPrize & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Brick</b><br>
+         * Brick prize.
+         * @return Brick weight. (0 to 255)
+         */
         public short getBrick() {
             return (short) (brick & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Rocket</b><br>
+         * Rocket prize.
+         * @return Rocket weight. (0 to 255)
+         */
         public short getRocket() {
             return (short) (rocket & MASK_UINT8);
         }
         
+        /**
+         * <b>[PrizeWeight] Portal</b><br>
+         * Portal prize.
+         * @return Portal weight. (0 to 255)
+         */
         public short getPortal() {
             return (short) (portal & MASK_UINT8);
         }
