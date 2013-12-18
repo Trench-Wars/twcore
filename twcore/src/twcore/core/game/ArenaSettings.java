@@ -1115,112 +1115,267 @@ public class ArenaSettings {
         return UNKNOWN1;
     }
 
+    /**
+     * <b>[Shrapnel] Random</b><br>
+     * Whether shrapnel spreads randomly instead of in the standard circle pattern.
+     * @return True when spread randomly, false when spread evenly.
+     */
     public boolean isRandomShrapnel() {
         return randomShrapnel;
     }
 
+    /**
+     * <b>[Soccer] BallBounce</b><br>
+     * Whether the ball bounces off walls instead of going through them.
+     * @return True when the ball bounces, otherwise false.
+     */
     public boolean isSoccerBallBounce() {
         return soccerBallBounce;
     }
 
+    /**
+     * <b>[Soccer] AllowBombs</b><br>
+     * Whether the ball carrier can fire bombs. If a ball carrier tries to fire
+     * a bomb and this settings disabled, the ball will be released before the bomb.
+     * @return True when a carrier can fire a bomb while keeping possession of the ball. False otherwise.
+     */
     public boolean isSoccerAllowBombs() {
         return soccerAllowBombs;
     }
 
+    /**
+     * <b>[Soccer] AllowGuns</b><br>
+     * Whether the ball carrier can fire his guns. If the carrier tries, the ball will be released before the bullets fire.
+     * @return True when a carrier can fire his/her gun while keeping possession of the ball. False otherwise.
+     */
     public boolean isSoccerAllowGuns() {
         return soccerAllowGuns;
     }
 
+    /**
+     * <b>[Soccer] Mode</b><br>
+     * Goal configuration.
+     * <li>0: any goal
+     * <li>1: left-half/right-half
+     * <li>2: top-half/bottom-half
+     * <li>3: quadrants-defend-one-goal
+     * <li>4: quadrants-defend-three-goals
+     * <li>5: sides-defend-one-goal
+     * <li>6: sides-defend-three-goals
+     * @return One of the above options, depending on the mode.
+     */
     public byte getSoccerMode() {
         return soccerMode;
     }
 
+    /**
+     * <b>[Team] MaxPerTeam</b><br>
+     * Maximum playercount on a public frequency.
+     * @return Max per team count.
+     */
     public short getMaxPerTeam() {
         return (short) (maxPerTeam & MASK_UINT8);
     }
 
+    /**
+     * <b>[Team] MaxPerPrivateTeam</b><br>
+     * Maximum playercount on a private frequency. Special Value: 0 = same as MaxPerTeam.<br>
+     * <b>Note:</b> This function will automatically return MaxPerTeam if MaxPerPrivateTeam's value is 0.
+     * @return When 0, Max per team count, otherwise Max per private team count.
+     */
     public short getMaxPerPrivateTeam() {
         if(maxPerPrivateTeam == 0)
             return getMaxPerTeam();
         return (short) (maxPerPrivateTeam & MASK_UINT8);
     }
     
+    /**
+     * <b>[Team] MaxPerPrivateTeam</b><br>
+     * Maximum playercount on a private frequency. Special Value: 0 = same as MaxPerTeam.<br>
+     * <b>Note:</b> This function will return the raw data.
+     * @return Max per private team count. Note: 0 indicates it is equal to {@link #getMaxPerTeam()}.
+     */
     public short getRawMaxPerPrivateTeam() {
         return (short) (maxPerPrivateTeam & MASK_UINT8);
     }
 
+    /**
+     * <b>[Mine] TeamMaxMines</b><br>
+     * Maximum mines allowed per team.
+     * @return Team max mines, up to 32000.
+     */
     public short getTeamMaxMines() {
         return teamMaxMines;
     }
 
+    /**
+     * <b>[Wormhole] GravityBombs</b><br>
+     * Whether a wormhole affects bombs.
+     * @return True when bombs are affected by the wormhole's gravitational pull. False otherwise.
+     */
     public boolean isWormholeGravityBombs() {
         return wormholeGravityBombs;
     }
 
+    /**
+     * <b>[Bomb] BombSafety</b><br>
+     * Enables a firing safety for proximity bombs. If an enemy ship is within proximity radius,
+     * the firing safety will not let the user fire.
+     * @return True when a player cannot fire while in the proximity trigger range of a bomb.
+     */
     public boolean isBombSafety() {
         return bombSafety;
     }
 
+    /**
+     * <b>[Message] MessageReliable</b><br>
+     * Whether messages are sent reliably, which could increase bandwidth usage.
+     * @return True when messages need to be sent reliably, otherwise false.
+     */
     public boolean isMessageReliable() {
         return messageReliable;
     }
 
+    /**
+     * <b>[Prize] TakePrizeReliable</b><br>
+     * Whether client-to-server prize packets are sent reliably.
+     * This will increase bandwidth usage, but also helps maintain integrity.
+     * @return True when this setting is enabled. False otherwise.
+     */
     public boolean isTakePrizeReliable() {
         return takePrizeReliable;
     }
 
+    /**
+     * <b>[Message] AllowAudioMessages</b><br>
+     * Whether players can send audio messages.
+     * @return True when players are allowed to send audio messages. False otherwise.
+     */
     public boolean isAllowAudioMessages() {
         return allowAudioMessages;
     }
 
+    /**
+     * <b>[Prize] PrizeHideCount</b><br>
+     * Number of prizes that server regenerates every PrizeDelay.
+     * Note that this is not the total number of prizes (which is determined by PrizeFactor).
+     * @return Prize hide count.
+     */
     public short getPrizeHideCount() {
         return (short) (prizeHideCount & MASK_UINT8);
     }
 
+    /**
+     * <b>[Misc] ExtraPositionData</b><br>
+     * Whether regular players receive sysop data about a ship. Leave this off.
+     * @return True when players receive the data. False otherwise.
+     */
     public boolean isExtraPositionData() {
         return extraPositionData;
     }
 
+    /**
+     * <b>[Misc] SlowFrameCheck</b><br>
+     * Whether to check for slow frames on the client (possible cheat technique).
+     * <b>Warning:</b> flawed on some machines, do not use.
+     * @return True when slow frame checking is enabled. False otherwise.
+     */
     public boolean isSlowFrameCheck() {
         return slowFrameCheck;
     }
 
+    /**
+     * <b>[Flag] CarryFlags</b><br>
+     * <li>0: Flags cannot be picked up.
+     * <li>1: A player can pick up and carry all flags.
+     * <li>2: A player can pick up and carry only one flag at a time.
+     * @return One of the values above.
+     */
     public byte getCarryFlags() {
         return carryFlags;
     }
 
+    /**
+     * <b>[Misc] AllowSavedShips</b><br>
+     * Whether ships' stats are saved between arenas and after lagouts.
+     * Do not enable this if subarenas have different ship settings.
+     * @return True when stats are saved, false otherwise.
+     */
     public boolean isAllowSavedShip() {
         return allowSavedShip;
     }
 
+    /**
+     * <b>[Radar] RadarMode</b><br>
+     * Radar mode.
+     * <li>0: normal
+     * <li>1: half/half
+     * <li>2: quarters
+     * <li>3: half/half-see team mates
+     * <li>4: quarters-see team mates
+     * @return One of the options above.
+     */
     public byte getRadarMode() {
         return radarMode;
     }
 
+    /**
+     * <b>[Misc] VictoryMusic</b><br>
+     * Whether the zone plays the victory music when a team is winning a flag game.
+     * @return True when this is enabled, false otherwise.
+     */
     public boolean isVictoryMusic() {
         return victoryMusic;
     }
 
+    /**
+     * <b>[Flag] FlaggerGunUpgrade</b><br>
+     * Whether the flaggers get a gun upgrade. This is the only way to have L4 guns.
+     * @return True when this feature is enabled, false otherwise.
+     */
     public boolean isFlaggerGunUpgrade() {
         return flaggerGunUpgrade;
     }
 
+    /**
+     * <b>[Flag] FlaggerBombUpgrade</b><br>
+     * Whether the flaggers get a bomb upgrade. This is the only way to have L4 bombs.
+     * @return True when this feature is enabled, false otherwise.
+     */
     public boolean isFlaggerBombUpgrade() {
         return flaggerBombUpgrade;
     }
 
+    /**
+     * <b>[Soccer] UseFlagger</b><br>
+     * If player with soccer ball should use the Flag:Flagger* ship adjustments or not.
+     * @return True when the Flagger* settings are applied to someone carrying the ball. False if this isn't the case.
+     */
     public boolean isSoccerUseFlagger() {
         return soccerUseFlagger;
     }
 
+    /**
+     * <b>[Soccer] BallLocation</b><br>
+     * Whether the balls' locations are displayed at all times or not.
+     * @return True when the ball is always visible, false otherwise.
+     */
     public boolean isSoccerBallLocation() {
         return soccerBallLocation;
     }
 
+    /**
+     * Section of unknown data.
+     * @return UNKNOWN1
+     */
     public byte[] getUNKNOWN2() {
         return UNKNOWN2;
     }
 
+    /**
+     * Fetches the prize settings.
+     * @return This arena's prize settings.
+     */
     public PrizeSettings getPrizeSettings() {
         return prizeSettings;
     }
