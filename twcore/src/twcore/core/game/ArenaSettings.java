@@ -608,218 +608,509 @@ public class ArenaSettings {
         return UNKNOWN0;
     }
 
+    /**
+     * <b>[Latency] SendRoutePercent</b><br>
+     * Percentage of the ping time that is spent on the ClientToServer portion of the ping.
+     * (Used in more accurately syncronizing clocks.)
+     * @return Send route percent in promille. (1000 = 100%)
+     */
     public int getSendRoutePercent() {
         return (int) (sendRoutePercent & MASK_UINT16);
     }
 
+    /**
+     * <b>[Bomb] BombExplodeDelay</b><br>
+     * How long after the proximity sensor is triggered before bomb explodes.
+     * (Note: it explodes immediately if ship moves away from it after triggering it.)
+     * @return Bomb explode delay in centiseconds.
+     */
     public int getBombExplodeDelay() {
         return (int) (bombExplodeDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Misc] SendPositionDelay</b><br>
+     * Time between position packets sent by clients. Do not modify this setting without a good reason.
+     * @return Send position delay in centiseconds.
+     */
     public int getSendPositionDelay() {
         return (int) (sendPositionDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Bomb] BombExplodePixels</b><br>
+     * Initial blast radius for a bomb, then multiplied by bomb level (so L1 gets this, L2 gets double, etc.).
+     * Note that this is purely the damage radius, not affected by prox.
+     * @return Bomb explode pixels in pixels.
+     */
     public int getBombExplodePixels() {
         return (int) (bombExplodePixels & MASK_UINT16);
     }
 
+    /**
+     * <b>[Prize] DeathPrizeTime</b><br>
+     * Time the prize exists that appears after killing somebody.
+     * @return Death prize time in centiseconds.
+     */
     public int getDeathPrizeTime() {
         return (int) (deathPrizeTime & MASK_UINT16);
     }
 
+    /**
+     * <b>[Bomb] JitterTime</b><br>
+     * How long the screen jitters from a bomb hit.
+     * @return Jitter time in centiseconds.
+     */
     public int getJitterTime() {
         return (int) (jitterTime & MASK_UINT16);
     }
 
+    /**
+     * <b>[Kill] EnterDelay</b><br>
+     * Delay before a killed player re-enters game (respawns).
+     * <i>Special value:</i> 0 = player respawns at same location after a very short delay.
+     * @return Enter delay in centiseconds.
+     */
     public int getEnterDelay() {
         return (int) (enterDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Prize] EngineShutdownTime</b><br>
+     * How long an "Engine Shutdown" prize effects your ship. When you get an engine shutdown 
+     * you cannot accelerate and your rotation speed is decreased significantly.
+     * @return Engine shutdown time in centiseconds.
+     */
     public int getEngineShutdownTime() {
         return (int) (engineShutdownTime & MASK_UINT16);
     }
 
+    /**
+     * <b>[Bomb] ProximityDistance</b><br>
+     * Radius of proximity trigger of an L1 bomb. Each bomb level adds 1 to this amount.
+     * @return Proximity distance in pixels.
+     */
     public int getProximityDistance() {
         return (int) (proximityDistance & MASK_UINT16);
     }
 
+    /**
+     * <b>[Kill] BountyIncreaseForKill</b><br>
+     * Points added to players bounty each time he kills an opponent.
+     * @return Bounty increase for kill in points.
+     */
     public int getBountyIncreaseForKill() {
         return (int) (bountyIncreaseForKill & MASK_UINT16);
     }
 
+    /**
+     * <b>[Misc] BounceFactor</b><br>
+     * How bouncy the walls are. <i>Formula:</i> SpeedAfter = SpeedBefore * (16 / BounceFactor).
+     * @return Bounce factor (multiplier).
+     */
     public int getBounceFactor() {
         return (int) (bounceFactor & MASK_UINT16);
     }
 
+    /**
+     * <b>[Radar] MapZoomFactor</b><br>
+     * A number representing how far you can see on radar.
+     * @return Map zoom factor.
+     */
     public int getMapZoomFactor() {
         return (int) (mapZoomFactor & MASK_UINT16);
     }
 
+    /**
+     * <b>[Kill] MaxBonus</b><br>
+     * This is if you have flags, the maximum amount of points that can be awarded per kill.
+     * @return Max bonus in points.
+     */
     public int getMaxBonus() {
         return (int) (maxBonus & MASK_UINT16);
     }
 
+    /**
+     * <b>[Kill] MaxPenalty</b><br>
+     * This is if you have flags, the maximum amount of points that can be taken away per a death.
+     * @return Max penalty in points.
+     */
     public int getMaxPenalty() {
         return (int) (maxPenalty & MASK_UINT16);
     }
 
+    /**
+     * <b>[Kill] RewardBase</b><br>
+     * This is shown added to a person's bounty, but isn't added from points for a kill.
+     * @return Reward base in points.
+     */
     public int getRewardBase() {
         return (int) (rewardBase & MASK_UINT16);
     }
 
+    /**
+     * <b>[Repel] RepelTime</b><br>
+     * How long a repel affects players.
+     * @return Repel time in centiseconds.
+     */
     public int getRepelTime() {
         return (int) (repelTime & MASK_UINT16);
     }
 
+    /**
+     * <b>[Repel] RepelDistance</b><br>
+     * Distance that a repel has an affect on players.
+     * @return Repel distance in pixels.
+     */
     public int getRepelDistance() {
         return (int) (repelDistance & MASK_UINT16);
     }
 
+    /**
+     * <b>[Misc] TickerDelay</b><br>
+     * Time between ticker help messages.
+     * @return Ticker delay in centiseconds.
+     */
     public int getHelpTickerDelay() {
         return (int) (helpTickerDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Flag] FlaggerOnRadar</b><br>
+     * Whether the flaggers appear on radar in red.
+     * @return True when flaggers are marked in red on the radar, otherwise false.
+     */
     public int getFlaggerOnRadar() {
         return (int) (flaggerOnRadar & MASK_UINT16);
     }
 
+    /**
+     * <b>[Flag] FlaggerKillMultiplier</b><br>
+     * Number of times more points are given to a flagger. <i>Formula:</i> Points = (FlaggerKillMultiplier + 1) * InitialPoints.
+     * @return Flagger kill multiplier.
+     */
     public int getFlaggerKillMultiplier() {
         return (int) (flaggerKillMultiplier & MASK_UINT16);
     }
 
+    /**
+     * <b>[Prize] PrizeFactor</b><br>
+     * Adjusts number of prizes generated per player. <i>Formula:</i> NumPrizes = PrizeFactor * PlayerCount / 1000.
+     * @return Prize factor.
+     */
     public int getPrizeFactor() {
         return (int) (prizeFactor & MASK_UINT16);
     }
-
+    
+    /**
+     * <b>[Prize] PrizeDelay</b><br>
+     * How often server regenerates prizes.
+     * @return Prize delay in centiseconds.
+     */
     public int getPrizeDelay() {
         return (int) (prizeDelay & MASK_UINT16);
     }
-
+    
+    /**
+     * <b>[Prize] PrizeMinimumVirtual</b><br>
+     * Base distance from center of arena that prizes/flags/soccer-balls will generate.
+     * Setting this below 8 will crash subgame.
+     * @return Prize minimum virtual in tiles.
+     */
     public int getPrizeMinimumVirtual() {
         return (int) (prizeMinimumVirtual & MASK_UINT16);
     }
-
+    
+    /**
+     * <b>[Prize] PrizeUpgradeVirtual</b><br>
+     * Additional distance added to MinimumVirtual per player in game.
+     * @return Prize upgrade virtual in tiles.
+     */
     public int getPrizeUpgradeVirtual() {
         return (int) (prizeUpgradeVirtual & MASK_UINT16);
     }
-
+    
+    /**
+     * <b>[Prize] PrizeMaxExist</b><br>
+     * Maximum random time that a hidden prize will remain on screen.
+     * @return Prize max exist in centiseconds.
+     */
     public int getPrizeMaxExist() {
         return (int) (prizeMaxExist & MASK_UINT16);
     }
-
+    
+    /**
+     * <b>[Prize] PrizeMinExist</b><br>
+     * Minimum random time that a hidden prize will remain on screen.
+     * @return Prize min exist in centiseconds.
+     */
     public int getPrizeMinExist() {
         return (int) (prizeMinExist & MASK_UINT16);
     }
-
+    
+    /**
+     * <b>[Prize] PrizeNegativeFactor</b><br>
+     * The chance of greening a negative prize, higher values mean less likely, 0 means never. 
+     * <i>Formula:</i> NegativePrizeCount = 1 / PrizeNegativeFactor * TotalPrizeCount.
+     * A negative prize takes an upgrade away from your ship, such as antiwarp.
+     * @return Prize negative factor.
+     */
     public int getPrizeNegativeFactor() {
         return (int) (prizeNegativeFactor & MASK_UINT16);
     }
 
+    /**
+     * <b>[Door] DoorDelay</b><br>
+     * How often doors attempt to switch their state.
+     * @return Door delay in centiseconds.
+     */
     public int getDoorDelay() {
         return (int) (doorDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Toggle] AntiWarpPixels</b><br>
+     * Distance Anti-Warp affects other players. Note that AntiWarp is still limited by the radar area.
+     * @return Antiwarp pixels in pixels.
+     */
     public int getAntiwarpPixels() {
         return (int) (antiwarpPixels & MASK_UINT16);
     }
 
+    /**
+     * <b>[Door] DoorMode</b><br>
+     * Each bit of this field determines whether its represented door is open or not. 
+     * The 8 bits, from left to right, represent the 8 door tiles in the tileset, from left to right.<br>
+     * Special values:
+     * <li>-2 = all doors completely random
+     * <li>-1 = weighted random (some doors open more often than others)
+     * <li>0-255 = fixed doors (1 bit of byte for each door specifying whether it is open or not)
+     * @return Door mode as bitfield.
+     */
     public short getDoorMode() {
         return doorMode;
     }
 
+    /**
+     * <b>[Flag] FlagBlankDelay</b><br>
+     * Amount of time that a user can get no data from server before the client will hide flags for 10 seconds. 
+     * Lessen this if you have lag-related flagging trouble.
+     * @return Flag blank delay in centiseconds.
+     */
     public int getFlagBlankDelay() {
         return (int) (flagBlankDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Flag] NoDataFlagDropDelay</b><br>
+     * Amount of time that a user can get no data from server before flags he is carrying are dropped. 
+     * @return No data flag drop delay in centiseconds.
+     */
     public int getNoDataFlagDropDelay() {
         return (int) (noDataFlagDropDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Prize] MultiPrizeCount</b><br>
+     * Amount of prizes within a multiprize green.
+     * @return Multiprize count.
+     */
     public int getMultiPrizeCount() {
         return (int) (multiPrizeCount & MASK_UINT16);
     }
 
+    /**
+     * <b>[Brick] BrickTime</b><br>
+     * How long bricks last.
+     * @return Brick time in centiseconds.
+     */
     public int getBrickTime() {
         return (int) (brickTime & MASK_UINT16);
     }
 
+    /**
+     * <b>[Misc] WarpRadiusLimit</b><br>
+     * Ships randomly placed on the map can be a maximum of this far from the map's center.
+     * Note that 1024 will cover the entire map.
+     * @return Warp radius limit in tiles.
+     */
     public int getWarpRadiusLimit() {
         return (int) (warpRadiusLimit & MASK_UINT16);
     }
 
+    /**
+     * <b>[Bomb] EBombShutdownTime</b><br>
+     * Maximum time an EMP bomb suspends recharge. When the EMP hits the player indirectly
+     * (through the blast radius), this time is reduced.
+     * @return EMP bomb shutdown time in centiseconds.
+     */
     public int geteBombShutdownTime() {
         return (int) (eBombShutdownTime & MASK_UINT16);
     }
 
+    /**
+     * <b>[Bomb] EBombDamagePercent</b><br>
+     * Percentage of normal damage applied to an EMP bomb.
+     * @return EMP bomb damage percent in promille. (1000 = 100%, 2000 = 200%)
+     */
     public int geteBombDamagePercent() {
         return (int) (eBombDamagePercent & MASK_UINT16);
     }
 
+    /**
+     * <b>[Radar] RadarNeutralSize</b><br>
+     * Size of area between blinded radar zones.
+     * @return Radar neutral size in pixels? (0 to 1024)
+     */
     public int getRadarNeutralSize() {
         return (int) (radarNeutralSize & MASK_UINT16);
     }
 
+    /**
+     * <b>[Misc] WarpPointDelay</b><br>
+     * How long a Portal point is active.
+     * @return Warppoint delay in centiseconds.
+     */
     public int getWarpPointDelay() {
         return (int) (warpPointDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Misc] NearDeathLevel</b><br>
+     * Energy that constitutes a near-death experience. The server will reduce the ship's
+     * bounty by 1 when this occurs. (Used for dueling zones.)
+     * @return Near death level in energy.
+     */
     public int getNearDeathLevel() {
         return (int) (nearDeathLevel & MASK_UINT16);
     }
 
+    /**
+     * <b>[Bomb] BBombDamagePercent</b><br>
+     * Percentage of normal damage applied to a bouncing bomb. Note that even though a bouncing bomb
+     * loses its bouncing picture after the last bounce, it retains this percentage modifier.
+     * @return Bouncing bomb damage percent in promille. (1000 = 100%, 2000 = 200%)
+     */
     public int getbBombDamagePercent() {
         return (int) (bBombDamagePercent & MASK_UINT16);
     }
 
+    /**
+     * <b>[Shrapnel] ShrapnelDamagePercent</b><br>
+     * Percentage of normal bullet damage applied to shrapnel (relative to same level).
+     * Note that shrapnel does obey Bullet:ExactDamage.
+     * @return Shrapnel damage percent in promille. (1000 = 100%, 2000 = 200%)
+     */
     public int getShrapnelDamagePercent() {
         return (int) (shrapnelDamagePercent & MASK_UINT16);
     }
 
+    /**
+     * <b>[Latency] ClientSlowPacketTime</b><br>
+     * The client will consider an S2C packet slow if it takes this long or longer to receive.
+     * @return Client slow packet time in centiseconds.
+     */
     public int getClientSlowPacketTime() {
         return (int) (clientSlowPacketTime & MASK_UINT16);
     }
 
+    /**
+     * <b>[Flag] FlagDropResetReward</b><br>
+     * Minimum kill reward that a flagger must get to reset his drop timer. 
+     * See Flag Settings for flag reward customization.
+     * @return Flag drop reset reward in points.
+     */
     public int getFlagDropResetReward() {
         return (int) (flagDropResetReward & MASK_UINT16);
     }
 
+    /**
+     * <b>[Flag] FlaggerFireCostPercent</b><br>
+     * Percentage of normal weapon firing cost for flaggers. Note that 0% will essentially give flaggers superpower.
+     * @return Flagger fire cost percent in promille. (1000 = 100%, 2000 = 200%)
+     */
     public int getFlaggerFireCostPercent() {
         return (int) (flaggerFireCostPercent & MASK_UINT16);
     }
 
+    /**
+     * <b>[Flag] FlaggerDamagePercent</b><br>
+     * Percentage of normal damage received by flaggers. Note that 0% will essentially make flaggers invincible.
+     * @return Flagger damage percent in promille. (1000 = 100%, 2000 = 200%)
+     */
     public int getFlaggerDamagePercent() {
         return (int) (flaggerDamagePercent & MASK_UINT16);
     }
 
+    /**
+     * <b>[Flag] FlaggerBombFireDelay</b><br>
+     * Delay added to standard bomb firing delay for flaggers. Note: Please do not set this number between 1 and 20.
+     * @return Flagger bomb fire delay in centiseconds.
+     */
     public int getFlaggerBombFireDelay() {
         return (int) (flaggerBombFireDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Soccer] PassDelay</b><br>
+     * How long after the ball is fired before anybody can pick it up.
+     * @return Soccer pass delay in centiseconds.
+     */
     public int getSoccerPassDelay() {
         return (int) (soccerPassDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Soccer] BallBlankDelay</b><br>
+     * Amount of time a player can receive no data from server and still pick up the soccer ball.
+     * @return Soccer ball blank delay in centiseconds.
+     */
     public int getSoccerBallBlankDelay() {
         return (int) (soccerBallBlankDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Latency] S2CNoDataKickoutDelay</b><br>
+     * Time a client can receive no data from server before it automatically disconnects.
+     * This must be higher than the KeepAliveDelay specified in server.ini.
+     * @return S2C no data kickout delay in centiseconds.
+     */
     public int getS2CNoDataKickoutDelay() {
         return (int) (s2CNoDataKickoutDelay & MASK_UINT16);
     }
 
+    /**
+     * <b>[Flag] FlaggerThrustAdjustment</b><br>
+     * Thrust adjustment for flaggers. Note that negative numbers will reduce their thrust.
+     * @return Flagger thrust adjustment in an unknown unit. (Range: -128 to 128)
+     */
     public int getFlaggerThrustAdjustment() {
         return (int) (flaggerThrustAdjustment & MASK_UINT16);
     }
 
+    /**
+     * <b>[Flag] FlaggerSpeedAdjustment</b><br>
+     * Speed adjustment for flaggers. Note that negative numbers will slow down flaggers.
+     * @return Flagger speed adjustment in pixels per 10 seconds. (Range: -128 to 128). 
+     */
     public int getFlaggerSpeedAdjustment() {
         return (int) (flaggerSpeedAdjustment & MASK_UINT16);
     }
 
+    /**
+     * <b>[Latency] ClientSlowPacketSampleSize
+     * Number of packets to sample S2C latency before checking for kickout.
+     * Only in very rare cases will this need to be altered, so just leave it at its default.
+     * @return Client slow packet sample size, unitless.
+     */
     public int getCliSlowPacketSampleSize() {
         return (int) (cliSlowPacketSampleSize & MASK_UINT16);
     }
 
+    /**
+     * Section of unknown data.
+     * @return UNKNOWN1
+     */
     public byte[] getUNKNOWN1() {
         return UNKNOWN1;
     }
