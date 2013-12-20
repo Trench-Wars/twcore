@@ -623,8 +623,8 @@ public class GamePacketGenerator {
         if(msg.length > 243) {
             // Variable offset to prevent chopping the non-UTF8 chars in the middle.
             int offset = 242;
-            if(msg[241] >= 0x80) offset = 241;
-            if(msg[240] >= 0x80) offset = 240;
+            if( (msg[241] & 0x80) != 0) offset = 241;
+            if( (msg[240] & 0x80) != 0) offset = 240;
             sendChatPacket( messageType, soundCode, userID, new String(msg, 0, offset) );
             sendChatPacket( messageType, soundCode, userID, new String(msg, offset, msg.length - offset) );
             return;
