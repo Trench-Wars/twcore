@@ -1867,11 +1867,11 @@ public class ArenaSettings {
         /**
          * <b>[All] MultiFireAngle</b><br>
          * Angle spread between multi-fire bullets and standard forward-firing bullets.
-         * Rotation Points / 1000. (Note: One rotation point equals exactly 9°.)
+         * Rotation Points / 1000. (Note: One rotation point equals exactly 9 degrees.)
          * <p>
          * Some research might be needed. Initial analysis made it look that you actually
          * need to divide MultiFireAngle by 1000 to get the Rotation Points. So, 1000 means
-         * a 9° rotation, or one Rotation Point, 40000 is a full 360° or 2PI rad circle (40 Rotation Points).
+         * a 9 degrees rotation, or one Rotation Point, 40000 is a full 360 degrees or 2PI rad circle (40 Rotation Points).
          * <p>
          * The multifire angle is measured from the normal, and mirrored on both sides. Whenever the
          * speed of a projectile is negative, this is done in regard to the normal sticking out of the backside
@@ -1922,7 +1922,7 @@ public class ArenaSettings {
         /**
          * <b>[All] MaximumRotation</b><br>
          * Maximum (with upgrades) rotation rate of the ship.
-         * <i>Formula:</i> 90°/(seconds / 100) (That is, 400 for a full rotation in 1s).
+         * <i>Formula:</i> 90 degrees/(seconds / 100) (That is, 400 for a full rotation in 1s).
          * @return Maximum rotation in Rotation Points per 10 seconds.
          */
         public int getMaximumRotation() {
@@ -1968,7 +1968,7 @@ public class ArenaSettings {
         /**
          * <b>[All] InitialRotation</b><br>
          * Initial rotation rate of the ship.
-         * <i>Formula:</i> 90°/(seconds / 100) (That is, 400 for a full rotation in 1s).
+         * <i>Formula:</i> 90 degrees/(seconds / 100) (That is, 400 for a full rotation in 1s).
          * @return Initial rotation in Rotation Points per 10 seconds.
          */
         public int getInitialRotation() {
@@ -2014,7 +2014,7 @@ public class ArenaSettings {
         /**
          * <b>[All] UpgradeRotation</b><br>
          * Amount added per Rotation Upgrade Prize.
-         * <i>Formula:</i> 90°/(seconds / 100) (That is, 400 for a full rotation in 1s).
+         * <i>Formula:</i> 90 degrees/(seconds / 100) (That is, 400 for a full rotation in 1s).
          * @return Upgrade rotation in Rotation Points per 10 seconds.
          */
         public int getUpgradeRotation() {
