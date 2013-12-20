@@ -615,10 +615,21 @@ public class GamePacketGenerator {
         
         //Tools.printConnectionLog("SEND    : (0x06) Chat message");
         
+        // Due to character encoding methods, there is a chance that strings can expand in size.
+        // The following lines are an attempt to prevent this, by using the converted length as parameter
+        // and chopping up the message when it's too long. (This last part may have unwanted side-effects.)
+        byte[] msg = message.getBytes();
+        
+        if(msg.length > 243) {
+            sendChatPacket( messageType, soundCode, userID, new String(msg, 0, 242) );
+            sendChatPacket( messageType, soundCode, userID, new String(msg, 242, msg.length - 242) );
+            return;
+        }
+        
     	if( message.length() > 243 )
     		message = message.substring(0, 242);		// (hack) Don't send more than SS can handle
 
-        int            size = message.length() + 6;
+        int            size = msg.length + 6;
         ByteArray      bytearray = new ByteArray( size );
 
         bytearray.addByte( 0x06 );          // Type byte
