@@ -1932,7 +1932,7 @@ public class ArenaSettings {
         /**
          * <b>[All] MaximumThrust</b><br>
          * Maximum (with upgrades) thrust of ship.
-         * @return Maximum thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s² ?) 
+         * @return Maximum thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s^2 ?) 
          */
         public int getMaximumThrust() {
             return (int) (maximumThrust & MASK_UINT16);
@@ -1978,7 +1978,7 @@ public class ArenaSettings {
         /**
          * <b>[All] InitialThrust</b><br>
          * Initial thrust of ship.
-         * @return Initial thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s² ?) 
+         * @return Initial thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s^2 ?) 
          */
         public int getInitialThrust() {
             return (int) (initialThrust & MASK_UINT16);
@@ -2024,7 +2024,7 @@ public class ArenaSettings {
         /**
          * <b>[All] UpgradeThrust</b><br>
          * Amount added per Thruster Upgrade Prize.
-         * @return Upgrade thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s² ?) 
+         * @return Upgrade thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s^2 ?) 
          */
         public int getUpgradeThrust() {
             return (int) (upgradeThrust & MASK_UINT16);
@@ -2069,7 +2069,7 @@ public class ArenaSettings {
         /**
          * <b>[All] BombThrust</b><br>
          * Amount of back-thrust (recoil) this ship receives when firing a bomb.
-         * @return Bomb thrust in an unknown unit. (Possibly in pixels / (10s)²)
+         * @return Bomb thrust in an unknown unit. (Possibly in pixels / (10s)^2)
          */
         public int getBombThrust() {
             return (int) (bombThrust & MASK_UINT16);
@@ -2087,7 +2087,7 @@ public class ArenaSettings {
         /**
          * <b>[All] TurretThrustPenalty</b><br>
          * This ship's thrust is decreased this much when a turret it riding.
-         * @return Turret thrust penalty in an unknown unit. (Possibly in pixels / (10s)²)
+         * @return Turret thrust penalty in an unknown unit. (Possibly in pixels / (10s)^2)
          */
         public int getTurretThrustPenalty() {
             return (int) (turretThrustPenalty & MASK_UINT16);
@@ -2197,7 +2197,7 @@ public class ArenaSettings {
         /**
          * <b>[All] SoccerBallFriction</b><br>
          * Amount of friction on the soccer ball when it is not carried by a ship.
-         * @return Soccer ball friction in an unknown unit. Could possibly be a deceleration instead of force, i.e. pixels / (10s)².
+         * @return Soccer ball friction in an unknown unit. Could possibly be a deceleration instead of force, i.e. pixels / (10s)^2.
          */
         public int getSoccerBallFriction() {
             return (int) (soccerBallFriction & MASK_UINT16);
