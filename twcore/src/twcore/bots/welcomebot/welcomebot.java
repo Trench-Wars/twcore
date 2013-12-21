@@ -972,8 +972,8 @@ public class welcomebot extends SubspaceBot {
                 debug("Created RefID, attempting to display ID.");
                 
                 ResultSet rs2 = psGetReferral.executeQuery();
-                if (rs2 != null && rs.next()) {
-                    int refID = rs.getInt(1);
+                if (rs2 != null && rs2.next()) {
+                    int refID = rs2.getInt(1);
                     if(forSelf) {
                         ba.sendSmartPrivateMessage(name, "Your referral ID is: " + refID);
                     } else {
