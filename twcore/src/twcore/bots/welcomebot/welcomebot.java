@@ -78,6 +78,8 @@ public class welcomebot extends SubspaceBot {
     private PreparedStatement psGetCountryCode;             // Gets country code using IP
     private PreparedStatement psGetSessionCount;            // Gets current session count
     private PreparedStatement psInsertNewb;                 // Creates a new newbcall alert entry
+    private PreparedStatement psGetReferral;                // Retrieves the referral ID for a given person.
+    private PreparedStatement psAddReferral;                // Adds a player to the referral database.
     
     private String infoee;
     private TreeSet<String> debuggers;
@@ -131,8 +133,13 @@ public class welcomebot extends SubspaceBot {
         psUpdatePlayer = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayer " 
                 + "(fcName, fcSquad, ffTotalUsage, fcIP, fnMID, fcCountryCode, fdNameCreated) " 
                 + "VALUES(?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE fcSquad=VALUES(fcSquad), ffTotalUsage=VALUES(ffTotalUsage), fcIP=VALUES(fcIP), fnMID=VALUES(fnMID), fcCountryCode=VALUES(fcCountryCode)");
+        
+        psGetReferral = ba.createPreparedStatement(db, db, "SELECT fnReferralid FROM tblReferral WHERE fcReferralName = ?");
+        psAddReferral = ba.createPreparedStatement(db, db, "INSERT INTO tblReferral (fcReferralName) VALUES (?)");
 
-        if (psSetAlerting == null || psGetTrusted == null || psAddTrusted == null || psRemTrusted == null || psInsertNewb == null || psGetSessionCount == null || psGetCountryCode == null || psCheckAlerts == null || psUpdateSession == null || psUpdatePlayer == null) {
+        if (psSetAlerting == null || psGetTrusted == null || psAddTrusted == null || psRemTrusted == null
+                || psInsertNewb == null || psGetSessionCount == null || psGetCountryCode == null || psCheckAlerts == null
+                || psUpdateSession == null || psUpdatePlayer == null || psGetReferral == null || psAddReferral == null) {
             ba.sendChatMessage("Disconnecting due to null prepared statement(s)...");
             Tools.printLog("WelcomeBot: One or more PreparedStatements are null! Bot disconnecting.");
             ba.die("null prepared statement");
@@ -461,6 +468,10 @@ public class welcomebot extends SubspaceBot {
                 cmd_end(name);
             else if (cmd.equals("!quickhelp")) 
                 cmd_quickHelp(name);
+            else if (cmd.equals("!link"))
+                cmd_displayLink(name);
+            else if (cmd.startsWith("!createrefid"))
+                cmd_createReferral(name, cmd);
             
             if (trusted.containsKey(name)) {
                 if (cmd.equals("!alert"))
@@ -601,6 +612,8 @@ public class welcomebot extends SubspaceBot {
         
         ArrayList<String> msgs = new ArrayList<String>();
             msgs.add("+-- Welcome Bot Commands --------------------------------------------------------.");
+            msgs.add("| !createRefID          -- Create a referral ID.                                 |");
+            msgs.add("| !link                 -- Displays your referral link.                          |");
         if (trusted.containsKey(name))
             msgs.add("| !alert                -- Toggles new player alert messages.                    |");
         if (trusted.containsKey(name) || ops.isZH(name))
@@ -614,6 +627,7 @@ public class welcomebot extends SubspaceBot {
         
         if (ops.isSmod(name)) {
             msgs.add("+- ~SMOD~                                                                       -+");
+            msgs.add("| !createRefID <name>   -- Creates a referral ID for <name>.                     |");
             msgs.add("| !listops              -- Lists granted operators.                              |");
             msgs.add("| !addop <name>         -- Grants operator priveledge to <name>.                 |");
             msgs.add("| !remop <name>         -- Removes operator priveledge for <name>.               |");
@@ -910,6 +924,116 @@ public class welcomebot extends SubspaceBot {
 
     }
     
+    /*
+     * Marketing referral commands.
+     */
+    /**
+     * !createRefID [<name>]<br>
+     * Creates a referral ID.
+     * Name optional for SMod+
+     * @param name Issuer of command.
+     * @param command Command and optional parameters.
+     */
+    private void cmd_createReferral(String name, String command) {
+        String referralName = name;
+        boolean forSelf = true;
+        
+        // Check if the request is done on someone else's behalf.
+        if(ba.getOperatorList().isSmod(name) && command.length() > 13) {
+            referralName = command.substring(13);
+            ba.sendSmartPrivateMessage(name, "Creating referral ID for " + referralName);
+        }
+        
+        forSelf = name.equalsIgnoreCase(referralName);
+        
+        try {
+            psGetReferral.clearParameters();
+            psGetReferral.setString(1, referralName);
+            
+            ResultSet rs = psGetReferral.executeQuery();
+            
+            if (rs != null && rs.next()) {
+                // Player already exists in database.
+                if(forSelf) {
+                    ba.sendSmartPrivateMessage(name, "Your referral ID already exists.");
+                } else {
+                    ba.sendSmartPrivateMessage(name, referralName + " already has a referral ID.");
+                }
+                
+                debug("RefID already exists. Displaying link.");
+                displayLink(name, rs.getInt(1));
+                
+            } else {
+                
+                psAddReferral.clearParameters();
+                psAddReferral.setString(1, referralName);
+                psAddReferral.execute();
+                
+                debug("Created RefID, attempting to display ID.");
+                
+                ResultSet rs2 = psGetReferral.executeQuery();
+                if (rs2 != null && rs.next()) {
+                    int refID = rs.getInt(1);
+                    if(forSelf) {
+                        ba.sendSmartPrivateMessage(name, "Your referral ID is: " + refID);
+                    } else {
+                        ba.sendSmartPrivateMessage(name, "Created referral ID " + refID + " for " + referralName);
+                    }
+                    
+                    displayLink(name, refID);
+                    
+                } else {
+                    ba.sendSmartPrivateMessage(name, "Failed to create a referral ID. Please contact an SMod+");
+                }
+                
+            }
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+    }
+    
+    /**
+     * !link<br>
+     * Displays referral link.
+     * @param name Who to look up the link for.
+     */
+    private void cmd_displayLink(String name) {
+        try {
+            psGetReferral.clearParameters();
+            psGetReferral.setString(1, name);
+            
+            ResultSet rs = psGetReferral.executeQuery();
+            
+            if (rs != null && rs.next()) {
+                // Player already exists in database.
+                displayLink(name, rs.getInt(1));
+            } else {
+                ba.sendSmartPrivateMessage(name, "Your name couldn't be found in the database. Please use '!createRefID' to create your unique referral ID.");
+            }
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+    }
+    
+    /**
+     * Creates the referral ID
+     * @param name Who to send the message to.
+     * @param refID The referral ID.
+     */
+    private void displayLink(String name, int refID) {
+        String link = cfg.getString("ReferralLink");
+        
+        debug("Constructing RefUrl.");
+        
+        if(link.isEmpty()) {
+            ba.sendSmartPrivateMessage(name, "An error occured while creating your referral link. Please contact a developer.");
+            return;
+        }
+        
+        link.replace(";RID;", Integer.toString(refID));
+        ba.sendSmartPrivateMessage(name, "Referral Link: " + link);
+    }
+    
     private void cmd_debug(String name) {
         if (DEBUG) {
             if (debuggers.remove(name)) {
@@ -1020,6 +1144,8 @@ public class welcomebot extends SubspaceBot {
         ba.closePreparedStatement(db, db, psUpdateSession);
         ba.closePreparedStatement(db, db, psGetCountryCode);
         ba.closePreparedStatement(db, db, psGetSessionCount);
+        ba.closePreparedStatement(db, db, psAddReferral);
+        ba.closePreparedStatement(db, db, psGetReferral);
         ba.cancelTasks();
     }
     
