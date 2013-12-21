@@ -471,7 +471,7 @@ public class welcomebot extends SubspaceBot {
             else if (cmd.equals("!link"))
                 cmd_displayLink(name);
             else if (cmd.startsWith("!createrefid"))
-                cmd_createReferral(name, cmd);
+                cmd_createReferral(name, msg);
             
             if (trusted.containsKey(name)) {
                 if (cmd.equals("!alert"))
@@ -946,6 +946,11 @@ public class welcomebot extends SubspaceBot {
         
         forSelf = name.equalsIgnoreCase(referralName);
         
+        // It can take a bit sometimes, so let's inform them we're on it.
+        if(forSelf) {
+            ba.sendSmartPrivateMessage(name, "Generating your referral ID. One moment please..");
+        }
+        
         try {
             psGetReferral.clearParameters();
             psGetReferral.setString(1, referralName);
@@ -960,7 +965,6 @@ public class welcomebot extends SubspaceBot {
                     ba.sendSmartPrivateMessage(name, referralName + " already has a referral ID.");
                 }
                 
-                debug("RefID already exists. Displaying link.");
                 displayLink(name, rs.getInt(1));
                 
             } else {
@@ -968,8 +972,6 @@ public class welcomebot extends SubspaceBot {
                 psAddReferral.clearParameters();
                 psAddReferral.setString(1, referralName);
                 psAddReferral.execute();
-                
-                debug("Created RefID, attempting to display ID.");
                 
                 ResultSet rs2 = psGetReferral.executeQuery();
                 if (rs2 != null && rs2.next()) {
@@ -1022,8 +1024,6 @@ public class welcomebot extends SubspaceBot {
      */
     private void displayLink(String name, int refID) {
         String link = cfg.getString("ReferralLink");
-        
-        debug("Constructing RefUrl. RefID = " + refID);
         
         if(link.isEmpty()) {
             ba.sendSmartPrivateMessage(name, "An error occured while creating your referral link. Please contact a developer.");
