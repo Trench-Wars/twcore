@@ -1023,15 +1023,14 @@ public class welcomebot extends SubspaceBot {
     private void displayLink(String name, int refID) {
         String link = cfg.getString("ReferralLink");
         
-        debug("Constructing RefUrl.");
+        debug("Constructing RefUrl. RefID = " + refID);
         
         if(link.isEmpty()) {
             ba.sendSmartPrivateMessage(name, "An error occured while creating your referral link. Please contact a developer.");
             return;
         }
-        
-        link.replace(";RID;", Integer.toString(refID));
-        ba.sendSmartPrivateMessage(name, "Referral Link: " + link);
+
+        ba.sendSmartPrivateMessage(name, "Referral Link: " + link.replace(";RID;", Integer.toString(refID)));
     }
     
     private void cmd_debug(String name) {
