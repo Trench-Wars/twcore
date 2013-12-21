@@ -82,6 +82,7 @@ public class welcomebot extends SubspaceBot {
     private PreparedStatement psAddReferral;                // Adds a player to the referral database.
     
     private String infoee;
+    private String einfoee;
     private TreeSet<String> debuggers;
     private boolean DEBUG;
     private boolean ready;                                  // Prevents bot from operating outside of pub
@@ -129,10 +130,10 @@ public class welcomebot extends SubspaceBot {
         psSetAlerting = ba.createPreparedStatement(db, db, "UPDATE tblTrustedPlayers SET fbAlerting = ? WHERE fcPlayerName = ?");
         psGetSessionCount = ba.createPreparedStatement(db, db, "SELECT COUNT(*) FROM tblNewPlayerSession WHERE fcName = ?");
         psGetCountryCode = ba.createPreparedStatement(db, db, "SELECT country_code3 FROM tblCountryIPs WHERE INET_ATON(?) >= ip_from AND INET_ATON(?) <= ip_to");
-        psUpdateSession = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayerSession (fcName, ffSessionUsage, fnKills, fnDeaths) VALUES(?,?,?,?)");
+        psUpdateSession = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayerSession (fcName, ffSessionUsage, fnKills, fnDeaths, fcResolution) VALUES(?,?,?,?,?)");
         psUpdatePlayer = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayer " 
-                + "(fcName, fcSquad, ffTotalUsage, fcIP, fnMID, fcCountryCode, fdNameCreated) " 
-                + "VALUES(?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE fcSquad=VALUES(fcSquad), ffTotalUsage=VALUES(ffTotalUsage), fcIP=VALUES(fcIP), fnMID=VALUES(fnMID), fcCountryCode=VALUES(fcCountryCode)");
+                + "(fcName, fcSquad, ffTotalUsage, fcIP, fnMID, fcCountryCode, fdNameCreated, fcResolution) " 
+                + "VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE fcSquad=VALUES(fcSquad), ffTotalUsage=VALUES(ffTotalUsage), fcIP=VALUES(fcIP), fnMID=VALUES(fnMID), fcCountryCode=VALUES(fcCountryCode), fcResolution=VALUES(fcResolution)");
         
         psGetReferral = ba.createPreparedStatement(db, db, "SELECT fnReferralid FROM tblReferral WHERE fcReferralName = ?");
         psAddReferral = ba.createPreparedStatement(db, db, "INSERT INTO tblReferral (fcReferralName) VALUES (?)");
@@ -541,9 +542,11 @@ public class welcomebot extends SubspaceBot {
                 if (sessions.containsKey(infoee))
                     sessions.get(infoee).setInfo(message);
             } else if (message.startsWith("TIME: Session:")) {
-                if (infoee != null && sessions.containsKey(infoee))
+                if (infoee != null && sessions.containsKey(infoee)) {
                     sessions.get(infoee).setUsage(message);
-                else {
+                    einfoee = infoee;
+                    ba.sendUnfilteredPrivateMessage(einfoee, "*einfo");
+                } else {
                     String time = message.substring(message.indexOf("Total:") + 6);
                     time = time.substring(0, time.indexOf("Created")).trim();
                     String[] pieces = time.split(":");
@@ -554,7 +557,7 @@ public class welcomebot extends SubspaceBot {
                             if (aliases.containsKey(infoee)) {
                                 AliasCheck alias = aliases.get(infoee);
                                 alias.setUsage(hour * 60 + min);
-                                System.out.println("[ALIAS] " + alias.getName() + " in array already.");
+                                //System.out.println("[ALIAS] " + alias.getName() + " in array already.");
                                 debug("[ALIAS] " + alias.getName() + " in array already.");
                                 if (alias.getTime() > 900000) {
                                     alias.resetTime();
@@ -570,6 +573,8 @@ public class welcomebot extends SubspaceBot {
             } else if ((message.startsWith("PING Current") || message.startsWith("Ping:")) && infoee != null && sessions.containsKey(infoee)) {
                 // either from *lag or *info, either way send it to session for possible welcome objon and message
                 sessions.get(infoee).checkPing(message);
+            } else if (message.contains("Res: ") && einfoee != null && sessions.containsKey(einfoee)) {
+                sessions.get(einfoee).setRes(message);
             }
     }
     
@@ -1196,7 +1201,7 @@ public class welcomebot extends SubspaceBot {
         String name;
         String squad;
         String countryCode;
-        //String res;
+        String res = "";
         String ip;
         int mid;
         double totalUsage;
@@ -1253,7 +1258,6 @@ public class welcomebot extends SubspaceBot {
                 Tools.printStackTrace(e);
             }
             debug("Usage setting for " + name + ": Total:" + totalUsage + " Session:" + sessionUsage + " Created: " + created.toString());
-            doUpdatePlayer();
         }
         
         public void checkPing(String message) {
@@ -1282,6 +1286,11 @@ public class welcomebot extends SubspaceBot {
             }
         }
         
+        public void setRes(String message) {
+            res = message.substring(message.indexOf("Res: ") + 4, message.indexOf("Client: ")).trim();
+            doUpdatePlayer();
+        }
+        
         public void doUpdatePlayer() {
             try {
                 psUpdatePlayer.clearParameters();
@@ -1292,6 +1301,7 @@ public class welcomebot extends SubspaceBot {
                 psUpdatePlayer.setInt(5, mid);
                 psUpdatePlayer.setString(6, countryCode);
                 psUpdatePlayer.setTimestamp(7, created);
+                psUpdatePlayer.setString(8, res);
                 psUpdatePlayer.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
@@ -1335,6 +1345,7 @@ public class welcomebot extends SubspaceBot {
                 psUpdateSession.setDouble(2, sessionUsage);
                 psUpdateSession.setInt(3, kills);
                 psUpdateSession.setInt(4, deaths);
+                psUpdateSession.setString(5, res);
                 psUpdateSession.execute();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
