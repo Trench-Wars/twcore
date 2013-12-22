@@ -621,7 +621,7 @@ public class GamePacketGenerator {
         // and chopping up the message when it's too long. (This last part may have unwanted side-effects.)
         byte[] msg;
         try {
-            msg = message.getBytes("ISO-8859-1");
+            msg = message.getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
             Tools.printLog("Character encoding not supported. Reverting to default.");
             msg = message.getBytes();
