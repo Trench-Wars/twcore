@@ -238,7 +238,14 @@ public class ByteArray {
     }
 
     public void addString( String str ){
-        byte[] bytearr = str.getBytes();
+        byte[] bytearr;
+        try {
+            bytearr = str.getBytes("ISO-8859-1");
+        } catch (UnsupportedEncodingException e) {
+            Tools.printLog("Character encoding not supported. Reverting to default.");
+            bytearr = str.getBytes();
+        }
+
 
         System.arraycopy( bytearr, 0, m_array, m_pointer, bytearr.length );
         m_pointer += bytearr.length;

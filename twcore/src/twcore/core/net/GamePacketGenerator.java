@@ -1,5 +1,6 @@
 package twcore.core.net;
 
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.util.Collections;
 import java.util.HashMap;
@@ -618,7 +619,13 @@ public class GamePacketGenerator {
         // Due to character encoding methods, there is a chance that strings can expand in size.
         // The following lines are an attempt to prevent this, by using the converted length as parameter
         // and chopping up the message when it's too long. (This last part may have unwanted side-effects.)
-        byte[] msg = message.getBytes();
+        byte[] msg;
+        try {
+            msg = message.getBytes("ISO-8859-1");
+        } catch (UnsupportedEncodingException e) {
+            Tools.printLog("Character encoding not supported. Reverting to default.");
+            msg = message.getBytes();
+        }
         
         if(msg.length > 243) {
             // Variable offset to prevent chopping the non-UTF8 chars in the middle.
