@@ -87,7 +87,7 @@ public class golden extends MultiModule {
                     m_botAction.sendPrivateMessage(name, "Golden Gun already started.");
                 else {
                     hasGun = (message.substring(7));
-                    if (opList.isBot(hasGun)) {
+                    if (opList.isBotExact(hasGun)) {
                         m_botAction.sendPrivateMessage(name, "Invalid player. Please try again.");
                         return;
                     }
@@ -107,8 +107,8 @@ public class golden extends MultiModule {
                     oldGun = hasGun;
                     hasGun = message.substring(8);
                     newGun = m_botAction.getFuzzyPlayerName(hasGun);
-                    if (!newGun.isEmpty()) { 
-                        if (opList.isBot(newGun)) {
+                    if (newGun != null && !newGun.isEmpty()) { 
+                        if (opList.isBotExact(newGun)) {
                             m_botAction.sendPrivateMessage(name, "Invalid player. Please try again.");
                             return;
                         }
