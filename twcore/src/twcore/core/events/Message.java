@@ -60,15 +60,31 @@ public class Message extends SubspaceEvent {
             m_playerID = array.readLittleEndianShort(3);
             m_message = array.readString(5, array.size() - 6);
 
-            if (m_messageType == Message.ARENA_MESSAGE && m_message.startsWith("misc:alertcommand:")) {
-                alertCommands = m_message.substring(18).split(",");
-                for (int i = 0; i < alertCommands.length; i++) {
-                    if (m_message.startsWith(alertCommands[i] + ':')) {
-                        m_messageType = ALERT_MESSAGE;
-                        m_alertCommandType = alertCommands[i];
-                        stop += "1";
-                        break;
+            if (m_messageType == Message.ARENA_MESSAGE) { 
+                if (m_message.startsWith("misc:alertcommand:")) {
+                    alertCommands = m_message.substring(18).split(",");
+                    for (int i = 0; i < alertCommands.length; i++) {
+                        if (m_message.startsWith(alertCommands[i] + ':')) {
+                            m_messageType = ALERT_MESSAGE;
+                            m_alertCommandType = alertCommands[i];
+                            stop += "1";
+                            break;
+                        }
                     }
+                } else if(m_message.startsWith("IP:") && m_message.contains("TypedName:")) {
+                    stop += "A";
+                    // Trim spaces down in TypedName to make it all match the other server commands.
+                    String[] message = new String[3];
+                    message[0] = m_message.substring(0, m_message.indexOf("TypedName:") + 11);
+                    message[1] = m_message.substring(m_message.indexOf("TypedName:") + 10, m_message.indexOf("  Demo:"));
+                    message[2] = m_message.substring(m_message.indexOf("  Demo:"));
+                    
+                    stop += "B";
+                    
+                    message[1].replaceAll(" +", " ");
+                    m_message = message[0] + message[1] + message[2];
+                    
+                    stop += "C";
                 }
                 stop += "2";
             } else {
