@@ -76,13 +76,12 @@ public class Message extends SubspaceEvent {
                     // Trim spaces down in TypedName to make it all match the other server commands.
                     String[] message = new String[3];
                     message[0] = m_message.substring(0, m_message.indexOf("TypedName:") + 11);
-                    message[1] = m_message.substring(m_message.indexOf("TypedName:") + 10, m_message.indexOf("  Demo:"));
+                    message[1] = m_message.substring(m_message.indexOf("TypedName:") + 11, m_message.indexOf("  Demo:"));
                     message[2] = m_message.substring(m_message.indexOf("  Demo:"));
                     
                     stop += "B";
                     
-                    message[1].replaceAll(" +", " ");
-                    m_message = message[0] + message[1] + message[2];
+                    m_message = message[0] + message[1].replaceAll(" +", " ") + message[2];
                     
                     stop += "C";
                 }
