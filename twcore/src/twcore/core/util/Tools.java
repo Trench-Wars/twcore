@@ -397,10 +397,14 @@ public final class Tools {
         if (t != null) {
             n = "";
             for (int i = 0; i < t.length(); i++) {
-                if (t.charAt(i) == '\'') n = n + "\\\'"; else
-                    if (t.charAt(i) == '\"') n = n + "\\\\\""; else
-                        if (t.charAt(i) == '\\') n = n + "\\\\\\\\"; else
-                            n = n + t.charAt(i);
+                if (t.charAt(i) == '\'')
+                    n = n + "\\\'"; 
+                else if (t.charAt(i) == '\"')
+                    n = n + "\\\"";
+                else if (t.charAt(i) == '\\')
+                    n = n + "\\\\";
+                else
+                    n = n + t.charAt(i);
             }
         }
         return n;
