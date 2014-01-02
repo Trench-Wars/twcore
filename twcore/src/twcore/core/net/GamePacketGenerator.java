@@ -630,14 +630,14 @@ public class GamePacketGenerator {
             // Variable offset to prevent chopping the non-UTF8 chars in the middle.
             int offset = 241;
             // Find a suitable spot to chop up the string, and check if we aint breaking up any special characters while doing so.
-            for(; offset >= 0; offset--) {
+            for(; offset >= 2; offset--) {
                 if((msg[offset] & 0x20) != 0 && (msg[offset - 1] & 0x80) == 0 && (msg[offset - 2] & 0x80) == 0) {
                     break;
                 }
             }
             
             // No space found, chop it up inconveniently at the maximum length.
-            if(offset == 0)
+            if(offset <= 2)
                 offset = 242;
             
             try {
