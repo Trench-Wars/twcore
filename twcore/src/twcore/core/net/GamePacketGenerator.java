@@ -626,7 +626,7 @@ public class GamePacketGenerator {
             msg = message.getBytes();
         }
         
-        if(msg.length > 243) {
+        if(msg.length >= 243) {
             // Variable offset to prevent chopping the non-UTF8 chars in the middle.
             int offset = 242;
             // Find a suitable spot to chop up the string, and check if we aint breaking up any special characters while doing so.
