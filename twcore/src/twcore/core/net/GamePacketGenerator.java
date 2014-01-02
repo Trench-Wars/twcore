@@ -626,11 +626,20 @@ public class GamePacketGenerator {
             msg = message.getBytes();
         }
         
-        if(msg.length > 243) {
+        if(msg.length >= 243) {
             // Variable offset to prevent chopping the non-UTF8 chars in the middle.
-            int offset = 242;
-            if( (msg[241] & 0x80) != 0) offset = 241;
-            if( (msg[240] & 0x80) != 0) offset = 240;
+            int offset = 241;
+            // Find a suitable spot to chop up the string, and check if we aint breaking up any special characters while doing so.
+            for(; offset >= 0; offset--) {
+                if((msg[offset] & 0x20) != 0 && (msg[offset - 1] & 0x80) == 0 && (msg[offset - 2] & 0x80) == 0) {
+                    break;
+                }
+            }
+            
+            // No space found, chop it up inconveniently at the maximum length.
+            if(offset == 0)
+                offset = 242;
+            
             try {
                 sendChatPacket( messageType, soundCode, userID, new String(msg, 0, offset, "ISO-8859-1") );
                 sendChatPacket( messageType, soundCode, userID, new String(msg, offset, msg.length - offset, "ISO-8859-1") );
