@@ -642,10 +642,26 @@ public class GamePacketGenerator {
             
             try {
                 sendChatPacket( messageType, soundCode, userID, new String(msg, 0, offset, "ISO-8859-1") );
-                sendChatPacket( messageType, soundCode, userID, new String(msg, offset, msg.length - offset, "ISO-8859-1") );
+                if(messageType == 0x07) {
+                    // Remove private message. Need to re-prepend the name.
+                    int index = 1;
+                    // Search for the second :
+                    for(; (index < offset) && (msg[offset] != 0x3A); index++);
+                    sendChatPacket( messageType, soundCode, userID, new String(msg, 0, index + 1, "ISO-8859-1") + new String(msg, offset, msg.length - offset, "ISO-8859-1"));
+                } else {
+                    sendChatPacket( messageType, soundCode, userID, new String(msg, offset, msg.length - offset, "ISO-8859-1") );
+                }
             } catch (UnsupportedEncodingException e) {
                 sendChatPacket( messageType, soundCode, userID, new String(msg, 0, offset) );
-                sendChatPacket( messageType, soundCode, userID, new String(msg, offset, msg.length - offset) );
+                if(messageType == 0x07) {
+                    // Remove private message. Need to re-prepend the name.
+                    int index = 1;
+                    // Search for the second :
+                    for(; (index < offset) && (msg[offset] != 0x3A); index++);
+                    sendChatPacket( messageType, soundCode, userID, new String(msg, 0, index + 1) + new String(msg, offset, msg.length - offset));
+                } else {
+                    sendChatPacket( messageType, soundCode, userID, new String(msg, offset, msg.length - offset) );
+                }
             }
             
             return;
