@@ -344,6 +344,7 @@ public class robohelp extends SubspaceBot {
         m_botAction.joinArena("#robopark");
         m_botAction.sendUnfilteredPublicMessage("?chat=" + m_botAction.getGeneralSettings().getString("Staff Chat") + "," + ALERT_CHAT + "," + ba.getBotSettings().getString("TWDChat"));
         m_botAction.sendUnfilteredPublicMessage("?blogin " + m_botSettings.getString("Banpassword"));
+        m_botAction.sendUnfilteredPublicMessage("?bantext If you would like to contest your ban, please send a ticket to www.trenchwars.org/support");
         m_botAction.ipcSubscribe(ZONE_CHANNEL);
     }
 
