@@ -525,6 +525,8 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Conspiracy &Who|If you seriously need help with anything, follow me.. i know exactly what im doing!
 &Willby &Who|Down, down to hell; and say I sent thee thither: / I, that have neither pity, love, nor fear. / Indeed, 'tis true that Henry told me of; / For I have often heard my mother say / I came into the world with my legs forward: / Had I not reason, think ye, to make haste, / And seek their ruin that usurp'd our right? / The midwife wonder'd and the women cried / 'O, Jesus bless us, he is born with teeth!' / And so I was; which plainly signified / That I should snarl and bite and play the dog. / Then, since the heavens have shaped my body so, Let hell make crook'd my mind to answer it. / I have no brother, I am like no brother; / And this word 'love,' which graybeards call divine, / Be resident in men like one another / And not in me: I am myself alone.
 &Weedle &Who|A Weedle Appears. Soft Gliding Across Wet Grass. Gotta Catchem All.
+&Azov &Who|"Though much is taken, much abides; and though we are not now that strength which in old days moved earth and heaven; that which we are, we are; One equal temper of heroic hearts, made weak by time and fate, but strong in will, to strive to seek, to find, and not to yield." - Lord Tennyson
+&Board &Who|Terrs are red, Levs are blue, I shot you ded, PEW PEW PEW
 
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
