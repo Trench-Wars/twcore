@@ -983,8 +983,7 @@ public class elim extends SubspaceBot {
     public void handleEvent(FrequencyShipChange event) {
         if (state == State.PLAYING || state == State.STARTING) {
             if (game != null)
-                ;
-            game.handleEvent(event);
+                game.handleEvent(event);
         }
         if (state == State.WAITING)
             handleState();
