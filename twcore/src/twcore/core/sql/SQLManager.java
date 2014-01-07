@@ -52,9 +52,15 @@ public class SQLManager extends Thread {
     HashMap     <String,SQLConnectionPool>pools;   // Connection pool storage
     HashMap     <String,SQLBackgroundQueue>queues; // Background queue storage
     boolean     operational = true;                // Status of SQL system
-    final static int THREAD_SLEEP_TIME = 60000;    // Length of time for thread to
+    
+    final static int THREAD_SLEEP_TIME = 30 * Tools.TimeInMillis.SECOND;
+                                                   // Length of time for thread to
                                                    // sleep, in ms, after all
                                                    // background queries are done.
+    
+    final static int NO_OP_TIME = 30 * Tools.TimeInMillis.MINUTE;
+                                                   // Time in ms to send a no-op.
+    private long lastNoOp = 0;
 
     /**
      * Initialize SQL functionality with the information given in the specified
@@ -102,6 +108,7 @@ public class SQLManager extends Thread {
             Tools.printLog( "SQL Background Queues NOT initialized." );
         }
         System.out.println();
+        lastNoOp = System.currentTimeMillis();
     }
 
     /**
@@ -279,10 +286,14 @@ public class SQLManager extends Thread {
      * it's then returned as an SQLResultEvent to the bot that made the query.
      * The SQLManager thread will sleep for a defined amount of time, but will
      * interrupt/return when a background query requires processing.
+     * 
+     * Also runs a no-op on each pool of connections periodically.
      */
     public void run() {
+        boolean runNoOp;
         while( true ){
             Iterator<String> i = queues.keySet().iterator();
+            runNoOp = (lastNoOp > System.currentTimeMillis() + NO_OP_TIME);
             while( i.hasNext() ){
                 String name = i.next();
                 SQLBackgroundQueue queue = queues.get( name );
@@ -291,7 +302,14 @@ public class SQLManager extends Thread {
                     SQLResultEvent event = queue.getNextInLine();
                     new SQLWorker( pool, event, this );
                 }
+                if( runNoOp ) {
+                    try {
+                        pool.runNoOp();
+                    } catch (SQLException e) {}
+                }
             }
+            if( runNoOp )
+                lastNoOp = System.currentTimeMillis();
             try{
                 Thread.sleep( THREAD_SLEEP_TIME );
             } catch( InterruptedException e ){}

@@ -105,6 +105,30 @@ public class SQLConnectionPool implements Runnable {
             free( DEFAULT_UNIQUE_ID, conn );
         }
     }
+    
+    /**
+     * Runs a no-op command on every available connection to keep
+     * the connection pool alive. Executed periodically by SQLManager.
+     * @throws SQLException
+     */
+    public void runNoOp() throws SQLException {
+        int remainingConnections = availableConnections.size();
+        Vector<Connection> usedConns = new Vector<Connection>();
+        for (int i=0; i<remainingConnections; i++ ) {
+            Connection conn = getConnection();
+            usedConns.add(conn);
+            try{
+                Statement stmt = conn.createStatement();
+
+                stmt.execute( "SELECT 1", Statement.RETURN_GENERATED_KEYS );
+            } catch( SQLException e ){
+                throw e;
+            }
+        }
+        
+        for (Connection conn : usedConns)
+            free( DEFAULT_UNIQUE_ID, conn );
+    }
 
     /**
      * Attempts to retrieve a connection from the connection pool using the specified unique ID.
