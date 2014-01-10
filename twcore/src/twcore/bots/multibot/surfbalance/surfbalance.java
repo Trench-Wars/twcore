@@ -304,7 +304,7 @@ public class surfbalance extends MultiModule {
             String playerName = p.getPlayerName();
             if (playerName != null) {
                 PlayerInfo player = m_players.get(playerName);
-                if (player.isReachedSafe) {
+                if (player != null && player.isReachedSafe) {
                     m_botAction.setFreq(playerName, freq);
                     m_players.put(playerName, new PlayerInfo(playerName, freq));
                     player.setNotReachedSafe();
