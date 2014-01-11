@@ -54,6 +54,7 @@ public class bwjsbot extends SubspaceBot {
     private Spy racismWatcher;                              //Racism watcher
     
     private HashMap<String,Long> listNotplaying;            //List of notplaying players
+    private HashMap<String,Long> listJustAdded;             //List of when players were added
 	private long NOTPLAYING_SECS_TO_WAIT = 45 * 1000;       //Time players must wait after enabling !np to disable
     private ArrayList<String> listAlert;                    //List of players who toggled !subscribe on
     private ArrayList<ExtendedLog> listExtendedLog;         //Logs more information of a game
@@ -639,6 +640,17 @@ public class bwjsbot extends SubspaceBot {
                     Tools.shipName(shipType) + "s allowed.");
                 return;
             }
+
+            // Protection from players spamming !add and !remove to DC others
+            Long added = listJustAdded.get(p.getPlayerName());
+            if (added != null) {
+                if (added + (Tools.TimeInMillis.SECOND * 10) > System.currentTimeMillis()) {
+                    m_botAction.sendPrivateMessage(name, "Error: Could not add " + p.getPlayerName() + " -- was added to the game already very recently." );                    
+                    return;
+                }
+            }
+            
+            listJustAdded.put(name, System.currentTimeMillis());
             
             /*
              * All checks are done
@@ -1651,6 +1663,18 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
+            // Protection from players spamming !sub and !remove to DC others
+            Long added = listJustAdded.get(playerBnew.getPlayerName());
+            if (added != null) {
+                if (added + (Tools.TimeInMillis.SECOND * 10) > System.currentTimeMillis()) {
+                    m_botAction.sendPrivateMessage(name, "Error: Could not sub in " + playerBnew.getPlayerName() + " -- was added to the game already very recently." );                    
+                    return;
+                }
+            }
+            
+            listJustAdded.put(name, System.currentTimeMillis());
+
+            
             t.sub(playerA, playerBnew); //Execute the substitute
         }
     }
@@ -1927,7 +1951,8 @@ public class bwjsbot extends SubspaceBot {
         
         //Cancel timer
         m_botAction.setTimer(0);
-        
+
+        listJustAdded.clear();
         
         //Determine winner
         if (cfg.getGameType() == BWJSConfig.BASE) {
@@ -2175,6 +2200,7 @@ public class bwjsbot extends SubspaceBot {
         
         listNotplaying = new HashMap<String,Long>();
         listNotplaying.put(m_botAction.getBotName().toLowerCase(),new Long(0));
+        listJustAdded = new HashMap<String,Long>();
         listAlert = new ArrayList<String>();
         listExtendedLog = new ArrayList<ExtendedLog>();
         
