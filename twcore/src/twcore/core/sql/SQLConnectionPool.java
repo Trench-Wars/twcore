@@ -99,21 +99,54 @@ public class SQLConnectionPool implements Runnable {
             else
                 return stmt.getGeneratedKeys();
         } catch( SQLException e ){
-        	throw e;
-        	
+            replaceStaleConnection( conn );
+            try {
+                return retryQueryWithAltConnection( query );
+            } catch ( SQLException e2 ) {
+                throw e;
+            }        	
         } finally {
             free( DEFAULT_UNIQUE_ID, conn );
         }
     }
     
     /**
-     * Runs a no-op command on every available connection to keep
-     * the connection pool alive. Executed periodically by SQLManager.
+     * Try to run a query with a different connection, if last connection failed/was stale.
+     * @param query A properly-formed SQL query
+     * @return The result set of the query (MAY be null)
      * @throws SQLException
      */
-    public void runNoOp() throws SQLException {
+    public ResultSet retryQueryWithAltConnection( String query ) throws SQLException {
+        Connection conn = getConnection();
+        try{
+            Statement stmt = conn.createStatement();
+            stmt.execute( query, Statement.RETURN_GENERATED_KEYS );
+            ResultSet set = stmt.getResultSet();
+            if( set != null )
+                return stmt.getResultSet();
+            else
+                return stmt.getGeneratedKeys();
+        } catch( SQLException e ){
+            replaceStaleConnection( conn );
+            throw e;
+            
+        } finally {
+            free( DEFAULT_UNIQUE_ID, conn );
+        }
+    }
+    
+    /**
+     * Checks for stale connections and replaces them as necessary.
+     * 
+     * This is a hack. See SQLManager for ways to do this a bit better
+     * (this functionality is already implemented elsewhere).
+     * 
+     * @throws SQLException
+     */
+    public void updateStaleConnections() throws SQLException {
         int remainingConnections = availableConnections.size();
         Vector<Connection> usedConns = new Vector<Connection>();
+        Vector<Connection> staleConns = new Vector<Connection>();
         for (int i=0; i<remainingConnections; i++ ) {
             Connection conn = getConnection();
             usedConns.add(conn);
@@ -122,12 +155,35 @@ public class SQLConnectionPool implements Runnable {
 
                 stmt.execute( "SELECT 1", Statement.RETURN_GENERATED_KEYS );
             } catch( SQLException e ){
-                throw e;
-            }
+                staleConns.add(conn);
+            }            
+        }
+
+        // Replace any stales found
+        for (Connection conn : staleConns) {
+            usedConns.remove( conn );
+            replaceStaleConnection( conn );
         }
         
+        // Free up all tested connections
         for (Connection conn : usedConns)
             free( DEFAULT_UNIQUE_ID, conn );
+    }
+    
+    /**
+     * Replaces a connection that has thrown a CommunicationsException
+     * @param conn Connection to replace
+     * @throws SQLException
+     */
+    public void replaceStaleConnection( Connection conn ) throws SQLException {
+        free( DEFAULT_UNIQUE_ID, conn );
+
+        availableConnections.remove( conn );
+        try {
+            conn.close();
+        } catch( SQLException e ) {}
+        conn = null;
+        availableConnections.addElement(makeNewConnection());
     }
 
     /**

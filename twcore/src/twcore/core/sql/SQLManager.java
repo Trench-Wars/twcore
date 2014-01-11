@@ -46,6 +46,11 @@ import twcore.core.util.Tools;
  * For every query you MUST run BotAction's SQLClose(), or manually run the close()
  * method on both the ResultSet and the Statement that created it.  If you do not,
  * memory leaks may occur!
+ * 
+ * TODO:
+ * Setup Apache Commons DBCP to remove CommunicatonsExceptions:
+ *    validationQuery="SELECT 1"
+ *    testOnBorrow="true"
  */
 public class SQLManager extends Thread {
     BotSettings sqlcfg;                            // Reference to SQL config file
@@ -58,9 +63,9 @@ public class SQLManager extends Thread {
                                                    // sleep, in ms, after all
                                                    // background queries are done.
     
-    final static int NO_OP_TIME = 30 * Tools.TimeInMillis.MINUTE;
-                                                   // Time in ms to send a no-op.
-    private long lastNoOp = 0;
+    final static int STALE_TIME = 15 * Tools.TimeInMillis.MINUTE;
+                                                   // Time in ms between stale conn checks.
+    private long lastStaleCheck = 0;
 
     /**
      * Initialize SQL functionality with the information given in the specified
@@ -77,12 +82,25 @@ public class SQLManager extends Thread {
             for( int i = 1; i <= sqlcfg.getInt( "ConnectionCount" ); i++ ){
                 String name = sqlcfg.getString( "Name" + i );
 
+                // TODO: Migrate to a DataSource object and pass that to SQLConnectionPool
+                // (com.mysql.jdbc.jdbc2.optional.MysqlDataSource)
                 String dburl = "jdbc:mysql://" + sqlcfg.getString( "Server" + i )
                 + ":" + sqlcfg.getInt( "Port" + i ) + "/"
                 + sqlcfg.getString( "Database" + i ) + "?user="
                 + sqlcfg.getString( "Login" + i ) + "&password="
-                + sqlcfg.getString( "Password" + i ) + "&allowMultiQueries=true" + "&autoReconnect=true" + "&autoReconnectForPools=true" + "&maxReconnects=2147483647" + "&initialTimeout=1" + "&logSlowQueries=false" + "&interactiveClient=true";
+                + sqlcfg.getString( "Password" + i ) +
+                
+                // Available properties (and info about them)
+                // http://dev.mysql.com/doc/refman/5.0/en/connector-j-reference-configuration-properties.html
+                "&allowMultiQueries=true" +
+                "&maxReconnects=2147483647" +
+                "&initialTimeout=1" +
+                "&logSlowQueries=false" +
+                "&interactiveClient=true" +
+                "&autoReconnect=true" +         // Auto-Reconnect not recommended
+                "&autoReconnectForPools=true";
 
+                // TODO: Better pooling solutions now exist that can be configured to our needs.
                 SQLConnectionPool db = new SQLConnectionPool( name, dburl,
                 sqlcfg.getInt( "MinPoolSize" + i ),
                 sqlcfg.getInt( "MaxPoolSize" + i ),
@@ -108,7 +126,7 @@ public class SQLManager extends Thread {
             Tools.printLog( "SQL Background Queues NOT initialized." );
         }
         System.out.println();
-        lastNoOp = System.currentTimeMillis();
+        lastStaleCheck = System.currentTimeMillis();
     }
 
     /**
@@ -290,10 +308,10 @@ public class SQLManager extends Thread {
      * Also runs a no-op on each pool of connections periodically.
      */
     public void run() {
-        boolean runNoOp;
+        boolean checkForStales;
         while( true ){
             Iterator<String> i = queues.keySet().iterator();
-            runNoOp = (lastNoOp > System.currentTimeMillis() + NO_OP_TIME);
+            checkForStales = (lastStaleCheck > System.currentTimeMillis() + STALE_TIME);
             while( i.hasNext() ){
                 String name = i.next();
                 SQLBackgroundQueue queue = queues.get( name );
@@ -302,14 +320,14 @@ public class SQLManager extends Thread {
                     SQLResultEvent event = queue.getNextInLine();
                     new SQLWorker( pool, event, this );
                 }
-                if( runNoOp ) {
+                if( checkForStales ) {
                     try {
-                        pool.runNoOp();
+                        pool.updateStaleConnections();
                     } catch (SQLException e) {}
                 }
             }
-            if( runNoOp )
-                lastNoOp = System.currentTimeMillis();
+            if( checkForStales )
+                lastStaleCheck = System.currentTimeMillis();
             try{
                 Thread.sleep( THREAD_SLEEP_TIME );
             } catch( InterruptedException e ){}
