@@ -4,6 +4,7 @@
 	<classpathentry kind="lib" path="lib/aim.jar"/>
 	<classpathentry kind="lib" path="lib/gson.jar"/>
 	<classpathentry kind="lib" path="lib/googleapi.jar"/>
+	<classpathentry kind="lib" path="lib/chatter-bot-api-r40.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.0.7-bin.jar"/>
 	<classpathentry kind="lib" path="lib/mail.jar"/>
