@@ -78,6 +78,7 @@ public class elim extends SubspaceBot {
 
     HashSet<String> debugStatPlayers;
     private String connectionID;
+    private int connectionCount = 0;
     static final String db = "website";
     static final String pub = "pubstats";
     static final int INITIAL_RATING = 300;
@@ -1300,6 +1301,7 @@ public class elim extends SubspaceBot {
             ba.closePreparedStatement(db, connectionID, showLadder);
         }
 
+        connectionID = "elimplayerstats" + connectionCount++;
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
         showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank ASC LIMIT ?");
