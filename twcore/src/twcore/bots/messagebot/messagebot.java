@@ -102,7 +102,7 @@ public class messagebot extends SubspaceBot
 		events.request(EventRequester.MESSAGE);
 		events.request(EventRequester.LOGGED_ON);
 		channels = new HashMap<String,Channel>();
-		//defaultChannel = new HashMap();
+        msgLimits = new HashMap<String,Integer>();
 		ops = new HashSet<String>();
 		m_CI = new CommandInterpreter(m_botAction);
 		registerCommands();
