@@ -131,28 +131,34 @@ public class robohelp extends SubspaceBot {
     void registerCommands() {
         int acceptedMessages;
 
+        // *** Any source cmds
         acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE | Message.CHAT_MESSAGE;
+        
         m_commandInterpreter.registerCommand("!claimhelp", acceptedMessages, this, "claimHelpScreen", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!calls", acceptedMessages, this, "handleCalls", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!stats", acceptedMessages, this, "handleStats", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!newbs", acceptedMessages, this, "handleNewbs", OperatorList.ZH_LEVEL);
+        m_commandInterpreter.registerCommand("!false", acceptedMessages, this, "handleFalseNewb", OperatorList.ZH_LEVEL);
+        m_commandInterpreter.registerCommand("!last", acceptedMessages, this, "handleLast", OperatorList.ZH_LEVEL);
+        m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL);
+        m_commandInterpreter.registerCommand("!lookup", acceptedMessages, this, "handleLookup", OperatorList.ZH_LEVEL);
+        m_commandInterpreter.registerCommand("!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
 
+        // *** PM cmds
         acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE;
+        
         // Player commands
         m_commandInterpreter.registerCommand("!next", acceptedMessages, this, "handleNext");
         m_commandInterpreter.registerCommand("!summon", acceptedMessages, this, "handleSummon");
 
         // ZH+ commands
-        m_commandInterpreter.registerCommand("!trigger", acceptedMessages, this, "handleTrigger", OperatorList.MODERATOR_LEVEL);
-        m_commandInterpreter.registerCommand("!lookup", acceptedMessages, this, "handleLookup", OperatorList.ZH_LEVEL);
-        m_commandInterpreter.registerCommand("!last", acceptedMessages, this, "handleLast", OperatorList.ZH_LEVEL);
-        m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL);
-        m_commandInterpreter.registerCommand("!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
         //m_commandInterpreter.registerCommand("!hosted", acceptedMessages, this, "handleDisplayHosted", OperatorList.ZH_LEVEL);
-        m_commandInterpreter.registerCommand("!false", acceptedMessages, this, "handleFalseNewb", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!alert", acceptedMessages, this, "toggleAlert", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!time", acceptedMessages, this, "changeTimeFormatP", OperatorList.ZH_LEVEL);
 
+        // Mod
+        m_commandInterpreter.registerCommand("!trigger", acceptedMessages, this, "handleTrigger", OperatorList.MODERATOR_LEVEL);
+        
         // Smod
         m_commandInterpreter.registerCommand("!truncate", acceptedMessages, this, "handleTruncate", OperatorList.SMOD_LEVEL);
         m_commandInterpreter.registerCommand("!say", acceptedMessages, this, "handleSay", OperatorList.SMOD_LEVEL);
@@ -165,24 +171,27 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!reload", acceptedMessages, this, "handleReload", OperatorList.SYSOP_LEVEL);
         m_commandInterpreter.registerCommand("!loadnewbs", acceptedMessages, this, "loadLastNewbs", OperatorList.SYSOP_LEVEL);
 
+        // *** Chat-only cmds       
         acceptedMessages = Message.CHAT_MESSAGE;
-
-        // ER+
+        
         m_commandInterpreter.registerCommand("!8ball", acceptedMessages, this, "handle8Ball", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!repeat", acceptedMessages, this, "handleRepeat", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!warn", acceptedMessages, this, "handleWarn", OperatorList.ZH_LEVEL);
-        m_commandInterpreter.registerCommand("!tell", acceptedMessages, this, "handleTell", OperatorList.ER_LEVEL);
         //m_commandInterpreter.registerCommand("!ban", acceptedMessages, this, "handleBan", OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!google", acceptedMessages, this, "handleGoogle", OperatorList.ER_LEVEL);
         m_commandInterpreter.registerCommand("!wiki", acceptedMessages, this, "handleWikipedia", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!status", acceptedMessages, this, "handleStatus", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!dictionary", acceptedMessages, this, "handleDictionary", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!thesaurus", acceptedMessages, this, "handleThesaurus", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!javadocs", acceptedMessages, this, "handleJavadocs", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!time", acceptedMessages, this, "changeTimeFormatC", OperatorList.ZH_LEVEL);
+        // ER+
+        m_commandInterpreter.registerCommand("!google", acceptedMessages, this, "handleGoogle", OperatorList.ER_LEVEL);
+        m_commandInterpreter.registerCommand("!tell", acceptedMessages, this, "handleTell", OperatorList.ER_LEVEL);
 
+        /* This cmd is not registered
         if (!m_strictOnIts)
             m_commandInterpreter.registerDefaultCommand(acceptedMessages, this, "handleChat");
+        */
 
         acceptedMessages = Message.ARENA_MESSAGE;
 
