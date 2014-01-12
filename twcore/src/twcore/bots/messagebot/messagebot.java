@@ -806,7 +806,9 @@ public class messagebot extends SubspaceBot
             m_botAction.sendSmartPrivateMessage(name, "    !delete read                  - Deletes messages already read.");
             m_botAction.sendSmartPrivateMessage(name, "    !delete all                   - Deletes all messages.");
 	        m_botAction.sendSmartPrivateMessage(name, "    !lmessage <name>:<message>    - Leaves <message> for <name>.");
-                m_botAction.sendSmartPrivateMessage(name, "    !smessage <message>    - Leaves <message> for everyone on squad. (Ass/Cap Only)");
+            m_botAction.sendSmartPrivateMessage(name, "    !smessage <message>    - Leaves <message> for everyone on squad. (Ass/Cap Only)");
+            m_botAction.sendSmartPrivateMessage(name, "    !limit <#>                    - Limits # of messages displayed (default=" + defaultLimit + ")" );
+            
 	    } else if(message.toLowerCase().startsWith("c")) {
 	        m_botAction.sendSmartPrivateMessage(name, "    !me                           - Tells you what channels you have joined.");
 	        if(m_botAction.getOperatorList().isBot(name)) m_botAction.sendSmartPrivateMessage(name, "    !memberof <name>              - Lists all the channels on which <name> is a member.");
