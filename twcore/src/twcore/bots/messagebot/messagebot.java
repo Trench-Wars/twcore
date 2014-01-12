@@ -1204,7 +1204,7 @@ public class messagebot extends SubspaceBot
         }
         
         try {
-            Integer i = Integer.getInteger(message);
+            int i = Integer.getInteger(message.trim());
             msgLimits.put(name,i);
             m_botAction.sendSmartPrivateMessage(name, "Message limit set to: " + i);
         } catch (NumberFormatException e) {
