@@ -945,7 +945,7 @@ public class messagebot extends SubspaceBot
 
                 LinkedList <String>messages = new LinkedList<String>();
                 LinkedList <Integer>ids = new LinkedList<Integer>();
-                SimpleDateFormat dateFormat = new SimpleDateFormat("dMMMyy h:mma");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("ddMMMyy h:mma");
 
                 if( !results.next() ) {
                     if( addAnd.equals( " AND fnRead='0'" ) )
@@ -981,12 +981,12 @@ public class messagebot extends SubspaceBot
                 }
                 
                 
-                String limitMsg = (numMsgs > limit ? " " + (numMsgs - limit) + " msgs not shown. Use !limit # to change max # shown." : "" );
+                String limitMsg = (numMsgs > limit ? "; " + limit + " shown (" + (numMsgs - limit) + " suppressed). Use !limit # to change max # shown." : " displayed." );
                 
                 if( idResetNum == numMsgs ) {
-                    messages.add( "Total " + numMsgs + " new message" + (numMsgs==1?"":"s") + " displayed." + limitMsg);
+                    messages.add( "Total " + numMsgs + " new message" + (numMsgs==1?"":"s") + limitMsg);
                 } else {
-                    messages.add( "Total " + numMsgs + " message" + (numMsgs==1?"":"s") + " displayed." + (idResetNum>0 ? (" (" + idResetNum + " new)") : "") + limitMsg);                    
+                    messages.add( "Total " + numMsgs + " message" + (numMsgs==1?"":"s") + (idResetNum>0 ? (" (" + idResetNum + " new)") : "") + limitMsg);                    
                 }
                 
                 if( !resetResults.equals("") ) {
@@ -1177,7 +1177,7 @@ public class messagebot extends SubspaceBot
 			}
 			
 			if (numMsgs > limit)
-			    msgs.add( (numMsgs - limit) + " messages not shown. Use !limit # to change max # of messages shown." );
+			    msgs.add( limit + " messages shown, " + (numMsgs - limit) + " suppressed. Use !limit # to change max # of messages shown at once." );
 
             SpamTask spamTask = new SpamTask();
             spamTask.setMsgs(name, msgs);
