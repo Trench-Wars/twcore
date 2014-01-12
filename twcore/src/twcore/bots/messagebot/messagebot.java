@@ -1020,7 +1020,7 @@ public class messagebot extends SubspaceBot
 		try{
 			messageNumber = Integer.parseInt(message);
 		} catch(Exception e) {
-			m_botAction.sendSmartPrivateMessage(name, "Invalid message number");
+			m_botAction.sendSmartPrivateMessage(name, "Invalid message number.");
 			return;
 		}
 
@@ -1204,10 +1204,10 @@ public class messagebot extends SubspaceBot
         }
         
         try {
-            int i = Integer.getInteger(message.trim());
+            int i = Integer.parseInt(message.trim());
             msgLimits.put(name,i);
             m_botAction.sendSmartPrivateMessage(name, "Message limit set to: " + i);
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             m_botAction.sendSmartPrivateMessage(name, "Your current message limit: " + limit + "  Use !limit # to set.");
             return;
         }
