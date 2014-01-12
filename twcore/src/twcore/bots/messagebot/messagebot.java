@@ -188,6 +188,7 @@ public class messagebot extends SubspaceBot
         m_CI.registerCommand( "!unread",	 acceptedMessages, this, "setAsNew");
         m_CI.registerCommand( "!r",          acceptedMessages, this, "readMessage");
         m_CI.registerCommand( "!read",		 acceptedMessages, this, "readMessage");
+        m_CI.registerCommand( "!readall",    acceptedMessages, this, "readAll");
         m_CI.registerCommand( "!delete",	 acceptedMessages, this, "deleteMessage");
         m_CI.registerCommand( "!messages",	 acceptedMessages, this, "myMessages");
         m_CI.registerCommand( "!msgs",       acceptedMessages, this, "myMessages");
@@ -1045,6 +1046,15 @@ public class messagebot extends SubspaceBot
             m_botAction.SQLClose(results);
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
+	
+	/**
+	 * Shortcut for fiS. :P
+	 * @param name
+	 * @param message
+	 */
+    public void readAll(String name, String message) {
+        readMessage(name,"a");
+    }
 	
 	/**
 	 * Support method to get the text of a given message when reading multiple message
