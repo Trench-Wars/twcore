@@ -943,7 +943,7 @@ public class messagebot extends SubspaceBot
                     else if( message.toLowerCase().startsWith("r"))
                         addAnd = " AND fnRead='1'";
                     results = m_botAction.SQLQuery(database, "SELECT * FROM tblMessageSystem WHERE fcName = '" +
-                            Tools.addSlashesToString(name) + "'"+addAnd);
+                            Tools.addSlashesToString(name) + "'" + addAnd + orderBy );
                 }
 
                 LinkedList <String>messages = new LinkedList<String>();
