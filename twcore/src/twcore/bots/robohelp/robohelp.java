@@ -42,7 +42,7 @@ public class robohelp extends SubspaceBot {
     public static final String ALERT_CHAT = "training"; // chat that the new player alerts get sent to
 
     static int TIME_BETWEEN_ADS = 390000;//6.5 * 60000;
-    public static final int CALL_INTERVAL = 10;
+    public static final int CALL_INTERVAL = 1;
     public static final String CALL_AD = "  (!claimhelp)";
     public static final int LINE_SIZE = 100;
     public static final int CALL_EXPIRATION_TIME = 3 * Tools.TimeInMillis.MINUTE; // Time after which a call can't
@@ -84,7 +84,7 @@ public class robohelp extends SubspaceBot {
     String findPopulation = "";
     int setPopID = -1;
     boolean timeFormat = false;
-    boolean whitespaceAfterCalls = true;        // True if we insert a Robohelp> line after calls
+    boolean ellipsisAfterCalls = true;        // Robohelp> ... after calls w/ no #
 
     String lastStafferClaimedCall;
 
@@ -482,8 +482,8 @@ public class robohelp extends SubspaceBot {
             msg += "Call #" + help.getID() + CALL_AD;
         } else if (now - lastAlert < CALL_EXPIRATION_TIME) {
             msg += "Call #" + help.getID();
-        } else if( whitespaceAfterCalls ) {
-            msg = " ";
+        } else if( ellipsisAfterCalls ) {
+            msg = "...";
         }
         
         if (msg.length() > 0)
@@ -538,8 +538,8 @@ public class robohelp extends SubspaceBot {
                 msg += "Call #" + helpRequest.getID() + CALL_AD;
             } else if (now - lastAlert < CALL_EXPIRATION_TIME) {
                 msg += "Call #" + helpRequest.getID();
-            } else if( whitespaceAfterCalls ) {
-                msg = " ";
+            } else if( ellipsisAfterCalls ) {
+                msg = "...";
             }
             if (msg.length() > 0)
                 m_botAction.sendChatMessage(msg);
@@ -617,8 +617,8 @@ public class robohelp extends SubspaceBot {
             msg += "Call #" + newb.getID() + CALL_AD;
         } else if (now - lastAlert < CALL_EXPIRATION_TIME) {
             msg += "Call #" + newb.getID();
-        } else if( whitespaceAfterCalls ) {
-            msg = " ";
+        } else if( ellipsisAfterCalls ) {
+            msg = "...";
         }            
         if (msg.length() > 0)
             m_botAction.sendChatMessage(msg);
