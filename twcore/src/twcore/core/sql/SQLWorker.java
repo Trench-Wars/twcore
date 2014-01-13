@@ -49,6 +49,7 @@ public class SQLWorker implements Runnable {
             m_pool.decrementBackgroundCount();
             m_manager.interrupt();
         } catch( SQLException e ){
+            Tools.printLog("SQLException encountered while running background query in SQLWorker.");
             Tools.printStackTrace( e );
         }
     }

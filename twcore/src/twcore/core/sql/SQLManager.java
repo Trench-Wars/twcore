@@ -305,27 +305,38 @@ public class SQLManager extends Thread {
      * The SQLManager thread will sleep for a defined amount of time, but will
      * interrupt/return when a background query requires processing.
      * 
-     * Also runs a no-op on each pool of connections periodically.
+     * Also runs a check for stales on each pool of connections periodically.
      */
     public void run() {
         boolean checkForStales;
         while( true ){
+            
+            // Run background queries
             Iterator<String> i = queues.keySet().iterator();
-            checkForStales = (lastStaleCheck > System.currentTimeMillis() + STALE_TIME);
             while( i.hasNext() ){
                 String name = i.next();
                 SQLBackgroundQueue queue = queues.get( name );
                 SQLConnectionPool pool = pools.get( name );
                 while( !queue.isEmpty() && !pool.reachedMaxBackground() ){
                     SQLResultEvent event = queue.getNextInLine();
-                    new SQLWorker( pool, event, this );
-                }
-                if( checkForStales ) {
                     try {
-                        pool.updateStaleConnections();
-                    } catch (SQLException e) {}
+                        new SQLWorker( pool, event, this );
+                    } catch (Exception e) {
+                        Tools.printLog("Uncaught exception encountered running background query.");
+                        Tools.printStackTrace(e);
+                    }                
                 }
             }
+
+            // Perform stale check
+            checkForStales = (lastStaleCheck > System.currentTimeMillis() + STALE_TIME);            
+            i = pools.keySet().iterator();
+            while( i.hasNext() ) {
+                String name = i.next();
+                SQLConnectionPool pool = pools.get( name );
+                if( checkForStales )
+                    pool.updateStaleConnections();
+            }            
             if( checkForStales )
                 lastStaleCheck = System.currentTimeMillis();
             try{

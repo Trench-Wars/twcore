@@ -86,8 +86,20 @@ public class SQLConnectionPool implements Runnable {
      * @throws SQLException
      */
     public ResultSet query( String query ) throws SQLException {
-        Connection conn = getConnection();
-        try{
+        Connection conn = null;
+        try {
+            conn = getConnection();
+        } catch (SQLException e) {
+            Tools.printLog( "SQLException in SQLConnectionPool while getting new connection." );
+            throw e;
+        }
+        
+        if (conn==null) {
+            Tools.printLog( "Null connection found in pool." );
+            throw new SQLException( "Null connection in pool." );
+        }
+        
+        try {
             Statement stmt = conn.createStatement();
             
             stmt.execute( query, Statement.RETURN_GENERATED_KEYS );
@@ -103,7 +115,8 @@ public class SQLConnectionPool implements Runnable {
             try {
                 return retryQueryWithAltConnection( query );
             } catch ( SQLException e2 ) {
-                throw e;
+                Tools.printLog("SQLException encountered while retrying query with new connection.");
+                throw e2;
             }        	
         } finally {
             free( DEFAULT_UNIQUE_ID, conn );
@@ -141,22 +154,34 @@ public class SQLConnectionPool implements Runnable {
      * This is a hack. See SQLManager for ways to do this a bit better
      * (this functionality is already implemented elsewhere).
      * 
-     * @throws SQLException
+     * An attempt to fix this exception being uncaught.
+     * http://www.docjar.com/html/api/com/mysql/jdbc/exceptions/jdbc4/CommunicationsException.java.html
+     * Also see:
+     * http://www.docjar.com/html/api/com/mysql/jdbc/CommunicationsException.java.html
+     * http://www.docjar.com/html/api/com/mysql/jdbc/SQLError.java.html
      */
-    public void updateStaleConnections() throws SQLException {
+    public void updateStaleConnections() {
         int remainingConnections = availableConnections.size();
         Vector<Connection> usedConns = new Vector<Connection>();
         Vector<Connection> staleConns = new Vector<Connection>();
         for (int i=0; i<remainingConnections; i++ ) {
-            Connection conn = getConnection();
-            usedConns.add(conn);
-            try{
+            Connection conn = null;            
+            try {
+                conn = getConnection();
+            } catch( Exception e ){
+                Tools.printLog("Exception encountered while getting connection during stale update.");
+                Tools.printStackTrace(e);
+                return;
+            }
+            try {
+                usedConns.add(conn);
                 Statement stmt = conn.createStatement();
 
                 stmt.execute( "SELECT 1", Statement.RETURN_GENERATED_KEYS );
-            } catch( SQLException e ){
+            } catch( Exception e ){
                 staleConns.add(conn);
-            }            
+                Tools.printLog("Stale connection found; exception caught running a query. Attempting to update...");
+            }
         }
 
         // Replace any stales found
@@ -173,17 +198,25 @@ public class SQLConnectionPool implements Runnable {
     /**
      * Replaces a connection that has thrown a CommunicationsException
      * @param conn Connection to replace
-     * @throws SQLException
      */
-    public void replaceStaleConnection( Connection conn ) throws SQLException {
+    public void replaceStaleConnection( Connection conn ) {
         free( DEFAULT_UNIQUE_ID, conn );
 
         availableConnections.remove( conn );
         try {
+            availableConnections.addElement(makeNewConnection());
+        } catch( Exception e ) {
+            Tools.printLog("Exception encountered while making new connection to replace stale connection.");
+            Tools.printStackTrace(e);
+        }
+
+        try {
             conn.close();
-        } catch( SQLException e ) {}
-        conn = null;
-        availableConnections.addElement(makeNewConnection());
+            conn = null;        
+        } catch( Exception e ) {
+            Tools.printLog("Exception encountered while closing stale connection.");
+            Tools.printStackTrace(e);
+        }
     }
 
     /**
