@@ -127,6 +127,8 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!smartshutdown", acceptedMessages, this, "handleSmartShutdownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdownidlebots", acceptedMessages, this, "handleShutdownIdleBotsCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdownallbots", acceptedMessages, this, "handleShutdownAllBotsCommand", accessRequired );
+        m_commandInterpreter.registerCommand( "!enablespawn", acceptedMessages, this, "handleEnableSpawnCommand", accessRequired);
+        m_commandInterpreter.registerCommand( "!disablespawn", acceptedMessages, this, "handleDisableSpawnCommand", accessRequired);
         
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleInvalidMessage" );
@@ -844,7 +846,7 @@ public class HubBot extends SubspaceBot {
 	    	}
 	    	if(operatorList.isSysop(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots !bottypes");
-	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype");
+	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype !enablespawn !disablespawn");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !smartshutdown !shutdownidlebots !shutdownallbots");
 	    	}
 	    	if(operatorList.isSmod(messager)) {
@@ -1013,6 +1015,20 @@ public class HubBot extends SubspaceBot {
                 m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SYSOP_LEVEL));
                 m_botAction.sendSmartPrivateMessage( messager , " !hiders");
             }
+            else if (argument.equalsIgnoreCase("enablespawn")) {
+                m_botAction.sendSmartPrivateMessage( messager , "Enables spawning of new bots.");
+                m_botAction.sendSmartPrivateMessage( messager , "Specify 'all' to automatically send the command to all the cores.");
+                m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SYSOP_LEVEL));
+                m_botAction.sendSmartPrivateMessage( messager , " !enablespawn");
+                m_botAction.sendSmartPrivateMessage( messager , " !enablespawn all");
+            }
+            else if (argument.equalsIgnoreCase("disablespawn")) {
+                m_botAction.sendSmartPrivateMessage( messager , "Disables spawning of new bots.");
+                m_botAction.sendSmartPrivateMessage( messager , "Specify 'all' to automatically send the command to all the cores.");
+                m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SYSOP_LEVEL));
+                m_botAction.sendSmartPrivateMessage( messager , " !disablespawn");
+                m_botAction.sendSmartPrivateMessage( messager , " !disablespawn all");
+            }
 	    	else {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Syntax error. Please message !help <command> for more information.");
 	    	}
@@ -1094,6 +1110,48 @@ public class HubBot extends SubspaceBot {
     	autoSpawnBots(true);
     	
     	m_botAction.sendSmartPrivateMessage( messager, "Done spawning all bots from the autoloader.");
+    }
+    
+    /**
+     * Re-enables spawning of bots if it was disabled before.
+     * @param messager Name of the player who sent the command
+     * @param message Optional parameters
+     */
+    public void handleEnableSpawnCommand( String messager, String message ) {
+        if(!m_botQueue.allowBotSpawn(true)) {
+            m_botAction.sendSmartPrivateMessage( messager, "Bot spawning is already enabled.");
+        } else {
+            m_botAction.sendSmartPrivateMessage( messager, "Enabling spawning of bots..." );
+            m_botAction.sendChatMessage( 1, "Enabling spawning of bots at " + messager + "'s request" );
+        }
+        
+        if(message.isEmpty() || !message.toLowerCase().trim().equals("all"))
+            return;
+        
+        String[] cores = m_botAction.getCoreData().getGeneralSettings().getString("Alt Logins").split(",");
+        for (String c : cores)
+            m_botAction.sendPrivateMessage(c, "!enablespawn");
+    }
+    
+    /**
+     * Disables spawning of any new bots from this core.
+     * @param messager Name of the player who sent the command
+     * @param message Optional parameters
+     */
+    public void handleDisableSpawnCommand( String messager, String message ) {
+        if(!m_botQueue.allowBotSpawn(false)) {
+            m_botAction.sendSmartPrivateMessage( messager, "Bot spawning is already disabled.");
+        } else {
+            m_botAction.sendSmartPrivateMessage( messager, "Disabling spawning of bots..." );
+            m_botAction.sendChatMessage( 1, "Disabling spawning of bots at " + messager + "'s request" );
+        }
+        
+        if(message.isEmpty() || !message.toLowerCase().trim().equals("all"))
+            return;
+
+        String[] cores = m_botAction.getCoreData().getGeneralSettings().getString("Alt Logins").split(",");
+        for (String c : cores)
+            m_botAction.sendPrivateMessage(c, "!disablespawn");
     }
     
     /**

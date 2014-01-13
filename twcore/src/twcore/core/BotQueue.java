@@ -31,6 +31,8 @@ public class BotQueue extends Thread {
     private Vector <File>repository;      // Recursively built directory list
     private File directory;               // Root directory of TWCore
 
+    private boolean m_spawnBots = true;       // Whether or not new bots are allowed to spawn.
+    
     /**
      * Initializes necessary data and recursively sets up a bot repository
      * for the AdaptiveClassLoader to load from.  Also sets the spawn delay
@@ -260,7 +262,8 @@ public class BotQueue extends Thread {
             try {
                 Session deadSesh = deadBot.getBot();
                 if( deadSesh != null ) {
-                    deadSesh.getBotAction().cancelTasks();
+                    if( deadSesh.getBotAction() != null )
+                        deadSesh.getBotAction().cancelTasks();
                     if( msg != null )
                         deadSesh.disconnect( msg );
                     else
@@ -487,6 +490,20 @@ public class BotQueue extends Thread {
         m_botStable.put( botName, newChildBot );
         m_spawnQueue.add( newChildBot );
     }
+    
+    /**
+     * Sets whether or not new bots are allowed to spawn.
+     * @param allowSpawning New setting.
+     * @return True if the setting has changed due to this function call. False if the setting was already this.
+     */
+    public boolean allowBotSpawn(boolean allowSpawning) {
+        if(m_spawnBots == allowSpawning) {
+            return false;
+        }
+        
+        m_spawnBots = allowSpawning;
+        return true;
+    }
 
     /**
      * Queue thread execution loop.  Attempts to spawn the next bot on
@@ -510,7 +527,20 @@ public class BotQueue extends Thread {
             try {
                 currentTime = System.currentTimeMillis() + 1000;
                 if( m_spawnQueue.isEmpty() == false ){
-                    if( m_lastSpawnTime + SPAWN_DELAY < currentTime ){
+                    if( !m_spawnBots ) {
+                        childBot = m_spawnQueue.remove(0);
+                        
+                        if(childBot.getBot() != null) {
+                            m_botStable.remove( childBot.getBot().getBotName() );
+                            addToBotCount( childBot.getClassName(), (-1) );
+                        }
+                        
+                        if(childBot.getCreator() != null) {
+                            m_botAction.sendSmartPrivateMessage( childBot.getCreator(), "Bot failed to log in. Spawning of new bots is currently disabled.");
+                        }
+                        m_botAction.sendChatMessage( 1, "Bot of type " + childBot.getClassName() + " failed to log in. Spawning of new bots is currently disabled.");
+                        
+                    } else if( m_lastSpawnTime + SPAWN_DELAY < currentTime ){
                         childBot = m_spawnQueue.remove( 0 );
                         bot = childBot.getBot();
 
@@ -525,11 +555,10 @@ public class BotQueue extends Thread {
                             m_botAction.sendSmartPrivateMessage( childBot.getCreator(), "Bot failed to log in.  Verify login and password are correct." );
                             m_botAction.sendChatMessage( 1, "Bot of type " + childBot.getClassName() + " failed to log in.  Verify login and password are correct." );
                         } else {
-                            m_botAction.sendSmartPrivateMessage( childBot.getCreator(), "Your new bot is named " + bot.getBotName() + "." );
-
-                            if(childBot.getCreator() != null)
+                            if(childBot.getCreator() != null) {
+                                m_botAction.sendSmartPrivateMessage( childBot.getCreator(), "Your new bot is named " + bot.getBotName() + "." );
                                 m_botAction.sendChatMessage( 1, childBot.getCreator() + " spawned " + childBot.getBot().getBotName() + " of type " + childBot.getClassName() );
-                            else
+                            } else
                                 m_botAction.sendChatMessage( 1, "AutoLoader spawned " + childBot.getBot().getBotName() + " of type " + childBot.getClassName() );
                         }
 
