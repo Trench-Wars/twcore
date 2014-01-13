@@ -79,7 +79,7 @@ public class robohelp extends SubspaceBot {
     TreeMap<Integer, Call> callList = new TreeMap<Integer, Call>();
     Vector<Integer> calls = new Vector<Integer>();
     long lastAlert;
-    int callsUntilAd = 7;
+    int callsUntilAd = CALL_INTERVAL;
     int currentID = 1;
     String findPopulation = "";
     int setPopID = -1;
