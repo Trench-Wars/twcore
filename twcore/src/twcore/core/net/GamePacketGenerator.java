@@ -613,51 +613,131 @@ public class GamePacketGenerator {
      * @param message Text to send
      */
     public void sendChatPacket( byte messageType, byte soundCode, short userID, String message ){
+        sendChatPacket( messageType, soundCode, userID, "", message );
+    }
+    
+    /**
+     * Sends a chat message.
+     * This function may look overly complicated and slow, but as long as the chat message isn't
+     * exceeding the maximum length, almost all of the code is skipped. This scenario will happen at least 95~99%
+     * of the time, so sending chat messages should still remain fast.
+     * @param messageType Type of message being sent -- public, error, etc. (0x00 to 0x09)
+     * @param soundCode Number of the sound attached to this message, if any
+     * @param userID For message types 0x04 and 0x05, player ID of target
+     * @param prefix Any prefix that needs to be repeated for chopped up messages. (This comes down to ";#;", ":<name>:" and ":#<squadname>:")
+     * @param message Text to send
+     */
+    public void sendChatPacket( byte messageType, byte soundCode, short userID, String prefix, String message ){
         
         //Tools.printConnectionLog("SEND    : (0x06) Chat message");
+        String encoding = "ISO-8859-1";
+        String fullMessage = prefix + message;
         
         // Due to character encoding methods, there is a chance that strings can expand in size.
         // The following lines are an attempt to prevent this, by using the converted length as parameter
         // and chopping up the message when it's too long. (This last part may have unwanted side-effects.)
-        byte[] msg;
+        byte[] fullMsg;
         try {
-            msg = message.getBytes("ISO-8859-1");
+            fullMsg = fullMessage.getBytes( encoding );
+        } catch (UnsupportedEncodingException e) {
+            fullMsg = fullMessage.getBytes();
+        }
+
+        // If the length doesn't exceed the maximum length, send the packet immediately.
+        if(fullMsg.length <= 250) { // 250 + 6 other bytes = 256 bytes total packet length.
+            sendChatPacketCore( messageType, soundCode, userID, fullMsg);
+            return;
+        }
+
+        // Otherwise, do some hacking to make it all work.        
+        byte[] msg;                 // Original message
+        byte[] pref = null;         // Original prefix, if any
+        byte[] splitMsg;            // Split up message part.
+        
+        int sectionLength = 250;    // Maximum length of a section
+        int currOffset = 0;         // Current offset within the message.
+        int len;                    // Current length of a chopped up section.
+        
+        int counter = 5;            // Safety counter to prevent server recycling due to flooding if stuff goes haywire.
+        
+        try {
+            msg = message.getBytes( encoding );
+            
+            if(!prefix.isEmpty()) {
+                pref = prefix.getBytes( encoding );
+                sectionLength -= pref.length;
+            }
         } catch (UnsupportedEncodingException e) {
             msg = message.getBytes();
+            
+            if(!prefix.isEmpty()) {
+                pref = prefix.getBytes();
+                sectionLength -= pref.length;
+            }
         }
         
-        if(msg.length >= 243) {
-            // Variable offset to prevent chopping the non-UTF8 chars in the middle.
-            int offset = 242;
-            // Find a suitable spot to chop up the string, and check if we aint breaking up any special characters while doing so.
-            for(; offset >= 2; offset--) {
-                if(msg[offset] == 0x20 && (msg[offset - 1] & 0x80) == 0 && (msg[offset - 2] & 0x80) == 0) {
+        while( currOffset + sectionLength < msg.length ) {
+            
+            int i = currOffset + sectionLength;
+            
+            if(--counter <= 0) {
+                // Anti recycle protection.
+                Tools.printLog("[ERROR] Too many iterations in a split up chat packet. Original message:");
+                Tools.printLog(prefix + message);
+                return;
+            }
+            
+            // Find a suitable space for chopping the string.
+            for(; i > currOffset + 2; i--) {
+                if(msg[i] == 0x20 && (msg[i - 1] & 0x80) == 0 && (msg[i - 2] & 0x80) == 0) {
                     break;
                 }
             }
-            
-            // No space found, chop it up inconveniently at the maximum length.
-            if(offset <= 2)
-                offset = 242;
-            
-            try {
-                sendChatPacket( messageType, soundCode, userID, new String(msg, 0, offset, "ISO-8859-1") );
-                if(messageType != 0x07) {
-                    sendChatPacket( messageType, soundCode, userID, new String(msg, offset, msg.length - offset, "ISO-8859-1") );
-                }
-            } catch (UnsupportedEncodingException e) {
-                sendChatPacket( messageType, soundCode, userID, new String(msg, 0, offset) );
-                if(messageType != 0x07) {
-                    sendChatPacket( messageType, soundCode, userID, new String(msg, offset, msg.length - offset) );
-                }
+
+            // No suitable spot found.
+            if(i <= currOffset + 2) {
+                len = sectionLength;
+            } else {
+                len = currOffset - i;
             }
             
-            return;
+            // Copy over and send the partial message.
+            if(pref == null) {
+                splitMsg = new byte[len];
+                System.arraycopy(msg, currOffset, splitMsg, 0, len);
+            } else {
+                splitMsg = new byte[len + pref.length];
+                System.arraycopy(pref, 0, splitMsg, 0, pref.length);
+                System.arraycopy(msg, currOffset, splitMsg, pref.length, len);
+            }
+
+            currOffset += len;
+            
+            sendChatPacketCore( messageType, soundCode, userID, splitMsg );
         }
         
-    	if( message.length() > 243 )
-    		message = message.substring(0, 242);		// (hack) Don't send more than SS can handle
+        // Do the final block of the chopped up message.
+        len = msg.length - currOffset;
+        if(pref == null) {
+            splitMsg = new byte[len];
+            System.arraycopy(msg, currOffset, splitMsg, 0, len);
+        } else {
+            splitMsg = new byte[len + pref.length];
+            System.arraycopy(pref, 0, splitMsg, 0, pref.length);
+            System.arraycopy(msg, currOffset, splitMsg, pref.length, len);
+        }
+        
+        sendChatPacketCore( messageType, soundCode, userID, splitMsg );
+    }
 
+    /**
+     * Original core code of the sendChatPacket function, to keep it all nice and tidy.
+     * @param messageType Type of message being sent -- public, error, etc. (0x00 to 0x09)
+     * @param soundCode Number of the sound attached to this message, if any
+     * @param userID For message types 0x04 and 0x05, player ID of target
+     * @param msg Encoded chat message to be sent.
+     */
+    private void sendChatPacketCore( byte messageType, byte soundCode, short userID, byte[] msg ) {
         int            size = msg.length + 6;
         ByteArray      bytearray = new ByteArray( size );
 
@@ -665,12 +745,13 @@ public class GamePacketGenerator {
         bytearray.addByte( messageType );
         bytearray.addByte( soundCode );
         bytearray.addLittleEndianShort( userID );
-        bytearray.addString( message );
+        bytearray.addByteArray( msg );
         bytearray.addByte( 0x00 );          // Terminator
 
         composeLowPriorityPacket( bytearray );
+        
     }
-
+    
     /**
      * Sends numerous packets in one cluster (all packets queued by
      * composePacket methods).

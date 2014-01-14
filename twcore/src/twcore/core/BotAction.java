@@ -556,7 +556,7 @@ public class BotAction
             firstChar = message.charAt(0);
             if (firstChar != '/' && firstChar != '*' && firstChar != '?' && firstChar != ';')
             {
-                m_packetGenerator.sendChatPacket((byte) 7, (byte) soundCode, (short) 0, ":" + name + ":" + message);
+                m_packetGenerator.sendChatPacket((byte) 7, (byte) soundCode, (short) 0, ":" + name + ":", message);
             }
         }
     }
@@ -754,7 +754,7 @@ public class BotAction
             firstChar = message.charAt(0);
             if (firstChar != '/' && firstChar != '*' && firstChar != '?' && firstChar != ';')
             {
-                m_packetGenerator.sendChatPacket((byte) 9, (byte) soundCode, (short) 0, ";" + chatNumber + ";" + message);
+                m_packetGenerator.sendChatPacket((byte) 9, (byte) soundCode, (short) 0, ";" + chatNumber + ";", message);
             }
         }
     }
@@ -792,7 +792,7 @@ public class BotAction
         if(squadName == null)
             return;
         
-        m_packetGenerator.sendChatPacket((byte) 7, (byte) soundCode, (short) 0, ":#" + squadName + ":" + message);
+        m_packetGenerator.sendChatPacket((byte) 7, (byte) soundCode, (short) 0, ":#" + squadName + ":", message);
     }
 
     /**
