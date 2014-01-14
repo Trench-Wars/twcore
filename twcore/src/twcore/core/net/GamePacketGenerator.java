@@ -644,7 +644,7 @@ public class GamePacketGenerator {
         }
 
         // If the length doesn't exceed the maximum length, send the packet immediately.
-        if(fullMsg.length <= 250) { // 250 + 6 other bytes = 256 bytes total packet length.
+        if(fullMsg.length <= 243) {
             sendChatPacketCore( messageType, soundCode, userID, fullMsg);
             return;
         }
@@ -654,7 +654,7 @@ public class GamePacketGenerator {
         byte[] pref = null;         // Original prefix, if any
         byte[] splitMsg;            // Split up message part.
         
-        int sectionLength = 250;    // Maximum length of a section
+        int sectionLength = 243;    // Maximum length of a section
         int currOffset = 0;         // Current offset within the message.
         int len;                    // Current length of a chopped up section.
         
@@ -677,9 +677,8 @@ public class GamePacketGenerator {
         }
         
         while( currOffset + sectionLength < msg.length ) {
-            
             int i = currOffset + sectionLength;
-            
+
             if(--counter <= 0) {
                 // Anti recycle protection.
                 Tools.printLog("[ERROR] Too many iterations in a split up chat packet. Original message:");
@@ -689,7 +688,7 @@ public class GamePacketGenerator {
             
             // Find a suitable space for chopping the string.
             for(; i > currOffset + 2; i--) {
-                if(msg[i] == 0x20 && (msg[i - 1] & 0x80) == 0 && (msg[i - 2] & 0x80) == 0) {
+                if(msg[i] == 0x20) { // && (msg[i - 1] & 0x80) == 0 && (msg[i - 2] & 0x80) == 0) {
                     break;
                 }
             }
@@ -698,9 +697,9 @@ public class GamePacketGenerator {
             if(i <= currOffset + 2) {
                 len = sectionLength;
             } else {
-                len = currOffset - i;
+                len = i - currOffset + 1;
             }
-            
+
             // Copy over and send the partial message.
             if(pref == null) {
                 splitMsg = new byte[len];
@@ -712,12 +711,13 @@ public class GamePacketGenerator {
             }
 
             currOffset += len;
-            
+
             sendChatPacketCore( messageType, soundCode, userID, splitMsg );
         }
         
         // Do the final block of the chopped up message.
         len = msg.length - currOffset;
+        
         if(pref == null) {
             splitMsg = new byte[len];
             System.arraycopy(msg, currOffset, splitMsg, 0, len);
