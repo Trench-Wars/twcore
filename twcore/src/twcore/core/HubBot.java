@@ -373,6 +373,11 @@ public class HubBot extends SubspaceBot {
         initOperators();
         m_botAction.sendSmartPrivateMessage( messager, "Updating access levels..." );
         m_botAction.sendChatMessage( 1, "Updating access levels at " + messager + "'s request" );
+        
+        // Only relay the update access if it was sent by a player.
+        if(m_botAction.getOperatorList().isBotExact(messager))
+            return;
+        
         String[] cores = m_botAction.getCoreData().getGeneralSettings().getString("Alt Logins").split(",");
         for (String c : cores)
             m_botAction.sendPrivateMessage(c, "!updateaccess");
@@ -1125,7 +1130,8 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendChatMessage( 1, "Enabling spawning of bots at " + messager + "'s request" );
         }
         
-        if(message.isEmpty() || !message.toLowerCase().trim().equals("all"))
+        // Only relay the command to the other cores if the all parameter was given and it was sent by a player.
+        if(message.isEmpty() || !message.toLowerCase().trim().equals("all") || m_botAction.getOperatorList().isBotExact(messager))
             return;
         
         String[] cores = m_botAction.getCoreData().getGeneralSettings().getString("Alt Logins").split(",");
@@ -1146,7 +1152,8 @@ public class HubBot extends SubspaceBot {
             m_botAction.sendChatMessage( 1, "Disabling spawning of bots at " + messager + "'s request" );
         }
         
-        if(message.isEmpty() || !message.toLowerCase().trim().equals("all"))
+        // Only relay the command to the other cores if the all parameter was given and it was sent by a player.
+        if(message.isEmpty() || !message.toLowerCase().trim().equals("all") || m_botAction.getOperatorList().isBotExact(messager))
             return;
 
         String[] cores = m_botAction.getCoreData().getGeneralSettings().getString("Alt Logins").split(",");
