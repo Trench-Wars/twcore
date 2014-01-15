@@ -5,6 +5,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 
 /**
  * Internal storage class for holding an array of bytes, and performing various
@@ -494,14 +497,25 @@ public class ByteArray {
     }
 
     public String readString( int index, int length ){
+        Charset targetSet;
         String result = "";
+        
+        try {
+            targetSet = Charset.forName("ISO-8859-1");
+        } catch (UnsupportedCharsetException uce) {
+            targetSet = Charset.defaultCharset();
+            Tools.printLog("Unsupported charset used when decoding string (index="+index+",length="+length+") from bytearray: "+uce.getMessage());
+        }
+        
+        result = targetSet.decode(ByteBuffer.wrap(m_array, index, length)).toString().trim();
+        /*
         try {
             result = new String(m_array, index, length, "ISO-8859-1").trim();
         } catch(UnsupportedEncodingException uee) {
             Tools.printLog("Unsupported charset used when decoding string (index="+index+",length="+length+") from bytearray: "+uee.getMessage());
         } finally {
             result = new String(m_array, index, length).trim();
-        }
+        }*/
         
         return result;
     }
