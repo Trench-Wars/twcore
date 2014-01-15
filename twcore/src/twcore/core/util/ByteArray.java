@@ -508,14 +508,6 @@ public class ByteArray {
         }
         
         result = targetSet.decode(ByteBuffer.wrap(m_array, index, length)).toString().trim();
-        /*
-        try {
-            result = new String(m_array, index, length, "ISO-8859-1").trim();
-        } catch(UnsupportedEncodingException uee) {
-            Tools.printLog("Unsupported charset used when decoding string (index="+index+",length="+length+") from bytearray: "+uee.getMessage());
-        } finally {
-            result = new String(m_array, index, length).trim();
-        }*/
         
         return result;
     }

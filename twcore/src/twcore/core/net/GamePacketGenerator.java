@@ -639,6 +639,7 @@ public class GamePacketGenerator {
             targetSet = Charset.forName("ISO-8859-1");
         } catch (UnsupportedCharsetException uce) {
             targetSet = Charset.defaultCharset();
+            Tools.printLog("Unsupported charset used for encoding string: "+uce.getMessage());
         }
         
         // Due to character encoding methods, there is a chance that strings can expand in size.
