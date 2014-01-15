@@ -1,7 +1,8 @@
 package twcore.core.net;
 
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -630,18 +631,20 @@ public class GamePacketGenerator {
     public void sendChatPacket( byte messageType, byte soundCode, short userID, String prefix, String message ){
         
         //Tools.printConnectionLog("SEND    : (0x06) Chat message");
-        String encoding = "ISO-8859-1";
+
+        Charset targetSet;
         String fullMessage = prefix + message;
+        
+        try {
+            targetSet = Charset.forName("ISO-8859-1");
+        } catch (UnsupportedCharsetException uce) {
+            targetSet = Charset.defaultCharset();
+        }
         
         // Due to character encoding methods, there is a chance that strings can expand in size.
         // The following lines are an attempt to prevent this, by using the converted length as parameter
         // and chopping up the message when it's too long. (This last part may have unwanted side-effects.)
-        byte[] fullMsg;
-        try {
-            fullMsg = fullMessage.getBytes( encoding );
-        } catch (UnsupportedEncodingException e) {
-            fullMsg = fullMessage.getBytes();
-        }
+        byte[] fullMsg = targetSet.encode(fullMessage).array();
 
         // If the length doesn't exceed the maximum length, send the packet immediately.
         if(fullMsg.length <= 243) {
@@ -660,20 +663,10 @@ public class GamePacketGenerator {
         
         int counter = 5;            // Safety counter to prevent server recycling due to flooding if stuff goes haywire.
         
-        try {
-            msg = message.getBytes( encoding );
-            
-            if(!prefix.isEmpty()) {
-                pref = prefix.getBytes( encoding );
-                sectionLength -= pref.length;
-            }
-        } catch (UnsupportedEncodingException e) {
-            msg = message.getBytes();
-            
-            if(!prefix.isEmpty()) {
-                pref = prefix.getBytes();
-                sectionLength -= pref.length;
-            }
+        msg = targetSet.encode( message ).array();
+        if( !prefix.isEmpty() ) {
+            pref = targetSet.encode( prefix ).array();
+            sectionLength -= pref.length;
         }
         
         while( currOffset + sectionLength < msg.length ) {
@@ -720,11 +713,11 @@ public class GamePacketGenerator {
         
         if(pref == null) {
             splitMsg = new byte[len];
-            System.arraycopy(msg, currOffset, splitMsg, 0, len);
+            System.arraycopy( msg, currOffset, splitMsg, 0, len );
         } else {
             splitMsg = new byte[len + pref.length];
-            System.arraycopy(pref, 0, splitMsg, 0, pref.length);
-            System.arraycopy(msg, currOffset, splitMsg, pref.length, len);
+            System.arraycopy( pref, 0, splitMsg, 0, pref.length );
+            System.arraycopy( msg, currOffset, splitMsg, pref.length, len );
         }
         
         sendChatPacketCore( messageType, soundCode, userID, splitMsg );
