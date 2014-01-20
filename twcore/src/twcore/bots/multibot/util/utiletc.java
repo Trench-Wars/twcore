@@ -130,7 +130,9 @@ public class utiletc extends MultiUtil {
         if( m_opList.isSmod(name) ) {
             String cmd = message.toLowerCase();
             if( cmd.startsWith( "!botattach" )) {
-                turretPlayer( message.substring( 11, message.length() ) );
+                turretPlayer( message.substring( 10, message.length() ).trim() );
+            } else if( cmd.startsWith( "!botattachme" )) {
+                turretPlayer( name );                
             } else if( cmd.startsWith( "!botunattach" )) {
                 unAttach();
             } else if( cmd.startsWith( "!setbotship" )) {
@@ -402,7 +404,8 @@ public class utiletc extends MultiUtil {
 
     public void turretPlayer( String name ) {
         attachID = m_botAction.getPlayerID( name );
-        m_botAction.getShip().attach( attachID );
+        if (attachID != -1)
+        	m_botAction.getShip().attach( attachID );
     }
 
     public void unAttach() {
@@ -543,6 +546,7 @@ public class utiletc extends MultiUtil {
                 "!setbotship <ship>        - Place the bot in a ship (0: WB .. 7: Shark, 8: Spec)",
                 "!setbotfreq <freq>        - Set the bot to a specific freq",
                 "!botattach <player>       - Attach bot to player, if in game",
+                "!botattachme              - Attach bot to player giving command",
                 "!botunattach              - Detach the bot",
                 "!fire                     - Toggles firing at close players",
                 "!shoot <degree>           - Fires in direction of degree (0-359)",
