@@ -3,6 +3,7 @@ package twcore.core.net;
 import java.net.DatagramPacket;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import twcore.core.lvz.LvzObject;
 import twcore.core.util.ByteArray;
 import twcore.core.util.Tools;
 
@@ -39,6 +41,9 @@ public class GamePacketGenerator {
     private LinkedList<ByteArray>  m_lvzToggleCluster;          // LVZ obj toggle group
     private Map<Integer,LinkedList<ByteArray>> m_lvzPlayerToggleCluster;   // Toggle clusters for
                                                                            // individual playerIDs
+    private LinkedList<LvzObject>  m_lvzModCluster;             // LVZ obj modification group
+    private Map<Integer,LinkedList<LvzObject>> m_lvzPlayerModCluster;      // LVZ modification cluster
+                                                                           // for individual playerIDs
     private long                   m_sendDelay = 75;            // Delay between packet sends
     private final static int       DEFAULT_PACKET_CAP = 45;     // Default # low-priority packets allowed
                                                                 // per clustered send
@@ -65,8 +70,12 @@ public class GamePacketGenerator {
         m_ssEncryption = ssEncryption;
         m_outboundQueue = outboundQueue;
         m_messageList = new DelayedPacketList<ByteArray>( DEFAULT_PACKET_CAP );
+        
         m_lvzToggleCluster = new LinkedList<ByteArray>();
         m_lvzPlayerToggleCluster = Collections.synchronizedMap( new HashMap<Integer,LinkedList<ByteArray>>() );
+        
+        m_lvzModCluster = new LinkedList<LvzObject>();
+        m_lvzPlayerModCluster = Collections.synchronizedMap( new HashMap<Integer, LinkedList<LvzObject>>() );
 
         m_timerTask = new TimerTask(){
             int size;
@@ -418,8 +427,9 @@ public class GamePacketGenerator {
         bytearray.addByte( 0x64 );
 
         bytearray.addByte( 0x04 ); // Connection type (UnknownNotRAS)
-        bytearray.addByte( 0xE0 ); // Timezone bias (224; 240=EST) - 2 bytes
-        bytearray.addByte( 0x01 );
+        bytearray.addLittleEndianShort((short) (Calendar.getInstance().getTimeZone().getOffset(System.currentTimeMillis()) / 60000));
+        //bytearray.addByte( 0xE0 ); // Timezone bias (224; 240=EST) - 2 bytes
+        //bytearray.addByte( 0x01 );
         bytearray.addByte( 0x57 ); // Unknown - 2bytes
         bytearray.addByte( 0xFC );
 
@@ -1188,10 +1198,11 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
 
     /**
      * Sends the current LVZ object toggle cluster to the player specified by the ID;
-     * -1 for all players.  Use {@link #addLVZObjectToggle(int, int, boolean)} to add objects
+     * -1 for all players.  Use {@link #setupLVZObjectToggle(int, int, boolean)} to add objects
      * before sending out the packet.
      * @param playerID ID of player to send to; use -1 for all players
-     * @see #addLVZObjectToggle(int, int, boolean)
+     * @see #setupLVZObjectToggle(int, int, boolean)
+     * @see #setupMultipleLVZObjectToggles(int, HashMap)
      */
     public void sendLVZObjectCluster( int playerID ) {
         
@@ -1241,6 +1252,111 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
         composeLowPriorityPacket( objPacket );
     }
 
+    /**
+     * Adds an modified LVZ object to the object queue.
+     * Use {@link #sendLVZObjectModCluster(int)} to send out a packet containing the
+     * modification instructions.
+     * @param playerID ID of player to send to; use -1 for all players.
+     * @param obj LVZ Object containing the modifications.
+     * @see #sendLVZObjectModCluster(int)
+     * @see LvzObject
+     */
+    public void setupLVZObjectMod( int playerID, LvzObject obj ) {
+        if( playerID == -1 )
+            m_lvzModCluster.addLast( obj );
+        else {
+            LinkedList <LvzObject>playerCluster = m_lvzPlayerModCluster.remove(playerID);
+            if( playerCluster == null )
+                playerCluster = new LinkedList<LvzObject>();
+            playerCluster.addLast( obj );
+            m_lvzPlayerModCluster.put( playerID, playerCluster );
+        }
+    }
+    
+    /**
+     * Adds one or more modified LVZ object to an object modification queue at once,
+     * using a LinkedList<LvzObject> as an array.
+     * Use {@link #sendLVZObjectModCluster(int)} to send out a packet containing the
+     * modification instructions.
+     * @param playerID ID of player to send to; use -1 for all players.
+     * @param objs Linked list of all the modifications of all the objects.
+     * @see #sendLVZObjectModCluster(int)
+     * @see LvzObject
+     */
+    public void setupMultipleLVZObjectMod(int playerID, LinkedList<LvzObject> objs ) {
+        if( objs == null )
+            return;
+        if( playerID == -1 ) {
+            m_lvzModCluster.addAll( objs );
+        } else {
+            LinkedList <LvzObject> playerCluster = m_lvzPlayerModCluster.remove(playerID);
+            if( playerCluster == null )
+                playerCluster = new LinkedList<LvzObject>();
+            playerCluster.addAll( objs );
+
+            m_lvzPlayerModCluster.put( playerID, playerCluster );
+        }
+    }
+    
+    /**
+     * Sends the current LVZ object modification cluster to the player specified by the ID;
+     * -1 for all players.  Use {@link #setupLVZObjectMod(int, LvzObject)} or
+     * {@link #setupMultipleLVZObjectMod(int, LinkedList) to add objects
+     * before sending out the packet.
+     * @param playerID ID of player to send to; use -1 for all players.
+     * @see #setupLVZObjectMod(int, LvzObject)
+     * @see #setupMultipleLVZObjectMod(int, LinkedList)
+     * @see LvzObject
+     */
+    public void sendLVZObjectModCluster( int playerID ) {
+        
+        //Tools.printConnectionLog("SEND    : (0x0A) Containing 0x36 LVZ Object Modification Cluster");
+        
+        if( playerID == -1 ) {
+            if( m_lvzModCluster.size() > 0 ) {
+                ByteArray objPacket = new ByteArray( m_lvzModCluster.size() * 11 + 4 );
+                
+                objPacket.addByte( 0x0A );  // Encapsulating packet type byte.
+                objPacket.addLittleEndianShort( ((short) 0xFFFF ) );
+                objPacket.addByte( 0x36 );  // Core packet type byte. (LVZ Object modification.)
+                while( m_lvzModCluster.size() > 0 )
+                    objPacket.addByteArray( m_lvzModCluster.removeFirst().objUpdateInfo );
+                composeLowPriorityPacket( objPacket );
+            }
+        } else {
+            LinkedList<LvzObject> playerCluster = m_lvzPlayerModCluster.remove(playerID);
+            if( playerCluster != null && playerCluster.size() > 0 ) {
+                ByteArray objPacket = new ByteArray( playerCluster.size() * 11 + 4 );
+                objPacket.addByte( 0x0A );  // Encapsulating packet type byte.
+                objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
+                objPacket.addByte( 0x36 );  // Core packet type byte. (LVZ Object modification.)
+                while( playerCluster.size() > 0 )
+                    objPacket.addByteArray( playerCluster.removeFirst().objUpdateInfo );
+                composeLowPriorityPacket( objPacket );
+            }
+        }
+    }
+    
+    /**
+     * Sends a single LVZ object modification to the player specified by the ID;
+     * -1 for all players.  Using this method does not interfere with or check
+     * against the object toggling or modification queues in any way.
+     * @param playerID ID of player to send to; use -1 for all players.
+     * @param obj LVZ Object containing the modifications.
+     * @see LvzObject
+     */
+    public void sendSingleLVZObjectMod( int playerID, LvzObject obj ) {
+        
+        //Tools.printConnectionLog("SEND    : (0x0A) Containing 0x36 LVZ Object Modification");
+        
+        ByteArray objPacket = new ByteArray( 15 );
+        objPacket.addByte( 0x0A );  // Encapsulating packet type byte.
+        objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
+        objPacket.addByte( 0x36 );  // Core packet type byte. (LVZ Object modification.)
+        objPacket.addByteArray(obj.objUpdateInfo);
+        composeLowPriorityPacket( objPacket );
+    }
+    
     /**
      * Sends a signal to the server that this client is no longer in the King of the Hill game.
      * (In Continuum this only happens when you die or the timer runs out.)

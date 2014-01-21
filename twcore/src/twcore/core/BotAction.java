@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -24,6 +25,7 @@ import twcore.core.game.Flag;
 import twcore.core.game.LvlMap;
 import twcore.core.game.Player;
 import twcore.core.game.Ship;
+import twcore.core.lvz.LvzObject;
 import twcore.core.lvz.Objset;
 import twcore.core.net.GamePacketGenerator;
 import twcore.core.net.Email;
@@ -2962,6 +2964,88 @@ public class BotAction
         }
     }
 
+    /**
+     * Issues an LVZ object on command, modifying it for all players.  The parameters
+     * of the object is configured from inside the LVZ.
+     * <p>For more information on this format, please download the LVZToolkit from
+     * your favorite Subspace download site (subspacedownloads.com ?), and see
+     * http://www.kolumbus.fi/sakari.aura/contmapdevguide.html for a solid spec.
+     * @param obj The LVZ object containing the new parameters.
+     * @see LvzObject
+     */
+    public void modifyObject(LvzObject obj)
+    {
+        m_packetGenerator.sendSingleLVZObjectMod(-1, obj);
+    }
+
+    /**
+     * Modifies the specified LVZ object for a specific player.
+     * @param playerID ID of player.
+     * @param obj The LVZ object containing the new parameters.
+     * @see LvzObject
+     */
+    public void modifyObjectForPlayer(int playerID, LvzObject obj)
+    {
+        m_packetGenerator.sendSingleLVZObjectMod(playerID, obj);
+    }
+
+    /**
+     * Setup the specified LVZ object to be modified to all players. Useful when
+     * you want to send out several modifications at once or easily keep track.
+     * @param obj The LVZ object containing the new parameters.
+     * @see LvzObject
+     */
+    public void setupObjectModification( LvzObject obj )
+    {
+        m_packetGenerator.setupLVZObjectMod(-1, obj);
+    }
+
+    /**
+     * Setup the specified LVZ object to be modified to a specific player.
+     * @param playerID ID of player to whom you shall send the objects
+     * @param obj The LVZ object containing the new parameters.
+     * @see LvzObject
+     */
+    public void setupObjectModification( int playerID, LvzObject obj )
+    {
+        m_packetGenerator.setupLVZObjectMod(playerID, obj);
+    }
+
+    /**
+     * Sends all object modifications that have been set up to be sent to all players.
+     */
+    public void sendSetupObjectModifications() {
+        m_packetGenerator.sendLVZObjectModCluster(-1);
+    }
+
+    /**
+     * Sends all object modifications that have been set up to be sent to a specific player.
+     * @param playerID ID of player.
+    */
+    public void sendSetupObjectModificationsForPlayer(int playerID ) {
+        m_packetGenerator.sendLVZObjectModCluster(playerID);
+    }
+
+    /**
+     * Manually sets multiple objects to modified and activates these straight away.
+     * @param objects Linked list containing all the modified objects.
+     * @see LvzObject
+     */
+    public void manuallySetObjectModifications( LinkedList<LvzObject> objects ) {
+        m_packetGenerator.setupMultipleLVZObjectMod(-1, objects);
+        m_packetGenerator.sendLVZObjectModCluster(-1);
+    }
+
+    /**
+     * Manually sets multiple objects to either be modified and activates these straight away.
+     * @param playerID ID of the player to send to.
+     * @param objects Linked list containing all the modified objects.
+     * @see LvzObject
+     */
+    public void manuallySetObjectModifications( int playerID, LinkedList<LvzObject> objects ) {
+        m_packetGenerator.setupMultipleLVZObjectMod( playerID, objects );
+        m_packetGenerator.sendLVZObjectModCluster(playerID);
+    }
 
     // ***** SQL DATABASE OPERATIONS *****
     /*
