@@ -1,3 +1,5 @@
+# General tells/help auto response detection
+# TWD/squad related
 &TWD &OP|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
 &TWD &Ops|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
 &TWDOp|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
@@ -28,9 +30,13 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &What &TWEL|TWEL stands for Trench Wars Extreme League, a 1v1 duelling ladder hosted in ?go duel. The TWEL website can be found at: http://www.trenchwars.org/TWEL
 &TWEL &Signup &Problem| If you have problems signing up to the TWEL League because you share your connection with another person, please contact a TWEL Operator which can be found by PM'ing !ops to Duelbot.
 &TWEL &Signup &Problems|If you have problems signing up to the TWEL League because you share your connection with another person, please contact a TWEL Operator which can be found by PM'ing !ops to Duelbot.
+
+# Automated/planned events.
 &Elim &What|Elim is an arena dedicated to elimination style matches for fighter ships (Warbird, Spider, Levi and Lancaster).  Everyone is put on their own freq and is specced after a certain number of deaths.  The last person standing is declared the winner.  Teaming, trucing or refusing to fight is illegal.
 &BaseElim &What|BaseElim is an arena dedicated to elimination style matches for base ships (Javelin, Terrier, Weasel and Shark).  Everyone is put on their own freq and is specced after a certain number of deaths.  The last person standing is declared the winner.  Teaming, trucing, refusing to fight or not going to the base is illegal.
 &Event &List &Where|You can view a list of all arenas/events here: http://forums.trenchwars.org/showthread.php?t=32600 .
+
+# Item/hot-key related.
 &Repel +What|When you use a repel, all nearby enemy bullets, bombs and ships will be pushed away from you.  The icon on the right side of your screen depicting a yellow circle indicates the number of repels that your ship currently has.  In public arenas, only the Shark (Ship 8) can equip repels.
 &Repel +How -Buy|To use a repel press <Shift> and <Ctrl> together.  In public arenas, only the Shark (Ship 8) can equip and use repels.
 &Portal +What|When you "drop" a portal, a marker will be placed on the map.  The next time that you warp, you will be transported to the marker as opposed to the spawn area.  Portals expire after a certain amount of time as indicated in the top right hand corner of the screen and you may only have one active portal at a given time.  The icon on the right side of your screen depicting a target indicates the number of portals that your ship currently has.  In public arenas, only the Leviathan (Ship 4), and the Terrier (Ship 5) can equip portals.
@@ -55,6 +61,8 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Antiwarp +How -Buy|To toggle antiwarp, press <Shift> and <End> together.  In public arenas, only the Spider (Ship 3) is able to equip antiwarp and it must be bought.
 &Buy +How|To see a list of items you can buy in the public arena, type :tw-p:!buy  This shows a list of items you can buy from TW-PubSystem anywhere in the arena. However, Leviathans and their Terriers have special restrictions on where they can buy (usually only in safe). 
 &Buy +Where|In public arenas, items can be bought anywhere in the arena from TW-PubSystem by typing :tw-p:!buy -- but Leviathans and their Terriers have special restrictions on where they can buy (usually only in safe).
+
+# Basic game mechanics.
 &Attach &How|To attach, select a person on the name list using the <Pg Up> and <Pg Dn> buttons then press <F7>.  Pressing <F7> while attached will make you detach.  In public arenas ships may only attach to the Terrier (Ship 5).
 &Detach &How|To detach, press <F7> when attached.
 &Boost &How|Hold on to shift when going forwards or backwards for a boost in speed.  Boosting takes up energy.
@@ -100,6 +108,8 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Change &Arena &How| There are 2 ways to switch arenas.  1) Press <Esc> followed by <A> or type ?arena to bring up your arena list.  Select the arena that you wish to go to using the <Pg Up> and <Pg Dn> keys.  Example: ?go Turretwarz.  2) Type ?go Arenaname, where <Arenaname> is the name of the arena you wish to go to.  To go to another public arena simply type ?go Number, where <Number> is the number of the pub.  Example: ?go 1.
 &Private &Arena &How|To go to a private arena type ?go #Arenaname, where <Arenaname> is the name of the arena you wish to go to.  Example: ?go #PrivateArena.
 &Shoot &Safe &How|In the safe zones in the public arenas, it is possible to shoot by thrusting into the corner.
+
+# Player/staff general information.
 &Find &Player &How|To find another player, type ?find Playername, where <Playername> is the name of they person that you would like to find.
 &Find &Someone &How|To find another player, type ?find Playername, where <Playername> is the name of they person that you would like to find.
 &Locate &Someone &How|To find another player, type ?find Playername, where <Playername> is the name of they person that you would like to find.
@@ -113,10 +123,14 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Sysops &Who|The sysops of SSCU Trench Wars are Pure_Luck and Weaver.
 &Owner &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
 &Owners &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
+
+# Abuse/complaints.
 Staffabuse|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 &Staff &Abuse|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 Complaints|To file a general complaint or to register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
 &Staff &Complaint|To register any complaints about any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
+
+# Host related.
 Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting request. We will attempt to handle your request as promptly as possible but there is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the <ER> tag next to their name.
 &Host &Base|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
 &Host &Base2|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
@@ -128,11 +142,15 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Host &Javduel2|An available staff member will start the javduel bot if there are 2 captains present in the arena. Staff will advertise for javduel if there are 2 captains, but not enough players present.
 &Host &Javduel3|An available staff member will start the javduel bot if there are 2 captains present in the arena. Staff will advertise for javduel if there are 2 captains, but not enough players present.
 &Host &Tourny|Tourny is only run in the weekends from Friday morning till Sunday evening (EST).
+
+# Appeal/bans
 &Forum &Ban|Issues regarding to banishment at Trench Wars's forums should be talked directly to a forum staff member. Please consult this page for a name to contact: http://forums.trenchwars.org/showgroups.php . 
 &Ban &Email|If you feel your ban is not warranted, please visit http://www.trenchwars.org/support/ to fill out a ticket for the ban operators.
 &Ban &Site|If you feel your ban is not warranted, please visit http://www.trenchwars.org/support/ to fill out a ticket for the ban operators.
 &Ban|If you feel your ban is not warranted, please visit http://www.trenchwars.org/support/ to fill out a ticket for the ban operators.
 &Ban &OldEmail|E-mail twbans@gmail.com for legitimate ban disputes. You must include your BanID # and user name(s) in the E-mail subject to avoid being filtered as spam.
+
+# Name/pass/email support
 &Lost &Password|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost. The password for that name will be set to a temporary, randomly generated password and emailed to you. The temporary password is valid for 24 hours. If this does not work, or if your email address isnt set correctly, please fill out the form at http://ssc.subspace.co/lostpass/open.php
 &TWD &Name &Change|To change name for TWD: 1. Log on with the name you wish to remove.  2. ?go TWD  3. PM TWDBot with !resetname  4. Wait 24 hours.  5. After 24 hours, log in with the new name you wish to register.  6. PM TWDBot with !register in the TWD arena.  If anyone else in your household is using the same connection, please contact a TWD op to change your name, or use the Contact form on twd.trenchwars.org.
 &Lost &Pass|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost. The password for that name will be set to a temporary, randomly generated password and emailed to you. The temporary password is valid for 24 hours. If this does not work, or if your email address isnt set correctly, please fill out the form at http://ssc.subspace.co/lostpass/open.php
@@ -144,23 +162,31 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Setemail &What|The setemail has currently been disabled.
 &Setemail &How|The setemail has currently been disabled.
 &Lostpassword &How|To retrieve a lost name, log on under a different user name and type ?lostpassword Playername, where <Playername> is the name of the player whose password you lost. The password for that name will be set to a temporary, randomly generated password and emailed to you. The temporary password is valid for 24 hours. If this does not work, or if your email address isnt set correctly, please fill out the form at http://ssc.subspace.co/lostpass/open.php
+
+# General server information
 &Where &Server|The SSCU Trench Wars server is located in Washington, D.C.
 &Who &Server|The SSCU Trench Wars server is being paid for by Priitk and the Subspace players that have donated.
 &Help &Server|For help setting up your own server please refer to: http://www.shanky.com/server.
 &Settings &Trench &Wars|Sorry but the Trench Wars settings are not publicly available.
 &Settings &TW|Sorry but the Trench Wars settings are not publicly available.
+
+# Banner related information
 &Banners &Site +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE and http://www.subspacedownloads.com/index.php?act=banners&f=1
 &Banners &Download &Where +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE and http://www.subspacedownloads.com/index.php?act=banners&f=1
 &Banners &Website +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE and http://www.subspacedownloads.com/index.php?act=banners&f=1
+
+# Various download information. (Client, map/other editors, voice chat clients.)
 &Continuum &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/game/Continuum040Setup.exe .
 &Subspace &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/game/Continuum040Setup.exe .
 &Subspace &1.35 &Download &Where|Subspace v1.35 can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=11 .
-&SSME &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182 .
-&Map &Editor &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182 .
-&Tileedit &Download &Where|TileEdit can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=187 .
-&TeamSpeak &Download &where|Teamspeak can be downloaded from the following location: http://www.goteamspeak.com/index.php?page=downloads
+&SSME &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .
+&Map &Editor &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .
+&Tileedit &Download &Where|TileEdit can be downloaded from the following location: http://www.subspace.co/files/file/70-tile-editor/ .
+&TeamSpeak &Download &where|Teamspeak can be downloaded from the following location: http://www.teamspeak.com/?page=downloads .
 &Shipset &Download &Where|Shipsets can be found at Subspace Downloads: http://www.subspacedownloads.com.
 &Shipsets &Download &Where|Shipsets can be found at Subspace Downloads: http://www.subspacedownloads.com.
+
+# Chatting related tells.
 &Team &Talk &How -Another|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
 &Team &Chat &How -Another|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
 &Team &Message &How -Another|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
@@ -200,6 +226,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Log +How|To toggle the logging of your chat on and off, type ?log Filename where <Filename> is the name of the log file to be created.  If no Filename is specified then it will be saved in Session.log.
 &Logbuffer +What|A logbuffer is a recorded transcript of your chat that is appended to the end of an already existing log file.
 &Logbuffer +How|To toggle the logging of your chat on and off, type ?log Filename where <Filename> is the name of the log file that the chat will be appended to.  If no Filename is specified then it will be saved in Session.log.
+
+# Score related tells.
 &Score &Erase -When +Javs -Public|In ?go javs you're able to reset your own score using the available RoboBot. Type :RoboBot:!scorereset to reset your score immediately. If you get no response or there is no RoboBot available, please contact staff by typing ::!summon. 
 &Score &reset -When +Javs -Public|In ?go javs you're able to reset your own score using the available RoboBot. Type :RoboBot:!scorereset to reset your score immediately. If you get no response or there is no RoboBot available, please contact staff by typing ::!summon.
 &Scorereset -When +Javs -Public|In ?go javs you're able to reset your own score using the available RoboBot. Type :RoboBot:!scorereset to reset your score immediately. If you get no response or there is no RoboBot available, please contact staff by typing ::!summon.
@@ -217,22 +245,26 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &R &What|Your rating, R is calculated as follows: Rating = (points from kills x 10 + (wins - losses) x 100) / (wins + 100)
 &Average &What|Your average, or Ave is calculated as follows: Average Kill = (points from kills) / (kills). It is the average number of points you get per kill.
 &Ave &What|Your average, or Ave is calculated as follows: Average Kill = (points from kills) / (kills). It is the average number of points you get per kill.
+
+# Detailed map/banner creation guides.
 &Banner &Make &How|There are 2 ways to make a banner.  1) Go to the splash screen and press <Ctrl> and <E> at the same time.  2) Use Paint to draw your banner.  The image size must be 12 x 8 pixels and it must be saved as a .bmp.  Banners must be stored in the continuum\banners directory.
 &Banners &Make &How|There are 2 ways to make a banner.  1) Go to the splash screen and press <Ctrl> and <E> at the same time.  2) Use Paint to draw your banner.  The image size must be 12 x 8 pixels and it must be saved as a .bmp.  Banners must be stored in the continuum\banners directory.
 &Banner &Set &How|To set a banner go to spectator mode <F11> then press <Esc> followed by <B> to open the banner selection window.  Use <Pg Up> and <Pg Dn> to select your banner and press <Enter>.
 &Banners &Set &How|To set a banner go to spectator mode <F11> then press <Esc> followed by <B> to open the banner selection window.  Use <Pg Up> and <Pg Dn> to select your banner and press <Enter>.
-&Map &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
-&Maps &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
-&Level &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
-&Levels &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
-&Arena &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
-&Arenas &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187.  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
+&Map &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  trenchwarsmaps@gmail.com .
+&Maps &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  trenchwarsmaps@gmail.com .
+&Level &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  trenchwarsmaps@gmail.com .
+&Levels &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  trenchwarsmaps@gmail.com .
+&Arena &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  trenchwarsmaps@gmail.com .
+&Arenas &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  trenchwarsmaps@gmail.com .
 &Squad &Arena|In order to get your squad map up, the squad must have 10 or more ACTIVE members and be a valid squad for at least 3 months (6 server scoreresets) and be actively playing in one of the leagues (TWL or TWD). Also, squad maps can not use .lvz in them however, we can enable a LVZ that is already on the server (such as miniset). Email maps to: twmaps@hotmail.com
 &Squad &Map|In order to get your squad map up, the squad must have 10 or more ACTIVE members and be a valid squad for at least 3 months (6 server scoreresets) and be actively playing in one of the leagues (TWL or TWD). Also, squad maps can not use .lvz in them however, we can enable a LVZ that is already on the server (such as miniset). Email maps to: twmaps@hotmail.com
 &Zone &Make &How|For information on how to make a zone, please refer to: http://www.shanky.com/server.
 &Zone &Create &How|For information on how to make a zone, please refer to: http://www.shanky.com/server.
 &Submit &Map &How|To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
 &Submit &Maps &How|To submit a completed map to be posted on SSCU Trench Wars, please email it zipped, along with a set of rules and description to:  twmaps@hotmail.com.
+
+# General ship information.
 &Warbird &What|The Warbird (Ship 1), or WB, is primarily a dueling ship.  It is relatively fast and maneuverable and has bullets that can kill in one hit.  To switch to a Warbird, press <Esc> followed by <1>.
 &Wb &What|The Warbird (Ship 1), or WB, is primarily a dueling ship.  It is relatively fast and maneuverable and has bullets that can kill in one hit.  To switch to a Warbird, press <Esc> followed by <1>.
 &Javelin &What|The Javelin (Ship 2), or Jav, is an attack bomber.  It shoots a bomb that can bounce once and weak bullets out of its back.  To switch to a Javelin, press <Esc> followed by <2>.
@@ -248,6 +280,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Lancaster &What|The Lancaster, or Lanc, is a fighter equipped with wide spread level 2 bullets.  To switch to a Lancaster, press <Esc> followed by <7>.
 &Lanc &What|The Lancaster, or Lanc, is a fighter equipped with wide spread level 2 bullets.  To switch to a Lancaster, press <Esc> followed by <7>.
 &Shark &What|The Shark is a mining ship.  It is equipped with 4 mines and EMP bombs.  To switch to a Shark, press <Esc> followed by <8>.
+
+# Illegal/frowned upon actions.
 &Teamkilling &What|Teamkilling is when you kill your own teammate with a bomb or a mine.  Intentional teamkilling is illegal in Trenchwars.  To report a teamkiller use the ?cheater command.
 &Teamkill &What|Teamkilling is when you kill your own teammate with a bomb or a mine.  Intentional teamkilling is illegal in Trenchwars.  To report a teamkiller use the ?cheater command.
 &Typekilling &What|Typekilling is when you kill an enemy while they are typing.  Typekilling is not illegal in Trenchwars.
@@ -264,6 +298,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Spawnkill &What|Spawnkilling is when you kill someone right after they appear after dying.  Spawnkilling is not illegal in Trench Wars.
 &Spam &What|Spam is when someone floods chat with useless text.  Excessive spamming is illegal in Trench Wars.
 &Spamming &What|Spam is when someone floods chat with useless text.  Excessive spamming is illegal in Trench Wars.
+
+# Bounty related stuff. (And LT and pure basing)
 &Greens &What|Greens are the green, rotating prizes.  They upgrade your ship, and also provide bounty, which some ships require to attach.  To gather greens, just pass over them with your ship.
 &Greening &What|Greening is when a player allows a leviathan to kill them so that they can gain the 20 bounty needed to attach.
 &Bounty &What -attach|Bounty is a measure of how long your ship has been alive for and how many enemies you have killed.  You receive one bounty for each green you pick up and six bounty for each kill you make.  When you die, your bounty is reset.
@@ -277,6 +313,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Bounty &Not &High &Enough|In public arenas, Leviathans (Ship 4) and Terriers (Ship 5) need 20 bounty to attach.  If you are a Leviathan with 20 bounty and are still not able to attach, it is most likely Pure Basing Weekend.
 &Pure &Basing &Weekend &What|Pure Basing Weekend is a weekend (Friday to Monday) devoted to basing.  Levis are not allowed to attach in public arenas and Private frequencies are not allowed.
 &PBW &What|Pure Basing Weekend is a weekend (Friday to Monday) devoted to basing.  Levis are not allowed to attach in public arenas and Private frequencies are not allowed.
+
+# Lag related tells.
 &Lag &What -Fix -Lower|Lag is an overall assessment of your connection.  Both packetloss and ping contribute to lag.  To check your lag type ?lag.
 &Ping &What -Fix -Lower|Ping is the time (in milliseconds) that it takes for data to be sent to the server and back.  To check your ping type ?ping.
 &Packetloss &What -Limit -Fix -Lower|Packetloss is when data is being lost when sent from you to the server or from the server to you.  To check your packetloss, type ?packetloss.
@@ -284,6 +322,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Spike &What -Fix -Lower|Spike is when you have a really high ping for a short period of time.  To see if you are spiking, type ?ping and look at the value marked "High:".
 &Packetloss &Limit &What|The packetloss limit in public arenas is 13%.  The packetloss limit in the elimination arenas is 6.5%.
 &Ploss &Limit &What|The packetloss limit in public arenas is 13%.  The packetloss limit in the elimination arenas is 6.5%.
+
+# need to reorder these to spots where similar stuff is.
 &Spectate &Frequency|Spectating at a frequency other then the default spectator frequency in Pure Publics is illegal as it will make the frequencies (teams) uneven.
 &Spec &Frequency|Spectating at a frequency other then the default spectator frequency in Pure Publics is illegal as it will make the frequencies (teams) uneven.
 &Spectate &Freq|Spectating at a frequency other then the default spectator frequency in Pure Publics is illegal as it will make the frequencies (teams) uneven.
@@ -294,6 +334,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Robo_Ref &who|Robo_Ref is the bot that runs the automated event ?go baseelim. Private messaging it with !help will further assist you with using it.
 &Teaming &What|Teaming is when two or more people of different teams have a truce together and/or both attack other players together.  In certain arenas such as elim and baseelim, teaming is illegal.
 &Framerate &What|Framerate or FPS stands for Frames Per Second.  It is a measure of how often your screen updates the picture. You can toggle a framerate indicator by pressing <Esc> + <F>.
+
+# Common abbrevations.
 &FPS &What|FPS stands for Frames Per Second.  It is a measure of how often your screen updates the picture. You can toggle a framerate indicator by pressing <Esc> + <F>.
 &GG &What|GG stands for either Good Going or Good Game.
 &NC &What|NC stands for No Count.  It is often used in one on one duels when two people kill each other at the same time.
@@ -311,6 +353,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &SCCC &What|SSCC stands for SubSpace Central Center (US)
 &SCCE &What|SSCE stands for SubSpace Central East (US)
 &SSC &What|SSC stands for SubSpace Central
+
+# Chat settings/messages and game related toggles/settings.
 &Kill &Messages|To toggle kill messages off, to chat, and to the center of your screen, type: ?kill.
 &Enter &Messages|To toggle enter messages off, to chat, and to the center of your screen, type: ?enter.
 &Leave &Messages|To toggle leave messages off, to chat, and to the center of your screen, type: ?leave.
@@ -365,6 +409,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &See &Lag &Other &How|To see other players ping times, exit to the splash screen and press <Ctrl> and <O> at the same time.  A window labeled "Options" should appear.  Click on the tab marked "Other" and toggle the checkbox labeled "Show Player Ping Times".
 &Low &FPS &Fix &How|To increase your Framerate, try the following: Exit to the splash screen and press <Ctrl> and <A> at the same time.  A box labeled "Advanced Options" will appear.  Uncheck the box labeled "software emulation" and check the box labeled "avoid page flipping".
 &Increase &FPS &How|To increase your Framerate, try the following: Exit to the splash screen and press <Ctrl> and <A> at the same time.  A box labeled "Advanced Options" will appear.  Uncheck the box labeled "software emulation" and check the box labeled "avoid page flipping".
+
+# Macro guides.
 &Tickname &Macro &How|To insert the name of a ticked player into a macro or a message, substitute the player's name with %tickname.  Example: Attach to %tickname to defend the base!
 &Selfname &Macro &How|To insert your own name into a macro or a message, substitute your name with %selfname.  Example: Hello my name is %selfname.
 &Squad &Macro &How|To insert the name of your squad into a macro or a message, substitute your squad's name with %squad.  Example: Hello my squad is %squad.
@@ -384,6 +430,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &RedName &Macro &How|To insert the name of the closest flag carrier into a macro or a message, substitute the name with %redname.  Example: Flag carrier %redname spotted!!
 &RedBounty &Macro &How|To insert the bounty of the closest flag carrier into a macro or a message, substitute the bounty with %redbounty.  Example: Flag carrier has %redbounty bounty!!
 &RedFlags &Macro &How|To insert the number of flags that the closest flag carrier has into a macro or a message, substitute the flags with %redflags.  Example: Enemy with %redflags flags spotted!!
+
+# Various websites.
 &What &TW &Website|The SSCU Trench Wars website is: http://www.trenchwars.org.
 &What &TW &Site|The SSCU Trench Wars website is: http://www.trenchwars.org.
 &What &TW &Homepage|The SSCU Trench Wars website is: http://www.trenchwars.org.
@@ -423,6 +471,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &What &PlayerGuide &Site|For all basics about playing Continuum, check out the Player Help Guide: http://www.trenchwars.org/index.php?v=gethelp&id=2
 &New &38 &What +0.38|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
 &Different &38 &What +0.38|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
+
+# Various question related tells.
 Question (question)|What is your question?  Please type ?help followed with your question.  Example: ?help How do I shoot?
 &Message &Staff|Please directly message the staff member who is helping you out by typing :playername: before your message, or type :: to respond to the last person that messaged you.
 Msgstaff|Please directly message the staff member who is helping you out by typing :playername: before your message, or type :: to respond to the last person that messaged you.
@@ -432,6 +482,8 @@ TwlHost|During TWL match times (Saturday and Sunday from 1pm to 6pm EST), only o
 TwdtHost|During TWDT only one TWD arena per division will be allowed. Elimination-type (?go elim/baseelim) events will play on, but no other events will be hosted.
 BwcHost|During BWC only one TWD arena per division will be allowed. Elimination-type (?go elim/baseelim) events will play on, but no other events will be hosted.
 WeekendHost|During the Scheduled Weekend Events no other TW events are hosted. However the Elims and WBduel/JavDuel and Base will play on.
+
+# Common staff responses.
 SayThankYou|The SSCU Trench Wars staff would like to say Thank You!
 SayWelcome|The SSCU Trench Wars staff would like to say You are Welcome!
 SaySpawn|Sorry, but spawning is not illegal in SSCU Trench Wars.
@@ -464,10 +516,13 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Her &Nice &Ass|Whoa mama!!! You have a nice posterior!!
 &Stop &Slacking|Please pick up your monthly stats and get more active or you will get the axe from one of the deans! :-[
 &Drinking &And &Driving|Please take care when operating your ship while under the influence of alcohol.
+
+# Distension
 &Distension &Site|The site for Distension is: http://trenchwars.org/distension/
 &Distension &When|Distension schedule as of 6/21/13: MON, WED, THUR @ 5PM-7PM EDT (GMT-4)  For the most current schedule see: http://trenchwars.org/distension/schedule.php
 &Distension &Schedule|Distension schedule as of 6/21/13: MON, WED, THUR @ 5PM-7PM EDT (GMT-4)  For the most current schedule see: http://trenchwars.org/distension/schedule.php
 &Distension &What|Distension is an RPG-style action game using TW ship settings, and can be found in ?go distension
+
 
 # !tell who <staffmember>
 # LINE LENGTH: |                                                      |
@@ -529,6 +584,8 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Board &Who|Terrs are red, Levs are blue, I shot you ded, PEW PEW PEW
 &Begz &Who|A continuum is something that keeps on going, changing slowly over time, like the continuum of the four seasons. In addition to meaning "a whole made up of many parts," continuum, pronounced "kon-TIN-yoo-um," can describe a range that is always present. For example, in the game, at any time, there are newplayers who are learning warbird, then advancing to javelin, spider, and terrier. Just as the newplayers master their particular ship, they move on to the next one, as other newplayers enter the game and the vets retire.
 
+
+# Prize related tells.
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
 &prizerotation|The prize number for recharge is 3.
@@ -557,6 +614,8 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &prizebrick|The prize number for brick is 26.
 &prizerocket|The prize number for rocket is 27.
 &prizeportal|The prize number for portal is 28.
+
+# TWCore development
 &TWCore &Download|You can download TWCore at http://www.twcore.org.
 &TWcore &Info|You can find out more information about TWCore at http://www.twcore.org.
 
