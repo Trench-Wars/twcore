@@ -1208,26 +1208,62 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
         
         //Tools.printConnectionLog("SEND    : (0x0A) LVZ Object Cluster");
         
-        if( playerID == -1 ) {
-            if( m_lvzToggleCluster.size() > 0 ) {
-                ByteArray objPacket = new ByteArray( m_lvzToggleCluster.size() * 2 + 4 );
-                objPacket.addByte( 0x0A );  // Type byte
-                objPacket.addLittleEndianShort( ((short) 0xFFFF ) );
-                objPacket.addByte( 0x35 );  // LVZ packet type byte
+        ByteArray data = null;
+        
+        // First convert toggle data into a byte array. If no valid data is found, the bytearray will remain null.
+        if(playerID == -1) {
+            if ( m_lvzToggleCluster.size() > 0 ) {
+                data = new ByteArray( m_lvzToggleCluster.size() * 2 );
                 while( m_lvzToggleCluster.size() > 0 )
-                    objPacket.addLittleEndianShort( m_lvzToggleCluster.removeFirst().readLittleEndianShort(0) );
-                composeLowPriorityPacket( objPacket );
+                    data.addLittleEndianShort( m_lvzToggleCluster.removeFirst().readLittleEndianShort(0) );
             }
+                
         } else {
-            LinkedList <ByteArray>playerCluster = m_lvzPlayerToggleCluster.remove(playerID);
-            if( playerCluster != null && playerCluster.size() > 0 ) {
-                ByteArray objPacket = new ByteArray( playerCluster.size() * 2 + 4 );
-                objPacket.addByte( 0x0A );  // Type byte
-                objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
-                objPacket.addByte( 0x35 );  // LVZ packet type byte
+            LinkedList <ByteArray>playerCluster = m_lvzPlayerToggleCluster.remove( playerID );
+            if ( playerCluster != null && playerCluster.size() > 0 ) {
+                data = new ByteArray( playerCluster.size() * 2 );
                 while( playerCluster.size() > 0 )
-                    objPacket.addLittleEndianShort( playerCluster.removeFirst().readLittleEndianShort(0) );
-                composeLowPriorityPacket( objPacket );
+                    data.addLittleEndianShort( playerCluster.removeFirst().readLittleEndianShort(0) );                
+            }
+        }
+        
+        // Determine whether the data is sufficiently small enough to be send by means of a low priority packet.
+        // Previous testing indicated that 39 combined object toggles were fine, but the used bot started acting
+        // erratically or even disconnected when 77 combined object toggles were sent through a low priority packet.
+        // Further research will have to point out what the exact safe limit is, but going for a wild guess here at 50 for now.
+        if( data == null ) {
+            // No data to be sent.
+            return;
+        } else if( data.size() <= 100 ) {
+            //TODO Test proper limit for this.
+            // Fifty objects or less, send unreliably. ( 100 == 50 objects * 2 bytes )
+            ByteArray objPacket = new ByteArray( data.size() + 4 );
+            objPacket.addByte( 0x0A );  // Type byte
+            objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) ); // Player id, -1 for all.
+            objPacket.addByte( 0x35 );  // LVZ Object toggle packet type byte
+            objPacket.addByteArray( data );
+            composeLowPriorityPacket( objPacket );            
+        } else {
+            // More than 50 objects. Send reliably and split up if needed.
+            int totalSize = data.size();
+            int i = totalSize;
+            int size;
+            
+            while( i > 0 ){
+                size = 440;             // Sent in chunks of 440 bytes at max (220 objects)
+
+                if( i < size ){
+                    size = i;
+                }
+
+                ByteArray objPacket = new ByteArray( size + 4 );
+                objPacket.addByte( 0x0A ); // Encapsulating packet type byte.
+                objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) ); // Player id, -1 for all.
+                objPacket.addByte( 0x35 ); // LVZ Object toggle packet type byte.
+                objPacket.addPartialByteArray( data, totalSize - i, size );
+                sendReliableMessage( objPacket );
+                
+                i -= size;
             }
         }
     }
@@ -1312,28 +1348,48 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
         
         //Tools.printConnectionLog("SEND    : (0x0A) Containing 0x36 LVZ Object Modification Cluster");
         
+        ByteArray objData = null;
+        
+        // Construct the data.
         if( playerID == -1 ) {
             if( m_lvzModCluster.size() > 0 ) {
-                ByteArray objPacket = new ByteArray( m_lvzModCluster.size() * 11 + 4 );
-                
-                objPacket.addByte( 0x0A );  // Encapsulating packet type byte.
-                objPacket.addLittleEndianShort( ((short) 0xFFFF ) );
-                objPacket.addByte( 0x36 );  // Core packet type byte. (LVZ Object modification.)
+                objData = new ByteArray( m_lvzModCluster.size() * 11);
                 while( m_lvzModCluster.size() > 0 )
-                    objPacket.addByteArray( m_lvzModCluster.removeFirst().objUpdateInfo );
-                composeLowPriorityPacket( objPacket );
+                    objData.addByteArray( m_lvzModCluster.removeFirst().objUpdateInfo );
             }
         } else {
             LinkedList<LvzObject> playerCluster = m_lvzPlayerModCluster.remove(playerID);
             if( playerCluster != null && playerCluster.size() > 0 ) {
-                ByteArray objPacket = new ByteArray( playerCluster.size() * 11 + 4 );
-                objPacket.addByte( 0x0A );  // Encapsulating packet type byte.
-                objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
-                objPacket.addByte( 0x36 );  // Core packet type byte. (LVZ Object modification.)
+                objData = new ByteArray( playerCluster.size() * 11 );
                 while( playerCluster.size() > 0 )
-                    objPacket.addByteArray( playerCluster.removeFirst().objUpdateInfo );
-                composeLowPriorityPacket( objPacket );
+                    objData.addByteArray( playerCluster.removeFirst().objUpdateInfo );
             }
+        }
+        
+        // Check if anything needs to be sent.
+        if(objData == null)
+            return;
+        
+        // Automatically break up the data if it's too big.
+        int totalSize = objData.size();
+        int i = totalSize;
+        int size;
+        
+        while( i > 0 ){
+            size = 440;             // Sent in chunks of 440 bytes at max (40 objects)
+
+            if( i < size ){
+                size = i;
+            }
+
+            ByteArray objPacket = new ByteArray( size + 4 );
+            objPacket.addByte( 0x0A ); // Encapsulating packet type byte.
+            objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
+            objPacket.addByte( 0x36 );
+            objPacket.addPartialByteArray( objData, totalSize - i, size );
+            sendReliableMessage( objPacket );
+            
+            i -= size;
         }
     }
     
