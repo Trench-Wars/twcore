@@ -277,6 +277,8 @@ public class utilgoal extends MultiUtil {
         try {
             if (message.startsWith("!goalmessage"))
                 doGoalMessage(sender, message.substring(13));
+            else if (message.startsWith("!goalwarpall"))
+                doGoalWarpAll(sender);
             else if (message.startsWith("!goalwarp"))
                 doGoalWarp(sender, message.substring(10));
             else if (message.startsWith("!goalobjon"))
@@ -285,8 +287,6 @@ public class utilgoal extends MultiUtil {
                 doGoalPrize(sender, message.substring(11));
             else if (message.startsWith("!goaldetails"))
                 doGoalDetails(sender);
-            else if (message.startsWith("!goalwarpall"))
-                doGoalWarpAll(sender);
             else if (message.startsWith("!goalshipreset")) {
                 doGoalShipReset(sender);
             }
