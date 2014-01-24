@@ -31,7 +31,8 @@ public class utilgoal extends MultiUtil {
     private int[] goalwarp = null;
     private int goalobjon = -1, goalprize = 0, goalsound = 0;
 
-    boolean goalWarpAll = false;
+    private boolean goalWarpAll = false;
+    private boolean goalShipReset = false;
 
     /**
       * Initializes
@@ -105,6 +106,10 @@ public class utilgoal extends MultiUtil {
         }
         if (goalprize != 0)
             m_botAction.sendUnfilteredPrivateMessage(goalscorer, "*prize #" + goalprize);
+        
+        if(goalShipReset) {
+            m_botAction.shipResetAll();
+        }
     }
 
     /**
@@ -175,16 +180,24 @@ public class utilgoal extends MultiUtil {
         }
     }
 
+    /**
+     * Toggles all players being warped back to their spawn after a goal.
+     * @param sender Issuer of the command.
+     */
     public void doGoalWarpAll(String sender) {
-        if (goalWarpAll == false) {
-            goalWarpAll = true;
-            m_botAction.sendSmartPrivateMessage(sender, "Warp all set to TRUE");
-        } else {
-            goalWarpAll = false;
-            m_botAction.sendSmartPrivateMessage(sender, "Warp all set to FALSE");
-        }
+        goalWarpAll = !goalWarpAll;
+        m_botAction.sendSmartPrivateMessage(sender, "Warp all set to " + (goalWarpAll?"TRUE":"FALSE"));
     }
 
+    /**
+     * Toggles if all players receive a ship reset after a goal.
+     * @param sender Issuer of the command.
+     */
+    public void doGoalShipReset(String sender) {
+        goalShipReset = !goalShipReset;
+        m_botAction.sendSmartPrivateMessage(sender, "Ship reset on goal is " + (goalShipReset?"en":"dis") + "abled.");
+    }
+    
     /**
       * Sets the objon for the goal scorer.
       * 
@@ -249,6 +262,8 @@ public class utilgoal extends MultiUtil {
                 + (goalwarp != null ? goalwarp[0] + ":" + goalwarp[1] + (goalwarp.length == 3 ? " Radius: " + goalwarp[2] : "") : "none"));
         m_botAction.sendPrivateMessage(sender, "Goal objon: " + (goalobjon == -1 ? "none" : goalobjon));
         m_botAction.sendPrivateMessage(sender, "Goal prize: " + (goalprize == 0 ? "none" : goalprize));
+        m_botAction.sendSmartPrivateMessage(sender, "Warp all: " + (goalWarpAll?"en":"dis") + "abled.");
+        m_botAction.sendSmartPrivateMessage(sender, "Ship reset: " + (goalShipReset?"en":"dis") + "abled.");
     }
 
     /**
@@ -270,8 +285,11 @@ public class utilgoal extends MultiUtil {
                 doGoalPrize(sender, message.substring(11));
             else if (message.startsWith("!goaldetails"))
                 doGoalDetails(sender);
-            else if (message.startsWith("!warpall"))
+            else if (message.startsWith("!goalwarpall"))
                 doGoalWarpAll(sender);
+            else if (message.startsWith("!goalshipreset")) {
+                doGoalShipReset(sender);
+            }
         } catch (NumberFormatException nfe) {
             m_botAction.sendPrivateMessage(sender, "syntax must be numerical.");
         } catch (IllegalArgumentException iae) {
@@ -288,8 +306,8 @@ public class utilgoal extends MultiUtil {
                 "----------This utility sends messages,objons,warps or----------", "-------------prizes to a player who scores a goal -------------",
                 "!goalmessage <message>:<#>            -- Sets the message      ", "!goalwarp    <x>:<y>:<r>   <r>optional-- Sets the warp point   ",
                 "!goalobjon   <objon#>                 -- Sets the objon        ", "!goalprize   <prize#>                 -- Sets the prize        ",
-                "!goaldetails                          -- Shows the details     ", "!warpall                              -- Warp All after goal?  ",
-                "++                                                           ++",
+                "!goaldetails                          -- Shows the details     ", "!goalwarpall                          -- Warp All after goal?  ",
+                "!goalshipreset                        -- Shipreset after goal? ", "++                                                           ++",
                 "Note: sending \" ~* \" rather than the syntax erases the setting", "=GOAL=====================================================GOAL=" };
         return helps;
     }
