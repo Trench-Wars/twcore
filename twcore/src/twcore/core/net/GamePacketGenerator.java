@@ -1337,7 +1337,7 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
     /**
      * Sends the current LVZ object modification cluster to the player specified by the ID;
      * -1 for all players.  Use {@link #setupLVZObjectMod(int, LvzObject)} or
-     * {@link #setupMultipleLVZObjectMod(int, LinkedList) to add objects
+     * {@link #setupMultipleLVZObjectMod(int, LinkedList)} to add objects
      * before sending out the packet.
      * @param playerID ID of player to send to; use -1 for all players.
      * @see #setupLVZObjectMod(int, LvzObject)

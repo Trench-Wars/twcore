@@ -55,7 +55,7 @@ public class KotHReset extends SubspaceEvent {
     }
     
     /**
-     * @return
+     * @return KotH timer for this player.
      */
     public int getTimer() {
         return timer;
@@ -63,7 +63,7 @@ public class KotHReset extends SubspaceEvent {
     
     /**
      * The specified player id
-     * @return
+     * @return The stored player ID associated with this object.
      */
     public short getPlayerID() {
         return playerID;

@@ -262,8 +262,8 @@ public class Objset {
     /**
      * Returns true if there are objects to be shown for a Freq regardless of wither
      * they are shown already.
-     * @param playerId ID of the player to check
-     * @return True if there are objects waiting to be set for the specified player
+     * @param freq Frequency to check
+     * @return True if there are objects waiting to be set for the specified frequency
      */
     public boolean toFreqSet( int freq ) {
         if( freq < 0 ) return false;

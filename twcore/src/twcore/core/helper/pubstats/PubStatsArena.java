@@ -22,7 +22,7 @@ public class PubStatsArena {
      * Gets a PubStatsPlayer by the exact player name (case insensitive).
      * 
      * @param name the playername 
-     * @return
+     * @return PubStatsPlayer object if it is found, otherwise null.
      */
     public PubStatsPlayer getPlayer(String name) {
         Collection<PubStatsPlayer> pubstatsPlayers = players.values();
@@ -43,7 +43,7 @@ public class PubStatsArena {
      * Returns the first found PubStatsPlayer where his name starts with the given shortName.
      * 
      * @param shortName the short playername (the name from %tickname/playerlist) 
-     * @return
+     * @return PubStatsPlayer object if it is found, otherwise null.
      */
     public PubStatsPlayer getPlayerOnPartialName(String shortName) {
         Collection<PubStatsPlayer> pubstatsPlayers = players.values();
@@ -64,7 +64,7 @@ public class PubStatsArena {
      * Returns the first found PubStatsPlayer where his name is the first part of the given longName.
      * 
      * @param longName the long playername (the name from *info)
-     * @return
+     * @return PubStatsPlayer object if it is found, otherwise null.
      */
     public PubStatsPlayer getPlayerOnPartialName2(String longName) {
         Collection<PubStatsPlayer> pubstatsPlayers = players.values();
@@ -82,7 +82,7 @@ public class PubStatsArena {
     
     /**
      * Adds a subspace player to the list of players this object contains
-     * @param p
+     * @param p The player who is to be added.
      * @return the newly created PubStatsPlayer
      */
     public PubStatsPlayer addPlayer(Player p) {

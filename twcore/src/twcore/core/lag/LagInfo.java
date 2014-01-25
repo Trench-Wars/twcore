@@ -69,7 +69,6 @@ public class LagInfo extends PlayerInfo {
      * @param botAction is the botAction of the bot.
      * @param playerName is the name of the player whose lag info this is.
      * @param spikeSize is the minimum ping jump required to make a spike.
-     * @param logFile is the log file to write events to.
      */
     public LagInfo(BotAction botAction, String playerName, int spikeSize) {
         super(botAction, playerName);

@@ -167,7 +167,7 @@ public class PubStatsPlayer {
 	
 	/**
 	 * Returns whether the information from *info is filled 
-	 * @return
+	 * @return True if all the information is present, false if at least one of them is missing.
 	 */
 	public boolean isExtraInfoFilled() {
 	    return 
