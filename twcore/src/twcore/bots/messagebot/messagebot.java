@@ -92,7 +92,8 @@ public class messagebot extends SubspaceBot
 
 	
 	private LinkedList<String> playersOnline = new LinkedList<String>();
-	/** Constructor, requests Message and Login events.
+	/** 
+	 * Constructor, requests Message and Login events.
 	 *  Also prepares bot for use.
 	 */
 	public messagebot(BotAction botAction)
@@ -111,8 +112,9 @@ public class messagebot extends SubspaceBot
 		m_botAction.scheduleTaskAtFixedRate(messageBotSync, 2 * 60 * 1000, 2 * 60 * 1000);
 	}
 
-	/** This method handles an InterProcessEvent
-	 *  @param event is the InterProcessEvent to handle.
+	/** 
+	 * This method handles an InterProcessEvent
+	 * @param event is the InterProcessEvent to handle.
 	 */
 	public void handleEvent(InterProcessEvent event)
 	{
@@ -121,8 +123,9 @@ public class messagebot extends SubspaceBot
 		checkNewMessages(message.toLowerCase());
 	}
 
-	/** Checks to see if the player has new messages.
-	 *  @param Name of player to check.
+	/** 
+	 * Checks to see if the player has new messages.
+	 * @param name Name of player to check.
 	 */
 	public void checkNewMessages(String name)
 	{
@@ -152,14 +155,18 @@ public class messagebot extends SubspaceBot
 		} catch(Exception e) { Tools.printStackTrace(e); }
 	}
 	
+	/**
+	 * Checks whether a player is online or not.
+	 * @param name Name of the player to be found.
+	 */
 	public void checkPlayerOnline(String name)
 	{
 	    m_botAction.locatePlayer(name);
 	    
 	}
-	/** Sets up the CommandInterpreter to respond to
+	/** 
+	 * Sets up the CommandInterpreter to respond to
 	 *  all of the commands.
-	 *
 	 */
 	public void registerCommands() {
         int acceptedMessages;
@@ -211,9 +218,10 @@ public class messagebot extends SubspaceBot
 
     }
 
-    /** Creates a channel
-     *  @param Name of the player creating the channel.
-     *  @param Name of the channel they are trying to create.
+    /** 
+     * Creates a channel
+     * @param name Name of the player creating the channel.
+     * @param message Name of the channel they are trying to create.
      */
     public void createChannel(String name, String message)
     {
@@ -237,9 +245,10 @@ public class messagebot extends SubspaceBot
     	} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
     }
 
-    /** Allows a channel owner or Highmod to delete a channel.
-     *  @param Name of player.
-     *  @param Name of channel being deleted.
+    /** 
+     * Allows a channel owner or Highmod to delete a channel.
+     * @param name Name of player.
+     * @param message Name of channel being deleted.
      */
     public void destroyChannel(String name, String message)
     {
@@ -267,9 +276,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Remove a player to a channel
-     *  @param Name of player.
-     *  @param Name of channel they want to join.
+    /** 
+     * Remove a player to a channel
+     * @param name Name of player.
+     * @param message Name of channel they want to join.
      */
     public void removePlayer(String name, String message)
     {
@@ -295,9 +305,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
     
-    /** Add a player to a channel
-     *  @param Name of player.
-     *  @param Name of channel they want to join.
+    /** 
+     * Add a player to a channel
+     * @param name Name of player.
+     * @param message Name of channel they want to join.
      */
     public void addPlayer(String name, String message) {
     	String channel = getChannel(name, message, false).toLowerCase();
@@ -328,9 +339,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Puts in a request to join a channel.
-     *  @param Name of player.
-     *  @param Name of channel they want to join.
+    /** 
+     * Puts in a request to join a channel.
+     * @param name Name of player.
+     * @param message Name of channel they want to join.
      */
     public void joinChannel(String name, String message)
     {
@@ -345,9 +357,10 @@ public class messagebot extends SubspaceBot
     	c.joinRequest(name, false);
     }
 
-    /** Allows a person to quit a channel.
-     *  @param Name of player.
-     *  @param Name of channel being quit.
+    /** 
+     * Allows a person to quit a channel.
+     * @param name Name of player.
+     * @param message Name of channel being quit.
      */
     public void quitChannel(String name, String message)
     {
@@ -367,9 +380,10 @@ public class messagebot extends SubspaceBot
     	c.leaveChannel(name, false);
     }
 
-    /** Accepts a player into the channel.
-     *  @param Name of operator.
-     *  @param Name of channel and player beinc accepted.
+    /** 
+     * Accepts a player into the channel.
+     * @param name Name of operator.
+     * @param message Name of channel and player beinc accepted.
      */
     public void acceptPlayer(String name, String message) {
     	String pieces[] = message.split(":", 2);
@@ -391,9 +405,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Declines a player's request to join a channel.
-     *  @param Name of operator.
-     *  @param Name of channel and player being rejected.
+    /** 
+     * Declines a player's request to join a channel.
+     * @param name Name of operator.
+     * @param message Name of channel and player being rejected.
      */
     public void declinePlayer(String name, String message) {
     	String pieces[] = message.split(":", 2);
@@ -416,9 +431,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Sends a pm to all players on the channel.
-     *  @param Name of operator.
-     *  @param Name of channel and message to be sent.
+    /** 
+     * Sends a pm to all players on the channel.
+     * @param name Name of operator.
+     * @param message Name of channel and message to be sent.
      */
     public void announceToChannel(String name, String message) {
     	String pieces[] = message.split(":", 2);
@@ -440,9 +456,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-	/** Sends ?message's to every player on a channel.
-	 *  @param Name of operator.
-	 *  @param Name of channel and message to be sent.
+	/** 
+	 * Sends ?message's to every player on a channel.
+	 * @param name Name of operator.
+	 * @param message Name of channel and message to be sent.
 	 */
 	public void messageChannel(String name, String message)
     {
@@ -468,9 +485,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");    	
     }
 
-    /** Lists all requests to join a channel.
-     *  @param Name of operator
-     *  @param Name of channel.
+    /** 
+     * Lists all requests to join a channel.
+     * @param name Name of operator
+     * @param message Name of channel.
      */
     public void listRequests(String name, String message)
     {
@@ -488,9 +506,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Bans a player from a channel
-     *  @param Name of operator
-     *  @param Name of channel and player being banned.
+    /** 
+     * Bans a player from a channel
+     * @param name Name of operator
+     * @param message Name of channel and player being banned.
      */
     public void banPlayer(String name, String message)
     {
@@ -513,9 +532,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Removes a player's ban.
-     *  @param Name of operator.
-     *  @param Name of channel and player being unbanned.
+    /** 
+     * Removes a player's ban.
+     * @param name Name of operator.
+     * @param message Name of channel and player being unbanned.
      */
     public void unbanPlayer(String name, String message)
     {
@@ -538,9 +558,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Lists all requests to join a channel.
-     *  @param Name of operator
-     *  @param Name of channel.
+    /** 
+     * Lists all requests to join a channel.
+     * @param name Name of operator
+     * @param message Name of channel.
      */
     public void listBanned(String name, String message)
     {
@@ -558,9 +579,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Lists all requests to join a channel.
-     *  @param Name of operator
-     *  @param Name of channel.
+    /** 
+     * Lists all requests to join a channel.
+     * @param name Name of operator
+     * @param message Name of channel.
      */
     public void listMembers(String name, String message)
     {
@@ -578,9 +600,10 @@ public class messagebot extends SubspaceBot
     //		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Makes a player a channel operator.
-     *  @param Name of owner
-     *  @param Name of channel and player being op'd.
+    /** 
+     * Makes a player a channel operator.
+     * @param name Name of owner
+     * @param message Name of channel and player being op'd.
      */
     public void makeOp(String name, String message)
     {
@@ -603,9 +626,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Revokes a player's operator status
-     *  @param Name of owner
-     *  @param Name of channel and player.
+    /** 
+     * Revokes a player's operator status
+     * @param name Name of owner
+     * @param message Name of channel and player.
      */
     public void deOp(String name, String message)
     {
@@ -634,9 +658,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Grants ownership of a channel to a new player.
-     *  @param Name of owner/Highmod
-     *  @param Name of channel and player beign given operator.
+    /** 
+     * Grants ownership of a channel to a new player.
+     * @param name Name of owner/Highmod
+     * @param message Name of channel and player beign given operator.
      */
     public void grantChannel(String name, String message)
     {
@@ -659,9 +684,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Tells who the owner of the requested channel is.
-     *  @param Name of player
-     *  @param Name of channel
+    /** 
+     * Tells who the owner of the requested channel is.
+     * @param name Name of player
+     * @param message Name of channel
      */
     public void sayOwner(String name, String message)
     {
@@ -676,9 +702,10 @@ public class messagebot extends SubspaceBot
     	m_botAction.sendSmartPrivateMessage(name, "Owner: " + c.owner);
     }
 
-    /** Makes a channel public.
-     *  @param Name of operator
-     *  @param Name of channel
+    /** 
+     * Makes a channel public.
+     * @param name Name of operator
+     * @param message Name of channel
      */
     public void makePublic(String name, String message)
     {
@@ -696,9 +723,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Makes a channel private
-     *  @param Name of operator
-     *  @param Name of channel.
+    /** 
+     * Makes a channel private
+     * @param name Name of operator
+     * @param message Name of channel.
      */
     public void makePrivate(String name, String message)
     {
@@ -716,9 +744,10 @@ public class messagebot extends SubspaceBot
     		m_botAction.sendSmartPrivateMessage(name, "You do not have permission to do that on this channel.");
     }
 
-    /** Tells the player all the channels he/she is on.
-     *  @param Name of player
-     *  @param does nothing
+    /** 
+     * Tells the player all the channels he/she is on.
+     * @param name Name of player
+     * @param message Does nothing
      */
 
     public void myChannels(String name, String message)
@@ -745,9 +774,10 @@ public class messagebot extends SubspaceBot
     	} catch(Exception e) { Tools.printStackTrace(e); }
     }
 
-    /** Tells the player all the channels the specified player is on.
-     *  @param Name of player
-     *  @param contains the nick of the player to search for.
+    /** 
+     * Tells the player all the channels the specified player is on.
+     * @param name Name of player
+     * @param message Contains the nick of the player to search for.
      */
 
     public void memberOfChannels(String name, String message)
@@ -785,8 +815,10 @@ public class messagebot extends SubspaceBot
         } catch(Exception e) { Tools.printStackTrace(e); }
     }
 
-    /** Sends help messages
-     *  @param Name of player.
+    /** 
+     * Sends help messages
+     * @param name Name of player.
+     * @param message Parameters, starting letter determines section.
      */
     public void doHelp(String name, String message)
     {
@@ -849,12 +881,16 @@ public class messagebot extends SubspaceBot
 
     }
 
-    /** Does nothing
+    /** 
+     * Does nothing
+     * @param name Name.
+     * @param message Original message.
      */
     public void doNothing(String name, String message) {}
 
-	/** Passes a message event to the command interpreter
-	 *  @param The message event being passed.
+	/** 
+	 * Passes a message event to the command interpreter
+	 * @param event The message event being passed.
 	 */
 	public void handleEvent(Message event)
 	{
@@ -866,7 +902,8 @@ public class messagebot extends SubspaceBot
 		m_CI.handleEvent(event);
 	}
 
-	/** Sends the bot to the default arena and reloads all channels.
+	/** 
+	 * Sends the bot to the default arena and reloads all channels.
 	 */
 	public void handleEvent(LoggedOn event)
 	{
@@ -906,9 +943,10 @@ public class messagebot extends SubspaceBot
         m_botAction.ipcSubscribe(IPCCHANNEL);
 	}
 
-	/** Reads a message from the database.
-	 *  @param Name of player reading the message.
-	 *  @param Message number being read.
+	/** 
+	 * Reads a message from the database.
+	 * @param name Name of player reading the message.
+	 * @param message Message number being read.
 	 */
 	public void readMessage(String name, String message) {	    
 	    
@@ -1049,8 +1087,8 @@ public class messagebot extends SubspaceBot
 	
 	/**
 	 * Shortcut for fiS. :P
-	 * @param name
-	 * @param message
+	 * @param name Issuer of the command.
+	 * @param message Original message.
 	 */
     public void readAll(String name, String message) {
         readMessage(name,"a");
@@ -1080,9 +1118,10 @@ public class messagebot extends SubspaceBot
 	}
      */
 
-	/** Marks a message's status as unread.
-	 *  @param Name of player.
-	 *  @param Message number being reset.
+	/** 
+	 * Marks a message's status as unread.
+	 * @param name Name of player.
+	 * @param message Message number being reset.
 	 */
 	public void setAsNew(String name, String message)
 	{
@@ -1107,9 +1146,10 @@ public class messagebot extends SubspaceBot
 		}
 	}
 
-	/** Deletes a message from the database.
-	 *  @param Name of player
-	 *  @param Message being deleted.
+	/** 
+	 * Deletes a message from the database.
+	 * @param name Name of player
+	 * @param message Message being deleted.
 	 */
 	public void deleteMessage(String name, String message)
 	{
@@ -1141,9 +1181,10 @@ public class messagebot extends SubspaceBot
 		}
 	}
 
-	/** PM's a player with all of his/her message numbers.
-	 *  @param Name of player.
-	 *  @param (does nothing).
+	/** 
+	 * PM's a player with all of his/her message numbers.
+	 * @param name Name of player.
+	 * @param message (does nothing).
 	 */
 	public void myMessages(String name, String message)
 	{
@@ -1205,8 +1246,8 @@ public class messagebot extends SubspaceBot
 	
     /**
      * Changes limit for messages sent to a player.
-     * @param Name of player.
-     * @param # to set to message limit
+     * @param name Name of player.
+     * @param message # to set to message limit
      */
     public void handleLimit(String name, String message) {
         Integer limit = msgLimits.get(name);
@@ -1227,11 +1268,13 @@ public class messagebot extends SubspaceBot
     }
 	
 
-	/** Checks the database to make sure a player owns the
+	/** 
+	 * Checks the database to make sure a player owns the
 	 *  message that he's trying to do stuff with.
-	 *  @param name Name of the player
-	 *  @param messageNumber Number of the message he/she is
+	 * @param name Name of the player
+	 * @param messageNumber Number of the message he/she is
 	 *         trying to do stuff to
+	 * @return True if the player is the owner of the message, false otherwise.
 	 */
 	 public boolean ownsMessage(String name, int messageNumber)
 	 {
@@ -1256,9 +1299,12 @@ public class messagebot extends SubspaceBot
 	 	return false;
 	 }
 
-	/** Retrieves the channel name out of the message.
-	 *  @param name Name of player.
-	 *  @param message Message sent
+	/** 
+	 * Retrieves the channel name out of the message.
+	 * @param name Name of player.
+	 * @param message Message sent
+	 * @param noParams If the message has any parameters?
+	 * @return Channel name when found, the original message when noParams is set, and an empty string in all other cases.
 	 */
 	 public String getChannel(String name, String message, boolean noParams) {
 	 	if(noParams) {
@@ -1273,9 +1319,10 @@ public class messagebot extends SubspaceBot
 		}
 	 }
 
-	/** Handles a message sent by pubbots to tell a player if they have new messages
-	 *  @param Name of player PM'ing
-	 *  @param Name of player logging in
+	/** 
+	 * Handles a message sent by pubbots to tell a player if they have new messages
+	 * @param name Name of player PM'ing
+	 * @param player Name of player logging in
 	 */
 	 public void playerLogin(String name, String player)
 	 {
@@ -1284,9 +1331,10 @@ public class messagebot extends SubspaceBot
 	 	else checkNewMessages(name.toLowerCase());
 	 }
 
-	/** Sends the bot to a new arena.
-	 *  @param Name of player.
-	 *  @param Arena to go to.
+	/** 
+	 * Sends the bot to a new arena.
+	 * @param name Name of player.
+	 * @param message Arena to go to.
 	 */
 	 public void handleGo(String name, String message)
 	 {
@@ -1294,9 +1342,10 @@ public class messagebot extends SubspaceBot
 	 		m_botAction.changeArena(message);
 	 }
 
-	/** Kills the bot
-	 *  @param Name of player
-	 *  @param should be blank
+	/** 
+	 * Kills the bot
+	 * @param name Name of player
+	 * @param message Should be blank
 	 */
 	 public void handleDie(String name, String message)
 	 {
@@ -1307,8 +1356,9 @@ public class messagebot extends SubspaceBot
 		}
 	 }
 
-	 /** Announces to a channel that they have recieved a new message.
-	  *  @param Name of channel
+	 /** 
+	  * Announces to a channel that they have received a new message.
+	  * @param name Name of channel
 	  */
 	 public Set<String> messageSentFromWebsite(String channel)
 	 {
@@ -1323,10 +1373,11 @@ public class messagebot extends SubspaceBot
 		return s;
 	 }
 
-	 /** Syncs the website and MessageBot's access levels
-	  *  @param Name of channel
-	  *  @param Name of player
-	  *  @param Access level
+	 /** 
+	  * Syncs the website and MessageBot's access levels
+	  * @param channel Name of channel
+	  * @param name Name of player
+	  * @param level Access level
 	  */
 	 public void accessUpdateFromWebsite(String channel, String name, int level)
 	 {
@@ -1336,7 +1387,8 @@ public class messagebot extends SubspaceBot
 	 	} catch(Exception e) { Tools.printStackTrace( e ); }
 	 }
 
-	/** Sets up the task that will delete messages that have expired.
+	/** 
+	 * Sets up the task that will delete messages that have expired.
 	 */
 	void createTasks()
 	{
@@ -1694,7 +1746,8 @@ class Channel
 	boolean isOpen;
 	String database = "website";
 
-	/** Constructs the new channel.
+	/** 
+	 * Constructs the new channel.
 	 */
 	public Channel(String creator, String cName, BotAction botAction, boolean pub, boolean auto)
 	{
@@ -1711,8 +1764,10 @@ class Channel
 			m_bA.sendSmartPrivateMessage(owner, "Channel created.");
 	}
 
-	/** Returns wether the person is owner or not.
-	 *  @param Name of player being checked.
+	/** 
+	 * Returns whether the person is owner or not.
+	 * @param name Name of player being checked.
+	 * @return True if the playre is the owner, false otherwise.
 	 */
 	public boolean isOwner(String name)
 	{
@@ -1724,8 +1779,10 @@ class Channel
 		else return false;
 	}
 
-	/** Returns whether the person is an operator or not.
-	 *  @param Name of player being checked.
+	/**
+	 * Returns whether the person is an operator or not.
+	 * @param name Name of player being checked.
+	 * @return True if the player is an operator, false otherwise.
 	 */
 	public boolean isOp(String name)
 	{
@@ -1737,17 +1794,19 @@ class Channel
 		else return false;
 	}
 
-	/** Returns wheter the channel is public or private.
-	 *  @return
+	/** 
+	 * Returns whether the channel is public or private.
+	 * @return True if the channel is public, false otherwise.
 	 */
 	public boolean isOpen()
 	{
 		return isOpen;
 	}
 
-	/** Gives channel ownership away
-	 *  @param Name of owner.
-	 *  @param Name of new owner.
+	/** 
+	 * Gives channel ownership away
+	 * @param name Name of owner.
+	 * @param player Name of new owner.
 	 */
 	public void newOwner(String name, String player)
 	{
@@ -1767,9 +1826,10 @@ class Channel
 			m_bA.sendSmartPrivateMessage(name, "This player is not in the channel.");
 	}
 
-	/** Adds an operator.
-	 *  @param Name of owner.
-	 *  @param Name of new operator.
+	/** 
+	 * Adds an operator.
+	 * @param name Name of owner.
+	 * @param player Name of new operator.
 	 */
 	public void makeOp(String name, String player)
 	{
@@ -1788,9 +1848,10 @@ class Channel
 			m_bA.sendSmartPrivateMessage(name, "This player is not in the channel.");
 	}
 
-	/** Removes an operator.
-	 *  @param Name of owner.
-	 *  @param Name of op being deleted.
+	/** 
+	 * Removes an operator.
+	 * @param name Name of owner.
+	 * @param player Name of operator being deleted.
 	 */
 	public void deOp(String name, String player)
 	{
@@ -1809,20 +1870,22 @@ class Channel
 			m_bA.sendSmartPrivateMessage(name, "This player is not in the channel.");
 	}
 
-	/** Makes the channel private.
-	 *  @param Name of owner.
+	/** 
+	 * Makes the channel private.
+	 * @param name Name of owner.
 	 */
 	public void makePrivate(String name)
 	{
 		try {
-                        m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
+		    m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fnPrivate = 1 WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 		m_bA.sendSmartPrivateMessage(name, "Now private channel.");
 		isOpen = false;
 	}
 
-	/** Makes the channel public.
-	 *  @param Name of owner.
+	/** 
+	 * Makes the channel public.
+	 * @param name Name of owner.
 	 */
 	public void makePublic(String name)
 	{
@@ -1833,11 +1896,13 @@ class Channel
 		isOpen = true;
 	}
 
-	/** Sends a ?message to everyone on channel and pm's the players that
+	/** 
+	 * Sends a ?message to everyone on channel and pm's the players that
 	 *  are online to tell them they got a message.
-	 *  @param Name of operator.
-	 *  @param Message being sent.
-	 *  @return Number of players messaged
+	 *  
+	 * @param name Name of operator.
+	 * @param message Message being sent.
+	 * @return Number of players messaged
 	 */
 	public int messageChannel(String name, String message)
 	{
@@ -1862,9 +1927,10 @@ class Channel
 		return numMsgd;
 	}
 
-	/** PM's everyone on channel.
-	 *  @param Name of operator.
-	 *  @param Message being sent.
+	/** 
+	 * PM's everyone on channel.
+	 * @param name Name of operator.
+	 * @param message Message being sent.
 	 */
 	public void announceToChannel(String name, String message)
 	{
@@ -1881,8 +1947,10 @@ class Channel
 		}
 	}
 
-	/** Puts in request to join channel.
-	 *  @param Name of player wanting to join.
+	/** 
+	 * Puts in request to join channel.
+	 * @param name Name of player wanting to join.
+	 * @param silent True if you wish to not receive any confirmation messages.
 	 */
 	public boolean joinRequest(String name, boolean silent)
 	{
@@ -1902,7 +1970,7 @@ class Channel
 		{
 			updateSQL(name.toLowerCase(), 1);
 			if (!silent)
-			m_bA.sendSmartPrivateMessage(name, "You have been accepted to " + channelName + " announcement channel.");
+			    m_bA.sendSmartPrivateMessage(name, "You have been accepted to " + channelName + " announcement channel.");
 		}
 		else
 		{
@@ -1913,8 +1981,10 @@ class Channel
 		return true;
 	}
 
-	/** Removes a player from the channel
-	 *  @param Name of player leaving.
+	/** 
+	 * Removes a player from the channel
+	 * @param name Name of player leaving.
+	 * @param silent True if you do not want to be informed of leaving the channel.
 	 */
 	public boolean leaveChannel(String name, boolean silent)
 	{
@@ -1942,8 +2012,9 @@ class Channel
 		return false;
 	}
 
-	/** Lists all requests to join channel.
-	 *  @param Name of operator.
+	/** 
+	 * Lists all requests to join channel.
+	 * @param name Name of operator.
 	 */
 	public void listRequests(String name)
 	{
@@ -1960,9 +2031,11 @@ class Channel
 		}
 	}
 
-	/** Accepts a player onto channel.
-	 *  @param Name of operator.
-	 *  @param Name of player being accepted.
+	/** 
+	 * Accepts a player onto channel.
+	 * @param name Name of operator.
+	 * @param player Name of player being accepted.
+	 * @param silent If you want the player to be informed of the acceptance, use false. Otherwise use true to make this happen silently.
 	 */
 	public boolean acceptPlayer(String name, String player, boolean silent)
 	{
@@ -1981,9 +2054,10 @@ class Channel
 		return false;
 	}
 
-	/** Rejects a player's request.
-	 *  @param Name of operator.
-	 *  @param Name of player being rejected.
+	/** 
+	 * Rejects a player's request.
+	 * @param name Name of operator.
+	 * @param player Name of player being rejected.
 	 */
 	public void rejectPlayer(String name, String player)
 	{
@@ -1998,9 +2072,10 @@ class Channel
 			m_bA.sendSmartPrivateMessage(name, "This player is not on the channel.");
 	}
 
-	/** Bans a player from the channel.
-	 *  @param Name of operator
-	 *  @param Name of player getting banned.
+	/** 
+	 * Bans a player from the channel.
+	 * @param name Name of operator
+	 * @param player Name of player getting banned.
 	 */
 	public void banPlayer(String name, String player)
 	{
@@ -2026,9 +2101,10 @@ class Channel
 		}
 	}
 
-	/** Unbans a player.
-	 *  @param Name of operator.
-	 *  @param Name of player being unbanned.
+	/** 
+	 * Unbans a player.
+	 * @param name Name of operator.
+	 * @param player Name of player being unbanned.
 	 */
 	public void unbanPlayer(String name, String player)
 	{
@@ -2050,9 +2126,10 @@ class Channel
 		}
 	}
 
-	/** Updates the database when a player's level of access changes.
-	 *  @param Player being changed.
-	 *  @param New level of access.
+	/** 
+	 * Updates the database when a player's level of access changes.
+	 * @param player Player being changed.
+	 * @param level New level of access.
 	 */
 	public void updateSQL(String player, int level)
 	{
@@ -2083,10 +2160,11 @@ class Channel
 		  catch(NullPointerException npe) { System.out.println("Silly debugging...."); }
 	}
         
-	/** Leaves a message from for a player in the database.
-	 *  @param Name of player leaving the message.
-	 *  @param Name of player recieving the message.
-	 *  @param Message being left.
+	/** 
+	 * Leaves a message from for a player in the database.
+	 * @param name Name of player leaving the message.
+	 * @param player Name of player recieving the message.
+	 * @param message Message being left.
 	 */
 	public void leaveMessage(String name, String player, String message)
 	{
@@ -2096,7 +2174,8 @@ class Channel
 		} catch(SQLException sqle) { Tools.printStackTrace( sqle ); }
 	}
 
-	/** Reload is called when the bot respawns. Allows channel to resume from where it was before bot went offline.
+	/** 
+	 * Reload is called when the bot respawns. Allows channel to resume from where it was before bot went offline.
 	 */
 	public void reload()
 	{
@@ -2116,8 +2195,9 @@ class Channel
 		} catch(Exception e) { Tools.printStackTrace( e ); }
 	}
 
-	/** Lists all players on channel.
-	 *  @param Name of player.
+	/** 
+	 * Lists all players on channel.
+	 * @param name Name of player.
 	 */
 	public void listMembers(String name)
 	{
@@ -2220,8 +2300,9 @@ class Channel
         m_bA.smartPrivateMessageSpam(name, memList.toArray(new String[memList.size()]));
 	}
 
-	/** Lists all players banned from channel.
-	 *  @param Name of player.
+	/** 
+	 * Lists all players banned from channel.
+	 * @param name Name of player.
 	 */
 	public void listBanned(String name)
 	{
@@ -2244,9 +2325,10 @@ class Channel
 		}
 	}
 
-	/** Updates access after website refresh
-	 *  @param Name of player
-	 *  @param New access level
+	/** 
+	 * Updates access after website refresh
+	 * @param name Name of player
+	 * @param level New access level
 	 */
 	 public void updateAccess(String name, int level) {
 	 	members.put(name.toLowerCase(), new Integer(level));
