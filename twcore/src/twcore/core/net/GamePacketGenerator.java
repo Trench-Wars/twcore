@@ -62,7 +62,6 @@ public class GamePacketGenerator {
      * @param outboundQueue Packet sending queue
      * @param ssEncryption Encryption algorithm class
      * @param timer Bot's universal timer
-     * @param isLocalConnection True if we are connecting locally to the server
      */
     public GamePacketGenerator( Sender outboundQueue, SSEncryption ssEncryption, Timer timer ){
         m_timer = timer;
@@ -949,9 +948,9 @@ public class GamePacketGenerator {
   */
     /**
     * Sends a request to pick up a ball.
+    * Added/written by Cheese
     * @param ballID ID of ball to pick up
     * @param timestamp Timestamp of last known ball position
-    * @author Cheese
     */
     public void sendBallPickupPacket(byte ballID, int timestamp)
     {
@@ -972,13 +971,13 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
 
     /**
     * Sends a ball fire packet.
+    * Added/written by Cheese
     * @param ballID ID of ball to fire
     * @param xPosition Starting X position
     * @param yPosition Starting Y position
     * @param xVelocity Ball X velocity
     * @param yVelocity Ball Y velocity
     * @param playerID ID of player firing ball
-    * @author Cheese
     */
     public void sendBallFirePacket(byte ballID, short xPosition, short yPosition, short xVelocity, short yVelocity, short playerID)
     {

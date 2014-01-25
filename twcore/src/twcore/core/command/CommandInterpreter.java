@@ -192,10 +192,10 @@ public class CommandInterpreter {
     }
     
     /**
-     * Returns the amount of commands that are allowed for the specified accesslevel (excluding the default commands)
+     * Returns the amount of commands that are allowed for the specified access level (excluding the default commands)
      * 
-     * @param accesslevel
-     * @return
+     * @param accesslevel Access level for which to check.
+     * @return Number of commands allowed.
      */
     public int getAllowedCommandsCount( int accesslevel ) {
     	int count = 0;
@@ -210,7 +210,7 @@ public class CommandInterpreter {
     
     /**
      * Returns the amount of commands (excluding the default commands)
-     * @return
+     * @return Total number of commands, excluding default ones and ignoring access level.
      */
     public int getCommandsCount() {
     	int count = 0;
@@ -354,7 +354,7 @@ public class CommandInterpreter {
          * @param methodClass     Class the method is located in
          * @param methodName      Name of the method the command is registered to
          * @param helpString      Message used by the help methods
-         * @param opStatus        Minimum access level needed to use this command (see OperatorList)
+         * @param opLevelReq        Minimum access level needed to use this command (see OperatorList)
          */
         public Command( int messageTypes, Object methodClass, String methodName, String helpString, int opLevelReq ){
             m_methodName = methodName;

@@ -122,7 +122,7 @@ public class DBPlayerData {
      * WARNING: If the playername in the database is 23 characters long (the name from alias *info can be that long)
      *          and you are looking for a playername with 19 characters (the name from the playerlist (m_botAction.getPlayerName())
      *          then this method will return false while the player IS saved, but under a different name
-     * @return
+     * @return True if the player is found, false otherwise or in case of an exception.
      */
     public boolean checkPlayerExists() {
         boolean result = false;
@@ -346,9 +346,9 @@ public class DBPlayerData {
 
     /**
      * This method checks for EITHER the MID or IP being in the DB.
-     * @param ip
-     * @param mid
-     * @return
+     * @param ip IP to search for.
+     * @param mid MID to search for.
+     * @return If either is found, true is returned, or when an exception has occurred. Otherwise, false is returned.
      */
     public boolean aliasMatchCrude( String ip, String mid ) {
         ip = ip.substring( 0, ip.lastIndexOf( "." ) )+".%";

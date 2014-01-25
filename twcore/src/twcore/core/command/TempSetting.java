@@ -702,8 +702,8 @@ class PlayerSetting extends TempSetting
 
 	/**
      * Restricts the range of allowed setting values
-     * @param min the smallest allowed value
-     * @param max the largest allowed value
+     * @param minFreq the smallest allowed value
+     * @param maxFreq the largest allowed value
      */
 	public void restrictFreq(int minFreq, int maxFreq)
 	{
