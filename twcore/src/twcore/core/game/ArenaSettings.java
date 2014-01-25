@@ -402,7 +402,7 @@ public class ArenaSettings {
     
     /**
      * Fetches all the ship settings.
-     * @return {@link ShipSettings} array of length 8, with each index matching {@link Ship#INTERNAL_WB} to {@link Ship#INTERNAL_SHARK}.
+     * @return {@link ShipSettings} array of length 8, with each index matching {@link Ship#INTERNAL_WARBIRD} to {@link Ship#INTERNAL_SHARK}.
      */
     public ShipSettings[] getShipSettings() {
         return shipSettings;
@@ -1932,7 +1932,17 @@ public class ArenaSettings {
         /**
          * <b>[All] MaximumThrust</b><br>
          * Maximum (with upgrades) thrust of ship.
-         * @return Maximum thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s^2 ?) 
+         * @return Maximum thrust in speed per centisecond. This results in a bit more unclear math. For example, take
+         * a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
+         * In other words, if thrust is x, then the speed increase is:
+         * <li>x / 100m pixels per second, per second of thrust;
+         * <li>x / 10m pixels per 10 seconds, per second of thrust;
+         * <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
+         * <li>x pixels per 10 seconds, per centisecond of thrust;
+         * <li>x / 10 pixels per second, per centisecond of thrust;
+         * <li>x / 100 pixels per millisecond, per second of thrust;
+         * <li>x / 10k pixels per millisecond, per centisecond of thrust;
+         * <li>x / 100k pixels per millisecond, per millisecond of thrust.
          */
         public int getMaximumThrust() {
             return (int) (maximumThrust & MASK_UINT16);
@@ -1978,7 +1988,17 @@ public class ArenaSettings {
         /**
          * <b>[All] InitialThrust</b><br>
          * Initial thrust of ship.
-         * @return Initial thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s^2 ?) 
+         * @return Initial thrust in speed per centisecond. This results in a bit more unclear math. For example, take
+         * a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
+         * In other words, if thrust is x, then the speed increase is:
+         * <li>x / 100m pixels per second, per second of thrust;
+         * <li>x / 10m pixels per 10 seconds, per second of thrust;
+         * <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
+         * <li>x pixels per 10 seconds, per centisecond of thrust;
+         * <li>x / 10 pixels per second, per centisecond of thrust;
+         * <li>x / 100 pixels per millisecond, per second of thrust;
+         * <li>x / 10k pixels per millisecond, per centisecond of thrust;
+         * <li>x / 100k pixels per millisecond, per millisecond of thrust.
          */
         public int getInitialThrust() {
             return (int) (initialThrust & MASK_UINT16);
@@ -2024,7 +2044,17 @@ public class ArenaSettings {
         /**
          * <b>[All] UpgradeThrust</b><br>
          * Amount added per Thruster Upgrade Prize.
-         * @return Upgrade thrust in speed per 10 seconds. (1000 means (100 pixels / 10 seconds) / second = 10 pixels / s^2 ?) 
+         * @return Upgrade thrust in speed per centisecond. This results in a bit more unclear math. For example, take
+         * a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
+         * In other words, if thrust is x, then the speed increase is:
+         * <li>x / 100m pixels per second, per second of thrust;
+         * <li>x / 10m pixels per 10 seconds, per second of thrust;
+         * <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
+         * <li>x pixels per 10 seconds, per centisecond of thrust;
+         * <li>x / 10 pixels per second, per centisecond of thrust;
+         * <li>x / 100 pixels per millisecond, per second of thrust;
+         * <li>x / 10k pixels per millisecond, per centisecond of thrust;
+         * <li>x / 100k pixels per millisecond, per millisecond of thrust.
          */
         public int getUpgradeThrust() {
             return (int) (upgradeThrust & MASK_UINT16);
