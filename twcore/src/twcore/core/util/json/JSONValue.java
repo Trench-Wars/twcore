@@ -19,6 +19,7 @@ import twcore.core.util.json.parser.ParseException;
 /**
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
+@SuppressWarnings("rawtypes")
 public class JSONValue {
 	/**
 	 * Parse JSON text into java object from the input source. 

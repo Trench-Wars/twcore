@@ -2,6 +2,7 @@
 
 package twcore.core.util.json.parser;
 
+@SuppressWarnings("unused")
 class Yylex {
 
   /** This character denotes the end of file */
