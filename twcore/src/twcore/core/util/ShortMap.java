@@ -24,6 +24,7 @@ import java.util.AbstractCollection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class ShortMap<V> implements Map<Integer, V> {
 
 	private final static int	TABLE_LEN = 256;
@@ -158,7 +159,6 @@ public class ShortMap<V> implements Map<Integer, V> {
 		throw new IllegalArgumentException();
  	}
 
-	@SuppressWarnings("unchecked")
  	public synchronized V remove(final int key) {
  		final int i = getIndex(key);
  		final Entry[] tab = m_table;
@@ -210,7 +210,6 @@ public class ShortMap<V> implements Map<Integer, V> {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	private boolean removeEntry(final Map.Entry entry) {
 		Object key = entry.getKey();
 		if(key instanceof Number)  {
@@ -331,7 +330,6 @@ public class ShortMap<V> implements Map<Integer, V> {
 		Entry<V>	m_current;
 		int			m_index;
 
-		@SuppressWarnings("unchecked")
 		public EntryIterator() {
 			final Entry[] t = m_table;
 			Entry<V> n = null;
@@ -346,7 +344,6 @@ public class ShortMap<V> implements Map<Integer, V> {
 			return m_next != null;
 		}
 
-		@SuppressWarnings("unchecked")
 		public Entry<V> nextEntry() {
 			if(m_next == null) {
 				throw new NoSuchElementException();
