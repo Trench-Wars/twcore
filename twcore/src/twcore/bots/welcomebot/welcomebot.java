@@ -68,19 +68,22 @@ public class welcomebot extends SubspaceBot {
     private TreeMap<String, ObjonTimer> objonTimers;
     private TreeMap<String, Stack<String[]>> tutorials;
 
+    // PS's called to welcome db
     private PreparedStatement psGetTrusted;
     private PreparedStatement psAddTrusted;                 // Add trusted player
     private PreparedStatement psRemTrusted;                 // Remove trusted player
     private PreparedStatement psSetAlerting;                // Set alerting status
     private PreparedStatement psUpdatePlayer;               // Creates or updates a NewPlayer record
     private PreparedStatement psUpdateSession;              // Used to create a session record
-    private PreparedStatement psCheckAlerts;                // Checks for prior newb call listing
     private PreparedStatement psGetCountryCode;             // Gets country code using IP
     private PreparedStatement psGetSessionCount;            // Gets current session count
-    private PreparedStatement psInsertNewb;                 // Creates a new newbcall alert entry
     private PreparedStatement psGetReferral;                // Retrieves the referral ID for a given person.
     private PreparedStatement psAddReferral;                // Adds a player to the referral database.
-    
+
+    // PS's called to website db
+    private PreparedStatement psInsertNewb;                 // Creates a new newbcall alert entry
+    private PreparedStatement psCheckAlerts;                // Checks for prior newb call listing
+
     private String infoee;
     private String einfoee;
     private TreeSet<String> debuggers;
@@ -120,7 +123,21 @@ public class welcomebot extends SubspaceBot {
         tutorials = new TreeMap<String, Stack<String[]>>(String.CASE_INSENSITIVE_ORDER);
         
         infoer = new InfoQueue(3);
-        
+                
+        createAllPrepareds();
+
+        if (psSetAlerting == null || psGetTrusted == null || psAddTrusted == null || psRemTrusted == null
+                || psInsertNewb == null || psGetSessionCount == null || psGetCountryCode == null || psCheckAlerts == null
+                || psUpdateSession == null || psUpdatePlayer == null || psGetReferral == null || psAddReferral == null) {
+            ba.sendChatMessage("Disconnecting due to null prepared statement(s)...");
+            Tools.printLog("WelcomeBot: One or more PreparedStatements are null! Bot disconnecting.");
+            ba.die("null prepared statement");
+            return;
+        }
+        loadTrusted();
+    }
+    
+    private void createAllPrepareds() {
         psInsertNewb = ba.createPreparedStatement(web, db, "INSERT INTO tblCallNewb (fcUserName, fdCreated) VALUES (?, NOW())");
         psCheckAlerts = ba.createPreparedStatement(web, db, "SELECT * FROM tblCallNewb WHERE fcUserName = ?");
        
@@ -137,16 +154,22 @@ public class welcomebot extends SubspaceBot {
         
         psGetReferral = ba.createPreparedStatement(db, db, "SELECT fnReferralid FROM tblReferral WHERE fcReferralName = ?");
         psAddReferral = ba.createPreparedStatement(db, db, "INSERT INTO tblReferral (fcReferralName) VALUES (?)");
-
-        if (psSetAlerting == null || psGetTrusted == null || psAddTrusted == null || psRemTrusted == null
-                || psInsertNewb == null || psGetSessionCount == null || psGetCountryCode == null || psCheckAlerts == null
-                || psUpdateSession == null || psUpdatePlayer == null || psGetReferral == null || psAddReferral == null) {
-            ba.sendChatMessage("Disconnecting due to null prepared statement(s)...");
-            Tools.printLog("WelcomeBot: One or more PreparedStatements are null! Bot disconnecting.");
-            ba.die("null prepared statement");
-            return;
-        }
-        loadTrusted();
+    }
+    
+    private void closeAllPrepareds() {
+        ba.closePreparedStatement(web, db, psInsertNewb);
+        ba.closePreparedStatement(web, db, psCheckAlerts);
+        
+        ba.closePreparedStatement(db, db, psGetTrusted);
+        ba.closePreparedStatement(db, db, psAddTrusted);
+        ba.closePreparedStatement(db, db, psRemTrusted);
+        ba.closePreparedStatement(db, db, psSetAlerting);
+        ba.closePreparedStatement(db, db, psUpdatePlayer);
+        ba.closePreparedStatement(db, db, psUpdateSession);
+        ba.closePreparedStatement(db, db, psGetCountryCode);
+        ba.closePreparedStatement(db, db, psGetSessionCount);
+        ba.closePreparedStatement(db, db, psAddReferral);
+        ba.closePreparedStatement(db, db, psGetReferral);
     }
     
     private void loadTrusted() {
@@ -1138,18 +1161,7 @@ public class welcomebot extends SubspaceBot {
     public void handleDisconnect() {
         ready = false;      // To prevent any prepared statements from being accessed via events while dcing
         ba.ipcUnSubscribe(IPC_CHANNEL);
-        ba.closePreparedStatement(web, db, psInsertNewb);
-        ba.closePreparedStatement(web, db, psCheckAlerts);
-        ba.closePreparedStatement(db, db, psGetTrusted);
-        ba.closePreparedStatement(db, db, psAddTrusted);
-        ba.closePreparedStatement(db, db, psRemTrusted);
-        ba.closePreparedStatement(db, db, psSetAlerting);
-        ba.closePreparedStatement(db, db, psUpdatePlayer);
-        ba.closePreparedStatement(db, db, psUpdateSession);
-        ba.closePreparedStatement(db, db, psGetCountryCode);
-        ba.closePreparedStatement(db, db, psGetSessionCount);
-        ba.closePreparedStatement(db, db, psAddReferral);
-        ba.closePreparedStatement(db, db, psGetReferral);
+        closeAllPrepareds();
         ba.cancelTasks();
     }
     
@@ -1227,7 +1239,9 @@ public class welcomebot extends SubspaceBot {
                 if (rs != null && rs.next())
                     sessionCount = rs.getInt(1) + 1;
             } catch (SQLException e) {
-                Tools.printStackTrace(e);
+            	ba.closePreparedStatement(db, db, psGetSessionCount);
+                psGetSessionCount = ba.createPreparedStatement(db, db, "SELECT COUNT(*) FROM tblNewPlayerSession WHERE fcName = ?");
+                Tools.printStackTrace("Recreating session count PS in Session class constructor...", e);
             }
             infoer.add(name);
         }
@@ -1304,7 +1318,13 @@ public class welcomebot extends SubspaceBot {
                 psUpdatePlayer.setString(8, res);
                 psUpdatePlayer.execute();
             } catch (SQLException e) {
-                Tools.printStackTrace(e);
+            	ba.closePreparedStatement(db, db, psUpdatePlayer);
+            	psUpdatePlayer = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayer " 
+                        + "(fcName, fcSquad, ffTotalUsage, fcIP, fnMID, fcCountryCode, fdNameCreated, fcResolution) " 
+                        + "VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE fcSquad=VALUES(fcSquad), ffTotalUsage=VALUES(ffTotalUsage), fcIP=VALUES(fcIP), fnMID=VALUES(fnMID), fcCountryCode=VALUES(fcCountryCode), fcResolution=VALUES(fcResolution)");
+                Tools.printStackTrace("Recreating session update PS in doUpdatePlayer...", e);
+            	// Ignoring this particular result (not calling recursively, for example)...
+            	// let's simply try not to die.
             }
         }
         
@@ -1319,7 +1339,9 @@ public class welcomebot extends SubspaceBot {
                 if (rs != null && rs.next()) 
                     countryCode = rs.getString(1);
             } catch (SQLException e) {
-                Tools.printStackTrace(e);
+            	ba.closePreparedStatement(db, db, psGetCountryCode);
+                psGetCountryCode = ba.createPreparedStatement(db, db, "SELECT country_code3 FROM tblCountryIPs WHERE INET_ATON(?) >= ip_from AND INET_ATON(?) <= ip_to");
+                Tools.printStackTrace("Recreating country code select PS in setInfo...", e);
             }
             debug("Info setting for " + name + ": IP:" + ip + " MID:" + mid + " CC: " + countryCode);
         }
@@ -1348,7 +1370,9 @@ public class welcomebot extends SubspaceBot {
                 psUpdateSession.setString(5, res);
                 psUpdateSession.execute();
             } catch (SQLException e) {
-                Tools.printStackTrace(e);
+            	ba.closePreparedStatement(db, db, psUpdateSession);
+                psUpdateSession = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayerSession (fcName, ffSessionUsage, fnKills, fnDeaths, fcResolution) VALUES(?,?,?,?,?)");
+                Tools.printStackTrace("Recreating session update PS in endSession...", e);
             }
             sessions.remove(name);         
             debug("Session ending for " + name + ": SessionUsage:" + sessionUsage + " Kills:" + kills + " Deaths:" + deaths);   
