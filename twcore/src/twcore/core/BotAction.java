@@ -2168,7 +2168,6 @@ public class BotAction
     /**
      * Sends all ships into spectator mode, but keeps their freq as what it was prior
      * to being spec'd.  Does not lock in spectator mode, so arena should be *lock'd.
-     * @param freq Frequency to spec
      */
     public void specAllAndKeepFreqs() {
         Iterator<Player> i = m_arenaTracker.getPlayingPlayerIterator();
@@ -2228,8 +2227,8 @@ public class BotAction
      * on and is already in an arena, use changeArena( int ) instead.
      * <p>If arenaname contains only a number, then it's assumed to be a pub
      * that is being joined.
-     * @param arenaName The name of arena (or number of pub) to join.
-     * @author DoCk> (modified by FoN)
+     * <p>Original code: DoCk> (modified by FoN) 
+     * @param arenaName The name of arena (or number of pub) to join. 
      * @see #changeArena(String)
      */
     public void joinArena(String arenaName)
@@ -2263,10 +2262,10 @@ public class BotAction
      * also specify the resolution for the bot to enter in at.
      * <p>If arenaname contains only a number, then it's assumed to be a pub
      * that is being joined.
+     * <p>Original code: Kirthi Sugnanam - FoN
      * @param arenaName The arena string to join.
      * @param xResolution The X coordinate resolution for the screen.
      * @param yResolution The Y coordinate resolution for the screen.
-     * @author Kirthi Sugnanam - FoN
      * @see #changeArena(String, short, short)
      */
     public void joinArena(String arenaName, short xResolution, short yResolution) throws Exception
@@ -2294,8 +2293,8 @@ public class BotAction
     /**
      * Causes the bot to join the specified public arena.  Should be used only
      * at initial login.
+     * <p>Original code: DoCk> (modified by FoN) 
      * @param arena The arena number to join.
-     * @author DoCk> (modified by FoN)
      * @see #changeArena(short)
      */
     public void joinArena(short arena)
@@ -2315,10 +2314,10 @@ public class BotAction
     /**
      * Causes the bot to join the specified public arena at a given resolution.
      * Should be used only at initial login.
+     * <p>Original code: Kirthi Sugnanam - FoN 
      * @param arena The arena number to join.
      * @param xResolution The X coordinate resolution for the screen.
      * @param yResolution The Y coordinate resolution for the screen.
-     * @author Kirthi Sugnanam - FoN
      * @see #changeArena(short, short, short)
      */
     public void joinArena(short arena, short xResolution, short yResolution) throws Exception
@@ -2337,7 +2336,7 @@ public class BotAction
 
     /**
      * Joins the bot to a random public arena.
-     * @author DoCk> (modified by FoN)
+     * <p>Original code: DoCk> (modified by FoN)
      */
     public void joinRandomPublicArena()
     {
@@ -2367,11 +2366,11 @@ public class BotAction
 
     /**
      * This is an overloaded change function to allow variations in resolution.
+     * <p>Original code: Kirthi Sugnanam - FoN
      * @param newArenaName Name or number of the arena to change to.
      * @param xResolution The X Max for the screen size.
      * @param yResolution The Y Max for the screen size.
      * @exception Catches the resolution mistake for specifying a bad max X and Y
-     * @author Kirthi Sugnanam - FoN
      */
     public void changeArena(String newArenaName, short xResolution, short yResolution) throws Exception
     {
@@ -2402,11 +2401,11 @@ public class BotAction
     /**
      * Forces the bot to leave the current arena and join a public arena specified
      * by an integer.  Allows resolution to be specified.
+     * <p>Original code: Kirthi Sugnanam - FoN
      * @param arenaNumber The number of the public arena to change to.
      * @param xResolution The X Max for the screen size.
      * @param yResolution The Y Max for the screen size.
      * @exception catches the resolution mistake for specifying X max and Y
-     * @author Kirthi Sugnanam - FoN
      */
     public void changeArena(short arenaNumber, short xResolution, short yResolution) throws Exception
     {
@@ -2895,11 +2894,8 @@ public class BotAction
 
     /**
      * Manually sets multiple objects to either be shown or hidden using the
-     * syntax of the *objset command.  objString should contain comma-separated
-     * object IDs marked either with a + or - for show or hide.  Also the string
-     * MUST terminate with a comma!  For example:
-     * <p>  "+2,+5,-7,+12,-14,+15,"
-     * @param objString Comma-separated list of object IDs marked with + for show or - for hide, ending with a comma.
+     * syntax of the *objset command.
+     * @param objects HashMap with object IDs paired to their target state.
      */
     public void manuallySetObjects( HashMap <Integer,Boolean>objects ) {
         m_packetGenerator.setupMultipleLVZObjectToggles(-1, objects );
@@ -3680,7 +3676,7 @@ public class BotAction
      * <b>NOTE:</b> The arena settings may be null or outdated if requested too early. (For
      * example, when the bot is in the progress of switching to an arena, or when the
      * arena settings are still being downloaded.)
-     * @return
+     * @return An object containing all the current arena settings.
      */
     public ArenaSettings getArenaSettings() {
         return m_botSession.getGamePacketInterpreter().getArenaSettings();

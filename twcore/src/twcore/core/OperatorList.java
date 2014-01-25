@@ -748,7 +748,7 @@ public class OperatorList {
     /**
      * Retrieve names based on numeric access level.
      * @param accessLevel
-     * @return
+     * @return Textual representation of the access level.
      */
     public String getAccessLevelName( int accessLevel ) {
         switch( accessLevel ) {

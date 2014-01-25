@@ -222,8 +222,8 @@ public class BotQueue extends Thread {
     /**
      * Returns the count of bots that are spawned for the specified bot type (className)
      *
-     * @param className
-     * @return
+     * @param className Bot class to search for.
+     * @return Current bot count.
      */
     int getBotCount(String className){
     	Integer      currentBotCount = m_botTypes.get( className.toLowerCase() );
@@ -352,7 +352,7 @@ public class BotQueue extends Thread {
      * @param className Class name of bot to spawn
      * @param messager Name of player trying to spawn the bot. If the messager is NULL, "AutoLoader" will be reported in chat messages but no PMs will be sent.
      *
-     * @see BotQueue.spawnBot(String, String, String, String)
+     * @see BotQueue#spawnBot(String, String, String, String)
      */
     void spawnBot( String className, String messager ) {
         spawnBot( className, null, null, messager);
