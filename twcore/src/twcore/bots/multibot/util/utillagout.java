@@ -742,6 +742,7 @@ public class utillagout extends MultiUtil
             return freq;
         }
 
+        @SuppressWarnings("unused")
         public boolean isLaggedOut()
         {
             return laggedOut;

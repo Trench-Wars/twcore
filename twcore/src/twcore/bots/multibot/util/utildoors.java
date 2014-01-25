@@ -59,11 +59,11 @@ public class utildoors extends MultiUtil {
 	}
 	
 	public int closeDoor(int doorState, int doorNumber) {
-	    return doorState | (int) Math.pow(2, (doorNumber - 1));
+	    return doorState | (int) ( 1 << (doorNumber - 1));
 	}
 	
 	public int openDoor(int doorState, int doorNumber) {
-	    return doorState & ~((int) Math.pow(2, (doorNumber - 1)));
+	    return doorState & ~((int) ( 1 << (doorNumber - 1)));
 	}
 	
 	public void doDoorOnCmd(String sender, String argString) {

@@ -671,9 +671,9 @@ public class utilflagconquest extends MultiUtil {
 	 * @param sender is the user of the bot.
 	 */
 
-	private void sortList(HashMap list, String sender)	{
-		Iterator key = list.keySet().iterator();
-		Iterator value = list.values().iterator();
+	private void sortList(HashMap<?, ?> list, String sender)	{
+		Iterator<?> key = list.keySet().iterator();
+		Iterator<?> value = list.values().iterator();
 
 		while (key.hasNext())	{
 			m_botAction.sendPrivateMessage(sender,key.next().toString() 
@@ -1164,7 +1164,8 @@ public class utilflagconquest extends MultiUtil {
 		{m_Flags.add(flag);}
 		public void removeFlag (Integer flag)
 		{m_Flags.remove(flag);}
-		public void clearFlags ()
+		@SuppressWarnings("unused")
+        public void clearFlags ()
 		{m_Flags.clear();}
 		public void addWrpp (String wrpp)
 		{m_Wrpp.add(wrpp);}
@@ -1230,7 +1231,8 @@ public class utilflagconquest extends MultiUtil {
 		{m_Holder = holder;}
 		public Integer getHolder()
 		{return m_Holder;}
-		public boolean containsFlag (Integer flag)
+		@SuppressWarnings("unused")
+        public boolean containsFlag (Integer flag)
 		{return m_Ids.contains(flag);}
 
 		public boolean hasFlags(ArrayList<Integer> flags)	{
