@@ -697,7 +697,7 @@ public class Arena {
     /**
      * Dedicates all position updates to one freq for a short period of time
      * so as to obtain stronger reliable position information.
-     * @param freqID Frequency of the players to track
+     * @param freq Frequency of the players to track
      */
     public void addFreqToTracker( Integer freq ) {
         synchronized(m_tracker) {

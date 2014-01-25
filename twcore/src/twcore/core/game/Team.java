@@ -106,7 +106,7 @@ public class Team
 
 	/**
      * Gets all players on this in a specific ship
-     * @param the desired ship, can also be ALL or PLAYING
+     * @param ship The desired ship, can also be ALL or PLAYING
      * @return an array of all Players currently in that ship
      */
 	public Player[] getPlayers(byte ship)
@@ -180,7 +180,7 @@ public class Team
 
 	/**
      * Gets the number of players on this team in a particular ship
-     * @param the desired ship, can also be ALL or PLAYING
+     * @param ship The desired ship, can also be ALL or PLAYING
      */
 	public int getShipCount(byte ship)
 	{
@@ -232,7 +232,7 @@ public class Team
 	 * Sets the ShipRestrictor this team uses to restrict ship access. If
 	 * restrictor is null, the team will be set to use a Restrictor that allows
 	 * full access to all ships.
-	 * @param restrictor the new ShipRestrictor to use
+	 * @param restrict The new ShipRestrictor to use
 	 */
 	public void setRestrictor(ShipRestrictor restrict)
 	{

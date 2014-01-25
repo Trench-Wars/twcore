@@ -24,7 +24,7 @@ public class Projectile {
 	/**
 	 * Constructor
 	 *
-	 * @param   t0 is the owner of the projectile
+	 * @param   tO is the owner of the projectile
 	 * @param   tX is the x location where the projectile was fired
 	 * @param   tY is the y location where the projectile was fired
 	 * @param  tVX is the x velocity of the projectile
