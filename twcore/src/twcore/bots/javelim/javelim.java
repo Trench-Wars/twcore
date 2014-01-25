@@ -1571,7 +1571,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
         }
     }
 
-
+    @SuppressWarnings("unused")
     private final class State {
         private int m_state;
         final static int UNDEFINED = -1;
