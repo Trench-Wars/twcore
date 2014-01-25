@@ -29,12 +29,12 @@ import twcore.core.events.PlayerLeft;
 public class ArenaChat extends Chat {
 
 	/**
-     * This si where the ability to chat comes in.
+     * This is where the ability to chat comes in.
      */
     private static final long serialVersionUID = 1L;
     static TreeSet<String> playerIndex;
-	private static DefaultListModel playerModel;
-	private static JList playerList;
+	private static DefaultListModel<String> playerModel;
+	private static JList<String> playerList;
 	private static ArrayList<String> spec;
 	private static ArrayList<String> freq0;
 	private static ArrayList<String> freq1;
@@ -45,8 +45,8 @@ public class ArenaChat extends Chat {
 	{
 		super(name, client, botAction);
 		playerIndex = new TreeSet<String>();
-		playerModel = new DefaultListModel();
-		playerList = new JList(playerModel);
+		playerModel = new DefaultListModel<String>();
+		playerList = new JList<String>(playerModel);
 		spec = new ArrayList<String>();
 		freq0 = new ArrayList<String>();
 		freq1 = new ArrayList<String>();
@@ -400,7 +400,7 @@ public class ArenaChat extends Chat {
 		Iterator<String> listpub = publicFreq.iterator();
 
  
-		playerModel = new DefaultListModel();
+		playerModel = new DefaultListModel<String>();
 		Collections.sort(spec, String.CASE_INSENSITIVE_ORDER);
 		Collections.sort(freq0, String.CASE_INSENSITIVE_ORDER);
 		Collections.sort(freq1, String.CASE_INSENSITIVE_ORDER);

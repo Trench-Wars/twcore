@@ -21,12 +21,12 @@ public class ArenaList extends JFrame {
     private static final long serialVersionUID = 1L;
     private BotAction m_botAction;
 	private JButton go;
-	private JList arenaList;
+	private JList<String> arenaList;
 	
 	public ArenaList(BotAction botAction, String[] arenas) {
 		this.m_botAction = botAction;
 
-		arenaList = new JList(arenas);
+		arenaList = new JList<String>(arenas);
 		arenaList.setBackground(Color.BLACK);
 		arenaList.setForeground(Color.YELLOW);
 		arenaList.addMouseListener(new MouseListener() {
