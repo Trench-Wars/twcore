@@ -43,11 +43,11 @@ public class LvlMap {
     private static final int TILE_MAX_Y = 0x400;            // Maximum amount of tiles vertically.
     private static final int TILE_MAX_LINEAR = 0x100000;    // Maximum amount of tiles when the array is linearized.
     
-    private static final byte SOLID     = 0x0;
-    private static final byte PERMEABLE = 0x1;
-    private static final byte DOOR      = 0x2;
-    private static final byte WORMHOLE  = 0x3;
-    private static final byte BRICK     = 0x4;
+    public static final byte SOLID     = 0x0;
+    public static final byte PERMEABLE = 0x1;
+    public static final byte DOOR      = 0x2;
+    public static final byte WORMHOLE  = 0x3;
+    public static final byte BRICK     = 0x4;
     
     
     /*
@@ -275,9 +275,9 @@ public class LvlMap {
     /**
      * Uncompresses a Zlib compressed map file and stores the raw map data to disk.
      * @param fileName Filename including path and extension.
-     * @param cmpData 
-     * @param length
-     * @return
+     * @param cmpData Compressed data 
+     * @param length Length of data
+     * @return True if the uncompress was a success, false otherwise.
      */
     public static boolean saveMap(String fileName, ByteArray cmpData, int length) {
         Inflater inflater = new Inflater();
