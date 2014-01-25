@@ -71,8 +71,8 @@ public class Hider {
     /**
      * Check to see if any hidden names are found in the given string.
      * 
-     * @param str
-     * @return
+     * @param str String to analyze.
+     * @return True if at least one hider is found, false otherwise.
      */
     public boolean isHidden(String str) {
         str = low(str);

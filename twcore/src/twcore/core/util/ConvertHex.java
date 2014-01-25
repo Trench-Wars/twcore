@@ -36,8 +36,8 @@ public class ConvertHex {
     /**
      * Given a string containing hexadecimals, returns the byte equivalent in a byte array
      *  
-     * @param s 
-     * @return
+     * @param s Source string to be decoded.
+     * @return Byte array representing the original hex values in the string. 
      */
     public static byte[] hexStringToByteArray(String s) {
         int len = s.length();

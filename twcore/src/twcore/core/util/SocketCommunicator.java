@@ -162,12 +162,7 @@ public class SocketCommunicator extends Thread {
 	 * 
 	 * @param channelName
 	 *            Name of the channel to broadcast to
-	 * @param senderName
-	 *            Name of message sender
-	 * @param bot
-	 *            SubspaceBot object of bot executing command
-	 * @param o
-	 *            Object, generally an IPCMessage, to transmit
+	 * @param event The original SocketMessageEvent that needs to be forwarded.
 	 */
 	public synchronized void broadcast(String channelName, SocketMessageEvent event) {
 

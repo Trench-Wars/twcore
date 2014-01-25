@@ -19,8 +19,9 @@ public class IPCEvent {
      * Constructs an IPC object that gives the player's name,
      * the type of event, and time the event occurred.
      * 
-     * @param e SubspaceEvent
+     * @param p Player's name
      * @param t Time occurred
+     * @param mtype Type of event.
      */
     public IPCEvent(String p, long t, int mtype) {
         name = p;
@@ -35,8 +36,9 @@ public class IPCEvent {
      * playing players in an arena a bot has entered/left,
      * as well as the time it was sent.
      * 
-     * @param e SubspaceEvent
+     * @param l List containing all playing players in an arena.
      * @param t Time occurred
+     * @param mtype Type of event.
      */
     public IPCEvent(Object l, long t, int mtype) {
         name = "";

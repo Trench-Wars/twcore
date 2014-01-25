@@ -34,7 +34,6 @@ public class MapRegions
 
     /**
      * Creates a new instance of MapRegions.
-     * @param botAction the BotAction object to use for bot interaction
      */
     public MapRegions()
     {
@@ -182,7 +181,7 @@ public class MapRegions
 
     /**
      * Checks if a player is in a certain region of the map
-     * @param name the name of the player
+     * @param p The Player object of the player
      * @param region the region to check for the player
      * @return true if player is in region, false if not
      */
@@ -195,7 +194,7 @@ public class MapRegions
 
     /**
      * Gets the region index of where a player is
-     * @param name the name of the player
+     * @param p The Player object of the player
      * @return the index of the region, or -1 if player is not in any
      */
     public int getRegion(Player p)

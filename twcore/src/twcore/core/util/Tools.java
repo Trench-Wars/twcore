@@ -92,7 +92,7 @@ public final class Tools {
      * String's split method, only slower and less powerful.  Nearly useless.
      * Also replaces ? and ! with whitespace, for who knows what reason.
      * @param input Input string
-     * @param delimiter Character to split around
+     * @param deliniator Character to split around
      * @return String array containing pieces
      */
     public static LinkedList<String> linkedStringChopper( String input, char deliniator ){
@@ -539,10 +539,10 @@ public final class Tools {
     /**
      * Aligns a String to the right over a given length and which characters to fill with.
      *
-     * @param fragment
-     * @param length
-     * @param padding
-     * @return
+     * @param fragment The text to be transformed.
+     * @param length The new target length of the string.
+     * @param padding What the padding character will be to expand the string with.
+     * @return The chopped/padded right aligned string.
      */
     public static String rightString (String fragment, int length, char padding) {
     	if( fragment == null )
@@ -559,9 +559,9 @@ public final class Tools {
     /**
      * Aligns a String to the right over a given number of characters, padded on the right with spaces.
      *
-     * @param fragment
-     * @param length
-     * @return
+     * @param fragment The text to be transformed.
+     * @param length The new target length of the string.
+     * @return The chopped/padded right aligned string.
      */
     public static String rightString (String fragment, int length) {
     	return rightString(fragment, length, ' ');
@@ -576,7 +576,7 @@ public final class Tools {
      *  <code>  3d:14h:30m:21s</code>
      * @param dateInMillis A date given in milliseconds, can be either in future or past
      * @param abbrev Whether or not to abbreviate the time string.
-     * @return
+     * @return Textual representation of the difference between the given time and the current time.
      */
     public static String getTimeDiffString( long dateInMillis, boolean abbrev ) {
     	long diffTime = 0;

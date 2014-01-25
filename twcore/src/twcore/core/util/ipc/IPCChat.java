@@ -6,7 +6,6 @@ package twcore.core.util.ipc;
  * @author MMaverick
  * @see IPCChatMessage
  * @see IPCChatPlayer
- * @see IPCChatArena
  */
 public class IPCChat {
 	private String arena;		// Arena
