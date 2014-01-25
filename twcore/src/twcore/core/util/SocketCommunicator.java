@@ -34,7 +34,7 @@ public class SocketCommunicator extends Thread {
 	private boolean running = true;
 
 	private int port = 6969;
-	private int timeout = (2 * 1000); // 2 seconds
+	private int timeout = 100; // 100 ms
 	private boolean debug = false;
 
 	/** Creates a new instance of RadioStatusServer */
@@ -45,11 +45,11 @@ public class SocketCommunicator extends Thread {
 		
 		try {
 			servsock = new ServerSocket();
-			servsock.bind(new InetSocketAddress("127.0.0.1",port));
-			servsock.setSoTimeout(100);
+			servsock.bind(new InetSocketAddress("127.0.0.1", this.port));
+			servsock.setSoTimeout(timeout);
 			
 		} catch (IOException ioe) {
-			Tools.printLog("SocketPort already opened (" + port + ")");
+			Tools.printLog("SocketPort already opened (" + this.port + ")");
 			Tools.printLog("This core is probably already started. Exiting..");
 			System.exit(1);
 		}
@@ -65,7 +65,7 @@ public class SocketCommunicator extends Thread {
 
 			try {
 				Socket socket = servsock.accept();
-				socket.setSoTimeout(100);
+				socket.setSoTimeout(timeout);
 				DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				String response = "";
