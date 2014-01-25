@@ -1358,7 +1358,7 @@ public class messagebot extends SubspaceBot
 
 	 /** 
 	  * Announces to a channel that they have received a new message.
-	  * @param name Name of channel
+	  * @param channel Name of channel
 	  */
 	 public Set<String> messageSentFromWebsite(String channel)
 	 {
