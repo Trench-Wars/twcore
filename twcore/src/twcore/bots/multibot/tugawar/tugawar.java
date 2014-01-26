@@ -4,7 +4,6 @@ import static twcore.core.EventRequester.FREQUENCY_CHANGE;
 import static twcore.core.EventRequester.FREQUENCY_SHIP_CHANGE;
 import static twcore.core.EventRequester.PLAYER_DEATH;
 
-import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
@@ -66,26 +65,8 @@ public class tugawar extends MultiModule {
                 startBoomBall( name, message );
             } else if( message.toLowerCase().startsWith( "!stop boomball" ) ) {
                 stopBoomBall( name, message );
-            } else if (message.toLowerCase().startsWith("!sql")) {
-                doSQLQuery();
             }
         } catch ( Exception e ) {}
-    }
-
-    public void doSQLQuery() {
-        try {
-            int k = 0;
-            ResultSet results = m_botAction.SQLQuery(database, "SELECT * FROM tblCall");
-            while(results.next()) {
-                String name = results.getString("fcUserName");
-                int id = results.getInt("fnCallID");
-                if(!opList.isBot(name)) {
-                    m_botAction.SQLQueryAndClose(database, "DELETE FROM tblCall WHERE fnCallID = "+id);
-                    k++;
-                }
-            }
-            m_botAction.SQLClose( results );
-        } catch(Exception e) {e.printStackTrace();}
     }
 
     public void startTugAWar( String name, String message ) {
