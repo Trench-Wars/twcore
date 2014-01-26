@@ -2,7 +2,7 @@ package twcore.bots.distensionbot;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.PreparedStatement;
+//import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
@@ -3023,7 +3023,7 @@ public class distensionbot extends SubspaceBot {
 
         // Check for shark and terr balance -- do not overbalance with one or the other.
         if( !m_refitMode && ( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) ) {
-            boolean tooMany = checkForTooManyShips(p, shipNum);
+            boolean tooMany = checkForTooManyShips(p, p.getArmyID(), shipNum);
             if( tooMany ) {
                 m_botAction.specWithoutLock(p.getArenaPlayerID());
                 return;
@@ -3162,16 +3162,23 @@ public class distensionbot extends SubspaceBot {
      * @param p
      * @return
      */
-    public boolean checkForTooManyShips( DistensionPlayer p, int shipNumToChangeTo ) {
+    public boolean checkForTooManyShips( DistensionPlayer p, int armyIDtoCheck, int shipNumToChangeTo ) {
         int friendly = 0;
         int enemy = 0;
         for( DistensionPlayer p2 : m_players.values() ) {
             if( p2.getShipNum() == shipNumToChangeTo )
-                if( p2.getArmyID() == p.getArmyID() )
+                if( p2.getArmyID() == armyIDtoCheck )
                     friendly++;
                 else
                     enemy++;
         }
+        
+        // If testing to see if we can !assist, account for the player's (non-switched) ship
+        if(p.getArmyID() != armyIDtoCheck) {
+        	friendly++;
+        	enemy--;
+        }
+        
         // If we already have more than they do (2 more needed for terr), do not allow the change.
         // Remember, in this calculation the player that just changed to shark is not included, so
         // if our army already has more than the other army, the difference would be +2 after the change.
@@ -4265,7 +4272,7 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
                 if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
-                    boolean tooMany = checkForTooManyShips(p, shipNum);
+                    boolean tooMany = checkForTooManyShips(p, p.getArmyID(), shipNum);
                     if( tooMany ) {
                         m_botAction.specWithoutLock(p.getArenaPlayerID());
                     }
@@ -4285,52 +4292,59 @@ public class distensionbot extends SubspaceBot {
                 } else if( m_flagOwner[0] == armyToAssist && m_flagOwner[1] == armyToAssist )
                     throw new TWCoreException( "While army strengths are imbalanced, that army seems to be doing fine as far as winning the battle goes!  Try again later." );
             }
+            
+            if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
+                boolean tooMany = checkForTooManyShips(p, armyToAssist, shipNum);
+                if( tooMany )
+                	return;
+            }
 
             m_botAction.sendPrivateMessage( name, "Now an honorary pilot of " + assistArmy.getName().toUpperCase() + ".  Use !assist to return to your army when you would like." );
             if( p.getShipNum() != 0 ) {
                 if( System.currentTimeMillis() > lastAssistReward + ASSIST_REWARD_TIME ||
                         m_botAction.getNumPlaying() > 8) {
+                	
                     lastAssistReward = System.currentTimeMillis();
                     int rank = p.getRank();
                     int reward = Math.max( 5, rank );
 
                     if( armySizeWeight < .5 )
-                        reward *= 4;
+                        reward *= 2.5;
                     else if( armySizeWeight < .6 )
-                        reward *= 3;
-                    else if( armySizeWeight < .7 )
                         reward *= 2;
+                    else if( armySizeWeight < .7 )
+                        reward *= 1.75;
                     else if( armySizeWeight < .8 )
                         reward *= 1.5;
 
                     // Increased bonuses for higher ranks, as it takes more to make a dent in
                     // their to-rank amounts
                     if( rank >= 70 )
-                        reward *= 50;
-                    else if( rank >= 60 )
                         reward *= 30;
-                    else if( rank >= 50 )
+                    else if( rank >= 60 )
                         reward *= 25;
-                    else if( rank >= 40 )
+                    else if( rank >= 50 )
                         reward *= 20;
-                    else if( rank >= 35 )
+                    else if( rank >= 40 )
                         reward *= 15;
-                    else if( rank >= 30 )
+                    else if( rank >= 35 )
                         reward *= 12;
-                    else if( rank >= 25 )
+                    else if( rank >= 30 )
                         reward *= 10;
-                    else if( rank >= 20 )
+                    else if( rank >= 25 )
                         reward *= 8;
+                    else if( rank >= 20 )
+                        reward *= 7;
                     else if( rank >= 15 )
-                        reward *= 6;
+                        reward *= 5;
                     else if( rank >= 10 )
-                        reward *= 4;
+                        reward *= 3;
                     else                    //  0: 10RP
                         reward *= 2;
                     if( gameGoing && m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
                             !flagTimer.isBeingBroken() ) {
                         float percent = (float)flagTimer.getSecondsHeld() / (float)flagTimer.getTimeNeededForWin();
-                        if( percent < .50 ) {
+                        if( percent < .60 ) {
                             reward *= 2;
                             reward = p.addRankPoints(reward,false); // Show actual amount added
                             m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, HQ awards you a " + reward + " RP bonus.", 1 );
@@ -4341,7 +4355,7 @@ public class distensionbot extends SubspaceBot {
                         }
                     } else {
                         if( !gameGoing )
-                            reward /= 2;
+                            reward /= 3;
                         reward = p.addRankPoints(reward,false); // Show actual amount added
                         m_botAction.sendPrivateMessage( name, "For your assistance, HQ awards you a " + reward + " RP bonus.", 1 );
                     }
@@ -4360,11 +4374,6 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency(p.getNaturalArmyID(), name.toUpperCase() + " has left to assist the other army." );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), name.toUpperCase() + " is now assisting your army." );
 
-            if( shipNum == Tools.Ship.SHARK || shipNum == Tools.Ship.TERRIER ) {
-                boolean tooMany = checkForTooManyShips(p, shipNum);
-                if( tooMany )
-                    m_botAction.specWithoutLock(p.getArenaPlayerID());
-            }
         } else {
             m_botAction.sendPrivateMessage( name, "Not overly imbalanced -- consider flying a lower-rank ship to even the battle instead! " + "(Weight: " + armySizeWeight + "; need <" + ASSIST_WEIGHT_IMBALANCE + ")" );
         }
@@ -9424,7 +9433,7 @@ public class distensionbot extends SubspaceBot {
          * @param profits RP earned in the last minute by teammates.
          */
         public void shareProfits( int profits ) {
-            if( isSupportShip() && idleTicksPiloting < 12 ) {
+            if( isHigherOrderSupportShip() && idleTicksPiloting < 12 ) {
                 float sharingPercent = getBaseProfitSharingPercent();
 
                 float baseTerrBonus = 0.0f;
@@ -10292,7 +10301,7 @@ public class distensionbot extends SubspaceBot {
          * another of their exact type
          */
         public boolean isHighestOrderSupportShip() {
-            return (shipNum == 5 || shipNum == 8 || shipNum == 4 || shipNum == 9 );
+            return (shipNum == 5 || shipNum == 8 || shipNum == 9 );
         }
 
         /**
@@ -12081,9 +12090,13 @@ public class distensionbot extends SubspaceBot {
                         playerRank += 20;
                     else if( playerRank > 30 )
                         playerRank += 10;
-                    if( p.isSupportShip() )
-                        points = (float)supportPoints * ((float)playerRank / totalLvlSupport);
-                    else
+                    if( p.isHigherOrderSupportShip() ) {
+                        points = (float)supportPoints * ((float)playerRank / totalLvlSupport);                        
+                        // Ops bonus
+                        if( p.getShipNum() == 9) {
+                        	points = points * 1.3f;
+                        }
+                    } else
                         points = (float)attackPoints * ((float)playerRank / totalLvlAttack);
                     Integer time = m_playerTimes.get( p.getName() );
                     if( time != null ) {
@@ -12221,7 +12234,12 @@ public class distensionbot extends SubspaceBot {
                         else if( winnerPercentage > 0.5f )
                             points /= 2;
                         else    // They actually held more than the winning team -- give them a good bit.
-                            points = (float)points / 1.5f;
+                            points = (float)points / 1.25f;
+                        
+                        // OPS boost
+                        if( p.getShipNum() == 9) {
+                        	points = points * 1.3f;
+                        }
 
                         float percentOnFreq = (float)(secs - time) / (float)secs;
                         int modPoints = Math.max(1, Math.round(points * percentOnFreq) );
@@ -12487,6 +12505,7 @@ public class distensionbot extends SubspaceBot {
     public void endRoundCleanup( boolean gameOver, int mins ) {
         // Start free play (delaying the intermission)
         // Take away one second so that when we set the timer, it doesn't look odd
+    	/*
         int intermissionTime;
         if( gameOver ) {
             intermissionTime = (INTERMISSION_SECS * 5000) - 1000;
@@ -12496,6 +12515,7 @@ public class distensionbot extends SubspaceBot {
         } else {
             intermissionTime = (INTERMISSION_SECS * 3000) - 1000;
         }
+        */
 
         try {
             flagTimer.endBattle();
@@ -12537,7 +12557,7 @@ public class distensionbot extends SubspaceBot {
             m_refitMode = true;
             PRIZE_SPAM_DELAY = 100;     // Set in order to safely resize arena
             //cmdSetMaxPlayers(m_botAction.getBotName(), "100");
-            intermissionTime = 5 * Tools.TimeInMillis.MINUTE;
+            //intermissionTime = 5 * Tools.TimeInMillis.MINUTE;
             m_botAction.setTimer( 5 );
         } else {
             cmdSaveData(":autosave:", "");
