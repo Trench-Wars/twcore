@@ -6348,7 +6348,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 2 )
+        if( p.getOpStatus() < 1 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         DistensionPlayer player = m_players.get( msg );
@@ -6384,7 +6384,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 2 )
+        if( p.getOpStatus() < 1 )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         DistensionPlayer player = m_players.get( msg );
