@@ -68,8 +68,8 @@ public class distensionbot extends SubspaceBot {
     private final float REWARD_RATE = 1.2f;                // Multiplier for RP earned in beta "reward" time
                                                            //   (for beta-testers, bug reporters, etc.)
     private final int NUM_UPGRADES = 20;                   // Number of upgrade slots allotted per ship
-    private final int AUTOSAVE_DELAY = 3;                  // How frequently autosave occurs, in minutes
-    private final int MESSAGE_SPAM_DELAY = 150;             // Delay in ms between msgs in list, when spammed to single
+    private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
+    private final int MESSAGE_SPAM_DELAY = 150;            // Delay in ms between msgs in list, when spammed to single
     private final int NUM_UNIVERSAL_MSGS_SPAMMED = 2;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
     private int PRIZE_SPAM_DELAY = 21;                     // Delay in ms between prizes for individual players
     private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
@@ -372,7 +372,7 @@ public class distensionbot extends SubspaceBot {
     private static final int SECTOR_CHANGE_SECONDS = 4; // Seconds it takes to secure hold or break one
     private static final int INTERMISSION_SECS = 20;    // Seconds between end of free play & start of next battle
     private static final int BALLTIME_MINS = 3;         // Minutes of ballgame time
-    private static final int PLAYERS_FOR_2_FLAGS = 26;  // Minimum # players required to activate 2 flags
+    private static final int PLAYERS_FOR_2_FLAGS = 30;  // Minimum # players required to activate 2 flags
     private static final int SUDDEN_DEATH_MINUTES = 35; // Minutes after which round ends with a truce
     private boolean flagTimeStarted;                    // True if flag time is enabled
     private boolean stopFlagTime;                       // True if flag time will stop at round end
@@ -3074,35 +3074,44 @@ public class distensionbot extends SubspaceBot {
                 if( shipNum == Tools.Ship.TERRIER ) {
                     if( ships == 0 && pilots > 3 ) {
                         if( rank > 50 )
-                            reward = rank * 20;
+                            reward = rank * 30;
+                        else if( rank > 40 )
+                            reward = rank * 25;
                         else if( rank > 30 )
-                            reward = rank * 10;
-                        else if( rank > 10 )
-                            reward = rank * 5;
+                            reward = rank * 20;
+                        else if( rank > 20 )
+                            reward = rank * 15;
                         else
-                            reward = rank * 3;
+                            reward = rank * 10;
+                        reward += 250;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when one was badly needed." );
                     } else if( ships == 1 && pilots > 8 ){
                         if( rank > 50 )
-                            reward = rank * 16;
+                            reward = rank * 25;
+                        else if( rank > 40 )
+                            reward = rank * 20;
                         else if( rank > 30 )
-                            reward = rank * 8;
-                        else if( rank > 10 )
-                            reward = rank * 4;
+                            reward = rank * 15;
+                        else if( rank > 20 )
+                            reward = rank * 10;
                         else
-                            reward = rank * 2;
+                            reward = rank * 5;
+                        reward += 150;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when a second one was needed." );
                     }
                 } else {
                     if( ships == 0 && pilots > 4 ) {
                         if( rank > 50 )
-                            reward = rank * 16;
+                            reward = rank * 25;
+                        else if( rank > 40 )
+                            reward = rank * 20;
                         else if( rank > 30 )
-                            reward = rank * 8;
-                        else if( rank > 10 )
-                            reward = rank * 4;
+                            reward = rank * 15;
+                        else if( rank > 20 )
+                            reward = rank * 10;
                         else
-                            reward = rank * 2;
+                            reward = rank * 5;
+                        reward += 150;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Shark when one was badly needed." );
                     }
                 }
@@ -3119,13 +3128,13 @@ public class distensionbot extends SubspaceBot {
                 // However, let players switch to support ships if only 20 seconds have passed
                 // for the sector hold
                 if( p.isSupportShip() ) {
-                    if( flagTimer.getSecondsHeld() + 40 > flagTimer.getTimeNeededForWin() ) {
-                        m_botAction.sendPrivateMessage( name, "For changing ships while your army has a sector hold and is within 40 seconds of a win, your participation counter has been reset." );
+                    if( flagTimer.getSecondsHeld() + 30 > flagTimer.getTimeNeededForWin() ) {
+                        m_botAction.sendPrivateMessage( name, "For changing ships while your army has a sector hold and is within 30 seconds of a win, your participation counter has been reset." );
                         m_playerTimes.remove( name );
                     }
                 } else {
-                    if( flagTimer.getSecondsHeld() + 60 > flagTimer.getTimeNeededForWin() ) {
-                        m_botAction.sendPrivateMessage( name, "For changing into an assault ship while your army has a sector hold and you are within 1 minute of a win, your participation counter has been reset." );
+                    if( flagTimer.getSecondsHeld() + 45 > flagTimer.getTimeNeededForWin() ) {
+                        m_botAction.sendPrivateMessage( name, "For changing into an assault ship while your army has a sector hold and you are within 45 seconds of a win, your participation counter has been reset." );
                         m_playerTimes.remove( name );
                     }
                 }
@@ -3845,15 +3854,15 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendPrivateMessage( name, "No rank progress lost (gun/bomb/multifire scraps are free)." );
         } else {
             int pointsSince = p.getPointsSinceLastRank();
-            int percentOfRank = p.getRankPointsForPercentage( 25.0f );
+            int percentOfRank = p.getRankPointsForPercentage( 50.0f );
             if( pointsSince >= percentOfRank ) {
                 int points = p.getPointsSinceLastRank() - percentOfRank;
                 if( points < 0 )
                     points = 0;
                 p.addRankPoints( -points );
-                m_botAction.sendPrivateMessage( name, "Ship returned to 25% progress; -" + points + "RP.  (Use Z-Class to avoid scrap penalties.)" );
+                m_botAction.sendPrivateMessage( name, "Ship returned to 50% progress; -" + points + "RP.  (Use Z-Class to avoid scrap penalties.)" );
             } else {
-                m_botAction.sendPrivateMessage( name, "Scrap done within 25% of start of rank; no RP lost." );
+                m_botAction.sendPrivateMessage( name, "Scrap done within 50% of start of rank; no RP lost." );
             }
         }
     }
@@ -3941,7 +3950,7 @@ public class distensionbot extends SubspaceBot {
 
         float cost = 0;
         if( !DEBUG && ( p.isSpecialized() || p.getRank() > distensionbot.ShipTypeProfile.rankForPaidTypeChoice ) )
-            cost = (float)p.getRankPoints() * .01f;
+            cost = (float)p.getRankPoints() * .003f;
         String[] args = msg.split(":");
         boolean realDeal = false;
         if( args.length == 2 )
@@ -3975,7 +3984,7 @@ public class distensionbot extends SubspaceBot {
 
         if( !realDeal ) {
             String specmsg = "So, you'd like to specialize to " + sp.getTypeName() + "?";
-            String costmsg = "It'll cost you " + (int)cost + " RP -- 1% of all the total RP you've ever earned -- to do it.";
+            String costmsg = "It'll cost you " + (int)cost + " RP -- 0.3% of the total RP you've ever earned in this ship -- to do it.";
             String confirmmsg = "Use !specialize " + typeToChangeTo + ":YES if you're sure.";
             if( !p.isSpecialized() ) {
                 if( cost > 0 ) {
@@ -4005,7 +4014,7 @@ public class distensionbot extends SubspaceBot {
         p.calculateRechargeAndEnergyLevels();
 
         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You have specialized to " + sp.getTypeName().toUpperCase() + "!" );
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Cost: " + (int)cost + "RP  (1% of your total RP earned)  You now have " + p.getUpgradePoints() + " UP to spend." );
+        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Cost: " + (int)cost + "RP  (0.3% of your total RP earned)  You now have " + p.getUpgradePoints() + " UP to spend." );
         p.prizeDefaultUpgrades();
     }
 
@@ -6034,7 +6043,7 @@ public class distensionbot extends SubspaceBot {
         for( DistensionPlayer p : m_players.values() ) {
             if( autosave ) {
                 p.savePlayerDataToDB();
-                p.saveCurrentShipToDB();
+                p.saveCurrentShipToDBNow();
             } else {
                 p.savePlayerDataToDB();
                 if( p.saveCurrentShipToDBNow() == false ) {
@@ -6128,7 +6137,7 @@ public class distensionbot extends SubspaceBot {
                 }
             };
             try {
-            m_botAction.scheduleTask(dieTask, 5000);
+            	m_botAction.scheduleTask(dieTask, 5000);
             } catch(IllegalStateException e) {
                 m_botAction.die( "mod-initiated by !shutdown" );
             }
@@ -6757,7 +6766,7 @@ public class distensionbot extends SubspaceBot {
      * @param msg
      */
     public void cmdGrant( String name, String msg ) {
-        if( !( name.equals("qan") || name.equals("dugwyler") || name.equals("WingZero")) )
+        if( !( name.equals("qan") || name.equals("dugwyler")) )
             throw new TWCoreException( "Only the bot coder may use this command." );
 
         String[] args = msg.split(":");
@@ -6782,7 +6791,7 @@ public class distensionbot extends SubspaceBot {
         if( DEBUG )
             points /= DEBUG_MULTIPLIER; // Adjust by multiplier to make amount fairly exact.
 
-        points = player.addRankPoints( (int)points, false );
+        points = player.addRankPointsWithoutBonus( (int)points );
         m_botAction.sendPrivateMessage( name, "Granted " + (int)points + "RP to " + args[0] + ".", 1 );
         m_botAction.sendPrivateMessage( args[0], "You have been granted " + points + "RP by " + name + ".", 1 );
     }
@@ -8892,6 +8901,27 @@ public class distensionbot extends SubspaceBot {
             shipDataSaved = false;
             return points;
         }
+        
+        /**
+         * Adds # rank points to total rank point amt.
+         * @param points Amt to add
+         * @param limit True if limits should be applied (end of rank and 50% of rank caps)
+         * @return Number of actual points awarded, after debug factor and caps are applied
+         */
+        public int addRankPointsWithoutBonus( int points ) {        	
+            rankPoints += points;
+            recentlyEarnedRP += points;
+            roundRP += points;
+            
+            checkProgress();
+
+            if( rankPoints >= nextRank )
+                doAdvanceRank();
+            shipDataSaved = false;
+
+        	return points;
+        }
+
 
         /**
          * Adds # upgrade points to total rank point amt.
@@ -9154,7 +9184,7 @@ public class distensionbot extends SubspaceBot {
             banned = true;
             try {
                 m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcBanned='y' WHERE fnID='" + dbPlayerID + "'" );
-                saveCurrentShipToDB();
+                saveCurrentShipToDBNow();
                 m_botAction.sendSmartPrivateMessage(name, "You have been forcefully discharged from your army, and are now considered a civilian.  You may no longer play Distension." );
                 m_botAction.sendUnfilteredPrivateMessage( arenaPlayerID, "*kill" );
             } catch (SQLException e ) {
