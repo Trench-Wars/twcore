@@ -198,8 +198,10 @@ public class LvzManager extends twcore.core.lvz.Objset
 	public LvzObject getObjectSafely(short id)
 	{
 		LvzObject obj = objects.get(id);
-		if(obj == null)
-			obj = objects.put(id, new LvzObject(id));
+		if(obj == null) {
+			objects.put(id, new LvzObject(id));
+		    obj = objects.get(id);
+		}
 		return obj;
 	}
 }
