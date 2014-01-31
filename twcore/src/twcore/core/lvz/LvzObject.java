@@ -16,13 +16,46 @@ package twcore.core.lvz;
  *      8        1      LVZ Layer
  *      9        2      Display Time & Mode
  * </PRE>
- *
+ * <p>
+ * <b>Breakdown of combined bytes</b><br>
+ * <i>Note:</i> This will be highly confusing. When data is spread over multiple bytes, the field order is as follows:<br>
+ * Byte1[7654 3210] Byte0[FEDC BA98] (Little-endian)
+ * <pre>Update Flags
+ *  Field     Bits  Description
+ *      0        1      Update the x-position AND anchor AND the y-position AND anchor
+ *      1        1      Update the image ID
+ *      2        1      Update the layer
+ *      3        1      Update the display timing
+ *      4        1      Update the display mode
+ *      5        3      Reserved/unknown?
+ *      
+ * Object ID & Type
+ *  Field     Bits  Description
+ *      0        1      0: Screen object; 1: Map object
+ *      1       15      Object ID: 0~32,767
+ *      
+ * Location & Anchoring Screen objects
+ *  Field     Bits  Description
+ *      0        4      Anchor point: 0~10 (See CoordType class)
+ *      4       12      Coordinate offset: -2048~+2047
+ *      
+ * Location Map objects
+ *  Field     Bits  Description
+ *      0       16      Map coordinate in pixels: 0~65,535
+ *      
+ * Display Time & Mode
+ *  Field     Bits  Description
+ *      0        4      Display mode: 0~5
+ *      4       12      Display time: 0~4095
+ * </pre>
  * @author Cerium (Shamelessly ripped from Hybrid by D1st0rt)
  */
 public class LvzObject implements Cloneable
 {
  	/** LVZ update bytes */
  	public final byte[]	objUpdateInfo;
+ 	
+ 	private static final short UINT8_MASK = 0xFF; // Used to correctly convert Java bytes to unsigned data. (Thanks to FatRolls for pointing the bug out.)
 
 
 	// Constructors
@@ -36,7 +69,7 @@ public class LvzObject implements Cloneable
 	}
 
 	/**
-	 * Creates a new instance of the <tt>LvzObject</tt> struct, with the byte array set to the array
+	 * Creates a new instance of the <tt>LvzObject</tt> struct, with the object ID set to the number
 	 * specified.
 	 *
 	 * @param	intObjID	The object's object id.
@@ -46,6 +79,22 @@ public class LvzObject implements Cloneable
 		this.objUpdateInfo = new byte[11];
 		this.setObjectID(intObjID);
 	}
+	
+	/**
+	 * Creates a new instance of the <tt>LvzObject</tt> struct, with the object ID set to the number
+     * specified and converted into a map object if specified.
+     * 
+	 * @param intObjID      The object's object id. 
+	 * @param isMapObject   True if the object is a map object, false otherwise.
+	 */
+	public LvzObject(int intObjID, boolean isMapObject)
+    {
+        this.objUpdateInfo = new byte[11];
+        intObjID = (intObjID << 1) | (isMapObject?0x01:0x00);
+
+        this.objUpdateInfo[1] = (byte) ((intObjID & 0x00FF));
+        this.objUpdateInfo[2] = (byte) ((intObjID & 0xFF00) >> 8);
+    }
 
 	/**
 	 * Creates a new instance of the <tt>LvzObject</tt> struct, with the byte array set to the array
@@ -134,7 +183,7 @@ public class LvzObject implements Cloneable
 	 *
 	 * @return See above.
 	 */
-	public int				getObjectID()		{ return (this.objUpdateInfo[1] | (this.objUpdateInfo[2] << 8)) >>> 1; }
+	public int				getObjectID()		{ return ((this.objUpdateInfo[1] & UINT8_MASK) | ((this.objUpdateInfo[2] & UINT8_MASK) << 8)) >>> 1; }
 
 	/**
 	 * Returns the position of this lvz object, in pixels. For map objects, the origin is the upper left
@@ -142,7 +191,7 @@ public class LvzObject implements Cloneable
 	 *
 	 * @return See above.
 	 */
-	public int				getXLocation()		{ return (this.objUpdateInfo[3] | (this.objUpdateInfo[4] << 8)) >>> (this.isMapObject() ? 0 : 4); }
+	public int				getXLocation()		{ return ((this.objUpdateInfo[3] & UINT8_MASK) | ((this.objUpdateInfo[4] & UINT8_MASK) << 8)) >>> (this.isMapObject() ? 0 : 4); }
 
 	/**
 	 * Returns the position of this lvz object, in pixels. For map objects, the origin is the upper left
@@ -150,11 +199,11 @@ public class LvzObject implements Cloneable
 	 *
 	 * @return See above.
 	 */
-	public int				getYLocation()		{ return (this.objUpdateInfo[5] | (this.objUpdateInfo[6] << 8)) >>> (this.isMapObject() ? 0 : 4); }
+	public int				getYLocation()		{ return ((this.objUpdateInfo[5] & UINT8_MASK) | ((this.objUpdateInfo[6] & UINT8_MASK) << 8)) >>> (this.isMapObject() ? 0 : 4); }
 
 	/**
 	 * Returns the position type for this lvz object. The value returned by this function should be
-	 * compared to the constants in the <tt>hybrid.core.consts.LVZLocationTypes</tt> class to determine
+	 * compared to the constants in the {@link CoordType} class to determine
 	 * the origin to use when positioning the LVZ.
 	 * <P>
 	 * <B>Note</B>: This will always return <tt>0</tt> if this lvz object is not a screen object.
@@ -165,7 +214,7 @@ public class LvzObject implements Cloneable
 
 	/**
 	 * Returns the position type (origin) for this lvz object. The value returned by this function
-	 * should be compared to the constants in the <tt>hybrid.core.consts.LVZLocationTypes</tt> class.
+	 * should be compared to the constants in the {@link CoordType} class.
 	 * <P>
 	 * <B>Note</B>: This will always return <tt>0</tt> if this lvz object is not a screen object.
 	 *
@@ -179,7 +228,7 @@ public class LvzObject implements Cloneable
 	 *
 	 * @return See above.
 	 */
-	public byte				getImageID()		{ return this.objUpdateInfo[7]; }
+	public int			   getImageID() 		{ return (this.objUpdateInfo[7] & UINT8_MASK ); }
 
 	/**
 	 * Returns the layer this lvz object will be displayed on. The value returned by this function can
@@ -187,7 +236,7 @@ public class LvzObject implements Cloneable
 	 *
 	 * @return See above.
 	 */
-	public byte				getLayer()			{ return this.objUpdateInfo[8]; }
+	public int				getLayer()			{ return (this.objUpdateInfo[8] & UINT8_MASK); }
 
 	/**
 	 * Returns the amount of time the lvz object will be displayed (in centiseconds) before it will be
@@ -195,15 +244,15 @@ public class LvzObject implements Cloneable
 	 *
 	 * @return See above.
 	 */
-	public int				getDisplayTime()	{ return (this.objUpdateInfo[9] | (this.objUpdateInfo[10] << 8)) & 0x0FFF; }
+	public int				getDisplayTime()	{ return ((this.objUpdateInfo[9] & UINT8_MASK) | ((this.objUpdateInfo[10] & UINT8_MASK) << 8)) & 0x0FFF; }
 
 	/**
 	 * Returns the display mode for this lvz object. The value returned by this function should be
-	 * compared to the constants in the <tt>hybrid.core.consts.LVZDisplayModes</tt> class.
+	 * compared to the constants in the {@link Mode} class.
 	 *
 	 * @return See above.
 	 */
-	public byte				getDisplayMode()	{ return (byte) (this.objUpdateInfo[10] >>> 4); }
+	public byte				getDisplayMode()	{ return (byte) ((this.objUpdateInfo[10] & UINT8_MASK) >>> 4); }
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -368,7 +417,7 @@ public class LvzObject implements Cloneable
 	 * 				this function will return silently.
 	 *
 	 * @param	bType	The position type to use. Valid position types are defined in the class
-	 *					<tt>hybrid.core.consts.LVZLocationTypes</tt>.
+	 *					{@link CoordType}.
 	 *
 	 * @return This <tt>LvzObject</tt> structure.
 	 */
@@ -386,7 +435,7 @@ public class LvzObject implements Cloneable
 	 * 				this function will return silently.
 	 *
 	 * @param	bType	The position type to use. Valid position types are defined in the class
-	 *					<tt>hybrid.core.consts.LVZLocationTypes</tt>.
+	 *					{@link CoordType}.
 	 *
 	 * @return This <tt>LvzObject</tt> structure.
 	 */
@@ -415,7 +464,7 @@ public class LvzObject implements Cloneable
 	 * Sets the layer to display this lvz object on.
 	 *
 	 * @param	bLayer		The layer to display this object on. Valid layer types are defined in the
-	 *						class <tt>hybrid.core.consts.LVZLayers</tt>.
+	 *						class {@link Layer}.
 	 *
 	 * @return This <tt>LvzObject</tt> structure.
 	 */
@@ -447,7 +496,7 @@ public class LvzObject implements Cloneable
 	 * displayed by the clients.
 	 *
 	 * @param	bDisplayMode	The new display mode for this lvz object. Value display modes are
-	 *							defined in the class <tt>hybrid.core.consts.LVZDisplayModes</tt>.
+	 *							defined in the class {@link Mode}.
 	 *
 	 * @return This <tt>LvzObject</tt> structure.
 	 */
