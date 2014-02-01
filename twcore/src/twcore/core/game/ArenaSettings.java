@@ -37,7 +37,7 @@ public class ArenaSettings {
     // 1428 bytes wide                                  //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     // Initial template by Snrrrub                      // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
                                                         //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-    private byte            version;                    // 0000     | VIE       | Version                       |    15 |    15 |         8 |
+    private byte            typeByte;                   // 0000     | VIE       | Type Byte                     |    15 |    15 |         8 | The packet type ID that is used to directly send this. (0x0F)
     private boolean         exactDamage;                // 0001     | Bullet    | ExactDamage                   |     0 |     1 |         1 | If damage is to be random or not (1=exact, 0=random) [Continuum .36]
     private boolean         hideFlags;                  // 0001     | Spectator | HideFlags                     |     0 |     1 |         1 | If flags are to be shown to specs when they are dropped (1=can't see them) [Continuum .36]
     private boolean         noXRadar;                   // 0001     | Spectator | NoXRadar                      |     0 |     1 |         1 | If specs are allowed to have X (0=yes, 1=no) [Continuum .36]
@@ -207,7 +207,7 @@ public class ArenaSettings {
      */
     public void updateVariables(ByteArray data) {
         
-        this.version                    = data.readByte(0);
+        this.typeByte                   = data.readByte(0);
         this.exactDamage                = (ByteArray.getPartial(data.readByte(1), 0, 0) == 1);
         this.hideFlags                  = (ByteArray.getPartial(data.readByte(1), 1, 1) == 1);
         this.noXRadar                   = (ByteArray.getPartial(data.readByte(1), 2, 2) == 1);
@@ -347,8 +347,8 @@ public class ArenaSettings {
      * Version number of arena settings? Seems to be 15 by default.
      * @return Version number.
      */
-    public short getVersion() {
-        return (short) (version & MASK_UINT8);
+    public short getPacketTypeByte() {
+        return (short) (typeByte & MASK_UINT8);
     }
 
     /**
