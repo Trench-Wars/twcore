@@ -264,7 +264,22 @@ public class bannerboy extends SubspaceBot {
 			     m_talk = !m_talk;
 			     if( m_talk ) m_botAction.sendSmartPrivateMessage( player, "Talk on" );
 			     else         m_botAction.sendSmartPrivateMessage( player, "Talk off" );
-			 }
+			 } else
+			     
+		    if(message.startsWith("!default")) {
+		        // Don't ask...
+		        m_botAction.setBanner(new byte[] {
+		                (byte) 0x00, (byte) 0x00, (byte) 0x11, (byte) 0xc3, (byte) 0xa5, (byte) 0x0b, (byte) 0xaa, (byte) 0xa8, (byte) 0xcd, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+		                (byte) 0x00, (byte) 0xc3, (byte) 0x0c, (byte) 0xa5, (byte) 0x36, (byte) 0x00, (byte) 0xe9, (byte) 0x98, (byte) 0xac, (byte) 0xca, (byte) 0x00, (byte) 0x00,
+		                (byte) 0x36, (byte) 0x9d, (byte) 0xb1, (byte) 0x36, (byte) 0xca, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xca, (byte) 0xb5, (byte) 0xca, (byte) 0x00,
+		                (byte) 0xa8, (byte) 0xb5, (byte) 0x00, (byte) 0x1e, (byte) 0xe9, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xca, (byte) 0xb4, (byte) 0x00,
+		                (byte) 0xac, (byte) 0x00, (byte) 0x00, (byte) 0xca, (byte) 0xe9, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xca, (byte) 0x00,
+		                (byte) 0xb2, (byte) 0x00, (byte) 0xe9, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xca, (byte) 0x00,
+		                (byte) 0xb3, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+		                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
+		        });
+		        m_botAction.sendSmartPrivateMessage(player, "It has been done.");
+		    }
 		}
 		else if(!m_botAction.getOperatorList().isSmod(player) && message.equalsIgnoreCase("!help")){
 		    String[] helpmsg = {
