@@ -37,6 +37,7 @@ public class utiletc extends MultiUtil {
     Random generator = new Random();
     private String database = "website";
     private String requester = null;
+    private String setting = null; 
     
     private long lastRotation = 0;          // Time tracker for last rotation update.
     private long lastFire = 0;              // Time tracker for last fire update.
@@ -123,12 +124,20 @@ public class utiletc extends MultiUtil {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
             if( m_opList.isER(name))
                 handleCommand( name, message );
+        } else if( event.getMessageType() == Message.ARENA_MESSAGE ){
+        	if( requester != null && setting != null ) {
+        		if( message.startsWith( setting ) ) {
+        		    m_botAction.sendPrivateMessage( requester, message );
+        		    requester = null;
+        		    setting = null;
+        		}
+        	}
         }
     }
 
     public void handleCommand( String name, String message ) {
-        if( m_opList.isSmod(name) ) {
-            String cmd = message.toLowerCase();
+        String cmd = message.toLowerCase();
+        if( m_opList.isSmod(name) || m_opList.isERExact(name) ) {
             if( cmd.startsWith( "!botattach" )) {
                 turretPlayer( message.substring( 10, message.length() ).trim() );
             } else if( cmd.startsWith( "!botattachme" )) {
@@ -192,14 +201,20 @@ public class utiletc extends MultiUtil {
                     m_botAction.sendSmartPrivateMessage( name, "Now printing coordinates to chat." );
                 else
                     m_botAction.sendSmartPrivateMessage( name, "No longer printing coordinates to public chat." );
-            } else if( cmd.startsWith( "!listdonated" ) ) {
+            } else if( cmd.startsWith( "!weapon" ) ) {
+                try { weapon = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
+            }
+        }
+            
+        if( m_opList.isSmod(name) || m_opList.isERExact(name) ) {
+            if( cmd.startsWith( "!listdonated" ) ) {
                 do_listDonations( name, message );
             } else if( cmd.startsWith( "!donated " ) ) {
                 do_addDonation( name, message.substring( 9, message.length() ) );
             } else if( cmd.startsWith( "!removedonated " ) ) {
                 do_removeDonation( name, message.substring( 15, message.length() ) );
-            } else if( cmd.startsWith( "!weapon" ) ) {
-                try { weapon = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
+            } else if( cmd.startsWith( "!getset " ) ) {
+                do_getSetting( name, message.substring( 8, message.length() ) );
             }
         }
     }
@@ -246,6 +261,12 @@ public class utiletc extends MultiUtil {
             m_botAction.SQLQueryAndClose( database, "DELETE FROM tblDonation WHERE fnDonationID = "+i );
             m_botAction.sendSmartPrivateMessage( name, "Donation #" + i +" + deleted." );
         } catch (Exception e) { m_botAction.sendSmartPrivateMessage( name, "Unable to remove donation" ); }
+    }
+    
+    public void do_getSetting( String name, String message ) {
+    	m_botAction.sendUnfilteredPublicMessage( "?get " + message );
+    	requester = name;
+    	setting = message;
     }
 
     public String sql_getUserName( int id ) {
