@@ -58,7 +58,10 @@ public class Objset {
      */
     public void showObject( int playerId, int object ) {
 
-        if( playerId < 0 ) return;
+        if( playerId < 0 ) {
+            showObject(object);
+            return;
+        }
         if( !m_privateUnsetObjects.containsKey( new Integer( playerId ) ) )
             m_privateUnsetObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) )
@@ -82,7 +85,26 @@ public class Objset {
         Map<Integer, Boolean> freqMap = m_freqObjects.get( new Integer( freq ) );
         freqMap.put( new Integer( object ), true );
     }
-
+    
+    /**
+     * Makes a copy of the global objects to show and put it in a private list for a specific player.
+     * @param playerID The player Id. This function does not support the -1, since copying from global to global is senseless.
+     */
+    public void showObjectsFromGlobal( int playerID ) {
+        if (playerID < 0)
+            return;
+        
+        Integer playerId = new Integer( playerID );
+        
+        if( !m_privateUnsetObjects.containsKey( playerId ) )
+            m_privateUnsetObjects.put( playerId, Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
+        if( !m_privateObjects.containsKey( playerId ) )
+            m_privateObjects.put( playerId, Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
+        
+        m_privateUnsetObjects.get(playerId).putAll(m_unsetObjects);
+        m_privateObjects.get(playerId).putAll(m_objects);
+    }
+    
     /**
      * Makes a given object invisible to all players.
      * @param object Index of object to make invisible
@@ -103,7 +125,10 @@ public class Objset {
      */
     public void hideObject( int playerId, int object ) {
 
-        if( playerId < 0 ) return;
+        if( playerId < 0 ) {
+            hideObject(object);
+            return;
+        }
         if( !m_privateUnsetObjects.containsKey( new Integer( playerId ) ) )
             m_privateUnsetObjects.put( new Integer( playerId ), Collections.synchronizedMap(new HashMap<Integer, Boolean>()) );
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) )
@@ -156,7 +181,10 @@ public class Objset {
      * @param playerId ID of player to hide all objects from
      */
     public void hideAllObjects( int playerId ) {
-        if( playerId < 0 ) return;
+        if( playerId < 0 ) {
+            hideAllObjects();
+            return;
+        }
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) ) return;
 
         Map<Integer, Boolean> playerUnset = m_privateUnsetObjects.get( new Integer( playerId ) );
@@ -216,7 +244,7 @@ public class Objset {
      * @return True if the specified object is currently visible
      */
     public boolean objectShown( int playerId, int object ) {
-        if( playerId < 0 ) return false;
+        if( playerId < 0 ) return objectShown(object);
         if( !m_privateObjects.containsKey( new Integer( playerId ) ) ) return false;
         Map<Integer,Boolean> playerObj = m_privateObjects.get( new Integer( playerId ) );
         boolean status = playerObj.get( new Integer( object ) );
@@ -253,7 +281,7 @@ public class Objset {
      * @return True if there are objects waiting to be set for the specified player
      */
     public boolean toSet( int playerId ) {
-        if( playerId < 0 ) return false;
+        if( playerId < 0 ) return toSet();
         if( !m_privateUnsetObjects.containsKey( new Integer( playerId ) ) ) return false;
         Map<Integer,Boolean> playerObj = m_privateUnsetObjects.get( new Integer( playerId ) );
         return !playerObj.isEmpty();
@@ -299,7 +327,10 @@ public class Objset {
      */
     public HashMap<Integer,Boolean> getObjects( int playerId ) {
         HashMap <Integer,Boolean> theseObjects = new HashMap<Integer,Boolean>();
-        if( playerId < 0 || !m_privateObjects.containsKey( new Integer( playerId ) ) ) return theseObjects;
+        if( playerId < 0 ) 
+            return getObjects();
+            
+        if(!m_privateObjects.containsKey( new Integer( playerId ) ) ) return theseObjects;
 
         Map<Integer, Boolean> playerMap = m_privateUnsetObjects.get( new Integer( playerId ) );
         Map<Integer, Boolean> playerObj = m_privateObjects.get( new Integer( playerId ) );
