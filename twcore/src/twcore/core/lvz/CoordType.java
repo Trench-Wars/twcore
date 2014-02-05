@@ -9,6 +9,7 @@ package twcore.core.lvz;
  */
 public enum CoordType
 {
+    N, // Top left corner
 	C, // Screen center
 	B, // Bottom right corner
 	S, // Stats box, lower right corner
@@ -31,26 +32,28 @@ public enum CoordType
 		CoordType t = null;
 
 		if(ordinal == 0)
-			t = CoordType.C;
+		    t = CoordType.N;
 		else if(ordinal == 1)
-			t = CoordType.B;
+			t = CoordType.C;
 		else if(ordinal == 2)
-			t = CoordType.S;
+			t = CoordType.B;
 		else if(ordinal == 3)
-			t = CoordType.G;
+			t = CoordType.S;
 		else if(ordinal == 4)
-			t = CoordType.F;
+			t = CoordType.G;
 		else if(ordinal == 5)
-			t = CoordType.E;
+			t = CoordType.F;
 		else if(ordinal == 6)
-			t = CoordType.T;
+			t = CoordType.E;
 		else if(ordinal == 7)
-			t = CoordType.R;
+			t = CoordType.T;
 		else if(ordinal == 8)
-			t = CoordType.O;
+			t = CoordType.R;
 		else if(ordinal == 9)
-			t = CoordType.W;
+			t = CoordType.O;
 		else if(ordinal == 10)
+			t = CoordType.W;
+		else if(ordinal == 11)
 			t = CoordType.V;
 
 		return t;
