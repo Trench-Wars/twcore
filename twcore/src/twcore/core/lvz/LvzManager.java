@@ -1,6 +1,7 @@
 package twcore.core.lvz;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Vector;
 
 import twcore.core.Session;
@@ -158,22 +159,44 @@ public class LvzManager extends twcore.core.lvz.Objset
 	 */
 	public void doChanges(short playerID, boolean clearQueue)
 	{
-		ByteArray data = new ByteArray(4 +(11 * changeQueue.size()));
-		data.addByte(0x0A);
-		data.addLittleEndianShort(playerID);
-		data.addByte(0x36);
+        ByteArray objData = null;
+        
+        // Construct the data.
+        if( changeQueue.size() > 0 ) {
+            objData = new ByteArray( changeQueue.size() * 11);
+            for(short id : changeQueue)
+            {
+                LvzObject obj = getObject(id);
+                objData.addByteArray(obj.objUpdateInfo);
+            }
+        }
 
-		for(short id : changeQueue)
-		{
-			LvzObject obj = getObject(id);
-			data.addByteArray(obj.objUpdateInfo);
-		}
+        // Check if anything needs to be sent.
+        if(objData == null)
+            return;
+        
+        // Automatically break up the data if it's too big.
+        int totalSize = objData.size();
+        int i = totalSize;
+        int size;
+        
+        while( i > 0 ){
+            size = 440;             // Sent in chunks of 440 bytes at max (40 objects)
 
-		m_gpg.sendReliableMessage(data);
-		//BotAction b = ((Session)Thread.currentThread()).getBotAction();
-		//b.sendChatMessage("Sending object packet.");
-		//data.show();
+            if( i < size ){
+                size = i;
+            }
 
+            ByteArray objPacket = new ByteArray( size + 4 );
+            objPacket.addByte( 0x0A ); // Encapsulating packet type byte.
+            objPacket.addLittleEndianShort( ((short) (playerID >= 0 ? (playerID & 0xFFFF) : 0xFFFF) ) );
+            objPacket.addByte( 0x36 );
+            objPacket.addPartialByteArray( objData, totalSize - i, size );
+            m_gpg.sendReliableMessage( objPacket );
+            
+            i -= size;
+        }
+        
 		if(clearQueue)
 			changeQueue.clear();
 	}
@@ -203,5 +226,21 @@ public class LvzManager extends twcore.core.lvz.Objset
 		    obj = objects.get(id);
 		}
 		return obj;
+	}
+	
+	/**
+	 * Retrieves a list of all the object IDs that will be changed.
+	 * @return Vector containing all the IDs.
+	 */
+	public Vector<Short> getQueue() {
+	    return changeQueue;
+	}
+	
+	public LinkedList<LvzObject> getObjectModifications() {
+	    LinkedList<LvzObject> objs = new LinkedList<LvzObject>();
+	    for(Short id : changeQueue) {
+	        objs.add(objects.get(id));
+	    }
+	    return objs;
 	}
 }
