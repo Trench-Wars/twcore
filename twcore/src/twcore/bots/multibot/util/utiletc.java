@@ -201,8 +201,6 @@ public class utiletc extends MultiUtil {
                     m_botAction.sendSmartPrivateMessage( name, "Now printing coordinates to chat." );
                 else
                     m_botAction.sendSmartPrivateMessage( name, "No longer printing coordinates to public chat." );
-            } else if( cmd.startsWith( "!weapon" ) ) {
-                try { weapon = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
             }
         }
             
@@ -215,6 +213,12 @@ public class utiletc extends MultiUtil {
                 do_removeDonation( name, message.substring( 15, message.length() ) );
             } else if( cmd.startsWith( "!getset " ) ) {
                 do_getSetting( name, message.substring( 8, message.length() ) );
+            }
+        }
+        
+        if( m_opList.isSmod(name)) {
+            if( cmd.startsWith( "!weapon" ) ) {
+                try { weapon = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
             }
         }
     }
