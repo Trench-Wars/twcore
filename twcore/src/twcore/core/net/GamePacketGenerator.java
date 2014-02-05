@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 
 import twcore.core.lvz.LvzObject;
 import twcore.core.util.ByteArray;
@@ -1164,6 +1165,37 @@ This is pointless, the server will just ignore the packet unless the Timestamp i
         }
     }
 
+    /**
+     * Adds multiple LVZ object IDs with the same state (whether to turn it on or off) to the object queue.
+     * Use {@link #sendLVZObjectCluster(int)} to send out a packet containing the
+     * toggling instructions.
+     * @param playerID ID of player to send to; use -1 for all players
+     * @param objID Object IDs to toggle
+     * @param objVisible True if object is to be visible after being set; false if invisible
+     * @see #sendLVZObjectCluster(int)
+     */
+    public void setupMultipleLVZObjectToggles( int playerID, Vector<Short> objID, boolean objVisible ) {
+        if(objID == null)
+            return;
+        if( playerID == -1 ) {
+            for(Short s : objID) {
+                ByteArray objData = new ByteArray( 2 );
+                objData.addLittleEndianShort( (short) (objVisible ? (s & 0x7FFF) : (s | 0x8000)) );
+                m_lvzToggleCluster.addLast( objData );
+            }
+        } else {
+            LinkedList <ByteArray>playerCluster = m_lvzPlayerToggleCluster.remove(playerID);
+            if( playerCluster == null )
+                playerCluster = new LinkedList<ByteArray>();
+            for(Short s : objID) {
+                ByteArray objData = new ByteArray( 2 );
+                objData.addLittleEndianShort( (short) (objVisible ? (s & 0x7FFF) : (s | 0x8000)) );
+                playerCluster.addLast( objData );
+            }
+            m_lvzPlayerToggleCluster.put( playerID, playerCluster );
+        }
+    }
+    
     /**
      * Adds one or more LVZ object ID states (whether to turn it on or off) to an object
      * toggle queue at once, using a HashMap with (Integer)ObjectID->(Boolean)Visible
