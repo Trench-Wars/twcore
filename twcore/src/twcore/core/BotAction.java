@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 import java.util.WeakHashMap;
 import java.util.HashMap;
 import java.util.Random;
@@ -2878,6 +2879,25 @@ public class BotAction
     }
 
     /**
+     * Manually sets multiple objects to a specific state.
+     * @param objects HashMap with object IDs paired to their target state.
+     * @param state True if the objects are to be shown, false if they are to be hidden.
+     */
+    public void setupObjects( Vector<Short> objects, boolean state ) {
+        m_packetGenerator.setupMultipleLVZObjectToggles(-1, objects, state);
+    }
+
+    /**
+     * Manually sets multiple objects to a specific state.
+     * @param playerID ID of the player to send to.
+     * @param objects Mapping from Integer objID to Boolean visibility
+     * @param state True if the objects are to be shown, false if they are to be hidden.
+     */
+    public void setupObjects( int playerID, Vector<Short> objects, boolean state) {
+        m_packetGenerator.setupMultipleLVZObjectToggles(playerID, objects, state );
+    }
+    
+    /**
      * Sends all objects that have been set up to be sent to all players.
      */
     public void sendSetupObjects() {
@@ -2913,6 +2933,27 @@ public class BotAction
         m_packetGenerator.sendLVZObjectCluster(playerID);
     }
 
+    /**
+     * Manually sets multiple objects to a specific state.
+     * @param objects HashMap with object IDs paired to their target state.
+     * @param state True if the objects are to be shown, false if they are to be hidden.
+     */
+    public void manuallySetObjects( Vector<Short> objects, boolean state ) {
+        m_packetGenerator.setupMultipleLVZObjectToggles(-1, objects, state);
+        m_packetGenerator.sendLVZObjectCluster(-1);
+    }
+
+    /**
+     * Manually sets multiple objects to a specific state.
+     * @param playerID ID of the player to send to.
+     * @param objects Mapping from Integer objID to Boolean visibility
+     * @param state True if the objects are to be shown, false if they are to be hidden.
+     */
+    public void manuallySetObjects( int playerID, Vector<Short> objects, boolean state) {
+        m_packetGenerator.setupMultipleLVZObjectToggles(playerID, objects, state );
+        m_packetGenerator.sendLVZObjectCluster(playerID);
+    }
+    
     /**
      * Sets objects using the current objects set under BotAction's copy of Objset.
      * In order for this command to work, first get the Objset with getObjectSet(),
