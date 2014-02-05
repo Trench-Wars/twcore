@@ -4,20 +4,23 @@ import twcore.core.util.ByteArray;
 
 public class WeaponFired extends PlayerPosition {
 
-    public static int WEAPON_BULLET = 1;
-    public static int WEAPON_BULLET_BOUNCING = 2;
-    public static int WEAPON_BOMB = 3;
-    public static int WEAPON_EMP_BOMB = 4;
-    public static int WEAPON_REPEL = 5;
+    public static final int WEAPON_BULLET = 1;
+    public static final int WEAPON_BULLET_BOUNCING = 2;
+    public static final int WEAPON_BOMB = 3;
+    public static final int WEAPON_EMP_BOMB = 4;
+    public static final int WEAPON_REPEL = 5;
 
-    public static int WEAPON_DECOY = 6;
-    public static int WEAPON_BURST = 7;
-    public static int WEAPON_THOR = 8;
+    public static final int WEAPON_DECOY = 6;
+    public static final int WEAPON_BURST = 7;
+    public static final int WEAPON_THOR = 8;
 
-    public static int WEAPON_MULTIFIRE = 9;
-    public static int WEAPON_SINGLEFIRE = 10;
-    public static int WEAPON_MINE = 11;
-    public static int WEAPON_NOTMINE = 12;
+    public static final int WEAPON_MULTIFIRE = 9;
+    public static final int WEAPON_SINGLEFIRE = 10;
+    public static final int WEAPON_MINE = 11;
+    public static final int WEAPON_NOTMINE = 12;
+    
+    // Used internally, not in the packet:
+    public static final int WEAPON_SHRAP = 13;
 
     private int         m_weaponType;
     private int         m_weaponLevel;
@@ -70,7 +73,11 @@ public class WeaponFired extends PlayerPosition {
         return m_weaponShrapCount;
     }
 
-    public boolean isMultifire(){
-        return m_weaponAlternative;
+    public boolean isMultifire() {
+        return (isType(WEAPON_BULLET) && m_weaponAlternative);
+    }
+    
+    public boolean isMine() {
+        return (isType(WEAPON_BOMB) && m_weaponAlternative);
     }
 }
