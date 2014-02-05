@@ -31,6 +31,7 @@ public final class Tools {
      * Chops a string into pieces around a given character.  Very similar to
      * String's split method, only slower and less powerful.  Nearly useless.
      * Also replaces ? and ! with whitespace, for who knows what reason.
+     * (Might be to prevent command injection, wondering though why the * isn't replaced then.)
      * @param input Input string
      * @param delimiter Character to split around
      * @return String array containing pieces
@@ -313,6 +314,11 @@ public final class Tools {
         }
     }
 
+    /**
+     * Translates a numerical staff level to the proper name.
+     * @param operatorLevel Operator level based on {@link OperatorList}.
+     * @return A textual representation of the level.
+     */
     public static String staffName( int operatorLevel ) {
     	switch( operatorLevel ) {
     		case OperatorList.OWNER_LEVEL: return "Owner";
@@ -330,6 +336,11 @@ public final class Tools {
     	}
     }
 
+    /**
+     * Translates a numerical staff level to the accompanied short name.
+     * @param operatorLevel Operator level based on {@link OperatorList}.
+     * @return A shortened textual representation of the level.
+     */
     public static String staffNameShort( int operatorLevel ) {
     	switch( operatorLevel ) {
 			case OperatorList.OWNER_LEVEL: return "Owner";
@@ -626,9 +637,15 @@ public final class Tools {
         return response;
     }
 
-    // *** ENUMS ***
+    /*
+     *** ENUMS ***
+     */
 
-    // Prizes
+    /**
+     * <b>Prizes</b><br>
+     * An enum-like mapping of prize names to their in-game values.
+     * @author unknown
+     */
     public static class Prize {
         /**1*/  public static final int RECHARGE = 1;
         /**2*/  public static final int ENERGY = 2;
@@ -662,8 +679,15 @@ public final class Tools {
         /**28*/ public static final int PORTAL = 28;
     }
 
-    // Sounds
+    /**
+     * <b>Sounds</b><br>
+     * Contains a listing of all the default sounds. Useful for sending chat messages.
+     * @author unknown
+     * @see Sound#isAllowedSound(int)
+     * @see Sound#isAllowedSound(String)
+     */
     public static class Sound {
+        /**0*/  public static final int NO_SOUND = 0;
         /**1*/  public static final int BEEP1 = 1;
         /**2*/  public static final int BEEP2 = 2;
         /**3*/  public static final int NOT_DEALING_WITH_ATT = 3;
@@ -700,6 +724,7 @@ public final class Tools {
         public static final int[] allowedSounds = { 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 102, 103, 104 };
         /**6, 12, 26, 100, 101*/
         public static final int[] restrictedSounds = { 6, 12, 26, 100, 101 };
+        
         /**
          * Disabled sounds( 6, 12, 26, 100, 101 )
          * @param sound The sound to check
@@ -732,7 +757,12 @@ public final class Tools {
         }
     }
 
-    // Ships (not to be confused with numbering system used in Ship, which is for internal/packet use only)
+    /**
+     * Ships (not to be confused with numbering system used in Ship, which is for internal/packet use only).
+     * This enum-like class uses 0 for Spectator, and 1 to 8 for the ships.
+     * @author unknown
+     * @see twcore.core.game.Ship Internal Ship numbering.
+     */
     public static class Ship {
         /**0*/public static final int SPECTATOR = 0;
         /**1*/public static final int WARBIRD = 1;
@@ -745,9 +775,12 @@ public final class Tools {
         /**8*/public static final int SHARK = 8;
     }
 
-    // Time defines for conversion to milliseconds.  If this is to be found somewhere else
-    // more handy, that can be used instead -- merely saw a static reference to the number
-    // representing "one day" in StaffBot and thought it was a little sloppy.
+    /**
+     * Time defines for conversion to milliseconds.  If this is to be found somewhere else
+     * more handy, that can be used instead -- merely saw a static reference to the number
+     * representing "one day" in StaffBot and thought it was a little sloppy.
+     * @author unknown
+     */
     public static class TimeInMillis {
         /**1000*/     public static final int SECOND = 1000;
         /**60000*/    public static final int MINUTE = 60000;
@@ -756,7 +789,9 @@ public final class Tools {
         /**604800000*/public static final int WEEK   = 604800000;
     }
 
-    /** Weapons - These are the <b>STANDARD</b> weapon speed settings in SSCU Trench Wars
+    /** 
+     * Weapons - These are the <b>STANDARD</b> weapon speed settings in SSCU Trench Wars.
+     * If your arena has custom settings, please refer to {@link twcore.core.game.ArenaSettings}.
      */
     public static class Weapon {
         /**5000.0*/ public static final double WARBIRD_BULLET_SPEED = 5000.0;
