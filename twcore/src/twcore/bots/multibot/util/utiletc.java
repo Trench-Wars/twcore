@@ -204,7 +204,7 @@ public class utiletc extends MultiUtil {
             }
         }
             
-        if( m_opList.isSmod(name) || m_opList.isERExact(name) ) {
+        if( m_opList.isSmod(name) ) {
             if( cmd.startsWith( "!listdonated" ) ) {
                 do_listDonations( name, message );
             } else if( cmd.startsWith( "!donated " ) ) {
@@ -213,11 +213,7 @@ public class utiletc extends MultiUtil {
                 do_removeDonation( name, message.substring( 15, message.length() ) );
             } else if( cmd.startsWith( "!getset " ) ) {
                 do_getSetting( name, message.substring( 8, message.length() ) );
-            }
-        }
-        
-        if( m_opList.isSmod(name)) {
-            if( cmd.startsWith( "!weapon" ) ) {
+            } else if( cmd.startsWith( "!weapon " ) ) {
                 try { weapon = Integer.parseInt( message.split( " " )[1] ); } catch (Exception e ){}
             }
         }
@@ -563,7 +559,7 @@ public class utiletc extends MultiUtil {
 
     public String[] getHelpMessages() {
         String help[] = {
-                "All commands listed are SMod only!",
+                "...ER-ONLY and SMOD+ CMDS...",
                 "!movebot <x> <y>          - Moves bot to a location.  If in spec, bot will spec",
                 "                            this location and receive player position info.",
                 "!printcoords              - Toggles whether to print player coords rcv'd or not.",
@@ -578,13 +574,15 @@ public class utiletc extends MultiUtil {
                 "!speed <speed>            - Sets how fast bot tracks using !fire (>10, in ms)",
                 "!firespeed <speed>        - How fast the bot fires using !fire (>100, in ms)",
                 "!setweapon [options]      - Sets bot's weapon, use without options for full details",
-                "!weapon <weapon>          - Changes to weapon # (16 bit vector)",
                 "!list                     - Lists all arenas to you in PM.",
                 "!draw <url>               - Draws pic from text file at url containing chars .*#^",
                 "!setdist                  - Sets distance between mines drawn (def: 16; one tile)",
+                "...SMOD ONLY CMDS...",
                 "!listdonated              - List the last 10 donations",
                 "!donated <name>:<amount>  - Adds a donation record",
-                "!removedonated <num>      - Removes the record with ID <num>"
+                "!removedonated <num>      - Removes the record with ID <num>",
+                "!weapon <weapon>          - Changes to weapon # (16 bit vector) ",
+                "!getset <setting>         - Gets a CFG setting, such as Misc:LevelFiles"
         };
         return help;
     }
