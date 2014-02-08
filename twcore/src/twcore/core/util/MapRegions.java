@@ -147,7 +147,7 @@ public class MapRegions
      * @param region the index of the region
      * @param color the color of the region in the region file
      */
-    private void setRegion(int region, Color color)
+    public void setRegion(int region, Color color)
     {
         setRegion(region,color.getRGB());
     }
@@ -170,7 +170,7 @@ public class MapRegions
      * @param g the RGB green value (0-255) of the region's color
      * @param b the RGB blue value (0-255) of the region's color
      */
-    private void setRegion(int region, int r, int g, int b)
+    public void setRegion(int region, int r, int g, int b)
     {
         if(region < m_regions.size() && region > -1)
         {

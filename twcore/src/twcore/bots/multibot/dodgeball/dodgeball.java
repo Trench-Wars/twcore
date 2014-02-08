@@ -508,6 +508,7 @@ public class dodgeball extends MultiModule {
             this.previousCarrierTime = previousCarrierTime;
         }
 
+        @SuppressWarnings("unused")
         public short getId() {                  return id;                  }
         public short getCarrier() {             return carrier;             }
         public short getPreviousCarrier() {     return previousCarrier;     }

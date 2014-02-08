@@ -246,6 +246,7 @@ public class eventbot extends SubspaceBot {
      * @param name
      * @param message
      */
+    @SuppressWarnings("unused")
     public void cmdRequest(String name, String message) {
     	message = message.trim();
     	

@@ -778,6 +778,7 @@ public class hunt extends MultiModule {
          * 
          * @return
          */
+        @SuppressWarnings("unused")
         public int getFreq() {
             return p.getFrequency();
         }

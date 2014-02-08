@@ -204,7 +204,7 @@ public class tortuga extends MultiModule {
         m_scores.clear();
         m_freqscores.clear();
         for (String strPlayer : m_players.keySet()) {
-            m_scores.put(strPlayer,new ScoreSet(strPlayer));
+            m_scores.put(strPlayer,new ScoreSet());
         }
         m_botAction.sendPrivateMessage(name,"Scores have been reset.");
     }
@@ -1205,7 +1205,7 @@ public class tortuga extends MultiModule {
                 } catch (SQLException e) {fatal("Error creating player: " + playerName + " - " + e.getMessage());}
 
                 m_players.put(playerName,new Pirate(playerID,playerName,r.getString("fcPirateName"),r.getInt("fnCoins"),arrPlots,arrHouses,m_earnings,m_bankrecords));
-                m_scores.put(playerName,new ScoreSet(playerName));
+                m_scores.put(playerName,new ScoreSet());
                 playerLoaded = 1;
             } else {
                 if (createPlayer) {
@@ -1219,7 +1219,7 @@ public class tortuga extends MultiModule {
                     } catch (SQLException e) {fatal("Error creating player: " + playerName + " - " + e.getMessage());}
 
                     m_players.put(playerName,new Pirate(playerID,playerName,pirateName,0,arrPlots,arrHouses,m_earnings,m_bankrecords));
-                    m_scores.put(playerName,new ScoreSet(playerName));
+                    m_scores.put(playerName,new ScoreSet());
                 
                     // message the newly created player if they are in the arena, which.. they should always be
                     Player newPlayer;
@@ -1381,6 +1381,7 @@ public class tortuga extends MultiModule {
         private String getOwnerString() {
             if (PlayerName == null) {return "none";} else {return PlayerName;}
         }
+        @SuppressWarnings("unused")
         private String getOwnerPirateName() {return PirateName;}
         private int getCoinsPaid() {return CoinsPaid;}
         private int getPrice() {
@@ -1405,6 +1406,7 @@ public class tortuga extends MultiModule {
     
     private class BankRecord {
         private int PlayerID;
+        @SuppressWarnings("unused")
         private int EntryID;
         private String EntryDate;
         private int BuyerID;
@@ -1478,6 +1480,7 @@ public class tortuga extends MultiModule {
         private int PlayerID;
         private int PlotID;
         private int Earnings;
+        @SuppressWarnings("unused")
         private int newEarnings;
         private boolean hasChanged;
         
@@ -1544,6 +1547,7 @@ public class tortuga extends MultiModule {
         private String getOwnerString() {
             if (PlayerName == null) {return "none";} else {return PlayerName;}
         }
+        @SuppressWarnings("unused")
         private String getOwnerPirateName() {return PirateName;}
         private int getPlotX() {return PlotX;}
         private int getPlotY() {return PlotY;}
@@ -1583,7 +1587,6 @@ public class tortuga extends MultiModule {
     }
 
     private class ScoreSet {
-        private String playerName;
         private int freq0Kills;
         private int freq1Kills;
         private int kills;
@@ -1594,8 +1597,7 @@ public class tortuga extends MultiModule {
         private int taxCoins;
         private int deaths;
 
-        private ScoreSet(String PlayerName) {
-            this.playerName = PlayerName;
+        private ScoreSet() {
             freq0Kills = 0;
             freq1Kills = 0;
             kills = 0;
@@ -1643,7 +1645,6 @@ public class tortuga extends MultiModule {
 
         private void addRecord(BankRecord m_record) {m_bankrecords.add(m_record);}
         private int getPlayerID() {return PlayerID;}
-        private String getPlayerName() {return PlayerName;}
         private String getPirateName() {return PirateName;}
         private void setPirateName(String PirateName) {this.PirateName = PirateName; pirateNameChanged = true;}
         private int getCoins() {return (origCoins+foundCoins+bountyCoins+taxCoins+otherCoins);}
