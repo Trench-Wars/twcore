@@ -993,10 +993,12 @@ public class twpoll extends SubspaceBot {
                 this.optionID = optionID;
             }
 
+            @SuppressWarnings("unused")
             public int getUserID() {
                 return userID;
             }
 
+            @SuppressWarnings("unused")
             public int getOptionID() {
                 return this.optionID;
             }  	        
