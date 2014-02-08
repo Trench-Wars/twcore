@@ -1514,6 +1514,10 @@ public class strikebot extends SubspaceBot {
                 status[0] = "Teams: " + team0.getName() + " vs. " + team1.getName()
                         + ". We are currently ending the game";
                 break;
+            case PRE_FACE_OFF:
+            case WAIT:
+            default:
+                break;
         }
 
         /* Send status message */

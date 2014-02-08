@@ -210,6 +210,9 @@ public class twdt extends SubspaceBot {
                     case BASING:
                         rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTB.txt");
                         break;
+                    case NA:
+                    default:
+                        break;
                 }
                 int team1, team2;
                 String name1, name2;
@@ -233,6 +236,9 @@ public class twdt extends SubspaceBot {
                             break;
                         case BASING:
                             rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTB.txt");
+                            break;
+                        case NA:
+                        default:
                             break;
                     }
                     int team1, team2;

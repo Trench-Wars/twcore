@@ -220,6 +220,9 @@ public class DraftGame {
             case BASING:
                 ba.sendZoneMessage("[TWDT-B] " + team1Name + " vs. " + team2Name + " starting in ?go " + ba.getArenaName());
                 break;
+            case NA:
+                ba.sendSmartPrivateMessage(name, "An unknown error has occured. Please contact a bot developer.");
+                break;
         }
     }
     
