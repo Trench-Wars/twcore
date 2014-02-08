@@ -493,6 +493,7 @@ public class DraftTeam {
     }
     
     /** Helper sets a player's "played" status in the database */
+    @SuppressWarnings("unused")
     private void setPlayed(String name, boolean played) {
         try {
             if (played)
