@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -41,6 +42,9 @@ public class HubBot extends SubspaceBot {
 
     private long 				spawnutime;				// Stores the unix timestamp when the bot gets spawned for !uptime use
     private Hider               hider;
+    
+    private ArrayList<String>   m_children;             // Used in multicore setups to restrict which bots can spawn from a core.
+    private boolean             m_strictSpawning;       // Boolean for the above to make checks quicker.
 
     /**
      * Creates the hub bot's thread grouping, registers commands, sets up
@@ -115,6 +119,9 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!updateaccess", acceptedMessages, this, "handleUpdateAccess", accessRequired );
         m_commandInterpreter.registerCommand( "!ua", acceptedMessages, this, "handleUpdateAccess", accessRequired );
         m_commandInterpreter.registerCommand( "!listoperators", acceptedMessages, this, "handleListOperators", accessRequired );
+        m_commandInterpreter.registerCommand( "!override", acceptedMessages, this, "handleOverride", accessRequired );
+        m_commandInterpreter.registerCommand( "!enablespawn", acceptedMessages, this, "handleEnableSpawnCommand", accessRequired);
+        m_commandInterpreter.registerCommand( "!disablespawn", acceptedMessages, this, "handleDisableSpawnCommand", accessRequired);
         m_commandInterpreter.registerCommand( "!recycleserver", acceptedMessages, this, "handleRecycleCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdowncore", acceptedMessages, this, "handleShutdownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!sdc", acceptedMessages, this, "handleShutdownCommand", accessRequired );
@@ -127,8 +134,6 @@ public class HubBot extends SubspaceBot {
         m_commandInterpreter.registerCommand( "!smartshutdown", acceptedMessages, this, "handleSmartShutdownCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdownidlebots", acceptedMessages, this, "handleShutdownIdleBotsCommand", accessRequired );
         m_commandInterpreter.registerCommand( "!shutdownallbots", acceptedMessages, this, "handleShutdownAllBotsCommand", accessRequired );
-        m_commandInterpreter.registerCommand( "!enablespawn", acceptedMessages, this, "handleEnableSpawnCommand", accessRequired);
-        m_commandInterpreter.registerCommand( "!disablespawn", acceptedMessages, this, "handleDisableSpawnCommand", accessRequired);
         
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "handleInvalidMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleInvalidMessage" );
@@ -151,6 +156,7 @@ public class HubBot extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Chat name" ) );
         initOperators();
         autoSpawnBots(false);
+        loadChildren();
         
     }
     
@@ -278,6 +284,53 @@ public class HubBot extends SubspaceBot {
         m_botAction.sendUnfilteredPublicMessage( "*getfile moderate.txt" );
         
         
+    }
+    
+    private void loadChildren() {
+        if(m_botAction.getGeneralSettings().getInt("StrictSpawning") == 1) {
+            Tools.printLog("Initializing children.cfg ...");
+            
+            ArrayList<String> children = new ArrayList<String>();
+            
+            try {
+                FileReader reader = new FileReader( m_botAction.getCoreCfg( "children.cfg" ) );
+                BufferedReader buffer = new BufferedReader( reader );
+                
+                String line = "";
+                
+                while( (line = buffer.readLine()) != null ){
+                    if( line == null || line.length() == 0 ){
+                        continue;
+                    }
+                    
+                    if( !line.startsWith("#") && !line.startsWith("[") ){
+                        children.add( line.trim().toLowerCase() );
+                    }
+                }
+                
+                buffer.close();
+                reader.close();
+            } catch( FileNotFoundException fnfe ){
+                Tools.printStackTrace( "File not found: autoload.cfg  ;  ", fnfe );
+            } catch( IOException ioe) {
+                Tools.printStackTrace( "IOException occured while reading autoload.cfg : ", ioe);
+            }
+            
+            if(children == null || children.isEmpty()) {
+                m_strictSpawning = false;
+                m_children = null;
+            } else {
+                m_strictSpawning = true;
+                m_children = new ArrayList<String>();
+                m_children.addAll(children);
+            }
+            
+            Tools.printLog("Done initializing bottypes from children.cfg");
+            
+        } else {
+            m_strictSpawning = false;
+            m_children = null;
+        }
     }
     
     /**
@@ -845,12 +898,16 @@ public class HubBot extends SubspaceBot {
 	    	if(operatorList.isOutsider(messager) && !operatorList.isHighmod(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !waitinglist !listbots !bottypes");
 	    	}
-	    	if(operatorList.isHighmod(messager) && !operatorList.isSysop(messager)) {
+	    	if(operatorList.isHighmod(messager) && !operatorList.isSmod(messager)) {
 	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !waitinglist !listbots !bottypes");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype !shutdowncore");
 	    	}
+	    	if(operatorList.isSmod(messager) && !operatorList.isSysop(messager)) {
+                m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !override !waitinglist !listbots !bottypes");
+                m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype !enablespawn !disablespawn !shutdowncore");
+            }
 	    	if(operatorList.isSysop(messager)) {
-	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !waitinglist !listbots !bottypes");
+	    		m_botAction.sendSmartPrivateMessage( messager, "BOT CONTROL:      !spawn !spawnmax !spawnauto !forcespawn !override !waitinglist !listbots !bottypes");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !remove !removetype !enablespawn !disablespawn");
 	    		m_botAction.sendSmartPrivateMessage( messager, "                  !shutdowncore !smartshutdown !shutdownidlebots !shutdownallbots");
 	    	}
@@ -887,6 +944,12 @@ public class HubBot extends SubspaceBot {
 	    		m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.OUTSIDER_LEVEL));
 	    		m_botAction.sendSmartPrivateMessage( messager , " !spawn <bot type>  OR  + <bot type>");
 	    		
+	    	}
+	    	// !override
+	    	else if (argument.equalsIgnoreCase("override")) {
+	    	    m_botAction.sendSmartPrivateMessage( messager , "Spawns a new bot of the specified bot type, overriding any set restrictions.");
+	    	    m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SMOD_LEVEL));
+                m_botAction.sendSmartPrivateMessage( messager , " !override <bot type>");
 	    	}
 	    	// !spawnmax
 	    	else if (argument.equalsIgnoreCase("spawnmax")) {
@@ -1023,14 +1086,14 @@ public class HubBot extends SubspaceBot {
             else if (argument.equalsIgnoreCase("enablespawn")) {
                 m_botAction.sendSmartPrivateMessage( messager , "Enables spawning of new bots.");
                 m_botAction.sendSmartPrivateMessage( messager , "Specify 'all' to automatically send the command to all the cores.");
-                m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SYSOP_LEVEL));
+                m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SMOD_LEVEL));
                 m_botAction.sendSmartPrivateMessage( messager , " !enablespawn");
                 m_botAction.sendSmartPrivateMessage( messager , " !enablespawn all");
             }
             else if (argument.equalsIgnoreCase("disablespawn")) {
                 m_botAction.sendSmartPrivateMessage( messager , "Disables spawning of new bots.");
                 m_botAction.sendSmartPrivateMessage( messager , "Specify 'all' to automatically send the command to all the cores.");
-                m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SYSOP_LEVEL));
+                m_botAction.sendSmartPrivateMessage( messager , "Access required: " + operatorList.getAccessLevelName(OperatorList.SMOD_LEVEL));
                 m_botAction.sendSmartPrivateMessage( messager , " !disablespawn");
                 m_botAction.sendSmartPrivateMessage( messager , " !disablespawn all");
             }
@@ -1048,11 +1111,30 @@ public class HubBot extends SubspaceBot {
     public void handleSpawnMessage( String messager, String message ){
         String className = message.trim();
         
-        if( className.length() > 0 ){
-            m_botQueue.spawnBot( className, messager );
+        if( className.length() > 0 ) {
+            if( !m_strictSpawning || m_children.contains(className.toLowerCase())) {
+                m_botQueue.spawnBot( className, messager );
+            } else {
+                m_botAction.sendSmartPrivateMessage( messager, "This core is not allowed to spawn that specific bottype.");
+            }
         } else {
             m_botAction.sendSmartPrivateMessage( messager, "Usage: !spawn <bot type>" );
         }
+    }
+    
+    /**
+     * Spawns a bot of a given type, ignoring any set spawn restrictions.
+     * @param messager Name of the player who sent the command
+     * @param message Bot type to spawn
+     */
+    public void handleOverride( String messager, String message ) {
+        String className = message.trim();
+        
+        if( className.length() > 0 ) {
+            m_botQueue.spawnBot( className, messager );
+        } else {
+            m_botAction.sendSmartPrivateMessage( messager, "Usage: !spawn <bot type>" );
+        }        
     }
 
     /**
