@@ -402,7 +402,7 @@ public class TempSettingsManager
 					"Modifiable Settings (* means locked):"};
 
 				String[] sets = new String[m_settings.size()];
-				Iterator setsIter = m_settings.values().iterator();
+				Iterator<TempSetting> setsIter = m_settings.values().iterator();
 				for(int x = 0; x < sets.length; x++)
 					sets[x] = ((TempSetting)setsIter.next()).getInfo();
 
@@ -415,7 +415,7 @@ public class TempSettingsManager
 			Matcher regex = pattern.matcher(message);
 			while(regex.find())
 			{
-				String old = ""+ getSetting(regex.group(1));
+				//String old = ""+ getSetting(regex.group(1));
 				String val = regex.group(2);
 				if(val.startsWith("\"") && val.endsWith("\""))
 					val = val.substring(1, val.length()-1);

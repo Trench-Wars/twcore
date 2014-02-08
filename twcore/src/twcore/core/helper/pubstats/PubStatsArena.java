@@ -149,5 +149,13 @@ public class PubStatsArena {
             }
         }
     }
+    
+    /**
+     * Retrieves the local name variable. Unsure as to what this is a name of.
+     * @return
+     */
+    public String getGroupName() {
+        return name;
+    }
 
 }
