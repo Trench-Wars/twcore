@@ -712,6 +712,7 @@ public final class radiobot2 extends SubspaceBot {
     		return m_maxItems;
     	}
 
+    	/* Unused
     	public String peek() {
     		if(m_queue.size() == 0)
     			return "<empty>";
@@ -719,6 +720,7 @@ public final class radiobot2 extends SubspaceBot {
     		String name = m_queue.peek();
     		return name + "> " + m_map.get(name);
     	}
+    	*/
 
     	public void clear() {
     		m_queue.clear();
