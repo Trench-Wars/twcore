@@ -1382,6 +1382,7 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
             }
             m_botAction.sendArenaMessage(sb.toString());
         }
+        formatter.close();
     }
 
 
@@ -1517,6 +1518,8 @@ public final class javelim extends SubspaceBot implements LagoutMan.ExpiredLagou
 
         m_lvz.buildStrings();
         m_lvz.turnOn();
+        
+        formatter.close();
     }
 
 
