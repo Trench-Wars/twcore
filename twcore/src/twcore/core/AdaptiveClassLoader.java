@@ -790,7 +790,8 @@ public class AdaptiveClassLoader extends ClassLoader {
                 try {
                     ZipFile zf = new ZipFile(file.getAbsolutePath());
                     ZipEntry ze = zf.getEntry(name);
-
+                    zf.close();
+                    
                     if (ze != null) {
                         try {
                             return new URL("jar:file:" + file.getAbsolutePath() + "!/" + name);
