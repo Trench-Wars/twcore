@@ -140,6 +140,7 @@ public class AdaptiveClassLoader extends ClassLoader {
      * Generation number of the classloader, used to distinguish between
      * different instances.
      */
+    @SuppressWarnings("unused")
     private int generation;
 
     /**

@@ -186,7 +186,7 @@ public class Session extends Thread {
 	        	m_chatLog = new PrintWriter( m_chatLogWriter );
 	        }
 
-            Class[] parameterTypes = { m_botAction.getClass() };
+            Class<?>[] parameterTypes = { m_botAction.getClass() };
             Object[] args = { m_botAction };
             m_subspaceBot = m_roboClass.getConstructor( parameterTypes ).newInstance( args );
             m_ship = new Ship( m_group, m_packetGenerator, m_arenaTracker );
