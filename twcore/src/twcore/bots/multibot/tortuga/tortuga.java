@@ -336,7 +336,7 @@ public class tortuga extends MultiModule {
             loadOrCreatePlayer(name,true);
             p = m_players.get(name);
         }
-        int plotID;
+        //int plotID;
         List<Integer> arrPlots =  p.getPlots();
         Collections.sort(arrPlots);
         Iterator<Integer> li = arrPlots.listIterator();
@@ -361,7 +361,7 @@ public class tortuga extends MultiModule {
             loadOrCreatePlayer(name,true);
             p = m_players.get(name);
         }
-        int houseID;
+        //int houseID;
         List<Integer> arrHouses =  p.getHouses();
         Iterator<Integer> li = arrHouses.listIterator();
         House ch;
@@ -731,12 +731,12 @@ public class tortuga extends MultiModule {
 
     public void cmdInfo(String name, String msg) {
         int curPlotID = 0;
-        int playerX = 0;
-        int playerY = 0;
+        //int playerX = 0;
+        //int playerY = 0;
         if (msg.length() > 0) {curPlotID = plotToPlotID(msg);}
         if (curPlotID > 0) {
             Plot curPlot = m_plots.get(curPlotID);
-            String plotAddr = (char)(curPlot.getPlotX()+65) + "" + (curPlot.getPlotY()+1);
+            //String plotAddr = (char)(curPlot.getPlotX()+65) + "" + (curPlot.getPlotY()+1);
             String curOwner = curPlot.getOwner();
             if (curOwner == null) {curOwner = "unowned";} else {curOwner = "owned by " + curOwner;}
             m_botAction.sendPrivateMessage(name,curPlot.getCaption() + " is " + curOwner + " (buy for: " + curPlot.getPrice() + "+)");

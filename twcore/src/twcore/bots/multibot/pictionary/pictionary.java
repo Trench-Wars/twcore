@@ -12,7 +12,6 @@ import twcore.bots.MultiModule;
 import twcore.core.BotSettings;
 import twcore.core.events.Message;
 import twcore.core.game.Player;
-import twcore.core.game.ShipRestrictor;
 import twcore.core.stats.PlayerProfile;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.StringBag;
