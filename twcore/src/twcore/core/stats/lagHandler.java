@@ -559,7 +559,7 @@ public class lagHandler
 
         try
         {
-            Class       parameterTypes[] = { report.getClass() };
+            Class<?>    parameterTypes[] = { report.getClass() };
             Object      lagReportA[] = { report };
             bot.getClass().getMethod(methodName, parameterTypes).invoke(bot, lagReportA);
         }

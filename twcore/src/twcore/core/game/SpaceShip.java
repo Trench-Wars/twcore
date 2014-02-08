@@ -132,7 +132,7 @@ public class SpaceShip extends Thread
 
 		        try
 			    {
-				    Class parameterTypes[] = { b.getClass() };
+				    Class<?> parameterTypes[] = { b.getClass() };
 					Object      lagReportA[] = { b };
 					m_bot.getClass().getMethod(m_methodName, parameterTypes).invoke(m_bot, lagReportA);
 		        }
@@ -154,7 +154,7 @@ public class SpaceShip extends Thread
 
 	        try
 		    {
-			    Class       parameterTypes[] = { duration.getClass() };
+			    Class<?>    parameterTypes[] = { duration.getClass() };
 				Object      lagReportA[] = { duration };
 				m_bot.getClass().getMethod(m_methodName, parameterTypes).invoke(m_bot, lagReportA);
 	        }

@@ -63,7 +63,7 @@ public class AdvancedCommandInterpreter {
                     try {
                         Object      parameters[] = { c };
                         Object      methodClass = cd.getMethodClass();
-                        Class       parameterTypes[] = { c.getClass() };
+                        Class<?>    parameterTypes[] = { c.getClass() };
 
                         methodClass.getClass().getMethod( cd.getMethodName(), parameterTypes ).invoke( methodClass, parameters );
                     } catch( Exception e ){
@@ -81,7 +81,7 @@ public class AdvancedCommandInterpreter {
 
     public ArrayList<String> getHelpList() {
         ArrayList<String> a = new ArrayList<String>();
-        Iterator i = m_commandDefinitions.keySet().iterator();
+        Iterator<String> i = m_commandDefinitions.keySet().iterator();
         String s;
         while (i.hasNext()) {
             s = (String)i.next();

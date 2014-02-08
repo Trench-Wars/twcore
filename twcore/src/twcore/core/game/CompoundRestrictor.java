@@ -23,7 +23,8 @@ public class CompoundRestrictor implements ShipRestrictor
 	private ArrayList<ShipGroup> groups;
 
 	/** The BotAction object to send messages with */
-	private BotAction m_botAction;
+	@SuppressWarnings("unused")
+    private BotAction m_botAction;
 
 	/** Classes signed up for denied ship change notifications */
 	private ArrayList<InvalidShipListener> listeners;

@@ -240,6 +240,22 @@ public class TimedHashSet<E> implements Set<E>
   }
 
   /**
+   * This method gets the time at which an object was created.
+   *
+   * @param o is the object to check.
+   * @return the time in milliseconds of the moment the object was created.
+   * returned.
+   */
+  public long getStarttime(E o)
+  {
+    EntryTimerTask<E> entryTimerTask = entries.get(o);
+
+    if(entryTimerTask == null)
+      throw new IllegalArgumentException("Object not found in set.");
+    return entryTimerTask.getStartTime();
+  }
+  
+  /**
    * This method gets the lifetime of an object.
    *
    * @param o is the object to check.

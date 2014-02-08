@@ -1532,7 +1532,7 @@ public class zbot extends SubspaceBot {
         public static final int NOT_APPROVED_STATUS = 1;
         public static final int APPROVED_STATUS = 2;
         public static final int INITIAL = 0; // initial zoner will be sent
-        public static final int FINAL = 1;   // readvert zoner is available to send
+        //public static final int FINAL = 1;   // readvert zoner is available to send
         public static final int DONE = 2;         // all zoners have been used
         private String adverter;
         private String advertText;

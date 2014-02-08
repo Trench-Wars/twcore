@@ -83,7 +83,7 @@ public class ItemCommand<T> implements List<T>
 
 		for(int i = 0; i < fields.length; i++)
 		{
-			Class fieldClass = fields[i].getType();
+			Class<?> fieldClass = fields[i].getType();
 			Object defVal = fields[i].get(defaults);
 
 			if(fieldClass.getName().equals("int"))
@@ -526,7 +526,8 @@ public class ItemCommand<T> implements List<T>
 	 * the specified array.
 	 * @see java.util.List#toArray(Object[])
 	 */
-	public <T> T[] toArray(T[] a)
+	@SuppressWarnings("hiding")
+    public <T> T[] toArray(T[] a)
 	{
 		return items.toArray(a);
 	}
