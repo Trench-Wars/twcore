@@ -509,6 +509,7 @@ public class BotQueue extends Thread {
      * Queue thread execution loop.  Attempts to spawn the next bot on
      * the waiting list, if the proper delay time has been reached.
      */
+    @SuppressWarnings("unused")
     public void run(){
         Iterator<String> i;
         String          key;

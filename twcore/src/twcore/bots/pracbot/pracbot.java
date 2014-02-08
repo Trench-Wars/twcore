@@ -1,6 +1,5 @@
 package twcore.bots.pracbot;
 
-import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.StringTokenizer;
@@ -48,7 +47,7 @@ public class pracbot extends SubspaceBot {
 	
 	boolean isFollowing = false;
 	private String target;
-	private int[] lastPosition = new int[]{ 0, 0 };
+	//private int[] lastPosition = new int[]{ 0, 0 };
 	
 	int botX, botY, botFreq;
 	
@@ -576,9 +575,10 @@ public class pracbot extends SubspaceBot {
 private class RepeatFireTimer{
 	private int SPAWN_TIME = 5005;
 	public int weapon, delayms, repeatms;
-	public boolean isRunning = true, isSlowlyStopping = false;
+	public boolean isRunning = true;
+    //public boolean isSlowlyStopping = false;
 	TimerTask repeat = null;
-	TimerTask slowly;
+	//TimerTask slowly;
 	
 	public RepeatFireTimer(int wep, int delayms, int repeatms){
 		this.weapon = wep;
@@ -608,12 +608,13 @@ private class RepeatFireTimer{
 		m_botAction.scheduleTaskAtFixedRate(this.repeat, this.SPAWN_TIME, this.repeatms);		
 	}
 	
+	/*
 	public void stop(){
 		if(isRunning){
 			repeat.cancel();
 			isRunning = false;
 		}
-	}
+	}*/
 	
 	public String toString(){
 		String s = (repeatFireTimers.indexOf(this)+1) + ") Firing weapon(" + weapon + ") every " + repeatms + " ms." ;		
