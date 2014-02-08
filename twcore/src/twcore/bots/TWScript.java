@@ -258,6 +258,7 @@ public class TWScript extends MultiUtil {
     			String s;
     			while((s = x.readLine()) != null)
     				textFile += s + "\r";
+    			x.close();
     			String[] msgs = textFile.split("\r");
     			m_botAction.smartPrivateMessageSpam(m_botAction.getBotName(), msgs);
     			m_botAction.sendSmartPrivateMessage( name, "Setup complete.");
