@@ -1066,8 +1066,8 @@ public class twhtGame {
      */
     public void doGoal(String msg) {
         if (voteInProgress) {
-            twhtPlayer pA;
-            twhtTeam tA;
+            //twhtPlayer pA;
+            //twhtTeam tA;
             
             if (msg.equals("cl")) {
                 ba.sendArenaMessage("Goal was considered clean.", 2);
@@ -1251,7 +1251,6 @@ public class twhtGame {
      */
     public void setPenShot(String name, String msg) {
         if(m_curRound != null && isPShot) {
-           String pA;
            twhtTeam t;
            
            t = getPlayerTeam(msg);

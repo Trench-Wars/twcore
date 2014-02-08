@@ -85,8 +85,8 @@ public class twht extends SubspaceBot {
     Stack<String> twhtOP;
     Stack<String> twdops;
     
-    LinkedList m_players = new LinkedList<twhtPlayer>();
-    LinkedList m_captains = new LinkedList<String>();
+    LinkedList<twhtPlayer> m_players = new LinkedList<twhtPlayer>();
+    LinkedList<String> m_captains = new LinkedList<String>();
 
     /* Creates a new instance of twht */
     public twht(BotAction botAction) {

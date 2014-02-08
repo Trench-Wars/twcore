@@ -383,7 +383,7 @@ public class twhtRound {
         TWHTPosition posA = null;
         TWHTPosition posB = null;
         int fA = -1;
-        int fB = -1;
+        //int fB = -1;
         int pAXLoc = 0;
         int pAYLoc = 0;
         int pBXLoc = 0;
@@ -402,7 +402,7 @@ public class twhtRound {
             pA = tA.searchPlayer(playerFired);
             pB = tB.searchPlayer(playerCaught);
             fA = tA.getFrequency();
-            fB = tB.getFrequency();
+            //fB = tB.getFrequency();
 
             if (pA == null || pB == null)
                 return;
@@ -559,8 +559,8 @@ public class twhtRound {
     public void doUpdateScoreBoardTime() {
         if (m_scoreBoard2 != null) {
             m_scoreBoard2.hideAllObjects();
-            twhtTeam leftT = null;
-            twhtTeam rightT = null;
+            twhtTeam leftT = (getRoundNum() % 2 == 1?m_team1:m_team2);
+            twhtTeam rightT = (getRoundNum() % 2 == 1?m_team2:m_team1);
             int time;
             int lpenTemp = 0, rpenTemp = 0;
 
@@ -572,7 +572,7 @@ public class twhtRound {
                 m_scoreBoard2.showObject(710 + ((time % 60) / 10));
                 m_scoreBoard2.showObject(720 + ((time / 60) % 10));
                 m_scoreBoard2.showObject(730 + (time / 600));
-            } else if (m_ba.getArenaName().equalsIgnoreCase("#hockey")) {
+            } else if (m_ba.getArenaName().equalsIgnoreCase("#hockey") && leftT != null && rightT != null) {
                 for(twhtPlayer i : leftT.m_players.values()) 
                     if (i.getPenalty() > 0) {
                         if (lpenTemp == 0)
@@ -822,6 +822,11 @@ public class twhtRound {
             this.playerYvel = ballYvel;
         }
 
+        // Returns the player's name
+        public String getName() {
+            return name;
+        }
+        
         // Returns the player's recorded X location
         public short getXloc() {
             return playerXloc;

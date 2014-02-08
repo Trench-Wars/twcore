@@ -10,7 +10,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import twcore.core.BotAction;
-import twcore.core.BotSettings;
 import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
@@ -512,7 +511,7 @@ public class twhtTeam {
             
             pA = searchPlayer(p.getPlayerName());
             
-            if (pA == null && pA.getPlayerState() != 1)
+            if (pA == null || pA.getPlayerState() != 1)
                 return;
             
             ba.warpTo(pA.getPlayerName(), 510, 560);

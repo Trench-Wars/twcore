@@ -3,14 +3,9 @@
  */
 package twcore.bots.twht;
 
-import java.sql.Connection;
-import java.util.LinkedList;
 import java.util.TreeMap;
-import java.util.Arrays;
 
-import twcore.bots.twht.twhtGame.RefRequest;
 import twcore.core.BotAction;
-import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
@@ -307,7 +302,7 @@ public class twhtPlayer {
         
         if (m_fnGameTime > 30) {
         ba.sendArenaMessage(Tools.formatString(shipString, 13," ") + Tools.formatString("|" + getPlayerName(), 10," ") + Tools.formatString("|" + m_fnGoals, 3," ") + 
-                            Tools.formatString("|" + m_fnAssists, 3," ") + Tools.formatString("|" + m_fnSOG , 4," ") + Tools.formatString("|" + m_fnSteals , 4," ") + 
+                            Tools.formatString("|" + m_fnAssists, 3," ") + Tools.formatString("|" + m_fnSOG , 4," ") + Tools.formatString("|" + m_fnGoalAllowed, 3, " ") + Tools.formatString("|" + m_fnSteals , 4," ") + 
                             Tools.formatString("|" + m_fnTurnOver , 4," ") + Tools.formatString("|" + m_fnChecksMade , 4," ") + Tools.formatString("|" + m_fnChecksTaken , 4," ") + 
                             Tools.formatString("|" + m_fnPuckCarry , 4," ") + Tools.formatString("|" + doFormatTimeString(m_fnPuckCarryTime) , 6," ") + Tools.formatString("|" + doFormatTimeString(m_fnGameTime) , 6," ") + 
                             Tools.formatString("|" + m_fnPlusMinus, 5," ") + Tools.formatString("|" + p_rating , 5," "));
