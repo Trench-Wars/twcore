@@ -731,6 +731,8 @@ public class DuelPlayer {
     public void warp(int x, int y) {
         setStatus(WARPING);
         Player p1 = ba.getPlayer(name);
+        if (p1 == null)
+            return;
         ba.shipReset(name);
         ba.warpTo(name, x, y);
         p1.updatePlayerPositionManuallyAfterWarp(x, y);
