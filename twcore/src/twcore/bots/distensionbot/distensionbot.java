@@ -8111,6 +8111,7 @@ public class distensionbot extends SubspaceBot {
         /**
          * Saves current ship to DB via background query.
          */
+        @SuppressWarnings("unused")
         public void saveCurrentShipToDB() {
             saveCurrentShipToDB( false );
         }
