@@ -101,10 +101,10 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
-    private final int RANK_0_STRENGTH = 80;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
-    private final int TERR_RANK_0_STRENGTH = 120;
-    private final int SHARK_RANK_0_STRENGTH = 100;
-    private final int OPS_RANK_0_STRENGTH = 90;
+    private final int RANK_0_STRENGTH = 70;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final int TERR_RANK_0_STRENGTH = 110;
+    private final int SHARK_RANK_0_STRENGTH = 90;
+    private final int OPS_RANK_0_STRENGTH = 80;
     /*
     private final float TERR_STRENGTH_MULTIPLIER = 1.3f;  // How much a terr's strength is multiplied by (for calculation purposes)
     private final float SHARK_STRENGTH_MULTIPLIER = 1.2f;  // How much a shark's strength is multiplied by
@@ -303,11 +303,11 @@ public class distensionbot extends SubspaceBot {
 
     // ASSIST SYSTEM
     private final int ASSIST_ADVERT_CHECK_FREQUENCY = 20;   // How many seconds between checking for an assist advert
-    private final float ADVERT_WEIGHT_IMBALANCE = 0.87f;    // At what point to advert that there's an imbalance
+    private final float ADVERT_WEIGHT_IMBALANCE = 0.88f;    // At what point to advert that there's an imbalance
     private final float ASSIST_WEIGHT_IMBALANCE = 0.89f;    // At what point an army is considered imbalanced
     private final float AUTOBALANCE_WEIGHT_IMBALANCE = 0.95f; // At what point an army is considered imbalanced
     private final int ASSIST_NUMBERS_IMBALANCE = 3;         // # of pilot difference before considered imbalanced
-    private final int ASSIST_REWARD_TIME = (int)(1000 * 60 * 1.5); // Time between adverting and rewarding assists
+    private final int ASSIST_REWARD_TIME = (int)(1000 * 60 * 2.5); // Time between adverting and rewarding assists
     private final int TERRSHARK_REWARD_TIME = 1000 * 60 * 1;// Time between rewarding new terrs/sharks
     private long lastAssistReward;                          // Last time assister was given points
     private long lastAssistAdvert;                          // Last time an advert was sent for assistance
@@ -3083,7 +3083,7 @@ public class distensionbot extends SubspaceBot {
                             reward = rank * 15;
                         else
                             reward = rank * 10;
-                        reward += 250;
+                        reward += 150;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when one was badly needed." );
                     } else if( ships == 1 && pilots > 8 ){
                         if( rank > 50 )
@@ -3096,7 +3096,7 @@ public class distensionbot extends SubspaceBot {
                             reward = rank * 10;
                         else
                             reward = rank * 5;
-                        reward += 150;
+                        reward += 100;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when a second one was needed." );
                     }
                 } else {
@@ -3111,7 +3111,7 @@ public class distensionbot extends SubspaceBot {
                             reward = rank * 10;
                         else
                             reward = rank * 5;
-                        reward += 150;
+                        reward += 100;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Shark when one was badly needed." );
                     }
                 }
@@ -4318,34 +4318,34 @@ public class distensionbot extends SubspaceBot {
                     int reward = Math.max( 5, rank );
 
                     if( armySizeWeight < .5 )
-                        reward *= 2.5;
+                        reward *= 2.0;
                     else if( armySizeWeight < .6 )
-                        reward *= 2;
-                    else if( armySizeWeight < .7 )
                         reward *= 1.75;
+                    else if( armySizeWeight < .7 )
+                        reward *= 1.50;
                     else if( armySizeWeight < .8 )
-                        reward *= 1.5;
+                        reward *= 1.25;
 
                     // Increased bonuses for higher ranks, as it takes more to make a dent in
                     // their to-rank amounts
                     if( rank >= 70 )
-                        reward *= 30;
-                    else if( rank >= 60 )
                         reward *= 25;
-                    else if( rank >= 50 )
+                    else if( rank >= 60 )
                         reward *= 20;
-                    else if( rank >= 40 )
+                    else if( rank >= 50 )
                         reward *= 15;
-                    else if( rank >= 35 )
+                    else if( rank >= 40 )
                         reward *= 12;
-                    else if( rank >= 30 )
+                    else if( rank >= 35 )
                         reward *= 10;
-                    else if( rank >= 25 )
+                    else if( rank >= 30 )
                         reward *= 8;
-                    else if( rank >= 20 )
+                    else if( rank >= 25 )
                         reward *= 7;
-                    else if( rank >= 15 )
+                    else if( rank >= 20 )
                         reward *= 5;
+                    else if( rank >= 15 )
+                        reward *= 4;
                     else if( rank >= 10 )
                         reward *= 3;
                     else                    //  0: 10RP
@@ -4358,7 +4358,8 @@ public class distensionbot extends SubspaceBot {
                             reward = p.addRankPoints(reward,false); // Show actual amount added
                             m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, HQ awards you a " + reward + " RP bonus.", 1 );
                         } else {
-                            reward *= 3;
+                            reward *= 2;
+                            reward += 250;
                             reward = p.addRankPoints(reward,false); // Show actual amount added
                             m_botAction.sendPrivateMessage( name, "SAINT BONUS!  For assisting this army in their most desperate hour, their HQ rewards you a " + reward + " RP bonus.", 1 );
                         }
