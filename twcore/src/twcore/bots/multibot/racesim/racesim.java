@@ -1,6 +1,7 @@
 package twcore.bots.multibot.racesim;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -197,11 +198,13 @@ public class racesim extends MultiModule {
         } else {
             try {
                 FileWriter fw = new FileWriter(m_path + "racesim_" + m_botAction.getArenaName() + ".dat");
-                fw.write(m_trackShip + System.lineSeparator());
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write((int) (m_trackShip));
+                bw.newLine();
                 WayPoint wp;
                 while(!m_posData.isEmpty()) {
                     wp = m_posData.remove(0);
-                    fw.write(wp.getX()
+                    bw.write(wp.getX()
                             + ":" + wp.getY()
                             + ":" + wp.getVx()
                             + ":" + wp.getVy()
@@ -209,9 +212,10 @@ public class racesim extends MultiModule {
                             + ":" + wp.getToggables()
                             + ":" + wp.getEnergy()
                             + ":" + wp.getBounty()
-                            + ":" + wp.getDT()
-                            + System.lineSeparator());
+                            + ":" + wp.getDT());
+                    bw.newLine();
                 }
+                bw.close();
                 fw.close();
                 m_botAction.sendSmartPrivateMessage(name, "Data has been stored to disk.");
             } catch (IOException ioe) {
