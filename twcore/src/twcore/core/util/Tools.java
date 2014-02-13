@@ -636,6 +636,68 @@ public final class Tools {
         }
         return response;
     }
+    
+    /**
+     * Based on a time given in milliseconds, return a String describing the
+     * difference between that time and zero (1/1/1970), such as:<p>
+     * <code>  2 days, 1 hour, 31 minutes and 45 seconds.</code><p>
+     * If abbrev is set to true, then the String is much less verbose:<p>
+     *  <code>  3d:14h:30m:21s</code>
+     * @param dateInMillis A date given in milliseconds, can be either in future or past
+     * @param abbrev Whether or not to abbreviate the time string.
+     * @return Textual representation of the difference between the given time and zero.
+     */
+    public static String getTimeString(long time, boolean abbrev) {
+        String response = new String();
+        
+        if(time < 0)
+            time = -time;
+        
+        int days = (int) (time / TimeInMillis.DAY);
+        time %= TimeInMillis.DAY;
+        
+        int hours = (int) (time / TimeInMillis.HOUR);
+        time %= TimeInMillis.HOUR;
+        
+        int minutes = (int) (time / TimeInMillis.MINUTE);
+        time %= TimeInMillis.MINUTE;
+        
+        time /= TimeInMillis.SECOND;
+        
+        if(days > 0) {
+            if( abbrev )
+                response += days + "d:";
+            else
+                response += days + "day" + (days!=1?"s":"");
+        }
+        
+        if(!response.isEmpty() || hours > 0) {
+            if( abbrev )
+                response += hours + "h:";
+            else
+                response += hours + " hour" + (hours!=1?"s":"");
+        }
+        
+        if(!response.isEmpty() || minutes > 0) {
+            if( abbrev )
+                response += minutes + "m:";
+            else
+                response += minutes + " minute" + (minutes!=1?"s":"");
+        }
+        
+        if( abbrev ) {
+            response += time + "s";
+        } else {
+            if( response.isEmpty() || time != 0 ) {
+                if( !response.isEmpty() )
+                    response += ", and ";
+                response += time + " second" + (time!=1?"s":"");
+            } else {
+                response += " exactly";
+            }
+        }
+        return response;
+    }
 
     /*
      *** ENUMS ***
