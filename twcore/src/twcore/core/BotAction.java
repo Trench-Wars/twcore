@@ -705,11 +705,31 @@ public class BotAction
         if(playerName == null)
             return;
         
-        int         playerID = m_arenaTracker.getPlayerID( playerName );
+        int playerID = m_arenaTracker.getPlayerID( playerName );
 
         sendOpposingTeamMessage( playerID, message, soundCode );
     }
 
+    /**
+     * Sends a message to a whole frequency of players based on the ID of one player
+     * on the frequency.
+     * @param playerID The id of the player whose frequency this message is to be sent to.
+     * @param message The message to be sent
+     */
+    public void sendOpposingTeamMessage( int playerID, String message ) {
+        sendOpposingTeamMessage( playerID, message, 0 );
+    }
+
+    /**
+     * Sends a message to a whole frequency of players based on the name of a player
+     * on that frequency.
+     * @param playerName The name of the player whose frequency this message is to be sent to.
+     * @param message The message to be sent
+     */
+    public void sendOpposingTeamMessage( String playerName, String message ){
+        sendOpposingTeamMessage( playerName, message, 0 );
+    }
+    
     /**
      * Sends a chat message to the first chat this bot has joined.
      * @param message The message to be displayed.
