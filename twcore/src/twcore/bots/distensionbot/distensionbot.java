@@ -4318,26 +4318,20 @@ public class distensionbot extends SubspaceBot {
                     int reward = Math.max( 5, rank );
 
                     if( armySizeWeight < .5 )
-                        reward *= 2.0;
+                        reward *= 1.3;
                     else if( armySizeWeight < .6 )
-                        reward *= 1.75;
+                        reward *= 1.2;
                     else if( armySizeWeight < .7 )
-                        reward *= 1.50;
+                        reward *= 1.15;
                     else if( armySizeWeight < .8 )
-                        reward *= 1.25;
+                        reward *= 1.1;
 
                     // Increased bonuses for higher ranks, as it takes more to make a dent in
                     // their to-rank amounts
-                    if( rank >= 70 )
-                        reward *= 25;
-                    else if( rank >= 60 )
-                        reward *= 20;
-                    else if( rank >= 50 )
-                        reward *= 15;
-                    else if( rank >= 40 )
-                        reward *= 12;
-                    else if( rank >= 35 )
+                    if( rank >= 40 )
                         reward *= 10;
+                    else if( rank >= 35 )
+                        reward *= 9;
                     else if( rank >= 30 )
                         reward *= 8;
                     else if( rank >= 25 )
@@ -4350,16 +4344,15 @@ public class distensionbot extends SubspaceBot {
                         reward *= 3;
                     else                    //  0: 10RP
                         reward *= 2;
-                    if( gameGoing && m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
+                    if( gameGoing && !m_singleFlagMode && m_flagOwner[0] == p.getArmyID() && m_flagOwner[1] == p.getArmyID() &&
                             !flagTimer.isBeingBroken() ) {
                         float percent = (float)flagTimer.getSecondsHeld() / (float)flagTimer.getTimeNeededForWin();
                         if( percent < .60 ) {
-                            reward *= 2;
+                            reward += ((float)(reward + 1) * 1.5f);
                             reward = p.addRankPoints(reward,false); // Show actual amount added
                             m_botAction.sendPrivateMessage( name, "For your extremely noble assistance, HQ awards you a " + reward + " RP bonus.", 1 );
                         } else {
                             reward *= 2;
-                            reward += 250;
                             reward = p.addRankPoints(reward,false); // Show actual amount added
                             m_botAction.sendPrivateMessage( name, "SAINT BONUS!  For assisting this army in their most desperate hour, their HQ rewards you a " + reward + " RP bonus.", 1 );
                         }
