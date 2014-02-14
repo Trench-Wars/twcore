@@ -34,6 +34,7 @@ public class racesim extends MultiModule {
 
     private CommandInterpreter m_commandInterpreter;
     private HashMap<String,RecordHeader> m_index;
+    private ArrayList<WayPoint> m_posData;
     private ArrayList<WayPoint> m_recData;
     
     private Record m_record;
@@ -141,9 +142,9 @@ public class racesim extends MultiModule {
             
             if(m_simData == null || !m_simData.contains(i)) {
                 m_botAction.sendSmartPrivateMessage(name, "No simData present.");
+            } else {
+                m_botAction.sendSmartPrivateMessage(name, "Contents: " + m_simData.getWaypoint(i).toString());
             }
-            
-            m_botAction.sendSmartPrivateMessage(name, "Contents: " + m_simData.getWaypoint(i).toString());
         } catch (NumberFormatException nfe) {
             m_botAction.sendSmartPrivateMessage(name, "Not a number");
         }
@@ -252,10 +253,10 @@ public class racesim extends MultiModule {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] Please disable recording mode first.");
         } else if(m_racing) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] Cannot change ships while racing.");
-        } else if(message == null || message.isEmpty() && m_simData != null) {
+        } else if((message == null || message.isEmpty()) && m_simData != null) {
             m_botAction.spectatePlayerImmediately(-1);
             m_botAction.getShip().setShip(m_simData.getShip());
-            if(m_simData != null && m_simData.getWaypoints() != null && !m_simData.getWaypoints().isEmpty())
+            if(m_simData.getWaypoints() != null && !m_simData.getWaypoints().isEmpty())
                 m_botAction.getShip().move(m_simData.getWaypoint(0).getX(), m_simData.getWaypoint(0).getY(), 0, 0);
             m_botAction.getShip().fire(1);
         } else {
@@ -558,7 +559,7 @@ public class racesim extends MultiModule {
             }
             FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bis = new BufferedInputStream(fis);
-            ArrayList<WayPoint> waypoints = new ArrayList<WayPoint>();
+            m_posData = new ArrayList<WayPoint>();
             switch(bis.read()) {
             case VERSION:
                 byte[] data = new byte[18];
@@ -566,7 +567,7 @@ public class racesim extends MultiModule {
                 int len;
                 while((len = bis.read(data)) == 18) {
                     bArray = new ByteArray(data);
-                    waypoints.add(new WayPoint(
+                    m_posData.add(new WayPoint(
                             bArray.readLittleEndianShort(0),
                             bArray.readLittleEndianShort(2),
                             bArray.readLittleEndianShort(4),
@@ -582,7 +583,7 @@ public class racesim extends MultiModule {
                     fis.close();
                     throw new RaceSimException("Recorded data is corrupt.");
                 }
-                m_simData.setWaypoints(waypoints);
+                m_simData.setWaypoints(m_posData);
                 break;
             default:
                 bis.close();
