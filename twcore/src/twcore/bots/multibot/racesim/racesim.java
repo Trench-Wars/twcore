@@ -865,7 +865,7 @@ public class racesim extends MultiModule {
         
         @Override
         public void run() {
-            if(!m_racing || m_simData.getWaypoints().size() == 0) {
+            if(!m_racing || m_simData.getWaypoints().size() <= 0 || index >= m_simData.getWaypoints().size()) {
                 m_botAction.getShip().move(m_botAction.getShip().getX(), m_botAction.getShip().getY(), 0, 0);
                 return;
             }
