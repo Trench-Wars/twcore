@@ -34,7 +34,6 @@ public class racesim extends MultiModule {
 
     private CommandInterpreter m_commandInterpreter;
     private HashMap<String,RecordHeader> m_index;
-    private ArrayList<WayPoint> m_posData;
     private ArrayList<WayPoint> m_recData;
     
     private Record m_record;
@@ -256,8 +255,8 @@ public class racesim extends MultiModule {
         } else if((message == null || message.isEmpty()) && m_simData != null) {
             m_botAction.spectatePlayerImmediately(-1);
             m_botAction.getShip().setShip(m_simData.getShip());
-            if(m_simData.getWaypoints() != null && !m_simData.getWaypoints().isEmpty())
-                m_botAction.getShip().move(m_simData.getWaypoint(0).getX(), m_simData.getWaypoint(0).getY(), 0, 0);
+            if(!m_simData.getWaypoints().isEmpty())
+                m_botAction.getShip().move(m_simData.getWaypoints().get(0).getX(), m_simData.getWaypoints().get(0).getY(), 0, 0);
             m_botAction.getShip().fire(1);
         } else if(message == null || message.isEmpty()) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] Please provide a valid ship number (1-8).");
@@ -269,8 +268,7 @@ public class racesim extends MultiModule {
                 } else {
                     m_botAction.spectatePlayerImmediately(-1);
                     m_botAction.getShip().setShip(shipNumber - 1);
-                    if(m_simData != null && m_simData.getWaypoints() != null && !m_simData.getWaypoints().isEmpty())
-                        m_botAction.getShip().move(m_simData.getWaypoint(0).getX(), m_simData.getWaypoint(0).getY(), 0, 0);
+                    m_botAction.getShip().move(m_simData.getWaypoints().get(0).getX(), m_simData.getWaypoints().get(0).getY(), 0, 0);
                     m_botAction.getShip().fire(1);
                 }
             } catch(NumberFormatException nfe) {
@@ -561,7 +559,6 @@ public class racesim extends MultiModule {
             }
             FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bis = new BufferedInputStream(fis);
-            m_posData = new ArrayList<WayPoint>();
             m_simData.getWaypoints().clear();
             switch(bis.read()) {
             case VERSION:
@@ -868,12 +865,12 @@ public class racesim extends MultiModule {
         
         @Override
         public void run() {
-            if(!m_racing || m_simData == null || !m_simData.contains(index)) {
+            if(!m_racing || m_simData.getWaypoints().size() == 0) {
                 m_botAction.getShip().move(m_botAction.getShip().getX(), m_botAction.getShip().getY(), 0, 0);
                 return;
             }
             
-            WayPoint wp = m_simData.getWaypoint(index);
+            WayPoint wp = m_simData.getWaypoints().get(index);
             m_botAction.getShip().move(
                     wp.getDirection(),
                     wp.getX(),
