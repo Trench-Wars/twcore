@@ -562,6 +562,7 @@ public class racesim extends MultiModule {
             FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bis = new BufferedInputStream(fis);
             m_posData = new ArrayList<WayPoint>();
+            m_simData.getWaypoints().clear();
             switch(bis.read()) {
             case VERSION:
                 byte[] data = new byte[18];
@@ -569,7 +570,7 @@ public class racesim extends MultiModule {
                 int len;
                 while((len = bis.read(data)) == 18) {
                     bArray = new ByteArray(data);
-                    m_posData.add(new WayPoint(
+                    m_simData.getWaypoints().add(new WayPoint(
                             bArray.readShort(0),
                             bArray.readShort(2),
                             bArray.readShort(4),
@@ -585,7 +586,7 @@ public class racesim extends MultiModule {
                     fis.close();
                     throw new RaceSimException("Recorded data is corrupt.");
                 }
-                m_simData.setWaypoints(m_posData);
+                //m_simData.setWaypoints(m_posData);
                 break;
             default:
                 bis.close();
@@ -697,7 +698,7 @@ public class racesim extends MultiModule {
         }
 
         public WayPoint getWaypoint(int index) {
-            if(index >= 0 && index < this.waypoints.size()) {
+            if(contains(index)) {
                 return this.waypoints.get(index);
             } else {
                 return null;
