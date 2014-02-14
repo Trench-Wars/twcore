@@ -442,7 +442,7 @@ public class racesim extends MultiModule {
                 m_indexLoaded = true;
                 return;
             }
-                
+            m_botAction.sendSmartPrivateMessage("ThePAP", "[DEBUG] Line: " + line + "; Version: " + Byte.parseByte(line) + "; " + Integer.parseInt(line));
             switch(Byte.parseByte(line)) {
             case VERSION:
                 String[] args;
@@ -482,6 +482,9 @@ public class racesim extends MultiModule {
         } catch (IOException ioe) {
             Tools.printStackTrace(ioe);
             throw new RaceSimException("Unable to read from file: " + filename);
+        } catch (NumberFormatException nfe) {
+            Tools.printStackTrace(nfe);
+            throw new RaceSimException("Corrupt version number: " + filename);
         }
     }
     
