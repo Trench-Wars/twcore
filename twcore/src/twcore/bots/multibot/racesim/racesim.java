@@ -679,7 +679,7 @@ public class racesim extends MultiModule {
         }
 
         public Record(RecordHeader rh) {
-            super(rh);
+            super(rh.getTag(), rh.getRacer(), rh.getShip(), rh.getLength());
             this.waypoints = new ArrayList<WayPoint>();
         }
         
@@ -697,7 +697,7 @@ public class racesim extends MultiModule {
         }
 
         public WayPoint getWaypoint(int index) {
-            if(this.contains(index)) {
+            if(this.waypoints.contains(index)) {
                 return this.waypoints.get(index);
             } else {
                 return null;
@@ -718,13 +718,6 @@ public class racesim extends MultiModule {
         public RecordHeader(String tag) {
             this.tag = tag;
             this.ship = Ship.INTERNAL_WARBIRD;
-        }
-        
-        public RecordHeader(RecordHeader rh) {
-            this.tag = rh.getTag();
-            this.racerName = rh.getRacer();
-            this.ship = rh.getShip();
-            this.length = rh.getLength();
         }
         
         public RecordHeader(String tag, String racer, short ship, int length) {
