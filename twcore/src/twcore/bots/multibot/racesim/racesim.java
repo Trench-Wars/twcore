@@ -582,7 +582,7 @@ public class racesim extends MultiModule {
                     fis.close();
                     throw new RaceSimException("Recorded data is corrupt.");
                 }
-                rec.setWaypoints(waypoints);
+                m_simData.setWaypoints(waypoints);
                 break;
             default:
                 bis.close();
