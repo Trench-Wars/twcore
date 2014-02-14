@@ -450,6 +450,7 @@ public class racesim extends MultiModule {
                     args = line.split("\0", 4);
                     if(args.length != 4) {
                         // Malformed data found. For now, just skip it.
+                        m_botAction.sendSmartPrivateMessage("ThePAP", "[DEBUG] Arg count invalid: " + args.length);
                         continue;
                     }
                     try {
@@ -460,6 +461,7 @@ public class racesim extends MultiModule {
                                 Integer.parseInt(args[3])));
                     } catch (NumberFormatException nfe) {
                         // Malformed data found. For now, just skip it.
+                        m_botAction.sendSmartPrivateMessage("ThePAP", "[DEBUG] Error in args[2] (" + args[2] + ") or [3] (" + args[3] + ")");
                         continue;
                     }
                 }
