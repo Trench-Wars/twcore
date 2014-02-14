@@ -216,7 +216,7 @@ public class racesim extends MultiModule {
         } else {
             try {
                 m_simData = new Record(m_index.get(message));
-                readRecord(m_simData);
+                readRecord();
                 m_botAction.sendSmartPrivateMessage(name, "Succesfully loaded: " + message);
                 m_botAction.sendSmartPrivateMessage(name, "Racer: " + m_simData.getRacer()
                         + "; Ship: " + Tools.shipName(m_simData.getShip() + 1)
@@ -422,18 +422,34 @@ public class racesim extends MultiModule {
      * - Delta T [integer]
      * 
      */
+    /**
+     * Saves both the current recording and updates the index list on disk.
+     * @param rec Record to be written to disk.
+     * @param overwrite Whether or not any existing recording file (Not header file!) is to be overwritten.
+     * @throws RaceSimException Forwards any exception thrown by the called functions.
+     */
     private void saveRace(Record rec, boolean overwrite) throws RaceSimException {
         writeRecord(rec, overwrite);
+        // If the above function throws any exceptions, it is likely that the record isn't stored properly.
+        // In this case, the index file shouldn't be updated, which won't due to the exception thrown before.
         saveIndex(rec);
     }
     
+    /**
+     * Loads an index of recorded races for this particular arena. The indexes will be saved to m_index.
+     * @throws RaceSimException If anything bad happens, an exception will be thrown containing a readable message.
+     * If everything goes as planned, no exception will be thrown.
+     */
     private void loadIndex() throws RaceSimException {
+        // Empty out any current information we have.
         m_index = new HashMap<String, RecordHeader>();
         
-        String filename = PATH + m_botAction.getArenaName() + ".txt";
+        // Due to the arena name in game being case insensitive in game, ensure that the capitalization has no effect.
+        String filename = PATH + m_botAction.getArenaName().toLowerCase() + ".txt";
         try {
             File f = new File(filename);
             if(!f.isFile()) {
+                // When no index exists yet, make sure the proper flag is set, but leave the index itself empty.
                 m_indexLoaded = true;
                 return;
             }
@@ -441,16 +457,21 @@ public class racesim extends MultiModule {
             FileReader fr = new FileReader(f);
             BufferedReader br = new BufferedReader(fr);
             
+            // If the file exists, but is empty, also set the proper flag, but leave the index itself empty.
             String line = br.readLine();
             if(line == null) {
                 m_indexLoaded = true;
                 return;
             }
 
+            // Switch based on the version number. When updating the file format, please
+            // try to keep it backward compatible by making a separate case for the old version number.
             switch(Byte.parseByte(line)) {
             case VERSION:
+                // Current version/format.
                 String[] args;
                 while((line = br.readLine()) != null) {
+                    // Read per line and split on the null-terminators.
                     args = line.split("\0", 4);
                     if(args.length != 4) {
                         // Malformed data found. For now, just skip it.
@@ -469,13 +490,14 @@ public class racesim extends MultiModule {
                 }
                 break;
             default:
-                // Unknown version
+                // Unknown version or format.
                 br.close();
                 fr.close();
                 throw new RaceSimException("Unknown version number found.");
             }
             br.close();
             fr.close();
+            // Seems everything was a success, set the flag to true.
             m_indexLoaded = true;
         } catch (NullPointerException npe) {
             Tools.printStackTrace(npe);
@@ -492,22 +514,34 @@ public class racesim extends MultiModule {
         }
     }
     
+    /**
+     * Saves the 'header' information of all the records to an index file for a particular arena.
+     * @param rec The record that is to be added to the list of headers.
+     * @throws RaceSimException If anything bad happens, an exception will be thrown containing a readable message.
+     * If everything goes as planned, no exception will be thrown.
+     */
     private void saveIndex(Record rec) throws RaceSimException {
         if(rec == null) {
+            // Can't store anything if we don't have anything to store.
             throw new RaceSimException("Record data is null.");
         }
         
+        // Put the new record's header to the index list. Will automatically replace if it already exists.
         m_index.put(rec.getTag(), new RecordHeader(rec.getTag(), rec.getRacer(), rec.getShip(), rec.getLength()));
         
-        String filename = PATH + m_botAction.getArenaName() + ".txt";
+        // Due to the arena name in game being case insensitive in game, ensure that the capitalization has no effect.
+        String filename = PATH + m_botAction.getArenaName().toLowerCase() + ".txt";
+        
         try {
             File f = new File(filename);
             FileWriter fw = new FileWriter(f);
             BufferedWriter bw = new BufferedWriter(fw);
             
+            // Write the version number first.
             bw.write(Byte.toString(VERSION));
             bw.newLine();
             
+            // Write the headers on separate lines based on their toStrings.
             for(RecordHeader rh : m_index.values()) {
                 bw.write(rh.toString());
                 bw.newLine();
@@ -524,25 +558,41 @@ public class racesim extends MultiModule {
         }
     }
     
-    private void readRecord(Record rec) throws RaceSimException {
-        if(rec == null) {
+    /**
+     * Reads a record from file. If adjusted properly, this will be backward compatible.
+     * @throws RaceSimException If any problems arise, this will be thrown with a readable reason.
+     * If the read is successful, nothing will be thrown.
+     */
+    private void readRecord() throws RaceSimException {
+        if(m_simData == null) {
+            // We need data already present to determine the name.
             throw new RaceSimException("Record data is null.");
         }
         
-        String filename = PATH + m_botAction.getArenaName() + "_" + rec.getTag() + ".dat";
+        // Due to the arena name in game being case insensitive, do so for the filename as well, but not for the Tag.
+        String filename = PATH + m_botAction.getArenaName().toLowerCase() + "_" + m_simData.getTag() + ".dat";
+        
         try {
             File f = new File(filename);
             if(!f.isFile()) {
+                // What it says below.
                 throw new RaceSimException("Record not found on disk: " + filename);
             }
             FileInputStream fis = new FileInputStream(f);
             BufferedInputStream bis = new BufferedInputStream(fis);
+            
+            // Clear the current list, to prevent appending new data to the existing data.
             m_simData.getWaypoints().clear();
+            
+            // Switch based on the version number. When updating the file format, please
+            // try to keep it backward compatible by making a separate case for the old version number.
             switch(bis.read()) {
             case VERSION:
+                // Current format.
                 byte[] data = new byte[18];
                 ByteArray bArray;
                 int len;
+                // Read in one field at a time and add it to the simulation data.
                 while((len = bis.read(data)) == 18) {
                     bArray = new ByteArray(data);
                     m_simData.getWaypoints().add(new WayPoint(
@@ -556,14 +606,19 @@ public class racesim extends MultiModule {
                             bArray.readShort(12),
                             bArray.readInt(14)));
                 }
+                
+                // If we exit the while loop on a size that is neither -1 (EoF) or 18 (field length) then one or
+                // more records might contain corrupt data. Take the safe method, and dump all data retrieved.
                 if(len != -1 && len != 18) {
                     bis.close();
                     fis.close();
+                    m_simData.getWaypoints().clear();
                     throw new RaceSimException("Recorded data is corrupt.");
                 }
-                //m_simData.setWaypoints(m_posData);
                 break;
+                
             default:
+                // Unsupported version/format.
                 bis.close();
                 fis.close();
                 throw new RaceSimException("Unknown version number found.");
@@ -586,19 +641,24 @@ public class racesim extends MultiModule {
     }
     
     /**
-     * 
-     * @param rec
-     * @param overwrite
-     * @throws RaceSimException
+     * Writes recorded data to file.
+     * @param rec The record that needs to be stored.
+     * @param overwrite Whether or not any existing files need to be overwritten.
+     * @throws RaceSimException If any error happens, this will be thrown back containing a readable message of what went wrong.
+     * When the storage process finished successfully, no exception will be thrown.
      */
     private void writeRecord(Record rec, boolean overwrite) throws RaceSimException {
         if(rec == null) {
+            // Nothing to save.
             throw new RaceSimException("Record data is null.");
         }
-        String filename = PATH + m_botAction.getArenaName() + "_" + rec.getTag() +  ".dat";
+        
+        // Due to the arena name in game being case insensitive, do so for the filename as well, but not for the Tag.
+        String filename = PATH + m_botAction.getArenaName().toLowerCase() + "_" + rec.getTag() +  ".dat";
         try {
             File f = new File(filename);
             if(f.isFile() && !overwrite) {
+                // File already exists, but the overwrite flag isn't set.
                 throw new RaceSimException("File already exists. Use \"!saveRecord overwrite\" to overwrite file.");
             }
             FileOutputStream fos = new FileOutputStream(f);
@@ -606,11 +666,13 @@ public class racesim extends MultiModule {
             
             ArrayList<WayPoint> waypoints = rec.getWaypoints();
             if(waypoints == null || waypoints.isEmpty()) {
+                // Nothing to save. Should perhaps move this upwards.
                 bos.close();
                 fos.close();
                 throw new RaceSimException("No waypoints found in recording.");
             }
             
+            // Version number first, followed by 18-byte wide fields. 
             bos.write(VERSION);
             ByteArray bArray = new ByteArray(18);
             for(WayPoint wp : waypoints) {
@@ -645,45 +707,109 @@ public class racesim extends MultiModule {
     /*
      * Helper classes.
      */
+    /**
+     * Main storage class that will hold basic or detailed information in regard to the recordings.
+     * @author Trancid
+     *
+     */
     private class Record extends RecordHeader {
-        ArrayList<WayPoint> waypoints;
+        ArrayList<WayPoint> waypoints;  // Contains a list of waypoints in order of which they should fire.
         
+        /**
+         * Basic constructor.<p>
+         * Sets the main id/tag and a default ship type. Also initializes the internal {@link ArrayList}.
+         * @param tag The tag that will be used for this class. Case sensitive!
+         */
         public Record(String tag) {
             super(tag);
             this.ship = Ship.INTERNAL_WARBIRD;
             waypoints = new ArrayList<WayPoint>();
         }
 
+        /**
+         * Inherited constructor.<p>
+         * Expands a basic {@link RecordHeader} into a full Record.
+         * @param rh The RecordHeader that is used as a base.
+         */
         public Record(RecordHeader rh) {
             super(rh.getTag(), rh.getRacer(), rh.getShip(), rh.getLength());
             this.waypoints = new ArrayList<WayPoint>();
         }
         
+        /**
+         * Full constructor.<p>
+         * Sets every detail there is and initializes the main internal {@link ArrayList}s.
+         * @param tag Main ID/tag/name for this record. Case sensitive!
+         * @param racer Name of the racer who has been recorded.
+         * @param ship Ship type according to INTERNAL numbering. (0=WB .. 7=Shark, 8=Spectator)
+         * @param length Length of the recording in milliseconds.
+         */
         public Record(String tag, String racer, short ship, int length) {
             super(tag, racer, ship, length);
             this.waypoints = new ArrayList<WayPoint>();
         }
 
+        /**
+         * Adds all members of type {@link WayPoint} from an {@link ArrayList} to the internal list.
+         * @param waypoints ArrayList with members of type WayPoint. 
+         */
         public void setWaypoints(ArrayList<WayPoint> waypoints) {
             this.waypoints.addAll(waypoints);
         }
         
+        /**
+         * Retrieves a handle to the internally stored list of way-points.
+         * @return A reference to this class' way-points.
+         */
         public ArrayList<WayPoint> getWaypoints() {
             return this.waypoints;
         }
+        
+        /**
+         * A safe method to retrieve the delta T of a way-point at the specified index of the internal list.
+         * Useful for when you are unsure if the index will be out of bounds.
+         * @param index Index of the way-point you want to retrieve.
+         * @return The accompanied delta T between this and the previous way-point in milliseconds or 150ms when not present.
+         */
+        public int getDT(int index) {
+            if(index >= 0 && index < this.waypoints.size()) {
+                return this.waypoints.get(index).getDT();
+            } else {
+                return 150;
+            }
+        }
     }
     
+    /**
+     * This class is the brains of the {@link Record} class. It is separated from the body to
+     * minimize the memory footprint when indexing the data of the previously stored races.<p>
+     * This class itself holds basic, general information in regard to recorded races like
+     * the name and ship type.
+     * @author Trancid
+     *
+     */
     private class RecordHeader {
-        String tag;
-        String racerName;
-        short ship;
-        int length;
+        String tag;         // The tag/id/name this object will go by when a user wants to access its contents. Case sensitive!
+        String racerName;   // The name of the racer who was originally stalked to produce the data.
+        short ship;         // The ship the racer was in at the time of recording according to the INTERNAL numbering.
+        int length;         // The length/duration of the recording in milliseconds.
         
+        /**
+         * Default constructor of a basic, empty class. Only sets tag and ship-type.
+         * @param tag The tag this record will go by. Case sensitive!
+         */
         public RecordHeader(String tag) {
             this.tag = tag;
             this.ship = Ship.INTERNAL_WARBIRD;
         }
         
+        /**
+         * Full constructor.
+         * @param tag The tag this record will go by. Case sensitive!
+         * @param racer The name of the racer.
+         * @param ship The ship of the racer according to internal numbering. 0=Warbird ... 7=Shark, 8=Spectator
+         * @param length
+         */
         public RecordHeader(String tag, String racer, short ship, int length) {
             this.tag = tag;
             this.racerName = racer;
@@ -691,34 +817,64 @@ public class racesim extends MultiModule {
             this.length = length;
         }
         
-        public void setRacer(String racer) {
-            this.racerName = racer;
-        }
-        
-        public void setShip(short ship) {
-            this.ship = ship;
-        }
-        
-        public void setLength(int length) {
-            this.length = length;
-        }
-        
+        /*
+         * Getters and setters.
+         */
+        /**
+         * @return Tag of this object.
+         */
         public String getTag() {
             return this.tag;
         }
         
+        /**
+         * @return Name of the original racer.
+         */
         public String getRacer() {
             return this.racerName;
         }
         
+        /**
+         * @return Ship type according to INTERNAL numbering.
+         */
         public short getShip() {
             return this.ship;
         }
         
+        /**
+         * @return Duration of the recording.
+         */
         public int getLength() {
             return this.length;
         }
-                
+        
+        /**
+         * Sets the racer's name.
+         * @param racer Racer's name.
+         */
+        public void setRacer(String racer) {
+            this.racerName = racer;
+        }
+        
+        /**
+         * Sets the ship type.
+         * @param ship Ship type according to INTERNAL numbering.
+         */
+        public void setShip(short ship) {
+            this.ship = ship;
+        }
+        
+        /**
+         * Sets the length of the recording.
+         * @param length Duration in milliseconds.
+         */
+        public void setLength(int length) {
+            this.length = length;
+        }
+
+        /**
+         * Good old customized toString method, mainly used as formatting for writing to files.
+         */
         public String toString() {
             String output = this.tag + '\0'
                     + this.racerName + '\0'
@@ -729,17 +885,31 @@ public class racesim extends MultiModule {
         }
     }
     
+    /**
+     * This class makes up the body of the {@link Record} class through an {@link ArrayList}.<p>
+     * It holds a single waypoint with the nescessary information to make the bot's movement look real.
+     * Technically, only the x- and y-coordinate, x- and y-speed and the rotation/direction are needed.
+     * The other parameters are just to make it look as real as possible, by making the info sent with
+     * the packet as complete as possible.
+     * @author Trancid
+     *
+     */
     private class WayPoint {
-        private short wp_x;
-        private short wp_y;
-        private short wp_vx;
-        private short wp_vy;
-        private byte wp_dir;
-        private byte wp_tog;
-        private short wp_ene;
-        private short wp_bty;
-        private int wp_dt;
+        private short wp_x;     // X-coordinate in pixels.
+        private short wp_y;     // Y-coordinate in pixels.
+        private short wp_vx;    // Horizontal speed in pixels/10 sec.
+        private short wp_vy;    // Vertical speed in pixels/10 sec.
+        private byte wp_dir;    // Direction/heading/rotation (0~39, 1 point being 40/360 degrees, clockwise from top.)
+        private byte wp_tog;    // Set of togglables, see the PlayerPosition packet/event for details.
+        private short wp_ene;   // Current energy level.
+        private short wp_bty;   // Current bounty.
+        private int wp_dt;      // Time that has expired since the previous waypoint, converted to milliseconds.
         
+        /**
+         * Constructor
+         * @param event PlayerPosition event that contains the information that needs to be logged.
+         * @param timestamp Timestamp of the previous log. Used to determine the delta T.
+         */
         public WayPoint(PlayerPosition event, int timestamp) {
             wp_x = event.getXLocation();
             wp_y = event.getYLocation();
@@ -751,16 +921,31 @@ public class racesim extends MultiModule {
             wp_bty = event.getBounty();
             
             if(timestamp == 0) {
+                // First waypoint of the series.
                 wp_dt = 0;
             } else if(event.getTimeStamp() < timestamp ) {
                 // Overflow scenario
                 wp_dt = (65535 + event.getTimeStamp() - timestamp) * 10;
             } else {
+                // Normal situation.
                 wp_dt = (event.getTimeStamp() - timestamp) * 10;
                 
             }
         }
         
+        /**
+         * Constructor used when manually setting all the parameters. For example, when reading the data back
+         * from a file instead of from a position packet.
+         * @param x X-coordinate in pixels.
+         * @param y Y-coordinate in pixels.
+         * @param vX X-velocity in pixels/10 sec.
+         * @param vY Y-velocity in pixels/10 sec.
+         * @param direction Heading/direction/rotation in points (0~39, 1 point == 40/360 degree, starting north, going clockwise.)
+         * @param toggles List of togglables, see {@link PlayerPosition} for details.
+         * @param energy Current energy level.
+         * @param bounty Current bounty.
+         * @param dT Time past since previous waypoint in milliseconds.
+         */
         public WayPoint(short x, short y, short vX, short vY, byte direction, byte toggles, short energy, short bounty, int dT) {
             wp_x = x;
             wp_y = y;
@@ -773,42 +958,75 @@ public class racesim extends MultiModule {
             wp_dt = dT;
         }
 
+        /*
+         * Getters
+         */
+        /**
+         * @return X-coordinate in pixels.
+         */
         public short getX() {
             return wp_x;
         }
 
+        /**
+         * @return Y-coordinate in pixels.
+         */
         public short getY() {
             return wp_y;
         }
 
+        /**
+         * @return X-velocity in pixels/10 sec.
+         */
         public short getVx() {
             return wp_vx;
         }
 
+        /**
+         * @return Y-velocity in pixels/10 sec.
+         */
         public short getVy() {
             return wp_vy;
         }
 
+        /**
+         * @return Rotation in points.
+         */
         public byte getDirection() {
             return wp_dir;
         }
         
+        /**
+         * @return Bitfield containing togglables.
+         */
         public byte getToggables() {
             return wp_tog;
         }
         
+        /**
+         * @return Energy level.
+         */
         public short getEnergy() {
             return wp_ene;
         }
         
+        /**
+         * @return Bounty.
+         */
         public short getBounty() {
             return wp_bty;
         }
 
+        /**
+         * @return Time between this waypoint and the previous waypoint in milliseconds.
+         */
         public int getDT() {
             return wp_dt;
         }
         
+        /**
+         * Old toString function. Was used in old storage format, now is only used for debugging purposes.
+         */
         public String toString() {
             return (this.wp_x
                     + ":" + this.wp_y
@@ -822,34 +1040,67 @@ public class racesim extends MultiModule {
         }
     }
     
+    /**
+     * This class takes care of the replaying of the data.
+     * <p>
+     * As the base of the data, the ArrayList from m_simData.getWaypoints() is used.
+     * As long as there is data in that ArrayList, it will initiate a new timer to fire for the next waypoint.
+     * Whenever the ArrayList runs out of data or the bot is put into spectator mode, this class will stop initiating
+     * new timers, and thus ending the loop.
+     * @author Trancid
+     *
+     */
     private class MoveTask extends TimerTask {
         private int index;
         
+        /**
+         * MoveTask constructor.
+         * @param index Index of the waypoint that is to be used in the move command.
+         */
         public MoveTask(int index) {
             this.index = index;
         }
         
+        /**
+         * Depending on the situation, either stops the bot in its tracks or
+         * moves the bot to the next waypoint.
+         */
         @Override
         public void run() {
-            if(!m_racing || m_simData.getWaypoints().size() <= 0 || index >= m_simData.getWaypoints().size()) {
+            // We've been put in spectator mode. Kill the speed to prevent drifting off.
+            if(!m_racing) {
                 m_botAction.getShip().move(m_botAction.getShip().getX(), m_botAction.getShip().getY(), 0, 0);
                 return;
             }
             
-            WayPoint wp = m_simData.getWaypoints().get(index);
-            m_botAction.getShip().move(
-                    wp.getDirection(),
-                    wp.getX(),
-                    wp.getY(),
-                    wp.getVx(),
-                    wp.getVy(),
-                    wp.getToggables(),
-                    wp.getEnergy(),
-                    wp.getBounty());
-            m_botAction.scheduleTask(new MoveTask(++index), wp.getDT());
+            try {
+                // Load the next waypoint we need to visit, send out the move command and schedule the next waypoint.
+                WayPoint wp = m_simData.getWaypoints().get(index);
+                m_botAction.getShip().move(
+                        wp.getDirection(),
+                        wp.getX(),
+                        wp.getY(),
+                        wp.getVx(),
+                        wp.getVy(),
+                        wp.getToggables(),
+                        wp.getEnergy(),
+                        wp.getBounty());
+                // The dT of the next waypoint will tell us how long we need to wait to fire the next one.
+                m_botAction.scheduleTask(new MoveTask(++index), m_simData.getDT(index));
+            } catch(IndexOutOfBoundsException ioobe) {
+                // No more data in the array. Kill the bot's speed to prevent it from drifting off.
+                m_botAction.getShip().move(m_botAction.getShip().getX(), m_botAction.getShip().getY(), 0, 0);
+                return;
+            }
         }
     }
     
+    /**
+     * This class is used to easily propagate error messages throughout the entire bot. The main usage is in the
+     * file parsing commands.
+     * @author Trancid
+     *
+     */
     private class RaceSimException extends Exception {
         /**
          * Auto generated serial ID.
