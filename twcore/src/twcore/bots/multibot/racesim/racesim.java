@@ -32,7 +32,7 @@ public class racesim extends MultiModule {
     private static final String PATH = "twcore/bots/multibot/racesim/records/";
     private static final byte VERSION = 0x2;
 
-    private CommandInterpreter m_commandInterpreter;
+    private CommandInterpreter m_cI;
     private HashMap<String,RecordHeader> m_index;
     private ArrayList<WayPoint> m_recData;
     
@@ -59,23 +59,23 @@ public class racesim extends MultiModule {
 
     @Override
     public void init() {
-        m_commandInterpreter = new CommandInterpreter(m_botAction);
+        m_cI = new CommandInterpreter(m_botAction);
         registerCommands();
     }
 
     public void registerCommands() {
         int acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
-        m_commandInterpreter.registerCommand("!follow",     acceptedMessages, this, "cmd_follow",           OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!trigger",    acceptedMessages, this, "cmd_trigger",          OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!startrec",   acceptedMessages, this, "cmd_startRecording",   OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!stoprec",    acceptedMessages, this, "cmd_stopRecording",    OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!storedata",  acceptedMessages, this, "cmd_storeData",        OperatorList.SMOD_LEVEL);
-        m_commandInterpreter.registerCommand("!loadindex",  acceptedMessages, this, "cmd_loadIndex",        OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!listraces",  acceptedMessages, this, "cmd_listRaces",        OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!loadrace",   acceptedMessages, this, "cmd_loadRace",         OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!ship",       acceptedMessages, this, "cmd_ship",             OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!spec",       acceptedMessages, this, "cmd_spec",             OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!blaat",      acceptedMessages, this, "cmd_debug",            OperatorList.SYSOP_LEVEL);
+        m_cI.registerCommand("!follow",     acceptedMessages, this, "cmd_follow",           OperatorList.ER_LEVEL);
+        m_cI.registerCommand("!trigger",    acceptedMessages, this, "cmd_trigger",          OperatorList.ER_LEVEL);
+        m_cI.registerCommand("!startrec",   acceptedMessages, this, "cmd_startRecording",   OperatorList.ER_LEVEL);
+        m_cI.registerCommand("!stoprec",    acceptedMessages, this, "cmd_stopRecording",    OperatorList.ER_LEVEL);
+        m_cI.registerCommand("!storedata",  acceptedMessages, this, "cmd_storeData",        OperatorList.SMOD_LEVEL);
+        m_cI.registerCommand("!loadindex",  acceptedMessages, this, "cmd_loadIndex",        OperatorList.ER_LEVEL);
+        m_cI.registerCommand("!listraces",  acceptedMessages, this, "cmd_listRaces",        OperatorList.ER_LEVEL);
+        m_cI.registerCommand("!loadrace",   acceptedMessages, this, "cmd_loadRace",         OperatorList.ER_LEVEL);
+        m_cI.registerCommand("!ship",       acceptedMessages, this, "cmd_ship", "test2",            OperatorList.ER_LEVEL);
+        m_cI.registerCommand("!spec",       acceptedMessages, this, "cmd_spec", "test",            OperatorList.ER_LEVEL);
+        m_cI.registerHelpCommand(acceptedMessages, this);
     }
     
     @Override
@@ -86,7 +86,7 @@ public class racesim extends MultiModule {
     
     @Override
     public void handleEvent(Message event) {
-        m_commandInterpreter.handleEvent(event);
+        m_cI.handleEvent(event);
         
         if(event.getMessageType() == Message.ARENA_MESSAGE) {
             decideAction(event.getMessage());
@@ -128,26 +128,6 @@ public class racesim extends MultiModule {
             m_botAction.scheduleTask(new MoveTask(0), 0);
             m_racing = true;
         }
-    }
-    
-    public void cmd_debug(String name, String message) {
-        int i;
-        if(message == null || message.isEmpty()) {
-            m_botAction.sendSmartPrivateMessage(name, "Provide parameter.");
-        }
-        
-        try {
-            i = Integer.parseInt(message);
-            
-            if(m_simData == null || !m_simData.contains(i)) {
-                m_botAction.sendSmartPrivateMessage(name, "No simData present.");
-            } else {
-                m_botAction.sendSmartPrivateMessage(name, "Contents: " + m_simData.getWaypoint(i).toString());
-            }
-        } catch (NumberFormatException nfe) {
-            m_botAction.sendSmartPrivateMessage(name, "Not a number");
-        }
-
     }
     
     /**
@@ -342,7 +322,7 @@ public class racesim extends MultiModule {
             m_botAction.sendSmartPrivateMessage(name, "Recording mode deactivated. Disabling logging of data.");
             m_botAction.sendSmartPrivateMessage(name, "Race duration: " + Tools.getTimeDiffString(m_startTime, false));
             if(m_recData != null && !m_recData.isEmpty()) {
-                m_record.setLength((int) (m_timeStamp - m_startTime) / 1000);
+                m_record.setLength((int) (System.currentTimeMillis() - m_startTime));
                 m_record.setWaypoints(m_recData);
             }
         }
