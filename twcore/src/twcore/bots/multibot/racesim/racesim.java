@@ -64,18 +64,19 @@ public class racesim extends MultiModule {
     }
 
     public void registerCommands() {
-        int acceptedMessages = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
-        m_cI.registerCommand("!follow",     acceptedMessages, this, "cmd_follow",           OperatorList.ER_LEVEL);
-        m_cI.registerCommand("!trigger",    acceptedMessages, this, "cmd_trigger",          OperatorList.ER_LEVEL);
-        m_cI.registerCommand("!startrec",   acceptedMessages, this, "cmd_startRecording",   OperatorList.ER_LEVEL);
-        m_cI.registerCommand("!stoprec",    acceptedMessages, this, "cmd_stopRecording",    OperatorList.ER_LEVEL);
-        m_cI.registerCommand("!storedata",  acceptedMessages, this, "cmd_storeData",        OperatorList.SMOD_LEVEL);
-        m_cI.registerCommand("!loadindex",  acceptedMessages, this, "cmd_loadIndex",        OperatorList.ER_LEVEL);
-        m_cI.registerCommand("!listraces",  acceptedMessages, this, "cmd_listRaces",        OperatorList.ER_LEVEL);
-        m_cI.registerCommand("!loadrace",   acceptedMessages, this, "cmd_loadRace",         OperatorList.ER_LEVEL);
-        m_cI.registerCommand("!ship",       acceptedMessages, this, "cmd_ship", "test2",            OperatorList.ER_LEVEL);
-        m_cI.registerCommand("!spec",       acceptedMessages, this, "cmd_spec", "test",            OperatorList.ER_LEVEL);
-        m_cI.registerHelpCommand(acceptedMessages, this);
+        int accepts = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
+        int access = OperatorList.ER_LEVEL;
+        m_cI.registerCommand("!follow",     accepts, this, "cmd_follow",         access);
+        m_cI.registerCommand("!trigger",    accepts, this, "cmd_trigger",        access);
+        m_cI.registerCommand("!startrec",   accepts, this, "cmd_startRecording", access);
+        m_cI.registerCommand("!stoprec",    accepts, this, "cmd_stopRecording",  access);
+        m_cI.registerCommand("!storedata",  accepts, this, "cmd_storeData",      access);
+        m_cI.registerCommand("!loadindex",  accepts, this, "cmd_loadIndex", "test",      access);
+        m_cI.registerCommand("!listraces",  accepts, this, "cmd_listRaces", "Tralala",     access);
+        m_cI.registerCommand("!loadrace",   accepts, this, "cmd_loadRace",       access);
+        m_cI.registerCommand("!ship",       accepts, this, "cmd_ship",           access);
+        m_cI.registerCommand("!spec",       accepts, this, "cmd_spec",           access);
+        //m_cI.registerHelpCommand(accepts, this);
     }
     
     @Override
@@ -445,7 +446,7 @@ public class racesim extends MultiModule {
                 m_indexLoaded = true;
                 return;
             }
-            m_botAction.sendSmartPrivateMessage("ThePAP", "[DEBUG] Line: " + line + "; Version: " + Byte.parseByte(line) + "; " + Integer.parseInt(line));
+
             switch(Byte.parseByte(line)) {
             case VERSION:
                 String[] args;
@@ -453,7 +454,6 @@ public class racesim extends MultiModule {
                     args = line.split("\0", 4);
                     if(args.length != 4) {
                         // Malformed data found. For now, just skip it.
-                        m_botAction.sendSmartPrivateMessage("ThePAP", "[DEBUG] Arg count invalid: " + args.length);
                         continue;
                     }
                     try {
@@ -464,8 +464,6 @@ public class racesim extends MultiModule {
                                 Integer.parseInt(args[3])));
                     } catch (NumberFormatException nfe) {
                         // Malformed data found. For now, just skip it.
-                        m_botAction.sendSmartPrivateMessage("ThePAP", "[DEBUG] Error in args[2] (" + args[2] + ") or [3] (" + args[3] + ")");
-                        
                         continue;
                     }
                 }
@@ -672,18 +670,6 @@ public class racesim extends MultiModule {
         
         public ArrayList<WayPoint> getWaypoints() {
             return this.waypoints;
-        }
-
-        public WayPoint getWaypoint(int index) {
-            if(contains(index)) {
-                return this.waypoints.get(index);
-            } else {
-                return null;
-            }
-        }
-        
-        public boolean contains(int index) {
-            return (this.waypoints != null && !this.waypoints.isEmpty() && this.waypoints.size() < index && index >= 0);
         }
     }
     
