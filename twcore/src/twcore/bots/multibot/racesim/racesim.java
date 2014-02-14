@@ -697,7 +697,7 @@ public class racesim extends MultiModule {
         }
 
         public WayPoint getWaypoint(int index) {
-            if(this.waypoints.contains(index)) {
+            if(index >= 0 && index < this.waypoints.size()) {
                 return this.waypoints.get(index);
             } else {
                 return null;
