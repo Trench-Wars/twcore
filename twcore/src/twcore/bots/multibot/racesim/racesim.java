@@ -498,7 +498,7 @@ public class racesim extends MultiModule {
             FileWriter fw = new FileWriter(f);
             BufferedWriter bw = new BufferedWriter(fw);
             
-            bw.write(VERSION);
+            bw.write(Byte.toString(VERSION));
             bw.newLine();
             
             for(RecordHeader rh : m_index.values()) {
@@ -843,7 +843,7 @@ public class racesim extends MultiModule {
         
         @Override
         public void run() {
-            if(!m_racing || !m_simData.contains(index)) {
+            if(!m_racing || m_simData == null || !m_simData.contains(index)) {
                 m_botAction.getShip().move(m_botAction.getShip().getX(), m_botAction.getShip().getY(), 0, 0);
                 return;
             }
