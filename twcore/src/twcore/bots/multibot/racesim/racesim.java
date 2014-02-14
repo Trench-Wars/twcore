@@ -320,7 +320,7 @@ public class racesim extends MultiModule {
             m_botAction.sendSmartPrivateMessage(name, "Recording mode deactivated. Disabling logging of data.");
             m_botAction.sendSmartPrivateMessage(name, "Race duration: " + Tools.getTimeDiffString(m_startTime, false));
             if(m_recData != null && !m_recData.isEmpty()) {
-                m_record.setLength((int) (m_timeStamp - m_startTime));
+                m_record.setLength((int) (m_timeStamp - m_startTime) / 1000);
                 m_record.setWaypoints(m_recData);
             }
         }
@@ -546,15 +546,15 @@ public class racesim extends MultiModule {
                 while((len = bis.read(data)) == 18) {
                     bArray = new ByteArray(data);
                     waypoints.add(new WayPoint(
-                            bArray.readShort(0),
-                            bArray.readShort(2),
-                            bArray.readShort(4),
-                            bArray.readShort(6),
+                            bArray.readLittleEndianShort(0),
+                            bArray.readLittleEndianShort(2),
+                            bArray.readLittleEndianShort(4),
+                            bArray.readLittleEndianShort(6),
                             bArray.readByte(8),
                             bArray.readByte(9),
-                            bArray.readShort(10),
-                            bArray.readShort(12),
-                            bArray.readInt(14)));
+                            bArray.readLittleEndianShort(10),
+                            bArray.readLittleEndianShort(12),
+                            bArray.readLittleEndianInt(14)));
                 }
                 if(len != -1 && len != 18) {
                     bis.close();
