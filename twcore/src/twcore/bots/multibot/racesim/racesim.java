@@ -568,15 +568,15 @@ public class racesim extends MultiModule {
                 while((len = bis.read(data)) == 18) {
                     bArray = new ByteArray(data);
                     m_posData.add(new WayPoint(
-                            bArray.readLittleEndianShort(0),
-                            bArray.readLittleEndianShort(2),
-                            bArray.readLittleEndianShort(4),
-                            bArray.readLittleEndianShort(6),
+                            bArray.readShort(0),
+                            bArray.readShort(2),
+                            bArray.readShort(4),
+                            bArray.readShort(6),
                             bArray.readByte(8),
                             bArray.readByte(9),
-                            bArray.readLittleEndianShort(10),
-                            bArray.readLittleEndianShort(12),
-                            bArray.readLittleEndianInt(14)));
+                            bArray.readShort(10),
+                            bArray.readShort(12),
+                            bArray.readInt(14)));
                 }
                 if(len != -1 && len != 18) {
                     bis.close();
