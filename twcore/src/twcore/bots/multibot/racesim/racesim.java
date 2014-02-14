@@ -27,42 +27,103 @@ import twcore.core.util.ByteArray;
 import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
+/**
+ * A multi-purpose MultiBot module.<p>
+ * This module allows you to record the movement of a specific player, store the data
+ * and replay it at any point in the future. The original idea was suggested by Fork.
+ * The bot itself will trigger on certain arena messages, allowing it to mimic a player completely.
+ * <p>
+ * At this moment in time, the module has barely undergone proper testing and is therefor marked
+ * to be in beta state. The order in which this module is to be used is as follows:
+ * <ul><b>Recording</b>
+ *  <li>Load the database with either !loadindex or !listraces;
+ *  <li>Set a trigger line with !trigger;
+ *  <li>Set a player to follow with !follow;
+ *  <li>Ensure the player is in game, in the correct ship;
+ *  <li>Set the name of the record and set the bot's state to hot with !startrec;
+ *  <li>*arena the trigger to start the recording;
+ *  <li>Stop the recording when the run is done with !stoprec;
+ *  <li>Store the recording with !storedata.
+ * </ul>
+ * <ul><b>Replaying</b>
+ *  <li>Load the database with either !loadindex or !listraces;
+ *  <li>Choose the race you want to replay with !loadrace;
+ *  <li>Put the bot in a ship with !ship;
+ *  <li>If not set yet, provide a trigger with !trigger;
+ *  <li>*arena the trigger to start the replay;
+ *  <li>After the race is done, stop the replay by putting the bot into spectator mode with !spec.
+ * </ul>
+ * @author Trancid<p>
+ *
+ * To-Do list:<br>
+ * TODO Allow the bot record while racing;<br>
+ * TODO Allow recording of several players at the same time;<br>
+ * TODO Alter !spec command so it won't conflict with the always loaded spec module;<br>
+ * TODO Correct energy level at the end of the replay;<br>
+ * TODO Debug this module properly;<br>
+ * TODO Implement a proper !help and how-to menu;<br>
+ * TODO Smoothen out the replay functionality;<br>
+ * TODO Write guide on staff forum;<br>
+ * TODO Write some nice events that use this functionality.
+ */
 public class racesim extends MultiModule {
     
+    /** Relative path to the folder where the recordings are to be saved. */
     private static final String PATH = "twcore/bots/multibot/racesim/records/";
+    /**
+     * Version number for the storage system.<br>
+     * It is for the best to only adjust this when you are redoing the storage format of either
+     * the index file and/or the records.<p>
+     * <b>NOTE: When changing this, please adjust the parsing/reading/writing functions in:</b>
+     * <ul>
+     *  <li>{@link #loadIndex()};
+     *  <li>{@link #saveIndex(Record)};
+     *  <li>{@link #readRecord()};
+     *  <li>{@link #writeRecord(Record, boolean)}.
+     * </ul>
+     * This is to ensure backwards compatibility.
+     */
     private static final byte VERSION = 0x2;
 
-    private CommandInterpreter m_cI;
-    private HashMap<String,RecordHeader> m_index;
-    private ArrayList<WayPoint> m_recData;
+    private CommandInterpreter m_cI;                // Used to register and handle commands.
+    private HashMap<String,RecordHeader> m_index;   // Holds the 'headers' of previously recorded races for an arena.
+    private ArrayList<WayPoint> m_recData;          // Holds the way-points of the currently being recorded race.
     
-    private Record m_record;
-    private Record m_simData;
+    private Record m_record;                        // Holds the general info for the currently being recorded race.
+    private Record m_simData;                       // Holds the replay data for the race the bot will simulate.
     
-    private String m_playerName = "";
-    private String m_trigger = "";
+    private String m_playerName = "";               // Temporal storage of the name of the player who's being recorded.
+    private String m_trigger = "";                  // The *arena message the bot will trigger on.
     
-    private long m_startTime = 0;
-    private int m_timeStamp = 0;
+    private long m_startTime = 0;                   // Point in time at which the bot started recording a race.
+    private int m_timeStamp = 0;                    // Point in time of the last recorded way-point.
     
-    private short m_trackID = -1;
+    private short m_trackID = -1;                   // Player ID of the player who's being recorded.
     
-    private boolean m_logData = false;
-    private boolean m_racing = false;
-    private boolean m_recording = false;
-    private boolean m_indexLoaded = false;
+    private boolean m_logData = false;              // True if the bot is not yet recording, but waiting for its trigger.
+    private boolean m_racing = false;               // True if the bot is in a ship and ready to replay simulated data.
+    private boolean m_recording = false;            // True when the bot is actually capturing data.
+    private boolean m_indexLoaded = false;          // Whether or not the index file containing the headers is loaded.
     
+    /**
+     * Empty, for now.
+     */
     @Override
     public void cancel() {
-        // TODO Auto-generated method stub
     }
 
+    /**
+     * Initializes the module.
+     */
     @Override
     public void init() {
         m_cI = new CommandInterpreter(m_botAction);
         registerCommands();
     }
 
+    /**
+     * Registers all the commands.
+     */
     public void registerCommands() {
         int accepts = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         int access = OperatorList.ER_LEVEL;
@@ -71,20 +132,28 @@ public class racesim extends MultiModule {
         m_cI.registerCommand("!startrec",   accepts, this, "cmd_startRecording", access);
         m_cI.registerCommand("!stoprec",    accepts, this, "cmd_stopRecording",  access);
         m_cI.registerCommand("!storedata",  accepts, this, "cmd_storeData",      access);
-        m_cI.registerCommand("!loadindex",  accepts, this, "cmd_loadIndex", "test",      access);
-        m_cI.registerCommand("!listraces",  accepts, this, "cmd_listRaces", "Tralala",     access);
+        m_cI.registerCommand("!loadindex",  accepts, this, "cmd_loadIndex",      access);
+        m_cI.registerCommand("!listraces",  accepts, this, "cmd_listRaces",      access);
         m_cI.registerCommand("!loadrace",   accepts, this, "cmd_loadRace",       access);
         m_cI.registerCommand("!ship",       accepts, this, "cmd_ship",           access);
         m_cI.registerCommand("!spec",       accepts, this, "cmd_spec",           access);
         //m_cI.registerHelpCommand(accepts, this);
     }
     
+    /**
+     * Default event requester.
+     * @param eventRequester Default event requester.
+     */
     @Override
     public void requestEvents(ModuleEventRequester eventRequester) {
         eventRequester.request(this, EventRequester.PLAYER_POSITION);
         eventRequester.request(this, EventRequester.ARENA_JOINED);
     }
     
+    /**
+     * Passes the message event to the command interpreter and to the action decider.
+     * @param event The original Message event.
+     */
     @Override
     public void handleEvent(Message event) {
         m_cI.handleEvent(event);
@@ -94,15 +163,24 @@ public class racesim extends MultiModule {
         }
     }
     
+    /**
+     * Although unlikely that this situation will ever happen, if the module is already loaded and
+     * the bot changes to another arena, it will attempt to update the list of available recordings.
+     * @param event The original ArenaJoined event.
+     */
     @Override
     public void handleEvent(ArenaJoined event) {
         try {
             loadIndex();
         } catch (RaceSimException e) {
-            // Do nothing.
+            // Do nothing. If anything fails, the player will just have to do the loading manually.
         }
     }
     
+    /**
+     * If a position update is received for a player that is being tracked, then store the data.
+     * @param event Original PlayerPosition event.
+     */
     @Override
     public void handleEvent(PlayerPosition event) {
         if(m_logData && event.getPlayerID() == m_trackID) {
@@ -118,6 +196,11 @@ public class racesim extends MultiModule {
             
     }
 
+    /**
+     * Decides which action the bot needs to take, if any.<p>
+     * If a valid trigger is found, then the bot will either start recording or replaying a record, or do nothing.
+     * @param msg The original message that got arena'd.
+     */
     public void decideAction(String msg) {
         if(m_trigger == null || m_trigger.isEmpty() || !m_trigger.equalsIgnoreCase(msg))
             return;
@@ -149,14 +232,16 @@ public class racesim extends MultiModule {
     /**
      * Displays the list of stored races.
      * @param name Issuer of the command.
-     * @param message Command parameters.
+     * @param message Unused at the moment.
      */
     public void cmd_listRaces(String name, String message) {
+        // Prevent the bot from being kicked for message flooding.
         if(m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode.");
             return;
         } 
         
+        // Try to load the index.
         if(!m_indexLoaded) {
             try {
                 loadIndex();
@@ -169,16 +254,20 @@ public class racesim extends MultiModule {
         if(m_index == null || m_index.isEmpty()) {
             m_botAction.sendSmartPrivateMessage(name, "There appear to be no saved records for this arena. Be the first to add one!");
         } else {
+            // Finally, display the list.
+            int i = 0;
             m_botAction.sendSmartPrivateMessage(name, "| Name                | Racer name          | Ship      | Length   |");
             for(RecordHeader rec : m_index.values()) {
-                // | 19 | 19 | 9 | 8 |
+                // Formatting: | 19 | 19 | 9 | 8 |
                 m_botAction.sendSmartPrivateMessage(name,
                         "| " + Tools.formatString(rec.getTag(), 19)
                         + " | " + Tools.formatString(rec.getRacer(), 19)
                         + " | " + Tools.formatString(Tools.shipName(rec.getShip() + 1), 9)
                         + " | " + Tools.rightString(Tools.getTimeString(rec.getLength(), true), 8)
                         + " |");
+                i++;
             }
+            m_botAction.sendSmartPrivateMessage(name, "Displayed a total of " + i + " records for this arena.");
         }
     }
     
@@ -198,7 +287,7 @@ public class racesim extends MultiModule {
     /**
      * Loads logged data for the current arena from disk.
      * @param name Issuer of command.
-     * @param message Original message.
+     * @param message Name of the recording to load.
      */
     public void cmd_loadRace(String name, String message) {
         if(m_logData || m_recording) {
@@ -228,12 +317,20 @@ public class racesim extends MultiModule {
         }
     }
 
+    /**
+     * This command puts the bot in a ship. Depending if any previous data has been loaded,
+     * the correct ship will be chosen. Otherwise, the ship specified by the user will be used.
+     * Additionally the bot will be put at the initial location in the recording, if this information is available.
+     * @param name Issuer of the command.
+     * @param message Optionally the ship type according to in-game numbering. (1=WB .. 8=Shark, 0=Spectator)
+     */
     public void cmd_ship(String name, String message) {
         if(m_recording || m_logData) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] Please disable recording mode first.");
         } else if(m_racing) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] Cannot change ships while racing.");
         } else if((message == null || message.isEmpty()) && m_simData != null) {
+            // When possible, put the bot automatically in the ship that was used in the recording.
             m_botAction.spectatePlayerImmediately(-1);
             m_botAction.getShip().setShip(m_simData.getShip());
             if(!m_simData.getWaypoints().isEmpty())
@@ -261,7 +358,7 @@ public class racesim extends MultiModule {
     /**
      * Puts the bot into spectator mode. This state is needed for several recording functions.
      * @param name Issuer of the command.
-     * @param message Original message.
+     * @param message Unused at the moment.
      */
     public void cmd_spec(String name, String message) {
         if(m_botAction.getShip().getShip() == Ship.INTERNAL_SPECTATOR) {
@@ -274,10 +371,10 @@ public class racesim extends MultiModule {
     }
     
     /**
-     * Puts the bot in a ready mode where it waits for the trigger to happen.
+     * Puts the bot in a ready mode where it waits for the trigger to happen and assigns an identifier to the recording.
      * When the trigger happens, it will start logging data. 
      * @param name Issuer of command.
-     * @param message Original message.
+     * @param message The tag/identifier for the new record.
      */
     public void cmd_startRecording(String name, String message) {
         if(m_racing || m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
@@ -295,6 +392,15 @@ public class racesim extends MultiModule {
         } else if(!m_indexLoaded) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] Please load the index first with !loadindex or !listraces");
         } else {
+            // Transform any argument past into a suitable name. This basically replace any of the non-mentioned chars in underscores.
+            message = message.replaceAll("[^a-zA-Z0-9_-]+", "_");
+            
+            if(m_index != null && !m_index.isEmpty() && m_index.containsKey(message)) {
+                // Display a warning if the entry already exists.
+                m_botAction.sendSmartPrivateMessage(name, "[WARNING] The name you provided is already used. If you choose save this recording, then the previous record will be erased.");
+            }
+            
+            // Initialize and set the necessary variables.
             m_botAction.spectatePlayer(m_trackID);
             m_recording = true;
             m_recData = new ArrayList<WayPoint>();
@@ -308,7 +414,7 @@ public class racesim extends MultiModule {
     /**
      * Disables the recording mode and stops any logging of data if this is happening.
      * @param name Issuer of command.
-     * @param message Original message.
+     * @param message Ignored, for now.
      */
     public void cmd_stopRecording(String name, String message) {
         if(!m_recording) {
@@ -322,6 +428,7 @@ public class racesim extends MultiModule {
             m_logData = false;
             m_botAction.sendSmartPrivateMessage(name, "Recording mode deactivated. Disabling logging of data.");
             m_botAction.sendSmartPrivateMessage(name, "Race duration: " + Tools.getTimeDiffString(m_startTime, false));
+            // If anything has been recorded, update the needed statistics and the waypoints.
             if(m_recData != null && !m_recData.isEmpty()) {
                 m_record.setLength((int) (System.currentTimeMillis() - m_startTime));
                 m_record.setWaypoints(m_recData);
@@ -367,12 +474,15 @@ public class racesim extends MultiModule {
         }
     }
     
+    /**
+     * Help message place holder.
+     */
     @Override
     public String[] getModHelpMessage() {
         if(m_botAction.getShip().getShip() == Ship.INTERNAL_SPECTATOR) {
             String[] out = {
                     "+------------------------------------------------------------+",
-                    "| RaceSimulator v.0.1                       - author ThePAP  |",
+                    "| RaceSimulator v.0.2                       - author ThePAP  |",
                     "+------------------------------------------------------------+",
                     "| How to use:                                                |",
                     "|   Don't use this yet. Still in beta mode...                |",
@@ -387,6 +497,9 @@ public class racesim extends MultiModule {
         }
     }
 
+    /**
+     * Tells the general module whether or not this module can be unloaded.
+     */
     @Override
     public boolean isUnloadable() {
         return (!m_logData && !m_recording && !m_racing);
