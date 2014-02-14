@@ -289,7 +289,7 @@ public class racesim extends MultiModule {
         } else if(message == null || message.isEmpty()) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] Please specify an identifying name for this record.");
         } else if(!m_indexLoaded) {
-            m_botAction.sendSmartPrivateMessage(name, "[ERROR] Please load the index first with !loadindex or !listindex");
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] Please load the index first with !loadindex or !listraces");
         } else {
             m_botAction.spectatePlayer(m_trackID);
             m_recording = true;
@@ -430,7 +430,7 @@ public class racesim extends MultiModule {
         try {
             File f = new File(filename);
             if(!f.isFile()) {
-                // No index yet, probably means no recordings for this arena yet.
+                m_indexLoaded = true;
                 return;
             }
             
@@ -439,7 +439,7 @@ public class racesim extends MultiModule {
             
             String line = br.readLine();
             if(line == null) {
-                // Empty index file. Act as if it doesn't exist.
+                m_indexLoaded = true;
                 return;
             }
                 
