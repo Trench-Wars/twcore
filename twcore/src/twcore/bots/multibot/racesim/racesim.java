@@ -239,7 +239,7 @@ public class racesim extends MultiModule {
                 readRecord(m_simData);
                 m_botAction.sendSmartPrivateMessage(name, "Succesfully loaded: " + message);
                 m_botAction.sendSmartPrivateMessage(name, "Racer: " + m_simData.getRacer()
-                        + "; Ship: " + Tools.shipName(m_simData.getShip())
+                        + "; Ship: " + Tools.shipName(m_simData.getShip() + 1)
                         + "; Duration: " + Tools.getTimeString(m_simData.getLength(), true)
                         + "; Waypoints: " + m_simData.getWaypoints().size());
             } catch (RaceSimException rse) {
@@ -259,6 +259,8 @@ public class racesim extends MultiModule {
             if(m_simData.getWaypoints() != null && !m_simData.getWaypoints().isEmpty())
                 m_botAction.getShip().move(m_simData.getWaypoint(0).getX(), m_simData.getWaypoint(0).getY(), 0, 0);
             m_botAction.getShip().fire(1);
+        } else if(message == null || message.isEmpty()) {
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] Please provide a valid ship number (1-8).");
         } else {
             try {
                 int shipNumber = Integer.parseInt(message);
