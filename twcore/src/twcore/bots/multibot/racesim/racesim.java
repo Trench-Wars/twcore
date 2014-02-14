@@ -75,6 +75,7 @@ public class racesim extends MultiModule {
         m_commandInterpreter.registerCommand("!loadrace",   acceptedMessages, this, "cmd_loadRace",         OperatorList.ER_LEVEL);
         m_commandInterpreter.registerCommand("!ship",       acceptedMessages, this, "cmd_ship",             OperatorList.ER_LEVEL);
         m_commandInterpreter.registerCommand("!spec",       acceptedMessages, this, "cmd_spec",             OperatorList.ER_LEVEL);
+        m_commandInterpreter.registerCommand("!blaat",      acceptedMessages, this, "cmd_debug",            OperatorList.SYSOP_LEVEL);
     }
     
     @Override
@@ -127,6 +128,26 @@ public class racesim extends MultiModule {
             m_botAction.scheduleTask(new MoveTask(0), 0);
             m_racing = true;
         }
+    }
+    
+    public void cmd_debug(String name, String message) {
+        int i;
+        if(message == null || message.isEmpty()) {
+            m_botAction.sendSmartPrivateMessage(name, "Provide parameter.");
+        }
+        
+        try {
+            i = Integer.parseInt(message);
+            
+            if(m_simData == null || !m_simData.contains(i)) {
+                m_botAction.sendSmartPrivateMessage(name, "No simData present.");
+            }
+            
+            m_botAction.sendSmartPrivateMessage(name, "Contents: " + m_simData.getWaypoint(i).toString());
+        } catch (NumberFormatException nfe) {
+            m_botAction.sendSmartPrivateMessage(name, "Not a number");
+        }
+
     }
     
     /**
@@ -742,7 +763,7 @@ public class racesim extends MultiModule {
             String output = this.tag + '\0'
                     + this.racerName + '\0'
                     + this.ship + '\0'
-                    + this.length;
+                    + Integer.toString(this.length);
             
             return output;
         }
