@@ -72,7 +72,7 @@ public class racesim extends MultiModule {
         m_commandInterpreter.registerCommand("!storedata",  acceptedMessages, this, "cmd_storeData",        OperatorList.SMOD_LEVEL);
         m_commandInterpreter.registerCommand("!loadindex",  acceptedMessages, this, "cmd_loadIndex",        OperatorList.ER_LEVEL);
         m_commandInterpreter.registerCommand("!listraces",  acceptedMessages, this, "cmd_listRaces",        OperatorList.ER_LEVEL);
-        m_commandInterpreter.registerCommand("!loaddata",   acceptedMessages, this, "cmd_loadRace",         OperatorList.ER_LEVEL);
+        m_commandInterpreter.registerCommand("!loadrace",   acceptedMessages, this, "cmd_loadRace",         OperatorList.ER_LEVEL);
         m_commandInterpreter.registerCommand("!ship",       acceptedMessages, this, "cmd_ship",             OperatorList.ER_LEVEL);
         m_commandInterpreter.registerCommand("!spec",       acceptedMessages, this, "cmd_spec",             OperatorList.ER_LEVEL);
     }
@@ -218,7 +218,8 @@ public class racesim extends MultiModule {
                 m_botAction.sendSmartPrivateMessage(name, "Succesfully loaded: " + message);
                 m_botAction.sendSmartPrivateMessage(name, "Racer: " + m_simData.getRacer()
                         + "; Ship: " + Tools.shipName(m_simData.getShip())
-                        + "; Duration: " + Tools.getTimeString(m_simData.getLength(), true));
+                        + "; Duration: " + Tools.getTimeString(m_simData.getLength(), true)
+                        + "; Waypoints: " + m_simData.getWaypoints().size());
             } catch (RaceSimException rse) {
                 m_botAction.sendSmartPrivateMessage(name, "[ERROR] " + rse.getMessage());
             }
@@ -462,6 +463,7 @@ public class racesim extends MultiModule {
                     } catch (NumberFormatException nfe) {
                         // Malformed data found. For now, just skip it.
                         m_botAction.sendSmartPrivateMessage("ThePAP", "[DEBUG] Error in args[2] (" + args[2] + ") or [3] (" + args[3] + ")");
+                        
                         continue;
                     }
                 }
@@ -740,7 +742,7 @@ public class racesim extends MultiModule {
             String output = this.tag + '\0'
                     + this.racerName + '\0'
                     + this.ship + '\0'
-                    + this.length + '\0';
+                    + this.length;
             
             return output;
         }
