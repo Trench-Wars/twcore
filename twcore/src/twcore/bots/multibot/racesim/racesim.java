@@ -133,8 +133,8 @@ public class racesim extends MultiModule {
         int accepts = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         int access = OperatorList.ER_LEVEL;
         m_cI.registerCommand("!about",      accepts, this, "cmd_about",          access);
-        m_cI.registerCommand("!guide",      accepts, this, "cmd_about",          access);
-        m_cI.registerCommand("!info",       accepts, this, "cmd_about",          access);
+        m_cI.registerCommand("!guide",      accepts, this, "cmd_guide",          access);
+        m_cI.registerCommand("!info",       accepts, this, "cmd_info",           access);
         m_cI.registerCommand("!follow",     accepts, this, "cmd_follow",         access);
         m_cI.registerCommand("!trigger",    accepts, this, "cmd_trigger",        access);
         m_cI.registerCommand("!startrec",   accepts, this, "cmd_startRecording", access);
