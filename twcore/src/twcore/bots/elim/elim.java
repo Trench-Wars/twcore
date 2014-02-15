@@ -3,6 +3,7 @@ package twcore.bots.elim;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -77,8 +78,7 @@ public class elim extends SubspaceBot {
     String debugger;
 
     HashSet<String> debugStatPlayers;
-    private String connectionID;
-    private int connectionCount = 0;
+    private String connectionID = "elimplayerstats";
     static final String db = "website";
     static final String pub = "pubstats";
     static final int INITIAL_RATING = 300;
@@ -104,12 +104,16 @@ public class elim extends SubspaceBot {
 
     private Spy spy;
 
-    private PreparedStatement updateStats, storeGame, showLadder;
+    private PreparedStatement updateStats, storeGame, showLadder, showSplash, updateSplash;
+    
+    // Splash screen related stuff
+    private ElimLeaderBoard m_leaderBoard;
+    private ArrayList<String> m_noSplash;
+    private boolean m_showOnEntry = false;
 
     public elim(BotAction botAction) {
         super(botAction);
         ba = botAction;
-        connectionID = "elimplayerstats";
         random = new Random();
     }
 
@@ -127,7 +131,8 @@ public class elim extends SubspaceBot {
 
     public void checkStatements() {
         try {
-            if (updateStats == null || storeGame == null || showLadder == null || updateStats.isClosed() || storeGame.isClosed() || showLadder.isClosed()) {
+            if (updateStats == null || storeGame == null || showLadder == null || showSplash == null || updateSplash == null
+                    || updateStats.isClosed() || storeGame.isClosed() || showLadder.isClosed() || showSplash.isClosed() || updateSplash.isClosed()) {
                 prepareStatements();
                 ba.sendSmartPrivateMessage("WingZero", "Statements were null or closed...");
             }
@@ -193,6 +198,31 @@ public class elim extends SubspaceBot {
     public void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Disconnecting...");
         this.handleDisconnect();
+    }
+    
+    /**
+     * Toggles whether or not the top 10 splash screen is shown to this player.
+     * @param name Player who issued the command.
+     */
+    public void cmd_disable(String name) {
+        try {
+            name = name.toLowerCase();
+            updateSplash.setString(1, name);
+            if(m_noSplash.contains(name)) {
+                updateSplash.setInt(2, 0);
+                m_noSplash.remove(name);
+                m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will now be shown when you enter the arena.");
+            } else {
+                updateSplash.setInt(2, 1);
+                m_noSplash.add(name);
+                m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will no longer be shown when you enter the arena.");
+            }
+            //SQL database not yet set up.
+            //updateSplash.execute();
+        } catch (SQLException sqle) {
+            Tools.printStackTrace(sqle);
+        }
+        
     }
 
     public void cmd_game(String name, String cmd) {
@@ -545,6 +575,25 @@ public class elim extends SubspaceBot {
         } else
             ba.sendSmartPrivateMessage(name, "Error! Bad length.");
     }
+    
+    public void cmd_splash(String name, String cmd) {
+        int mode = 0;
+        short pID = (short) ba.getPlayerID(name);
+        if(cmd.length() > 8) {
+            try {
+                mode = Integer.parseInt(cmd.substring(8));
+                if(mode > 1)
+                    mode = 1;
+            } catch (NumberFormatException nfe) {
+                ba.sendSmartPrivateMessage(name, "Error! Bad mode, reverting to default.");
+            }
+        }
+        if(pID < 0)
+            return;
+        
+        m_leaderBoard.showSplash(pID, mode);
+        
+    }
 
     /** Handles the !start command which restarts the bot after being stopped */
     public void cmd_start(String name) {
@@ -785,6 +834,7 @@ public class elim extends SubspaceBot {
             @Override
             public void run() {
                 updateRanks();
+                m_leaderBoard.updateCache(shipType.getNum());
             }
         };
         ba.scheduleTask(ranks, 3000);
@@ -944,9 +994,13 @@ public class elim extends SubspaceBot {
 
     @Override
     public void handleDisconnect() {
+        if(m_leaderBoard != null)
+            m_leaderBoard.die();
         ba.closePreparedStatement(db, connectionID, this.updateStats);
         ba.closePreparedStatement(db, connectionID, this.storeGame);
         ba.closePreparedStatement(db, connectionID, this.showLadder);
+        ba.closePreparedStatement(db, connectionID, this.showSplash);
+        ba.closePreparedStatement(db, connectionID, this.updateSplash);
         ba.cancelTasks();
         TimerTask die = new TimerTask() {
             @Override
@@ -1015,6 +1069,26 @@ public class elim extends SubspaceBot {
         allowRace = true;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         prepareStatements();
+        
+        // Splash screen related settings and preparation.
+        m_noSplash = new ArrayList<String>();
+        
+        if (rules.getInt("DisplayEnable") == 1) {
+            m_showOnEntry = true;
+            try {
+                ResultSet rs = showSplash.executeQuery();
+                while(rs.next()) {
+                    m_noSplash.add(rs.getString(1));
+                }
+                rs.close();
+            } catch (SQLException sqle) {
+                Tools.printStackTrace(sqle);
+            }
+        } else {
+            m_showOnEntry = false;
+        }
+        m_leaderBoard = new ElimLeaderBoard(ba, db, connectionID);
+        
         ba.joinArena(arena);
     }
 
@@ -1048,6 +1122,8 @@ public class elim extends SubspaceBot {
         if (type == Message.PRIVATE_MESSAGE) {
             if (state == State.OFF)
                 ba.sendPrivateMessage(name, "Bot disabled.");
+            else if (m_showOnEntry && cmd.equals("!disable"))
+                cmd_disable(name);
             else if (cmd.equals("!help"))
                 cmd_help(name);
             else if (cmd.startsWith("!lag "))
@@ -1064,6 +1140,8 @@ public class elim extends SubspaceBot {
                 cmd_streak(name, msg);
             else if (cmd.startsWith("!scorereset") || cmd.startsWith("!sr"))
                 cmd_scorereset(name, msg);
+            else if (cmd.startsWith("!splash"))
+                cmd_splash(name, msg);
         }
 
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
@@ -1132,6 +1210,10 @@ public class elim extends SubspaceBot {
         if (name == null || name.length() < 1)
             name = ba.getPlayerName(event.getPlayerID());
         cmd_status(name);
+        
+        if(m_showOnEntry && !m_noSplash.contains(name.toLowerCase())) {
+            m_leaderBoard.showSplash(event.getPlayerID(), 0);
+        }
     }
 
     /** Handles PlayerLeft events */
@@ -1295,21 +1377,26 @@ public class elim extends SubspaceBot {
     }
 
     public void prepareStatements() {
-        if (updateStats != null || storeGame != null || showLadder != null) {
+        if (updateStats != null || storeGame != null || showLadder != null || showSplash != null || updateSplash != null) {
             ba.closePreparedStatement(db, connectionID, updateStats);
             ba.closePreparedStatement(db, connectionID, storeGame);
             ba.closePreparedStatement(db, connectionID, showLadder);
+            ba.closePreparedStatement(db, connectionID, showSplash);
+            ba.closePreparedStatement(db, connectionID, updateSplash);
         }
 
-        connectionID = "elimplayerstats" + connectionCount++;
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
         showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank ASC LIMIT ?");
-        if (updateStats == null || storeGame == null || showLadder == null) {
+        showSplash = ba.createPreparedStatement(db, connectionID, "SELECT fcName FROM tblElim__Splash WHERE fbDisabled = 1");
+        updateSplash = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Splash (fcName, fbDisabled) VALUES (?, ?) ON DUPLICATE KEY UPDATE fbDisabled = NOT fbDisabled");
+        if (updateStats == null || storeGame == null || showLadder == null || showSplash == null || updateSplash == null) {
             debug("Update was null.");
             ba.closePreparedStatement(db, connectionID, updateStats);
             ba.closePreparedStatement(db, connectionID, storeGame);
             ba.closePreparedStatement(db, connectionID, showLadder);
+            ba.closePreparedStatement(db, connectionID, showSplash);
+            ba.closePreparedStatement(db, connectionID, updateSplash);
             this.handleDisconnect();
         }
     }
