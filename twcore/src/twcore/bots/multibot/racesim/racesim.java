@@ -225,7 +225,7 @@ public class racesim extends MultiModule {
     public void cmd_about(String name, String message) {
         // Prevent the bot from being kicked for message flooding.
         if(m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
-            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode.");
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode. (!spec)");
             return;
         }
         
@@ -265,7 +265,7 @@ public class racesim extends MultiModule {
     public void cmd_guide(String name, String message) {
         // Prevent the bot from being kicked for message flooding.
         if(m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
-            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode.");
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode. (!spec)");
             return;
         }
         
@@ -313,7 +313,7 @@ public class racesim extends MultiModule {
     public void cmd_info(String name, String message) {
         // Prevent the bot from being kicked for message flooding.
         if(m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
-            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode.");
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode. (!spec)");
             return;
         }
         
@@ -480,7 +480,7 @@ public class racesim extends MultiModule {
     public void cmd_listRaces(String name, String message) {
         // Prevent the bot from being kicked for message flooding.
         if(m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
-            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode.");
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode. (!spec)");
             return;
         }
         
@@ -499,14 +499,15 @@ public class racesim extends MultiModule {
         } else {
             // Finally, display the list.
             int i = 0;
-            m_botAction.sendSmartPrivateMessage(name, "| Name                | Racer name          | Ship      | Length   |");
+            m_botAction.sendSmartPrivateMessage(name, "Listing the recordings for " + m_botAction.getArenaName() + ":");
+            m_botAction.sendSmartPrivateMessage(name, "| Name                | Racer name          | Ship      | Length     |");
             for(RecordHeader rec : m_index.values()) {
                 // Formatting: | 19 | 19 | 9 | 8 |
                 m_botAction.sendSmartPrivateMessage(name,
                         "| " + Tools.formatString(rec.getTag(), 19)
                         + " | " + Tools.formatString(rec.getRacer(), 19)
                         + " | " + Tools.formatString(Tools.shipName(rec.getShip() + 1), 9)
-                        + " | " + Tools.rightString(Tools.getTimeString(rec.getLength(), true), 8)
+                        + " | " + Tools.rightString(Tools.getTimeString(rec.getLength(), true), 10)
                         + " |");
                 i++;
             }
@@ -622,7 +623,7 @@ public class racesim extends MultiModule {
      */
     public void cmd_startRecording(String name, String message) {
         if(m_racing || m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
-            m_botAction.sendSmartPrivateMessage(name, "[ERROR] Not in spectator mode.");
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] Not in spectator mode. (!spec)");
         } else if(m_trigger == null || m_trigger.isEmpty()) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] No trigger message has been set yet.");
         } else if(m_trackID == -1) {
@@ -756,7 +757,7 @@ public class racesim extends MultiModule {
             return out;
         } else {
             String[] out = {
-                    "[ERROR] Cannot spam help while in a ship."
+                    "[ERROR] Cannot spam help while in a ship. (!spec)"
             };
             return out;
         }
