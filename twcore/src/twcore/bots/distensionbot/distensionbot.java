@@ -117,6 +117,11 @@ public class distensionbot extends SubspaceBot {
     private final int ARMY_SYSTEM_NONSTATIC = 2;           // Armies balanced on the fly by bot
     private int m_armySystem = ARMY_SYSTEM_STATIC;      // Which army system is being used
 
+    private final int DIST_OP_JUNIOR = 1;
+    private final int DIST_OP_SENIOR = 2;
+    private final int DIST_OP_FULL = 3;
+    
+    
     // **** UNLOCK RANKS for 2012 Distension (much smaller to promote diversity)
     // Note that Lanc and Weasel are still unlocked via special means
     private final int RANK_REQ_ASSAULT_SHIP2 = 8;
@@ -1431,7 +1436,7 @@ public class distensionbot extends SubspaceBot {
         DistensionPlayer p = m_players.get( name );
         if( p == null )
             throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
-        if( p.getOpStatus() < 1 )
+        if( p.getOpStatus() < DIST_OP_JUNIOR && !m_botAction.getOperatorList().isSmod(name)  )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         String[] helps = {
@@ -1443,7 +1448,8 @@ public class distensionbot extends SubspaceBot {
                 "| !unban <name>         |  Unbans banned player",
                 "| !shutdown <time>      |  Shuts down bot after <time>, extended to round end",
                 "| !shutdowninfo         |  Shows time until shutdown",
-                "| !setmaxplayers <#>    |  Sets player cap to #  (currently " + m_maxPlayers + ")",
+                "| !rpbonus <%>          |  Add on a % bonus RP for all (for bot death/nosave)",
+                //"| !setmaxplayers <#>    |  Sets player cap to #  (currently " + m_maxPlayers + ")",
                 "| !savedata             |  Saves all player data to database",
                 "| !savedie              |  Saves all player data and runs a delayed !die",
                 "| !diewithoutsave       |  Kills DistensionBot -- use !savedie instead!",
@@ -3086,6 +3092,9 @@ public class distensionbot extends SubspaceBot {
                         reward += 150;
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when one was badly needed." );
                     } else if( ships == 1 && pilots > 8 ){
+                        if( flagTimer.getSecondsRemainingToWin() < 30 && flagTimer.getHoldingFreq() == p.getArmyID() )
+                            return;
+                        
                         if( rank > 50 )
                             reward = rank * 25;
                         else if( rank > 40 )
@@ -3100,6 +3109,9 @@ public class distensionbot extends SubspaceBot {
                         m_botAction.sendPrivateMessage( name, "You receive a rank bonus of " + (DEBUG ? ((int)(DEBUG_MULTIPLIER * (float)reward)) : reward) + "RP for switching to Terrier when a second one was needed." );
                     }
                 } else {
+                    if( flagTimer.getSecondsRemainingToWin() < 30 && flagTimer.getHoldingFreq() == p.getArmyID() )
+                        return;
+                    
                     if( ships == 0 && pilots > 4 ) {
                         if( rank > 50 )
                             reward = rank * 25;
@@ -6034,17 +6046,19 @@ public class distensionbot extends SubspaceBot {
         int players = 0;
         int playersunsaved = 0;
         long starttime = System.currentTimeMillis();
-        for( DistensionPlayer p : m_players.values() ) {
-            if( autosave ) {
-                p.savePlayerDataToDB();
-                p.saveCurrentShipToDBNow();
-            } else {
-                p.savePlayerDataToDB();
-                if( p.saveCurrentShipToDBNow() == false ) {
-                    m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Your data could not be saved.  Please use !dock to save your data.  Contact a mod with ?help if this does not work." );
-                    playersunsaved++;
+        synchronized ( m_players ) {
+            for( DistensionPlayer p : m_players.values() ) {
+                if( autosave ) {
+                    p.savePlayerDataToDB();
+                    p.saveCurrentShipToDBNow();
                 } else {
-                    players++;
+                    p.savePlayerDataToDB();
+                    if( p.saveCurrentShipToDBNow() == false ) {
+                        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Your data could not be saved.  Please use !dock to save your data.  Contact a mod with ?help if this does not work." );
+                        playersunsaved++;
+                    } else {
+                        players++;
+                    }
                 }
             }
         }
@@ -6310,7 +6324,7 @@ public class distensionbot extends SubspaceBot {
             DistensionPlayer p = m_players.get( name );
             if( p == null )
                 throw new TWCoreException("In order to use Op powers, you'll need to !return so that I may verify your authorization." );
-            if( p.getOpStatus() < 2 )
+            if( p.getOpStatus() < DIST_OP_SENIOR )
                 throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
         }
 
@@ -6342,7 +6356,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 1 )
+        if( p.getOpStatus() < DIST_OP_JUNIOR )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         DistensionPlayer player = m_players.get( msg );
@@ -6378,7 +6392,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 1 )
+        if( p.getOpStatus() < DIST_OP_JUNIOR )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         DistensionPlayer player = m_players.get( msg );
@@ -6411,7 +6425,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 1 )
+        if( p.getOpStatus() < DIST_OP_JUNIOR )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         if( m_players.get(msg) == null )
@@ -6431,7 +6445,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 2 )
+        if( p.getOpStatus() < DIST_OP_SENIOR )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         String[] args = msg.split(":");
@@ -6472,7 +6486,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 2 )
+        if( p.getOpStatus() < DIST_OP_SENIOR )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         String[] args = msg.split(":");
@@ -6513,7 +6527,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 3 )
+        if( p.getOpStatus() < DIST_OP_FULL )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         String[] args = msg.split(":");
@@ -6554,7 +6568,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 3 )
+        if( p.getOpStatus() < DIST_OP_FULL )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         DistensionPlayer player = m_players.get( msg );
@@ -6592,7 +6606,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 2 )
+        if( p.getOpStatus() < DIST_OP_SENIOR )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         int army0Count = 0;
@@ -6704,7 +6718,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 2 )
+        if( p.getOpStatus() < DIST_OP_SENIOR )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         String[] args = msg.split(":");
@@ -6839,7 +6853,7 @@ public class distensionbot extends SubspaceBot {
             cmdReturn(name, msg);
             throw new TWCoreException("In order to use Op powers, you need to !return or !enlist.  Attempting to return you automatically.  Try the command again." );
         }
-        if( p.getOpStatus() < 2 )
+        if( p.getOpStatus() < DIST_OP_SENIOR )
             throw new TWCoreException("Access denied.  If you believe you have reached this recording in error, you probably need to !return so that I can load your access permissions.");
 
         Integer olddelay = m_botSettings.getInteger("dbg-TimeoutDelay");
@@ -9458,6 +9472,9 @@ public class distensionbot extends SubspaceBot {
          * @param profits RP earned in the last minute by teammates.
          */
         public void shareProfits( int profits ) {
+            if( m_refitMode )
+                return;
+            
             if( isHigherOrderSupportShip() && idleTicksPiloting < 12 ) {
                 float sharingPercent = getBaseProfitSharingPercent();
 
