@@ -33,7 +33,7 @@ import twcore.core.util.Tools;
  * and replay it at any point in the future. The original idea was suggested by Fork.
  * The bot itself will trigger on certain arena messages, allowing it to mimic a player completely.
  * <p>
- * At this moment in time, the module has barely undergone proper testing and is therefor marked
+ * At this moment in time, the module has barely undergone proper testing and is therefore marked
  * to be in beta state. The order in which this module is to be used is as follows:
  * <ul><b>Recording</b>
  *  <li>Load the database with either !loadindex or !listraces;
@@ -43,6 +43,7 @@ import twcore.core.util.Tools;
  *  <li>Set the name of the record and set the bot's state to hot with !startrec;
  *  <li>*arena the trigger to start the recording;
  *  <li>Stop the recording when the run is done with !stoprec;
+ *  <li>Update the index one more time, to prevent accidental overwriting with !loadindex;
  *  <li>Store the recording with !storedata.
  * </ul>
  * <ul><b>Replaying</b>
@@ -59,9 +60,13 @@ import twcore.core.util.Tools;
  * TODO Allow the bot record while racing;<br>
  * TODO Allow recording of several players at the same time;<br>
  * TODO Alter !spec command so it won't conflict with the always loaded spec module;<br>
+ * TODO Automatic loading of the index file in general, on specific commands and only when the internal data is outdated;<br>
  * TODO Correct energy level at the end of the replay;<br>
  * TODO Debug this module properly;<br>
  * TODO Implement a proper !help and how-to menu;<br>
+ * TODO Implement alternative methods of triggering, like start/finish recognition;<br>
+ * TODO Save the position packet received right before the trigger is detected;<br>
+ * TODO Set rotation when the bots spawns in a ship;<br>
  * TODO Smoothen out the replay functionality;<br>
  * TODO Write guide on staff forum;<br>
  * TODO Write some nice events that use this functionality.
@@ -127,6 +132,9 @@ public class racesim extends MultiModule {
     public void registerCommands() {
         int accepts = Message.PRIVATE_MESSAGE | Message.REMOTE_PRIVATE_MESSAGE;
         int access = OperatorList.ER_LEVEL;
+        m_cI.registerCommand("!about",      accepts, this, "cmd_about",          access);
+        m_cI.registerCommand("!guide",      accepts, this, "cmd_about",          access);
+        m_cI.registerCommand("!info",       accepts, this, "cmd_about",          access);
         m_cI.registerCommand("!follow",     accepts, this, "cmd_follow",         access);
         m_cI.registerCommand("!trigger",    accepts, this, "cmd_trigger",        access);
         m_cI.registerCommand("!startrec",   accepts, this, "cmd_startRecording", access);
@@ -137,7 +145,7 @@ public class racesim extends MultiModule {
         m_cI.registerCommand("!loadrace",   accepts, this, "cmd_loadRace",       access);
         m_cI.registerCommand("!ship",       accepts, this, "cmd_ship",           access);
         m_cI.registerCommand("!spec",       accepts, this, "cmd_spec",           access);
-        //m_cI.registerHelpCommand(accepts, this);
+
     }
     
     /**
@@ -214,6 +222,31 @@ public class racesim extends MultiModule {
         }
     }
     
+    public void cmd_about(String name, String message) {
+        // Prevent the bot from being kicked for message flooding.
+        if(m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode.");
+            return;
+        }
+        
+        String spam[] = {
+                "This module has been written by ThePAP/Trancid by request of Fork with advice from various other people",
+                "like POiD. Currently it is in beta 0.2 and should thus be handled with extreme care and caution.",
+                "This module allows you to, on a per arena basis, record and replay races, or movement in general.",
+                "It is highly adviced, or even mandatory, to read the guide first (!guide) and to use !info on any",
+                "command you haven't used before. Each time you load this module, use this command (!about) to check",
+                "if it is still the same version. When the version differs, it is very likely that the commands have",
+                "changed, or their usage/inner workings are different! When this is the case, it is best to",
+                "re-familiarize yourself again through !guide and !info.",
+                "At this moment in time, this module is written as a game module. This means you cannot use it in",
+                "combination with any other game module, and it is even discouraged at this moment to use it with",
+                "any other utility module on the same bot. If you want to run other modules besides this one, it is",
+                "highly adviced to get and use a second multibot for this."
+        };
+        
+        m_botAction.privateMessageSpam(name, spam);
+    }
+    
     /**
      * Sets which player will be followed.
      * @param name Issuer of command.
@@ -229,6 +262,216 @@ public class racesim extends MultiModule {
         }
     }
     
+    public void cmd_guide(String name, String message) {
+        // Prevent the bot from being kicked for message flooding.
+        if(m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode.");
+            return;
+        }
+        
+        String[] spam = {
+                "At this moment in time, the module has barely undergone proper testing and is therefore marked",
+                "to be in beta state. The order in which this module is to be used is as follows:",
+                "Recording:",
+                " - Load the database with either !loadindex or !listraces;",
+                " - Set a trigger line with !trigger <trigger>;",
+                " - Set a player to follow with !follow <name>;",
+                " - Ensure the player is in game, in the correct ship and the bot is in spec;",
+                " - Set the name of the record and set the bot's state to hot with !startrec <tag>;",
+                " - *arena the trigger to start the recording;",
+                " - Stop the recording when the run is done with !stoprec;",
+                " - Update the index one more time, to prevent accidental overwriting with !loadindex;",
+                " - Store the recording with !storedata.",
+                "Replaying:",
+                " - Load the database with either !loadindex or !listraces;",
+                " - Choose the race you want to replay with !loadrace <tag>;",
+                " - Put the bot in a ship with !ship [ship];",
+                " - If not set yet, provide a trigger with !trigger <trigger>;",
+                " - *arena the trigger to start the replay;",
+                " - After the race is done, stop the replay by putting the bot into spectator mode with !spec.",
+                "Using multiple RoboBots:",
+                " It is possible to use multiple RoboBots at the same time, but especially when using them to do",
+                " multiple recordings at the same time, you must use extreme caution.",
+                " To ensure minimal irrevertable mistakes, always do a !loadindex on every RoboBot in the arena",
+                " that has this module loaded before and after using the following commands:",
+                " - !listraces;",
+                " - !loadrace;",
+                " - !startrec;",
+                " - !stoprec;",
+                " - !storedata."
+        };
+        
+        m_botAction.privateMessageSpam(name, spam);
+    }
+    
+    /**
+     * Displays detailed information on the commands used in this module.
+     * @param name Issuer of the command.
+     * @param message The command for which the info is requested. If no valid command is found,
+     * the general !help will be displayed.
+     */
+    public void cmd_info(String name, String message) {
+        // Prevent the bot from being kicked for message flooding.
+        if(m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
+            m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode.");
+            return;
+        }
+        
+        String[] spam;
+        
+        if(message == null || message.isEmpty()) {
+            spam = getModHelpMessage();
+        } else {
+            message = message.toLowerCase();
+            if(message.startsWith("!"))
+                message = message.substring(1);
+            
+            if(message.equals("about")) {
+                spam = new String[] {
+                        "!about",
+                        "  Lists basic information about this module.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("follow")) {
+                spam = new String[] {
+                        "!follow <name>",
+                        "  Sets the bot up to track a specific player from spectator mode.",
+                        "  Whenever the bot starts the actual recording, it will record the position data of this player.",
+                        "Parameters:",
+                        "  <name>   Required; Name of the player which will be followed.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("guide")) {
+                spam = new String[] {
+                        "!guide",
+                        "  Shows a relatively short guide on how to properly use this module.",
+                        "  Make sure you have read this at least once, since this module is still",
+                        "  in beta mode and thus rather fragile.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("info")) {
+                spam = new String[] {
+                        "!info [command]",
+                        "  Shows detailed information on a specific command.",
+                        "  When no (valid) command is specified, it will display the general help.",
+                        "Parameters:",
+                        "  [command]    Optional; Name of the command you want additional information on.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("listraces")) {
+                spam = new String[] {
+                        "!listraces",
+                        "  Shows a list of races that have already been recorded for the arena you are in.",
+                        "  NOTE: It is mandatory to use this command before you can use most commands.",
+                        "        This does not update/reload the list. To do so, use !loadindex.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("loadindex")) {
+                spam = new String[] {
+                        "!loadindex",
+                        "  Loads the list of races silently. Useful for when you need to (re)load the current",
+                        "  list of races, but don't want to be bothered by the spam from !listraces.",
+                        "  Unlike !listraces, this always reloads the database even when it's already loaded.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("loadrace")) {
+                spam = new String[] {
+                        "!loadrace <tag>",
+                        "  Loads a specific race into memory, to be used for replaying.",
+                        "  Before being able to use this command, either !listraces or !loadindex must have been",
+                        "  used at least once. It cannot be used when the bot is already replaying a race.",
+                        "  The bot will start its replay when it receives the trigger set with !trigger.",
+                        "Parameters:",
+                        "  <tag>    Required; Name of the race you want to load. This tag is case sensitive!",
+                        "Access: ER+"
+                };
+            } else if(message.equals("ship")) {
+                spam = new String[] {
+                        "!ship [ship]",
+                        "  Puts the bot in a ship.",
+                        "  Depending on the situation, the bot will try to put himself into the appropiate ship.",
+                        "  This command cannot be used when the bot is ready to record, or is already recording",
+                        "  a race.",
+                        "Parameters:",
+                        "  [ship]   Optional; If a recording has already been loaded, it will automatically set",
+                        "                     itself in that specific ship. In any other situation, you must",
+                        "                     specify a ship number, where 1 = Warbird .. 8 = Shark.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("spec")) {
+                spam = new String[] {
+                        "!spec",
+                        "  Puts the bot into spectator mode.",
+                        "  This is the only way to stop the bot midway during a replay of a race.",
+                        "  At this moment, this command conflicts with the !spec command of the spec module.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("startrec")) {
+                spam = new String[] {
+                        "!startrec <tag>",
+                        "  Sets the bot up to start recording whenever it receives the trigger specified by",
+                        "  !trigger. To be able to use this command, you must have properly set !trigger and",
+                        "  !follow first, and the bot needs to be in spectator mode. Please ensure that when",
+                        "  doing this command, that the player you want to follow is already in his/her ship.",
+                        "  Note that the name of the race is localized per arena and it is case sensitive,",
+                        "  So it will only overwrite a race that has the exact same name and has been",
+                        "  recorded for the arena you are currently in.",
+                        "  This command will also fail when the bot is already recording.",
+                        "Parameters:",
+                        "  <tag>    Required: Specifieds the name the recording will be saved under.",
+                        "                     This name is case sensitive and can only contain the",
+                        "                     following characters: a~z, A~Z, 0~9, - and _",
+                        "                     NOTE: If a race exists with a similar name for this",
+                        "                     arena then this will be overwritten!",
+                        "                     Any tag exceeding 19 characters will be trimmed down!",
+                        "Access: ER+"
+                };
+            } else if(message.equals("stoprec")) {
+                spam = new String[] {
+                        "!stoprec",
+                        "  Stops any recording the bot is currently doing.",
+                        "  This command does not save the recording to disk. To do so, it is best practice to",
+                        "  first do a !loadindex, followed by a !storedata.",
+                        "  When this is used to abort a recording, the bot is ready straight away to start",
+                        "  a new recording with !startrec. This will overwrite any unsaved previous recordings.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("storedata")) {
+                spam = new String[] {
+                        "!storedata",
+                        "  Stores the recorded data to disk.",
+                        "  This is a very dangerous command when used improperly. If a situation arises where",
+                        "  multiple bots in the same arena are recording, then you must use !loadindex before",
+                        "  using this command, to ensure you will not overwrite any data from the other recordings,",
+                        "  even when they have completely other tags.",
+                        "  Also, when you try to store a recording to disk with an exactly matching name to previous",
+                        "  recording that has been made in this arena, then that previous recording will be overwritten.",
+                        "  NOTE: There is no \"Undo\" when a previous record is overwritten. That data is lost forever.",
+                        "Access: ER+"
+                };
+            } else if(message.equals("trigger")) {                
+                spam = new String[] {
+                        "!trigger <trigger>",
+                        "  Sets the trigger the bot will react upon and use to either start recording or start",
+                        "  replaying a pre-recorded race. At this moment, it is only possibly to trigger through",
+                        "  an arena message.",
+                        "  It is best to set the trigger to an arena you do at a set time before you give the \"Go!\"",
+                        "  because it is possible otherwise that the first captured waypoint will be after the race",
+                        "  is started. (Try for yourself to see what this means.)",
+                        "Parameters:",
+                        "  <trigger>    Required; The exact text that the bot will trigger on when it sees it used",
+                        "                         as an arena message. Example: \"!trigger 1..\" will cause the bot",
+                        "                         to start recording/replaying when you do \"*arena 1..\".",
+                        "Access: ER+"
+                };
+            } else {
+                spam = getModHelpMessage();
+            }
+        }
+        
+        m_botAction.privateMessageSpam(name, spam);
+    }
+    
     /**
      * Displays the list of stored races.
      * @param name Issuer of the command.
@@ -239,7 +482,7 @@ public class racesim extends MultiModule {
         if(m_botAction.getShip().getShip() != Ship.INTERNAL_SPECTATOR) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] This function is disabled when I'm not in spectator mode.");
             return;
-        } 
+        }
         
         // Try to load the index.
         if(!m_indexLoaded) {
@@ -274,11 +517,12 @@ public class racesim extends MultiModule {
     /**
      * Loads the index file for this specific arena without displaying it.
      * @param name Player who issued the command.
-     * @param message Message parameters.
+     * @param message Not used at this moment.
      */
     public void cmd_loadIndex(String name, String message) {
         try {
             loadIndex();
+            m_botAction.sendSmartPrivateMessage(name, "Index reloaded.");
         } catch (RaceSimException rse) {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] " + rse.getMessage());
         }
@@ -393,7 +637,11 @@ public class racesim extends MultiModule {
             m_botAction.sendSmartPrivateMessage(name, "[ERROR] Please load the index first with !loadindex or !listraces");
         } else {
             // Transform any argument past into a suitable name. This basically replace any of the non-mentioned chars in underscores.
-            message = message.replaceAll("[^a-zA-Z0-9_-]+", "_");
+            message = message.replaceAll("[^a-zA-Z0-9_-]+", "_").trim();
+            
+            if(message.length() > 19) {
+                message = message.substring(0, 19);
+            }
             
             if(m_index != null && !m_index.isEmpty() && m_index.containsKey(message)) {
                 // Display a warning if the entry already exists.
@@ -481,12 +729,29 @@ public class racesim extends MultiModule {
     public String[] getModHelpMessage() {
         if(m_botAction.getShip().getShip() == Ship.INTERNAL_SPECTATOR) {
             String[] out = {
-                    "+------------------------------------------------------------+",
-                    "| RaceSimulator v.0.2                       - author ThePAP  |",
-                    "+------------------------------------------------------------+",
-                    "| How to use:                                                |",
-                    "|   Don't use this yet. Still in beta mode...                |",
-                    "+------------------------------------------------------------+"
+                    "+-----------------------------------------------------------------------+",
+                    "| RaceSimulator v.0.2                                                   |",
+                    "+-----------------------------------------------------------------------+",
+                    "| Commands:                                                             |",
+                    "|   !about             What this module is and how to use it.           |",
+                    "|   !follow <name>     Sets the bot to follow <name>.                   |",
+                    "|   !guide             How to use this module. Best to read this first! |",
+                    "|   !info [cmd]        This menu or for details on command [cmd].       |",
+                    "|   !listraces         Lists recorded races for this arena.             |",
+                    "|   !loadindex         Same as !listraces, but silently.                |",
+                    "|   !loadrace <tag>    Loads the record named <tag>.                    |",
+                    "|   !ship [type]       Puts the bot in a ship.                          |",
+                    "|   !spec              Puts the bot into spectator mode.                |",
+                    "|   !startrec <tag>    Prepares the capturing of data for record <tag>. |",
+                    "|   !stoprec           Stops the capturing of data.                     |",
+                    "|   !storedata         Stores the captured record to disk.              |",
+                    "|   !trigger           Sets the trigger which starts the capture.       |",
+                    "+-----------------------------------------------------------------------+",
+                    "| Firt time users:                                                      |",
+                    "| This module is still in beta mode. It is mandatory that you read      |",
+                    "| !about and !guide first, as well as using !info [cmd] before using    |",
+                    "| a command that you've never used before.                              |",
+                    "+-----------------------------------------------------------------------+",
                 };
             return out;
         } else {
