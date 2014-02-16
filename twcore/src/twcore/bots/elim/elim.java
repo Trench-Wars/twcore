@@ -104,7 +104,7 @@ public class elim extends SubspaceBot {
 
     private Spy spy;
 
-    private PreparedStatement updateStats, storeGame, showLadder, showSplash, updateSplash;
+    private PreparedStatement updateStats, storeGame, showLadder; //, showSplash, updateSplash;
     
     // Splash screen related stuff
     private ElimLeaderBoard m_leaderBoard;
@@ -131,8 +131,11 @@ public class elim extends SubspaceBot {
 
     public void checkStatements() {
         try {
+            /*
             if (updateStats == null || storeGame == null || showLadder == null || showSplash == null || updateSplash == null
-                    || updateStats.isClosed() || storeGame.isClosed() || showLadder.isClosed() || showSplash.isClosed() || updateSplash.isClosed()) {
+                    || updateStats.isClosed() || storeGame.isClosed() || showLadder.isClosed() || showSplash.isClosed() || updateSplash.isClosed()) { */
+            if (updateStats == null || storeGame == null || showLadder == null
+                    || updateStats.isClosed() || storeGame.isClosed() || showLadder.isClosed()) {
                 prepareStatements();
                 ba.sendSmartPrivateMessage("WingZero", "Statements were null or closed...");
             }
@@ -205,23 +208,23 @@ public class elim extends SubspaceBot {
      * @param name Player who issued the command.
      */
     public void cmd_disable(String name) {
-        try {
+        //try {
             name = name.toLowerCase();
-            updateSplash.setString(1, name);
+            //updateSplash.setString(1, name);
             if(m_noSplash.contains(name)) {
-                updateSplash.setInt(2, 0);
+                //updateSplash.setInt(2, 0);
                 m_noSplash.remove(name);
                 m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will now be shown when you enter the arena.");
             } else {
-                updateSplash.setInt(2, 1);
+                //updateSplash.setInt(2, 1);
                 m_noSplash.add(name);
                 m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will no longer be shown when you enter the arena.");
             }
             //SQL database not yet set up.
             //updateSplash.execute();
-        } catch (SQLException sqle) {
-            Tools.printStackTrace(sqle);
-        }
+        //} catch (SQLException sqle) {
+        //    Tools.printStackTrace(sqle);
+        //}
         
     }
 
@@ -1009,8 +1012,8 @@ public class elim extends SubspaceBot {
         ba.closePreparedStatement(db, connectionID, this.updateStats);
         ba.closePreparedStatement(db, connectionID, this.storeGame);
         ba.closePreparedStatement(db, connectionID, this.showLadder);
-        ba.closePreparedStatement(db, connectionID, this.showSplash);
-        ba.closePreparedStatement(db, connectionID, this.updateSplash);
+        //ba.closePreparedStatement(db, connectionID, this.showSplash);
+        //ba.closePreparedStatement(db, connectionID, this.updateSplash);
         ba.cancelTasks();
         TimerTask die = new TimerTask() {
             @Override
@@ -1085,6 +1088,7 @@ public class elim extends SubspaceBot {
         
         if (rules.getInt("DisplayEnable") == 1) {
             m_showOnEntry = true;
+            /*
             try {
                 ResultSet rs = showSplash.executeQuery();
                 while(rs.next()) {
@@ -1093,7 +1097,7 @@ public class elim extends SubspaceBot {
                 rs.close();
             } catch (SQLException sqle) {
                 Tools.printStackTrace(sqle);
-            }
+            }*/
         } else {
             m_showOnEntry = false;
         }
@@ -1387,26 +1391,26 @@ public class elim extends SubspaceBot {
     }
 
     public void prepareStatements() {
-        if (updateStats != null || storeGame != null || showLadder != null || showSplash != null || updateSplash != null) {
+        if (updateStats != null || storeGame != null || showLadder != null) { // || showSplash != null || updateSplash != null) {
             ba.closePreparedStatement(db, connectionID, updateStats);
             ba.closePreparedStatement(db, connectionID, storeGame);
             ba.closePreparedStatement(db, connectionID, showLadder);
-            ba.closePreparedStatement(db, connectionID, showSplash);
-            ba.closePreparedStatement(db, connectionID, updateSplash);
+            //ba.closePreparedStatement(db, connectionID, showSplash);
+            //ba.closePreparedStatement(db, connectionID, updateSplash);
         }
 
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
         showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank ASC LIMIT ?");
-        showSplash = ba.createPreparedStatement(db, connectionID, "SELECT fcName FROM tblElim__Splash WHERE fbDisabled = 1");
-        updateSplash = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Splash (fcName, fbDisabled) VALUES (?, ?) ON DUPLICATE KEY UPDATE fbDisabled = NOT fbDisabled");
-        if (updateStats == null || storeGame == null || showLadder == null || showSplash == null || updateSplash == null) {
+        //showSplash = ba.createPreparedStatement(db, connectionID, "SELECT fcName FROM tblElim__Splash WHERE fbDisabled = 1");
+        //updateSplash = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Splash (fcName, fbDisabled) VALUES (?, ?) ON DUPLICATE KEY UPDATE fbDisabled = NOT fbDisabled");
+        if (updateStats == null || storeGame == null || showLadder == null) { // || showSplash == null || updateSplash == null) {
             debug("Update was null.");
             ba.closePreparedStatement(db, connectionID, updateStats);
             ba.closePreparedStatement(db, connectionID, storeGame);
             ba.closePreparedStatement(db, connectionID, showLadder);
-            ba.closePreparedStatement(db, connectionID, showSplash);
-            ba.closePreparedStatement(db, connectionID, updateSplash);
+            //ba.closePreparedStatement(db, connectionID, showSplash);
+            //ba.closePreparedStatement(db, connectionID, updateSplash);
             this.handleDisconnect();
         }
     }
