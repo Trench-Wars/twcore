@@ -232,7 +232,7 @@ public class ElimLeaderBoard {
             m_lvzMgrDisp1 = new LvzManager();
             m_lvzMgrDisp2 = new LvzManager();
             m_lvzMgrScore = new LvzManager();
-            short objID = 16000;
+            short objID = 9998;
             int xCoord = OFFSET_TOP[0];
             int yCoord = OFFSET_TOP[1];
             

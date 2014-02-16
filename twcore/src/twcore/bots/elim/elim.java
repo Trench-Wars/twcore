@@ -292,6 +292,8 @@ public class elim extends SubspaceBot {
                 "| !lagout           - Return to game after lagging out                                    |",
                 "| !lag <name>       - Checks the lag of player <name>                                     |",
                 "| !alert            - Toggles new game private message alerts on or off                   |",
+                "| !splash           - Shows the top 10 of Warbirds and Javelins                           |",
+                "| !disable          - Disables showing the splash screen on entry                         |",
                 };
         ba.privateMessageSpam(name, msg);
         if (oplist.isZH(name)) {
@@ -576,9 +578,16 @@ public class elim extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Error! Bad length.");
     }
     
+    /**
+     * Handles the splash command.
+     * @param name Issuer of the command.
+     * @param cmd Unusued, originally allowed choosing between different backgrounds.
+     */
     public void cmd_splash(String name, String cmd) {
         int mode = 0;
         short pID = (short) ba.getPlayerID(name);
+        /* Disabled for now, due to the final product just having one background.
+         * Need to decide whether to clean up the code, or leave it in for future possibilities.
         if(cmd.length() > 8) {
             try {
                 mode = Integer.parseInt(cmd.substring(8));
@@ -588,6 +597,7 @@ public class elim extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "Error! Bad mode, reverting to default.");
             }
         }
+        */
         if(pID < 0)
             return;
         
