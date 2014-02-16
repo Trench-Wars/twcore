@@ -69,6 +69,10 @@ public class ElimLeaderBoard {
     private ArrayList<SplashScreen> m_splashScreens;    // Holds all the splash screen info that needs to be shown.
     private ArrayList<Short> m_playersActive;           // Tracks to which player(s) the splash screens are currently shown.
     
+    private LvzManager m_lvzMgrScore = new LvzManager();
+    private LvzManager m_lvzMgrDisp1 = new LvzManager();
+    private LvzManager m_lvzMgrDisp2 = new LvzManager();
+    
     private String m_db;                                // SQL Database name.
     private String m_connectionID;                      // SQL Connection ID name.
     private int m_displayTime;                          // Display length of each splash window in milliseconds.
@@ -168,9 +172,6 @@ public class ElimLeaderBoard {
     }
     
     public class SplashScreen {
-        private LvzManager m_lvzMgrScore;
-        private LvzManager m_lvzMgrDisp1;
-        private LvzManager m_lvzMgrDisp2;
         private ArrayList<Integer> m_shipCount = new ArrayList<Integer>((Collections.nCopies(11, 0)));
 
         private int[][] m_order = new int[2][10];
@@ -229,9 +230,6 @@ public class ElimLeaderBoard {
         }
         
         public void generateLVZTable() {
-            m_lvzMgrDisp1 = new LvzManager();
-            m_lvzMgrDisp2 = new LvzManager();
-            m_lvzMgrScore = new LvzManager();
             short objID = 9998;
             int xCoord = OFFSET_TOP[0];
             int yCoord = OFFSET_TOP[1];
