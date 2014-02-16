@@ -61,7 +61,7 @@ public class ElimLeaderBoard {
     private static final int[] SPACING          = {  10,   47}; // Horizontal and vertical spacing.
     
     private static final String ELIM_QUERY      = "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= 1 ORDER BY fnRank ASC LIMIT ?";
-    private static final String BOTTOM_TEXT     = "Type \":RoboRef:!disable\" to disable this.";
+    private static final String BOTTOM_TEXT     = "Type \":Robo Ref:!disable\" to disable this.";
     
     private BotAction m_botAction;                      // Original BotAction, used for several methods.
     private PreparedStatement m_updateStats;            // The PreparedStatement used to get the required information.
