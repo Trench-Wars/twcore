@@ -11784,10 +11784,12 @@ public class distensionbot extends SubspaceBot {
      * Displays rules and pauses for intermission.
      */
     private void doIntermission() {
+        /*
         if( m_beginDelayedShutdown ) {
             cmdDie(m_botAction.getBotName(), "shutdown");
             return;
         }
+        */
 
         if(!flagTimeStarted || stopFlagTime )
             return;
