@@ -310,7 +310,9 @@ public class distensionbot extends SubspaceBot {
     private final int ASSIST_ADVERT_CHECK_FREQUENCY = 20;   // How many seconds between checking for an assist advert
     private final float ADVERT_WEIGHT_IMBALANCE = 0.88f;    // At what point to advert that there's an imbalance
     private final float ASSIST_WEIGHT_IMBALANCE = 0.89f;    // At what point an army is considered imbalanced
-    private final float AUTOBALANCE_WEIGHT_IMBALANCE = 0.95f; // At what point an army is considered imbalanced
+    private final float ASSIST_WEIGHT_MINOR_IMBALANCE = 0.94f;    // Minor imbalance (an !assist must be a good improvement) 
+    private final float ASSIST_AVARICE = 0.87f;             // When Avarice will fire
+    private final float AUTOBALANCE_WEIGHT_IMBALANCE = 0.95f; // At what point an army is considered imbalanced (for auto)
     private final int ASSIST_NUMBERS_IMBALANCE = 3;         // # of pilot difference before considered imbalanced
     private final int ASSIST_REWARD_TIME = (int)(1000 * 60 * 2.5); // Time between adverting and rewarding assists
     private final int TERRSHARK_REWARD_TIME = 1000 * 60 * 1;// Time between rewarding new terrs/sharks
@@ -2091,11 +2093,11 @@ public class distensionbot extends SubspaceBot {
                 if( timeBetweenGoals < 30000 )
                     timeBetweenModifier = 0.8f;
                 if( timeBetweenGoals > 60000 )
-                    timeBetweenModifier = 1.25f;
+                    timeBetweenModifier = 1.15f;
                 if( timeBetweenGoals > 90000 )
+                    timeBetweenModifier = 1.25f;
+                if( timeBetweenGoals > 115000 )
                     timeBetweenModifier = 1.5f;
-                if( timeBetweenGoals > 120000 )
-                    timeBetweenModifier = 2.0f;
             }
 
             DistensionArmy winA = m_armies.get(armyID);
@@ -2108,7 +2110,7 @@ public class distensionbot extends SubspaceBot {
             float weight = loserStr / winnerStr;
             boolean avariceWeight = false;
 
-            if( weight < ASSIST_WEIGHT_IMBALANCE - 0.1f ) {
+            if( weight < ASSIST_AVARICE ) {
                 avariceWeight = true;
                 taperAmount++;
             }
@@ -2138,21 +2140,21 @@ public class distensionbot extends SubspaceBot {
                         twcorePlayer.getYTileLocation() < BOT_LOW )) {
                         players++;
                         int rank = p.getRank();
-                        float bonus = 5;
+                        float bonus = 10;
                         if( rank > 10 )
-                            bonus += 20;
+                            bonus += 15;
                         if( rank > 20 )
-                            bonus += 40;
+                            bonus += 35;
                         if( rank > 30 )
-                            bonus += 60;
+                            bonus += 50;
                         if( rank > 40 )
                             bonus += 100;
                         if( rank > 50 )
                             bonus += 300;
                         if( rank > 60 )
-                            bonus += 1500;
+                            bonus += 700;
                         if( rank > 70 )
-                            bonus += 2500;
+                            bonus += 1000;
                         if( avariceWeight ) {
                             bonus *= (weight * scoreMod * timeBetweenModifier );
                             bonus /= 2;
@@ -3197,7 +3199,6 @@ public class distensionbot extends SubspaceBot {
         // If testing to see if we can !assist, account for the player's (non-switched) ship
         if(p.getArmyID() != armyIDtoCheck) {
         	friendly++;
-        	enemy--;
         }
         
         // If we already have more than they do (2 more needed for terr), do not allow the change.
@@ -3961,8 +3962,14 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "You may only specialize your ship after rank " + distensionbot.ShipTypeProfile.rankForTypeChoice + ".  Patience." );
 
         float cost = 0;
-        if( !DEBUG && ( p.isSpecialized() || p.getRank() > distensionbot.ShipTypeProfile.rankForPaidTypeChoice ) )
-            cost = (float)p.getRankPoints() * .003f;
+        if( !DEBUG && ( p.isSpecialized() || p.getRank() > distensionbot.ShipTypeProfile.rankForPaidTypeChoice ) ) {
+            if( p.getRank() < 30 )
+                cost = (float)p.getRankPoints() * .015f;
+            else if( p.getRank() < 35 )
+                cost = (float)p.getRankPoints() * .008f;
+            else
+                cost = (float)p.getRankPoints() * .003f;
+        }
         String[] args = msg.split(":");
         boolean realDeal = false;
         if( args.length == 2 )
@@ -4251,7 +4258,7 @@ public class distensionbot extends SubspaceBot {
             if( !p.isAssisting() ) {
                 m_botAction.sendPrivateMessage( name, "You aren't assisting any army presently.  Use !assist armyID# to assist an army in need." );
             } else {
-                if( assistArmyWeightAfterChange < ASSIST_WEIGHT_IMBALANCE ) {
+                if( assistArmyWeightAfterChange < ASSIST_WEIGHT_MINOR_IMBALANCE ) {
                     if( !autoReturn )
                         m_botAction.sendPrivateMessage( name, "Returning to your army now would make things too imbalanced!  Sorry, no can do." );
                     return;
@@ -4303,7 +4310,7 @@ public class distensionbot extends SubspaceBot {
         }
 
         if( armySizeWeight < ASSIST_WEIGHT_IMBALANCE && !autoReturn ) {
-            if( assistArmyWeightAfterChange < ASSIST_WEIGHT_IMBALANCE )
+            if( assistArmyWeightAfterChange < ASSIST_WEIGHT_MINOR_IMBALANCE )
                 throw new TWCoreException( "Assisting with your current ship will only continue the imbalance!  First pilot a lower-ranked ship if you want to !assist." );
             boolean gameGoing = flagTimer != null && flagTimer.isRunning();
             if( gameGoing ) {
@@ -6072,7 +6079,7 @@ public class distensionbot extends SubspaceBot {
                 m_botAction.sendArenaMessage( "Saved " + players + " players in " + timeDiff + "ms.  " + playersunsaved + " players could not be saved.", 2 );
         }
         if( m_beginDelayedShutdown && !(name.equals(m_botAction.getBotName())) ) {
-            m_botAction.sendPrivateMessage( name, "IMPORTANT NOTE TO MODERATOR: Bot will automatically save and shut down at end of this round." );
+            m_botAction.sendPrivateMessage( name, "IMPORTANT NOTE TO MODERATOR: Bot will automatically save and shut down at end of the next flag round." );
         }
         m_lastSave = System.currentTimeMillis();
     }
@@ -6210,13 +6217,14 @@ public class distensionbot extends SubspaceBot {
         TimerTask delayedShutdownTask = new TimerTask() {
             public void run() {
                 m_beginDelayedShutdown = true;
+                // If in ballgame mode or intermission, save immediately
+                if( m_canScoreGoals || (!m_canScoreGoals && flagTimer.isRunning()) ) {
+                    cmdSaveData( m_botAction.getBotName(), "" );
+                }
                 if( DEBUG )
                     m_botAction.sendArenaMessage("--- DELAYED SHUTDOWN INITIATED ---  The beta test will stop at the next end of round.  Thank you for testing.", Tools.Sound.VICTORY_BELL );
                 else
                     m_botAction.sendArenaMessage("--- DELAYED SHUTDOWN INITIATED ---  The game will stop at the next end of round.  Thank you for playing.", Tools.Sound.VICTORY_BELL );
-                // If in ballgame mode, save immediately
-                if( m_canScoreGoals )
-                    cmdSaveData( m_botAction.getBotName(), "" );
             }
         };
         try {
@@ -8868,7 +8876,7 @@ public class distensionbot extends SubspaceBot {
                     points = (int)((float)points * DEBUG_MULTIPLIER);
                 if( rewardRemaining > 0 ) {
                     if( points > rewardRemaining ) {
-                        m_botAction.sendPrivateMessage(arenaPlayerID, "NOTICE: Your reward has expired; you will no longer receive a bonus to RP earned.  I personally thank you for your invaluable help.  Good luck! -qan/Geoff Dugwyler", 1 );
+                        m_botAction.sendPrivateMessage(arenaPlayerID, "NOTICE: Your reward has expired; you will no longer receive a bonus to RP earned.  I personally thank you for your invaluable help.  Good luck! -qan/dugwyler", 1 );
                         points += (int)((float)rewardRemaining * REWARD_RATE);
                         rewardRemaining = 0;
                     } else {
@@ -11783,36 +11791,32 @@ public class distensionbot extends SubspaceBot {
     /**
      * Displays rules and pauses for intermission.
      */
-    private void doIntermission() {
-        /*
-        if( m_beginDelayedShutdown ) {
-            cmdDie(m_botAction.getBotName(), "shutdown");
-            return;
-        }
-        */
-
+    private void doIntermission() {        
         if(!flagTimeStarted || stopFlagTime )
             return;
 
         String roundTitle = "";
 
         m_roundNum++;
-        if( m_roundNum == 1 )
-            roundTitle = "A new conflict";
-        else
-            roundTitle = "Battle " + m_roundNum;
-
+        
+        if( m_beginDelayedShutdown ) {
+            roundTitle = "FINAL BATTLE OF THE SESSION";
+        } else {
+            if( m_roundNum == 1 )
+                roundTitle = "A new conflict";
+            else
+                roundTitle = "Battle " + m_roundNum;
+        }
+        
         String warning = "";
         if( m_freq0Score >= SCORE_REQUIRED_FOR_WIN - 1 || m_freq1Score >= SCORE_REQUIRED_FOR_WIN - 1 )
             warning = "  VICTORY IS IMMINENT!!";
         
         if( m_canScoreGoals ) {
-            m_botAction.sendArenaMessage( "BALLGAME FINISHED!  " + roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+            m_botAction.sendArenaMessage( "----- BALLGAME FINISHED -----  " + roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
             m_canScoreGoals = false;
-        }else
+        } else
             m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
-            
-        m_botAction.sendChatMessage("The next round of Distension begins in " + getTimeString( INTERMISSION_SECS ) + ".  ?go " + arenaName + " to play." );
 
         // Between rounds, switch between one and two flags
         int players = 0;
@@ -11970,7 +11974,7 @@ public class distensionbot extends SubspaceBot {
 
         // Special case: if teams are imbalanced at end people do not !assist so they will win the round,
         //               fewer points are earned.
-        if( loserStrCurrent / winnerStrCurrent < ASSIST_WEIGHT_IMBALANCE - 0.1f ) {
+        if( loserStrCurrent / winnerStrCurrent < ASSIST_AVARICE ) {
             // Abuse prevention: only fire avarice if losing team was also hurting in last snapshot
             float lastMajorStrengthSnapshot = flagTimer.getLastMajorStrength(losingArmyID);
             if( lastMajorStrengthSnapshot != -1 ) {      // If -1, no major snapshot is recorded and avarice can not be determined
@@ -12617,11 +12621,11 @@ public class distensionbot extends SubspaceBot {
                 p.setWaiterFullRoundPlayAbility(false);     // Those who were swapped in midround were exempt from an end-round swap
                                                             //  ... but for this round end only.
 
+            intermissionTimer = new IntermissionTask();
+            m_botAction.scheduleTask( intermissionTimer, ( BALLTIME_MINS * Tools.TimeInMillis.MINUTE ) + 15000 );
         }
         //if( intermissionTime >= Tools.TimeInMillis.MINUTE && !DEBUG )
         //    m_botAction.setTimer( (intermissionTime + Tools.TimeInMillis.SECOND) / Tools.TimeInMillis.MINUTE );
-        intermissionTimer = new IntermissionTask();
-        m_botAction.scheduleTask( intermissionTimer, ( BALLTIME_MINS * Tools.TimeInMillis.MINUTE ) + 15000 );
     }
 
 
@@ -13559,7 +13563,7 @@ public class distensionbot extends SubspaceBot {
                 }
 
                 // Inform players that avarice may be a problem
-                if( loserStrCurrent / winnerStrCurrent < ASSIST_WEIGHT_IMBALANCE - 0.1f ) {
+                if( loserStrCurrent / winnerStrCurrent < ASSIST_AVARICE ) {
                     m_botAction.sendOpposingTeamMessageByFrequency(sectorHoldingArmyID, "WARNING: Potential AVARICE; use !assist " + losingArmyID + " (rewarded; participation saved) or pilot lower-ranked ships!", 2 );
                     lastAssistReward = 0;           // Ensure anyone changing gets a reward
                     checkForAssistAdvert = true;    // ... and advert.
