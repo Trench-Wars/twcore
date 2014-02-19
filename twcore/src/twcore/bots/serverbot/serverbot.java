@@ -47,6 +47,8 @@ public class serverbot extends SubspaceBot {
         	if(oplist.isSmod(name)){
         		if(msg.equalsIgnoreCase("!die")){
         			ba.die();
+        		} else if(msg.startsWith("!go ")){
+        			ba.changeArena(msg.substring(4));
         		}
         	}
         }
