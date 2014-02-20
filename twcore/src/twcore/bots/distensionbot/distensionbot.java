@@ -3068,7 +3068,9 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency( p.getArmyID(), p.getName() + " is now manning the Tactical Ops console." );
 
         // Award sharks and terrs who change to needed slot w/ a bonus
-        if( !m_refitMode && (lastShipNum > 0) && (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK ) ) {
+        if( flagTimer != null && flagTimer.isRunning() &&
+                !m_refitMode && (lastShipNum > 0) &&
+                (shipNum == Tools.Ship.TERRIER || shipNum == Tools.Ship.SHARK ) ) {
             int reward = 0;
             if( System.currentTimeMillis() > lastTerrSharkReward + TERRSHARK_REWARD_TIME ) {
                 int ships = 0;
