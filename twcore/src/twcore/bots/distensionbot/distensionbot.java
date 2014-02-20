@@ -286,6 +286,7 @@ public class distensionbot extends SubspaceBot {
     private SpecialAbilityTask m_specialAbilityPrizer;      // Prizer for special abilities (run once every 30s)
     private TimerTask m_entranceWaitTask;                   // For when bot first enters the arena
     private TimerTask m_periodicTasks;                      // Combined task for tasks that execute periodically
+    private TimerTask delayedShutdownTask;
 
     private boolean m_beginDelayedShutdown;                 // True if, at round end, a shutdown should be initiated
     private boolean m_refitMode;                            // True if kills are worth nothing (for refitting before shutdown)
@@ -6207,14 +6208,24 @@ public class distensionbot extends SubspaceBot {
             m_beginDelayedShutdown = false;
             m_shutdownTimeMillis = 0;
             return;
+        } else {
+            if( delayedShutdownTask != null ) {
+                try {
+                    m_botAction.cancelTask( delayedShutdownTask );
+                } catch (Exception e) {}
+                m_botAction.sendPrivateMessage( name, "Shutdown cancelled." );
+                m_shutdownTimeMillis = 0;
+                return;
+            }
         }
         Integer minToShutdown = 0;
         try {
             minToShutdown = Integer.parseInt( msg );
         } catch (NumberFormatException e) {
             throw new TWCoreException( "Improper format.  !shutdown <minutes>.  Or use !shutdown 0 and then !shutdown to cancel." );
-        }
-        TimerTask delayedShutdownTask = new TimerTask() {
+        }        
+        
+        delayedShutdownTask = new TimerTask() {
             public void run() {
                 m_beginDelayedShutdown = true;
                 // If in ballgame mode or intermission, save immediately
@@ -12607,6 +12618,8 @@ public class distensionbot extends SubspaceBot {
             //cmdSetMaxPlayers(m_botAction.getBotName(), "100");
             //intermissionTime = 5 * Tools.TimeInMillis.MINUTE;
             m_botAction.setTimer( 5 );
+            intermissionTimer = new IntermissionTask();
+            m_botAction.scheduleTask( intermissionTimer, 5 * Tools.TimeInMillis.MINUTE );
         } else {
             cmdSaveData(":autosave:", "");
             freePlayTimer = new FreePlayTask();
@@ -12806,9 +12819,13 @@ public class distensionbot extends SubspaceBot {
         public void run() {
             if( !DEBUG )
                 m_botAction.setTimer(0);
-            doIntermission();
-            if( !m_beginDelayedShutdown )
+            
+            if( !m_beginDelayedShutdown ) {
                 m_botAction.showObject(LVZ_INTERMISSION); //Shows intermission lvz
+                doIntermission();
+            } else {
+                cmdSaveDie(m_botAction.getBotName(), "shutdown");
+            }
         }
     }
 
