@@ -336,7 +336,7 @@ public class SpaceShip extends Thread
 
 	public int fixRotation(int n) {
 		int nN = n;
-		if (nN > 40) {
+		if (nN >= 40) {
 			nN -= 40;
 		} else if (nN < 0) {
 			nN += 40;
