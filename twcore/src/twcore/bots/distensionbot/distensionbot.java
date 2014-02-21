@@ -7179,8 +7179,8 @@ public class distensionbot extends SubspaceBot {
                 timeNeeded = (int)(flagSecondsRequiredSingleFlag * flagSecondsHybridFactor);
                 if( players >= 18 )
                     timeNeeded -= 60;
-                if( players >= 22 )
-                    timeNeeded -= 120;
+                if( players >= 24 )
+                    timeNeeded -= 90;
             } else {
                 timeNeeded = (int)(flagSecondsRequiredDoubleFlag * flagSecondsHybridFactor);
                 if( players >= 35 )
