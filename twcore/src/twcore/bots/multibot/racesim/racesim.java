@@ -840,6 +840,8 @@ public class racesim extends MultiModule {
             String line = br.readLine();
             if(line == null) {
                 m_indexLoaded = true;
+                br.close();
+                fr.close();
                 return;
             }
 
