@@ -14,7 +14,7 @@ import twcore.core.events.Message;
 import twcore.core.game.Ship;
 
 public class heli extends MultiModule {
-
+ 
     // Static settings
     private final static int xMin = 256 * 16;           // Starting X-coordinate.
     private final static int xMax = 767 * 16;           // End X-coordinate.
