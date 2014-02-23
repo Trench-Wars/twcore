@@ -9297,7 +9297,7 @@ public class distensionbot extends SubspaceBot {
                             m_botAction.SQLQueryAndClose( m_database, "UPDATE tblDistensionPlayer SET fcShip6='y' WHERE fnID='" + dbPlayerID + "'" );
                             m_botAction.sendPrivateMessage(arenaPlayerID, "For earning 20 successive kills, your Weasel has been returned to the hangar!");
                         } else {
-                            if( battlesWon > WINS_REQ_OFFICER ) {
+                            if( battlesWon >= WINS_REQ_OFFICER ) {
                                 m_botAction.sendPrivateMessage(arenaPlayerID, "AWARD FOR MASTERFUL DOGFIGHTING.  You are quite the pilot, and have proven yourself capable of joining our stealth operations.  The Weasel is now available in your !hangar." );
                                 m_botAction.sendPrivateMessage(arenaPlayerID, "WEASEL: The Weasel heads Covert Operations, providing scout reconnaissance to the rest of the army.  Its small size and cloaking allows it a freedom no others have.  Our newest Weasels now have the ability to cut off pursuit instantly.");
                                 m_botAction.showObjectForPlayer( arenaPlayerID, LVZ_UNLOCK_WEASEL );
@@ -12600,7 +12600,7 @@ public class distensionbot extends SubspaceBot {
         for( DistensionPlayer p : m_players.values() ) {
             rate = ((float)p.genKills / (float)mins);
             if( rate >= KPM_REQ_SHIP7 && mins > 10) {
-                if( p.getBattlesWon() > WINS_REQ_OFFICER ) {
+                if( p.getBattlesWon() >= WINS_REQ_OFFICER ) {
                     if( !p.shipIsAvailable(7) ) {
                         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "SPECIAL AWARD FOR BLOODTHIRSTY RESOLVE.  At a murderous rate of over " + ((int)rate) + " pilots a minute (" + p.genKills + " kills in " + mins + " min), you have proven you have what it takes to eviscerate rapidly.  A Lancaster is now in your !hangar." );
                         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "LANCASTER: A ship designed for a brutal full-frontal offense, the Lancaster is likely to take out more than a few lesser ships before it has to rearm.  It also has an array of special weapons unique to its build.");
