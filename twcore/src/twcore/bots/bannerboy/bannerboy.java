@@ -42,6 +42,7 @@ public class bannerboy extends SubspaceBot {
 	PreparedStatement psSaveBanner;
 	PreparedStatement psSeenBanner;
 	PreparedStatement psCheckSeen;
+	PreparedStatement psBannerBannedUpdate;
 
 	public bannerboy( BotAction botAction ) {
 		super( botAction );
@@ -58,6 +59,8 @@ public class bannerboy extends SubspaceBot {
         psSaveBanner = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "INSERT INTO tblBanner (fnUserID, fcBanner, fdDateFound) VALUES ( ? , ? , NOW())");
         psSeenBanner = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "INSERT INTO tblWore (fnUserId, fnBannerId) VALUES ( ? , ? )");
         psCheckSeen = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "SELECT fnUserId FROM tblWore WHERE fnUserID = ? AND fnBannerID = ? LIMIT 0,1");
+        psBannerBannedUpdate = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "UPDATE tblBanner SET fnBanned = ? , fnBannedByID = ? WHERE fnBannerID = ?");
+        
 	}
 
 	public void handleEvent( PlayerBanner event ) {
@@ -97,6 +100,7 @@ public class bannerboy extends SubspaceBot {
 	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psGetBannerID);
 	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psSaveBanner);
 	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psSeenBanner);
+	    m_botAction.closePreparedStatement(m_sqlHost, "bannerboy", this.psBannerBannedUpdate);
 	    m_botAction.cancelTasks();
 	}
 
@@ -127,7 +131,7 @@ public class bannerboy extends SubspaceBot {
 		DBPlayerData dbPlayer = new DBPlayerData( m_botAction, m_sqlHost, player, true );
 		return dbPlayer.getUserID();
 	}
-
+	
 	private int getBannerID( byte[] b ) {
         int id = -1;
 		try {
@@ -201,6 +205,96 @@ public class bannerboy extends SubspaceBot {
 	 	}
 	 	return b;
 	}
+	
+	private byte[] getBannerFromDatabase( int bannerID )
+	{
+		String bannerString = null;
+		byte[] banner = new byte[96];
+		
+		try {
+			ResultSet rs = m_botAction.SQLQuery(m_sqlHost, "SELECT fcBanner FROM tblBanner WHERE fnBannerID = '" 
+												+ bannerID + "' LIMIT 0,1");	
+			if(rs != null && rs.next()) {
+				bannerString = rs.getString("fcBanner");
+			}
+			else {
+				banner = null;
+				return banner;
+			}
+			
+			rs.close();
+		}
+		catch(SQLException sqle)
+		{
+			Tools.printStackTrace(sqle);
+		}
+				
+		for(int i = 0; i < 190; i+=2 )
+		{
+			banner[i/2] = (byte)Integer.parseInt(bannerString.substring(i, i+2), 16);
+		}
+		
+		return banner;		
+	}
+	
+	private boolean banBanner( int bannerID, int userIDOfBanningModerator )
+	{
+		try {				
+				psBannerBannedUpdate.setInt(1, 1);
+				psBannerBannedUpdate.setInt(2, userIDOfBanningModerator);
+				psBannerBannedUpdate.setInt(3, bannerID);
+				int rowCount = psBannerBannedUpdate.executeUpdate();
+				
+				if(rowCount == 1)
+					return true;
+		} catch(SQLException sqle) {				
+			Tools.printStackTrace(sqle);
+		}
+		
+		return false;
+	}
+	
+	private boolean unbanBanner( int bannerID, int userIDOfBanningModerator )
+	{
+		try {				
+				psBannerBannedUpdate.setInt(1, 0);
+				psBannerBannedUpdate.setInt(2, userIDOfBanningModerator);
+				psBannerBannedUpdate.setInt(3, bannerID);
+				int rowCount = psBannerBannedUpdate.executeUpdate();
+				
+				if(rowCount == 1)
+					return true;
+		} catch(SQLException sqle) {				
+			Tools.printStackTrace(sqle);
+		}
+		
+		return false;
+	}
+	
+	private void listbannedBanners(String player)
+	{
+		try {
+			ResultSet rs = m_botAction.SQLQuery(m_sqlHost, "SELECT tblUser.fcUserName, tblBanner.fnBannerID "
+					+ "FROM tblUser INNER JOIN tblBanner "
+					+ "ON tblUser.fnUserID = tblBanner.fnBannedByID "
+					+ "WHERE tblBanner.fnBanned = '1'");
+			
+			if(!rs.isBeforeFirst()) {
+				m_botAction.sendSmartPrivateMessage(player, "No banners are currently banned.");
+				rs.close();
+				return;
+			}
+			
+			while(rs.next()) {
+				m_botAction.sendSmartPrivateMessage(player, rs.getInt(2) + " - banned by " + rs.getString(1));
+			}
+			rs.close();
+		}
+		catch (SQLException sqle) {
+			Tools.printStackTrace(sqle);
+		}
+	}
+	
 
 	public void handleEvent( Message event ) {
 		if( event.getMessageType() != Message.PRIVATE_MESSAGE &&
@@ -223,6 +317,10 @@ public class bannerboy extends SubspaceBot {
                      " !tsay <message>             - Sends team <message>",
                      " !talk                       - Toggles if the bot talks to the player",
                      "                               when copying/wearing his banner",
+                     " !wearbanner <bannerID>      - Wears banner based on bannerID",
+                     " !banbanner  <bannerID>      - Removes banner from website based on bannerID",
+                     " !unbanbanner <bannerID>     - Unbans a banner",
+                     " !listbannedbanners          - Lists bannerIDs that are banned",                     
                      " !die                        - Disconnects the bot"
                      };
 		        m_botAction.smartPrivateMessageSpam(player, help);
@@ -279,7 +377,74 @@ public class bannerboy extends SubspaceBot {
 		                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
 		        });
 		        m_botAction.sendSmartPrivateMessage(player, "It has been done.");
+		    } else
+		    
+		    if(message.startsWith("!wearbanner ")) {
+		    	int bannerID = 0;
+		    	
+		    	try {
+		    		bannerID = Integer.parseInt(message.substring(12));
+		    	}
+		    	catch(NumberFormatException e) {
+		    		m_botAction.sendSmartPrivateMessage(player, "Please input a number for the banner ID.");
+		    		return;
+		    	}
+
+		    	byte[] banner = getBannerFromDatabase(bannerID);
+		    	
+		    	if(banner != null) {
+		    		m_botAction.setBanner(banner);
+		    		m_botAction.sendSmartPrivateMessage(player, "Banner set.");
+		    	}
+		    	else {
+		    		m_botAction.sendSmartPrivateMessage(player, "Banner does not exist in database." );
+		    	}		   
+		    } else
+		    
+		    if(message.startsWith("!banbanner ")) {
+		    	
+		    	int bannerID = 0;
+		    	
+		    	try {
+		    		bannerID = Integer.parseInt(message.substring(11));
+		    	}
+		    	catch(NumberFormatException e) {
+		    		m_botAction.sendSmartPrivateMessage(player, "Please input a number for the banner ID.");
+		    		return;
+		    	}
+		    	
+		    	if(bannerID != 0) {
+		    		boolean successfulBan = banBanner(bannerID, getPlayerID(player) );
+		    		if(successfulBan)
+		    			m_botAction.sendSmartPrivateMessage(player, "Banner removed/banned successfully.");
+		    		else
+		    			m_botAction.sendSmartPrivateMessage(player, "Banner not found/error.");
+		    	}
+		    	
+		    } else
+		    if(message.startsWith("!unbanbanner ")) {
+		    	int bannerID = 0;
+		    	
+		    	try {
+		    		bannerID = Integer.parseInt(message.substring(13));
+		    	}
+		    	catch(NumberFormatException e) {
+		    		m_botAction.sendSmartPrivateMessage(player, "Please input a number for the banner ID.");
+		    		return;
+		    	}
+		    	
+		    	if(bannerID != 0) {
+		    		boolean successfulLift = unbanBanner(bannerID, getPlayerID(player) );
+		    		if(successfulLift)
+		    			m_botAction.sendSmartPrivateMessage(player, "Banner ban lifted successfully.");
+		    		else
+		    			m_botAction.sendSmartPrivateMessage(player, "Banner not found/error.");
+		    	}		    	
+		    } else
+		    if(message.startsWith("!listbannedbanners")) {
+		    	listbannedBanners(player);
 		    }
+		    
 		}
 		else if(!m_botAction.getOperatorList().isSmod(player) && message.equalsIgnoreCase("!help")){
 		    String[] helpmsg = {
@@ -299,7 +464,7 @@ public class bannerboy extends SubspaceBot {
 	    m_botAction.joinArena( m_botAction.getGeneralSettings().getString("Arena") );
         m_botAction.sendUnfilteredPublicMessage("?chat="+m_botAction.getGeneralSettings().getString("Chat Name"));
 
-	    if(psGetBannerID == null || psSaveBanner == null || psSeenBanner == null || psCheckSeen == null) {
+	    if(psGetBannerID == null || psSaveBanner == null || psSeenBanner == null || psCheckSeen == null || psBannerBannedUpdate == null) {
             //Something went wrong, we can't continue
 	        m_botAction.sendChatMessage("Error while creating PreparedStatements, disconnecting...");
             handleDisconnect();
