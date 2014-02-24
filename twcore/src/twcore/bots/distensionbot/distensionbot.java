@@ -9704,11 +9704,11 @@ public class distensionbot extends SubspaceBot {
          * 7 successive kills = MDlvl * 6%  (6%, 12%, 18%, 24%, 30%)
          */
         public void checkMasterDrive() {
-            if( masterDrive <= 0 || successiveKills < 2 )
+            if( successiveKills < 2 )
                 return;
             double masterChance = Math.random() * 100.0;
             boolean fired = false;
-            int masterMod = Math.min(35, (masterDrive * (successiveKills - 1)));  // Cap at 35%
+            int masterMod = Math.min(28, ((masterDrive + 1) * (successiveKills - 1)) );  // Cap at 30%
             if( (double)masterMod > masterChance ) {
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.SUPER );
                 m_botAction.specificPrize( arenaPlayerID, Tools.Prize.SHIELDS );
