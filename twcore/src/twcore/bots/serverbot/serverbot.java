@@ -2,14 +2,9 @@ package twcore.bots.serverbot;
 
 import twcore.core.*;
 import twcore.core.events.*;
-import twcore.core.stats.DBPlayerData;
-import twcore.core.util.Tools;
 import twcore.core.events.SQLResultEvent;
 import twcore.core.game.Player;
 
-import java.net.*;
-import java.io.*;
-import java.sql.ResultSet;
 import java.util.*;
 
 public class serverbot extends SubspaceBot {
