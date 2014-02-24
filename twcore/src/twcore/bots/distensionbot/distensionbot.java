@@ -188,8 +188,8 @@ public class distensionbot extends SubspaceBot {
     private final int REARM_AREA_BOTTOM_Y = 824;
     private final int REARM_SAFE_TOP_Y = 192;                   // Y coords of safe parts of rearm areas
     private final int REARM_SAFE_BOTTOM_Y = 832;
-    private final int BASE_CENTER_0_Y_COORD = 426;
-    private final int BASE_CENTER_1_Y_COORD = 597;
+    private final int BASE_CENTER_0_Y_COORD = 459;  // Old: 426
+    private final int BASE_CENTER_1_Y_COORD = 564;  // Old: 597
     // Old base warp coords (inside base)
     //private final int BASE_CENTER_0_Y_COORD = 335;
     //private final int BASE_CENTER_1_Y_COORD = 688;
@@ -260,10 +260,10 @@ public class distensionbot extends SubspaceBot {
     public final int OPS_BOT_WARP6_Y = 721;
 
     // 1-flag earwarp
-    public final int LEFT_EAR_X = 474;
-    public final int LEFT_EAR_Y = 278;
-    public final int RIGHT_EAR_X = 550;
-    public final int RIGHT_EAR_Y = 278;
+    public int LEFT_EAR_X = 474;
+    public int LEFT_EAR_Y = 278;
+    public int RIGHT_EAR_X = 550;
+    public int RIGHT_EAR_Y = 278;
 
 
 
@@ -556,6 +556,7 @@ public class distensionbot extends SubspaceBot {
 
         requestEvents();
         registerCommands();
+        readCoords();
         m_botAction.SQLBackgroundQuery(m_database, null, "SELECT 1"); // Start the car.
 
         m_shipGeneralData = new Vector<ShipProfile>();
@@ -1285,6 +1286,25 @@ public class distensionbot extends SubspaceBot {
         m_commandInterpreter.registerDefaultCommand( Message.REMOTE_PRIVATE_MESSAGE, this, "handleRemoteMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.ARENA_MESSAGE, this, "handleArenaMessage" );
         m_commandInterpreter.registerDefaultCommand( Message.PUBLIC_MESSAGE, this, "handlePublicMessage" );
+    }
+    
+    /**
+     * Read in any arena-specific coordinates.
+     */
+    public void readCoords() {
+        String arenacfg = m_botSettings.getString("ArenaCfg");
+        Integer lfrx = m_botSettings.getInteger("LeftFRX" + arenacfg);
+        Integer lfry = m_botSettings.getInteger("LeftFRY" + arenacfg);
+        Integer rfrx = m_botSettings.getInteger("RightFRX" + arenacfg);
+        Integer rfry = m_botSettings.getInteger("RightFRY" + arenacfg);
+        try {
+            LEFT_EAR_X = lfrx.intValue();
+            LEFT_EAR_Y = lfry.intValue();
+            RIGHT_EAR_X = rfrx.intValue();
+            RIGHT_EAR_Y = rfry.intValue();
+        } catch( NullPointerException e) {
+            Tools.printLog( "Unable to read arena coords for arenacfg: '" + arenacfg + "'" );
+        }
     }
 
 
@@ -8488,14 +8508,17 @@ public class distensionbot extends SubspaceBot {
             if( roundStart ) {
                 if( !m_singleFlagMode ) {
                     if( warpInBase ) {
-                        int xmod = (int)(Math.random() * 10) - 5;
-                        int ymod = (int)(Math.random() * 10) - 5;
+                        int xmod = (int)(Math.random() * 30) - 15;
+                        //int ymod = (int)(Math.random() * 10) - 5;
+                        int ymod = (int)Math.abs((xmod + 1) / 3);
                         x = 512 + xmod;
-                        if( base == 0 )
+                        if( base == 0 ) {
                             y = BASE_CENTER_0_Y_COORD;
-                        else
+                            y += ymod;
+                        } else {
                             y = BASE_CENTER_1_Y_COORD;
-                        y += ymod;
+                            y -= ymod;
+                        }
                     }
                 } else {
                     if( base == 0 ) {
@@ -8841,6 +8864,11 @@ public class distensionbot extends SubspaceBot {
                     }
                 }
             }
+            
+            // Hack fix for giving Celebrate Diversity bonus to those who reach 20
+            if( rank == 20 )
+                bonusRPMult += 0.05f;
+
 
             // BETA ONLY
             /*
