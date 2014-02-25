@@ -935,8 +935,6 @@ public class elim extends SubspaceBot {
         if (state != State.VOTING)
             return;
         if (voteType == VoteType.NA) {
-            ba.sendChatMessage(2, "The next game of ELIM is about to begin. We are voting on ship.");
-            ba.sendChatMessage(3, "The next game of ELIM is about to begin. We are voting on ship.");
             voteType = VoteType.SHIP;
             ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 5-Terrier, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
         } else if (voteType == VoteType.SHIP) {
@@ -945,6 +943,8 @@ public class elim extends SubspaceBot {
                 ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + " or 15-30 for KillRace" + ")");
             else
                 ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + ")");
+            ba.sendChatMessage(2, Tools.shipName(shipType.getNum()) + " elim is beginning now.");
+            ba.sendChatMessage(3, "ELIM: " + Tools.shipName(shipType.getNum()) + " elim now beginning.");
         } else if (voteType == VoteType.DEATHS) {
             if (shipType.hasShrap()) {
                 voteType = VoteType.SHRAP;
