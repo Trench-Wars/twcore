@@ -2248,21 +2248,36 @@ public class distensionbot extends SubspaceBot {
         // also cleared.
         if( killed.getFrequency() == killer.getFrequency() ) {
             float div;
-            // Sharks get off a little easier for TKs
-            if( victor.getShipNum() == Tools.Ship.SHARK )
-                div = 8.0f;
+            // Sharks (& WBs) get off a little easier for TKs
+            if( victor.getShipNum() == Tools.Ship.SHARK || victor.getShipNum() == Tools.Ship.WARBIRD )
+                div = 6.0f;
             else {
                 if( loser.isSupportShip() )
-                    div = 1.5f;
-                else
                     div = 2.5f;
+                else
+                    div = 1.5f;
             }
             // If lowbies get TKd, it shouldn't hurt as much, because ... well, it's easy to TK them.
-            if( rankDiff <= -RANK_DIFF_MED )
+            if( rankDiff <= -(RANK_DIFF_MED + 10) )
                 div *= 1.5f;
-            if( victorRank < 10 )       // Be nice to the new guys
-                div *= 2.0f;
-            int loss = Math.round((float)victor.getRank() / div);
+            
+            int loss = 0;
+            if( victorRank > 60 )
+                loss = 400;
+            else if( victorRank > 50 )
+                loss = 300;
+            else if( victorRank > 40 )
+                loss = 200;
+            else if( victorRank > 30 )
+                loss = 150;
+            else if( victorRank > 20 )
+                loss = 100;
+            else if( victorRank > 10 )
+                loss = 50;
+            else
+                loss = 25;
+            
+            loss = Math.round((float)loss / div);
             if( DEBUG )
                 loss = Math.round((float)loss * DEBUG_MULTIPLIER);
             victor.addRankPoints( -loss );
@@ -2356,7 +2371,8 @@ public class distensionbot extends SubspaceBot {
             points = loser.getRank();
         }
 
-        // Points adjusted based on size of victor's army v. loser's
+        // Points adjusted based on size of victor's army v. loser's.
+        // The closer this value is to 0, the more skewed things are in the victor's favor.
         float armySizeWeight;
         float killedArmyStr = loserArmy.getTotalStrength();
         float killerArmyStr = victorArmy.getTotalStrength();
@@ -2378,30 +2394,40 @@ public class distensionbot extends SubspaceBot {
         // Flags don't matter while the flag timer is running.
         if( flagTimer != null && flagTimer.isRunning() ) {
             flagMulti = victorArmy.getNumFlagsOwned();
+            boolean voidBonus = armySizeWeight <= ASSIST_WEIGHT_MINOR_IMBALANCE;
+            boolean voidPenalty = armySizeWeight >= 1.11;
             if( m_singleFlagMode ) {
-                if( flagMulti == 1.0f )
-                    flagMulti = 1.1f;
+                if( flagMulti == 1.0f && !voidBonus )
+                    flagMulti = 1.4f;
+                else {
+                    // No flags; support ships immune to no-flag 
+                    if( victor.isHigherOrderSupportShip()) {
+                        flagMulti = 1.0f;
+                    } else {
+                        if( voidPenalty )
+                            flagMulti = 1.0f;
+                        else
+                            flagMulti = 0.65f;
+                    }
+                }
             } else {
                 if( flagMulti == 0f ) {
-                    if( armySizeWeight > ASSIST_WEIGHT_IMBALANCE ) {
-                        flagMulti = 0.5f;
+                    if( voidPenalty || victor.isHigherOrderSupportShip() ) {
+                        flagMulti = 1.0f;
                     } else {
-                        // Reduced RP for 0 flag rule doesn't apply if armies are imbalanced.
-                        flagMulti = 1;
+                        flagMulti = 0.25f;
                     }
-                } else if( flagMulti == 2.0f ) {
-                    flagMulti = 1.5f;
+                } else if( flagMulti == 2.0f && !voidBonus ) {
+                    flagMulti = 2.25f;
                 }
-                points = (int)((float)points * flagMulti);
             }
+            points = (int)((float)points * flagMulti);
 
-            if( flagTimer != null && flagTimer.isRunning() ) {
-                // Don't count streak if the killed player was not in base & round is going
-                if( ! ((killed.getYTileLocation() > TOP_ROOF && killed.getYTileLocation() < TOP_LOW) ||
-                        (killed.getYTileLocation() > BOT_LOW  && killed.getYTileLocation() < BOT_ROOF)) ) {
-                    killInBase = false;
-                    addedToStreak = false;
-                }
+            // Don't count streak if the killed player was not in base & round is going
+            if( ! ((killed.getYTileLocation() > TOP_ROOF && killed.getYTileLocation() < TOP_LOW) ||
+                    (killed.getYTileLocation() > BOT_LOW  && killed.getYTileLocation() < BOT_ROOF)) ) {
+                killInBase = false;
+                addedToStreak = false;
             }
         }
 
@@ -2424,7 +2450,7 @@ public class distensionbot extends SubspaceBot {
 
         // Experimental: sharks get additional points for kills.
         if( victorShip == Tools.Ship.SHARK ) {
-            points *= 1.3;
+            points *= 1.25;
         }
 
         if( loserArmy.getPilotsInGame() != 1 ) {
@@ -2536,12 +2562,14 @@ public class distensionbot extends SubspaceBot {
                     msg += " [Terr: +25%]";
                 else
                     msg += " [Terr: +10%]";
-        if( flagMulti == 1.5f )
-            msg += " [Both flags: +50%]";
-        else if( flagMulti == 0.5f )
-            msg += " [No flags: -50%]";
-        else if( flagMulti == 1.1f )
-            msg += " [Flag held: +10%]";
+        if( flagMulti == 2.25f )
+            msg += " [Both flags: +125%]";
+        else if( flagMulti == 1.4f )
+            msg += " [Flag held: +40%]";
+        else if( flagMulti == 0.25f )
+            msg += " [No flags: -75%]";
+        else if( flagMulti == 0.65f )
+            msg += " [No flag: -35%]";
         if( endedStreak )
             msg += " [Ended streak: +50%]";
         if( !killInBase )
@@ -9732,7 +9760,7 @@ public class distensionbot extends SubspaceBot {
          * 7 successive kills = MDlvl * 6%  (6%, 12%, 18%, 24%, 30%)
          */
         public void checkMasterDrive() {
-            if( successiveKills < 2 )
+            if( masterDrive < 1 || successiveKills < 2 )
                 return;
             double masterChance = Math.random() * 100.0;
             boolean fired = false;
@@ -12556,7 +12584,7 @@ public class distensionbot extends SubspaceBot {
                         topBreaker = p.getName();
                     }
 
-                    int bonus = Math.max( 1, (holds * ( playerRank / 2 ) + breaks * (playerRank / 3)) );
+                    int bonus = Math.max( 1, (holds * ( (playerRank + 50) / 2 ) + breaks * ((playerRank + 25) / 2)) );
                     int totalDisplay = (int)(DEBUG ? (bonus + modPoints) * DEBUG_MULTIPLIER : bonus + modPoints );
                     if( holds != 0 && breaks != 0 ) {
                         victoryMsg += ", + " + (int)(DEBUG ? bonus * DEBUG_MULTIPLIER : bonus ) + "RP for " + holds + " sector holds and " + breaks +" sector breaks = " + totalDisplay + " RP!" ;
