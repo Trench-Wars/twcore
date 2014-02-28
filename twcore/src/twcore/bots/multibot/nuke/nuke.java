@@ -297,7 +297,12 @@ public final class nuke extends MultiModule {
     @Override
     public String[] getModHelpMessage() {
         // TODO Auto-generated method stub
-        return null;
+
+        String[] nukeHelp = { "!set <small,med,large>               -- Starts a size of base ",
+                              "!nuke                                -- Nuke the base!"
+        };
+        return nukeHelp;
+        
     }
 
     @Override
