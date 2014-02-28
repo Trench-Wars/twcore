@@ -19,7 +19,6 @@ import twcore.core.util.Tools;
 
 public final class nuke extends MultiModule {
 
-    
     private static final int SMALL_OBJON = 1001;
     private static final int MED_OBJON = 1002;
     private static final int LARGE_OBJON = 1003;
