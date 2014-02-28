@@ -2397,9 +2397,10 @@ public class distensionbot extends SubspaceBot {
             boolean voidBonus = armySizeWeight <= ASSIST_WEIGHT_MINOR_IMBALANCE;
             boolean voidPenalty = armySizeWeight >= 1.11;
             if( m_singleFlagMode ) {
-                if( flagMulti == 1.0f && !voidBonus )
-                    flagMulti = 1.4f;
-                else {
+                if( flagMulti == 1.0f ) {
+                    if( !voidBonus ) 
+                        flagMulti = 1.4f;
+                } else {
                     // No flags; support ships immune to no-flag 
                     if( victor.isHigherOrderSupportShip()) {
                         flagMulti = 1.0f;
