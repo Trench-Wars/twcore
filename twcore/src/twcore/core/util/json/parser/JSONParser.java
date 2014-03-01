@@ -21,7 +21,7 @@ import twcore.core.util.json.JSONObject;
  * 
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
-@SuppressWarnings( { "rawtypes", "unchecked" } )
+@SuppressWarnings("rawtypes")
 public class JSONParser {
 	public static final int S_INIT=0;
 	public static final int S_IN_FINISHED_VALUE=1;//string,number,boolean,null,object,array
@@ -98,7 +98,7 @@ public class JSONParser {
 	 * Parse JSON text into java object from the input source.
 	 * 	
 	 * @param in
-     * @param containerFactory - Use this factory to createyour own JSON object and JSON array containers.
+     * @param containerFactory - Use this factory to create your own JSON object and JSON array containers.
 	 * @return Instance of the following:
 	 *  org.json.simple.JSONObject,
 	 * 	org.json.simple.JSONArray,
@@ -110,9 +110,10 @@ public class JSONParser {
 	 * @throws IOException
 	 * @throws ParseException
 	 */
+	@SuppressWarnings("unchecked")
 	public Object parse(Reader in, ContainerFactory containerFactory) throws IOException, ParseException{
 		reset(in);
-		LinkedList statusStack = new LinkedList();
+		LinkedList<Integer> statusStack = new LinkedList<Integer>();
 		LinkedList valueStack = new LinkedList();
 		
 		try{
@@ -328,6 +329,7 @@ public class JSONParser {
 	 * @throws IOException
 	 * @throws ParseException
 	 */
+	@SuppressWarnings("unchecked")
 	public void parse(Reader in, ContentHandler contentHandler, boolean isResume) throws IOException, ParseException{
 		if(!isResume){
 			reset(in);
