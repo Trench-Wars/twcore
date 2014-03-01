@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project name="twcore" default="all" basedir=".">
-        
+	<presetdef name="javac">
+		<javac includeantruntime="false" />
+	</presetdef>
+	
     <target name="all" depends="clean,core,bots" description="Builds the entire TWCore distribution">    	
     </target>
 	
