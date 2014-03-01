@@ -65,7 +65,7 @@ public class SQLManager extends Thread {
     
     final static int STALE_TIME = 15 * Tools.TimeInMillis.MINUTE;
                                                    // Time in ms between stale conn checks.
-    private long lastStaleCheck = 0;
+    private long nextStaleCheck = 0;
 
     /**
      * Initialize SQL functionality with the information given in the specified
@@ -126,7 +126,7 @@ public class SQLManager extends Thread {
             Tools.printLog( "SQL Background Queues NOT initialized." );
         }
         System.out.println();
-        lastStaleCheck = System.currentTimeMillis();
+        nextStaleCheck = System.currentTimeMillis() + STALE_TIME;
     }
 
     /**
@@ -329,7 +329,7 @@ public class SQLManager extends Thread {
             }
 
             // Perform stale check
-            checkForStales = (lastStaleCheck > System.currentTimeMillis() + STALE_TIME);            
+            checkForStales = (nextStaleCheck < System.currentTimeMillis());            
             i = pools.keySet().iterator();
             while( i.hasNext() ) {
                 String name = i.next();
@@ -338,7 +338,7 @@ public class SQLManager extends Thread {
                     pool.updateStaleConnections();
             }            
             if( checkForStales )
-                lastStaleCheck = System.currentTimeMillis();
+                nextStaleCheck = System.currentTimeMillis() + STALE_TIME;
             try{
                 Thread.sleep( THREAD_SLEEP_TIME );
             } catch( InterruptedException e ){}
