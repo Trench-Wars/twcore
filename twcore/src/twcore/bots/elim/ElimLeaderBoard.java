@@ -258,6 +258,9 @@ public class ElimLeaderBoard {
                     if(shipType == Tools.Ship.SPECTATOR)
                         continue;
                     
+                    if(m_rankings.get(shipType) == null)
+                        continue;
+                    
                     shipCount[shipType]++;
                     // Rank
                     String rank = Tools.rightString(Integer.toString(j + 1), 2, ' ');
