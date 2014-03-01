@@ -31,7 +31,6 @@ public class evabot extends SubspaceBot {
     public evabot(BotAction botAction) {
         super(botAction);
         oplist = ba.getOperatorList();
-        oplist.addOperator("PoisonIvy", OperatorList.OWNER_LEVEL);
         ba=botAction;
         requestEvents();
 
