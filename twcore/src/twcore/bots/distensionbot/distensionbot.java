@@ -2800,8 +2800,9 @@ public class distensionbot extends SubspaceBot {
             throw new TWCoreException( "Whoa, and what the hell army are you in now?  You're confusing me... might want to tell someone important that I told you this." );
 
 
-        boolean weak = (oldarmy.getPilotsTotal() > army.getPilotsTotal() + 1 );
-
+        //boolean weak = (oldarmy.getPilotsTotal() > army.getPilotsTotal() + 1 );
+        boolean weak = true;    // Free defect while we are shuffling armies regularly
+        
         // Free !defect if army has less pilots
         if( weak ) {
             p.doDefect( armyNum );
@@ -6257,6 +6258,10 @@ public class distensionbot extends SubspaceBot {
         if( m_beginDelayedShutdown ) {
             m_botAction.sendPrivateMessage( name, "Shutdown cancelled." );
             m_beginDelayedShutdown = false;
+            try {
+                m_botAction.cancelTask( delayedShutdownTask );
+            } catch (Exception e) {}
+            delayedShutdownTask = null;
             m_shutdownTimeMillis = 0;
             return;
         } else {
@@ -7427,7 +7432,7 @@ public class distensionbot extends SubspaceBot {
             desc = "Thor recharged every 5 minutes";
             break;
         case ABILITY_MASTER_DRIVE:
-            desc = "Chance of Super/Shields after streak of 5";
+            desc = "Chance of Super & Shields every kill after streak of 3";
             break;
         case ABILITY_PRISMATIC_ARRAY:
             desc = "+15% chance to refuel prismatic decoy array (--- to use)";
