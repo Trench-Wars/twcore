@@ -1,6 +1,6 @@
 package twcore.bots.multibot.prodem;
 
-import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TimerTask;
@@ -32,7 +32,7 @@ public final class prodem extends MultiModule {
 
     int				curTime = 0,lastMessage = 0;
     int				gameProgress = -1;
-    private HashMap<String, PlayerProfile> playerMap;
+    private Hashtable<String, PlayerProfile> playerMap;
     final String[]	ranks = { "",
     "General",
     "Lt. General",
@@ -55,7 +55,7 @@ public final class prodem extends MultiModule {
     ///*** Constructor ///***
     public void init() {
         //Other setup
-        playerMap = new HashMap<String, PlayerProfile>();
+        playerMap = new Hashtable<String, PlayerProfile>();
     }
 
     public void requestEvents(ModuleEventRequester events) {
