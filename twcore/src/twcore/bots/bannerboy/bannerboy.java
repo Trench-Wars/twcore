@@ -66,6 +66,11 @@ public class bannerboy extends SubspaceBot {
 	public void handleEvent( PlayerBanner event ) {
 
 	 	String player = m_botAction.getPlayerName( event.getPlayerID() );
+	 	
+	 	//Ignore banner changes by bot
+	 	if(player == m_botAction.getBotName())
+	 		return;
+	 	
 	 	byte[] banner = event.getBanner();
 
 	 	m_toCheck.add( new BannerCheck( player, banner ) );
