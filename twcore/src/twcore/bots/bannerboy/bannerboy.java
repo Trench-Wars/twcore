@@ -55,7 +55,7 @@ public class bannerboy extends SubspaceBot {
 
 		m_toCheck = new Vector<BannerCheck>();
 		m_talk = false;
-		psGetBannerID = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "SELECT fnBannerID FROM tblBanner WHERE fcBanner = ? LIMIT 0,1");
+		psGetBannerID = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "SELECT fnBannerID, fnBanned FROM tblBanner WHERE fcBanner = ? LIMIT 0,1");
         psSaveBanner = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "INSERT INTO tblBanner (fnUserID, fcBanner, fdDateFound) VALUES ( ? , ? , NOW())");
         psSeenBanner = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "INSERT INTO tblWore (fnUserId, fnBannerId) VALUES ( ? , ? )");
         psCheckSeen = m_botAction.createPreparedStatement(m_sqlHost, "bannerboy", "SELECT fnUserId FROM tblWore WHERE fnUserID = ? AND fnBannerID = ? LIMIT 0,1");
@@ -104,12 +104,20 @@ public class bannerboy extends SubspaceBot {
 	    m_botAction.cancelTasks();
 	}
 
-	private boolean bannerExists( byte[] b ) {
+	private boolean bannerExists( BannerCheck bc ) {
 		try {
-            psGetBannerID.setString(1, getBannerString( b ));
+            psGetBannerID.setString(1, getBannerString( bc.getBanner() ));
             ResultSet rs = psGetBannerID.executeQuery();
 
-            if( rs.next() ) return true;
+            if( rs.next() ) 
+            {
+            	//Report banner if banner is a banned banner. <-Tongue Twister?
+            	if(rs.getInt("fnBanned") == 1)
+            	{
+            		m_botAction.sendCheaterMessage("I see player "+bc.getPlayer()+ " wearing a banned banner.");
+            	}
+            	return true;
+            }
             else            return false;
 		} catch (SQLException sqle) {
 			Tools.printStackTrace( sqle );
@@ -320,7 +328,8 @@ public class bannerboy extends SubspaceBot {
                      " !wearbanner <bannerID>      - Wears banner based on bannerID",
                      " !banbanner  <bannerID>      - Removes banner from website based on bannerID",
                      " !unbanbanner <bannerID>     - Unbans a banner",
-                     " !listbannedbanners          - Lists bannerIDs that are banned",                     
+                     " !listbannedbanners          - Lists bannerIDs that are banned", 
+                     " !default                    - Resets to default banner, use when bot is wearing a naughty banner",
                      " !die                        - Disconnects the bot"
                      };
 		        m_botAction.smartPrivateMessageSpam(player, help);
@@ -490,7 +499,7 @@ public class bannerboy extends SubspaceBot {
 				String player = bc.getPlayer();
 
 			 	//If banner isn't in db save it
-			 	if( !bannerExists( banner ) ) {
+			 	if( !bannerExists( bc ) ) {
 			 		saveBanner( player, banner);
 			 	    
 			 		// And start wearing it if has been more than 5 minutes since the last banner got set.
