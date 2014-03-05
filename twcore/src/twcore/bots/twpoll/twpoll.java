@@ -23,6 +23,7 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.PlayerEntered;
 import twcore.core.util.Tools;
+import twcore.core.stats.DBPlayerData;
 
 /**
  * A DB-based poll system
@@ -180,7 +181,7 @@ public class twpoll extends SubspaceBot {
         } else if (message.startsWith("!about")) {
             cmd_about(name);
         } else if (message.startsWith("!vote ") && message.substring(6) != null) {
-            cmd_vote(name, message.substring(6));                
+            cmd_vote(name, message.substring(6));
         }
 
         if (oplist.isZH(name)) {
@@ -242,7 +243,7 @@ public class twpoll extends SubspaceBot {
         } else if ((window[0] >= 5 && window[0] <= 8) && updates.containsKey(entryID)) {
             showUpdate(name, entryID);
         } else
-            m_botAction.sendSmartPrivateMessage(name, "Invalid selection please try again");
+            m_botAction.sendSmartPrivateMessage(name, "Invalid selection; please try again.");
     }
 
     public void cmd_info(String name, String message) {       
@@ -256,7 +257,7 @@ public class twpoll extends SubspaceBot {
         if (polls.containsKey(entryID)) 
             showPollResults(name, entryID);
         else
-            m_botAction.sendSmartPrivateMessage(name, "Invalid selection please try again");
+            m_botAction.sendSmartPrivateMessage(name, "Invalid selection; please try again.");
     }
 
     public void cmd_com(String name, String message) {
@@ -277,7 +278,7 @@ public class twpoll extends SubspaceBot {
         ArrayList<String> spam = new ArrayList<String>();
 
         spam.add(formatMessage("[Main Navigation]",0));
-        spam.add(formatMessage("!polls",1) + formatMessage("Shows the active polls.",2));
+        spam.add(formatMessage("!polls",1) + formatMessage("Shows the active polls/elections.",2));
         spam.add(formatMessage("!updates",1) + formatMessage("Shows active updates.",2));
         spam.add(formatMessage("!ignore",1) + formatMessage("Turns off automessages for you.",2));
         spam.add(formatMessage("!about",1) + formatMessage("Information about this bot.",2));
@@ -316,8 +317,10 @@ public class twpoll extends SubspaceBot {
         PlayerData p = playerdata.get(getUserID(name));
         int[] window = p.getWindow();
 
-        if (window[0] != 3 && window [0] != 7)
-            return;
+        if (window[0] != 3 && window [0] != 7) {
+            m_botAction.sendSmartPrivateMessage(name, "You can't vote in this menu.");            
+            return;            
+        }
 
         if (Tools.isAllDigits(message))
             vote = Integer.parseInt(message);
@@ -342,7 +345,7 @@ public class twpoll extends SubspaceBot {
                 int pollID = rs.getInt("fnPollID");
                 if (!polls.containsKey(pollID)) {
                     polls.put(rs.getInt("fnPollID"), new Poll(rs.getInt("fnPollID"), rs.getInt("fnUserPosterID"), rs.getString("fcUserName"),
-                            rs.getString("fcQuestion"),rs.getBoolean("fbMultiSelect"), rs.getDate("fdBegin"), rs.getDate("fdEnd"), rs.getDate("fdCreated")));
+                            rs.getString("fcQuestion"),rs.getBoolean("fbMultiSelect"), rs.getInt("fnRequireTWD"), rs.getDate("fdBegin"), rs.getDate("fdEnd"), rs.getDate("fdCreated")));
 
                     polls.get(pollID).addOption(rs.getInt("fnPollOptionID"),rs.getString("fcOption"));
                 } else {
@@ -440,7 +443,7 @@ public class twpoll extends SubspaceBot {
                 rs.close();
                 return userId;
             }
-            // If nothing, dont filter and get the last fnUserID found
+            // If nothing, don't filter and get the last fnUserID found
             else {
                 rs = m_botAction.SQLQuery(DB_NAME, "" +
                         "SELECT fnUserID " +
@@ -555,6 +558,10 @@ public class twpoll extends SubspaceBot {
                 spam.add(" ");
                 spam.add("To COMMENT on this, use !com <your comment>. To SELECT VOTE OPTION, use !vote <num>");
             }
+            if (poll.requireTWD == 2)
+                spam.add(">>> NOTE: This is an OFFICIAL VOTE and requires a TWD-enabled name to cast your ballot. To get help enabling your name, type: ?help Need TWD name enabled");
+            if (poll.requireTWD == 1)
+                spam.add(">>> NOTE: This is an OFFICIAL VOTE and requires a TWD-registered name to cast your ballot. To get help enabling your name, type: ?help Need TWD name registered");
             spam.add("To RETURN HOME, use !home. To go BACK a menu, use !back");
             m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
         }
@@ -813,8 +820,28 @@ public class twpoll extends SubspaceBot {
         try {
             Poll poll = polls.get(pollID);
             pollOption = poll.options.get(optionID-1);
+            
+            if (poll.requireTWD > 0) {
+                int status = playerdata.get(userID).getTWDStatus();
+                if (status == 0) {
+                    m_botAction.sendSmartPrivateMessage(playerName, "You need to have a TWD account to cast an OFFICIAL vote. For assistance, type: ?help twd account");
+                    return false;
+                } else if (status == -1) {
+                    m_botAction.sendSmartPrivateMessage(playerName, "Your TWD account on this name is disabled, and can not be used to cast an OFFICIAL vote. For assistance, type: ?help twd account disabled");
+                    return false;                    
+                }
+                
+                // They are either registered or enabled; now only need to check if enabled for enabled-only votes
+                if (poll.requireTWD == 2) {
+                    if (status != 2) {
+                        m_botAction.sendSmartPrivateMessage(playerName, "You are registered for TWD, but you need to have a TWD-ENABLED account to cast this OFFICIAL VOTE. For assistance, type: ?help twd account not enabled");
+                        return false;
+                    }
+                }
+            }
         } catch(Exception e) { return false; }
 
+        
         try {
             if (hasVotedAlready(pollID, userID)) {
                 m_botAction.SQLQueryAndClose(DB_NAME, "" +
@@ -948,17 +975,21 @@ public class twpoll extends SubspaceBot {
         //public String userPoster;
         public String question;
         //public boolean multi;
+        public int requireTWD;      // 0 = no TWD acct needed
+                                    // 1 = TWD-registered acct needed
+                                    // 2 = TWD-enabled acct needed
         public Date begin;
         public Date end;
         //public Date created;
         public ArrayList<PollOption> options;
 
-        public Poll(int pollID, int posterID, String poster, String question, Boolean multi, Date begin, Date end, Date created) {
+        public Poll(int pollID, int posterID, String poster, String question, Boolean multi, int requireTWD, Date begin, Date end, Date created) {
             this.id = pollID;
             //this.userPosterId = posterID;
             //this.userPoster = poster;
             this.question = question;
             //this.multi = multi;
+            this.requireTWD = requireTWD;
             this.begin = begin;
             this.end = end;
             //this.created = created;
@@ -1023,6 +1054,7 @@ public class twpoll extends SubspaceBot {
         private int[] currentWindow = {0,0};
         private String userName;
         private TimerTask updateMessage;
+        private DBPlayerData twdData = null;
 
         public PlayerData(int userID, String name) {
             updateComments = new TreeMap <Integer, String>();
@@ -1184,6 +1216,27 @@ public class twpoll extends SubspaceBot {
 
         public int[] getWindow() {
             return currentWindow;
+        }
+                
+        public void loadDBPlayerData() {
+            if (twdData == null) {
+                twdData = new DBPlayerData(m_botAction, DB_NAME, userName );
+            }
+        }
+        
+        /**
+         * 
+         * @return 0=not registered; 1=registered; 2=enabled; -1=disabled
+         */
+        public int getTWDStatus() {
+            loadDBPlayerData();
+            if (twdData.isEnabled() )
+                return 2;
+            if (twdData.isRegistered() )
+                return 1;
+            if (twdData.hasBeenDisabled() )
+                return -1;
+            return 0;
         }
     }
 }
