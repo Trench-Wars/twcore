@@ -119,7 +119,8 @@ public class bannerboy extends SubspaceBot {
             	//Report banner if banner is a banned banner. <-Tongue Twister?
             	if(rs.getInt("fnBanned") == 1)
             	{
-            		m_botAction.sendCheaterMessage("I see player "+bc.getPlayer()+ " wearing a banned banner.");
+            		m_botAction.sendCheaterMessage("I see " + bc.getPlayer() + " "
+            				+ "wearing a banned banner. (#" + rs.getInt("fnBannerID") + ")");
             	}
             	return true;
             }
