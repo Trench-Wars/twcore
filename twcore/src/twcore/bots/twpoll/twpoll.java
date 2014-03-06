@@ -53,6 +53,8 @@ public class twpoll extends SubspaceBot {
     public Vector<String> players;
 
     public BotSettings m_botSettings;
+    
+    public boolean notifyPlayers = true;
 
     public twpoll(BotAction botAction) {
         super(botAction);
@@ -85,8 +87,10 @@ public class twpoll extends SubspaceBot {
     }
 
     public void handleEvent(LoggedOn event) {
-        m_botAction.joinArena(m_botSettings.getString("InitialArena"));
         m_botAction.requestArenaList();
+        // Request arena list right now joins the first pub arena; no need to join cfg-defined arena
+        //m_botAction.joinArena(m_botSettings.getString("InitialArena"));
+        notifyPlayers = (m_botSettings.getInt("NotifyPlayers") == 1);
         loadData();
     }
 
@@ -103,6 +107,7 @@ public class twpoll extends SubspaceBot {
             playerdata.put(userID, new PlayerData(userID, event.getPlayerName()));
         else {
             PlayerData p = playerdata.get(userID);
+            if (p == null) return;
             p.sendMessage();
         }
 
@@ -219,6 +224,8 @@ public class twpoll extends SubspaceBot {
 
     public void cmd_viewall(String name) {
         PlayerData p = playerdata.get(getUserID(name));
+        if (p == null) return;
+
         int[] window = p.getWindow();
 
         if (window[0] >= 1 && window[0] <= 4) {
@@ -230,6 +237,8 @@ public class twpoll extends SubspaceBot {
 
     public void cmd_view(String name, String message) {
         PlayerData p = playerdata.get(getUserID(name));
+        if (p == null) return;
+
         int[] window = p.getWindow();
         int entryID = -1;
 
@@ -262,6 +271,8 @@ public class twpoll extends SubspaceBot {
 
     public void cmd_com(String name, String message) {
         PlayerData p = playerdata.get(getUserID(name));
+        if (p == null) return;
+
         int[] window = p.getWindow();
         String comment = message;
 
@@ -291,6 +302,8 @@ public class twpoll extends SubspaceBot {
 
     public void cmd_back(String name) {
         PlayerData p = playerdata.get(getUserID(name));
+        if (p == null) return;
+
         int[] window = p.getWindow();
 
         switch(window[0]) {
@@ -315,6 +328,8 @@ public class twpoll extends SubspaceBot {
     private void cmd_vote(String name, String message) {
         int vote = -1;
         PlayerData p = playerdata.get(getUserID(name));
+        if (p == null) return;
+        
         int[] window = p.getWindow();
 
         if (window[0] != 3 && window [0] != 7) {
@@ -475,6 +490,7 @@ public class twpoll extends SubspaceBot {
         int count = 0;
         int userID = getUserID(playerName);
         PlayerData p = playerdata.get(userID);
+        if (p == null) return 0;
 
         if (type == 1) {
             for(int pollId: polls.keySet()) {
@@ -530,6 +546,8 @@ public class twpoll extends SubspaceBot {
 
     private void showPoll(String playerName, int pollId) {
         PlayerData p = playerdata.get(getUserID(playerName));
+        if (p == null) return;
+
         p.setWindow(3, pollId);
         //int userId = getUserID(playerName);
         ArrayList<String> spam = new ArrayList<String>();
@@ -793,6 +811,8 @@ public class twpoll extends SubspaceBot {
 
     private void showUpdate(String name, int updateID) {
         PlayerData p = playerdata.get(getUserID(name));
+        if (p == null) return;
+        
         p.setWindow(7, updateID);        
         ArrayList<String> spam = new ArrayList<String>();
 
@@ -1070,6 +1090,8 @@ public class twpoll extends SubspaceBot {
         }
 
         public void sendMessage() {
+            if (!notifyPlayers)
+                return;
             if (updateMessage == null) {
                 updateMessage = new TimerTask() {   
                     @Override
@@ -1093,7 +1115,8 @@ public class twpoll extends SubspaceBot {
                             }               
                         } catch (NullPointerException e) {Tools.printStackTrace(e);}
                     } 
-                }; m_botAction.scheduleTask(updateMessage, Tools.TimeInMillis.MINUTE);
+                };
+                m_botAction.scheduleTask(updateMessage, Tools.TimeInMillis.MINUTE);
             }
         }
 
