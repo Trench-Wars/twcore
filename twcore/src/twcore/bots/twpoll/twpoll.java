@@ -88,8 +88,7 @@ public class twpoll extends SubspaceBot {
 
     public void handleEvent(LoggedOn event) {
         m_botAction.requestArenaList();
-        // Request arena list right now joins the first pub arena; no need to join cfg-defined arena
-        //m_botAction.joinArena(m_botSettings.getString("InitialArena"));
+        m_botAction.joinArena(m_botSettings.getString("InitialArena"));
         notifyPlayers = (m_botSettings.getInt("NotifyPlayers") == 1);
         loadData();
     }
