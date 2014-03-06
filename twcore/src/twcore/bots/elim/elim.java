@@ -1081,7 +1081,7 @@ public class elim extends SubspaceBot {
             try {
                 ResultSet rs = showSplash.executeQuery();
                 while(rs.next()) {
-                    m_noSplash.add(rs.getString(1));
+                    m_noSplash.add(rs.getString(1).toLowerCase());
                 }
                 rs.close();
             } catch (SQLException sqle) {
