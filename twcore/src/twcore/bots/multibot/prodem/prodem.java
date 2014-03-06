@@ -185,7 +185,7 @@ public final class prodem extends MultiModule {
             m_botAction.sendPrivateMessage( name, "There is no game in progress." );
     }
 
-    public void botPlayerIn( String name, String message) {
+    public synchronized void botPlayerIn( String name, String message) {
     	int id = m_botAction.getPlayerID(name);
         if(gameProgress == 1 && id >= 0) {
             if(!playerMap.containsKey( name ) ) {
@@ -227,7 +227,7 @@ public final class prodem extends MultiModule {
     }
 
     ///*** Handles a kill ///***
-    public void manageKill( String killer, String killee ) {
+    public synchronized void manageKill( String killer, String killee ) {
         PlayerProfile tempWin, tempLose;
         tempWin  = playerMap.get(killer);
         tempLose = playerMap.get(killee);
