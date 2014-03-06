@@ -333,7 +333,7 @@ public class twpoll extends SubspaceBot {
     private void loadPolls() {
         try {
             ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
-                    "SELECT fnPollID, fcQuestion, fbMultiSelect, fdBegin, fdEnd, fdCreated, fnUserPosterID, fcUserName, fnPollOptionID, fcOption, fnOrder " +
+                    "SELECT fnPollID, fcQuestion, fbMultiSelect, fnRequireTWD, fdBegin, fdEnd, fdCreated, fnUserPosterID, fcUserName, fnPollOptionID, fcOption, fnOrder " +
                     "FROM tblPoll__Poll p " +
                     "JOIN tblPoll__PollOptions po USING (fnPollID) " +
                     "JOIN tblUser u ON p.fnUserPosterID = u.fnUserID " +
