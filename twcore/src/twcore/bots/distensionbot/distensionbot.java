@@ -4476,9 +4476,12 @@ public class distensionbot extends SubspaceBot {
             String text = "   ";
             for( int j = 0; j < team.get(i).size(); j++) {
                 DistensionPlayer p2 = m_players.get( team.get(i).get(j) );
-                text += p2.getName() + "(" + p2.getRank() + ")  ";
-                players++;
-                shipStrength += p2.getStrength();
+                // Hackfix for people in spec changing freqs and somehow getting counted
+                if (p2.getRank() >= 0 ) {
+                    text += p2.getName() + "(" + p2.getRank() + ")  ";
+                    players++;
+                    shipStrength += p2.getStrength();
+                }
             }
             m_botAction.sendPrivateMessage(p.getArenaPlayerID(), num + Tools.formatString( (" " + Tools.shipNameSlang(i) + (num==1 ? "":"s")), 8 )
                     + (shipStrength > 0 ? ("  " + Tools.formatString( String.valueOf( shipStrength ), 3 ) + " STR" + text) : "") );
