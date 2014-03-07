@@ -2848,7 +2848,7 @@ public class distensionbot extends SubspaceBot {
         else
         	returnCode = 1;	// Loaded; go if we can
 
-        if( !bypassChecks ) {
+        if( !bypassChecks && !m_refitMode ) {
             if( m_slotManager.isPlayerAlreadyWaiting(p) )
                 if( m_slotManager.getNumberEmptySlots() == 0 )
                     throw new TWCoreException( "You are already in the queue; please wait patiently and you will be AUTOMATICALLY ADDED into the battle when a slot becomes available, or at the end of the round.  You are #" + m_slotManager.getWaitingListOrder(p) + " of " + m_slotManager.getNumberWaiting() + " waiting." );
