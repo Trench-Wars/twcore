@@ -2263,19 +2263,19 @@ public class distensionbot extends SubspaceBot {
             
             int loss = 0;
             if( victorRank > 60 )
-                loss = 400;
+                loss = 250;
             else if( victorRank > 50 )
-                loss = 300;
+                loss = 175;
             else if( victorRank > 40 )
-                loss = 200;
+                loss = 125;
             else if( victorRank > 30 )
-                loss = 150;
+                loss = 110;
             else if( victorRank > 20 )
-                loss = 100;
+                loss = 70;
             else if( victorRank > 10 )
-                loss = 50;
+                loss = 35;
             else
-                loss = 25;
+                loss = 20;
             
             loss = Math.round((float)loss / div);
             if( DEBUG )
@@ -4086,7 +4086,7 @@ public class distensionbot extends SubspaceBot {
         p.calculateRechargeAndEnergyLevels();
 
         m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "You have specialized to " + sp.getTypeName().toUpperCase() + "!" );
-        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Cost: " + (int)cost + "RP  (0.3% of your total RP earned)  You now have " + p.getUpgradePoints() + " UP to spend." );
+        m_botAction.sendPrivateMessage( p.getArenaPlayerID(), "Cost: " + (int)cost + "RP  You now have " + p.getUpgradePoints() + " UP to spend." );
         p.prizeDefaultUpgrades();
     }
 
