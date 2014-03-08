@@ -540,11 +540,17 @@ public class elim extends SubspaceBot {
         if (game != null) {
             ep = game.getPlayer(name);
             if (ep != null) {
+                /* 
+                 * This piece of code is causing problems at the moment.
+                 * For now, I'm disabling scoreresets when a player is in a game.
                 if (shipType.getNum() == ship && ep.isPlaying() && ep.getStatus() != Status.LAGGED) {
                     ba.sendPrivateMessage(name, "You cannot do a scorereset while playing a game with the ship you want to reset.");
                     return;
                 } else
                     game.do_scorereset(ep, ship);
+                 */
+                ba.sendPrivateMessage(name, "You cannot do a scorereset while playing a game.");
+                return;
             }
         }
         try {
