@@ -1380,7 +1380,7 @@ public class elim extends SubspaceBot {
     }
 
     public void prepareStatements() {
-        if (!checkStatements(false)) {
+        if (updateStats != null || storeGame != null || showLadder != null || showSplash != null || updateSplash != null) {
             ba.closePreparedStatement(db, connectionID, updateStats);
             ba.closePreparedStatement(db, connectionID, storeGame);
             ba.closePreparedStatement(db, connectionID, showLadder);
