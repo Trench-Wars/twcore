@@ -71,7 +71,7 @@ public class distensionbot extends SubspaceBot {
     private final int AUTOSAVE_DELAY = 5;                  // How frequently autosave occurs, in minutes
     private final int MESSAGE_SPAM_DELAY = 150;            // Delay in ms between msgs in list, when spammed to single
     private final int NUM_UNIVERSAL_MSGS_SPAMMED = 2;      // # msgs to be spammed in the universal/shared spammer per tick/delay time
-    private int PRIZE_SPAM_DELAY = 21;                     // Delay in ms between prizes for individual players
+    private int PRIZE_SPAM_DELAY = 22;                     // Delay in ms between prizes for individual players
     private final int MULTIPRIZE_AMOUNT = 4;               // Amount of energy a multiprize counts for
     private final int UPGRADE_DELAY = 50;                  // How often the prize queue rechecks for prizing
     private final int DELAYS_BEFORE_TICK = 10;             // How many UPGRADE_DELAYs before prize queue runs a tick
