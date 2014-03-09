@@ -234,30 +234,30 @@ public class distensionbot extends SubspaceBot {
 
 
     // Ops !warp coords
-    public final int OPS_TOP_WARP1_X = 512; // mid
-    public final int OPS_TOP_WARP1_Y = 374;
-    public final int OPS_TOP_WARP2_X = 450; // left
-    public final int OPS_TOP_WARP2_Y = 314;
-    public final int OPS_TOP_WARP3_X = 574; // right
-    public final int OPS_TOP_WARP3_Y = 314;
-    public final int OPS_TOP_WARP4_X = 512; // before fr
-    public final int OPS_TOP_WARP4_Y = 327;
-    public final int OPS_TOP_WARP5_X = 512; // roof
-    public final int OPS_TOP_WARP5_Y = 265;
-    public final int OPS_TOP_WARP6_X = 512; // fr
-    public final int OPS_TOP_WARP6_Y = 302;
-    public final int OPS_BOT_WARP1_X = 512; // mid
-    public final int OPS_BOT_WARP1_Y = 649;
-    public final int OPS_BOT_WARP2_X = 450; // left
-    public final int OPS_BOT_WARP2_Y = 709;
-    public final int OPS_BOT_WARP3_X = 574; // right
-    public final int OPS_BOT_WARP3_Y = 709;
-    public final int OPS_BOT_WARP4_X = 512; // before fr
-    public final int OPS_BOT_WARP4_Y = 696;
-    public final int OPS_BOT_WARP5_X = 512; // roof
-    public final int OPS_BOT_WARP5_Y = 758;
-    public final int OPS_BOT_WARP6_X = 512; // fr
-    public final int OPS_BOT_WARP6_Y = 721;
+    public int OPS_TOP_WARP1_X = 512; // mid
+    public int OPS_TOP_WARP1_Y = 374;
+    public int OPS_TOP_WARP2_X = 450; // left
+    public int OPS_TOP_WARP2_Y = 314;
+    public int OPS_TOP_WARP3_X = 574; // right
+    public int OPS_TOP_WARP3_Y = 314;
+    public int OPS_TOP_WARP4_X = 512; // before fr
+    public int OPS_TOP_WARP4_Y = 327;
+    public int OPS_TOP_WARP5_X = 512; // roof
+    public int OPS_TOP_WARP5_Y = 265;
+    public int OPS_TOP_WARP6_X = 512; // fr
+    public int OPS_TOP_WARP6_Y = 302;
+    public int OPS_BOT_WARP1_X = 512; // mid
+    public int OPS_BOT_WARP1_Y = 649;
+    public int OPS_BOT_WARP2_X = 450; // left
+    public int OPS_BOT_WARP2_Y = 709;
+    public int OPS_BOT_WARP3_X = 574; // right
+    public int OPS_BOT_WARP3_Y = 709;
+    public int OPS_BOT_WARP4_X = 512; // before fr
+    public int OPS_BOT_WARP4_Y = 696;
+    public int OPS_BOT_WARP5_X = 512; // roof
+    public int OPS_BOT_WARP5_Y = 758;
+    public int OPS_BOT_WARP6_X = 512; // fr
+    public int OPS_BOT_WARP6_Y = 721;
 
     // 1-flag earwarp
     public int LEFT_EAR_X = 474;
@@ -1293,17 +1293,42 @@ public class distensionbot extends SubspaceBot {
      */
     public void readCoords() {
         String arenacfg = m_botSettings.getString("ArenaCfg");
-        Integer lfrx = m_botSettings.getInteger("LeftFRX" + arenacfg);
-        Integer lfry = m_botSettings.getInteger("LeftFRY" + arenacfg);
-        Integer rfrx = m_botSettings.getInteger("RightFRX" + arenacfg);
-        Integer rfry = m_botSettings.getInteger("RightFRY" + arenacfg);
         try {
-            LEFT_EAR_X = lfrx.intValue();
-            LEFT_EAR_Y = lfry.intValue();
-            RIGHT_EAR_X = rfrx.intValue();
-            RIGHT_EAR_Y = rfry.intValue();
+            LEFT_EAR_X = m_botSettings.getInteger("LeftFRX" + arenacfg).intValue();
+            LEFT_EAR_Y = m_botSettings.getInteger("LeftFRY" + arenacfg).intValue();
+            RIGHT_EAR_X = m_botSettings.getInteger("RightFRX" + arenacfg).intValue();
+            RIGHT_EAR_Y = m_botSettings.getInteger("RightFRY" + arenacfg).intValue();
         } catch( NullPointerException e) {
-            Tools.printLog( "Unable to read arena coords for arenacfg: '" + arenacfg + "'" );
+            Tools.printLog( "Unable to read FR warp coords for arenacfg: '" + arenacfg + "'" );
+        }        
+        
+        try {
+            OPS_TOP_WARP1_X = m_botSettings.getInteger("OPS_TOP_WARP1_X" + arenacfg).intValue();
+            OPS_TOP_WARP1_Y = m_botSettings.getInteger("OPS_TOP_WARP1_Y" + arenacfg).intValue();
+            OPS_TOP_WARP2_X = m_botSettings.getInteger("OPS_TOP_WARP2_X" + arenacfg).intValue();
+            OPS_TOP_WARP2_Y = m_botSettings.getInteger("OPS_TOP_WARP2_Y" + arenacfg).intValue();
+            OPS_TOP_WARP3_X = m_botSettings.getInteger("OPS_TOP_WARP3_X" + arenacfg).intValue();
+            OPS_TOP_WARP3_Y = m_botSettings.getInteger("OPS_TOP_WARP3_Y" + arenacfg).intValue();
+            OPS_TOP_WARP4_X = m_botSettings.getInteger("OPS_TOP_WARP4_X" + arenacfg).intValue();
+            OPS_TOP_WARP4_Y = m_botSettings.getInteger("OPS_TOP_WARP4_Y" + arenacfg).intValue();
+            OPS_TOP_WARP5_X = m_botSettings.getInteger("OPS_TOP_WARP5_X" + arenacfg).intValue();
+            OPS_TOP_WARP5_Y = m_botSettings.getInteger("OPS_TOP_WARP5_Y" + arenacfg).intValue();
+            OPS_TOP_WARP6_X = m_botSettings.getInteger("OPS_TOP_WARP6_X" + arenacfg).intValue();
+            OPS_TOP_WARP6_Y = m_botSettings.getInteger("OPS_TOP_WARP6_Y" + arenacfg).intValue();
+            OPS_BOT_WARP1_X = m_botSettings.getInteger("OPS_BOT_WARP1_X" + arenacfg).intValue();
+            OPS_BOT_WARP1_Y = m_botSettings.getInteger("OPS_BOT_WARP1_Y" + arenacfg).intValue();
+            OPS_BOT_WARP2_X = m_botSettings.getInteger("OPS_BOT_WARP2_X" + arenacfg).intValue();
+            OPS_BOT_WARP2_Y = m_botSettings.getInteger("OPS_BOT_WARP2_Y" + arenacfg).intValue();
+            OPS_BOT_WARP3_X = m_botSettings.getInteger("OPS_BOT_WARP3_X" + arenacfg).intValue();
+            OPS_BOT_WARP3_Y = m_botSettings.getInteger("OPS_BOT_WARP3_Y" + arenacfg).intValue();
+            OPS_BOT_WARP4_X = m_botSettings.getInteger("OPS_BOT_WARP4_X" + arenacfg).intValue();
+            OPS_BOT_WARP4_Y = m_botSettings.getInteger("OPS_BOT_WARP4_Y" + arenacfg).intValue();
+            OPS_BOT_WARP5_X = m_botSettings.getInteger("OPS_BOT_WARP5_X" + arenacfg).intValue();
+            OPS_BOT_WARP5_Y = m_botSettings.getInteger("OPS_BOT_WARP5_Y" + arenacfg).intValue();
+            OPS_BOT_WARP6_X = m_botSettings.getInteger("OPS_BOT_WARP6_X" + arenacfg).intValue();
+            OPS_BOT_WARP6_Y = m_botSettings.getInteger("OPS_BOT_WARP6_Y" + arenacfg).intValue();
+        } catch( NullPointerException e) {
+            Tools.printLog( "Unable to read ops warp coords for arenacfg: '" + arenacfg + "'" );
         }
     }
 
@@ -8547,7 +8572,7 @@ public class distensionbot extends SubspaceBot {
                     if( warpInBase ) {
                         int xmod = (int)(Math.random() * 30) - 15;
                         //int ymod = (int)(Math.random() * 10) - 5;
-                        int ymod = (int)Math.abs((xmod + 1) / 3);
+                        int ymod = (int)Math.abs((xmod + 1) / 2);
                         x = 512 + xmod;
                         if( base == 0 ) {
                             y = BASE_CENTER_0_Y_COORD;
