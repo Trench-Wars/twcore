@@ -176,14 +176,28 @@ public class Session extends Thread {
         	int logpvt = m_coreData.getGeneralSettings().getInt("LogPrivateMessages");
         	if(logpvt == 1)
         	{
-	        	String botName = m_roboClass.getName();
-	        	if (botName.indexOf(".") != -1 ) {
-	            	botName = botName.substring(botName.lastIndexOf(".") + 1);
-	        	}
-	        	String filename = m_coreData.getGeneralSettings().getString("Core Location");
-	        	filename += "/logs/"+ botName + ".log";
-	        	m_chatLogWriter = new FileWriter(filename, true);
-	        	m_chatLog = new PrintWriter( m_chatLogWriter );
+                String botName = m_roboClass.getName();
+                if (botName.indexOf(".") != -1 ) {
+                    botName = botName.substring(botName.lastIndexOf(".") + 1);
+                }
+                
+        	    String dnls = m_coreData.getGeneralSettings().getString("DoNotLogBots");
+        	    boolean log = true;
+        	    if (dnls != null) {
+        	        String[] ignored = dnls.split(",");
+        	        for( String s : ignored ) {
+        	            if( s.equalsIgnoreCase(botName) ) {
+        	                log = false;
+        	                break;
+        	            }
+        	        }
+        	    }
+        	    if (log) {
+        	        String filename = m_coreData.getGeneralSettings().getString("Core Location");
+        	        filename += "/logs/"+ botName + ".log";
+        	        m_chatLogWriter = new FileWriter(filename, true);
+        	        m_chatLog = new PrintWriter( m_chatLogWriter );
+        	    }
 	        }
 
             Class<?>[] parameterTypes = { m_botAction.getClass() };
