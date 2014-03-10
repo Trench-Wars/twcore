@@ -1017,7 +1017,11 @@ public class elim extends SubspaceBot {
                 ba.die();
             }
         };
-        ba.scheduleTask(die, 2500);
+        try {
+            ba.scheduleTask(die, 2500);
+        } catch( IllegalStateException e) {
+            ba.die();
+        }
     }
 
     /** Handles ArenaJoined event which initializes bot startup */
