@@ -1579,7 +1579,7 @@ public class elim extends SubspaceBot {
                 debug(debugs);
             else
                 debug("Updated player: " + name.name + " Count: " + updateStats.getUpdateCount());
-            if (game.gotUpdate(name.name)) {
+            if (game != null && game.gotUpdate(name.name)) {
                 state = State.ENDING;
                 handleState();
             }
