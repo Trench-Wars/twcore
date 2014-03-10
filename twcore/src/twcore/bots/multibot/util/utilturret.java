@@ -54,6 +54,8 @@ public class utilturret extends MultiUtil
 
 		if(event.isAttaching()) //Attaching
 		{
+		    if(attachee == null)
+		        return;
 			int aShip = attachee.getShipType() - 1; //convert to 0-7
 			boolean allowed = rules[aShip][tShip]; //check rule for attaching
 			if(!allowed) //not allowed
