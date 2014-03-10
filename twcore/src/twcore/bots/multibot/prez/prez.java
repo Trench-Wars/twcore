@@ -461,9 +461,10 @@ public class prez extends MultiModule {
         
         Iterator<Player> i = m_botAction.getFreqPlayerIterator(freq);
         while (i != null && i.hasNext()) {
-            plist.add(i.next().getPlayerName());
-            m_botAction.sendPrivateMessage("SpookedOne", "[DEBUG] Adding Player: "
-                    + i.next().getPlayerName());
+            Player p = i.next();
+            plist.add(p.getPlayerName());
+            //m_botAction.sendPrivateMessage("SpookedOne", "[DEBUG] Adding Player: "
+            //        + i.next().getPlayerName());
         }
 
         if (!plist.isEmpty()) {
