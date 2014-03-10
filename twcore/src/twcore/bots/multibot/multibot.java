@@ -274,7 +274,8 @@ public class multibot extends SubspaceBot {
             else
                 foundCommand = false;
         } catch (RuntimeException e) {
-            m_botAction.sendSmartPrivateMessage(sender, e.getMessage() );
+            if( sender != null )
+                m_botAction.sendSmartPrivateMessage(sender, e.getMessage() );
         }
         return foundCommand;
     }
