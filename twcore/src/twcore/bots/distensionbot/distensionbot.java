@@ -807,11 +807,13 @@ public class distensionbot extends SubspaceBot {
                     int army0profits = m_armies.get(0).getProfits();
                     int army1profits = m_armies.get(1).getProfits();
 
-                    for( DistensionPlayer p : m_players.values() ) {
-                        if( p.getArmyID() == 0 )
-                            p.shareProfits(army0profits);
-                        else
-                            p.shareProfits(army1profits);
+                    synchronized( m_players ) {
+                        for( DistensionPlayer p : m_players.values() ) {
+                            if( p.getArmyID() == 0 )
+                                p.shareProfits(army0profits);
+                            else
+                                p.shareProfits(army1profits);
+                        }
                     }
                 }
 
