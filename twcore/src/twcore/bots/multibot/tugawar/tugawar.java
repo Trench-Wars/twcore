@@ -92,8 +92,8 @@ public class tugawar extends MultiModule {
                             }
                         }
                         Random generator = new Random();
-                        int randZero = Math.abs( generator.nextInt() ) % zeroTeam.size();
-                        int randOne  = Math.abs( generator.nextInt() ) % oneTeam.size();
+                        int randZero = generator.nextInt(zeroTeam.size());
+                        int randOne  = generator.nextInt(oneTeam.size());
                         capZero = zeroTeam.elementAt( randZero);
                         capOne = oneTeam.elementAt( randOne );
                         m_botAction.sendArenaMessage( "GO GO GO!!!", 104);
