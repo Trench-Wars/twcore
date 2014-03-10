@@ -3902,6 +3902,8 @@ public class BotAction
         Map<Integer, Player> m_playerMap = m_arenaTracker.getPlayerMap();
         Iterator<Player> i = m_playerMap.values().iterator();
         String answ, best = null;
+        if (playerName == null )
+            return null;
         synchronized(m_playerMap) {
             while (i.hasNext())
             {
