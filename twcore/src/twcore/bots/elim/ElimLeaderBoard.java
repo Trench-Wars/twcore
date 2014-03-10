@@ -289,15 +289,17 @@ public class ElimLeaderBoard {
                     }
                     
                     // Points
-                    String score = Tools.rightString(Integer.toString(m_rankings.get(shipType).getScore(shipCount[shipType])), 5, ' ');
-                    objID = (short) (14000 + 1000 * i + 100 * j);
-                    xCoord = OFFSET_SCORES[i];
-                    yCoord = OFFSET_Y[0] + SPACING[1] * j;
-                    for(int k = 0; k < score.length(); k++, objID++, xCoord += SPACING[0]) {
-                        m_lvzMgrScore.getObjectSafely(objID);
-                        m_lvzMgrScore.setImageToChange(objID, score.charAt(k));
-                        m_lvzMgrScore.setLocationToChange(objID, xCoord, yCoord);
-                        m_lvzMgrScore.setLocationTypeToChange(objID, CoordType.C, CoordType.C);
+                    if( m_rankings.get(shipType).getScore(shipCount[shipType]) != null ) {
+                        String score = Tools.rightString(Integer.toString(m_rankings.get(shipType).getScore(shipCount[shipType])), 5, ' ');
+                        objID = (short) (14000 + 1000 * i + 100 * j);
+                        xCoord = OFFSET_SCORES[i];
+                        yCoord = OFFSET_Y[0] + SPACING[1] * j;
+                        for(int k = 0; k < score.length(); k++, objID++, xCoord += SPACING[0]) {
+                            m_lvzMgrScore.getObjectSafely(objID);
+                            m_lvzMgrScore.setImageToChange(objID, score.charAt(k));
+                            m_lvzMgrScore.setLocationToChange(objID, xCoord, yCoord);
+                            m_lvzMgrScore.setLocationTypeToChange(objID, CoordType.C, CoordType.C);
+                        }
                     }
                 }
             }
