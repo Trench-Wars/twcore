@@ -147,7 +147,9 @@ public class ElimLeaderBoard {
             m_botAction.sendPrivateMessage(playerID, "Request ignored; Currently showing splash screen to everyone. Please try again in a few moments.");
         }
         ShowSplash ttShowSplash = new ShowSplash(playerID, mode);
-        m_botAction.scheduleTask(ttShowSplash, 0, m_displayTime + 100);
+        try {
+            m_botAction.scheduleTask(ttShowSplash, 0, m_displayTime + 100);
+        } catch (IllegalStateException e) {}
     }
     
     public Set<Integer> getKeySet() {
