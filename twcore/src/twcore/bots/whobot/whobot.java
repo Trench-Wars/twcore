@@ -416,7 +416,9 @@ public class whobot extends SubspaceBot {
             }
         };
         ba.sendUnfilteredPublicMessage("*locate " + locating);
-        ba.scheduleTask(locate, LOCATE_WAIT);
+        try {
+            ba.scheduleTask(locate, LOCATE_WAIT);
+        } catch( IllegalStateException e) {}
     }
     
     private void stop(String name) {
