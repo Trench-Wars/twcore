@@ -74,8 +74,8 @@ public class elim extends SubspaceBot {
     HashMap<String, Integer> votes;
 
     HashSet<String> alerts;
-    boolean DEBUG;
-    String debugger;
+    boolean DEBUG = true;
+    String debugger = "ThePAP";
 
     HashSet<String> debugStatPlayers;
     private String connectionID = "elimplayerstats";
