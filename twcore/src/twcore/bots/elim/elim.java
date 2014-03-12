@@ -79,6 +79,7 @@ public class elim extends SubspaceBot {
 
     HashSet<String> debugStatPlayers;
     private String connectionID = "elimplayerstats";
+    private String connectionID2 = "elimplayersettings";
     static final String db = "website";
     static final String pub = "pubstats";
     static final int INITIAL_RATING = 300;
@@ -1008,8 +1009,8 @@ public class elim extends SubspaceBot {
         ba.closePreparedStatement(db, connectionID, this.updateStats);
         ba.closePreparedStatement(db, connectionID, this.storeGame);
         ba.closePreparedStatement(db, connectionID, this.showLadder);
-        ba.closePreparedStatement(pub, connectionID, this.showSplash);
-        ba.closePreparedStatement(pub, connectionID, this.updateSplash);
+        ba.closePreparedStatement(pub, connectionID2, this.showSplash);
+        ba.closePreparedStatement(pub, connectionID2, this.updateSplash);
         ba.cancelTasks();
         TimerTask die = new TimerTask() {
             @Override
@@ -1394,15 +1395,15 @@ public class elim extends SubspaceBot {
             ba.closePreparedStatement(db, connectionID, updateStats);
             ba.closePreparedStatement(db, connectionID, storeGame);
             ba.closePreparedStatement(db, connectionID, showLadder);
-            ba.closePreparedStatement(pub, connectionID, showSplash);
-            ba.closePreparedStatement(pub, connectionID, updateSplash);
+            ba.closePreparedStatement(pub, connectionID2, showSplash);
+            ba.closePreparedStatement(pub, connectionID2, updateSplash);
         }
 
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
         showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank ASC LIMIT ?");
-        showSplash = ba.createPreparedStatement(pub, connectionID, "SELECT fcName FROM tblPlayerStats WHERE fnElimSplash = 0");
-        updateSplash = ba.createPreparedStatement(pub, connectionID, "UPDATE tblPlayerStats SET fnElimSplash = ? WHERE fcName = ?");
+        showSplash = ba.createPreparedStatement(pub, connectionID2, "SELECT fcName FROM tblPlayerStats WHERE fnElimSplash = 0");
+        updateSplash = ba.createPreparedStatement(pub, connectionID2, "UPDATE tblPlayerStats SET fnElimSplash = ? WHERE fcName = ?");
         
         if (!checkStatements(false)) {
             debug("Update was null.");
