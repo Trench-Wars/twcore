@@ -74,12 +74,11 @@ public class elim extends SubspaceBot {
     HashMap<String, Integer> votes;
 
     HashSet<String> alerts;
-    boolean DEBUG = true;
-    String debugger = "ThePAP";
+    boolean DEBUG;
+    String debugger;
 
     HashSet<String> debugStatPlayers;
     private String connectionID = "elimplayerstats";
-    private String connectionID2 = "elimplayersettings";
     static final String db = "website";
     static final String pub = "pubstats";
     static final int INITIAL_RATING = 300;
@@ -105,7 +104,7 @@ public class elim extends SubspaceBot {
 
     private Spy spy;
 
-    private PreparedStatement updateStats, storeGame, showLadder, showSplash, updateSplash;
+    private PreparedStatement updateStats, storeGame, showLadder;
     
     // Splash screen related stuff
     private ElimLeaderBoard m_leaderBoard;
@@ -200,23 +199,21 @@ public class elim extends SubspaceBot {
      * @param name Player who issued the command.
      */
     public void cmd_disable(String name) {
-        try {
-            name = name.toLowerCase();
-            updateSplash.setString(2, name);
-            if(m_noSplash.contains(name)) {
-                updateSplash.setInt(1, 1);
-                m_noSplash.remove(name);
-                m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will now be shown when you enter the arena.");
-            } else {
-                updateSplash.setInt(1, 0);
-                m_noSplash.add(name);
-                m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will no longer be shown when you enter the arena.");
-            }
-            updateSplash.execute();
-        } catch (SQLException sqle) {
-            Tools.printStackTrace(sqle);
+        int newValue;
+        name = name.toLowerCase();
+        if(m_noSplash.contains(name)) {
+            newValue = 1;
+            m_noSplash.remove(name);
+            m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will now be shown when you enter the arena.");
+        } else {
+            newValue = 0;
+            m_noSplash.add(name);
+            m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will no longer be shown when you enter the arena.");
         }
         
+        String query = "UPDATE tblPlayerStats SET fnElimSplash = " + newValue 
+                + " WHERE fcName = '" + Tools.addSlashes(name) + "'";
+        ba.SQLBackgroundQuery(pub, null, query);
     }
 
     public void cmd_game(String name, String cmd) {
@@ -448,7 +445,7 @@ public class elim extends SubspaceBot {
                 return;
             }
         } else if (cmd.indexOf(":") < cmd.length()) {
-            debug(":=" + cmd.indexOf(":") + " length=" + cmd.length());
+            //debug(":=" + cmd.indexOf(":") + " length=" + cmd.length());
             target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
@@ -559,8 +556,11 @@ public class elim extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
+        /*
+         * See the above comment on the disabled code.
         if (shipType != null && ship == shipType.getNum() && ep != null && state == State.STARTING)
             ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+         */
         ba.sendPrivateMessage(name, "Your " + ShipType.type(ship) + " scores have been reset.");
     }
 
@@ -978,12 +978,12 @@ public class elim extends SubspaceBot {
             handleState();
             return;
         }
-        final long time = System.currentTimeMillis();
+        //final long time = System.currentTimeMillis();
 
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                debug("Elapsed vote time: " + ((System.currentTimeMillis() - time) / Tools.TimeInMillis.SECOND) + " seconds");
+                //debug("Elapsed vote time: " + ((System.currentTimeMillis() - time) / Tools.TimeInMillis.SECOND) + " seconds");
                 countVotes();
             }
         };
@@ -1009,8 +1009,6 @@ public class elim extends SubspaceBot {
         ba.closePreparedStatement(db, connectionID, this.updateStats);
         ba.closePreparedStatement(db, connectionID, this.storeGame);
         ba.closePreparedStatement(db, connectionID, this.showLadder);
-        ba.closePreparedStatement(pub, connectionID2, this.showSplash);
-        ba.closePreparedStatement(pub, connectionID2, this.updateSplash);
         ba.cancelTasks();
         TimerTask die = new TimerTask() {
             @Override
@@ -1071,8 +1069,8 @@ public class elim extends SubspaceBot {
             lastZoner = -1;
         lastAlert = 0;
         spy = new Spy(ba);
-        DEBUG = false;
-        debugger = "";
+        DEBUG = true;
+        debugger = "ThePAP";
         voteStats = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
         votes = new HashMap<String, Integer>();
         alerts = new HashSet<String>();
@@ -1089,14 +1087,20 @@ public class elim extends SubspaceBot {
         
         if (rules.getInt("DisplayEnable") == 1) {
             m_showOnEntry = true;
-            try {
-                ResultSet rs = showSplash.executeQuery();
-                while(rs.next()) {
-                    m_noSplash.add(rs.getString(1).toLowerCase());
+            PreparedStatement showSplash = ba.createPreparedStatement(pub, "elimplayersettings", "SELECT fcName FROM tblPlayerStats WHERE fnElimSplash = 0");
+            if(showSplash != null) {
+                try {
+                    ResultSet rs = showSplash.executeQuery();
+                    while(rs.next()) {
+                        m_noSplash.add(rs.getString(1).toLowerCase());
+                    }
+                    rs.close();
+                } catch (SQLException sqle) {
+                    Tools.printStackTrace(sqle);
                 }
-                rs.close();
-            } catch (SQLException sqle) {
-                Tools.printStackTrace(sqle);
+                ba.closePreparedStatement(pub, "elimplayersettings", showSplash);
+            } else {
+                debug("Failed to load player splash preferences.");
             }
         } else {
             m_showOnEntry = false;
@@ -1391,19 +1395,15 @@ public class elim extends SubspaceBot {
     }
 
     public void prepareStatements() {
-        if (updateStats != null || storeGame != null || showLadder != null || showSplash != null || updateSplash != null) {
+        if (updateStats != null || storeGame != null || showLadder != null) {
             ba.closePreparedStatement(db, connectionID, updateStats);
             ba.closePreparedStatement(db, connectionID, storeGame);
             ba.closePreparedStatement(db, connectionID, showLadder);
-            ba.closePreparedStatement(pub, connectionID2, showSplash);
-            ba.closePreparedStatement(pub, connectionID2, updateSplash);
         }
 
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
         showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank ASC LIMIT ?");
-        showSplash = ba.createPreparedStatement(pub, connectionID2, "SELECT fcName FROM tblPlayerStats WHERE fnElimSplash = 0");
-        updateSplash = ba.createPreparedStatement(pub, connectionID2, "UPDATE tblPlayerStats SET fnElimSplash = ? WHERE fcName = ?");
         
         if (!checkStatements(false)) {
             debug("Update was null.");
@@ -1424,18 +1424,14 @@ public class elim extends SubspaceBot {
         // Check if they all exist.
         if(updateStats == null
                 || storeGame == null
-                || showLadder == null
-                || showSplash == null
-                || updateSplash == null)
+                || showLadder == null)
             return false;
         
         // If extensive check is needed, check if they are closed or not
         try {
             if(extensive && (updateStats.isClosed()
                     || storeGame.isClosed()
-                    || showLadder.isClosed()
-                    || showSplash.isClosed()
-                    || updateSplash.isClosed()))
+                    || showLadder.isClosed()))
                 return false;
         } catch (SQLException sqle) {
             // DB error happened. Statements are not ready.
