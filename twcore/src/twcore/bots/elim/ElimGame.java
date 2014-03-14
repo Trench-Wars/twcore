@@ -322,7 +322,6 @@ public class ElimGame {
         ElimPlayer ep = getPlayer(name);
         if (ep == null) return;
         try {
-            bot.debug("Sending stats to: " + name);
             ep.loadStats(rs);
         } catch (SQLException e) {
             Tools.printStackTrace(e);
@@ -349,11 +348,9 @@ public class ElimGame {
                 errors.add(name);
         }
         if (errors.isEmpty()) {
-            bot.debug("All player stats loaded and ready!");
             state = GameState.STARTING;
             startGame();
         } else {
-            bot.debug("Error, " + errors.size() + " players missing stat records.");
             final HashSet<String> errs = errors;
             TimerTask task = new TimerTask() {
                 public void run() {
@@ -732,7 +729,6 @@ public class ElimGame {
     /** Warps a Weasel into the flag room */
     private void sendWarp(String name) {
         if (ship != ShipType.WEASEL) {
-            bot.debug("SendWarp attempt while ship was not weasel!");
             return;
         }
         int[] coords = rules.getIntArray("XArena" + bot.random.nextInt(4), ",");

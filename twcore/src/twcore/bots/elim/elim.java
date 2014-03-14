@@ -445,7 +445,6 @@ public class elim extends SubspaceBot {
                 return;
             }
         } else if (cmd.indexOf(":") < cmd.length()) {
-            //debug(":=" + cmd.indexOf(":") + " length=" + cmd.length());
             target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
@@ -983,7 +982,6 @@ public class elim extends SubspaceBot {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                //debug("Elapsed vote time: " + ((System.currentTimeMillis() - time) / Tools.TimeInMillis.SECOND) + " seconds");
                 countVotes();
             }
         };
