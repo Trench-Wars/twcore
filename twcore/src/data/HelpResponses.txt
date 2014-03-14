@@ -523,8 +523,8 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 
 # Distension
 &Distension &Site|The site for Distension is: http://trenchwars.org/distension/
-&Distension &When|Distension schedule as of 6/21/13: MON, WED, THUR @ 5PM-7PM EDT (GMT-4)  For the most current schedule see: http://trenchwars.org/distension/schedule.php
-&Distension &Schedule|Distension schedule as of 6/21/13: MON, WED, THUR @ 5PM-7PM EDT (GMT-4)  For the most current schedule see: http://trenchwars.org/distension/schedule.php
+&Distension &When|The distension schedule is: MON: RND, TUE: 5PM, WDN: 10PM, THUR: RND, FRI: 3PM, SAT: 4PM + RND, SUN: RND (after weekend event). All times EST (GMT-4). For the most current schedule see: http://trenchwars.org/distension/schedule.php
+&Distension &Schedule|The distension schedule is: MON: RND, TUE: 5PM, WDN: 10PM, THUR: RND, FRI: 3PM, SAT: 4PM + RND, SUN: RND (after weekend event). All times EST (GMT-4). For the most current schedule see: http://trenchwars.org/distension/schedule.php
 &Distension &What|Distension is an RPG-style action game using TW ship settings, and can be found in ?go distension
 
 
