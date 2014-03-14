@@ -36,6 +36,9 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &BaseElim &What|BaseElim is an arena dedicated to elimination style matches for base ships (Javelin, Terrier, Weasel and Shark).  Everyone is put on their own freq and is specced after a certain number of deaths.  The last person standing is declared the winner.  Teaming, trucing, refusing to fight or not going to the base is illegal.
 &Event &List &Where|You can view a list of all arenas/events here: http://forums.trenchwars.org/showthread.php?t=32600 .
 
+#Suggestions
+&Player &Suggestion|Have a suggestion for Trench Wars? Great! Submit it here and we'll have a look! http://trenchwars.org/support
+
 # Item/hot-key related.
 &Repel +What|When you use a repel, all nearby enemy bullets, bombs and ships will be pushed away from you.  The icon on the right side of your screen depicting a yellow circle indicates the number of repels that your ship currently has.  In public arenas, only the Shark (Ship 8) can equip repels.
 &Repel +How -Buy|To use a repel press <Shift> and <Ctrl> together.  In public arenas, only the Shark (Ship 8) can equip and use repels.
@@ -125,10 +128,11 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Owners &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
 
 # Abuse/complaints.
-Staffabuse|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
-&Staff &Abuse|To register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
-Complaints|To file a general complaint or to register instances of abuse by any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
-&Staff &Complaint|To register any complaints about any Trench Wars staff member(s), please e-mail your side of the story to Complaints@TrenchWars.org
+Staffabuse|To register instances of abuse by any Trench Wars staff member(s), please submit a ticket to http://trenchwars.org/support
+&Staff &Abuse|To register instances of abuse by any Trench Wars staff member(s), please submit a ticket to http://trenchwars.org/support
+Complaints|To file a general complaint or to register instances of abuse by any Trench Wars staff member(s), please submit a ticket to http://trenchwars.org/support
+&Staff &Complaint|To register any complaints about any Trench Wars staff member(s), please submit a ticket to http://trenchwars.org/support
+&Sysop &Contact|To contact a sysop, please email twsysops@gmail.com with your query.
 
 # Host related.
 Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting request. We will attempt to handle your request as promptly as possible but there is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the <ER> tag next to their name.
