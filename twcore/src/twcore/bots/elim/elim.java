@@ -205,10 +205,12 @@ public class elim extends SubspaceBot {
             newValue = 1;
             m_noSplash.remove(name);
             m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will now be shown when you enter the arena.");
+            debug("Enabling splash on entry for: " + name);
         } else {
             newValue = 0;
             m_noSplash.add(name);
             m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will no longer be shown when you enter the arena.");
+            debug("Disabling splash on entry for: " + name);
         }
         
         String query = "UPDATE tblPlayerStats SET fnElimSplash = " + newValue 
