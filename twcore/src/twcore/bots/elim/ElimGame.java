@@ -266,7 +266,7 @@ public class ElimGame {
             if (!report.isBotRequest())
                 ba.sendPrivateMessage(report.getRequester(), report.getLagReport());
             ElimPlayer p = getPlayer(report.getName());
-            if (p != null && ba.getPlayer(report.getName()).getShipType() != 0 && p.getStatus() == Status.IN) {
+            if (p != null && ba.getPlayer(report.getName()).getShipType() != 0 && p.isPlaying()) {
                 ba.sendPrivateMessage(report.getName(), report.getLagReport());
                 handleLagout(report.getName());
                 ba.spec(report.getName());
