@@ -49,6 +49,8 @@ public class zonerbot extends SubspaceBot {
     public static final int LINE_LENGTH = 120;
     
     public static final int PER_DELAY = 10;
+    
+    private static final boolean ANNOUNCE_MESSAGEBOT = true;
 
     private boolean ZONE_ON_LOAD;
 
@@ -350,14 +352,20 @@ public class zonerbot extends SubspaceBot {
             }
             if (soundCheck(sound)) {
                 zone = zone.substring(0, index);
-                if (sound > -1)
+                if (sound > -1) {
                     ba.sendZoneMessage(zone, sound);
-                else
+                	announceMessageBot(zone);
+                }
+                else {
                     ba.sendZoneMessage(zone);
+                    announceMessageBot(zone);
+                }
             } else
                 ba.sendSmartPrivateMessage(name, "Sound " + sound + " is prohibited from use.");
-        } else
+        } else {
             ba.sendZoneMessage(zone);
+        	announceMessageBot(zone);
+        }
     }
     
     /** Handles the !arenas command which lists the arenas available to a ZH not supervised */
@@ -853,8 +861,10 @@ public class zonerbot extends SubspaceBot {
                     String adv = advert.getMessage() + "-" + advert.getName();
                     if (adv.length() > NATURAL_LINE)
                         zoneMessageSpam(splitString(adv, LINE_LENGTH), advert.getSound());
-                    else
+                    else {
                         ba.sendZoneMessage(adv, advert.getSound());
+                        announceMessageBot(adv);                        
+                    }
 
                     advertTimer = new AdvertTimer(ADVERT_DELAY);
                     ba.scheduleTask(advertTimer, ADVERT_DELAY * Tools.TimeInMillis.MINUTE);
@@ -900,7 +910,10 @@ public class zonerbot extends SubspaceBot {
                     event = arena;
                 String zoners[] = { "Last call for " + event + "." + " Type ?go " + arena + " to play. -" + name,
                         "The event " + event + " is starting. Type ?go " + arena + " to play. -" + name };
-                ba.sendZoneMessage(zoners[new Random().nextInt(zoners.length)], 1);
+                
+                String msg = zoners[new Random().nextInt(zoners.length)];
+                ba.sendZoneMessage(msg, 1);
+                announceMessageBot(msg);                
             } else {
                 ba.sendSmartPrivateMessage(name, "Your last advert does not have a readvert available. It was used or expired.");
             }
@@ -1286,13 +1299,24 @@ public class zonerbot extends SubspaceBot {
     private void zoneMessageSpam(String[] msg, int sound) {
         for (int i = 0; i < msg.length; i++) {
             if (i == 0) {
-                if (sound > -1)
+                if (sound > -1) {
                     ba.sendZoneMessage(msg[0], sound);
-                else
+                    announceMessageBot(msg[0]);
+                } else {
                     ba.sendZoneMessage(msg[0]);
-            } else
+                    announceMessageBot(msg[0]);
+                }
+            } else {
                 ba.sendZoneMessage(msg[i]);
+                announceMessageBot(msg[0]);
+            }
         }
+    }
+    
+    private void announceMessageBot(String message)
+    {
+    	if(ANNOUNCE_MESSAGEBOT)
+    		m_botAction.sendRemotePrivateMessage("MessageBot", "!announce events:" + message);
     }
 
     /**
@@ -1760,10 +1784,15 @@ public class zonerbot extends SubspaceBot {
                     return;
                 if (advert.length() > NATURAL_LINE)
                     zoneMessageSpam(splitString(advert, LINE_LENGTH), sound);
-                else if (sound > -1)
+                else if (sound > -1) {
                     ba.sendZoneMessage(advert, sound);
-                else
+                    announceMessageBot(advert);
+                }
+                else {
                     ba.sendZoneMessage(advert);
+                    announceMessageBot(advert);
+                }
+                	
             } catch (Exception e) {
                 ba.cancelTask(this);
                 periodic.remove(this);
