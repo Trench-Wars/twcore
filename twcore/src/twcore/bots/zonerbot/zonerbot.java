@@ -913,7 +913,7 @@ public class zonerbot extends SubspaceBot {
                 
                 String msg = zoners[new Random().nextInt(zoners.length)];
                 ba.sendZoneMessage(msg, 1);
-                announceMessageBot(msg);                
+                //announceMessageBot(msg);                
             } else {
                 ba.sendSmartPrivateMessage(name, "Your last advert does not have a readvert available. It was used or expired.");
             }
@@ -1786,11 +1786,9 @@ public class zonerbot extends SubspaceBot {
                     zoneMessageSpam(splitString(advert, LINE_LENGTH), sound);
                 else if (sound > -1) {
                     ba.sendZoneMessage(advert, sound);
-                    announceMessageBot(advert);
                 }
                 else {
                     ba.sendZoneMessage(advert);
-                    announceMessageBot(advert);
                 }
                 	
             } catch (Exception e) {
