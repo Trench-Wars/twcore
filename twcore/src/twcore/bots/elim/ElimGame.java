@@ -260,13 +260,16 @@ public class ElimGame {
     
     /** Handles a lag report received from the lag handler */
     public void handleLagReport(LagReport report) {
+        bot.debug("[" + report.getRequester() + "]: " + report.getLagStats());
         if (!report.isBotRequest())
             ba.privateMessageSpam(report.getRequester(), report.getLagStats());
         if (report.isOverLimits()) {
+            bot.debug("[Limits Exceeded]: " + report.getLagReport());
             if (!report.isBotRequest())
                 ba.sendPrivateMessage(report.getRequester(), report.getLagReport());
             ElimPlayer p = getPlayer(report.getName());
             if (p != null && ba.getPlayer(report.getName()).getShipType() != 0 && p.isPlaying()) {
+                bot.debug("Removing " + report.getName());
                 ba.sendPrivateMessage(report.getName(), report.getLagReport());
                 handleLagout(report.getName());
                 ba.spec(report.getName());

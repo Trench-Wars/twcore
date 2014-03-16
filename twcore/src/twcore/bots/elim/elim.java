@@ -1578,8 +1578,6 @@ public class elim extends SubspaceBot {
             updateStats.execute();
             if (debugStatPlayers.contains(name.name.toLowerCase()))
                 debug(debugs);
-            else
-                debug("Updated player: " + name.name + " Count: " + updateStats.getUpdateCount());
             if (game != null && game.gotUpdate(name.name)) {
                 state = State.ENDING;
                 handleState();
