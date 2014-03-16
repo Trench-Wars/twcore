@@ -46,7 +46,7 @@ public class utilballdrop extends MultiUtil {
 
 		if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
 			if (m_opList.isER(playerName)) {
-				if (message.startsWith("!ball")) {
+				if (message.startsWith("!ball ")) {
 					checkDropBall(playerName, message.substring(6));
 				}
 			}
