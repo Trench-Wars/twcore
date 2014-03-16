@@ -260,7 +260,6 @@ public class ElimGame {
     
     /** Handles a lag report received from the lag handler */
     public void handleLagReport(LagReport report) {
-        bot.debug("[" + report.getRequester() + "]: " + report.getLagStats());
         if (!report.isBotRequest())
             ba.privateMessageSpam(report.getRequester(), report.getLagStats());
         if (report.isOverLimits()) {
