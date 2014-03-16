@@ -1313,6 +1313,20 @@ public class zonerbot extends SubspaceBot {
         }
     }
     
+    private void zoneMessageSpamNoAnnounce(String[] msg, int sound) {
+        for (int i = 0; i < msg.length; i++) {
+            if (i == 0) {
+                if (sound > -1) {
+                    ba.sendZoneMessage(msg[0], sound);
+                } else {
+                    ba.sendZoneMessage(msg[0]);
+                }
+            } else {
+                ba.sendZoneMessage(msg[i]);
+            }
+        }
+    }
+    
     private void announceMessageBot(String message)
     {
     	if(ANNOUNCE_MESSAGEBOT)
@@ -1783,7 +1797,7 @@ public class zonerbot extends SubspaceBot {
                 if (duration < 0)   // Safety check
                     return;
                 if (advert.length() > NATURAL_LINE)
-                    zoneMessageSpam(splitString(advert, LINE_LENGTH), sound);
+                    zoneMessageSpamNoAnnounce(splitString(advert, LINE_LENGTH), sound);
                 else if (sound > -1) {
                     ba.sendZoneMessage(advert, sound);
                 }
