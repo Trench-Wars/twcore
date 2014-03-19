@@ -677,13 +677,9 @@ public class twpoll extends SubspaceBot {
                         return;
                     }
 
-                    spam.add(" ");
-                    spam.add("Use !view <number> to load a poll for viewing and voting.");
-                    //spam.add("To VIEW ALL polls, use !viewall.");
-                    intro.addAll(spam);
-                    m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));    	    
                 } else {
-                    intro.add("Polls");
+                    intro.add("Current polls:");
+                    intro.add(" ");                    
 
                     for(int pollId: polls.keySet()) {
                         Poll poll = polls.get(pollId);
@@ -698,11 +694,12 @@ public class twpoll extends SubspaceBot {
                                 spam.add(i, Tools.formatString(" ", 3, " ") + entryText.get(i));
                         }
                     }
-                    spam.add(" ");
-                    spam.add("Use !view <number> for more details on a specific poll.");
-                    intro.addAll(spam);                
-                    m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
                 }
+                spam.add(" ");
+                spam.add("Use !view <number> to load a poll for viewing and voting.");
+                //spam.add("To VIEW ALL polls, use !viewall.");
+                intro.addAll(spam);                
+                m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
             }
         } else {
             playerdata.put(getUserID(name), new PlayerData(getUserID(name), name));
