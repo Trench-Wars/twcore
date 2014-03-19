@@ -564,7 +564,7 @@ public class twpoll extends SubspaceBot {
             //  if (poll.pvotes.containsKey(userId))
             //       spam.add("[Poll #" + pollId + "]" + "   Your Vote: " + poll.options.get(poll.pvotes.get(userId).getOptionID() - 1).option);
             //    else
-            spam.addAll(chopString("Poll #" + pollId + ":  " + poll.question,70));                
+            spam.addAll(chopString("[Poll #" + pollId + "]  " + poll.question,70));                
             int i=0;
             for(PollOption option: poll.options) {
                 String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
@@ -572,10 +572,10 @@ public class twpoll extends SubspaceBot {
             }
             spam.add(" ");                
             if (poll.requireTWD == 2) {
-                spam.add(">>> NOTE: This is an OFFICIAL VOTE and will require a TWD-enabled name to cast your ballot. ONE VOTE PER PERSON.");
+                spam.add(">>> OFFICIAL VOTE; requires TWD-enabled name. ONE VOTE PER PERSON.");
                 spam.add(" ");                
             } else if (poll.requireTWD == 1) {
-                spam.add(">>> NOTE: This is an OFFICIAL VOTE and requires a TWD-registered name to cast your ballot. ONE VOTE PER PERSON.");
+                spam.add(">>> OFFICIAL VOTE; requires a TWD-registered name. ONE VOTE PER PERSON.");
                 spam.add(" ");                
             }
 
@@ -583,7 +583,7 @@ public class twpoll extends SubspaceBot {
                 spam.add("To VOTE, use !vote <number>. To COMMENT, use !com <comment>. You have left a comment for this poll already:");
                 spam.add(p.userName + "> " + p.getComment(pollId, 1));
             } else {
-                spam.add("To VOTE, use !vote <number>. To COMMENT on this poll (optional), use !com <your comment>.");
+                spam.add("To VOTE, use !vote <number>. To COMMENT on this poll, use !com <your comment>.");
             }
             spam.add("To RETURN HOME, use !home. To go BACK a menu, use !back");
             m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
