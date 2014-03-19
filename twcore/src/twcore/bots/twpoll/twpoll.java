@@ -630,7 +630,7 @@ public class twpoll extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "There are no running polls at the moment.");
         } else {
             spam.add("Poll Info #" + pollID);
-            spam.addAll(chopString(poll.question,60));                
+            spam.addAll(chopString(poll.question,70));                
             //int i=0;
             Integer count;
             for(PollOption option: poll.options) {
@@ -675,7 +675,7 @@ public class twpoll extends SubspaceBot {
                         if (!p.oldPolls.contains(pollId)) {
                             Vector<String> entryText = new Vector<String>();
 
-                            entryText = chopString(poll.question,60);
+                            entryText = chopString(poll.question,70);
 
                             for (int i = 0; i < entryText.size();i++) {
                                 if(i==0)
@@ -700,7 +700,7 @@ public class twpoll extends SubspaceBot {
                         Poll poll = polls.get(pollId);
                         Vector<String> entryText = new Vector<String>();
 
-                        entryText = chopString(poll.question,60);
+                        entryText = chopString(poll.question,70);
 
                         for (int i = 0; i < entryText.size();i++) {
                             if(i==0)
@@ -722,11 +722,19 @@ public class twpoll extends SubspaceBot {
         }
     }
 
+    /**
+     * Pretty sure this doesn't work properly.
+     * 
+     * @param content
+     * @param limiter
+     * @return
+     */
     private Vector<String> chopString(String content, int limiter) {
         Vector<String> entryText = new Vector<String>();
         String messageString = content;
         int limit = limiter;
 
+        try {
         while(messageString.length() > limit) {
             String splitMessage[] = messageString.split(" ");
             String tempString = "";
@@ -736,6 +744,11 @@ public class twpoll extends SubspaceBot {
             }
             entryText.add(tempString);
             messageString = messageString.substring(tempString.length());
+        }
+        } catch( Exception e) {
+            entryText.clear();
+            entryText.add(content);
+            return entryText;
         }
 
         if(messageString.length() != 0)
@@ -772,7 +785,7 @@ public class twpoll extends SubspaceBot {
                     if (!p.oldUpdates.contains(updateID)) {
                         Vector<String> entryText = new Vector<String>();
 
-                        entryText = chopString(updates.get(updateID).getUpdateString(1),60);
+                        entryText = chopString(updates.get(updateID).getUpdateString(1),70);
 
                         for (int i = 0; i < entryText.size();i++) {
                             if(i==0)
@@ -800,7 +813,7 @@ public class twpoll extends SubspaceBot {
                 for(int updateID : updates.keySet()) {
                     Vector<String> entryText = new Vector<String>();
 
-                    entryText = chopString(updates.get(updateID).getUpdateString(1),60);
+                    entryText = chopString(updates.get(updateID).getUpdateString(1),70);
 
                     for (int i = 0; i < entryText.size();i++) {
                         if(i==0)
@@ -835,7 +848,7 @@ public class twpoll extends SubspaceBot {
         ArrayList<String> spam = new ArrayList<String>();
 
         spam.add("Update #" + updateID);
-        spam.addAll(chopString(updates.get(updateID).getUpdateString(2),60));
+        spam.addAll(chopString(updates.get(updateID).getUpdateString(2),70));
 
         if (p.isCommented(updateID,2)) {
             spam.add("Your comments: " + p.getComment(updateID, 2));
