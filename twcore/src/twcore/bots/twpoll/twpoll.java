@@ -172,8 +172,9 @@ public class twpoll extends SubspaceBot {
         } else if (message.startsWith("!help")) {
             //showHelp(name, 0);
             cmd_home(name);
-        } else if (message.startsWith("!viewall")) {
-            cmd_viewall(name);
+        // Let's do them individually for now.
+        //} else if (message.startsWith("!viewall")) {
+        //    cmd_viewall(name);
         } else if (message.startsWith("!view ") && message.substring(6) != null) {
             cmd_view(name, message.substring(6));
         } else if (message.startsWith("!com ") && message.substring(5) != null) {
@@ -205,11 +206,12 @@ public class twpoll extends SubspaceBot {
     }
 
     public void cmd_about(String name) {
-        m_botAction.sendSmartPrivateMessage(name, "Bot made by K A N E. Command under construction");
+        m_botAction.sendSmartPrivateMessage(name, "Bot made by K A N E and Arobas+.");
     }
 
     public void cmd_ignore(String name) {
-        m_botAction.sendSmartPrivateMessage(name, "command under construction");
+        //m_botAction.sendSmartPrivateMessage(name, "command under construction");
+
         //TODO TO DO THIS LATER
 
         /* if (ignore.contains(name)) {
@@ -221,6 +223,7 @@ public class twpoll extends SubspaceBot {
         } */       
     }
 
+    /*
     public void cmd_viewall(String name) {
         PlayerData p = playerdata.get(getUserID(name));
         if (p == null) return;
@@ -233,6 +236,7 @@ public class twpoll extends SubspaceBot {
             showUpdatesMain(name, false);
         }
     }
+    */
 
     public void cmd_view(String name, String message) {
         PlayerData p = playerdata.get(getUserID(name));
@@ -342,6 +346,8 @@ public class twpoll extends SubspaceBot {
             return;
 
         vote(window[1], name, vote);
+        
+        cmd_back(name);
     }
 
     private void loadPolls() {
@@ -558,27 +564,27 @@ public class twpoll extends SubspaceBot {
             //  if (poll.pvotes.containsKey(userId))
             //       spam.add("[Poll #" + pollId + "]" + "   Your Vote: " + poll.options.get(poll.pvotes.get(userId).getOptionID() - 1).option);
             //    else
-            spam.add("Poll #" + pollId);
-            spam.addAll(chopString(poll.question,60));                
+            spam.addAll(chopString("Poll #" + pollId + ":  " + poll.question,70));                
             int i=0;
             for(PollOption option: poll.options) {
                 String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
                 spam.add(pad + (++i) + ". " + option.option);
             }
             spam.add(" ");                
+            if (poll.requireTWD == 2) {
+                spam.add(">>> NOTE: This is an OFFICIAL VOTE and will require a TWD-enabled name to cast your ballot. ONE VOTE PER PERSON.");
+                spam.add(" ");                
+            } else if (poll.requireTWD == 1) {
+                spam.add(">>> NOTE: This is an OFFICIAL VOTE and requires a TWD-registered name to cast your ballot. ONE VOTE PER PERSON.");
+                spam.add(" ");                
+            }
 
             if (p.isCommented(pollId,1)) {
-                spam.add("Your comments: " + p.getComment(pollId, 1));
-                spam.add(" ");
-                spam.add("To REPLACE a comment, use !com <your comment>. To SELECT VOTE OPTION, use !vote <num>");
+                spam.add("To VOTE, use !vote <number>. To COMMENT, use !com <comment>. You have left a comment for this poll already:");
+                spam.add(p.userName + "> " + p.getComment(pollId, 1));
             } else {
-                spam.add(" ");
-                spam.add("To COMMENT on this, use !com <your comment>. To SELECT VOTE OPTION, use !vote <num>");
+                spam.add("To VOTE, use !vote <number>. To COMMENT on this poll (optional), use !com <your comment>.");
             }
-            if (poll.requireTWD == 2)
-                spam.add(">>> NOTE: This is an OFFICIAL VOTE and requires a TWD-enabled name to cast your ballot. To get help enabling your name, type: ?help Need TWD name enabled");
-            if (poll.requireTWD == 1)
-                spam.add(">>> NOTE: This is an OFFICIAL VOTE and requires a TWD-registered name to cast your ballot. To get help enabling your name, type: ?help Need TWD name registered");
             spam.add("To RETURN HOME, use !home. To go BACK a menu, use !back");
             m_botAction.smartPrivateMessageSpam(playerName, spam.toArray(new String[spam.size()]));
         }
@@ -635,7 +641,7 @@ public class twpoll extends SubspaceBot {
             p.setWindow(2, 0);
 
             if (polls.isEmpty()) {
-                m_botAction.sendSmartPrivateMessage(name, "There is no poll at the moment.");
+                m_botAction.sendSmartPrivateMessage(name, "There is no active poll running.");
             } else {
                 if (showNew) {
                     //int userId = getUserID(name);
@@ -644,10 +650,11 @@ public class twpoll extends SubspaceBot {
                         oldpolls = p.oldPolls.size(); 
 
                     if (oldpolls != 0)
-                        intro.add("Unread Polls Only" + "[" + oldpolls + " Polls(s) not shown]");
+                        intro.add("Currently running polls  " + "[" + oldpolls + " old polls(s) not shown]");
                     else
-                        intro.add("Unread Polls Only");               
+                        intro.add("Current polls:");
 
+                    intro.add(" ");                    
                     for(int pollId: polls.keySet()) {
                         Poll poll = polls.get(pollId);
                         if (!p.oldPolls.contains(pollId)) {
@@ -671,8 +678,8 @@ public class twpoll extends SubspaceBot {
                     }
 
                     spam.add(" ");
-                    spam.add("Use !view <number> for more details or to vote on a specific polls.");
-                    spam.add("To VIEW ALL polls, use !viewall.");        	
+                    spam.add("Use !view <number> to load a poll for viewing and voting.");
+                    //spam.add("To VIEW ALL polls, use !viewall.");
                     intro.addAll(spam);
                     m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));    	    
                 } else {
@@ -772,7 +779,7 @@ public class twpoll extends SubspaceBot {
 
                 spam.add(" ");
                 spam.add("Use !view <number> for more details on a specific update.");
-                spam.add("Use !viewall to show previously read updates.");
+                //spam.add("Use !viewall to show previously read updates.");
                 intro.addAll(spam);                
                 m_botAction.smartPrivateMessageSpam(name, intro.toArray(new String[intro.size()]));
 
@@ -836,8 +843,8 @@ public class twpoll extends SubspaceBot {
 
         PollOption pollOption = null;
 
+        Poll poll = polls.get(pollID);
         try {
-            Poll poll = polls.get(pollID);
             pollOption = poll.options.get(optionID-1);
             
             if (poll.requireTWD > 0) {
@@ -875,7 +882,9 @@ public class twpoll extends SubspaceBot {
                         "VALUES (null, "+pollID+","+pollOption.id+","+userID+", NOW())"
                         );
             }
-            m_botAction.sendSmartPrivateMessage(playerName, "Your vote has been counted.");
+            m_botAction.sendSmartPrivateMessage(playerName, "Thank you. Your vote has been counted. If you have made an error, you may change your vote as long as the poll is still running.");
+            if( poll.requireTWD > 0 )
+                m_botAction.sendSmartPrivateMessage(playerName, ">>> NOTE: Voting for this poll on any other name is considered fraud, and will result, at minimum, in 1-week ban from the zone.");
         } catch (SQLException e) {
 
         }
@@ -885,18 +894,16 @@ public class twpoll extends SubspaceBot {
             users = new TreeSet<Integer>();
         }
 
-        Poll poll = polls.get(pollID);
-
         if (poll != null) {
             poll.addVote(userID, optionID);
         }
+
 
         users.add(userID);
         votes.put(pollID, users);
         openPolls.remove(userID);
         showPoll(playerName, pollID);
         return true;
-
     }
 
     private boolean hasVotedAlready(int pollID, int userID) {
