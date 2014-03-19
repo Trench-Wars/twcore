@@ -267,9 +267,9 @@ public class twpoll extends SubspaceBot {
         else 
             return;
 
-        if (polls.containsKey(entryID)) 
+        if (polls.containsKey(entryID)) {
             showPollResults(name, entryID);
-        else
+        } else
             m_botAction.sendSmartPrivateMessage(name, "Invalid selection; please try again.");
     }
 
@@ -354,7 +354,7 @@ public class twpoll extends SubspaceBot {
     private void loadPolls() {
         try {
             ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
-                    "SELECT fnPollID, fcQuestion, fbMultiSelect, fnRequireTWD, fdBegin, fdEnd, fdCreated, fnUserPosterID, fcUserName, fnPollOptionID, fcOption, fnOrder " +
+                    "SELECT fnPollID, fcQuestion, fbMultiSelect, fnRequireTWD, fnIsPrivate, fdBegin, fdEnd, fdCreated, fnUserPosterID, fcUserName, fnPollOptionID, fcOption, fnOrder " +
                     "FROM tblPoll__Poll p " +
                     "JOIN tblPoll__PollOptions po USING (fnPollID) " +
                     "JOIN tblUser u ON p.fnUserPosterID = u.fnUserID " +
@@ -366,7 +366,7 @@ public class twpoll extends SubspaceBot {
                 int pollID = rs.getInt("fnPollID");
                 if (!polls.containsKey(pollID)) {
                     polls.put(rs.getInt("fnPollID"), new Poll(rs.getInt("fnPollID"), rs.getInt("fnUserPosterID"), rs.getString("fcUserName"),
-                            rs.getString("fcQuestion"),rs.getBoolean("fbMultiSelect"), rs.getInt("fnRequireTWD"), rs.getDate("fdBegin"), rs.getDate("fdEnd"), rs.getDate("fdCreated")));
+                            rs.getString("fcQuestion"),rs.getBoolean("fbMultiSelect"), rs.getInt("fnRequireTWD"), rs.getInt("fnIsPrivate"), rs.getDate("fdBegin"), rs.getDate("fdEnd"), rs.getDate("fdCreated")));
 
                     polls.get(pollID).addOption(rs.getInt("fnPollOptionID"),rs.getString("fcOption"));
                 } else {
@@ -592,13 +592,19 @@ public class twpoll extends SubspaceBot {
     }
 
     /**
-     * FIXME: Doesn't seem to work at present.
      * @param name
      * @param pollID
      */
     private void showPollResults(String name, int pollID) {
         HashMap<Integer,Integer> voteCount = new HashMap<Integer,Integer>();
         ArrayList<String> spam = new ArrayList<String>();
+        Poll poll = polls.get(pollID);
+        if (poll == null)
+            return;
+        if (poll.isPrivate == 1) {
+            m_botAction.sendSmartPrivateMessage(name, "This poll is private and results can not be viewed until it is finished.");
+            return;
+        }
 
         try {
             ResultSet rs = m_botAction.SQLQuery(DB_NAME, "" +
@@ -621,14 +627,17 @@ public class twpoll extends SubspaceBot {
         }
 
         if (polls.isEmpty()) {
-            m_botAction.sendSmartPrivateMessage(name, "There is no poll at the moment.");
+            m_botAction.sendSmartPrivateMessage(name, "There are no running polls at the moment.");
         } else {
-            Poll poll = polls.get(pollID);
             spam.add("Poll Info #" + pollID);
             spam.addAll(chopString(poll.question,60));                
             //int i=0;
+            Integer count;
             for(PollOption option: poll.options) {
-                spam.add(Tools.centerString("" + voteCount.get(option.id), 6) + " ... " + option.option);
+                count = voteCount.get(option.id);
+                if( count == null )
+                    count = 0;
+                spam.add(Tools.centerString("" + count, 6) + " ... " + option.option);
             }
             spam.add(" ");
             spam.add("Start Date: " + poll.getStartingDate());
@@ -1010,18 +1019,21 @@ public class twpoll extends SubspaceBot {
         public int requireTWD;      // 0 = no TWD acct needed
                                     // 1 = TWD-registered acct needed
                                     // 2 = TWD-enabled acct needed
+        public int isPrivate;       // 0 = results can be viewed by staff
+                                    // 1 = results may not be viewed by staff
         public Date begin;
         public Date end;
         //public Date created;
         public ArrayList<PollOption> options;
 
-        public Poll(int pollID, int posterID, String poster, String question, Boolean multi, int requireTWD, Date begin, Date end, Date created) {
+        public Poll(int pollID, int posterID, String poster, String question, Boolean multi, int requireTWD, int isPrivate, Date begin, Date end, Date created) {
             this.id = pollID;
             //this.userPosterId = posterID;
             //this.userPoster = poster;
             this.question = question;
             //this.multi = multi;
             this.requireTWD = requireTWD;
+            this.isPrivate = isPrivate;
             this.begin = begin;
             this.end = end;
             //this.created = created;
