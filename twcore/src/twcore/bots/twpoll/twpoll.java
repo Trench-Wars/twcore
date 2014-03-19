@@ -163,9 +163,9 @@ public class twpoll extends SubspaceBot {
     public void handleCommand(String name, String message) {
         message = message.toLowerCase();
 
-        if (message.startsWith("!ignore")) { //TODO IGNORE COMMAND
-            cmd_ignore(name);               
-        }  else if (message.startsWith("!polls")) {
+        //if (message.startsWith("!ignore")) { //TODO IGNORE COMMAND
+        //    cmd_ignore(name);
+        if (message.startsWith("!polls")) {
             showPollsMain(name, true);
         }  else if (message.startsWith("!updates")) {
             showUpdatesMain(name, true);
@@ -209,7 +209,7 @@ public class twpoll extends SubspaceBot {
         m_botAction.sendSmartPrivateMessage(name, "Bot made by K A N E and Arobas+.");
     }
 
-    public void cmd_ignore(String name) {
+    //public void cmd_ignore(String name) {
         //m_botAction.sendSmartPrivateMessage(name, "command under construction");
 
         //TODO TO DO THIS LATER
@@ -221,7 +221,7 @@ public class twpoll extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "You have been added to my ignore list. I won't bother you until I reset.");
             m_botAction.sendSmartPrivateMessage(name, "HINT: Vote for each polls and you won't get notified again.");
         } */       
-    }
+    //}
 
     /*
     public void cmd_viewall(String name) {
@@ -294,10 +294,12 @@ public class twpoll extends SubspaceBot {
         spam.add(formatMessage("[Main Navigation]",0));
         spam.add(formatMessage("!polls",1) + formatMessage("Shows the active polls/elections.",2));
         spam.add(formatMessage("!updates",1) + formatMessage("Shows active updates.",2));
-        spam.add(formatMessage("!ignore",1) + formatMessage("Turns off automessages for you.",2));
-        spam.add(formatMessage("!about",1) + formatMessage("Information about this bot.",2));
+        spam.add(formatMessage("!back",1) + formatMessage("Goes back one menu.",2));
+        spam.add(formatMessage("!home",1) + formatMessage("Goes back to the home menu.",2));
+        //spam.add(formatMessage("!ignore",1) + formatMessage("Turns off automessages for you.",2));
+        //spam.add(formatMessage("!about",1) + formatMessage("Information about this bot.",2));
         if (m_botAction.getOperatorList().isZH(name))
-            spam.add(formatMessage("!info ",1) + formatMessage("Information and results for a poll.",2));
+            spam.add(formatMessage("!info ",1) + formatMessage("Shows results for poll #.",2));
         spam.add(formatMessage("-",3));
 
         m_botAction.smartPrivateMessageSpam(name, spam.toArray(new String[spam.size()]));
@@ -588,6 +590,11 @@ public class twpoll extends SubspaceBot {
         }
     }
 
+    /**
+     * FIXME: Doesn't seem to work at present.
+     * @param name
+     * @param pollID
+     */
     private void showPollResults(String name, int pollID) {
         Vector<Integer> voteCount = new Vector<Integer>();
         ArrayList<String> spam = new ArrayList<String>();
