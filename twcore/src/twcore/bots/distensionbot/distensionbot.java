@@ -101,10 +101,10 @@ public class distensionbot extends SubspaceBot {
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
     private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
     private final int RANK_DIFF_HIGHEST = 50;
-    private final int RANK_0_STRENGTH = 70;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
-    private final int TERR_RANK_0_STRENGTH = 110;
-    private final int SHARK_RANK_0_STRENGTH = 90;
-    private final int OPS_RANK_0_STRENGTH = 80;
+    private final int RANK_0_STRENGTH = 50;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
+    private final int TERR_RANK_0_STRENGTH = 85;
+    private final int SHARK_RANK_0_STRENGTH = 65;
+    private final int OPS_RANK_0_STRENGTH = 60;
     /*
     private final float TERR_STRENGTH_MULTIPLIER = 1.3f;  // How much a terr's strength is multiplied by (for calculation purposes)
     private final float SHARK_STRENGTH_MULTIPLIER = 1.2f;  // How much a shark's strength is multiplied by
@@ -4759,6 +4759,8 @@ public class distensionbot extends SubspaceBot {
         if( !p.useTargetedEMP() )
             throw new TWCoreException( "You have no EMP charged.  Average recharge time: 15 minutes." );
         int freq = p.getArmyID();
+        if( !p.getArmy().canEMP() ) 
+            throw new TWCoreException( "Your army has used an EMP in the last 60 seconds. Please wait before EMPing again." );
 
         GroupSpamTask emp0 = new GroupSpamTask();
         GroupSpamTask emp1 = new GroupSpamTask();
@@ -4781,7 +4783,7 @@ public class distensionbot extends SubspaceBot {
                     emp1.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, 0 );
                     emp2.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, Tools.Sound.STOP_MUSIC );
                 } else {
-                    // An early-round EMP only depletes energy, and does not shutdown.
+                    // An early- or late-round EMP only depletes energy, and does not shutdown.
                     emp0.addSingleMsg(p3.getArenaPlayerID(), "*prize#" + Tools.Prize.ENERGY_DEPLETED, 0 );                    
                 }
             }
@@ -4795,6 +4797,7 @@ public class distensionbot extends SubspaceBot {
             m_botAction.sendOpposingTeamMessageByFrequency(p.getArmyID(), p.getName() + " unleashed a weakened ELECTRO-MAGNETIC PULSE on the enemy." );
             m_botAction.sendOpposingTeamMessageByFrequency(p.getOpposingArmyID(), p.getName() + " unleashed a weakened ELECTRO-MAGNETIC PULSE on your army." );
         }
+        p.getArmy().updateEMP();
         m_botAction.hideObjectForPlayer( p.getArenaPlayerID(), LVZ_EMP );
     }
 
@@ -10713,6 +10716,7 @@ public class distensionbot extends SubspaceBot {
         boolean isDefault;              // True if army is available by default (not user-created)
         boolean isPrivate;              // True if army can't be seen on !armies screen
         int profitShareRP;              // Amount of RP made from profit shares
+        long lastEMP;                   // Last time an EMP was used
         //List <String>profitSharers;     // Players with profit-sharing on freq
 
         /**
@@ -10743,6 +10747,7 @@ public class distensionbot extends SubspaceBot {
             pilotsInGame = 0;
             highestNumPilotsThisShare = 0;
             profitShareRP = 0;
+            lastEMP = System.currentTimeMillis();
             //profitSharers = Collections.synchronizedList( new LinkedList<String>() );
         }
 
@@ -10803,6 +10808,11 @@ public class distensionbot extends SubspaceBot {
         public void addSharedProfit( int shared ) {
             profitShareRP += shared;
         }
+        
+        public void updateEMP() {
+            lastEMP = System.currentTimeMillis();
+        }
+
 
         // GETTERS
 
@@ -10888,6 +10898,10 @@ public class distensionbot extends SubspaceBot {
         public boolean isPrivate() {
             return isPrivate;
         }
+        
+        public boolean canEMP() {
+            return (lastEMP + (Tools.TimeInMillis.MINUTE * 1) < System.currentTimeMillis());
+        }        
 
     }
 
