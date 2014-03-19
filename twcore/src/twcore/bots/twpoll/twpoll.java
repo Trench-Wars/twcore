@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.TreeMap;
+import java.util.HashMap;
 import java.util.TreeSet;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -596,7 +597,7 @@ public class twpoll extends SubspaceBot {
      * @param pollID
      */
     private void showPollResults(String name, int pollID) {
-        Vector<Integer> voteCount = new Vector<Integer>();
+        HashMap<Integer,Integer> voteCount = new HashMap<Integer,Integer>();
         ArrayList<String> spam = new ArrayList<String>();
 
         try {
@@ -611,7 +612,7 @@ public class twpoll extends SubspaceBot {
                     );
 
             while(rs.next()) {
-                voteCount.add(rs.getInt("fnOrder"), rs.getInt("Count"));    
+                voteCount.put(rs.getInt("fnPollOptionID"), rs.getInt("Count"));    
             }
             rs.close();
 
@@ -625,9 +626,9 @@ public class twpoll extends SubspaceBot {
             Poll poll = polls.get(pollID);
             spam.add("Poll Info #" + pollID);
             spam.addAll(chopString(poll.question,60));                
-            int i=0;
+            //int i=0;
             for(PollOption option: poll.options) {
-                spam.add(Tools.centerString("" + voteCount.get(i), 6) + (++i) + ". " + option.option);
+                spam.add(Tools.centerString("" + voteCount.get(option.id), 6) + " ... " + option.option);
             }
             spam.add(" ");
             spam.add("Start Date: " + poll.getStartingDate());
