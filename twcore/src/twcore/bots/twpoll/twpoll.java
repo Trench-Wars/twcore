@@ -345,9 +345,7 @@ public class twpoll extends SubspaceBot {
         else 
             return;
 
-        vote(window[1], name, vote);
-        
-        cmd_back(name);
+        vote(window[1], name, vote);        
     }
 
     private void loadPolls() {
@@ -879,9 +877,11 @@ public class twpoll extends SubspaceBot {
                         "VALUES (null, "+pollID+","+pollOption.id+","+userID+", NOW())"
                         );
             }
-            m_botAction.sendSmartPrivateMessage(playerName, "Thank you. Your vote has been counted. If you have made an error, you may change your vote as long as the poll is still running.");
-            if( poll.requireTWD > 0 )
-                m_botAction.sendSmartPrivateMessage(playerName, ">>> NOTE: Voting for this poll on any other name is considered fraud, and will result, at minimum, in 1-week ban from the zone.");
+            m_botAction.sendSmartPrivateMessage(playerName, "SUCCESS: Your vote was counted. You may change it if you have made an error.");
+            if( poll.requireTWD > 0 ) {
+                m_botAction.sendSmartPrivateMessage(playerName, ">>> DO NOT VOTE FOR THIS POLL ON ANY OTHER NAME! <<<");
+                m_botAction.sendSmartPrivateMessage(playerName, "Fraud is taken seriously and will result in a 1-week zone ban, at minimum.");
+            }
         } catch (SQLException e) {
 
         }
@@ -899,7 +899,8 @@ public class twpoll extends SubspaceBot {
         users.add(userID);
         votes.put(pollID, users);
         openPolls.remove(userID);
-        showPoll(playerName, pollID);
+        //showPoll(playerName, pollID);
+        cmd_back(playerName);
         return true;
     }
 
