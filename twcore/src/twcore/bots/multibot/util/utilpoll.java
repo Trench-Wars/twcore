@@ -154,6 +154,9 @@ public class utilpoll extends MultiUtil {
          * @param message is the player's choice presumably
          */
         public void handlePollCount( String name, String message ){
+        	if(name == m_botAction.getBotName())
+        		return;
+        	
             try{
                 if( !Tools.isAllDigits( message )){
                     return;
