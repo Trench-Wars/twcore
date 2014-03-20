@@ -419,6 +419,9 @@ public class story extends MultiModule{
      * will handle either votes or phrase submissions.
      */
     public void doCheckPrivate( String name, String message ) {
+    	if(name == m_botAction.getBotName())
+    		return;
+    	
         if( gameState == 1 && listNotplaying.contains(name.toLowerCase()) == false) {
             String pieces[] = message.split( " " );
             String pieces2[] = curAcro.split( " " );
