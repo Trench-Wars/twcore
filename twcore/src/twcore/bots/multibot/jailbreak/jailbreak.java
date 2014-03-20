@@ -527,7 +527,7 @@ public class jailbreak extends MultiModule {
                 if (freq0Safe.size() > 0) {
                     if (p.getFrequency() == 0 && freq0Safe.contains(p.getPlayerName())) {
                         m_botAction.warpTo(p.getPlayerName(), 238, 510, 1);
-                        freq0Safe.clear();
+                        freq0Safe.remove(p.getPlayerName());
                     }
                 }
             }
@@ -549,7 +549,7 @@ public class jailbreak extends MultiModule {
                 if (freq1Safe.size() > 0) {
                     if (p.getFrequency() == 1 && freq1Safe.contains(p.getPlayerName())) {
                         m_botAction.warpTo(p.getPlayerName(), 761, 510, 1);
-                        freq1Safe.clear();
+                        freq1Safe.remove(p.getPlayerName());
                     }
                 }
             }
