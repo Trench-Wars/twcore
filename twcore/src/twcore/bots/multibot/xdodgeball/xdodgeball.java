@@ -318,6 +318,8 @@ public class xdodgeball extends MultiModule {
         isStarted = true;
         freq0Safe.clear();
         freq1Safe.clear();
+        freq0Scored = false;
+        freq1Scored = false;
         m_botAction.warpFreqToLocation(0, 473, 485);
         m_botAction.warpFreqToLocation(1, 551, 539);
         m_botAction.setDoors(255);
