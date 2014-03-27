@@ -1,7 +1,6 @@
 package twcore.core;
 
 import java.io.File;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -3371,21 +3370,7 @@ public class BotAction
      * @param p The PreparedStatement to be closed
      */
     public void closePreparedStatement(String connectionName, String uniqueID, PreparedStatement p) {
-    	if(p != null) {
-	    	Connection conn = null;
-	    	try {
-	    		conn = p.getConnection();
-	    	} catch(SQLException sqle) {}
-
-	    	try {
-	    		p.close();
-	    	} catch(SQLException sqle) {}
-
-	    	if(conn != null) {
-	    		getCoreData().getSQLManager().freeConnection(connectionName, uniqueID, conn);
-	    	}
-    	}
-
+    	getCoreData().getSQLManager().closePreparedStatement(connectionName, uniqueID, p);
     }
 
 
