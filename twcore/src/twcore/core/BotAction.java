@@ -3369,9 +3369,9 @@ public class BotAction
      * @param uniqueID The uniqueID used to create the Prepared Statement
      * @param p The PreparedStatement to be closed
      */
-    public void closePreparedStatement(String connectionName, String uniqueID, PreparedStatement p) {
-    	getCoreData().getSQLManager().closePreparedStatement(connectionName, uniqueID, p);
-    }
+	public void closePreparedStatement(String connectionName, String uniqueID, PreparedStatement p) {
+		getCoreData().getSQLManager().closePreparedStatement(connectionName, uniqueID, p);
+	}
 
 
     // ***** INTER-PROCESS COMMUNICATION OPERATIONS *****
