@@ -403,24 +403,22 @@ public class SQLManager extends Thread {
             
             Iterator<PreparedStatement> q = psQueryCache.keySet().iterator();
             
-            while( q.hasNext() && psKeepAlive) {
+            while( q.hasNext() && psKeepAlive ) {
             	PreparedStatement ps = q.next();
-            	
-            	if(psQueryCache.containsKey(ps)) {            		           		
-            		try {
-            			Tools.printLog("Trying keep alive on prepared statement connection.");
-            			Connection conn = ps.getConnection();
-            			Statement stmt = conn.createStatement();
-            			stmt.execute("SELECT 1");                		
-            		}
-            		catch (SQLException e)
-            		{
+          		           		
+            	try {            		
+            		Connection conn = ps.getConnection();
+            		Statement stmt = conn.createStatement();
+            		stmt.execute("SELECT 1");                		
+            	}
+            	catch (SQLException e)
+            	{
             			Tools.printStackTrace(e);
-            		}            		
-            	}         	
+            	}   	
             }
             
             if(psKeepAlive) {
+            	Tools.printLog("SQL: Attempted keep alive on " + psQueryCache.size() + " prepared statement connections.");
             	nextPSkeepAlive = System.currentTimeMillis() + KEEP_PS_CONNECTION_ALIVE_TIME;
             }
            
