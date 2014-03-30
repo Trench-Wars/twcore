@@ -323,6 +323,7 @@ public class xdodgeball extends MultiModule {
         m_botAction.warpFreqToLocation(0, 473, 485);
         m_botAction.warpFreqToLocation(1, 551, 539);
         m_botAction.setDoors(255);
+        m_botAction.shipResetAll();
         if (!turbo) {
             m_botAction.sendArenaMessage("Round is about to begin! We're playing to " + wins + " wins! The safe timer is set to " + doorTimer + " seconds!", 2);
         } else {
@@ -503,7 +504,7 @@ public class xdodgeball extends MultiModule {
             if (freq1Score == wins) {
                 announceWinner(1);
             } else {
-                m_botAction.sendArenaMessage("Freq 1 has won this round! Score: Freq 1: " + freq0Score + " - Freq 1: " + freq1Score + ".", 5);
+                m_botAction.sendArenaMessage("Freq 1 has won this round! Score: " + freq0Score + " - " + freq1Score + ".", 5);
                 m_botAction.sendArenaMessage("Freq 1 needs " + freq1RoundsLeft + " round wins until they win the game!");
                 pauseAndGo();
             }
@@ -544,8 +545,8 @@ public class xdodgeball extends MultiModule {
             }
         };
 
-        m_botAction.sendArenaMessage("Next round begins in ~30 seconds! Take a quick breather. >:)");
-        m_botAction.scheduleTask(pause, 20000);
+        m_botAction.sendArenaMessage("Next round begins in ~15 seconds! Take a quick breather. >:)");
+        m_botAction.scheduleTask(pause, 5000);
     }
 
     private void pauseAndStop() {
@@ -584,11 +585,18 @@ public class xdodgeball extends MultiModule {
 
     public String[] getModHelpMessage() { //The help message for mods
 
-        String[] JBHelp = { "------------------------------------------------------------------------------", "|!start     -   Starts the exciting game of XDODGEBALL!                      |",
-                "|!stop      -   Cancels the game                                             |", "|!wins #    -   Sets how many round wins we're playing to (Default is 3)     |",
-                "|!timer #   -   Adjusts the safe timer                                       |", "|                              (How long the safe is open (Default 10)       |",
-                "|!turbo     -   Enables UNLIMITED TURBO MODE                                 |", "|!specall   -   Spectates everyone (for team shuffling)                      |",
-                "|!spamrules -   I forgot what this does, sorry. :(                           |", "------------------------------------------------------------------------------" };
+        String[] JBHelp = { 
+        		"------------------------------------------------------------------------------", 
+        		"|!start     -   Starts the exciting game of XDODGEBALL!                      |",
+                "|!stop      -   Cancels the game                                             |", 
+                "|!wins #    -   Sets how many round wins we're playing to (Default is 3)     |",
+                "|!timer #   -   Adjusts the safe timer                                       |", 
+                "|                              (How long the safe is open (Default 10)       |",
+                "|!turbo     -   Enables UNLIMITED TURBO MODE                                 |", 
+                "|!specall   -   Spectates everyone (for team shuffling)                      |",
+                "|!spamrules -   I forgot what this does, sorry. :(                           |", 
+                "|!shutup    -   Stops the bot from spamming the spec frequency.              |",
+                "------------------------------------------------------------------------------" };
         return JBHelp;
     }
 
