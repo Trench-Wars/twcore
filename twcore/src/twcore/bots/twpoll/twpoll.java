@@ -150,10 +150,7 @@ public class twpoll extends SubspaceBot {
     public void handleEvent(Message event) {
         String name = event.getMessager() != null ? event.getMessager() : m_botAction.getPlayerName(event.getPlayerID());
         if (name == null) name = "-anonymous-";
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!die")) {
-            try { Thread.sleep(50); } catch (Exception e) {};
-            m_botAction.die();
-        }
+
         String message = event.getMessage();
 
         if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE || event.getMessageType() == Message.PUBLIC_MESSAGE) {
@@ -195,6 +192,12 @@ public class twpoll extends SubspaceBot {
                 cmd_info(name, message.substring(6));
             }                  
         }
+        
+        if (oplist.isModerator(name)) {
+        	if (message.startsWith("!die")) {
+        		cmd_die(name);
+        	}
+        }
 
         if (oplist.isSmod(name)) {
             if (message.startsWith("!reload")) {
@@ -208,6 +211,12 @@ public class twpoll extends SubspaceBot {
 
     public void cmd_about(String name) {
         m_botAction.sendSmartPrivateMessage(name, "Bot made by K A N E and Arobas+.");
+    }
+    
+    public void cmd_die(String name) {
+    	m_botAction.sendSmartPrivateMessage(name, "Bye Bye o/");
+        try { Thread.sleep(50); } catch (Exception e) {};
+        m_botAction.die();    	
     }
 
     //public void cmd_ignore(String name) {
