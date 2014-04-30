@@ -589,6 +589,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Begz &Who|A continuum is something that keeps on going, changing slowly over time, like the continuum of the four seasons. In addition to meaning "a whole made up of many parts," continuum, pronounced "kon-TIN-yoo-um," can describe a range that is always present. For example, in the game, at any time, there are newplayers who are learning warbird, then advancing to javelin, spider, and terrier. Just as the newplayers master their particular ship, they move on to the next one, as other newplayers enter the game and the vets retire.
 &fiS &Who|My responses are limited. You must ask the right questions.
 &LF &Who|~!~ Wow!  Have a great time in SSCU Trench Wars! ~!~
+&Griz &Who|Slacker extraordinaire.
 
 # Prize related tells.
 &prizerecharge|The prize number for recharge is 1.
