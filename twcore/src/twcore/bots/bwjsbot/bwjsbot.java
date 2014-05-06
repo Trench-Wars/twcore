@@ -2586,7 +2586,7 @@ public class bwjsbot extends SubspaceBot {
             }
         }
         /* 
-         * Wbduel, javduel, spidduel
+         * Wbduel, javduel, spidduel, fighterduel
          */
         else {
             String scoreTeam1 = "" + team[1].getDeaths();
@@ -2755,6 +2755,7 @@ public class bwjsbot extends SubspaceBot {
         private static final int WBDUEL = 2;
         private static final int JAVDUEL = 3;
         private static final int SPIDDUEL = 4;
+        private static final int FIGHTERDUEL = 5;
         
         /** Class constructor */
         private BWJSConfig() {
@@ -2778,6 +2779,8 @@ public class bwjsbot extends SubspaceBot {
                 gameType = JAVDUEL;
             else if (gameTypeString.equals("spidduel"))
                 gameType = SPIDDUEL;
+            else if (gameTypeString.equals("fighterduel"))
+                gameType = FIGHTERDUEL;
             else
                 m_botAction.die();
             
@@ -2939,6 +2942,7 @@ public class bwjsbot extends SubspaceBot {
                 case BASE : gameTypeString = "BASE"; break;
                 case JAVDUEL : gameTypeString = "JAVDUEL"; break;
                 case SPIDDUEL : gameTypeString = "SPIDDUEL"; break;
+                case FIGHTERDUEL : gameTypeString = "FIGHTERDUEL"; break;
                 default : gameTypeString = "";
             }
             
@@ -3218,7 +3222,8 @@ public class bwjsbot extends SubspaceBot {
                 //Add a death on a lagout during gameplay in WBDUEL, JAVDUEL and SPIDDUEL
                 if (cfg.getGameType() == BWJSConfig.WBDUEL ||
                         cfg.getGameType() == BWJSConfig.JAVDUEL ||
-                        cfg.getGameType() == BWJSConfig.SPIDDUEL) {
+                        cfg.getGameType() == BWJSConfig.SPIDDUEL ||
+                        cfg.getGameType() == BWJSConfig.FIGHTERDUEL ) {
                     p_ship[p_currentShip][DEATHS]++;    //Add a loss due the lagout
                     
                     //Notify the arena of the lagout
