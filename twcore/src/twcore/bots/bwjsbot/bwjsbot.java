@@ -47,6 +47,7 @@ public class bwjsbot extends SubspaceBot {
     
     private boolean lockArena;
     private boolean lockLastGame;
+    private boolean zoneSquadVWorld;
     private BWJSConfig cfg;                                 //Game configuration
     private BWJSState state;                                //Game state
     private BWJSSQL sql;
@@ -481,7 +482,9 @@ public class bwjsbot extends SubspaceBot {
             } else if (cmd.startsWith("!forcenp ")) {
                 cmd_forcenp(name, cmd);
             } else if (cmd.startsWith("!setcaptain") || cmd.startsWith("!sc")) {
-                cmd_setCaptain(name, cmd, override);
+                cmd_setCaptain(name, cmd, false, override);
+            } else if (cmd.startsWith("!squadcaptain")) {
+                cmd_setCaptain(name, cmd, true, override);
             } else if (cmd.startsWith("!t1") || cmd.startsWith("!t2")) {
                 cmd_overrideCmd(name, cmd);
             } else if (cmd.equals("!end")) {
@@ -650,11 +653,18 @@ public class bwjsbot extends SubspaceBot {
                 }
             }
             
-            listJustAdded.put(name, System.currentTimeMillis());
-            
+            if (t.squadLimited != null) {
+                if ( !p.getSquadName().equalsIgnoreCase(t.squadLimited) ) {
+                    m_botAction.sendPrivateMessage(name, "Error: Could not add " + p.getPlayerName() + " -- this is a squad vs world match, and only members of the squad " + t.squadLimited + " may be added to this team." );
+                    return;
+                }
+            }
+                        
             /*
              * All checks are done
              */
+            
+            listJustAdded.put(name, System.currentTimeMillis());
             
             /* Add player */
             t.addPlayer(p, shipType);
@@ -709,7 +719,7 @@ public class bwjsbot extends SubspaceBot {
                 sendCaptainList(name);
                 return;
             } else {
-                t.setCaptain(name);
+                t.setCaptain(name, false);
                 return;
             }
         }
@@ -718,10 +728,10 @@ public class bwjsbot extends SubspaceBot {
         if (state.getCurrentState() == BWJSState.WAITING_FOR_CAPS ||
                 state.getCurrentState() == BWJSState.ADDING_PLAYERS) {
             if (!team[0].hasCaptain()) {
-                team[0].setCaptain(name);
+                team[0].setCaptain(name, false);
                 return;
             } else if (!team[1].hasCaptain()) {
-                team[1].setCaptain(name);
+                team[1].setCaptain(name, false);
                 return;
             } else {
                 sendCaptainList(name);
@@ -948,7 +958,8 @@ public class bwjsbot extends SubspaceBot {
             }
             help.add("!forcenp <player>                 -- Sets <player> to !notplaying");
             if (state.getCurrentState() > BWJSState.OFF) {
-                help.add("!setcaptain <# freq>:<player>     -- Sets <player> as captain for <# freq> (short: !sc)");
+                help.add("!setcaptain <frq>:<plr>   -- Sets <plr> as captain for <frq> (short: !sc)");
+                help.add("!squadcaptain <frq>:<plr> -- Squad vs world game; <plr> as cap, only their squad on <frq>");
                 help.add("-- Prepend your command with !t1- for 'Freq 0', !t2- for 'Freq 1' --");
                 if ( state.getCurrentState() >= BWJSState.ADDING_PLAYERS) {
                     help.add("!add <player>             -- Adds player");
@@ -965,7 +976,7 @@ public class bwjsbot extends SubspaceBot {
                         help.add("!switch <player>:<player> -- Exchanges the ship of both players");
                     }
                 }
-                help.add("!setcaptain <player>      -- Sets <player> to captain (short: !sc)");
+                //help.add("!setcaptain <player>      -- Sets <player> to captain (short: !sc)");
                 help.add("!removecap                -- Removes the cap of team !t#");
             }
         }
@@ -1395,9 +1406,10 @@ public class bwjsbot extends SubspaceBot {
      * 
      * @param name name of the player that issued the !setcaptain command
      * @param cmd command parameters
+     * @param True if only members of the captain's squad may be added
      * @param override override 0/1 for teams, -1 if not overriden
      */
-    private void cmd_setCaptain(String name, String cmd, int override) {
+    private void cmd_setCaptain(String name, String cmd, boolean isSquadOnly, int override) {
         int frequency;
         Player p;
         String[] splitCmd;
@@ -1452,7 +1464,7 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
             
-            team[frequency].setCaptain(p.getPlayerName()); //Set player to captain
+            team[frequency].setCaptain(p.getPlayerName(), isSquadOnly); //Set player to captain
         }
     }
     
@@ -2856,6 +2868,9 @@ public class bwjsbot extends SubspaceBot {
             else
                 inBase = false;
             outOfBorderTime = botSettings.getInt("OutOfBorderTime" + gameType);
+            
+            //Zone after squad vs world has begun?
+            zoneSquadVWorld = (botSettings.getInt("ZoneSquadVWorld") == 1);
         }
         
         /**
@@ -3992,6 +4007,7 @@ public class bwjsbot extends SubspaceBot {
         private String teamName;
         private long captainTimestamp;
         private int substitutesLeft;
+        private String squadLimited;    // null if not limited to only a squad; squadname if so
         
         /** Class constructor */
         private BWJSTeam(int frequency) {
@@ -4024,6 +4040,7 @@ public class bwjsbot extends SubspaceBot {
             ready = false;
             substitutesLeft = cfg.getMaxSubs();
             captainsIndex = -1;
+            squadLimited = null;
         }
         
         /**
@@ -4501,8 +4518,9 @@ public class bwjsbot extends SubspaceBot {
          * - Sends arena message
          * 
          * @param name Name of the captain
+         * @param isSquadOnly True if only members of this captain's squad will be allowed to be added
          */
-        private void setCaptain(String name) {
+        private void setCaptain(String name, boolean isSquadOnly ) {
             Player p;
             
             p = m_botAction.getPlayer(name);
@@ -4522,11 +4540,21 @@ public class bwjsbot extends SubspaceBot {
                 }
             }
             
+            
             captainName = p.getPlayerName();
             captainTimestamp = System.currentTimeMillis();
-            
-            m_botAction.sendArenaMessage(captainName + " is assigned as captain for " +
-                   teamName, Tools.Sound.BEEP1);
+            if (isSquadOnly) {
+                squadLimited = p.getSquadName();
+                teamName = squadLimited;
+                m_botAction.sendArenaMessage(captainName + " is assigned as captain for " +
+                        teamName, Tools.Sound.BEEP1);
+                m_botAction.sendArenaMessage("This will be a squad vs world match. Only squad members of " + teamName + " will be added to team " + frequency + ".");
+                if (zoneSquadVWorld)
+                    m_botAction.sendZoneMessage( squadLimited + " v World starting now in ?go " + cfg.arena, Tools.Sound.BEEP2);
+            } else {
+                m_botAction.sendArenaMessage(captainName + " is assigned as captain for " +
+                        teamName, Tools.Sound.BEEP1);
+            }            
             
             if (captains.containsKey(captainsIndex)) {
                 if (!captains.get(captainsIndex).hasEnded()) {
