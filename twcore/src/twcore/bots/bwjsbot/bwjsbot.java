@@ -746,8 +746,10 @@ public class bwjsbot extends SubspaceBot {
         BWJSPlayer p;
         int shipType;
         
-        /* Check if this is a BASE game */
-        if (cfg.getGameType() != BWJSConfig.BASE) {
+        /* Check if we can !change according to gametype */
+        if (cfg.getGameType() != BWJSConfig.BASE &&
+                cfg.getGameType() != BWJSConfig.FIGHTERDUEL &&
+                cfg.getGameType() != BWJSConfig.TURRETDUEL ) {
             return;
         }
         
@@ -890,15 +892,19 @@ public class bwjsbot extends SubspaceBot {
 //                help.add("!stats <player>:<ship>    -- Displays your/<player>:<ship> stats");
 //            }
         } else if (state.getCurrentState() >= BWJSState.ADDING_PLAYERS) {
-            if (isCaptain(name)) {
-                help.add("!add <player>             -- Adds player");
-                if (cfg.getGameType() == BWJSConfig.BASE) {
-                    help.add("!add <player>:<ship>      -- Adds player in the specified ship");
-                }
-            }
             help.add("!cap                      -- Become captain of a team / shows current captains!");
-            if (cfg.getGameType() == BWJSConfig.BASE && isCaptain(name)) {
-                help.add("!change <player>:<ship>   -- Sets the player in the specified ship");
+            
+            if (isCaptain(name)) {
+                help.add("!removecap                -- Removes you as a captain");
+                help.add("!add <player>             -- Adds player");
+                if (cfg.getGameType() == BWJSConfig.BASE ||
+                    cfg.getGameType() == BWJSConfig.FIGHTERDUEL ||
+                    cfg.getGameType() == BWJSConfig.TURRETDUEL ) {
+                    help.add("!add <player>:<ship>      -- Adds player in the specified ship");
+                    help.add("!change <player>:<ship>   -- Sets the player in the specified ship");
+                    help.add("!switch <player>:<player> -- Exchanges the ship of both players");
+                }
+                help.add("!sub <playerA>:<playerB>  -- Substitutes <playerA> with <playerB>");
             }
             help.add("!lagout                   -- Puts you back into the game if you have lagged out");
             help.add("!list                     -- Lists all players on this team");
@@ -915,15 +921,8 @@ public class bwjsbot extends SubspaceBot {
                 help.add("!stats <player>           -- Displays your/<player> stats");
             }
             if (state.getCurrentState() == BWJSState.ADDING_PLAYERS && isCaptain(name)) { 
-                help.add("!ready                    -- Use this when you're done setting your lineup");
                 help.add("!remove <player>          -- Removes specified player)");
-            }
-            if (isCaptain(name)) {
-                help.add("!removecap                -- Removes you as a captain");
-                help.add("!sub <playerA>:<playerB>  -- Substitutes <playerA> with <playerB>");
-                if (cfg.getGameType() == BWJSConfig.BASE) {
-                    help.add("!switch <player>:<player> -- Exchanges the ship of both players");
-                }
+                help.add("!ready                    -- Use this when you're done setting your lineup");
             }
         }
         
@@ -1711,8 +1710,10 @@ public class bwjsbot extends SubspaceBot {
         BWJSPlayer playerA;
         BWJSPlayer playerB;
         
-        /* Check if game type is of type BASE */
-        if (cfg.getGameType() != BWJSConfig.BASE) {
+        /* Check if game type can !switch */
+        if (cfg.getGameType() != BWJSConfig.BASE &&
+                cfg.getGameType() != BWJSConfig.FIGHTERDUEL &&
+                cfg.getGameType() != BWJSConfig.TURRETDUEL ) {
             return;
         }
         
@@ -2756,6 +2757,7 @@ public class bwjsbot extends SubspaceBot {
         private static final int JAVDUEL = 3;
         private static final int SPIDDUEL = 4;
         private static final int FIGHTERDUEL = 5;
+        private static final int TURRETDUEL = 6;
         
         /** Class constructor */
         private BWJSConfig() {
@@ -2943,6 +2945,7 @@ public class bwjsbot extends SubspaceBot {
                 case JAVDUEL : gameTypeString = "JAVDUEL"; break;
                 case SPIDDUEL : gameTypeString = "SPIDDUEL"; break;
                 case FIGHTERDUEL : gameTypeString = "FIGHTERDUEL"; break;
+                case TURRETDUEL : gameTypeString = "TURRETDUEL"; break;
                 default : gameTypeString = "";
             }
             
@@ -3219,11 +3222,12 @@ public class bwjsbot extends SubspaceBot {
             if (state.getCurrentState() == BWJSState.GAME_IN_PROGRESS) {
                 p_lagouts++;
                 
-                //Add a death on a lagout during gameplay in WBDUEL, JAVDUEL and SPIDDUEL
+                //Add a death on a lagout during gameplay in WBDUEL, JAVDUEL, SPIDDUEL, FIGHTERDUEL and TURRETDUEL
                 if (cfg.getGameType() == BWJSConfig.WBDUEL ||
                         cfg.getGameType() == BWJSConfig.JAVDUEL ||
                         cfg.getGameType() == BWJSConfig.SPIDDUEL ||
-                        cfg.getGameType() == BWJSConfig.FIGHTERDUEL ) {
+                        cfg.getGameType() == BWJSConfig.FIGHTERDUEL ||
+                        cfg.getGameType() == BWJSConfig.TURRETDUEL ) {
                     p_ship[p_currentShip][DEATHS]++;    //Add a loss due the lagout
                     
                     //Notify the arena of the lagout
