@@ -113,7 +113,6 @@ public class bannerboy extends SubspaceBot {
 		try {
             psGetBannerID.setString(1, getBannerString( bc.getBanner() ));
             ResultSet rs = psGetBannerID.executeQuery();
-            Tools.printLog("Bannerboy: just executedquery");
 
             if( rs.next() ) 
             {
@@ -137,7 +136,6 @@ public class bannerboy extends SubspaceBot {
 			psSaveBanner.setInt(1, getPlayerID( player ));
 			psSaveBanner.setString(2, getBannerString( b ));
 			psSaveBanner.execute();
-			 Tools.printLog("Bannerboy: just executedquery");
 		} catch (Exception e) {
 			Tools.printStackTrace( e );
 		}
@@ -153,7 +151,6 @@ public class bannerboy extends SubspaceBot {
 		try {
 		    psGetBannerID.setString(1, getBannerString( b ));
 		    ResultSet rs = psGetBannerID.executeQuery();
-		    Tools.printLog("Bannerboy: just executedquery");
 			if( rs.next() ) {
 			    id = rs.getInt("fnBannerID");
 			}
@@ -190,7 +187,6 @@ public class bannerboy extends SubspaceBot {
 		    psSeenBanner.setInt(1, userId);
 		    psSeenBanner.setInt(2, bannerId);
 		    psSeenBanner.execute();
-		    Tools.printLog("Bannerboy: just executedquery");
 		} catch (SQLException sqle) {
 			Tools.printStackTrace( sqle );
 		}
@@ -262,7 +258,6 @@ public class bannerboy extends SubspaceBot {
 				psBannerBannedUpdate.setInt(2, userIDOfBanningModerator);
 				psBannerBannedUpdate.setInt(3, bannerID);
 				int rowCount = psBannerBannedUpdate.executeUpdate();
-				 Tools.printLog("Bannerboy: just executedquery");
 				
 				if(rowCount == 1)
 					return true;
@@ -280,7 +275,6 @@ public class bannerboy extends SubspaceBot {
 				psBannerBannedUpdate.setInt(2, userIDOfBanningModerator);
 				psBannerBannedUpdate.setInt(3, bannerID);
 				int rowCount = psBannerBannedUpdate.executeUpdate();
-				 Tools.printLog("Bannerboy: just executedquery");
 				
 				if(rowCount == 1)
 					return true;
