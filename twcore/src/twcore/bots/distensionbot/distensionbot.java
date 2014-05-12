@@ -99,8 +99,8 @@ public class distensionbot extends SubspaceBot {
     private final float HIGH_RANK_FACTOR = 1.20f;          // Factor for rank increases (lvl 50+)
     private final float STUPIDLY_HIGH_RANK_FACTOR = 1.35f; // Factor for rank increases (lvl 70+)
     private final int RANK_DIFF_MED = 20;                  // Rank difference calculations
-    private final int RANK_DIFF_VHIGH = 40;                // for humiliation and rank RP caps
-    private final int RANK_DIFF_HIGHEST = 50;
+    private final int RANK_DIFF_VHIGH = 30;                // for humiliation and rank RP caps
+    private final int RANK_DIFF_HIGHEST = 40;
     private final int RANK_0_STRENGTH = 50;                // How much str a rank 0 player adds to army (rank1 = 1 + rank0str, etc)
     private final int TERR_RANK_0_STRENGTH = 85;
     private final int SHARK_RANK_0_STRENGTH = 65;
@@ -2340,7 +2340,7 @@ public class distensionbot extends SubspaceBot {
         if( victorShip < 1 )
             return;     // Dump out if they spec'd just as they made this kill (safe)
         boolean isVictorWeasel = victorShip == 6;
-        boolean isMaxReward = false;
+        //boolean isMaxReward = false;
         boolean isRepeatKillLight = false;
         boolean isRepeatKillHard = false;
         boolean isFirstKill = (victor.getRecentlyEarnedRP() == 0);
@@ -2373,11 +2373,17 @@ public class distensionbot extends SubspaceBot {
         int points;
 
         // Loser is many levels above victor:
-        //   Victor capped, but loser is humiliated with some point loss
-        if( rankDiff >= RANK_DIFF_HIGHEST ) {
+        //   * Victor gets a bonus
+        //   * Loser is humiliated with some point loss
+        if( rankDiff >= RANK_DIFF_MED ) {
 
-            points = victorRank + RANK_DIFF_HIGHEST;
-            isMaxReward = true;
+            if( rankDiff >= RANK_DIFF_HIGHEST ) {
+                points = Math.round((float)loserRank * 3.0f);                
+            } else if( rankDiff >= RANK_DIFF_VHIGH ) {
+                points = Math.round((float)loserRank * 2.5f);
+            } else {
+                points = Math.round((float)loserRank * 2.0f);
+            }
 
             // Support ships are not humiliated; assault are
             if( ! loser.isSupportShip() ) {
@@ -2395,7 +2401,7 @@ public class distensionbot extends SubspaceBot {
                 }
             }
         } else {
-            points = loser.getRank();
+            points = loserRank;
         }
 
         // Points adjusted based on size of victor's army v. loser's.
@@ -2478,7 +2484,7 @@ public class distensionbot extends SubspaceBot {
 
         // Experimental: sharks get additional points for kills.
         if( victorShip == Tools.Ship.SHARK ) {
-            points *= 1.25;
+            points = Math.round((float)points * 1.25f);
         }
 
         if( loserArmy.getPilotsInGame() != 1 ) {
@@ -2573,8 +2579,8 @@ public class distensionbot extends SubspaceBot {
 
         points = actualEarnedPoints; // For DISPLAY purposes only.
         String msg = "+" + points + " RP: " + loser.getName() + "(" + loser.getRank() + ")";
-        if( isMaxReward )
-            msg += " [High rank cap]";
+        //if( isMaxReward )
+        //    msg += " [High rank cap]";
         if( isRepeatKillLight )
             msg += " [Repeat: -50%]";
         else if( isRepeatKillHard )
