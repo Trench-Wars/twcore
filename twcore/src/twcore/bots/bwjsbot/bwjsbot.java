@@ -1525,7 +1525,7 @@ public class bwjsbot extends SubspaceBot {
                 break;
             case BWJSState.WAITING_FOR_CAPS :
                 if (cfg.getAllowAutoCaps()) {
-                    status[0] =  "A new game will start when two people message me with !cap";
+                    status[0] =  "A new game will start when two people message me with !cap. For squad vs world, send ?help";
                 } else {
                     status[0] =  "Request a new game with '?help start "+cfg.getGameTypeString().toLowerCase()+" please'";
                 }
