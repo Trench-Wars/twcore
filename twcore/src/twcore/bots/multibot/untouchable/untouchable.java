@@ -57,7 +57,7 @@ public class untouchable extends MultiModule {
     int m_lives, m_utLives;
 
     boolean isRunning = false;
-    boolean allowGuessing = false;
+    boolean allowGuessing = true;
     boolean manual = false;        // Manual toggle for more personal hosting style
 
 
@@ -538,6 +538,7 @@ public class untouchable extends MultiModule {
             "!stop                             - Stops Untouchable mode.",
             "!rules                            - Displays basic rules of the Untouchable to the arena.",
             "!whoami                           - PUBLIC COMMAND.  Tells you if you are the Untouchable.",
+            "!allowguessing                    - Toggle guessing who is the UT on/off",
             "!manual                           - Manual toggle.  If on, !start will start game instantly. (Default OFF)"
         };
         return untouchableHelp;
