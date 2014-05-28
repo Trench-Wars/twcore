@@ -13,6 +13,11 @@ import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 import twcore.core.events.Message;
 
+import twcore.bots.multibot.bogglelvz.BoggleStack;
+import twcore.bots.multibot.bogglelvz.BoggleBoard;
+import twcore.bots.multibot.bogglelvz.BoggleXY;
+
+
 /**
  * Boggle.
  * 
