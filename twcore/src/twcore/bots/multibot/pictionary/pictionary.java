@@ -51,7 +51,7 @@ public class pictionary extends MultiModule {
     public String t_definition, t_word = " ", curArtist = " ", theWinner, lastWord = " ";
 
     public String[] helpmsg = { "Commands:", "!help               -- displays this.", "!rules              -- displays the rules.",
-            "!lagout             -- puts you back in the game if you're drawing.", "!pass               -- gives your drawing turn to a random player.",
+            "!lagout             -- puts you back in the game if you're drawing.", "!pass               -- gives your drawing turn to a random player (-1pt)",
             "!reset              -- resets your mines if drawing.", "!score              -- displays the current scores.", "!repeat             -- will repeat the hint or answer.",
             "!stats              -- will display your statistics.", "!stats <name>       -- displays <name>'s statistics.", "!topten             -- displays top ten player stats.",
             "!red/!yellow!/!blue -- changes your mine colours.",    "!ship  <shipnumber> -- will change ship type"};
@@ -421,13 +421,24 @@ public class pictionary extends MultiModule {
     public void doPass(String name) {
         if (!opList.isER(name) && !name.equals(curArtist))
             return;
-        String passing = curArtist;
+        String passing = curArtist;        
         m_botAction.specWithoutLock(curArtist);
+        
+        if (playerMap.containsKey(curArtist)) {
+            PlayerProfile tempPlayer = playerMap.get(curArtist);
+            tempPlayer.decData(0);
+        } else {
+            playerMap.put(curArtist, new PlayerProfile(curArtist));
+            PlayerProfile tempPlayer = playerMap.get(curArtist);
+            tempPlayer.setData(0, -1);
+        }
+
         gameProgress = READY_CHECK;
         while (passing.equals(curArtist)) {
             pickPlayer();
         }
-        m_botAction.sendArenaMessage(passing + " passes to " + curArtist + ".");
+        
+        m_botAction.sendArenaMessage(passing + " passes to " + curArtist + " (-1pt).");
         cantPlay.clear();
         cantPlay.add(curArtist);
         try {
