@@ -591,6 +591,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &LF &Who|~!~ Wow!  Have a great time in SSCU Trench Wars! ~!~
 &Griz &Who|Slacker extraordinaire.
 &Residue &Who|If you want to walk the heavenly streets of gold, you gotta know the password, "ROLL, TIDE, ROLL!"
+&Lena &Who|I'd rather drink bleach, jump off a cliff or shoot myself in the head than host bug for someone like you.
 
 # Prize related tells.
 &prizerecharge|The prize number for recharge is 1.
