@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import twcore.core.util.Tools;
+
 /**
  * A packet sending queue.  Packets are formatted properly from inside
  * GamePacketGenerator, and then added to Sender's queue to be sent out as
@@ -93,9 +95,11 @@ public class Sender extends Thread {
                 if( m_highPriorityPackets.isEmpty() == false ){
                     m_socket.send( m_highPriorityPackets.remove( 0 ));
                     m_packetsSent++;
+                    Thread.sleep(1);
                 } else if( m_packets.isEmpty() == false ){
                     m_socket.send( m_packets.remove( 0 ));
                     m_packetsSent++;
+                    Thread.sleep(2);
                 } else {
 	                Thread.sleep( 5 );
                 }
