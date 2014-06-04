@@ -11938,10 +11938,12 @@ public class distensionbot extends SubspaceBot {
             warning = "  VICTORY IS IMMINENT!!";
         
         if( m_canScoreGoals ) {
-            m_botAction.sendArenaMessage( "----- BALLGAME FINISHED -----  " + roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+            m_botAction.sendArenaMessage( "----- BALLGAME FINISHED -----  " + roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning, Tools.Sound.BEEP2 );
             m_canScoreGoals = false;
         } else
-            m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning );
+            m_botAction.sendArenaMessage( roundTitle + " begins in " + getTimeString( INTERMISSION_SECS ) + ".  Score:  " + flagTimer.getScoreDisplay() + warning, Tools.Sound.BEEP2 );
+        
+        m_botAction.sendTeamMessage( "NEW ROUND starting. Enter a ship at any time to play." );
 
         // Between rounds, switch between one and two flags
         int players = 0;
