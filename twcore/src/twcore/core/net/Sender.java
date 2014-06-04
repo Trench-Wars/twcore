@@ -95,11 +95,11 @@ public class Sender extends Thread {
                 if( m_highPriorityPackets.isEmpty() == false ){
                     m_socket.send( m_highPriorityPackets.remove( 0 ));
                     m_packetsSent++;
-                    Thread.sleep(1);
+                    Thread.sleep( 1 );
                 } else if( m_packets.isEmpty() == false ){
                     m_socket.send( m_packets.remove( 0 ));
                     m_packetsSent++;
-                    Thread.sleep(2);
+                    Thread.sleep( 2 );
                 } else {
 	                Thread.sleep( 5 );
                 }
