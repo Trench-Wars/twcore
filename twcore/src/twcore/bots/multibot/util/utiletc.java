@@ -137,7 +137,7 @@ public class utiletc extends MultiUtil {
 
     public void handleCommand( String name, String message ) {
         String cmd = message.toLowerCase();
-        if( m_opList.isSmod(name) || m_opList.isERExact(name) ) {
+        if( m_opList.isSmod(name) || m_opList.isER(name) ) {
             if( cmd.startsWith( "!botattach" )) {
                 turretPlayer( message.substring( 10, message.length() ).trim() );
             } else if( cmd.startsWith( "!botattachme" )) {
@@ -559,7 +559,7 @@ public class utiletc extends MultiUtil {
 
     public String[] getHelpMessages() {
         String help[] = {
-                "...ER-ONLY and SMOD+ CMDS...",
+                "...ER+ CMDS...",
                 "!movebot <x> <y>          - Moves bot to a location.  If in spec, bot will spec",
                 "                            this location and receive player position info.",
                 "!printcoords              - Toggles whether to print player coords rcv'd or not.",
