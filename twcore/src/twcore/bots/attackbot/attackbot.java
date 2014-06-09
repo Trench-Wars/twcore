@@ -434,9 +434,9 @@ public class attackbot extends SubspaceBot {
             ba.sendUnfilteredPublicMessage("?chat=attack,alerts");
             advert = new TimerTask() {
                 public void run() {
-                    ba.sendChatMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
-                    ba.sendChatMessage(2, "Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
-                    ba.sendArenaMessage("Don't forget to signup for the Attack tournament by typing !signup to bot or in the Attack chat.");
+                    ba.sendChatMessage("Attack Initiated!");
+                    ba.sendChatMessage(2, "Attack Initiated!");
+                    ba.sendArenaMessage("Attack Initiated!");
                 }
             };
             ba.scheduleTask(advert, 0, 45 * Tools.TimeInMillis.MINUTE);
