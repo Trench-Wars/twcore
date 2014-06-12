@@ -530,10 +530,12 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Drinking &And &Driving|Please take care when operating your ship while under the influence of alcohol.
 
 # Distension
-&Distension &Site|The site for Distension is: http://trenchwars.org/distension/
-&Distension &When|The distension schedule is: MON: RND, TUE: 5PM, WDN: 10PM, THUR: RND, FRI: 3PM, SAT: 4PM + RND, SUN: RND (after weekend event). All times EST (GMT-4). For the most current schedule see: http://trenchwars.org/distension/schedule.php
-&Distension &Schedule|The distension schedule is: MON: RND, TUE: 5PM, WDN: 10PM, THUR: RND, FRI: 3PM, SAT: 4PM + RND, SUN: RND (after weekend event). All times EST (GMT-4). For the most current schedule see: http://trenchwars.org/distension/schedule.php
-&Distension &What|Distension is an RPG-style action game using TW ship settings, and can be found in ?go distension
+&Distension &Site|Thanks for your interest in my game, Distension. The site for Distension is: http://trenchwars.org/distension/  -qan
+&Distension &When|The Distension schedule is: WED 6PM, SAT 4PM, SUN possible random host (not guaranteed). All times EST (GMT-4) (!servertime to TW-Pubsystem for help).  See: http://trenchwars.org/distension/schedule.php
+&Distension &Schedule|The Distension schedule is: WED 6PM, SAT 4PM, SUN possible random host (not guaranteed). All times EST (GMT-4) (!servertime to TW-Pubsystem for help).  See: http://trenchwars.org/distension/schedule.php
+&Dist &time|The Distension schedule is: WED 6PM, SAT 4PM, SUN possible random host (not guaranteed). All times EST (GMT-4) (!servertime to TW-Pubsystem for help).  See: http://trenchwars.org/distension/schedule.php
+&Dist &Schedule|The Distension schedule is: WED 6PM, SAT 4PM, SUN possible random host (not guaranteed). All times EST (GMT-4) (!servertime to TW-Pubsystem for help).  See: http://trenchwars.org/distension/schedule.php
+&Distension &What|Distension is an RPG-style action game using TW ship settings, and can be found in ?go distension and ?go distension3
 
 
 # !tell who <staffmember>
