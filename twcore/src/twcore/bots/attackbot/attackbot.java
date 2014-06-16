@@ -133,6 +133,8 @@ public class attackbot extends SubspaceBot {
 
     /** Handles the ArenaJoined event **/
     public void handleEvent(ArenaJoined event) {
+        String name = "diakka";
+        cmd_lock(name);
     }
     
     /** Handles the PlayerEntered event **/
@@ -434,9 +436,9 @@ public class attackbot extends SubspaceBot {
             ba.sendUnfilteredPublicMessage("?chat=attack,alerts");
             advert = new TimerTask() {
                 public void run() {
-                    ba.sendChatMessage("Attack Initiated!");
-                    ba.sendChatMessage(2, "Attack Initiated!");
-                    ba.sendArenaMessage("Attack Initiated!");
+                    ba.sendChatMessage("I have been locked and ready to begin!");
+                    ba.sendChatMessage(2, "I have been locked and ready to begin!");
+                    ba.sendArenaMessage("I have been locked and ready to begin!");
                 }
             };
             ba.scheduleTask(advert, 0, 45 * Tools.TimeInMillis.MINUTE);
