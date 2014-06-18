@@ -852,6 +852,10 @@ public class attackbot extends SubspaceBot {
         Team t = getTeam(name);
         if (t == null) return;
         String[] players = msg.substring(msg.indexOf(" ") + 1).split(":");
+        if (players.length != 2) {
+            ba.sendSmartPrivateMessage(name, "Use: !sub playera:playerb");
+            return;
+        }
         String res = t.subPlayer(players[0], players[1]);
         if (res != null)
             ba.sendSmartPrivateMessage(name, res);
