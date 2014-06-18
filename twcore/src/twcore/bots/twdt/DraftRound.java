@@ -213,22 +213,22 @@ public class DraftRound {
                 	cmd_reloadCaps(name);
                 else if (msg.startsWith("!t1-") && msg.contains(" ")) {
                 	if (msg.contains("-add"))
-                		team1.cmd_add(name, "!add " + msg.substring(msg.indexOf(" ") + 1));
+                		team1.cmd_add(name, "!add " + msg.substring(msg.indexOf(" ") + 1), true);
                 	else if (msg.contains("-sub"))
-                		team1.cmd_add(name, "!sub " + msg.substring(msg.indexOf(" ") + 1));
+                		team1.cmd_sub(name, "!sub " + msg.substring(msg.indexOf(" ") + 1), true);
                 	else if (msg.contains("-rem"))
-                		team1.cmd_add(name, "!rem " + msg.substring(msg.indexOf(" ") + 1));
+                		team1.cmd_remove(name, "!rem " + msg.substring(msg.indexOf(" ") + 1));
                 	else if (msg.contains("-ready"))
-                		team1.cmd_add(name, "!ready");
+                		team1.cmd_ready(name);
                 } else if (msg.startsWith("!t2-") && msg.contains(" ")) {
                 	if (msg.contains("-add"))
-                		team2.cmd_add(name, "!add " + msg.substring(msg.indexOf(" ") + 1));
+                		team2.cmd_add(name, "!add " + msg.substring(msg.indexOf(" ") + 1), true);
                 	else if (msg.contains("-sub"))
-                		team2.cmd_add(name, "!sub " + msg.substring(msg.indexOf(" ") + 1));
+                		team2.cmd_sub(name, "!sub " + msg.substring(msg.indexOf(" ") + 1), true);
                 	else if (msg.contains("-rem"))
-                		team2.cmd_add(name, "!rem " + msg.substring(msg.indexOf(" ") + 1));
+                		team2.cmd_remove(name, "!rem " + msg.substring(msg.indexOf(" ") + 1));
                 	else if (msg.contains("-ready"))
-                		team2.cmd_add(name, "!ready");
+                		team2.cmd_ready(name);
                 }
             }
         }

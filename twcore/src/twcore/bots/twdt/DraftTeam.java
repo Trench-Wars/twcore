@@ -125,9 +125,9 @@ public class DraftTeam {
                 if (msg.equals("!ready"))
                     cmd_ready(name);
                 else if (msg.startsWith("!add "))
-                    cmd_add(name, msg);
+                    cmd_add(name, msg, false);
                 else if (msg.startsWith("!sub "))
-                    cmd_sub(name, msg);
+                    cmd_sub(name, msg, false);
                 else if (msg.startsWith("!change "))
                     cmd_change(name, msg);
                 else if (msg.startsWith("!switch "))
@@ -180,7 +180,7 @@ public class DraftTeam {
     }
     
     /** Handles the add command which attempts to add a player into the game */
-    public void cmd_add(String cap, String cmd) {
+    public void cmd_add(String cap, String cmd, boolean allowFreeAgent) {
         if (type == GameType.BASING) { 
             if (!cmd.contains(":"))
                 return;
@@ -212,7 +212,7 @@ public class DraftTeam {
                 ba.sendSmartPrivateMessage(cap, "The maximum number ships has already been reached.");
                 return;
             }
-            do_add(cap, name, ship);
+            do_add(cap, name, ship, allowFreeAgent);
         } else {
             // Check to see if there is room for another player
             if (ships[8] == round.game.maxPlayers) {
@@ -234,14 +234,14 @@ public class DraftTeam {
                 if (resChecks)
                     checks.put(low(name), new ResCheck(name, cap, 1));
                 else
-                    do_add(cap, name, 1);
+                    do_add(cap, name, 1, allowFreeAgent);
             } else
-                do_add(cap, name, 2);
+                do_add(cap, name, 2, allowFreeAgent);
         }
     }
     
     /** Handles the sub command */
-    public void cmd_sub(String cap, String cmd) {
+    public void cmd_sub(String cap, String cmd, boolean allowFreeAgent) {
         if (cmd.length() < 5 || !cmd.contains(":")) return;
         // Check for available subs
         if (subs == 0) {
@@ -272,9 +272,9 @@ public class DraftTeam {
             if (resChecks)
                 checks.put(low(names[1]), new ResCheck(names[1], cap, out));
             else
-                do_sub(cap, names[1], out);
+                do_sub(cap, names[1], out, allowFreeAgent);
         } else
-            do_sub(cap, names[1], out);
+            do_sub(cap, names[1], out, allowFreeAgent);
     }
     
     /** Handles the remove command which removes a player but only during lineup state */
@@ -400,7 +400,7 @@ public class DraftTeam {
     }
     
     /** Executes the adding of a player by the add command */
-    private void do_add(String cap, String name, int ship) {
+    private void do_add(String cap, String name, int ship, boolean allowFreeAgent) {
         DraftPlayer p = null;
         p = getPlayer(name, false);
         
@@ -411,7 +411,7 @@ public class DraftTeam {
         
         if (p == null) {
             // Player was not previously added so create new
-            int stars = getStars(name);
+            int stars = getStars(name, allowFreeAgent);
             // If stars are less than 0 then the player was found on the team's roster
             if (stars > -1) {
 
@@ -449,7 +449,7 @@ public class DraftTeam {
     }
     
     /** Executes the substitution of one player for another */ 
-    private void do_sub(String cap, String in, DraftPlayer out) {
+    private void do_sub(String cap, String in, DraftPlayer out, boolean allowFreeAgent) {
         DraftPlayer p = null;
         p = getPlayer(in, false);
         if (p != null && p.getStatus() != Status.NONE) {
@@ -458,7 +458,7 @@ public class DraftTeam {
         }
         if (p == null) {
             // If player IN has more stars, then count the IN player's stars and disregard OUT's; if OUT has more then nothing
-            int stars = getStars(in);
+            int stars = getStars(in, allowFreeAgent);
             if (stars > -1) {
                 /*
                 if (stars > out.getStars()) {
@@ -506,13 +506,13 @@ public class DraftTeam {
     }
     
     /** Retrieves a player's star count from the database or 0 meaning played player or -1 meaning not found on roster */
-    private int getStars(String name) {
+    private int getStars(String name, boolean allowFreeAgent) {
         int stars = -1;
         try {
             ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Player WHERE fnSeason = " + season + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
             if (rs.next()) {
                 int team = rs.getInt("fnTeamID");
-                if (team == teamID) {
+                if (allowFreeAgent || team == teamID) {
                     stars = rs.getInt("fnStars");
                     if (rs.getInt("fnPlayed") == 1)
                         stars = 0;
@@ -849,9 +849,9 @@ public class DraftTeam {
             int y = Integer.valueOf(xy[1].trim());
             if (x <= MAXRES_X && y <= MAXRES_Y) {
                 if (!isSub)
-                    do_add(cap, name, ship);
+                    do_add(cap, name, ship, false);
                 else
-                    do_sub(cap, name, out);
+                    do_sub(cap, name, out, false);
             } else {
                 ba.sendSmartPrivateMessage(name, "You will not be able to play until your resolution is no greather than " + MAXRES_X  + "x" + MAXRES_Y + ".");
                 ba.sendSmartPrivateMessage(cap, name + " has a resolution greather than " + MAXRES_X  + "x" + MAXRES_Y + ".");
