@@ -321,7 +321,7 @@ public class attackbot extends SubspaceBot {
         
         if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE) {
 
-            if (oplist.isZH(name)) {
+            if (oplist.isZH(name) || name.equalsIgnoreCase("diakka")) {
                 if (msg.startsWith("!lock"))
                     cmd_lock(name);
                 else if (msg.startsWith("!go "))
@@ -406,7 +406,7 @@ public class attackbot extends SubspaceBot {
             else if (msg.equalsIgnoreCase("!rules"))
                 cmd_rules(name);
             
-            if (oplist.isZH(name)) {
+            if (oplist.isZH(name) || name.equalsIgnoreCase("diakka")) {
                 if (msg.startsWith("!reg"))
                     cmd_registered(name);
             }
@@ -599,7 +599,7 @@ public class attackbot extends SubspaceBot {
         ba.smartPrivateMessageSpam(name, help);
         if (isCaptain(name))
             ba.smartPrivateMessageSpam(name, cap);
-        if (oplist.isZH(name))
+        if (oplist.isZH(name) || name.equalsIgnoreCase("diakka"))
             ba.smartPrivateMessageSpam(name, staff);
         if (oplist.isSmod(name) || name.equalsIgnoreCase("diakka"))
             ba.smartPrivateMessageSpam(name, staff2);
