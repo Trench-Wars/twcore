@@ -454,6 +454,13 @@ public class Arena {
             addPlayerToFrontOfTracker( new Integer( message.getPlayerID() ) );
         else
             removePlayerFromTracker( new Integer( message.getPlayerID() ) );
+        
+        if( player.isAttached() ) {
+            Player oldAttachedTo = m_playerList.get( player.getTurretee() );
+            if( oldAttachedTo != null )
+                oldAttachedTo.removeTurret( message.getPlayerID() );
+            player.setUnattached();
+        }
     }
 
     /**
@@ -491,6 +498,13 @@ public class Arena {
             addPlayerToFrontOfTracker( new Integer( message.getPlayerID() ) );
         else
             removePlayerFromTracker( new Integer( message.getPlayerID() ) );
+        
+        if( player.isAttached() ) {
+            Player oldAttachedTo = m_playerList.get( player.getTurretee() );
+            if( oldAttachedTo != null )
+                oldAttachedTo.removeTurret( message.getPlayerID() );
+            player.setUnattached();
+        }
     }
 
     /**
@@ -516,6 +530,12 @@ public class Arena {
         m_playerList.remove( new Integer( message.getPlayerID() ) );
 
         removePlayerFromTracker( new Integer( message.getPlayerID() ) );
+        
+        if( player.isAttached() ) {
+            Player oldAttachedTo = m_playerList.get( player.getTurretee() );
+            if( oldAttachedTo != null )
+                oldAttachedTo.removeTurret( message.getPlayerID() );
+        }
     }
 
     /**
@@ -539,6 +559,13 @@ public class Arena {
         }
 
         addPlayerToTracker( new Integer( message.getKilleeID() ) );
+        
+        if( killee.isAttached() ) {
+            Player oldAttachedTo = m_playerList.get( killee.getTurretee() );
+            if( oldAttachedTo != null )
+                oldAttachedTo.removeTurret( message.getKilleeID() );
+            killee.setUnattached();
+        }
     }
 
     /**
