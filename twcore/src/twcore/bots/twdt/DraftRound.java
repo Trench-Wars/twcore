@@ -204,7 +204,7 @@ public class DraftRound {
             else if (msg.equals("!help"))
                 cmd_help(name);
             
-            if (oplist.isER(name)) {
+            if (oplist.isOutsider(name)) {
                 if (msg.equals("!addtime"))
                     cmd_addTime(name);
                 else if (msg.startsWith("!rescheck")) 
