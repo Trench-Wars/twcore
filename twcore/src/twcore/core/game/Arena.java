@@ -560,7 +560,7 @@ public class Arena {
 
         addPlayerToTracker( new Integer( message.getKilleeID() ) );
         
-        if( killee.isAttached() ) {
+        if( killee != null && killee.isAttached() ) {
             Player oldAttachedTo = m_playerList.get( killee.getTurretee() );
             if( oldAttachedTo != null )
                 oldAttachedTo.removeTurret( message.getKilleeID() );
