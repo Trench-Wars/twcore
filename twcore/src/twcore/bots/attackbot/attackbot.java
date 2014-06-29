@@ -133,8 +133,8 @@ public class attackbot extends SubspaceBot {
 
     /** Handles the ArenaJoined event **/
     public void handleEvent(ArenaJoined event) {
-        String name = "diakka";
-        cmd_lock(name);
+       // String name = "diakka";
+        //cmd_lock(name);
     }
     
     /** Handles the PlayerEntered event **/
