@@ -538,8 +538,29 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Distension &What|Distension is an RPG-style action game using TW ship settings, and can be found in ?go distension and ?go distension3
 
 
-# !tell who <staffmember>
-# LINE LENGTH: |                                                      |
+#          #############################
+#          #  A GENTLEMAN NEVER ASKS  ## 
+#          #  A STAFFER NEVER !TELLS  ##
+###############################################################################################################
+#                                                                                                            ;;
+# !tell who <staffmember>                                                                                    ;:
+#                                                                                                           ;::
+# -----------------------------------------------------------------------------------------------------------<
+#                                                                                                             '          
+# ASCII Lineup Ruler BETAMax Pro 2000                                                                         |
+#          1. Include 1 character at the start to allow spaces at start of line                               |
+#          2. Paste line of ASCII art
+#          3. Pad spaces until you hit | on the ruler, including one space for the | itself
+#          4. Start new line at the same character position as the L of the Line#.
+#
+# EXAMPLE |..                                                      __                                          .. /'\_/`\                                   __        /\ \                                         ../\      \     __     __  __     __   _ __ /\_\    ___\ \ \/'\                                     ..\ \ \__\ \  /'__`\  /\ \/\ \  /'__`\/\`'__\/\ \  /'___\ \ , <                                     .. \ \ \_/\ \/\ \L\.\_\ \ \_/ |/\  __/\ \ \/ \ \ \/\ \__/\ \ \\`\                                   ..  \ \_\\ \_\ \__/.\_\\ \___/ \ \____\\ \_\  \ \_\ \____\\ \_\ \_\                                 ..   \/_/ \/_/\/__/\/_/ \/__/   \/____/ \/_/   \/_/\/____/ \/_/\/_/
+#
+#         0         1         2         3         4        *5*        6         7         8         9         |
+#         |1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+#         |Line1                                                                                              |Line2                                                                                              |Line3                                                                                              |Line4                                                                                              |Line5                                                                                              |Line6                                                                                              |Line7                                                                                              |Line8                                                                                              |Line9                                                                                              |Line10                                                                                             |                                                                                                                                                                                          
+# PASTE > |
+#  HERE > |
+
 &Weaver &Who|Weaver: If you've got a problem he's not your man, but if you're a problem he'll give you a ban! =)
 &Dock> &Who|Dock is a sysop of SSCU Trench Wars.  He, along with Sphonk, created the bot core that is currently being used in Trench Wars.  His email address is DoCk@yaunet.com.
 &Priitk &Who|PriitK is a SSCU Trench Wars SysOp, a Billing Server Operator and the creator of Continuum.  His email address is priitk@trenchwars.org.
@@ -555,7 +576,8 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Punk &Who|You just got PUNK'D!
 &O.M.G. &Who|O.M.G. is the one who will be pulling off the impossible or sitting in spec disgusted.. face it, the name says it all, Oh. My. God...
 &Stargazer &Who|H.M.S. stands for Her/His Majesty's Ship.
-&Maverick &Who|..                                                      __                                         .. /'\_/`\                                   __        /\ \                                         ../\      \     __     __  __     __   _ __ /\_\    ___\ \ \/'\                                     ..\ \ \__\ \  /'__`\  /\ \/\ \  /'__`\/\`'__\/\ \  /'___\ \ , <                                     .. \ \ \_/\ \/\ \L\.\_\ \ \_/ |/\  __/\ \ \/ \ \ \/\ \__/\ \ \\`\                                   ..  \ \_\\ \_\ \__/.\_\\ \___/ \ \____\\ \_\  \ \_\ \____\\ \_\ \_\                                 ..   \/_/ \/_/\/__/\/_/ \/__/   \/____/ \/_/   \/_/\/____/ \/_/\/_/
+&Maverick &Who|..                                                      __                                          .. /'\_/`\                                   __        /\ \                                         ../\      \     __     __  __     __   _ __ /\_\    ___\ \ \/'\                                     ..\ \ \__\ \  /'__`\  /\ \/\ \  /'__`\/\`'__\/\ \  /'___\ \ , <                                     .. \ \ \_/\ \/\ \L\.\_\ \ \_/ |/\  __/\ \ \/ \ \ \/\ \__/\ \ \\`\                                   ..  \ \_\\ \_\ \__/.\_\\ \___/ \ \____\\ \_\  \ \_\ \____\\ \_\ \_\                                 ..   \/_/ \/_/\/__/\/_/ \/__/   \/____/ \/_/   \/_/\/____/ \/_/\/_/
+&Upster &Who|Putting the zone first, by putting the players first. Immediately after prioritizing Staff          responsibility and leveraging practicality toward exceeding by empowering our zone to put players   (and themselves) first, in a diverse and respectful gaming environment of only those that           come first, first.                                                                                  ™                    o           ( ( (         ( ( (                                                ™     ,,,         ` /_\ '      '. ___ .'     '. ___ .'                                              ™    (o o)       - (o o) -    '  (> <) '    '  (> <) '                                              ™ooO--(_)--Ooo-ooO--(_)--Ooo-ooO--(_)--Ooo-ooO--(_)--Ooo
 &Nycle &Who|Nycle > Falk \(o_O)/
 &Kahlan &Who|Who is the man that would risk his neck for his brother man? KAHLAN! They say this cat Kahlan is a bad mother SHUT YOUR MOUTH! I'm talkin' bout Kahlan. THEN WE CAN DIG IT! He's a complicated man but no one understands him but his woman. KAHLAN!
 &Krazie &Who|Krazie <ER> + Pandora's Box = END OF THE WORLD!!!
