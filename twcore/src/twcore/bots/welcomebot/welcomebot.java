@@ -1311,7 +1311,10 @@ public class welcomebot extends SubspaceBot {
                 psUpdatePlayer.setString(1, name);
                 psUpdatePlayer.setString(2, squad);
                 psUpdatePlayer.setDouble(3, totalUsage);
-                psUpdatePlayer.setString(4, ip);
+                if (ip == null || ip.equals(""))
+                    psUpdatePlayer.setString(4, "?.?.?.?");
+                else
+                    psUpdatePlayer.setString(4, ip);
                 psUpdatePlayer.setInt(5, mid);
                 psUpdatePlayer.setString(6, countryCode);
                 psUpdatePlayer.setTimestamp(7, created);
