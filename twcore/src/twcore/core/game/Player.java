@@ -302,6 +302,7 @@ public class Player {
         // is larger than the current bounty stored.
         if( message.containsWeaponsInfo() ) {
             m_bounty = message.getBounty();
+            m_weaponType = message.getWeaponInfo() & 0x001f;
         } else {
             if( m_bounty < message.getBounty() )
                 m_bounty = message.getBounty();
@@ -312,9 +313,6 @@ public class Player {
         m_xVelocity = message.getXVelocity();
         m_ping = message.getPing();
         m_timeStamp = message.getTimeStamp();
-
-        short wepinfo = message.getWeaponInfo();
-        m_weaponType = wepinfo & 0x001f;
 
         // Togglables
         m_stealthOn = message.isStealthed();
