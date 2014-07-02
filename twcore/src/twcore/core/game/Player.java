@@ -552,6 +552,17 @@ public class Player {
     public short getYTileLocation(){
         return (short)(m_yLocation / 16);
     }
+    
+    /**
+     * Returns the player's approximate location using in-game text coords (A1, C19, etc).
+     * @return String containing text coords
+     */
+    public String getTextCoords() {
+        long x = (long)Math.floor(((double)getXLocation()) / 819.2); // Break into sections of 20 (16834 / 819.2 = 20)
+        long y = (long)(Math.floor(((double)getYLocation()) / 819.2)) + 1; // Don't forget to carry the 0!
+        char xchar = (char)(65 + x);
+        return (xchar + "" + y);
+    }
 
     /**
      * Returns how quickly a player is moving along the x plane.  Velocity is
