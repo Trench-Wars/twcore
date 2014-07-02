@@ -1080,6 +1080,8 @@ public class elim extends SubspaceBot {
         gameType = ELIM;
         allowRace = true;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
+        // Temporary, until the fix is in place from the new code
+        connectionID.concat(Integer.toString(random.nextInt(1000)));
         prepareStatements();
         
         // Splash screen related settings and preparation.
