@@ -709,12 +709,11 @@ public class Arena {
             }
         } else {
             // Unattaching
-            int lastAttachedTo = -1;
-            lastAttachedTo = attacher.setUnattached();
-            if( lastAttachedTo != -1 ) {
-                Player detachedFrom = m_playerList.get( new Integer( lastAttachedTo ) );
-                if( detachedFrom != null )
-                    detachedFrom.removeTurret( attacherID );
+            if( attacher.isAttached() ) {
+                Player oldAttachedTo = m_playerList.get( attacher.getTurretee() );
+                if( oldAttachedTo != null )
+                    oldAttachedTo.removeTurret( attacherID );
+                attacher.setUnattached();
             }
         }
     }
