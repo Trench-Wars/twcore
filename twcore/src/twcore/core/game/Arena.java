@@ -390,9 +390,8 @@ public class Arena {
     public void processEvent( ScoreUpdate message ){
         Player          player = m_playerList.get( new Integer( message.getPlayerID() ) );
 
-        if( player != null ){
+        if( player != null )
             player.updatePlayer( message );
-        }
     }
 
     /**
@@ -402,9 +401,8 @@ public class Arena {
     public void processEvent( PlayerPosition message ){
         Player          player = m_playerList.get( new Integer( message.getPlayerID() ) );
 
-        if( player != null ){
+        if( player != null )
             player.updatePlayer( message );
-        }
     }
     
     /**
@@ -414,9 +412,8 @@ public class Arena {
     public void processEvent( Prize message ){
         Player          player = m_playerList.get( new Integer( message.getPlayerID() ) );
 
-        if( player != null ){
+        if( player != null )
             player.updatePlayer( message );
-        }
     }
 
     /**
@@ -424,15 +421,12 @@ public class Arena {
      * @param message Event object to be processed
      */
     public void processEvent( FrequencyChange message ){
+        Player              player = m_playerList.get( new Integer( message.getPlayerID() ) );
+        if( player == null )
+            return;
         int                 oldFrequency;
         int                 newFrequency;
         Map <Integer,Player>frequencyList;
-        Player              player;
-
-        player = m_playerList.get( new Integer( message.getPlayerID() ) );
-        if( player == null ){
-            return;
-        }
 
         oldFrequency = player.getFrequency();
 
@@ -456,7 +450,7 @@ public class Arena {
             removePlayerFromTracker( new Integer( message.getPlayerID() ) );
         
         if( player.isAttached() ) {
-            Player oldAttachedTo = m_playerList.get( player.getTurretee() );
+            Player oldAttachedTo = m_playerList.get( new Integer(player.getTurretee()) );
             if( oldAttachedTo != null )
                 oldAttachedTo.removeTurret( message.getPlayerID() );
             player.setUnattached();
@@ -468,31 +462,31 @@ public class Arena {
      * @param message Event object to be processed
      */
     public void processEvent( FrequencyShipChange message ){
+        Player              player = m_playerList.get( new Integer( message.getPlayerID() ) );
+        if( player == null )
+            return;
+        
         int                 oldFrequency;
         int                 newFrequency;
         Map <Integer,Player>frequencyList;
-        Player              player;
-
-        player = m_playerList.get( new Integer( message.getPlayerID() ) );
-        if( player == null ){
-            return;
-        }
 
         oldFrequency = player.getFrequency();
 
         player.updatePlayer( message );
         newFrequency = message.getFrequency();
 
-        frequencyList = m_frequencyList.get( new Integer( oldFrequency ) );
-        frequencyList.remove( new Integer( message.getPlayerID() ) );
+        if (oldFrequency != newFrequency) {
+            frequencyList = m_frequencyList.get( new Integer( oldFrequency ) );
+            frequencyList.remove( new Integer( message.getPlayerID() ) );
 
-        frequencyList = m_frequencyList.get( new Integer( newFrequency ) );
-        if( frequencyList == null ){
-            frequencyList = Collections.synchronizedMap( new HashMap<Integer,Player>() );
-            m_frequencyList.put( new Integer( newFrequency ), frequencyList );
+            frequencyList = m_frequencyList.get( new Integer( newFrequency ) );
+            if( frequencyList == null ){
+                frequencyList = Collections.synchronizedMap( new HashMap<Integer,Player>() );
+                m_frequencyList.put( new Integer( newFrequency ), frequencyList );
+            }
+
+            frequencyList.put( new Integer( message.getPlayerID() ), player );
         }
-
-        frequencyList.put( new Integer( message.getPlayerID() ), player );
 
         if( player.getShipType() != 0 )
             addPlayerToFrontOfTracker( new Integer( message.getPlayerID() ) );
@@ -500,7 +494,7 @@ public class Arena {
             removePlayerFromTracker( new Integer( message.getPlayerID() ) );
         
         if( player.isAttached() ) {
-            Player oldAttachedTo = m_playerList.get( player.getTurretee() );
+            Player oldAttachedTo = m_playerList.get( new Integer( player.getTurretee() ) );
             if( oldAttachedTo != null )
                 oldAttachedTo.removeTurret( message.getPlayerID() );
             player.setUnattached();
@@ -512,14 +506,12 @@ public class Arena {
      * @param message Event object to be processed
      */
     public void processEvent( PlayerLeft message ){
+        Player          player = m_playerList.get( new Integer( message.getPlayerID() ) );
+        if( player == null )
+            return;
+        
         int             oldFrequency;
         Map<Integer,Player> frequencyList;
-        Player          player;
-
-        player = m_playerList.get( new Integer( message.getPlayerID() ) );
-        if( player == null ){
-            return;
-        }
 
         oldFrequency = player.getFrequency();
 
@@ -532,7 +524,7 @@ public class Arena {
         removePlayerFromTracker( new Integer( message.getPlayerID() ) );
         
         if( player.isAttached() ) {
-            Player oldAttachedTo = m_playerList.get( player.getTurretee() );
+            Player oldAttachedTo = m_playerList.get( new Integer(player.getTurretee()) );
             if( oldAttachedTo != null )
                 oldAttachedTo.removeTurret( message.getPlayerID() );
         }
@@ -550,18 +542,16 @@ public class Arena {
         Player          killer = m_playerList.get( new Integer( message.getKillerID() ) );
         Player          killee = m_playerList.get( new Integer( message.getKilleeID() ) );
 
-        if( killer != null ){
+        if( killer != null )
             killer.updatePlayer( message );
-        }
 
-        if( killee != null ){
+        if( killee != null )
             killee.updatePlayer( message );
-        }
 
         addPlayerToTracker( new Integer( message.getKilleeID() ) );
         
         if( killee != null && killee.isAttached() ) {
-            Player oldAttachedTo = m_playerList.get( killee.getTurretee() );
+            Player oldAttachedTo = m_playerList.get( new Integer(killee.getTurretee()) );
             if( oldAttachedTo != null )
                 oldAttachedTo.removeTurret( message.getKilleeID() );
             killee.setUnattached();
