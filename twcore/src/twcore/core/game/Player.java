@@ -216,6 +216,7 @@ public class Player {
         } else if( message.getKilleeID() == m_playerID ){
             m_losses++;
             m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
+            removeAllTurrets();
         }
     }
     
@@ -269,6 +270,7 @@ public class Player {
     public void updatePlayer( FrequencyChange message ){
         m_frequency = message.getFrequency();
         m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
+        removeAllTurrets();
     }
 
     /**
@@ -277,8 +279,12 @@ public class Player {
      */
     public void updatePlayer( FrequencyShipChange message ){
         m_frequency = message.getFrequency();
-        m_shipType = message.getShipType();
+        if(m_shipType != message.getShipType()) {
+            removeAllTurrets();
+            m_shipType = message.getShipType();
+        }
         m_bounty = 0;       // As a precaution; we will retrieve bounty at next position packet
+        
     }
 
     /**
@@ -404,6 +410,13 @@ public class Player {
      */
     public void removeTurret( short playerID ) {
         m_turrets.remove( new Integer( playerID ) );
+    }
+
+    /**
+     * Removes all turrets from this ship; called automatically via events.
+     */
+    public void removeAllTurrets() {
+        m_turrets.clear();
     }
 
 
