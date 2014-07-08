@@ -700,7 +700,7 @@ public class Arena {
         } else {
             // Unattaching
             if( attacher.isAttached() ) {
-                Player oldAttachedTo = m_playerList.get( attacher.getTurretee() );
+                Player oldAttachedTo = m_playerList.get( new Integer(attacher.getTurretee()) );
                 if( oldAttachedTo != null )
                     oldAttachedTo.removeTurret( attacherID );
                 attacher.setUnattached();
