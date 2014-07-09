@@ -171,6 +171,9 @@ public class heli extends MultiModule {
         } else if (message.startsWith("!stop")) {
             m_botAction.sendPrivateMessage(name, "Stopping...");
             m_botAction.cancelTasks();
+            m_botAction.getShip().setShip(Ship.INTERNAL_SPECTATOR);
+            m_botAction.resetReliablePositionUpdating();
+            isActive = false;
         } else if (message.equals("!debug") && opList.isSysop(name)) {
             cmd_debug(name);
         }
