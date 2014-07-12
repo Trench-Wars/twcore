@@ -326,6 +326,8 @@ public class attackbot extends SubspaceBot {
                     cmd_lock(name);
                 else if (msg.startsWith("!go "))
                     cmd_go(name, msg);
+                else if(oplist.isSmod(name) && msg.equalsIgnoreCase("!die"))
+                    cmd_die(name);
                 
                 if (!locked) {
                     ba.sendSmartPrivateMessage(name, "I have not been arena locked.");
