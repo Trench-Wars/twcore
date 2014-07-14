@@ -410,11 +410,11 @@ public class SQLManager extends Thread {
                 } catch (SQLException sqle) {
                     Tools.printStackTrace(sqle);
                 }
-                
-                if(psKeepAlive) {
-                    Tools.printLog("SQL: Attempted keep alive on " + psQueryCache.size() + " prepared statement connections.");
-                    nextPSkeepAlive = System.currentTimeMillis() + KEEP_PS_CONNECTION_ALIVE_TIME;
-                }
+            }
+            
+            if(psKeepAlive) {
+                Tools.printLog("SQL: Attempted keep alive on " + psQueryCache.size() + " prepared statement connections.");
+                nextPSkeepAlive = System.currentTimeMillis() + KEEP_PS_CONNECTION_ALIVE_TIME;
             }
             
             try {
