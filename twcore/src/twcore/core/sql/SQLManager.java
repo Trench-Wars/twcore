@@ -363,7 +363,6 @@ public class SQLManager extends Thread {
      */
     public void run() {
         boolean checkForStales;
-        boolean psKeepAlive;
         
         while( true ){
             
@@ -397,26 +396,24 @@ public class SQLManager extends Thread {
                 nextStaleCheck = System.currentTimeMillis() + STALE_TIME;
             
             // Perform Prepared Statement Recycle.
-            psKeepAlive = (nextPSkeepAlive < System.currentTimeMillis());
+            if (nextPSkeepAlive < System.currentTimeMillis()) {
+
+	            Iterator<PreparedStatement> q = psQueryCache.keySet().iterator();
+	            while( q.hasNext() ) {
+	                PreparedStatement ps = q.next();
+	                
+	                try {
+	                    Connection conn = ps.getConnection();
+	                    Statement stmt = conn.createStatement();
+	                    stmt.execute("SELECT 1");
+	                } catch (SQLException sqle) {
+	                    Tools.printStackTrace(sqle);
+	                }
+	            }
             
-            Iterator<PreparedStatement> q = psQueryCache.keySet().iterator();
-            while( q.hasNext() && psKeepAlive ) {
-                PreparedStatement ps = q.next();
-                
-                try {
-                    Connection conn = ps.getConnection();
-                    Statement stmt = conn.createStatement();
-                    stmt.execute("SELECT 1");
-                } catch (SQLException sqle) {
-                    Tools.printStackTrace(sqle);
-                }
-            }
-            
-            if(psKeepAlive) {
                 Tools.printLog("SQL: Attempted keep alive on " + psQueryCache.size() + " prepared statement connections.");
                 nextPSkeepAlive = System.currentTimeMillis() + KEEP_PS_CONNECTION_ALIVE_TIME;
             }
-            
             try {
                 Thread.sleep( THREAD_SLEEP_TIME );
             } catch( InterruptedException e ) {}
