@@ -1089,7 +1089,7 @@ public class welcomebot extends SubspaceBot {
      */
     private void cmd_die(String name, boolean save) {
         if (save) {
-            ba.sendSmartPrivateMessage(name, "Saving sessions and diconnecting...");
+            ba.sendSmartPrivateMessage(name, "Saving sessions and disconnecting...");
             ba.sendChatMessage("Disconnect with save request: " + name);
             // its weird but avoids concurrent modifications
             Set<String> names = new TreeSet<String>();
@@ -1100,7 +1100,7 @@ public class welcomebot extends SubspaceBot {
             infoer.stop();
             ba.scheduleTask(new TimerTask() { public void run() { ba.die(); }}, 3000);
         } else {
-            ba.sendSmartPrivateMessage(name, "Diconnecting without saving...");
+            ba.sendSmartPrivateMessage(name, "Disconnecting without saving...");
             ba.sendChatMessage("Disconnect without save request: " + name);
             infoer.stop();
             ba.scheduleTask(new TimerTask() { public void run() { ba.die(); }}, 3000);
