@@ -79,8 +79,14 @@ public class golden extends MultiModule {
                     m_botAction.sendPrivateMessage(name, "Golden Gun already started.");
                 else {
                     hasGun = randomPlayer();
-                    startGame(hasGun);
-                    isRunning = true;
+                    
+                    if(hasGun != null) {
+                    	startGame(hasGun);
+                    	isRunning = true;
+                    } else {
+                    	m_botAction.sendPrivateMessage(name, "Golden Gun cannot start unless someone is in a ship!");
+                    	return;
+                    }                    
                 }
             } else if (message.startsWith("!start ")) {  // lets host pick gunner like !startgun WillBy (uses fuzzy name so !startgun will should work too)
                 if (isRunning)
@@ -178,7 +184,9 @@ public class golden extends MultiModule {
                 cancel();
 
             } else if (message.equalsIgnoreCase("!randomplayer")) {
-                m_botAction.sendPrivateMessage(name, randomPlayer());
+            	String randomPlayer = randomPlayer();
+                m_botAction.sendPrivateMessage(name, (randomPlayer != null ? randomPlayer : "This command does not work when "
+                		+ "every player is a spectator."));
 
             } else if( message.startsWith( "!status" )){
                 // Testing feature from original golden gun module
