@@ -533,7 +533,7 @@ public class pictionary extends MultiModule {
                 randomPlayerBag.add(addPlayerName);
             }
             addPlayerName = randomPlayerBag.grabAndRemove();
-            if (!(m_botAction.getOperatorList().isSysopExact(addPlayerName) && !addPlayerName.equalsIgnoreCase("Pure_Luck") && !addPlayerName.equalsIgnoreCase("Arobas+"))
+            if (!(m_botAction.getOperatorList().isSysopExact(addPlayerName) && !addPlayerName.equalsIgnoreCase("Pure_Luck") && !addPlayerName.equalsIgnoreCase("Beasty") && !addPlayerName.equalsIgnoreCase("Demonic") && !addPlayerName.equalsIgnoreCase("M_M God") && !addPlayerName.equalsIgnoreCase("Arobas+"))
                     && !addPlayerName.equals(m_botAction.getBotName()) && !notPlaying.contains(addPlayerName))
                 curArtist = addPlayerName;
             else
