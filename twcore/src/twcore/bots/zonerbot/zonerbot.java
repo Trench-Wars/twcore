@@ -277,7 +277,7 @@ public class zonerbot extends SubspaceBot {
         String[] msg = { ",-- ZonerBot Commands --------------------------------------------------------------------------.",
                 "| !hosted                - Lists the hosted event counts for last 24 hours                      |",
                 "| !hosted <hours>        - Lists the hosted event counts for last <hours> hours                 |",
-                "| !hosted MM-yyyy         -  Lists the hosted event counts for the specified month                 |",
+                "| !hosted MM-yyyy        - Lists the hosted event counts for the specified month                |",
                 "| !status                - Reports your current advert status                                   |",
                 "| !claim                 - Claims an advert by adding you to the advert queue                   |",
                 "| !free                  - Releases your advert and removes you from the queue                  |",
@@ -543,40 +543,48 @@ public class zonerbot extends SubspaceBot {
     /** Handles the !hosted command **/
     private void cmd_hosted(String name, String cmd) 
     {
-        if (cmd.length() > 7) 
-        {
-            String message = cmd.substring(8).trim();
+    	String message = "";
+    	
+    	if(cmd.length() > 7)
+    		message = cmd.substring(8).trim();
             
-            if (message.contains("-")) {
-                String[] cmdSplit = message.split("-");
-                String date = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
-                String enddate = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
-
-                if ((cmdSplit[0].length() > 0 && cmdSplit[1].length() > 0) && Integer.valueOf(cmdSplit[0]) != null && Integer.valueOf(cmdSplit[1]) != null){
-                    int mnth = Integer.valueOf(cmdSplit[0]);
-                    int yr = Integer.valueOf(cmdSplit[1]);                     
-                    Calendar tmp = Calendar.getInstance();
-                    tmp.set(yr, mnth - 1, 01, 00, 00, 00);
-                    date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
-                    tmp.clear();
-                    tmp.set(yr, mnth, 01, 00,00,00);
-                    enddate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
-                        ba.SQLBackgroundQuery(db, "" + name + ":00", "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN '" + date + "' AND '" + enddate + "' ORDER BY fcEventName ASC");                     
-                }
-            } else {
-                if (Integer.valueOf(message) != null) {
-                    int hours = Integer.valueOf(message);
-                    try {
-                            if (hours < 1 || hours > 48)
-                                hours = 24;                        
-                    } catch (NumberFormatException e) {
-                        hours = 24;
-                    }
-                    ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT * FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours
-                            + " HOUR) ORDER BY fdTime DESC LIMIT " + (hours * 6));                    
-                }                    
+        if (message.contains("-")) {
+        	String[] cmdSplit = message.split("-");
+            String date = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
+            String enddate = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
+                
+            if(cmdSplit.length != 2)
+            {
+              	m_botAction.sendSmartPrivateMessage(name, "Error: Invalid arguments.");
+              	return;
             }
-        }
+
+            try {
+              	if (cmdSplit[0].length() > 0 && cmdSplit[1].length() > 0) {
+              		int mnth = Integer.valueOf(cmdSplit[0]);
+              		int yr = Integer.valueOf(cmdSplit[1]);                     
+              		Calendar tmp = Calendar.getInstance();
+              		tmp.set(yr, mnth - 1, 01, 00, 00, 00);
+              		date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
+              		tmp.clear();
+              		tmp.set(yr, mnth, 01, 00,00,00);
+              		enddate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(tmp.getTime());
+              		ba.SQLBackgroundQuery(db, "" + name + ":00", "SELECT * FROM tblAdvert WHERE fdTime  BETWEEN '" + date + "' AND '" + enddate + "' ORDER BY fcEventName ASC");                     
+               	}
+            } catch (NumberFormatException e) {
+            		m_botAction.sendSmartPrivateMessage(name, "Error: Invalid arguments.");
+            }
+        } else {
+        	int hours = 24;
+            try {
+            	hours = Integer.valueOf(message);
+            	if (hours < 1 || hours > 48)
+            		hours = 24;                        
+            } catch (NumberFormatException e) {}
+            
+            ba.SQLBackgroundQuery(db, "" + name + ":" + hours, "SELECT * FROM tblAdvert WHERE fdTime > DATE_SUB(NOW(), INTERVAL " + hours
+                            		+ " HOUR) ORDER BY fdTime DESC LIMIT " + (hours * 6));                    
+        }                    
     }
 
     
