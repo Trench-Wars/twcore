@@ -371,12 +371,16 @@ public class DBPlayerData {
         }
     }
 
-    public boolean resetRegistration() {
+    public boolean resetRegistration(boolean resetRoster) {
 
         try {
             if( m_fnStatus == 2 )
                 return false;
             m_connection.SQLQueryAndClose( m_connName, "DELETE FROM tblAliasSuppression WHERE fnUserID = "+m_fnUserID );
+            if(resetRoster) {
+                getPlayerSquadData();
+                m_connection.SQLQueryAndClose(m_connName, "UPDATE tblTeamUser SET fdQuit = NOW(), fnCurrentTeam = 0, fnApply=0 WHERE fnTeamUserID = " + getTeamUserID() );
+            }
             return true;
         } catch (Exception e) {
             return false;
