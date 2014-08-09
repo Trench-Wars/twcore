@@ -1774,7 +1774,7 @@ public class zonerbot extends SubspaceBot {
             if (delay > 0 && duration > 0 && advert.length() > 0) {
                 try {
                     ba.SQLQueryAndClose(db, "INSERT INTO tblPeriodic (fcUserName, fcMessage, fnSound, fnDelay, fnDuration) VALUES('" + Tools.addSlashesToString(name) + "', '"
-                            + Tools.addSlashes(advert) + "', " + sound + ", " + delay + ", " + duration + ")");
+                            + Tools.addSlashesToString(advert) + "', " + sound + ", " + delay + ", " + duration + ")");
                     ResultSet rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID() as id");
                     if (rs.next())
                         id = rs.getInt("id");
