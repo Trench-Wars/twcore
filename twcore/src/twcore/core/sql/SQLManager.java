@@ -384,6 +384,7 @@ public class SQLManager extends Thread {
             }
 
             // Perform stale check
+            /*
             checkForStales = (nextStaleCheck < System.currentTimeMillis());            
             i = pools.keySet().iterator();
             while( i.hasNext() ) {
@@ -394,7 +395,7 @@ public class SQLManager extends Thread {
             }            
             if( checkForStales )
                 nextStaleCheck = System.currentTimeMillis() + STALE_TIME;
-            
+            */
             // Perform Prepared Statement Recycle.
             if (nextPSkeepAlive < System.currentTimeMillis()) {
 
