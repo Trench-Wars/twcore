@@ -180,10 +180,11 @@ public class SQLConnectionPool implements Runnable {
                 stmt.execute( "SELECT 1", Statement.RETURN_GENERATED_KEYS );
             } catch( Exception e ){
                 staleConns.add(conn);
-                Tools.printLog("Stale connection found; exception caught running a query. Attempting to update...");
             }
         }
 
+        Tools.printLog(staleConns.size() + " stale connection found; exception caught running a query. Attempting to update...");
+        
         // Replace any stales found
         for (Connection conn : staleConns) {
             usedConns.remove( conn );
@@ -453,7 +454,7 @@ public class SQLConnectionPool implements Runnable {
      * @return True if # background connections is equal to max # connections allowed
      */
     public synchronized boolean reachedMaxBackground(){
-        return (currentBackground == maxConnections);
+        return (currentBackground >= (maxConnections - busyConnections.size()));
     }
 
     /**

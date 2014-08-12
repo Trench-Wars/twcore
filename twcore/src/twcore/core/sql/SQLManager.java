@@ -362,7 +362,6 @@ public class SQLManager extends Thread {
      * Also runs a check for stales on each pool of connections periodically.
      */
     public void run() {
-        boolean checkForStales;
         
         while( true ){
             
@@ -384,18 +383,18 @@ public class SQLManager extends Thread {
             }
 
             // Perform stale check
-            /*
-            checkForStales = (nextStaleCheck < System.currentTimeMillis());            
-            i = pools.keySet().iterator();
-            while( i.hasNext() ) {
-                String name = i.next();
-                SQLConnectionPool pool = pools.get( name );
-                if( checkForStales )
-                    pool.updateStaleConnections();
-            }            
-            if( checkForStales )
+            if (nextStaleCheck < System.currentTimeMillis()) {
                 nextStaleCheck = System.currentTimeMillis() + STALE_TIME;
-            */
+
+                i = pools.keySet().iterator();
+                while( i.hasNext() ) {
+                    String name = i.next();
+                    SQLConnectionPool pool = pools.get( name );
+                    pool.updateStaleConnections();
+                }
+                
+            }
+            
             // Perform Prepared Statement Recycle.
             if (nextPSkeepAlive < System.currentTimeMillis()) {
 
@@ -415,6 +414,7 @@ public class SQLManager extends Thread {
                 Tools.printLog("SQL: Attempted keep alive on " + psQueryCache.size() + " prepared statement connections.");
                 nextPSkeepAlive = System.currentTimeMillis() + KEEP_PS_CONNECTION_ALIVE_TIME;
             }
+            
             try {
                 Thread.sleep( THREAD_SLEEP_TIME );
             } catch( InterruptedException e ) {}
