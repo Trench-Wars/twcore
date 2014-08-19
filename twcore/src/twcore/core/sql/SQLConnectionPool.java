@@ -373,8 +373,15 @@ public class SQLConnectionPool implements Runnable {
     /**
      * @return Total number of connections either available or currently busy
      */
-    public synchronized int totalConnections() {
-        return(availableConnections.size() + busyConnections.size());
+    public synchronized int totalConnections() {    	
+    	int totalBusyConnections = 0;
+    	
+    	for(Vector<Connection> v:busyConnections.values())
+    	{
+    		totalBusyConnections += v.size();
+    	}
+    	
+        return(availableConnections.size() + totalBusyConnections);
     }
 
     /**
