@@ -370,10 +370,7 @@ public class SQLConnectionPool implements Runnable {
         }
     }
     
-    /**
-     * @return Total number of connections either available or currently busy
-     */
-    public synchronized int totalConnections() {    	
+    public synchronized int busyConnections() {
     	int totalBusyConnections = 0;
     	
     	for(Vector<Connection> v:busyConnections.values())
@@ -381,7 +378,14 @@ public class SQLConnectionPool implements Runnable {
     		totalBusyConnections += v.size();
     	}
     	
-        return(availableConnections.size() + totalBusyConnections);
+    	return totalBusyConnections;   	
+    }
+    
+    /**
+     * @return Total number of connections either available or currently busy
+     */
+    public synchronized int totalConnections() {    	
+        return(availableConnections.size() + busyConnections());
     }
 
     /**
@@ -441,7 +445,7 @@ public class SQLConnectionPool implements Runnable {
         "SQL pool " + poolName + ": " + totalConnections() + "/"
         + maxConnections + " connections online, " + busyConnections.size()
         + " in use";*/
-        return "SQL pool "+ poolName + ": " + busyConnections.size() + "/" + availableConnections.size() + " connections online (background: "+getNumBackground()+") (max: "+maxConnections+")";
+        return "SQL pool "+ poolName + ": " + busyConnections() + "/" + availableConnections.size() + " connections online (background: "+getNumBackground()+") (max: "+maxConnections+")";
     }
 
     /**
@@ -461,7 +465,7 @@ public class SQLConnectionPool implements Runnable {
      * @return True if # background connections is equal to max # connections allowed
      */
     public synchronized boolean reachedMaxBackground(){
-        return (currentBackground >= (maxConnections - busyConnections.size()));
+        return currentBackground >= maxConnections;
     }
 
     /**
