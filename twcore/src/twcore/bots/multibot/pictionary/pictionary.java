@@ -664,7 +664,7 @@ public class pictionary extends MultiModule {
     public void grabWord() {
         try {
             ResultSet qryWordData;
-            qryWordData = m_botAction.SQLQuery(mySQLHost, "SELECT WordID, Word FROM tblPict_Words WHERE TimesUsed=" + getMinTimesUsed() + " AND CHAR_LENGTH(Word) > 4 ORDER BY RAND(" + m_rnd.nextInt()
+            qryWordData = m_botAction.SQLQuery(mySQLHost, "SELECT WordID, Word FROM tblPict_Words WHERE TimesUsed=" + getMinTimesUsed() + " ORDER BY RAND(" + m_rnd.nextInt()
                     + ") LIMIT 1");
             if (qryWordData.next()) {
                 t_word = qryWordData.getString("Word").toLowerCase();
