@@ -183,7 +183,8 @@ public class SQLConnectionPool implements Runnable {
             }
         }
 
-        Tools.printLog(staleConns.size() + " stale connection found; exception caught running a query. Attempting to update...");
+        if(!staleConns.isEmpty() && staleConns.size() > 0)
+        	Tools.printLog(staleConns.size() + " stale connection found; exception caught running a query. Attempting to update...");
         
         // Replace any stales found
         for (Connection conn : staleConns) {
