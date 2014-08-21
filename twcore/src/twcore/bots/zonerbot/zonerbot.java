@@ -199,6 +199,8 @@ public class zonerbot extends SubspaceBot {
                     cmd_reload(name);
                 else if (msg.toLowerCase().startsWith("!cred "))
                     cmd_credit(name, msg);
+                else if (msg.toLowerCase().startsWith("!credleague "))
+                	cmd_creditLeague(name, msg);
                 else if (msg.toLowerCase().startsWith("!credtrainer ") || msg.toLowerCase().startsWith("!ct "))
                     cmd_credtrainer(name, msg);
             }
@@ -317,7 +319,8 @@ public class zonerbot extends SubspaceBot {
                     "| !addop <name>                   - Adds <name> to the trainer list (allows zh advert granting)          |",
                     "| !delop <name>                   - Deletes <name> from the trainer list                                 |",
                     "| !autozone                       - Toggle periodic zoners to instant-zone when loaded from database     |",
-                    "| !cred <name>:#:<arena>          - Gives # weekend event hosting credits to <name> for <arena>          |",
+                    "| !cred <name>:#:<arena>          - Gives # WEEKEND EVENT hosting credits to <name> for <arena>          |",
+                    "| !credleague <name>:#:<league>   - Gives # LEAGUE hosting credits to <name> for <league>                |",
                     "| !credtrainer <name>:#:<reason>  - Gives # training credits to <name> for <reason>. (!ct for short)     |",
                     "| !credtrainer <name>:<reason>    - Gives 1 training credits to <name> for <reason>. (!ct for short)     |",
                     "| !reload                         - Reloads all the periodic messages from the database                  |", };
@@ -1031,6 +1034,31 @@ public class zonerbot extends SubspaceBot {
                 throw new NumberFormatException();
         } catch (NumberFormatException e) {
             ba.sendSmartPrivateMessage(name, "Invalid command syntax, please use !cred staffer:amount:arena");
+        }
+    }
+    
+    /** Handles the !credleague command to give credit to league hosters for league events **/
+    private void cmd_creditLeague(String name, String cmd) {
+        if (!cmd.contains(" ")) return;
+        try {
+            String[] args = splitArgs(cmd);
+            if (args != null && args.length == 3) {
+                //!cred name:#:arena
+                int n = Integer.valueOf(args[1]);
+                if (oplist.isZH(args[0])) {
+                    if (n > 0 && n < 7) {
+                        String query = "INSERT INTO tblLeagueHosts (fcUserName, fcGranter, fcEventName, fdTime) VALUES('" + Tools.addSlashesToString(args[0]) + "', '" + Tools.addSlashesToString(name) + "', '" + Tools.addSlashesToString(args[2]) + "',NOW())";
+                        for (; n > 0; n--)
+                            ba.SQLBackgroundQuery(db, null, query);
+                        ba.sendSmartPrivateMessage(name, args[0] + " has successfully been given " + args[1] + " weekend event credits for " + args[2] + ".");
+                    } else
+                        ba.sendSmartPrivateMessage(name, "Credit amount must be between 0 and 7");
+                } else
+                    ba.sendSmartPrivateMessage(name, args[0] + " is not a staff member.");
+            } else
+                throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            ba.sendSmartPrivateMessage(name, "Invalid command syntax, please use !credleague staffer:amount:arena");
         }
     }
 
