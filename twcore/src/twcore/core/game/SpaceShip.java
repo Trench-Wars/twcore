@@ -335,13 +335,7 @@ public class SpaceShip extends Thread
 	}
 
 	public int fixRotation(int n) {
-		int nN = n;
-		if (nN >= 40) {
-			nN -= 40;
-		} else if (nN < 0) {
-			nN += 40;
-		}
-		return nN;
+		return ((n%40)+40) % 40;
 	}
 
 	public boolean hasTarget() {
