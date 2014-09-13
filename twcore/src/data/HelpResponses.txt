@@ -621,7 +621,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Lena &Who|I'd rather drink bleach, jump off a cliff or shoot myself in the head than host bug for someone like you.
 &9th &Who|Above average, uncut and clean.
 &Haze &Who|YOUZA THOT #3HUNNA #SCUTTAH #GBE #OTF #BANGBANG
-&Undercut &Who|Can you get a room?
+&Undercut &Who|Take these crayons and go to your room!
 &Underquota &Who|wilcim to staff ~~!!
 &the &block &who|Yeahhhh, if you could go ahead and not teamkill, use racist or harassing language, or spam useless nonsensical ramblings, that'd be greeaaat.
 # Prize related tells.
