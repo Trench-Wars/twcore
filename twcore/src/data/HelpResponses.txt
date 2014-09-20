@@ -624,6 +624,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Undercut &Who|Take these crayons and go to your room!
 &Underquota &Who|wilcim to staff ~~!!
 &the &block &who|Yeahhhh, if you could go ahead and not teamkill, use racist or harassing language, or spam useless nonsensical ramblings, that'd be greeaaat.
+&field &who|I would die if I waxed my chest.
 # Prize related tells.
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
