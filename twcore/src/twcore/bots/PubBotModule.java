@@ -3,8 +3,8 @@ package twcore.bots;
 
 public abstract class PubBotModule extends Module
 {
-    private String ipcChannel;
-    private String pubHubName;
+    protected String ipcChannel;
+    protected String pubHubName;
 
     public void initializeModule(String ipcChannel, String pubHubName)
     {
