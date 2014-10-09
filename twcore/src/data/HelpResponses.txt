@@ -625,6 +625,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Underquota &Who|wilcim to staff ~~!!
 &the &block &who|Yeahhhh, if you could go ahead and not teamkill, use racist or harassing language, or spam useless nonsensical ramblings, that'd be greeaaat.
 &field &who|I would die if I waxed my chest.
+&Beasty &who|Maybe I'm off my hinges, but I believe you. That's why I'm gonna let you go. I'm gonna give you to the count of three to get your lousy, lyin', low-down, four flushing carcass OUT my door! 1... 2....
 
 # Prize related tells.
 &prizerecharge|The prize number for recharge is 1.
