@@ -64,6 +64,7 @@ public class zonerbot extends SubspaceBot {
     private ArrayList<Periodic> periodic;
     private LinkedList<Advert> usedAdverts;
     private LinkedList<String> trainers;
+    private LinkedList<String> eventsHeads;
     
     private PeriodicTimer periodicTimer;
     private Vector<Periodic> periodicQueue;
@@ -78,17 +79,21 @@ public class zonerbot extends SubspaceBot {
         queue = new Vectoid<String, Advert>();
         periodic = new ArrayList<Periodic>();
         trainers = new LinkedList<String>();
+        eventsHeads = new LinkedList<String>();
         usedAdverts = new LinkedList<Advert>();
         periodicQueue = new Vector<Periodic>();
         currentUser = null;
         ba.getEventRequester().request(EventRequester.LOGGED_ON);
         ba.getEventRequester().request(EventRequester.MESSAGE);
         loadTrainers();
+        loadEventsHeads();
         DEBUG = false;
         debugger = "";
     }
 
-    /** Handles the LoggedOn event **/
+
+
+	/** Handles the LoggedOn event **/
     public void handleEvent(LoggedOn event) {
         ba.joinArena(ba.getBotSettings().getString("InitialArena"));
         ba.sendUnfilteredPublicMessage("?chat=robodev");
@@ -187,16 +192,10 @@ public class zonerbot extends SubspaceBot {
                     cmd_delop(name, msg);
                 else if (msg.toLowerCase().equals("!ops"))
                     cmd_ops(name);
-                else if (msg.toLowerCase().startsWith("!per "))
-                    cmd_periodic(name, msg);
-                else if (msg.toLowerCase().startsWith("!remper "))
-                    cmd_removePeriodic(name, msg);
-                else if (msg.toLowerCase().equals("!list"))
-                    cmd_listPeriodics(name);
+
                 else if (msg.toLowerCase().equals("!autozone"))
                     cmd_autoZone(name);
-                else if (msg.toLowerCase().equals("!reload"))
-                    cmd_reload(name);
+
                 else if (msg.toLowerCase().startsWith("!cred "))
                     cmd_credit(name, msg);
                 else if (msg.toLowerCase().startsWith("!credleague "))
@@ -204,11 +203,21 @@ public class zonerbot extends SubspaceBot {
                 else if (msg.toLowerCase().startsWith("!credtrainer ") || msg.toLowerCase().startsWith("!ct "))
                     cmd_credtrainer(name, msg);
             }
-            if (oplist.isOwner(name)) {
+            if (oplist.isOwner(name) || isEventsHead(name)) {
                 if (msg.toLowerCase().startsWith("!zone "))
                     cmd_zone(name, msg);
             }
-
+            
+            if (oplist.isSmod(name) || isEventsHead(name)) {
+                if (msg.toLowerCase().startsWith("!per "))
+                    cmd_periodic(name, msg);
+                else if (msg.toLowerCase().startsWith("!remper "))
+                    cmd_removePeriodic(name, msg);
+                else if (msg.toLowerCase().equals("!list"))
+                    cmd_listPeriodics(name);
+                else if (msg.toLowerCase().equals("!reload"))
+                    cmd_reload(name);
+            }
         }
     }
 
@@ -323,6 +332,15 @@ public class zonerbot extends SubspaceBot {
                     "| !credleague <name>:#:<league>   - Gives # LEAGUE hosting credits to <name> for <league>                |",
                     "| !credtrainer <name>:#:<reason>  - Gives # training credits to <name> for <reason>. (!ct for short)     |",
                     "| !credtrainer <name>:<reason>    - Gives 1 training credits to <name> for <reason>. (!ct for short)     |",
+                    "| !reload                         - Reloads all the periodic messages from the database                  |", };
+            ba.smartPrivateMessageSpam(name, msg);
+        }
+        if (!oplist.isSmod(name) && isEventsHead(name)) {
+            msg = new String[] { "+-- Events Department Special Commands  ----------------------------------------------------------------+",
+            		"| !zone <msg>                    - Sends a zoner message without changing quota points. Use %% for sound |",
+                    "| !per <del>;<dur>;<msg>          - Sets a periodic zoner to repeat every <del> min for <dur> hr  %%#    |",
+                    "| !remper <index>                 - Removes the periodic zoner at <index>                                |",
+                    "| !list                           - List of the currently active periodic zoners                         |",
                     "| !reload                         - Reloads all the periodic messages from the database                  |", };
             ba.smartPrivateMessageSpam(name, msg);
         }
@@ -1222,6 +1240,21 @@ public class zonerbot extends SubspaceBot {
         for (String n : list)
             trainers.add(n.toLowerCase());
     }
+    
+    /** Loads the event dept heads in the cfg file **/
+    private void loadEventsHeads() {
+		eventsHeads.clear();
+        String[] list = ba.getBotSettings().getString("EventsHeads").split(",");
+        for (String n : list)
+            eventsHeads.add(n.toLowerCase());		
+	}
+
+	private boolean isEventsHead(String name) {
+		if (eventsHeads.contains(name.toLowerCase()))
+			return true;
+
+		return false;
+	}
 
     /** Loads active periodic zoners from the database **/
     private void loadPeriodics() {
