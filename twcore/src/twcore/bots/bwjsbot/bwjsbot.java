@@ -475,7 +475,7 @@ public class bwjsbot extends SubspaceBot {
                 cmd_start(name, command);
             } else if (cmd.equals("!stop")) {
                 cmd_stop(name);
-            } else if (cmd.startsWith("!zone") && !cfg.getAllowAutoCaps()) {
+            } else if (cmd.startsWith("!zone")) {
                 cmd_zone(name, command);
             } else if (cmd.equals("!off")) {
                 cmd_off(name);
