@@ -952,11 +952,10 @@ public class bwjsbot extends SubspaceBot {
         if (m_botAction.getOperatorList().isZH(name)) {
             help.add("ZH+ commands:");
             help.add("!start                            -- starts the bot");
-            help.add("!stop                             -- stops the bot");
-            if(!cfg.getAllowAutoCaps()) {
-                help.add("!zone <message>                   -- sends time-restricted advert, message is optional");
-            }
+            help.add("!stop                             -- stops the bot");            
+            help.add("!zone <message>                   -- sends time-restricted advert, message is optional");            
             help.add("!forcenp <player>                 -- Sets <player> to !notplaying");
+            
             if (state.getCurrentState() > BWJSState.OFF) {
                 help.add("!setcaptain <frq>:<plr>   -- Sets <plr> as captain for <frq> (short: !sc)");
                 help.add("!squadcaptain <frq>:<plr> -- Squad vs world game; <plr> as cap, only their squad on <frq>");
@@ -2093,7 +2092,7 @@ public class bwjsbot extends SubspaceBot {
         }
         
         //Alert zoner, (max once every ZONER_WAIT_TIME (minutes))
-        if ((allowZoner() && cfg.getAllowZoner()) || (allowManualZoner() && !cfg.getAllowAutoCaps())) {
+        if ((allowZoner() && cfg.getAllowZoner()) || (allowManualZoner())) {
             m_botAction.sendZoneMessage(message + nameTag, Tools.Sound.BEEP2);
             zonerTimestamp = System.currentTimeMillis();
             manualZonerTimestamp = zonerTimestamp;
