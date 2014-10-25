@@ -504,6 +504,7 @@ public class multibot extends SubspaceBot {
         doGoCmd(sender, m_initialArena);
         m_owner = null;
         m_accessLevel = OperatorList.ER_LEVEL;
+        m_followEnabled = false;
     }
 
     /**
