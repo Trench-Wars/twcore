@@ -1135,12 +1135,13 @@ public class robohelp extends SubspaceBot {
     			String time = rs.getString("time"); //hour
     			int takenCalls = rs.getInt("taken");
     			int totalCalls = rs.getInt("total");
+    			double percent = 100.0 * takenCalls / totalCalls;
     			String percentage;
     			
     			if(totalCalls == 0) {
     				percentage = "-";
     			} else {
-    				percentage = Integer.toString((takenCalls/totalCalls) * 100) + "%";
+    				percentage = Integer.toString((int)percent) + "%";
     			}
     			
 
