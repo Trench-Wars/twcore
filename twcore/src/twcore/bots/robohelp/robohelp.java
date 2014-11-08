@@ -144,7 +144,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!lookup", acceptedMessages, this, "handleLookup", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
-        m_commandInterpreter.registerCommand("!hourlystats", acceptedMessages, this, "handleHourlyStats", OperatorList.SMOD_LEVEL);
+        m_commandInterpreter.registerCommand("!hourlystats", acceptedMessages, this, "handleHourlyStats", OperatorList.ZH_LEVEL);
 
         // *** PM cmds
         acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE;
@@ -2303,13 +2303,13 @@ public class robohelp extends SubspaceBot {
                 "                                        If # is not specified, shows top 5.", 
                 " !mystats <name>                      - Returns the call count of <name>",
                 " !mystats <month>-<year> [above args] - Returns the top/call count from specified", 
-                "                                        month-year. F.ex: !mystats 08-2007 mod 50" };
+                "                                        month-year. F.ex: !mystats 08-2007 mod 50",
+                " !hourlystats                         - Hourly call stats"};
         if (m_botAction.getOperatorList().isZH(playerName))
             m_botAction.remotePrivateMessageSpam(playerName, helpText);
 
         String[] SMod = { " !banned                              - Who's banned from using tell?!?!", " !addban                              - Add a tell ban",
-                " !unban                               - Remove a tell ban", " !say                                 - SMod fun!",  
-                " !hourlystats                         - Hourly call stats"};
+                " !unban                               - Remove a tell ban", " !say                                 - SMod fun!"};
         if (m_botAction.getOperatorList().isSmod(playerName))
             m_botAction.remotePrivateMessageSpam(playerName, SMod);
 
