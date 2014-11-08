@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -143,6 +144,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!help", acceptedMessages, this, "mainHelpScreen", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!lookup", acceptedMessages, this, "handleLookup", OperatorList.ZH_LEVEL);
         m_commandInterpreter.registerCommand("!mystats", acceptedMessages, this, "handleMystats", OperatorList.ZH_LEVEL);
+        m_commandInterpreter.registerCommand("!hourlystats", acceptedMessages, this, "handleHourlyStats", OperatorList.SMOD_LEVEL);
 
         // *** PM cmds
         acceptedMessages = Message.REMOTE_PRIVATE_MESSAGE | Message.PRIVATE_MESSAGE;
@@ -166,6 +168,7 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!unban", acceptedMessages, this, "unbanTell", OperatorList.SMOD_LEVEL);
         m_commandInterpreter.registerCommand("!addban", acceptedMessages, this, "handleAddBan", OperatorList.SMOD_LEVEL);
         m_commandInterpreter.registerCommand("!die", acceptedMessages, this, "handleDie", OperatorList.SMOD_LEVEL);
+
 
         // Sysop+ 
         m_commandInterpreter.registerCommand("!reload", acceptedMessages, this, "handleReload", OperatorList.SYSOP_LEVEL);
@@ -1112,6 +1115,45 @@ public class robohelp extends SubspaceBot {
             m_botAction.sendRemotePrivateMessage(name, "Sorry, no matches.");
         else
             displayResponses(name, resp);
+    }
+    
+    public void handleHourlyStats(String name, String message)
+    {
+		ArrayList<String> spam = new ArrayList<String>();
+		
+		spam.add("Hourly Call Stats for Current Month");
+		spam.add("------------------------------------------------------------");
+		spam.add("Hour      Calls Taken     Total Calls       Percentage Taken");
+		spam.add("------------------------------------------------------------");
+		
+    	try {
+    		ResultSet rs = m_botAction.SQLQuery(mySQLHost, "SELECT DATE_FORMAT(fdCreated, '%h %p') AS time, COUNT(CASE WHEN fnTaken > 0 THEN 1 END) AS taken, "
+    				+ "COUNT(fnTaken) AS total FROM `tblCallHelp` WHERE MONTH(fdCreated) = MONTH(NOW()) AND YEAR(fdCreated) = YEAR(NOW()) GROUP BY "
+    				+ "DATE_FORMAT(fdCreated, '%h %p') ORDER BY DATE_FORMAT(fdCreated, '%H') ASC");
+    		
+    		while(rs.next()) {
+    			String time = rs.getString("time"); //hour
+    			int takenCalls = rs.getInt("taken");
+    			int totalCalls = rs.getInt("total");
+    			String percentage;
+    			
+    			if(totalCalls == 0) {
+    				percentage = "-";
+    			} else {
+    				percentage = Integer.toString((takenCalls/totalCalls) * 100) + "%";
+    			}
+    			
+
+    			spam.add(Tools.formatString(time, 10) + Tools.formatString(Integer.toString(takenCalls), 16) + Tools.formatString(Integer.toString(totalCalls), 18) + percentage);     					
+    		}
+    		
+    		m_botAction.SQLClose(rs);
+    		
+    	} catch(SQLException e) {
+    		spam.add("Error processing request");
+    	}
+    	
+    	m_botAction.remotePrivateMessageSpam(name, spam.toArray(new String[spam.size()]));
     }
 
     public void handleReload(String name, String message) {
@@ -2265,7 +2307,8 @@ public class robohelp extends SubspaceBot {
             m_botAction.remotePrivateMessageSpam(playerName, helpText);
 
         String[] SMod = { " !banned                              - Who's banned from using tell?!?!", " !addban                              - Add a tell ban",
-                " !unban                               - Remove a tell ban", " !say                                 - SMod fun!" };
+                " !unban                               - Remove a tell ban", " !say                                 - SMod fun!",  
+                " !hourlystats                         - Hourly call stats"};
         if (m_botAction.getOperatorList().isSmod(playerName))
             m_botAction.remotePrivateMessageSpam(playerName, SMod);
 
