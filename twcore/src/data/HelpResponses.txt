@@ -3,6 +3,7 @@
 &TWD &OP|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
 &TWD &Ops|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
 &TWDOp|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
+&TWDOps|If there is a current TWD Op available, he or she will try to help you as soon as possible. If you do not receive a response within 5 minutes of when the ?help call was placed, please leave a message for any of the following TWD Ops found here: http://www.trenchwars.org/index.php?v=staff
 &Squad &Join &How|To join a squad type ?squadjoin=Name:Password where <Name> is the name of the squad and <Password> is the squad's password.
 &Squadjoin &How|To join a squad type ?squadjoin=Name:Password where <Name> is the name of the squad and <Password> is the squad's password.
 &Squad &Leave &How|To leave your current squad type ?squadleave.
@@ -25,8 +26,8 @@
 SayTWDDown|The website has currently lost connectivity with the matchbots which means that any roster changes made on the site will not be recognized by the bots.  Please keep this in mind when challenging other teams.  This issue should be resolved in the next day or two.  Thank you for your patience.
 &Accept &Squad|Squad applications are handled automatically by TWDBot. Please ?go twd and pm the bot with !help (:TWDBot:!help). To sign up a squad you have to be ?squadjoined, ?squadowner of the squad and !registered with TWDBot. If you have any problems with this, please contact a TWD Operator.
 &TWD &Squad|Squad applications are handled automatically by TWDBot. Please ?go twd and pm the bot with !help (:TWDBot:!help). To sign up a squad you have to be ?squadjoined, ?squadowner of the squad and !registered with TWDBot. If you have any problems with this, please contact a TWD Operator.
-RegisterHelp|If you got problems with the !register command, need to change names or other relative things please first read forum theard about how you can do it on your own (http://twd.trenchwars.org/documents/howsignup, ?go twd and :TWDBot:!help). If this guide does not help you and you really need two names registered on your computer, because you have two (or possibly more) TWD/TWL players in your family, please contact a TWD Operator.
-&!register|If you got problems with the !register command, need to change names or other relative things please first read forum theard about how you can do it on your own (http://forums.trenchwars.org/showthread.php?t=13296, ?go twd and :TWDBot:!help). If this guide does not help you and you really need two names registered on your computer, because you have two (or possibly more) TWD/TWL players in your family, please contact a TWD Operator.
+RegisterHelp|If you got problems with the !register command, need to change names or other relative things please first read forum thread about how you can do it on your own (http://twd.trenchwars.org/documents/howsignup, ?go twd and :TWDBot:!help). If this guide does not help you and you really need two names registered on your computer, because you have two (or possibly more) TWD/TWL players in your family, please contact a TWD Operator.
+&!register|If you got problems with the !register command, need to change names or other relative things please first read forum theard about how you can do it on your own (http://twd.trenchwars.org/documents/howsignup, ?go twd and :TWDBot:!help). If this guide does not help you and you really need two names registered on your computer, because you have two (or possibly more) TWD/TWL players in your family, please contact a TWD Operator.
 &What &TWEL|TWEL stands for Trench Wars Extreme League, a 1v1 duelling ladder hosted in ?go duel. The TWEL website can be found at: http://www.trenchwars.org/TWEL
 &TWEL &Signup &Problem| If you have problems signing up to the TWEL League because you share your connection with another person, please contact a TWEL Operator which can be found by PM'ing !ops to Duelbot.
 &TWEL &Signup &Problems|If you have problems signing up to the TWEL League because you share your connection with another person, please contact a TWEL Operator which can be found by PM'ing !ops to Duelbot.
@@ -34,7 +35,7 @@ RegisterHelp|If you got problems with the !register command, need to change name
 # Automated/planned events.
 &Elim &What|Elim is an arena dedicated to elimination style matches for fighter ships (Warbird, Spider, Levi and Lancaster).  Everyone is put on their own freq and is specced after a certain number of deaths.  The last person standing is declared the winner.  Teaming, trucing or refusing to fight is illegal.
 &BaseElim &What|BaseElim is an arena dedicated to elimination style matches for base ships (Javelin, Terrier, Weasel and Shark).  Everyone is put on their own freq and is specced after a certain number of deaths.  The last person standing is declared the winner.  Teaming, trucing, refusing to fight or not going to the base is illegal.
-&Event &List &Where|You can view a list of all arenas/events here: http://forums.trenchwars.org/showthread.php?t=32600 .
+&Event &List &Where|You can view a list of all arenas/events here: http://forums.trenchwars.org/showthread.php?t=32600 or ?go Events .
 
 #Suggestions
 &Player &Suggestion|Have a suggestion for Trench Wars? Great! Submit it here and we'll have a look! http://trenchwars.org/support
@@ -122,8 +123,8 @@ RegisterHelp|If you got problems with the !register command, need to change name
 &Staff &Join &How|Trench Wars Staff are always looking for players who play regularly and are friendly, helpful, knowledgeable and who show a desire to improve the zone. You are invited to fill out a staff application at http://www.trenchwars.org/index.php?v=staffapplication
 &Staff &Become &How|Trench Wars Staff are always looking for players who play regularly and are friendly, helpful, knowledgeable and who show a desire to improve the zone. You are invited to fill out a staff application at http://www.trenchwars.org/index.php?v=staffapplication
 &Staff &Invite|Trench Wars Staff are always looking for players who play regularly and are friendly, helpful, knowledgeable and who show a desire to improve the zone. You are invited to fill out a staff application at http://www.trenchwars.org/index.php?v=staffapplication
-&Sysop &Who|The sysops of SSCU Trench Wars are Pure_Luck and Weaver.
-&Sysops &Who|The sysops of SSCU Trench Wars are Pure_Luck and Weaver.
+&Sysop &Who|The sysops of SSCU Trench Wars are M_M God, Beasty and Turban.
+&Sysops &Who|The sysops of SSCU Trench Wars are M_M God, Beasty and Turban.
 &Owner &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
 &Owners &Who|The owners of SSCU Trench Wars are DoCk> and PriitK.
 
@@ -136,7 +137,7 @@ Complaints|To file a general complaint or to register instances of abuse by any 
 &Sysop &Contact|To contact a sysop, please email twsysops@gmail.com with your query.
 
 # Host related.
-Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting request. We will attempt to handle your request as promptly as possible but there is no guarantee that your event will be hosted. If you wish to contact an event referee about this, find a staffer with the <ER> tag next to their name.
+Host H0st Ho$t H0$t hozt h-o-s-t tsoh hist|Thank you for submitting your hosting request. We will attempt to handle your request as promptly as possible but there is no guarantee that your event will be hosted.
 &Host &Base|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
 &Host &Base2|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
 &Host &Base3|An available staff member will start the base bot if there are 2 captains present in the arena. Staff will advertise for base if there are 2 captains, but not enough players present.
@@ -171,25 +172,24 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 # General server information
 &Where &Server|The SSCU Trench Wars server is located in Washington, D.C.
 &Who &Server|The SSCU Trench Wars server is being paid for by Priitk and the Subspace players that have donated.
-&Help &Server|For help setting up your own server please refer to: http://www.shanky.com/server.
+&Help &Server|For help setting up your own server please refer to: http://www.minegoboom.com/server/howto.html.
 &Settings &Trench &Wars|Sorry but the Trench Wars settings are not publicly available.
 &Settings &TW|Sorry but the Trench Wars settings are not publicly available.
 
 # Banner related information
-&Banners &Site +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE and http://www.subspacedownloads.com/index.php?act=banners&f=1
-&Banners &Download &Where +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE and http://www.subspacedownloads.com/index.php?act=banners&f=1
-&Banners &Website +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE and http://www.subspacedownloads.com/index.php?act=banners&f=1
+&Banners &Site +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE
+&Banners &Download &Where +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE
+&Banners &Website +Banner|To download banners, refer to the following websites: http://www.trenchwars.org/SSBE
 
 # Various download information. (Client, map/other editors, voice chat clients.)
 &Continuum &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/game/Continuum040Setup.exe .
 &Subspace &Download &Where|The latest version of Continuum can be downloaded from the following location: http://www.trenchwars.org/downloads/game/Continuum040Setup.exe .
-&Subspace &1.35 &Download &Where|Subspace v1.35 can be downloaded from the following location: http://www.subspacedownloads.com/index.php?act=file&fid=11 .
-&SSME &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .
-&Map &Editor &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .
-&Tileedit &Download &Where|TileEdit can be downloaded from the following location: http://www.subspace.co/files/file/70-tile-editor/ .
+&SSME &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip .
+&Map &Editor &Download &Where|Subspace Map Editor, or SSME can be downloaded from the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip .
+&Tileedit &Download &Where|TileEdit can be downloaded from the following location: http://www.trenchwars.org/downloads/editors/tileedit.zip .
 &TeamSpeak &Download &where|Teamspeak can be downloaded from the following location: http://www.teamspeak.com/?page=downloads .
-&Shipset &Download &Where|Shipsets can be found at Subspace Downloads: http://www.subspacedownloads.com.
-&Shipsets &Download &Where|Shipsets can be found at Subspace Downloads: http://www.subspacedownloads.com.
+&Shipset &Download &Where|Shipsets can be found at Subspace Downloads: http://www.subspaceforum.com/downloads .
+&Shipsets &Download &Where|Shipsets can be found at Subspace Downloads: http://www.subspaceforum.com/downloads .
 
 # Chatting related tells.
 &Team &Talk &How -Another|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
@@ -220,8 +220,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Macro &Create &Voice &How|To create a sound macro, exit to the splash screen and press <Ctrl> and <M> at the same time.  A window labeled "Edit Macros" should appear.  Click on the button marked "Wave" and select a .wav file that is less than 32k.  This will create a sound macro.  Playing it is like playing a normal macro.
 &Message &Squad &Another|To send a message to all of the members of another squad type :#Squadname:Message where <Squadname> is the name of the squad that you would like to message and <Message> is the message you would like to send.  Example: :#Lame:Hello Lame!  The message should appear in green.
 &Message &Squad -Another|To send a message to all of the members of your squad type #Message where <Message> is the message that you would like to send.  Example: #Hello squad!  The message should appear in green.
-&How &Bong &Noise|To make a bong noise type %Number where <Number> is the number of the noise that you would like to play.  In most arenas, nobody else can hear the bong noises.  A list of the sounds can be found at: http://www.shanky.com/server/commands.html.
-&How &Bong &Noises|To make a bong noise type %Number where <Number> is the number of the noise that you would like to play.  In most arenas, nobody else can hear the bong noises.  A list of the sounds can be found at: http://www.shanky.com/server/commands.html.
+&How &Bong &Noise|To make a bong noise type %Number where <Number> is the number of the noise that you would like to play.  In most arenas, nobody else can hear the bong noises.  A list of the sounds can be found at: http://www.minegoboom.com/server/commands.html.
+&How &Bong &Noises|To make a bong noise type %Number where <Number> is the number of the noise that you would like to play.  In most arenas, nobody else can hear the bong noises.  A list of the sounds can be found at: http://www.minegoboom.com/server/commands.html.
 &Away &Message &How|To set an away message type ?away Message where <Message> is the away message that you want to you set.  Example ?away I am away!  To turn your away message off type ?away.
 &Leave &Message &How|To leave a message to someone who is currently not active or not online type ?message Name:Message where <Name> is the name of the person you want to leave the message to and <Message> is the message that you want to leave.  Example: ?message DoCk>:Where is my money?!  To read the messages in your message box, type ?messages.
 &Send &Message &How|To leave a message to someone who is currently not active or not online type ?message Name:Message where <Name> is the name of the person you want to leave the message to and <Message> is the message that you want to leave.  Example: ?message DoCk>:Where is my money?!  To read the messages in your message box, type ?messages.
@@ -256,24 +256,24 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Banners &Make &How|There are 2 ways to make a banner.  1) Go to the splash screen and press <Ctrl> and <E> at the same time.  2) Use Paint to draw your banner.  The image size must be 12 x 8 pixels and it must be saved as a .bmp.  Banners must be stored in the continuum\banners directory.
 &Banner &Set &How|To set a banner go to spectator mode <F11> then press <Esc> followed by <B> to open the banner selection window.  Use <Pg Up> and <Pg Dn> to select your banner and press <Enter>.
 &Banners &Set &How|To set a banner go to spectator mode <F11> then press <Esc> followed by <B> to open the banner selection window.  Use <Pg Up> and <Pg Dn> to select your banner and press <Enter>.
-&Map &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Maps &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Level &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Levels &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Arena &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Arenas &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspacedownloads.com/index.php?act=file&fid=182.  TileEdit is also a useful tool and can be downloaded here: http://www.subspacedownloads.com/index.php?act=file&fid=187. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Map &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip.  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Maps &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip.  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Level &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip.  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Levels &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip.  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Arena &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip.  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Arenas &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip.  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip. To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
 &Squad &Arena|In order to get your squad map up, the squad must have 10 or more ACTIVE members and be a valid squad for at least 3 months (6 server scoreresets) and be actively playing in one of the leagues (TWL or TWD). Also, squad maps can not use .lvz in them however, we can enable a LVZ that is already on the server (such as miniset). Submit maps to: http://trenchwars.org/index.php?v=submitmap
 &Squad &Map|In order to get your squad map up, the squad must have 10 or more ACTIVE members and be a valid squad for at least 3 months (6 server scoreresets) and be actively playing in one of the leagues (TWL or TWD). Also, squad maps can not use .lvz in them however, we can enable a LVZ that is already on the server (such as miniset). Submit maps to: http://trenchwars.org/index.php?v=submitmap
-&Map &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Maps &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ . To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Level &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Levels &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Arena &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
-&Arenas &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.subspace.co/files/file/69-subspace-map-editor/ .  TileEdit is also a useful tool and can be downloaded here: http://www.subspace.co/files/file/70-tile-editor/ .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Map &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip .  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Maps &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip .  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip . To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Level &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip .  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Levels &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip .  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Arena &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip .  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
+&Arenas &Make &How|To make your own arena you must download the Subspace Map Editor.  You can find this at the following location: http://www.trenchwars.org/downloads/editors/ssme81a.zip .  TileEdit is also a useful tool and can be downloaded here: http://www.trenchwars.org/downloads/editors/tileedit.zip .  To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file.
 &Squad &Arena|In order to get your squad map up, the squad must have 10 or more ACTIVE members and be a valid squad for at least 3 months (6 server scoreresets) and be actively playing in one of the leagues (TWL or TWD). Also, squad maps can not use .lvz in them however, we can enable a LVZ that is already on the server (such as miniset). Submit maps to: http://trenchwars.org/index.php?v=submitmap
 &Squad &Map|In order to get your squad map up, the squad must have 10 or more ACTIVE members and be a valid squad for at least 3 months (6 server scoreresets) and be actively playing in one of the leagues (TWL or TWD). Also, squad maps can not use .lvz in them however, we can enable a LVZ that is already on the server (such as miniset). Submit maps to: http://trenchwars.org/index.php?v=submitmap
-&Zone &Make &How|For information on how to make a zone, please refer to: http://www.shanky.com/server.
-&Zone &Create &How|For information on how to make a zone, please refer to: http://www.shanky.com/server.
+&Zone &Make &How|For information on how to make a zone, please refer to: http://www.minegoboom.com/server/download/howto-zone.txt.
+&Zone &Create &How|For information on how to make a zone, please refer to: http://www.minegoboom.com/server/download/howto-zone.txt.
 &Submit &Map &How|To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file
 &Submit &Maps &How|To submit a completed map to be posted on SSCU Trench Wars, please fill out the information on http://trenchwars.org/index.php?v=submitmap and make sure to attach the .zip file
 
@@ -304,8 +304,8 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &Spec &Hunt &What|Spechunting is when a person in spectator mode locates a player then either enters the game and hunts them or gives away their location.  Spechunting is illegal in Trenchwars.  To report a spechunter use the ?cheater command.
 &Spechunting &What|Spechunting is when a person in spectator mode locates a player then either enters the game and hunts them or gives away their location.  Spechunting is illegal in Trenchwars.  To report a spechunter use the ?cheater command.
 &Spechunt &What|Spechunting is when a person in spectator mode locates a player then either enters the game and hunts them or gives away their location.  Spechunting is illegal in Trenchwars.  To report a spechunter use the ?cheater command.
-&Vulching &What|Vulching is when you kill someone right after they have used all their energy to kill someone else.	
-&Vulch &What|Vulching is when you kill someone right after they have used all their energy to kill someone else.	
+&Vulching &What|Vulching is when you kill someone right after they have used all their energy to kill someone else. 
+&Vulch &What|Vulching is when you kill someone right after they have used all their energy to kill someone else.    
 &Spawn &What|Spawning has two definitions.  1) When you reappear after dying.  2) Short for spawnkilling: When you kill someone right after they appear after dying.  Spawnkilling is not illegal in Trench Wars.
 &Spawning &What|Spawning has two definitions.  1) When you reappear after dying.  2) Short for spawnkilling: When you kill someone right after they appear after dying.  Spawnkilling is not illegal in Trench Wars.
 &Spawnkill &What|Spawnkilling is when you kill someone right after they appear after dying.  Spawnkilling is not illegal in Trench Wars.
@@ -339,14 +339,15 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 # need to reorder these to spots where similar stuff is.
 &Spectate &Frequency|Spectating at a frequency other then the default spectator frequency in Pure Publics is illegal as it will make the frequencies (teams) uneven.
 &Spec &Frequency|Spectating at a frequency other then the default spectator frequency in Pure Publics is illegal as it will make the frequencies (teams) uneven.
-&Spectate &Freq|Spectating at a frequency other then the default spectator frequency in Pure Publics is illegal as it will make the frequencies (teams) uneven.
 &Spec &Freq|Spectating at a frequency other then the default spectator frequency in Pure Publics is illegal as it will make the frequencies (teams) uneven.
+&Spectate &Freq|Spectating at a frequency other then the default spectator frequency in Pure Publics is illegal as it will make the frequencies (teams) uneven.
 &Robohelp &Who|Robohelp is a bot that is designed to answer your ?help calls.
 &Robohelp &What|Robohelp is a bot that is designed to answer your ?help calls.
 &Robo &Ref &who|Robo Ref is the bot that runs the automated event ?go elim. Private messaging it with !help will further assist you with using it.
 &Robo_Ref &who|Robo_Ref is the bot that runs the automated event ?go baseelim. Private messaging it with !help will further assist you with using it.
 &Teaming &What|Teaming is when two or more people of different teams have a truce together and/or both attack other players together.  In certain arenas such as elim and baseelim, teaming is illegal.
 &Framerate &What|Framerate or FPS stands for Frames Per Second.  It is a measure of how often your screen updates the picture. You can toggle a framerate indicator by pressing <Esc> + <F>.
+&Teamspeak &Server &What|The Trench Wars TeamSpeak server is TrenchWars.TeamSpeak.cc . It can also be connected to from twd.trenchwars.org after logging in.
 
 # Common abbrevations.
 &FPS &What|FPS stands for Frames Per Second.  It is a measure of how often your screen updates the picture. You can toggle a framerate indicator by pressing <Esc> + <F>.
@@ -458,7 +459,7 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &What &TWD &Site|The Trench Wars Divisions website is: http://twd.trenchwars.org.
 &What &Divisons &Website|The Trench Wars Divisions website is: http://twd.trenchwars.org.
 &What &Divisons &Site|The Trench Wars Divisions website is: http://twd.trenchwars.org.
-&What &TWL|TWL stands for Trench Wars Leagues. It has three divisions: Javelin (TWLJ), Dueling (TWLD), and Basing (TWLB). Javelin and Dueling play matches of 5 players per team, while basing features 8 players per team. Months before the league starts, squads compete in duels for ranking. In order to qualify for TWL, a squad must play 15 games in one division. The exact number of squads that are invited to participate depends on the amount of competition and demand in a specific division. If a squad drops out of the league, then the next highest ranking squad is invited to play. The TWL season is a very competitive time for most squads. It brings the most skilled players to the same arena in order to battle it out for victory and gain the esteem from all players as "the best." It is the highlight of Trench Wars and its reputation and prestige can not be compared to any other zone in Continuum.  	 
+&What &TWL|TWL stands for Trench Wars Leagues. It has three divisions: Javelin (TWLJ), Dueling (TWLD), and Basing (TWLB). Javelin and Dueling play matches with 5 players per team, while basing features 8 players per team. Months before the league starts, squads compete in duels for ranking. In order to qualify for TWL, a squad must play 15 games in one division. The exact number of squads that are invited to participate depends on the amount of competition and demand in a specific division. If a squad drops out of the league, then the next highest ranking squad is invited to play. The TWL season is a very competitive time for most squads. It brings the most skilled players to the same arena in order to battle it out for victory and gain the esteem from all players as "the best." It is the highlight of Trench Wars and its reputation and prestige can not be compared to any other zone in Continuum.     
 &What &TWL &Website|The Trench Wars Leagues website is: http://twl.trenchwars.org.
 &What &TWL &Site|The Trench Wars Leagues website is: http://twl.trenchwars.org.
 &What &League &Website|The Trench Wars Leagues website is: http://twl.trenchwars.org.
@@ -473,17 +474,25 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh|Thank you for submitting your hosting requ
 &What &History &Trench &Site|The history of Trench Wars website is: http://www.trenchwars.org/index.php?v=gethelp&id=1
 &What &History &TW &Website|The history of Trench Wars website is: http://www.trenchwars.org/index.php?v=gethelp&id=1
 &What &History &TW &Site|The history of Trench Wars website is: http://www.trenchwars.org/index.php?v=gethelp&id=1
-&What &SubspaceDownloads &Website|The SubspaceDownloads website is: http://www.subspacedownloads.com/
-&What &SubspaceDownloads &Site|The SubspaceDownloads website is: http://www.subspacedownloads.com/
-&What &Shanky &Website|The Shanky Server website is: http://www.shanky.com/server.
-&What &Shanky &Site|The Shanky Server website is: http://www.shanky.com/server.
+&What &SubspaceDownloads &Website|The SubspaceDownloads website is: http://www.subspaceforum.com/downloads
+&What &SubspaceDownloads &Site|The SubspaceDownloads website is: http://www.subspaceforum.com/downloads
+&What &SubSpaceForum &Website|The SubspaceForum website is: http://www.subspaceforum.com/
+&What &SubSpaceForum &Site|The SubspaceForum website is: http://www.subspaceforum.com/
+&What &Shanky &Website|The Shanky Server website is: http://www.minegoboom.com/server/howto.html.
+&What &Shanky &Site|The Shanky Server website is: http://www.minegoboom.com/server/howto.html.
+&What &MineGoBoom &Website|The MineGoBoom Server website is: http://www.minegoboom.com/server/howto.html.
+&What &MineGoBOom &Site|The MineGoBoom Server website is: http://www.minegoboom.com/server/howto.html.
 &What &TWEL &Website|The TWEL Website is: http://www.trenchwars.org/TWEL.
 &What &TWEL &Site|The TWEL Website is: http://www.trenchwars.org/TWEL.
+&What &TWT &Site&|The Trench Wars Tourny Website is: http://twt.trenchwars.org/
+&What &TWT &Website|The Trench Wars Tourny Website is: http://twt.trenchwars.org/
+&What &Tourny &Site|The Trench Wars Tourny Website is: http://twt.trenchwars.org/
+&What &Tourny &Website|The Trench Wars Tourny Website is: http://twt.trenchwars.org/
 &Donate &How|To donate to the Trench Wars fund, http://www.trenchwars.org/donations
 &What &Donation|Beer addictions are expensive. And so is hosting a server, advertizing and organizing cash events. So donate now to support your zone ! Visit www.trenchwars.org/donations for more information.
 &What &PlayerGuide &Site|For all basics about playing Continuum, check out the Player Help Guide: http://www.trenchwars.org/index.php?v=gethelp&id=2
-&New &38 &What +0.38|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
-&Different &38 &What +0.38|For a complete listing of the improvements and modifications made in Continuum 0.38, please refer to the whatsnew.txt file in your continuum folder.
+&New &40 &What +0.40|For a complete listing of the improvements and modifications made in Continuum 0.40, please refer to the whatsnew.txt file in your continuum folder.
+&Different &40 &What +0.40|For a complete listing of the improvements and modifications made in Continuum 0.40, please refer to the whatsnew.txt file in your continuum folder.
 
 # Various question related tells.
 Question (question)|What is your question?  Please type ?help followed with your question.  Example: ?help How do I shoot?
@@ -510,7 +519,7 @@ SayWait|The game will end shortly.  Please be patient and wait for it to end.
 SayPlease|What is the magic word?
 SayTechSupport|We are sorry, but we do not have the answer to your question.  If you wish to post it on our tech support forum, please do so at: http://forums.trenchwars.org/forumdisplay.php?f=5.
 NotIllegal|Sorry, but that is not illegal in Trench Wars.
-Dontberude|Please do not be rude to the staff.
+Dontberude|Please do not be rude to members of staff.
 HelpAbuse|Please discontinue your use of the ?help command as Trench Wars Staff has deemed your requests invalid or excessive.
 CheaterAbuse|Please do not abuse ?cheater unless you have a valid cheater to report.
 AdvertAbuse|Please do not abuse ?advert.  If you would like to request an event, type '?help Please host eventname'. For instance, type '?help Please host turretwars!'
@@ -612,7 +621,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Conspiracy &Who|If you seriously need help with anything, follow me.. i know exactly what im doing!
 &Willby &Who|Down, down to hell; and say I sent thee thither: / I, that have neither pity, love, nor fear. / Indeed, 'tis true that Henry told me of; / For I have often heard my mother say / I came into the world with my legs forward: / Had I not reason, think ye, to make haste, / And seek their ruin that usurp'd our right? / The midwife wonder'd and the women cried / 'O, Jesus bless us, he is born with teeth!' / And so I was; which plainly signified / That I should snarl and bite and play the dog. / Then, since the heavens have shaped my body so, Let hell make crook'd my mind to answer it. / I have no brother, I am like no brother; / And this word 'love,' which graybeards call divine, / Be resident in men like one another / And not in me: I am myself alone.
 &Weedle &Who|A Weedle Appears. Soft Gliding Across Wet Grass. Gotta Catchem All.
-&Azov &Who|Azov is the Head of Staff Support for SSCU Trench Wars Staff!
+&Azov &Who|Throw down your guns, and come on out with your hands up. Or come on out, then throw down your guns, whichever way you wanna do it. Just remember the two key elements here: one, guns to be thrown down; two, come on out!
 &Board &Who|Terrs are red, Levs are blue, I shot you ded, PEW PEW PEW
 &Begz &Who|A continuum is something that keeps on going, changing slowly over time, like the continuum of the four seasons. In addition to meaning "a whole made up of many parts," continuum, pronounced "kon-TIN-yoo-um," can describe a range that is always present. For example, in the game, at any time, there are newplayers who are learning warbird, then advancing to javelin, spider, and terrier. Just as the newplayers master their particular ship, they move on to the next one, as other newplayers enter the game and the vets retire.
 &fiS &Who|My responses are limited. You must ask the right questions.
@@ -629,6 +638,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Beasty &who|Maybe I'm off my hinges, but I believe you. That's why I'm gonna let you go. I'm gonna give you to the count of three to get your lousy, lyin', low-down, four flushing carcass OUT my door! 1... 2....
 &Missa &Who|It's not happening.
 &Heaven &Who|Look left. Look right. Heaven bitch slapped you with his mind.
+&Shadowmere &Who|Who am I? I'm no one. Just a spy.
 # Prize related tells.
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
