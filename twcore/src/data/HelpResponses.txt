@@ -639,6 +639,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Missa &Who|It's not happening.
 &Heaven &Who|Look left. Look right. Heaven bitch slapped you with his mind.
 &Shadowmere &Who|Who am I? I'm no one. Just a spy.
+&pod &Who|7:pod> some ppl take it so seriously as if they are a judge irl its like brasef this an online pew pew spaceship game
 # Prize related tells.
 &prizerecharge|The prize number for recharge is 1.
 &prizeenergy|The prize number for energy is 2.
