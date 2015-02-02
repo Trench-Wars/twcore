@@ -1,0 +1,45 @@
+2008-07-26
+Release 1.2
+
+	- fixed bug where application would become unresponsive if the internet connection
+	  was broken
+	- added chat logging (saved to: data/logs/session.log)
+	- added a notify list: when a message containing one of the notify strings is
+	  received, the icon changes color and the application flashes in the taskbar
+	- the zone selection is now maintained after receiving updates from the directory server
+	- added a dialog box to display Continuum-style custom login errors
+	- added ?ignore command - use ?ignore add <name> and ?ignore remove <name> to add and
+	  remove players from the ignore list
+	- icon changes color in taskbar and system tray when a private message is received
+	  and the window is not focused
+	- expands %selfname, %tickname, and %squad
+	- added option to not display timestamps
+	- added enter/leave messages
+	- added player kill messages
+	- displays player's squad in player list and allows sorting by name or squad
+	- added registration form for new users - the lack of registration form prevented
+	  the creation of new accounts on the SSC biller in previous versions (thanks to
+	  CRe> for pointing this out)
+	- fixed CRe>'s email address in About dialog
+	- upgrades to the underlying control protocol (much more efficient - especially
+	  on upgraded ASSS servers)
+
+2008-06-06
+Release 1.1
+
+	- new Windows installer that correctly sets up shortcuts and icons
+	- changed application icon (thanks to CRe> for the artwork)
+	- window flashes in taskbar when not focused and a private message received
+	  (previously only flashed when minimized)
+	- added configuration item to change background color of chat and input
+	  areas
+	- input text color now always matches public text color
+	- chat area auto-scrolls when the scrollbar is completely scrolled
+	- added :: functionality to send message to last user who sent a private
+	  message
+	- added a "minimize to tray" feature
+
+2008-05-30
+Release 1.0
+
+    - Initial release
