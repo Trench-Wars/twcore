@@ -518,51 +518,8 @@ public class elim extends SubspaceBot {
 
     /** Handles the !scorereset (sr) command which resets the stats for the specified ship */
     public void cmd_scorereset(String name, String cmd) {
-        if (!cmd.contains(" ")) {
-            ba.sendPrivateMessage(name, "You have to specify the ship whose scores you want to reset.");
-            return;
-        }
-        if (cmd.indexOf(" ") + 1 >= cmd.length())
-            return;
-        int ship = -1;
-        try {
-            ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
-            if (ship < 1 || ship > 8) {
-                ba.sendPrivateMessage(name, "Invalid ship number, " + ship + "!");
-                return;
-            }
-        } catch (NumberFormatException e) {
-            ba.sendPrivateMessage(name, "Invalid syntax, please use !sr <#>");
-            return;
-        }
-        ElimPlayer ep = null;
-        if (game != null) {
-            ep = game.getPlayer(name);
-            if (ep != null) {
-                /* 
-                 * This piece of code is causing problems at the moment.
-                 * For now, I'm disabling scoreresets when a player is in a game.
-                if (shipType.getNum() == ship && ep.isPlaying() && ep.getStatus() != Status.LAGGED) {
-                    ba.sendPrivateMessage(name, "You cannot do a scorereset while playing a game with the ship you want to reset.");
-                    return;
-                } else
-                    game.do_scorereset(ep, ship);
-                 */
-                ba.sendPrivateMessage(name, "You cannot do a scorereset while playing a game.");
-                return;
-            }
-        }
-        try {
-            ba.SQLQueryAndClose(db, "DELETE FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "'");
-        } catch (SQLException e) {
-            Tools.printStackTrace(e);
-        }
-        /*
-         * See the above comment on the disabled code.
-        if (shipType != null && ship == shipType.getNum() && ep != null && state == State.STARTING)
-            ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
-         */
-        ba.sendPrivateMessage(name, "Your " + ShipType.type(ship) + " scores have been reset.");
+    	ba.sendPrivateMessage(name, "Resetting scores is currently disabled.");
+        return;
     }
 
     public void cmd_setStats(String name, String cmd) {
