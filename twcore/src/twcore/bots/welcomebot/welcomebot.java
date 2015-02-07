@@ -204,7 +204,7 @@ public class welcomebot extends SubspaceBot {
         ba.joinArena(cfg.getString("InitialArena"));
         ready = true;
         ba.ipcSubscribe(IPC_CHANNEL);
-        ba.sendUnfilteredPublicMessage("?chat=newplayer,robodev,staff");
+        ba.sendUnfilteredPublicMessage("?chat=newplayer,robodev,staff,training");
         ba.changeArena("0");
     }
     
@@ -1118,6 +1118,7 @@ public class welcomebot extends SubspaceBot {
             if (e.getValue())
                 ba.sendSmartPrivateMessage(e.getKey(), "New player '" + session.getName() + "' has logged in now " + c + " times. Usage: " + session.getUsage() + " hours");
         ba.sendChatMessage("New player '" + session.getName() + "' has logged in now " + c + " times. Usage: " + session.getUsage() + " hours");
+        ba.sendChatMessage(4, "New player '" + session.getName() + "' has logged in now " + c + " times. Usage: " + session.getUsage() + " hours" );
     }
     
     private void debug(String msg) {
