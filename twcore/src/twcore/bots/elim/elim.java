@@ -1540,7 +1540,7 @@ public class elim extends SubspaceBot {
                     }
                 }
             }
-            updateStats.setInt(22, currentSeason);
+            updateStats.setInt(21, currentSeason);
             updateStats.execute();
             if (debugStatPlayers.contains(name.name.toLowerCase()))
                 debug(debugs);
