@@ -68,6 +68,8 @@ public class ElimGame {
     
     HiderFinder hiderFinder;
     
+    int currentSeason;
+    
     Vector<String> lagChecks;
     HashMap<String, ElimPlayer> players;    // holds any ElimPlayer regardless of activity
     HashMap<String, ElimPlayer> played;     // contains only players who actually played in the current game
@@ -119,6 +121,7 @@ public class ElimGame {
         lagCheck = null;
         lagHandler = new LagHandler(ba, rules, this, "handleLagReport");
         Iterator<Player> i = ba.getPlayingPlayerIterator();
+        currentSeason = rules.getInt("CurrentSeason");
         while (i.hasNext()) {
             Player p = i.next();
             String name = p.getPlayerName();
@@ -623,7 +626,7 @@ public class ElimGame {
     
     /** Prepares the player object for receiving stats and sends sql query */
     private void requestStats(String name) {
-        ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+        ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' AND fnSeason = " + currentSeason + " LIMIT 1");
     }
     
     /** Helper method adds spaces to a String to meet a certain length */

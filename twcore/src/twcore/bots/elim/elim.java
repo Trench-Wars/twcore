@@ -99,6 +99,8 @@ public class elim extends SubspaceBot {
     String[] updateFields;
     boolean shrap;
     boolean arenaLock;
+    
+    int currentSeason; //current season for elim
 
     boolean hiderCheck;
 
@@ -350,7 +352,8 @@ public class elim extends SubspaceBot {
                 showLadder.clearParameters();
                 showLadder.setInt(1, ship);
                 showLadder.setInt(2, 1);
-                showLadder.setInt(3, 5);
+                showLadder.setInt(3, currentSeason);
+                showLadder.setInt(4, 5);
                 ResultSet rs = showLadder.executeQuery();
                 ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
                 while (rs.next())
@@ -381,7 +384,8 @@ public class elim extends SubspaceBot {
                 showLadder.clearParameters();
                 showLadder.setInt(1, ship);
                 showLadder.setInt(2, (rank - 1));
-                showLadder.setInt(3, 3);
+                showLadder.setInt(3, currentSeason);
+                showLadder.setInt(4, 3);
                 ResultSet rs = showLadder.executeQuery();
                 ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
                 while (rs.next())
@@ -462,7 +466,7 @@ public class elim extends SubspaceBot {
             ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !rank <name>:<#> or !rank <#>");
             return;
         }
-        String query = "SELECT fcName as n, fnRank as r, fnShip as s FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 1";
+        String query = "SELECT fcName as n, fnRank as r, fnShip as s FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' AND fnSeason = " + currentSeason + " LIMIT 1";
         ba.SQLBackgroundQuery(db, "rank:" + name + ":" + target + ":" + ship, query);
     }
 
@@ -501,9 +505,9 @@ public class elim extends SubspaceBot {
         }
         if (ship != -1)
             ba.SQLBackgroundQuery(db, "rec:" + name + ":" + ship, "SELECT fnKills as k, fnDeaths as d, fcName as n FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '"
-                    + Tools.addSlashesToString(target) + "' LIMIT 1");
+                    + Tools.addSlashesToString(target) + "' AND fnSeason = " + currentSeason + " LIMIT 1");
         else
-            ba.SQLBackgroundQuery(db, "rec:" + name, "SELECT SUM(fnKills) as k, SUM(fnDeaths) as d, fcName as n FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
+            ba.SQLBackgroundQuery(db, "rec:" + name, "SELECT SUM(fnKills) as k, SUM(fnDeaths) as d, fcName as n FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' AND fnSeason = " + currentSeason + " LIMIT 8");
     }
 
     /** Handles the !remove player command which will spec the player and erase stats */
@@ -602,9 +606,9 @@ public class elim extends SubspaceBot {
         }
         if (ship != -1)
             ba.SQLBackgroundQuery(db, "stats:" + name + ":" + target + ":" + ship, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target)
-                    + "' LIMIT 1");
+                    + "' AND fnSeason = " + currentSeason + " LIMIT 1");
         else
-            ba.SQLBackgroundQuery(db, "allstats:" + name + ":" + target, "SELECT * FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' LIMIT 8");
+            ba.SQLBackgroundQuery(db, "allstats:" + name + ":" + target, "SELECT * FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' AND fnSeason = " + currentSeason + " LIMIT 8");
     }
 
     /** Handles the !status command which displays current bot or game state */
@@ -1039,6 +1043,7 @@ public class elim extends SubspaceBot {
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         // Temporary, until the fix is in place from the new code
         connectionID = connectionID.concat(Integer.toString(random.nextInt(1000)));
+        currentSeason = rules.getInt("CurrentSeason");
         prepareStatements();
         
         // Splash screen related settings and preparation.
@@ -1222,8 +1227,8 @@ public class elim extends SubspaceBot {
                 if (rs.next() && rs.getInt("fnShip") == shipType.getNum()) {
                     game.handleStats(name, rs);
                 } else {
-                    ba.SQLQueryAndClose(db, "INSERT INTO tblElim__Player (fcName, fnShip) VALUES('" + Tools.addSlashesToString(name) + "', " + shipType.getNum() + ")");
-                    ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + shipType.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+                    ba.SQLQueryAndClose(db, "INSERT INTO tblElim__Player (fcName, fnShip, fnSeason) VALUES('" + Tools.addSlashesToString(name) + "', " + shipType.getNum() + "," + currentSeason + ")");
+                    ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + shipType.getNum() + " AND fcName = '" + Tools.addSlashesToString(name) + "' AND fnSeason =" + currentSeason + " LIMIT 1");
                 }
             } else if (id.startsWith("stats:")) {
                 String[] args = id.split(":");
@@ -1360,9 +1365,9 @@ public class elim extends SubspaceBot {
             ba.closePreparedStatement(db, connectionID, showLadder);
         }
 
-        updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ?");
-        storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating) VALUES(?, ?, ?, ?, ?, ?, ?)");
-        showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? ORDER BY fnRank ASC LIMIT ?");
+        updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ? AND fnSeason = ?");
+        storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating, fnSeason) VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
+        showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? AND fnSeason = ? ORDER BY fnRank ASC LIMIT ?");
         
         if (!checkStatements(false)) {
             debug("Update was null.");
@@ -1485,6 +1490,7 @@ public class elim extends SubspaceBot {
             storeGame.setInt(5, winner.getScores()[1]);
             storeGame.setInt(6, players);
             storeGame.setInt(7, aveRating);
+            storeGame.setInt(8, currentSeason);
             storeGame.execute();
         } catch (SQLException e) {
             Tools.printStackTrace("Elim store game error!", e);
@@ -1534,6 +1540,7 @@ public class elim extends SubspaceBot {
                     }
                 }
             }
+            updateStats.setInt(22, currentSeason);
             updateStats.execute();
             if (debugStatPlayers.contains(name.name.toLowerCase()))
                 debug(debugs);
@@ -1550,7 +1557,7 @@ public class elim extends SubspaceBot {
     private void updateRanks() {
         try {
             ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE (fnKills + fnDeaths) > " + INITIAL_RATING + " AND fnShip = " + shipType.getNum()
-                    + " ORDER BY fnRating DESC");
+                    + " AND fnSeason = "+ currentSeason + "ORDER BY fnRating DESC");
             ba.SQLClose(rs);
         } catch (SQLException e) {
             Tools.printStackTrace(e);

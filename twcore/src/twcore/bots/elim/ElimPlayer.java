@@ -57,9 +57,11 @@ public class ElimPlayer {
     private ElimGame game;
     private int ship, consecutiveKills, lagouts, freq, specAt, lastStreak;
     private long lastKill, lastDeath, lastShot;
+    private int currentSeason;
     
     public ElimPlayer(BotAction act, ElimGame elimGame, String name, int ship, int deaths) {
         ba = act;
+        currentSeason = ba.getBotSettings().getInt("CurrentSeason");
         this.name = name;
         spawn = null;
         bounds = null;
@@ -74,7 +76,7 @@ public class ElimPlayer {
         status = Status.SPAWN;
         game = elimGame;
         stats = new ElimStats(ship);
-        ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+        ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' AND fnSeason = " + currentSeason + " LIMIT 1");
     }
     
     /**

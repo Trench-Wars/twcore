@@ -60,7 +60,7 @@ public class ElimLeaderBoard {
     private static final int[] OFFSET_TEXT      = {-150,  310}; // Offset for optional text at bottom (x, y).
     private static final int[] SPACING          = {  10,   47}; // Horizontal and vertical spacing.
     
-    private static final String ELIM_QUERY      = "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= 1 ORDER BY fnRank ASC LIMIT ?";
+    private static final String ELIM_QUERY = "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= 1 AND fnSeason = ? ORDER BY fnRank ASC LIMIT ?";
     private static final String BOTTOM_TEXT     = "Type \":Robo Ref:!disable\" to disable this.";
     
     private BotAction m_botAction;                      // Original BotAction, used for several methods.
@@ -77,6 +77,8 @@ public class ElimLeaderBoard {
     private String m_connectionID;                      // SQL Connection ID name.
     private int m_displayTime;                          // Display length of each splash window in milliseconds.
     private int m_displayCount;                         // Amount of displays to be shown to a player.
+    
+    private int currentSeason;
     
     /**
      * Main constructor.<br>
@@ -105,6 +107,8 @@ public class ElimLeaderBoard {
         BotSettings cfg = m_botAction.getBotSettings();
         m_displayTime = cfg.getInt("DisplayTime");          // Display time in milliseconds.
         m_displayCount = cfg.getInt("DisplayCount");        // Amount of different displays to display.
+        
+        currentSeason = cfg.getInt("CurrentSeason");
         
         m_splashScreens = new ArrayList<SplashScreen>();    // Place-holder for the different splash screens.
         
@@ -360,7 +364,8 @@ public class ElimLeaderBoard {
             try {
                 m_updateStats.clearParameters();
                 m_updateStats.setInt(1, shipType);
-                m_updateStats.setInt(2, m_shipCount.get(shipType));
+                m_updateStats.setInt(2, currentSeason);
+                m_updateStats.setInt(3, m_shipCount.get(shipType));
                 
                 ResultSet rs = m_updateStats.executeQuery();
                 
