@@ -101,6 +101,8 @@ public class elim extends SubspaceBot {
     boolean arenaLock;
     
     int currentSeason; //current season for elim
+    
+    private ArrayList<String> elimOps;
 
     boolean hiderCheck;
 
@@ -116,6 +118,8 @@ public class elim extends SubspaceBot {
     public elim(BotAction botAction) {
         super(botAction);
         ba = botAction;
+        elimOps = new ArrayList<String>();
+        loadOps();
         random = new Random();
     }
 
@@ -522,8 +526,55 @@ public class elim extends SubspaceBot {
 
     /** Handles the !scorereset (sr) command which resets the stats for the specified ship */
     public void cmd_scorereset(String name, String cmd) {
-    	ba.sendPrivateMessage(name, "Resetting scores is currently disabled.");
-        return;
+    	if(!isElimOp(name)) {
+    		ba.sendPrivateMessage(name, "Resetting scores is currently disabled.");
+        	return;
+    	}
+        
+    	String[] params = cmd.split(":");
+    	if(params.length != 2) return;
+
+        int ship = -1;
+        try {
+            ship = Integer.valueOf(params[1]);
+            if (ship < 1 || ship > 8) {
+                ba.sendPrivateMessage(name, "Invalid ship number, " + ship + "!");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            ba.sendPrivateMessage(name, "Invalid syntax, please use !scorerreset <name>:<ship #>");
+            return;
+        }
+        ElimPlayer ep = null;
+        if (game != null) {
+            ep = game.getPlayer(params[0]);
+            if (ep != null) {
+                /* 
+                 * This piece of code is causing problems at the moment.
+                 * For now, I'm disabling scoreresets when a player is in a game.
+                if (shipType.getNum() == ship && ep.isPlaying() && ep.getStatus() != Status.LAGGED) {
+                    ba.sendPrivateMessage(name, "You cannot do a scorereset while playing a game with the ship you want to reset.");
+                    return;
+                } else
+                    game.do_scorereset(ep, ship);
+                 */
+                ba.sendPrivateMessage(name, "You cannot do a scorereset while player is playing a game.");
+                return;
+            }
+        }
+        try {
+            ba.SQLQueryAndClose(db, "DELETE FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(params[0]) + "' AND fnSeason = " + currentSeason);
+        } catch (SQLException e) {
+            Tools.printStackTrace(e);
+        }
+        /*
+         * See the above comment on the disabled code.
+        if (shipType != null && ship == shipType.getNum() && ep != null && state == State.STARTING)
+            ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
+         */
+        ba.sendPrivateMessage(params[0], "Your " + ShipType.type(ship) + " scores have been reset.");    
+        ba.sendPrivateMessage(name, params[0] + "'s " + ShipType.type(ship) + " scores have been reset.");    
+    
     }
 
     public void cmd_setStats(String name, String cmd) {
@@ -1120,8 +1171,8 @@ public class elim extends SubspaceBot {
                 cmd_stats(name, msg);
             else if (cmd.startsWith("!streak"))
                 cmd_streak(name, msg);
-            else if (cmd.startsWith("!scorereset") || cmd.startsWith("!sr"))
-                cmd_scorereset(name, msg);
+            else if (cmd.startsWith("!scorereset "))
+                cmd_scorereset(name, msg.substring(12));
             else if (cmd.startsWith("!splash"))
                 cmd_splash(name, msg);
         }
@@ -1562,5 +1613,15 @@ public class elim extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
+    }
+
+    private boolean isElimOp(String name) {
+    	return elimOps.contains(name.toLowerCase());
+    }
+    
+    private void loadOps() {
+    	String[] eOps = ba.getBotSettings().getString("ElimOps").split(",");
+    	for(String op:eOps)
+    		elimOps.add(op);
     }
 }
