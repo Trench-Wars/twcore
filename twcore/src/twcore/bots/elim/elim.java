@@ -1608,7 +1608,7 @@ public class elim extends SubspaceBot {
     private void updateRanks() {
         try {
             ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE (fnKills + fnDeaths) > " + INITIAL_RATING + " AND fnShip = " + shipType.getNum()
-                    + " AND fnSeason = "+ currentSeason + "ORDER BY fnRating DESC");
+                    + " AND fnSeason = "+ currentSeason + " ORDER BY fnRating DESC");
             ba.SQLClose(rs);
         } catch (SQLException e) {
             Tools.printStackTrace(e);
