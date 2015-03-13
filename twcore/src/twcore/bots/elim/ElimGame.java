@@ -767,7 +767,7 @@ public class ElimGame {
             this.name = name;
             time = System.currentTimeMillis();
             ba.scheduleTask(this, MAX_LAG_TIME * Tools.TimeInMillis.SECOND);
-            ba.sendSmartPrivateMessage(name, "It appears you have lagged out! You have " + timeLeft() + " seconds to return using !lagout.");
+            ba.sendSmartPrivateMessage(name, "It appears you have lagged out! You have " + timeLeft() + " seconds to return using !lagout. (+1 death added)");
         }
         
         /** Record game loss */

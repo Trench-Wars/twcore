@@ -187,13 +187,26 @@ public class ElimPlayer {
     }
     
     public boolean handleLagout() {
+    	//Lagout counts as +1 death
+    	stats.handleDeath();
+    	
+    	//Check if player has reached final number of deaths..
+        if (game.bot.gameType == elim.ELIM && stats.getStat(StatType.DEATHS) >= specAt) {
+            status = Status.OUT;
+            stats.handleLoss(); //Reset win streak
+            ba.spec(name);
+            ba.spec(name);
+            lagouts = 0; //Remaining lagouts set to 0 so player can not return.
+            game.removePlayer(this);
+        }
+        
         if (getRemainingLagouts() > 0) {
             status = Status.LAGGED;
             cancelTasks();
             return false;
         } else {
             status = Status.OUT;
-            ba.sendArenaMessage(name + " is out. " + getScore() + " (Too many lagouts)");
+            ba.sendArenaMessage(name + " is out. " + getScore() + " (Lagged Out)");
             saveLoss();
             return true;
         }
