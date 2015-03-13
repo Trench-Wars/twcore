@@ -198,6 +198,8 @@ public class ElimPlayer {
             ba.spec(name);
             lagouts = 0; //Remaining lagouts set to 0 so player can not return.
             game.removePlayer(this);
+        } else {
+        	ba.sendArenaMessage(name + " lagged out! (+1 death)");
         }
         
         if (getRemainingLagouts() > 0) {
