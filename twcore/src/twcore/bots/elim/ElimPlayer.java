@@ -8,6 +8,7 @@ import twcore.bots.elim.ElimGame.GameState;
 import twcore.bots.elim.StatType;
 import twcore.core.BotAction;
 import twcore.core.events.PlayerPosition;
+import twcore.core.lvz.Objset;
 import twcore.core.util.Tools;
 
 /**
@@ -58,6 +59,15 @@ public class ElimPlayer {
     private int ship, consecutiveKills, lagouts, freq, specAt, lastStreak;
     private long lastKill, lastDeath, lastShot;
     private int currentSeason;
+    private Objset objset;
+    
+    public static int LVZ_KILL_HUNDREDS = 1940;
+    public static int LVZ_KILL_TENS = 1950;
+    public static int LVZ_KILL_ONES = 1960;    
+    public static int LVZ_DEATH_HUNDREDS = 1970;
+    public static int LVZ_DEATH_TENS = 1980;
+    public static int LVZ_DEATH_ONES = 1990;
+    
     
     public ElimPlayer(BotAction act, ElimGame elimGame, String name, int ship, int deaths) {
         ba = act;
@@ -76,6 +86,7 @@ public class ElimPlayer {
         status = Status.SPAWN;
         game = elimGame;
         stats = new ElimStats(ship);
+        objset = ba.getObjectSet();
         ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' AND fnSeason = " + currentSeason + " LIMIT 1");
     }
     
@@ -95,6 +106,7 @@ public class ElimPlayer {
                 ba.sendArenaMessage("Kill Joy! " + killer.name + " terminates the (" + lastStreak + ":0) kill streak of " + name + "!", Tools.Sound.INCONCEIVABLE);
         }
         stats.handleDeath();
+        updatePersonalScoreLVZ();
         if (game.bot.gameType == elim.ELIM && stats.getStat(StatType.DEATHS) >= specAt) {
             status = Status.OUT;
             stats.handleLoss();
@@ -118,6 +130,7 @@ public class ElimPlayer {
      */
     public int handleKill(ElimPlayer dead) {
         stats.handleKill();
+        updatePersonalScoreLVZ();
         if (System.currentTimeMillis() - lastKill < (MULTI_KILL_TIME * Tools.TimeInMillis.SECOND)){
             consecutiveKills++;
             multiKill();
@@ -189,6 +202,7 @@ public class ElimPlayer {
     public boolean handleLagout() {
     	//Lagout counts as +1 death
     	stats.handleDeath();
+    	updatePersonalScoreLVZ();
     	
     	//Check if player has reached final number of deaths..
         if (game.bot.gameType == elim.ELIM && stats.getStat(StatType.DEATHS) >= specAt) {
@@ -343,6 +357,7 @@ public class ElimPlayer {
     
     /** Lagout command execution */
     public void lagin() {
+        updatePersonalScoreLVZ();
         status = Status.SPAWN;
         ba.setShip(name, game.ship.getNum());
         if (ba.getFrequencySize(getFreq()) == 0)
@@ -484,5 +499,46 @@ public class ElimPlayer {
             case 5: ba.sendArenaMessage(name + " - Sextuple kill!", Tools.Sound.CRYING); break;
             case 6: ba.sendArenaMessage(name + " - Septuple kill!", Tools.Sound.GAME_SUCKS); break;      
         }
+    }
+    
+    /**
+     * Resets all personal score LVZ to the starting state (0-0)
+     */
+    public void resetPersonalScoreLVZ() {
+        if (ba.getPlayer(name) == null)
+            return;
+        objset.hideAllObjects(ba.getPlayer(name).getPlayerID());
+        objset.showObject(ba.getPlayer(name).getPlayerID(), LVZ_KILL_ONES);
+        objset.showObject(ba.getPlayer(name).getPlayerID(), LVZ_DEATH_ONES);
+        ba.setObjects(ba.getPlayer(name).getPlayerID());
+    }
+    
+    /**
+     * Updates personal score LVZ after each kill or death.
+     */
+    public void updatePersonalScoreLVZ() {
+        if (ba.getPlayer(name) == null)
+            return;
+        int numdeaths = getDeaths();        
+        int numkills = getKills();
+        String deaths = Tools.rightString("" + numdeaths, 3);
+        String kills = Tools.rightString("" + numkills, 3);
+        
+        objset.hideAllObjects(ba.getPlayer(name).getPlayerID());
+        
+        if(numkills >= 100)
+            objset.showObject(ba.getPlayer(name).getPlayerID(), LVZ_KILL_HUNDREDS + Integer.parseInt("" + kills.charAt(0)));
+        if(numkills >= 10)
+            objset.showObject(ba.getPlayer(name).getPlayerID(), LVZ_KILL_TENS + Integer.parseInt("" + kills.charAt(1)));
+        objset.showObject(ba.getPlayer(name).getPlayerID(), LVZ_KILL_ONES + Integer.parseInt("" + kills.charAt(2)));
+        
+        if(numdeaths >= 100)
+            objset.showObject(ba.getPlayer(name).getPlayerID(), LVZ_DEATH_HUNDREDS + Integer.parseInt("" + deaths.charAt(0)));
+        if(numdeaths >= 10)
+            objset.showObject(ba.getPlayer(name).getPlayerID(), LVZ_DEATH_TENS + Integer.parseInt("" + deaths.charAt(1)));
+        
+        objset.showObject(ba.getPlayer(name).getPlayerID(), LVZ_DEATH_ONES + Integer.parseInt("" + deaths.charAt(2)));
+        
+        ba.setObjects(ba.getPlayer(name).getPlayerID());        
     }
 }
