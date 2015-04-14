@@ -159,8 +159,8 @@ public final class birdelim extends SubspaceBot implements LagoutMan.ExpiredLago
     };
     private final static short[] m_safeCoords = {
          42,  77, //1
-        236, 581, //2
-        236,  77, //3
+        230, 581, //2
+        230,  77, //3
          42, 581, //4
         135,  77, //5
         135, 581, //6
@@ -177,8 +177,8 @@ public final class birdelim extends SubspaceBot implements LagoutMan.ExpiredLago
     };
     private final static int[] m_goCoords = {
          42,  81, //1
-        236, 577, //2
-        236,  81, //3
+        230, 577, //2
+        230,  81, //3
          42, 577, //4
         135,  81, //5
         135, 577, //6
@@ -208,6 +208,7 @@ public final class birdelim extends SubspaceBot implements LagoutMan.ExpiredLago
         576, 335,
         452, 501
     };
+
 
 
     /** Creates a new instance of kimbot **/
