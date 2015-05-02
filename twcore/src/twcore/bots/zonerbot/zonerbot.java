@@ -96,7 +96,7 @@ public class zonerbot extends SubspaceBot {
 	/** Handles the LoggedOn event **/
     public void handleEvent(LoggedOn event) {
         ba.joinArena(ba.getBotSettings().getString("InitialArena"));
-        ba.sendUnfilteredPublicMessage("?chat=robodev");
+        ba.sendUnfilteredPublicMessage("?chat=robodev,events");
         ba.ipcSubscribe(ZONE_CHANNEL);
         lastPeriodic = System.currentTimeMillis() - (PER_DELAY * Tools.TimeInMillis.MINUTE);
         ZONE_ON_LOAD = true;
@@ -376,16 +376,19 @@ public class zonerbot extends SubspaceBot {
                 if (sound > -1) {
                     ba.sendZoneMessage(zone, sound);
                 	announceMessageBot(zone);
+                	ba.sendChatMessage(2, zone);
                 }
                 else {
                     ba.sendZoneMessage(zone);
                     announceMessageBot(zone);
+                    ba.sendChatMessage(2, zone);
                 }
             } else
                 ba.sendSmartPrivateMessage(name, "Sound " + sound + " is prohibited from use.");
         } else {
             ba.sendZoneMessage(zone);
         	announceMessageBot(zone);
+        	ba.sendChatMessage(2, zone);
         }
     }
     
