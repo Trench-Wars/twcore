@@ -1391,7 +1391,7 @@ public class elim extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Vote counted for: " + ShipType.type(vote).toString());
             }
         } else if (voteType == VoteType.DEATHS) {
-            if (vote > minDeaths[shipType.getNum() - 1] && vote <= maxDeaths[shipType.getNum() - 1]) {
+            if (vote >= minDeaths[shipType.getNum() - 1] && vote <= maxDeaths[shipType.getNum() - 1]) {
                 votes.put(name, vote);
                 ba.sendPrivateMessage(name, "Vote counted for: " + vote + " deaths");
             } else if (allowRace && vote >= 15 && vote <= 30) {
