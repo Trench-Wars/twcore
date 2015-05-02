@@ -124,9 +124,6 @@ public class elim extends SubspaceBot {
         elimOps = new ArrayList<String>();
         loadOps();
         random = new Random();
-        
-        minDeaths = rules.getIntArray("MinDeaths", ",");
-        maxDeaths = rules.getIntArray("MaxDeaths", ",");
     }
 
     /** Prevents the game from starting usually due to lack of players */
@@ -1101,6 +1098,10 @@ public class elim extends SubspaceBot {
         // Temporary, until the fix is in place from the new code
         connectionID = connectionID.concat(Integer.toString(random.nextInt(1000)));
         currentSeason = rules.getInt("CurrentSeason");
+        
+        minDeaths = rules.getIntArray("MinDeaths", ",");
+        maxDeaths = rules.getIntArray("MaxDeaths", ",");
+        
         prepareStatements();
         
         // Splash screen related settings and preparation.
