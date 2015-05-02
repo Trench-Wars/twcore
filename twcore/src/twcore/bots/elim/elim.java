@@ -102,6 +102,9 @@ public class elim extends SubspaceBot {
     
     int currentSeason; //current season for elim
     
+    int minDeaths[];
+    int maxDeaths[];
+    
     private ArrayList<String> elimOps;
 
     boolean hiderCheck;
@@ -121,6 +124,9 @@ public class elim extends SubspaceBot {
         elimOps = new ArrayList<String>();
         loadOps();
         random = new Random();
+        
+        minDeaths = rules.getIntArray("MinDeaths", ",");
+        maxDeaths = rules.getIntArray("MaxDeaths", ",");
     }
 
     /** Prevents the game from starting usually due to lack of players */
@@ -777,7 +783,7 @@ public class elim extends SubspaceBot {
             shipType = ShipType.type(ship);
             votes.clear();
         } else if (voteType == VoteType.DEATHS) {
-            int[] count = new int[rules.getInt("MaxDeaths") + 20];
+            int[] count = new int[maxDeaths[shipType.getNum() - 1] + 20];
             for (int i = 0; i < count.length; i++)
                 count[i] = 0;
             for (Integer i : votes.values())
@@ -786,7 +792,7 @@ public class elim extends SubspaceBot {
             int high = count[0];
             int val = 1;
             wins.add(val);
-            for (int i = 0; i < (rules.getInt("MaxDeaths") + 20); i++) {
+            for (int i = 0; i < (maxDeaths[shipType.getNum() - 1] + 20); i++) {
                 if (count[i] > high) {
                     wins.clear();
                     high = count[i];
@@ -950,9 +956,9 @@ public class elim extends SubspaceBot {
         } else if (voteType == VoteType.SHIP) {
             voteType = VoteType.DEATHS;
             if (allowRace)
-                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + " or 15-30 for KillRace" + ")");
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + " or 15-30 for KillRace" + ")");
             else
-                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (1-" + rules.getInt("MaxDeaths") + ")");
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + ")");;
             ba.sendChatMessage(2, Tools.shipName(shipType.getNum()) + " elim is beginning now.");
             ba.sendChatMessage(3, "ELIM: " + Tools.shipName(shipType.getNum()) + " elim now beginning.");
         } else if (voteType == VoteType.DEATHS) {
@@ -1090,7 +1096,7 @@ public class elim extends SubspaceBot {
         state = State.IDLE;
         voteType = VoteType.NA;
         gameType = ELIM;
-        allowRace = true;
+        allowRace = false;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         // Temporary, until the fix is in place from the new code
         connectionID = connectionID.concat(Integer.toString(random.nextInt(1000)));
@@ -1385,7 +1391,7 @@ public class elim extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Vote counted for: " + ShipType.type(vote).toString());
             }
         } else if (voteType == VoteType.DEATHS) {
-            if (vote > 0 && vote <= rules.getInt("MaxDeaths")) {
+            if (vote > minDeaths[shipType.getNum() - 1] && vote <= maxDeaths[shipType.getNum() - 1]) {
                 votes.put(name, vote);
                 ba.sendPrivateMessage(name, "Vote counted for: " + vote + " deaths");
             } else if (allowRace && vote >= 15 && vote <= 30) {
