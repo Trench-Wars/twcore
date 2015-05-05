@@ -895,7 +895,8 @@ public class zonerbot extends SubspaceBot {
                         zoneMessageSpam(splitString(adv, LINE_LENGTH), advert.getSound());
                     else {
                         ba.sendZoneMessage(adv, advert.getSound());
-                        announceMessageBot(adv);                        
+                        announceMessageBot(adv);
+                        ba.sendChatMessage(2, adv);
                     }
 
                     advertTimer = new AdvertTimer(ADVERT_DELAY);
@@ -1374,13 +1375,16 @@ public class zonerbot extends SubspaceBot {
                 if (sound > -1) {
                     ba.sendZoneMessage(msg[0], sound);
                     announceMessageBot(msg[0]);
+                    ba.sendChatMessage(2, msg[0]);
                 } else {
                     ba.sendZoneMessage(msg[0]);
                     announceMessageBot(msg[0]);
+                    ba.sendChatMessage(2, msg[0]);
                 }
             } else {
                 ba.sendZoneMessage(msg[i]);
-                announceMessageBot(msg[0]);
+                announceMessageBot(msg[i]);
+                ba.sendChatMessage(2, msg[i]);
             }
         }
     }
