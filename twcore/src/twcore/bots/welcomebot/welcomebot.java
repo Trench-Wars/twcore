@@ -509,14 +509,14 @@ public class welcomebot extends SubspaceBot {
             }
 
             if (trusted.containsKey(name) || ops.isZH(name)) {
-                if (cmd.startsWith("!where "))
-                    cmd_where(name, msg);
-                else if (cmd.startsWith("!newplayer "))
+                if (cmd.startsWith("!newplayer "))
                     cmd_newplayer(name, msg);
             }
             // Staff Commands
             if (ops.isZH(name)) {
-                if (cmd.startsWith("!next "))
+                if (cmd.startsWith("!where "))
+                    cmd_where(name, msg);
+                else if (cmd.startsWith("!next "))
                     cmd_next(name, msg);
                 else if (cmd.startsWith("!end "))
                     cmd_end(name, msg);
@@ -653,10 +653,10 @@ public class welcomebot extends SubspaceBot {
         if (trusted.containsKey(name))
             msgs.add("| !alert                -- Toggles new player alert messages.                    |");
         if (trusted.containsKey(name) || ops.isZH(name))
-            msgs.add("| !where <name>         -- Gives the current coordinates for <name> if possible. |");
-        msgs.add("| !newplayer <name>     -- Sends new player helper objon to <name>.              |");
+            msgs.add("| !newplayer <name>     -- Sends new player helper objon to <name>.              |");
         if (ops.isZH(name)) {
             msgs.add("|  ~ZH~                                                                         -+");
+            msgs.add("| !where <name>         -- Gives the current coordinates for <name> if possible. |");
             msgs.add("| !next <name>          -- Sends the next helper objon to <name>.                |");
             msgs.add("| !end <name>           -- Removes all objons for <name>.                        |");
         }
