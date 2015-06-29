@@ -511,13 +511,13 @@ public class welcomebot extends SubspaceBot {
             if (trusted.containsKey(name) || ops.isZH(name)) {
                 if (cmd.startsWith("!newplayer "))
                     cmd_newplayer(name, msg);
+                else if (cmd.startsWith("!next "))
+                    cmd_next(name, msg);
             }
             // Staff Commands
             if (ops.isZH(name)) {
                 if (cmd.startsWith("!where "))
                     cmd_where(name, msg);
-                else if (cmd.startsWith("!next "))
-                    cmd_next(name, msg);
                 else if (cmd.startsWith("!end "))
                     cmd_end(name, msg);
             }
