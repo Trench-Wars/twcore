@@ -654,10 +654,10 @@ public class welcomebot extends SubspaceBot {
             msgs.add("| !alert                -- Toggles new player alert messages.                    |");
         if (trusted.containsKey(name) || ops.isZH(name))
             msgs.add("| !newplayer <name>     -- Sends new player helper objon to <name>.              |");
+        msgs.add("| !next <name>          -- Sends the next helper objon to <name>.                |");
         if (ops.isZH(name)) {
             msgs.add("|  ~ZH~                                                                         -+");
             msgs.add("| !where <name>         -- Gives the current coordinates for <name> if possible. |");
-            msgs.add("| !next <name>          -- Sends the next helper objon to <name>.                |");
             msgs.add("| !end <name>           -- Removes all objons for <name>.                        |");
         }
 
