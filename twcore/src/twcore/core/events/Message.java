@@ -51,8 +51,8 @@ public class Message extends SubspaceEvent {
     public Message(ByteArray array) {
         int nameEnding;
         int nameBeginning;
-        String stop = "0";
-        try {
+        //String stop = "0";
+        //try {
             m_chatNumber = 0;
             m_messager = null;
             m_messageType = (1 << (int) array.readByte(1));
@@ -67,25 +67,25 @@ public class Message extends SubspaceEvent {
                         if (m_message.startsWith(alertCommands[i] + ':')) {
                             m_messageType = ALERT_MESSAGE;
                             m_alertCommandType = alertCommands[i];
-                            stop += "1";
+                            //stop += "1";
                             break;
                         }
                     }
                 } else if(m_message.startsWith("IP:") && m_message.contains("TypedName:")) {
-                    stop += "A";
+                    //stop += "A";
                     // Trim spaces down in TypedName to make it all match the other server commands.
                     String[] message = new String[3];
                     message[0] = m_message.substring(0, m_message.indexOf("TypedName:") + 10);
                     message[1] = m_message.substring(m_message.indexOf("TypedName:") + 10, m_message.indexOf("  Demo:"));
                     message[2] = m_message.substring(m_message.indexOf("  Demo:"));
                     
-                    stop += "B";
+                    //stop += "B";
                     
                     m_message = message[0] + message[1].replaceAll(" +", " ") + message[2];
                     
-                    stop += "C";
+                    //stop += "C";
                 }
-                stop += "2";
+                //stop += "2";
             } else {
                 // The parsing of the name from the remote private message, private message, and chat message
                 // could possibly inaccurate.  The message isn't meant to have the name parsed out of it.
@@ -95,47 +95,55 @@ public class Message extends SubspaceEvent {
                             if (m_message.startsWith(alertCommands[i] + ':')) {
                                 m_messageType = ALERT_MESSAGE;
                                 m_alertCommandType = alertCommands[i];
-                                stop += "3";
+                                //stop += "3";
                                 break;
                             }
                         }
                     }
 
-                    stop += "4";
+                    //stop += "4";
                     if (m_messageType == REMOTE_PRIVATE_MESSAGE) {
-                        nameBeginning = m_message.indexOf('(');
+                        nameBeginning = m_message.indexOf("(");
                         nameEnding = m_message.indexOf(")>");
+                        if (nameBeginning < 0 || nameEnding < 0)
+                            // Something is borked, and will not be meaningful to pass on; abort
+                            return;
                         m_messager = m_message.substring(nameBeginning + 1, nameEnding);
                         m_message = m_message.substring(nameEnding + 2);
-                        stop += "5";
+                        //stop += "5";
                     } else {
-                        nameBeginning = m_message.indexOf('(');
+                        nameBeginning = m_message.indexOf("(");
                         nameEnding = m_message.indexOf(") (");
+                        if (nameBeginning < 0 || nameEnding < 0)
+                            // Something is borked, and will not be meaningful to pass on; abort
+                            return;
                         m_messager = m_message.substring(nameBeginning + 1, nameEnding);
                         m_message = m_message.substring(nameEnding + 2);
-                        stop += "6";
+                        //stop += "6";
                     }
                 } else if (m_messageType == CHAT_MESSAGE) {
-                    stop += "7";
+                    //stop += "7";
                     m_chatNumber = Integer.valueOf(m_message.substring(0, 1)).intValue();
                     nameBeginning = 2;
                     nameEnding = m_message.indexOf("> ");
-                    if (nameEnding == -1) {
+                    if (nameEnding < 0) {
                         m_messager = m_message.substring(nameBeginning);
                         m_message = "";
-                        stop += "8";
+                        //stop += "8";
                     } else {
+                        if (nameEnding < 0)
+                            return;
                         m_messager = m_message.substring(nameBeginning, nameEnding);
                         m_message = m_message.substring(nameEnding + 2);
-                        stop += "9";
+                        //stop += "9";
                     }
                 }
             }
-        } catch (StringIndexOutOfBoundsException e) {
+        /*} catch (StringIndexOutOfBoundsException e) {
             System.out.println("OutOfBounds: " + stop);
             Tools.printLog("OutOfBounds: " + stop);
             Tools.printStackTrace("OutOfBounds: " + stop, e);
-        }
+        }*/
     }
 
     /**
