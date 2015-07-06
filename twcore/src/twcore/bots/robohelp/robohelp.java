@@ -989,7 +989,6 @@ public class robohelp extends SubspaceBot {
         if (!opList.isBot(playerName))
             return;
         String[] responses;
-        HelpCall helpCall;
         PlayerInfo info;
         
         String lastName = lastHelpRequestName;
@@ -1014,8 +1013,13 @@ public class robohelp extends SubspaceBot {
         if (info == null || info.getLastCall() == -1)
             m_botAction.sendRemotePrivateMessage(playerName, "No response was given.");
         else {
-            helpCall = (HelpCall) callList.get(info.getLastCall());
-            responses = helpCall.getAllResponses();
+            try {
+                HelpCall helpCall = (HelpCall) callList.get(info.getLastCall());
+                responses = helpCall.getAllResponses();
+            } catch (ClassCastException e) {
+                m_botAction.sendRemotePrivateMessage(playerName, "That was not a help call, so no response was given.");
+                return;
+            }
             if (responses == null)
                 m_botAction.sendRemotePrivateMessage(playerName, "No response was given.");
             else {
