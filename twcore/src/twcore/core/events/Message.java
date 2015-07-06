@@ -51,6 +51,12 @@ public class Message extends SubspaceEvent {
     public Message(ByteArray array) {
         int nameEnding;
         int nameBeginning;
+        
+        // String stop and the try block are DEBUG code.
+        // "04" would occasionally be fired, with a StringIndexOutOfBoundsException of -10.
+        // Can't trace why a negative number other than -1 would be returned by indexOf. Possible Java bug,
+        // maybe related to indexOf(char). No information available online, as far as I can see. -qan 7/6/15
+        
         //String stop = "0";
         //try {
             m_chatNumber = 0;
@@ -131,8 +137,6 @@ public class Message extends SubspaceEvent {
                         m_message = "";
                         //stop += "8";
                     } else {
-                        if (nameEnding < 0)
-                            return;
                         m_messager = m_message.substring(nameBeginning, nameEnding);
                         m_message = m_message.substring(nameEnding + 2);
                         //stop += "9";
