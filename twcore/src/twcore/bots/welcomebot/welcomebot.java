@@ -513,6 +513,8 @@ public class welcomebot extends SubspaceBot {
                     cmd_newplayer(name, msg);
                 else if (cmd.startsWith("!next "))
                     cmd_next(name, msg);
+                else if (cmd.equals("!list"))
+                    cmd_list(name);
             }
             // Staff Commands
             if (ops.isZH(name)) {
@@ -545,8 +547,6 @@ public class welcomebot extends SubspaceBot {
                     cmd_addTrusted(name, msg);
                 else if (cmd.startsWith("!untrust "))
                     cmd_remTrusted(name, msg);
-                else if (cmd.equals("!list"))
-                    cmd_list(name);
                 else if (cmd.equals("!trusted"))
                     cmd_trusted(name);
                 else if (cmd.startsWith("!trusted "))
@@ -655,6 +655,7 @@ public class welcomebot extends SubspaceBot {
         if (trusted.containsKey(name) || ops.isZH(name))
             msgs.add("| !newplayer <name>     -- Sends new player helper objon to <name>.              |");
         msgs.add("| !next <name>          -- Sends the next helper objon to <name>.                |");
+        msgs.add("| !list                 -- Lists currently active sessions (new players).        |");
         if (ops.isZH(name)) {
             msgs.add("|  ~ZH~                                                                         -+");
             msgs.add("| !where <name>         -- Gives the current coordinates for <name> if possible. |");
@@ -674,7 +675,6 @@ public class welcomebot extends SubspaceBot {
 
         if (ops.isSmod(name) || grantedOps.contains(name)) {
             msgs.add("+- ~Ops~                                                                        -+");
-            msgs.add("| !list                 -- Lists currently active sessions (new players).        |");
             msgs.add("| !debug                -- Enables or disables debug messages being sent to you. |");
             msgs.add("| !trust <name>         -- Adds <name> to the trusted players list.              |");
             msgs.add("| !untrust <name>       -- Removes <name> from the trusted players list.         |");
