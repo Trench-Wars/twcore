@@ -6324,7 +6324,7 @@ public class distensionbot extends SubspaceBot {
             public void run() {
                 m_beginDelayedShutdown = true;
                 // If in ballgame mode or intermission, save immediately
-                if( m_canScoreGoals || (!m_canScoreGoals && flagTimer.isRunning()) ) {
+                if( m_canScoreGoals || (!m_canScoreGoals && (flagTimer == null || flagTimer.isRunning())) ) {
                     cmdSaveData( m_botAction.getBotName(), "" );
                 }
                 if( DEBUG )
