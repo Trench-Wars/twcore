@@ -267,7 +267,7 @@ public class HubBot extends SubspaceBot {
         } catch (IOException ioe) {
             System.err.println("FATAL: IO Exception occured while initializing operators from operators.cfg: "+ ioe.getMessage());
             System.err.println("FATAL: No operators loaded, shutting down TWCore.");
-            m_botAction.die();
+            m_botAction.die("Unable to load operators.cfg");
         }
         /*
         String msg = "";
@@ -783,7 +783,7 @@ public class HubBot extends SubspaceBot {
             Thread.sleep(3000);
         } catch( InterruptedException e ){
         }
-        m_botAction.die();
+        m_botAction.die("successful shutdown.");
     }
 
     /**
@@ -810,7 +810,7 @@ public class HubBot extends SubspaceBot {
                         Thread.sleep(3000);
                     } catch( InterruptedException e ){
                     }
-                    m_botAction.die();
+                    m_botAction.die("Smart shutdown.");
                 }
             }
         };
