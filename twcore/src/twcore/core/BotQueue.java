@@ -241,7 +241,7 @@ public class BotQueue extends Thread {
      */
     String removeBot( String name ) {
         try {
-            return removeBot( name, "" );
+            return removeBot( name, "no longer running; removed from BotQueue stable" );
         } catch ( NullPointerException e ) {
             return "nullbot";
         }
@@ -262,12 +262,18 @@ public class BotQueue extends Thread {
             try {
                 Session deadSesh = deadBot.getBot();
                 if( deadSesh != null ) {
-                    if( deadSesh.getBotAction() != null )
+                    if( deadSesh.getBotAction() != null ) {
                         deadSesh.getBotAction().cancelTasks();
-                    if( msg != null )
-                        deadSesh.disconnect( msg );
-                    else
-                        deadSesh.disconnect( "" );
+                    }
+                    if( msg != null ) {
+                        if( !msg.equals("") ) {
+                            deadSesh.disconnect( msg );
+                        } else {
+                            deadSesh.disconnect( "(empty DC message)" );                            
+                        }
+                    } else {
+                        deadSesh.disconnect( "(null DC message)" );
+                    }
                 }
                 // Decrement count for this type of bot
                 addToBotCount( deadBot.getClassName(), (-1) );
