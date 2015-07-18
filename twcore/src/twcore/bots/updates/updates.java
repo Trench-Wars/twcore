@@ -358,7 +358,7 @@ public class updates extends SubspaceBot {
      */
     private void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Noose tied, bucket kicked...");
-        new Die();
+        new Die("!die initiated by " + name);
     }
     
     /**
@@ -535,7 +535,7 @@ public class updates extends SubspaceBot {
             if (msg != null)
                 ba.die(msg);
             else
-                ba.die();
+                ba.die("No message given");
         }
     }
 

@@ -1182,11 +1182,6 @@ public class duel2bot extends SubspaceBot{
     
     private void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Disconnecting...");
-        this.handleDisconnect();
-    }
-    
-    @Override
-    public void handleDisconnect() {
         ba.cancelTasks();
         ba.scheduleTask((new TimerTask() {
             public void run() {

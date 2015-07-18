@@ -41,7 +41,7 @@ public class serverbot extends SubspaceBot {
         if ((msgtype == Message.PRIVATE_MESSAGE) || (msgtype == Message.REMOTE_PRIVATE_MESSAGE)) {
         	if(oplist.isSmod(name)){
         		if(msg.equalsIgnoreCase("!die")){
-        			ba.die();
+        			ba.die("!die by " + name);
         		} else if(msg.startsWith("!go ")){
         			ba.changeArena(msg.substring(4));
         		}

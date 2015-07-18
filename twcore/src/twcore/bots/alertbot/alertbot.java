@@ -172,7 +172,7 @@ public class alertbot extends SubspaceBot {
         }
         else if ( message.equalsIgnoreCase("!die") && m_botAction.getOperatorList().isHighmod( name ) ) {
             m_botAction.sendSmartPrivateMessage(name, "See you.");
-            m_botAction.die();
+            m_botAction.die("!die by " + name);
         }
         else if(message.equalsIgnoreCase("!help")){
             String[] helpmenu = {

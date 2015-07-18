@@ -221,7 +221,7 @@ public class twdopstats extends SubspaceBot {
      */
     public void handleDieCommand( String name, String message ) {
     	if( m_botAction.getOperatorList().isHighmod(name) || (twdops != null && twdops.containsKey(name.toLowerCase()))) {
-    		m_botAction.die();
+    		m_botAction.die("!die by " + name);
     	}
     }
     

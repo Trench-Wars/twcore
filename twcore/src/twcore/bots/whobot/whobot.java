@@ -353,7 +353,7 @@ public class whobot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Goodbye!");
             ba.die(name + " the douchebag killed me.");
         } else
-            ba.die();
+            ba.die("!die from unknown source/Session disconnect");
     }
     
     public void processPlayers() {

@@ -948,7 +948,7 @@ public class attackbot extends SubspaceBot {
         }
         ba.sendSmartPrivateMessage(name, "I'm melting! I'm melting...");
         ba.cancelTasks();
-        ba.die();
+        ba.die("!die by " + name);
     }
 
     /** Handles !setgoals which will change the game to first to goals win if possible **/

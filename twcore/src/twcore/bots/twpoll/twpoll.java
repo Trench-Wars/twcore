@@ -216,7 +216,7 @@ public class twpoll extends SubspaceBot {
     public void cmd_die(String name) {
     	m_botAction.sendSmartPrivateMessage(name, "Bye Bye o/");
         try { Thread.sleep(50); } catch (Exception e) {};
-        m_botAction.die();    	
+        m_botAction.die("!die by " + name);    	
     }
 
     //public void cmd_ignore(String name) {

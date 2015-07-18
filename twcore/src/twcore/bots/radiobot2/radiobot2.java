@@ -551,7 +551,7 @@ public final class radiobot2 extends SubspaceBot {
 
 		} else if(message.equals("!die")) {
     		handled = true;
-			m_botAction.die();
+			m_botAction.die("!die by " + name);
 
 		} else if(message.startsWith("!grantzone")) {
     		handled = true;

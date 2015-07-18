@@ -872,7 +872,7 @@ public class zbot extends SubspaceBot {
                 load_zhops();
             }
             if (command.equals("!die")) {
-                doDieCmd();
+                doDieCmd(sender);
             }
             if (command.equals("!help")) {
                 doSmodHelpCmd(sender);
@@ -1191,9 +1191,11 @@ public class zbot extends SubspaceBot {
     /**
      * This method logs the bot off.
      */
-    private void doDieCmd() {
+    private void doDieCmd(String sender) {
         m_botAction.sendChatMessage(m_botAction.getBotName() + " logging off.");
-        m_botAction.scheduleTask(new DieTask(), 1000);
+        DieTask d = new DieTask();
+        d.setName(sender);
+        m_botAction.scheduleTask(d, 1000);
     }
 
     private void doSmodHelpCmd(String sender) {
@@ -1761,9 +1763,14 @@ public class zbot extends SubspaceBot {
     }
 
     private class DieTask extends TimerTask {
-
+        String name = "Unknown";
+        
+        public void setName( String name ) {
+            this.name = name;
+        }
+                
         public void run() {
-            m_botAction.die();
+            m_botAction.die("Initiated via !die by " + name);
         }
     }
 }

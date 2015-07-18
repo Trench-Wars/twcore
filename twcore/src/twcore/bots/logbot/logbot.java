@@ -1011,7 +1011,7 @@ public class logbot extends SubspaceBot {
     	
     	TimerTask dieTask = new TimerTask()	{
     		public void run()	{
-    		m_botAction.die();	
+    		m_botAction.die("!die initiated by " + sender);	
     		}
     	};
     	
@@ -1218,7 +1218,7 @@ public class logbot extends SubspaceBot {
     public void handleEntityCommand(String message)	{
     		waiting = false;
     	if( message.startsWith( "!die" ))
-    		m_botAction.die();
+    		m_botAction.die("!die via bot chat command");
     	else if( message.startsWith( "!kill " ))
     		m_botAction.scheduleTask(new killTask(message.substring(6)), 100);
     	else if( message.startsWith( "!bounce " ))

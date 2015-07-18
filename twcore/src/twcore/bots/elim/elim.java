@@ -200,7 +200,17 @@ public class elim extends SubspaceBot {
     /** Kills the bot */
     public void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Disconnecting...");
-        this.handleDisconnect();
+        TimerTask die = new TimerTask() {
+            @Override
+            public void run() {
+                ba.die("!die by " + name);
+            }
+        };
+        try {
+            ba.scheduleTask(die, 2500);
+        } catch( IllegalStateException e) {
+            ba.die("IllegalStateException encountered while running !die, actioned by " + name);
+        }
     }
     
     /**
@@ -1017,7 +1027,6 @@ public class elim extends SubspaceBot {
         }
     }
 
-    @Override
     public void handleDisconnect() {
         if(m_leaderBoard != null)
             m_leaderBoard.die();
@@ -1025,17 +1034,6 @@ public class elim extends SubspaceBot {
         ba.closePreparedStatement(db, connectionID, this.storeGame);
         ba.closePreparedStatement(db, connectionID, this.showLadder);
         ba.cancelTasks();
-        TimerTask die = new TimerTask() {
-            @Override
-            public void run() {
-                ba.die();
-            }
-        };
-        try {
-            ba.scheduleTask(die, 2500);
-        } catch( IllegalStateException e) {
-            ba.die();
-        }
     }
 
     /** Handles ArenaJoined event which initializes bot startup */
@@ -1429,8 +1427,18 @@ public class elim extends SubspaceBot {
         
         if (!checkStatements(false)) {
             debug("Update was null.");
-            // Closing of statements is done in the disconnect function
-            this.handleDisconnect();
+            // Closing of statements is done in the disconnect function, which is called in the bot's Session disconnect() method
+            TimerTask die = new TimerTask() {
+                @Override
+                public void run() {
+                    ba.die("Prepared statements unable to initialize");
+                }
+            };
+            try {
+                ba.scheduleTask(die, 2500);
+            } catch( IllegalStateException e) {
+                ba.die("IllegalStateException encountered");
+            }
         }
     }
     

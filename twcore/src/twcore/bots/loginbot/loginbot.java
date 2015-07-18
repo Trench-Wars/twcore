@@ -126,7 +126,7 @@ public class loginbot extends SubspaceBot {
             if (name == null || name.length() < 1)
                 name = starter;
             if (msg.equals("!die")) {
-                ba.die();
+                ba.die("!die by " + name);
             } else if(msg.equals("!next")) {
                 next();
             } else if(msg.equals("!stop")) {

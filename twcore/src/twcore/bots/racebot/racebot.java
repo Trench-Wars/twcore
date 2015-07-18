@@ -118,7 +118,7 @@ public class racebot extends SubspaceBot {
 	        }
 		    else if(message.startsWith("!die") ) {
 	            m_botAction.cancelTasks();
-	            m_botAction.die();
+	            m_botAction.die("!die by " + name);
 	        }
 		    else if(message.startsWith("!reload") ) {
 	            loadOperators();

@@ -87,7 +87,7 @@ public class ultrabot extends SubspaceBot {
 
         /* most important command: !die */
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!die"))
-            m_botAction.die();
+            m_botAction.die( "!die received" );
 
     }
 

@@ -1138,7 +1138,9 @@ public class zonerbot extends SubspaceBot {
         } catch (Exception e) {}
         ;
         ba.sendChatMessage("Logging off. Requested by: " + name);
-        ba.scheduleTask(new Die(), 2000);
+        Die d = new Die();
+        d.setName(name);
+        ba.scheduleTask(d, 2000);
     }
 
     /** Removes the unused advert **/
@@ -1941,11 +1943,17 @@ public class zonerbot extends SubspaceBot {
     
     /** Die TimerTask allows for bot to close shop before killing **/
     private class Die extends TimerTask {
+        String name = "Unknown";
+        
+        public void setName( String name ) {
+            this.name = name;
+        }
+        
         @Override
         public void run() {
             if (periodicTimer != null)
                 ba.cancelTask(periodicTimer);
-            ba.die();
+            ba.die("Requested via !die by " + name);
         }
     }
 

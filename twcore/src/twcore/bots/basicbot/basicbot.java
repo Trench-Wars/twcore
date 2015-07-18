@@ -85,7 +85,7 @@ public class basicbot extends SubspaceBot {
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!die")) {
             //m_botAction.sendPublicMessage(name + " commanded me to die. Disconnecting...");
             try { Thread.sleep(50); } catch (Exception e) {};
-            m_botAction.die();
+            m_botAction.die("!die by " + name);
         }
 
     }

@@ -59,7 +59,7 @@ public class gravbomber extends MultiModule {
         int time = m_botSettings.getInt("TurnTime");
         if (time < 5000) {
             m_botAction.sendChatMessage("Invalid turn time set for GravBomber (<5000ms)!  Ensure CFG is set up properly.  Dying...");
-            m_botAction.die();
+            m_botAction.die("Invalid turn time set for GravBomber (<5000ms)!  Ensure CFG is set up properly.");
         } else {
             m_turnTime = time;
         }
@@ -100,7 +100,7 @@ public class gravbomber extends MultiModule {
             if (message.toLowerCase().equals("!die")) {
                 if (!m_gameStarted) {
                     m_botAction.sendPrivateMessage(name, "Unloading...");
-                    m_botAction.die();
+                    m_botAction.die("!die by " + name);
                 } else {
                     m_botAction.sendPrivateMessage(name, "There is currently a game in progress. Please !stop it first");
                 }

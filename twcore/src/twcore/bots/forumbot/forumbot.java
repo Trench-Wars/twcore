@@ -389,7 +389,7 @@ public class forumbot extends SubspaceBot {
             m_botAction.closePreparedStatement(DATABASE, UNIQUECONNECTIONID, psInfoUser);
             m_botAction.closePreparedStatement(DATABASE, UNIQUECONNECTIONID, psValidateUser);
             m_botAction.closePreparedStatement(DATABASE, UNIQUECONNECTIONID, psKeepAlive);
-            m_botAction.die();
+            m_botAction.die("!die by " + name);
         }
     }
 

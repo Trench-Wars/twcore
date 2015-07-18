@@ -115,7 +115,7 @@ public class updatebot extends SubspaceBot {
         	} else if (msg.startsWith("!cycle")) {
         		do_cycle(name);
         	} else if (msg.startsWith("!die")) {
-        		m_botAction.die();
+        		m_botAction.die("!die by " + name);
         	}  	
         }
     }
@@ -195,7 +195,7 @@ public class updatebot extends SubspaceBot {
     			m_botAction.sendRemotePrivateMessage(executor, "Task completed. Shutting down.");
     			ready = false;
     			completedTask = true;
-    			m_botAction.die();
+    			m_botAction.die("Normal end-run condition");
     		}    		
     	}
     }

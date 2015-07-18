@@ -1351,7 +1351,7 @@ public class messagebot extends SubspaceBot
 	 {
 	 	if(m_botAction.getOperatorList().isHighmod(name) || ops.contains(name.toLowerCase())) {
 	 		try {
-			 	m_botAction.die();
+			 	m_botAction.die("!die by " + name);
 			} catch(Exception e) { }
 		}
 	 }

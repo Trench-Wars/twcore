@@ -66,7 +66,7 @@ public class tortuga extends MultiModule {
     public void fatal(String errMsg) {
         Tools.printLog("FATAL: " + errMsg);
         if (m_host != "") {m_botAction.sendPrivateMessage(m_host, "FATAL: " + errMsg);}
-        m_botAction.die();
+        m_botAction.die("Fatal error: " + errMsg);
     }
 
     public void logError(String errMsg) {

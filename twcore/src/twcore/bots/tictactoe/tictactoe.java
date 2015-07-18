@@ -656,7 +656,7 @@ public class tictactoe extends SubspaceBot {
         
         public void run() {
             ba.cancelTasks();
-            ba.die();
+            ba.die("!die initiated");
         }
     }
 

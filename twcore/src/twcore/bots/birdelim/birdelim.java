@@ -472,7 +472,7 @@ public final class birdelim extends SubspaceBot implements LagoutMan.ExpiredLago
                     try {
                         Thread.sleep(3000);
                     } catch(InterruptedException e) {}
-                    m_botAction.die();
+                    m_botAction.die("!die by " + name);
                 } else {
                     m_botAction.sendPrivateMessage(id, "A game is in progress. Use !stop first.");
                 }

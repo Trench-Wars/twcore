@@ -569,7 +569,7 @@ public class pracbot extends SubspaceBot {
 	
 	private class DieTask extends TimerTask {
         public void run() {
-            m_botAction.die();
+            m_botAction.die("DieTask initiated");
         }
     }
 private class RepeatFireTimer{

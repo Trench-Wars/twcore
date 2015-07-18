@@ -353,7 +353,7 @@ public class twdt extends SubspaceBot {
         
         @Override
         public void run() {
-            ba.die();
+            ba.die("Scheduled die");
         }
     }
 }

@@ -109,7 +109,7 @@ public class bbj extends MultiModule
 		else if(command.startsWith("!disable"))
 			enabled = false;
 		else if(command.equals("!die"))
-			m_botAction.die();
+			m_botAction.die("!die by " + name);
 	}
 
 	public void handleNormalCommand(String name, String message)

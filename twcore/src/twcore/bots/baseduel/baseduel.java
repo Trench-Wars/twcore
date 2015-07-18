@@ -271,7 +271,7 @@ public class baseduel extends SubspaceBot
         //Make sure player has clearance
         if(oplist.isER(name))
             //Destroy bot, allows another to be spawned
-            m_botAction.die();
+            m_botAction.die("!die initiated by " + name);
     }
     public void addstats(String name, int kills, int losses)
     {

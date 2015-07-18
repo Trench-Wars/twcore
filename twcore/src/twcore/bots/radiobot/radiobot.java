@@ -425,7 +425,7 @@ public final class radiobot extends SubspaceBot {
                 
             } else if (message.equals("!die")) {
                 m_botAction.sendChatMessage(name + " Just killed me!");
-                m_botAction.die();
+                m_botAction.die("!die by " + name);
                                
             } else if (message.startsWith("!dbcon")) {
                 if (!m_botAction.SQLisOperational()) {

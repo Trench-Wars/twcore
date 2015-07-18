@@ -29,7 +29,7 @@ public class loginspawn extends SubspaceBot {
         String msg = event.getMessage();
         if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
             if (msg.equals("!die")) {
-                ba.die();
+                ba.die("!die received");
             }
         }
     }
@@ -39,6 +39,6 @@ public class loginspawn extends SubspaceBot {
     }
     
     public void handleEvent(ArenaJoined event) {
-        ba.die();
+        ba.die("Arena joined successfully.");
     }
 }

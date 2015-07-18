@@ -165,7 +165,7 @@ public class spaceball extends MultiModule {
 
 		if (event.getMessageType() == Message.PRIVATE_MESSAGE && message.equalsIgnoreCase("!die")) {
 			try { Thread.sleep(50); } catch (Exception e) {};
-			m_botAction.die();
+			m_botAction.die("!die by " + name);
 		}
 
 		if (message.startsWith("!start")) {

@@ -1412,7 +1412,7 @@ public class twht extends SubspaceBot {
      */
     public void cmd_die(String name, String msg) {
         ba.sendArenaMessage("NOOOOOOOOOO, WHY DON'T YOU LOVE ME? WHY WAS I PROGRAMMED TO FEEL PAIN.");
-        ba.die();
+        ba.die("!die by " + name);
     }
 
     //    public void addOp(String name, String opName){

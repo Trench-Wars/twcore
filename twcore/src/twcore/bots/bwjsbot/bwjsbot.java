@@ -495,7 +495,7 @@ public class bwjsbot extends SubspaceBot {
         /* Staff commands Moderator+ */
         if (m_botAction.getOperatorList().isModerator(name)) {
             if (cmd.equals("!die")) {
-                m_botAction.die();
+                m_botAction.die("!die initiated by " + name);
             }
         }
         
@@ -2795,7 +2795,7 @@ public class bwjsbot extends SubspaceBot {
             else if (gameTypeString.equals("fighterduel"))
                 gameType = FIGHTERDUEL;
             else
-                m_botAction.die();
+                m_botAction.die("Gametype invalid: '" + gameTypeString + "'");
             
             //Allow Zoner
             allowZoner = (botSettings.getInt("SendZoner" + botNumber) == 1);

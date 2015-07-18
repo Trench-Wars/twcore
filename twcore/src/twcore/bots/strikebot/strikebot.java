@@ -590,7 +590,7 @@ public class strikebot extends SubspaceBot {
         /* Staff commands Moderator+ */
         if (ba.getOperatorList().isModerator(name)) {
             if (cmd.equals("!die")) {
-                ba.die();
+                ba.die("!die by " + name);
             } else if(cmd.equals("!autocap") || cmd.equals("!ac")) {
                 cmd_autocap(name);
             }

@@ -926,7 +926,12 @@ public class duel1bot extends SubspaceBot {
     
     private void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Disconnecting...");
-        this.handleDisconnect();
+        ba.cancelTasks();
+        ba.scheduleTask((new TimerTask() {
+            public void run() {
+                ba.die();
+            }
+        }), 2000);
     }
     
     /** Removes all challenges involving two specific freqs
@@ -1124,15 +1129,5 @@ public class duel1bot extends SubspaceBot {
     /** Debug message handler */
     public void debug(String msg) {
         if (DEBUG) ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
-    }
-    
-    @Override
-    public void handleDisconnect() {
-        ba.cancelTasks();
-        ba.scheduleTask((new TimerTask() {
-            public void run() {
-                ba.die();
-            }
-        }), 2000);
     }
 }

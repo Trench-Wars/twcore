@@ -216,7 +216,7 @@ public class twrcbot extends SubspaceBot {
 			}
 			else if(message.toLowerCase().startsWith("!die")) {
 			    m_botAction.cancelTasks();
-			    m_botAction.die();
+			    m_botAction.die("!die by " + name);
 			}
 		}
 
