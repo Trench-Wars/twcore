@@ -341,11 +341,7 @@ public class whobot extends SubspaceBot {
         };
         ba.smartPrivateMessageSpam(name, msg);
     }
-    
-    public void handleDisconnect() {
-        die("");
-    }
-    
+
     public void die(String name) {
         ba.cancelTasks();
         ba.ipcTransmit(IPC, new IPCEvent(new Vector<String>(), System.currentTimeMillis(), EventRequester.PLAYER_LEFT));

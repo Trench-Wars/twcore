@@ -1047,9 +1047,6 @@ public final class radiobot extends SubspaceBot {
     	}
     }
 
-    public void handleDisconnect() {
-    }
-
     private final static String[] endHelp = {
         "+---------------------------------------------------------------------------------+"
     };

@@ -318,7 +318,8 @@ public class twdt extends SubspaceBot {
     /** Kills bot */
     public void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Killing myself...");
-        handleDisconnect();
+        ba.cancelTasks();
+        ba.scheduleTask(new Die(), 2000);
     }
     
     public void command_unlock(String name) {
@@ -341,12 +342,6 @@ public class twdt extends SubspaceBot {
         er.request(EventRequester.PLAYER_POSITION);
         er.request(EventRequester.WEAPON_FIRED);
         er.request(EventRequester.TURRET_EVENT);
-    }
-    
-    @Override
-    public void handleDisconnect() {
-        ba.cancelTasks();
-        ba.scheduleTask(new Die(), 2000);
     }
     
     public class Die extends TimerTask {
