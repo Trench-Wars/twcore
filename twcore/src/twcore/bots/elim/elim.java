@@ -203,7 +203,7 @@ public class elim extends SubspaceBot {
         TimerTask die = new TimerTask() {
             @Override
             public void run() {
-                ba.die("!die by " + name);
+                ba.die("!die initiated");
             }
         };
         try {

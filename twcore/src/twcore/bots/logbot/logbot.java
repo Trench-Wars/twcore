@@ -1011,7 +1011,7 @@ public class logbot extends SubspaceBot {
     	
     	TimerTask dieTask = new TimerTask()	{
     		public void run()	{
-    		m_botAction.die("!die initiated by " + sender);	
+    		m_botAction.die("!die initiated");	
     		}
     	};
     	

@@ -1114,7 +1114,7 @@ public class welcomebot extends SubspaceBot {
             infoer.stop();
             ba.scheduleTask(new TimerTask() {
                 public void run() {
-                    ba.die("!die with save initiated by " + name);
+                    ba.die("!die with save initiated");
                 }
             }, 3000);
         } else {
@@ -1123,7 +1123,7 @@ public class welcomebot extends SubspaceBot {
             infoer.stop();
             ba.scheduleTask(new TimerTask() {
                 public void run() {
-                    ba.die("!die without save initiated by " + name);
+                    ba.die("!die without save initiated");
                 }
             }, 3000);
         }
