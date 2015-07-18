@@ -2604,6 +2604,11 @@ public class BotAction
 
     /**
      * Tells the bot to go parachuting (without the parachute).
+     * 
+     * PLEASE use die(String) instead, in order to distinguish between errors caused in bot core,
+     * and intentional bot deaths caused by normal or known-error circumstances. This vastly aids
+     * in troubleshooting.
+     * @deprecated
      */
     public void die()
     {
