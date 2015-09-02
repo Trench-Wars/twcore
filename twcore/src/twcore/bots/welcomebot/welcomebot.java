@@ -204,7 +204,7 @@ public class welcomebot extends SubspaceBot {
         ready = true;
         ba.ipcSubscribe(IPC_CHANNEL);
         ba.sendUnfilteredPublicMessage("?chat=newplayer,robodev,staff,training");
-        ba.changeArena("0");
+        ba.changeArena("2");
     }
 
     public void handleEvent(ArenaJoined event) {
