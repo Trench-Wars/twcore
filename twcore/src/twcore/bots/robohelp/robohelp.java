@@ -299,7 +299,7 @@ public class robohelp extends SubspaceBot {
 
     public void handleSay(String name, String msg) {
 
-        m_botAction.sendChatMessage(msg);
+        m_botAction.sendSmartPrivateMessage(name, "Unfortunately, we are not mature enough to handle this. :(");
     }
 
     public void handleBanNumber(String name, String message) {
