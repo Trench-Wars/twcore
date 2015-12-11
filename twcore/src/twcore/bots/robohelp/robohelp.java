@@ -1992,6 +1992,7 @@ public class robohelp extends SubspaceBot {
             return;
 
         String date = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
+        SimpleDateFormat datereal = new SimpleDateFormat("yyyy-MM-dd");
         String displayDate = new SimpleDateFormat("dd MMM yyyy HH:mm zzz").format(Calendar.getInstance().getTime());
         String query = null, rankQuery = null, title = "", title2 = "";
         HashMap<String, String> stats = new HashMap<String, String>();
@@ -2022,9 +2023,14 @@ public class robohelp extends SubspaceBot {
             // Staffer> !mystats mod
 
             date = date + "-01";
-            query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='" + date + "' AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fcUserName, fnType";
-            rankQuery = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='" + date
-                    + "' AND fnType=0 AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fnCount DESC";
+            if (message.startsWith("mod30")) {
+                query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate=(DATE_SUB('" + datereal + "', INTERVAL 1 MONTH)) AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fcUserName, fnType";
+                rankQuery = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate=(DATE_SUB('" + datereal + "', INTERVAL 1 MONTH)) AND fnType=0 AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fnCount DESC";
+            } else {
+                query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate=('" + date + "' AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fcUserName, fnType";
+                rankQuery = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='" + date
+                        + "' AND fnType=0 AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fnCount DESC";
+            }
             title = "Top 5 call count | " + displayDate;
             title2 = "Your call count";
             showTopStats = true;
@@ -2304,7 +2310,7 @@ public class robohelp extends SubspaceBot {
                 "                                        associated with the specified call id.",
                 " !mystats                             - Returns the top 5 call count and your call stats", 
                 " !mystats mod/er/zh [#]               - Returns the top # of moderators / ERs / ZHs.",
-                "                                        If # is not specified, shows top 5.", 
+                "                                        If # is not specified, shows top 5. mod30=mods last 30", 
                 " !mystats <name>                      - Returns the call count of <name>",
                 " !mystats <month>-<year> [above args] - Returns the top/call count from specified", 
                 "                                        month-year. F.ex: !mystats 08-2007 mod 50",
