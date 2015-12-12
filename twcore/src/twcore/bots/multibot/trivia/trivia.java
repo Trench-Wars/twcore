@@ -47,14 +47,14 @@ public class trivia extends MultiModule {
     String          m_prec = "--|-- ";
     String          t_category, t_question, t_answer, f_answer;
     String[]        helpmsg =
-    { "To ?chat=trivia or privately:",
+    { "To ?chat=games or privately:",
       "!help          -- displays this.",
       "!score         -- displays the current scores.",
       "!repeat        -- will repeat the last question given.",
       "!stats         -- will display your statistics.",
       "!stats <name>  -- displays <name>'s statistics.",
       "!topten        -- displays top ten player stats.",
-      "To ?chat=trivia only:",
+      "To ?chat=games only:",
       "!pm            -- bot will pm you for remote play."
     };
     String[]        opmsg =
@@ -145,7 +145,7 @@ public class trivia extends MultiModule {
             spamChatMessage(m_prec + "  - This chat is for remote players, please PM me the answer.");
             spamChatMessage(m_prec + "  - Use !help in chat to get a list of commands.");
             m_botAction.sendArenaMessage(m_prec + "A game of Trivia is starting | Win by getting " + toWin + " pts!", 22);
-            m_botAction.sendArenaMessage(m_prec + "  - Use !help sent privately for a list of commands..");
+            m_botAction.sendArenaMessage(m_prec + "  - Use !help sent privately for a list of commands. Join ?chat=games to play via chat.");
             startGame = new TimerTask() {
                 public void run() {
                     grabQuestion();
