@@ -1992,7 +1992,7 @@ public class robohelp extends SubspaceBot {
             return;
 
         String date = new SimpleDateFormat("yyyy-MM").format(Calendar.getInstance().getTime());
-        SimpleDateFormat datereal = new SimpleDateFormat("yyyy-MM-dd");
+        //SimpleDateFormat datereal = new SimpleDateFormat("yyyy-MM-dd");
         String displayDate = new SimpleDateFormat("dd MMM yyyy HH:mm zzz").format(Calendar.getInstance().getTime());
         String query = null, rankQuery = null, title = "", title2 = "";
         HashMap<String, String> stats = new HashMap<String, String>();
@@ -2023,7 +2023,7 @@ public class robohelp extends SubspaceBot {
             // Staffer> !mystats mod
 
             date = date + "-01";
-            query = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='" + date + "' AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fcUserName, fnType";
+            query = "SELECT fcUserName, fnCount FROM tblCall WHERE fdDate='" + date + "' AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' AND fnType=0 ORDER BY fcUserName";
             rankQuery = "SELECT fcUserName, fnCount, fnType FROM tblCall WHERE fdDate='" + date
                     + "' AND fnType=0 AND fcUserName NOT LIKE '%<ZH>%' AND fcUserName NOT LIKE '%<ER>%' ORDER BY fnCount DESC";
             title = "Top 5 call count | " + displayDate;
@@ -2040,9 +2040,68 @@ public class robohelp extends SubspaceBot {
                     topNumber = Integer.parseInt(number);
                     title = "Top " + topNumber + " call count | " + displayDate;
                 }
-                showPersonalStats = false;
+                showPersonalStats = false;              
+            }
+            
+            // Order and create a list out of the results
+            if (query == null || rankQuery == null)
+                return;
+
+            try {
+                ResultSet results = m_botAction.SQLQuery(mySQLHost, query);
+                while (results != null && results.next()) {
+                    String staffer = results.getString(1);
+                    String count = results.getString(2);
+                    stats.put(staffer, Tools.formatString(count + "", 3));
+                }
+                m_botAction.SQLClose(results);
+            } catch (Exception e) {
+                Tools.printStackTrace(e);
             }
 
+            // Determine the rank
+            try {
+                ResultSet results = m_botAction.SQLQuery(mySQLHost, rankQuery);
+                while (results != null && results.next())
+                    rank.add(results.getString(1));
+                m_botAction.SQLClose(results);
+            } catch (Exception e) {
+                Tools.printStackTrace(e);
+            }
+
+            // Return the top 5
+            if (showTopStats) {
+                m_botAction.sendSmartPrivateMessage(name, title);
+                m_botAction.sendSmartPrivateMessage(name, "------------------");
+                for (int i = 0; i < topNumber; i++)
+                    if (i < rank.size())
+                        m_botAction.sendSmartPrivateMessage(name, " " + Tools.formatString((i + 1) + ")", 5) + Tools.formatString(rank.get(i), 20) + " " + stats.get(rank.get(i)));
+            }
+
+            // Return your position, one previous and one next
+            if (showPersonalStats) {
+                int yourPosition = -1;
+
+                // Determine your position in the rank
+                for (int i = 0; i < rank.size(); i++)
+                    if (rank.get(i).equalsIgnoreCase(name)) {
+                        yourPosition = i;
+                        break;
+                    }
+
+                // Response
+                m_botAction.sendSmartPrivateMessage(name, "    "); // spacer
+                m_botAction.sendSmartPrivateMessage(name, title2);
+                m_botAction.sendSmartPrivateMessage(name, "-----------------");
+                if (yourPosition == -1)
+                    m_botAction.sendSmartPrivateMessage(name, " There is no statistic from your name found.");
+                else
+                    for (int i = yourPosition - 1; i < yourPosition + 2; i++)
+                        if (i > -1 && i < rank.size())
+                            m_botAction.sendSmartPrivateMessage(name, " " + Tools.formatString((i + 1) + ")", 5) + Tools.formatString(rank.get(i), 20) + " " + stats.get(rank.get(i)));
+            }
+            
+            return;
         } else if ((opList.isERExact(name) && message.length() == 0) || message.startsWith("er")) {
             // Staffer> !mystats
             // Staffer> !mystats er
