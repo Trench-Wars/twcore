@@ -990,7 +990,8 @@ public class elim extends SubspaceBot {
                 else
                     msg = "" + Tools.shipName(shipType.getNum()) + " KILLRACE to " + goal + ". ";
                 ba.sendArenaMessage(msg);
-                mobilePusher.push("Elim Notify", msg);
+                boolean success = mobilePusher.push("", msg);
+                System.out.println(success);
                 handleState();
                 return;
             }
@@ -1135,8 +1136,10 @@ public class elim extends SubspaceBot {
         m_leaderBoard = new ElimLeaderBoard(ba, db, connectionID);
         
         pushAuth = ba.getGeneralSettings().getString("PushAuth");
+        System.out.println(pushAuth);
         pushChannel = rules.getString("PushChannel");
-        mobilePusher = new MobilePusher(pushAuth, pushChannel, Tools.TimeInMillis.MINUTE * 30);
+        System.out.println(pushChannel);
+        mobilePusher = new MobilePusher(pushAuth, pushChannel, Tools.TimeInMillis.MINUTE * 0);
                
         ba.joinArena(arena);
     }
