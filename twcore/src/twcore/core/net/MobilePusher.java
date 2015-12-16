@@ -47,7 +47,7 @@ public class MobilePusher {
         
         try {
             msg = "curl -u " + pushAuth +
-                    ": -X POST https://api.pushbullet.com/v2/pushes --header 'Content-Type:application/json' --data-binary " + msg;
+                    ": -X POST https://api.pushbullet.com/v2/pushes --header 'Content-Type:application/json' --data-binary '" + msg + "'";
             /*
                     '{\"type\":\"note\",\"title\":\"" + sanitize(title) +
                     "\",\"channel_tag\":\"" + pushChannel +
