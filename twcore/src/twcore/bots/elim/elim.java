@@ -28,6 +28,7 @@ import twcore.core.events.SQLResultEvent;
 import twcore.core.events.WeaponFired;
 import twcore.core.util.Spy;
 import twcore.core.util.Tools;
+import twcore.core.net.MobilePusher;
 
 /**
  * New bot to manage elim jav and wb
@@ -117,6 +118,11 @@ public class elim extends SubspaceBot {
     private ElimLeaderBoard m_leaderBoard;
     private ArrayList<String> m_noSplash;
     private boolean m_showOnEntry = false;
+    
+    // Push to mobile data
+    private MobilePusher mobilePusher;
+    private String pushAuth;
+    private String pushChannel;
 
     public elim(BotAction botAction) {
         super(botAction);
@@ -984,6 +990,7 @@ public class elim extends SubspaceBot {
                 else
                     msg = "" + Tools.shipName(shipType.getNum()) + " KILLRACE to " + goal + ". ";
                 ba.sendArenaMessage(msg);
+                mobilePusher.push("Elim Notify", msg);
                 handleState();
                 return;
             }
@@ -1127,6 +1134,10 @@ public class elim extends SubspaceBot {
         }
         m_leaderBoard = new ElimLeaderBoard(ba, db, connectionID);
         
+        pushAuth = ba.getGeneralSettings().getString("PushAuth");
+        pushChannel = rules.getString("PushChannel");
+        mobilePusher = new MobilePusher(pushAuth, pushChannel, Tools.TimeInMillis.MINUTE * 30);
+               
         ba.joinArena(arena);
     }
 
