@@ -16,7 +16,7 @@ public class MobilePusher {
         this.pushAuth = pushAuth;
         this.pushChannel = pushChannel;
         delay = minDelayBetweenPushes;
-        lastPush = System.currentTimeMillis();
+        lastPush = System.currentTimeMillis() - delay;
     }
     
     public boolean push( String title, String body ) {
