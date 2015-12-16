@@ -46,13 +46,14 @@ public class MobilePusher {
         String msg = JSONObject.toJSONString(hm);
         
         try {
+            msg = "curl -u " + pushAuth +
+                    ": -X POST https://api.pushbullet.com/v2/pushes --header 'Content-Type:application/json' --data-binary " + msg;
             /*
-            String msg = "curl -u " + pushAuth +
-                    ": -X POST https://api.pushbullet.com/v2/pushes --header 'Content-Type:application/json' " +
-                    "--data-binary '{\"type\":\"note\",\"title\":\"" + sanitize(title) +
+                    '{\"type\":\"note\",\"title\":\"" + sanitize(title) +
                     "\",\"channel_tag\":\"" + pushChannel +
                     "\",\"body\":\"" + sanitize(body) + "\"}'";
             */
+
             System.out.print(msg);
             p = Runtime.getRuntime().exec(msg);
             p.waitFor();
