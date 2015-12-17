@@ -1,20 +1,25 @@
 package twcore.core.net;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
+//import java.io.BufferedReader;
+//import java.io.InputStreamReader;
+
 import twcore.core.util.Tools;
 import twcore.core.util.json.JSONObject;
 
 
 /**
  * Pushes notifications to a PushBullet Channel, which is essentially a modernized RSS feed.
- * It's managed by PushBullet, so the bot overhead is basically nothing.
+ * It's largely managed by PushBullet, so the bot overhead is basically nothing.
  * 
  * @author qan
  */
 public class MobilePusher {
-    private String pushAuth;
+    URL pushURL;
+    private String pushAuth;        // base64(concat(authcode,":")) -- get authcode from PushBullet & base64 encode it + :
     private String pushChannel;
     private long delay;
     private long lastPush;
@@ -24,73 +29,76 @@ public class MobilePusher {
         this.pushChannel = pushChannel;
         delay = minDelayBetweenPushes;
         lastPush = System.currentTimeMillis() - delay;
+        try {
+            pushURL = new URL("https://api.pushbullet.com/v2/pushes");
+        } catch( Exception e ) {} 
     }
     
+    /**
+     * Sends a push with no title. On the user's phone, the title of the notification will be the channel name (not pushChannel).
+     * @param msg Message to send
+     * @return True if there are no errors
+     */
     public boolean push( String msg ) {
         return push( "", msg );
     }
     
+    /**
+     * Sends a push with title. On Android, user will see title in larger font, then the message beneath it. On the right side,
+     * the time will appear, and below that, the channel name as set on PushBullet's website (different from pushChannel).
+     * 
+     * In the push itself, if a user opens it in PushBullet rather than dismissing it, the title and the message will appear
+     * with the same size text and be indistinguishable. The preferred method is therefore probably sending without a title.
+     * However, you could send with a title to distinguish who is saying what.
+     * @param title Title to send
+     * @param body Message to send
+     * @return True if there are no errors
+     */
     public boolean push( String title, String body ) {
         if( pushAuth == null || pushChannel == null || title == null || body == null )
             return false;
         if( System.currentTimeMillis() < lastPush + delay )
             return false;
         
-        StringBuffer output = new StringBuffer();
-        Process p;
-        HashMap<String,String> hm = new HashMap<String,String>();
-        hm.put("type", "note");
-        hm.put("title", sanitize(title));
-        hm.put("channel_tag", pushChannel);
-        hm.put("body", sanitize(body));
-        String msg = JSONObject.toJSONString(hm);
-        
         try {
-            msg = "curl -u " + pushAuth +
-                    ": -X POST https://api.pushbullet.com/v2/pushes --header 'Content-Type:application/json' --data-binary '" + msg + "'";
-            /*
-                    '{\"type\":\"note\",\"title\":\"" + sanitize(title) +
-                    "\",\"channel_tag\":\"" + pushChannel +
-                    "\",\"body\":\"" + sanitize(body) + "\"}'";
+            HttpURLConnection con = (HttpURLConnection) pushURL.openConnection();
+
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            con.setRequestProperty("Authorization", "Basic " + pushAuth); 
+            con.setDoOutput(true);
+
+            HashMap<String,String> hm = new HashMap<String,String>();
+            hm.put("type", "note");
+            hm.put("title", title);
+            hm.put("channel_tag", "twelim");
+            hm.put("body", body);
+            String msg = JSONObject.toJSONString(hm);            
+
+            OutputStream os = con.getOutputStream();
+            os.write(msg.getBytes("UTF-8"));
+            os.flush();
+            con.disconnect();
+            
+            /* Uncomment to test return status.
+            if (con.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                throw new RuntimeException("Failed : HTTP error code : " + con.getResponseCode());
+            }
+
+            BufferedReader br = new BufferedReader(new InputStreamReader((con.getInputStream())));
+
+            String output;
+            System.out.println("Output from Server .... \n");
+            while ((output = br.readLine()) != null) {
+                System.out.println(output);
+            }
             */
 
-            System.out.print(msg);
-            p = Runtime.getRuntime().exec(msg);
-            p.waitFor();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-            String line = "";           
-            while ((line = reader.readLine())!= null) {
-                output.append(line + "\n");
-            }
-            
-            System.out.print(output);
-        } catch( Exception e) {
+        } catch (Exception e) {
             Tools.printStackTrace("Error encountered when pushing message to mobile: " + body, e);
         }
-        
+               
         lastPush = System.currentTimeMillis();
         return true;
     }
-    
-    /**
-     * Sanitize input by escaping all ' as '\''
-     * @param t String to sanitize
-     * @return Formatted string
-     */
-    public static String sanitize( String t ) {
-        String n = null;
-        if (t != null) {
-            n = "";
-            for (int i = 0; i < t.length(); i++) {
-                if (t.charAt(i) == '\'') {
-                    n = n + "'\''"; 
-                } else {
-                    n = n + t.charAt(i);
-                }
-            }
-        }
-        return n;
-    }
-
 }
