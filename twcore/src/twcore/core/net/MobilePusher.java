@@ -4,8 +4,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
-//import java.io.BufferedReader;
-//import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import twcore.core.util.Tools;
 import twcore.core.util.json.JSONObject;
@@ -25,6 +25,8 @@ public class MobilePusher {
     private long lastPush;
     
     public MobilePusher( String pushAuth, String pushChannel, long minDelayBetweenPushes ) {
+        if( pushAuth == null || pushChannel == null )
+            throw new RuntimeException("Null input where auth or channel expected");
         this.pushAuth = pushAuth;
         this.pushChannel = pushChannel;
         delay = minDelayBetweenPushes;
@@ -55,8 +57,24 @@ public class MobilePusher {
      * @return True if there are no errors
      */
     public boolean push( String title, String body ) {
-        if( pushAuth == null || pushChannel == null || title == null || body == null )
+        if( pushAuth == null ) {           
+            Tools.printLog("Null auth string in push.");
             return false;
+        }
+        if( pushChannel == null ) {           
+            Tools.printLog("Null channel in push.");
+            return false;
+        }
+        if( title == null ) {           
+            Tools.printLog("Null title string in push.");
+            return false;
+        }
+
+        if( body == null ) {           
+            Tools.printLog("Null body string in push.");
+            return false;
+        }
+            
         if( System.currentTimeMillis() < lastPush + delay )
             return false;
         
@@ -65,13 +83,13 @@ public class MobilePusher {
 
             con.setRequestMethod("POST");
             con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            con.setRequestProperty("Authorization", "Basic " + pushAuth); 
+            con.setRequestProperty("Authorization", "Basic " + pushAuth);
             con.setDoOutput(true);
 
             HashMap<String,String> hm = new HashMap<String,String>();
             hm.put("type", "note");
             hm.put("title", title);
-            hm.put("channel_tag", "twelim");
+            hm.put("channel_tag", pushChannel);
             hm.put("body", body);
             String msg = JSONObject.toJSONString(hm);            
 
@@ -80,7 +98,7 @@ public class MobilePusher {
             os.flush();
             con.disconnect();
             
-            /* Uncomment to test return status.
+            // Uncomment to test return status.           
             if (con.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 throw new RuntimeException("Failed : HTTP error code : " + con.getResponseCode());
             }
@@ -88,14 +106,13 @@ public class MobilePusher {
             BufferedReader br = new BufferedReader(new InputStreamReader((con.getInputStream())));
 
             String output;
-            System.out.println("Output from Server .... \n");
             while ((output = br.readLine()) != null) {
                 System.out.println(output);
             }
-            */
 
         } catch (Exception e) {
             Tools.printStackTrace("Error encountered when pushing message to mobile: " + body, e);
+            return false;
         }
                
         lastPush = System.currentTimeMillis();
