@@ -932,6 +932,20 @@ public class elim extends SubspaceBot {
     /** Starting state creates new ElimGame and initiates player stat trackers */
     private void doStarting() {
         game = new ElimGame(this, shipType, goal, shrap);
+        String msg;
+        if (gameType == ELIM)
+            msg = Tools.shipNameSlang(shipType.getNum()) + "s to " + goal;
+        else
+            msg = Tools.shipNameSlang(shipType.getNum()) + " race to " + goal;
+
+        if (shipType.hasShrap()) {
+            if (shrap)
+                msg += "Shrap: [ON]";
+            else
+                msg += "Shrap: [OFF]";
+        }
+        mobilePusher.push(msg);
+        
         ba.sendArenaMessage("Enter to play. Arena will be locked in 30 seconds!", 9);
         timer = new TimerTask() {
             @Override
@@ -983,13 +997,12 @@ public class elim extends SubspaceBot {
                 shrap = false;
                 state = State.STARTING;
                 String msg;
-                if (gameType == ELIM)
+                if (gameType == ELIM) {
                     msg = "" + Tools.shipName(shipType.getNum()) + " ELIM to " + goal + ". ";
-                else
+                } else {
                     msg = "" + Tools.shipName(shipType.getNum()) + " KILLRACE to " + goal + ". ";
+                }
                 ba.sendArenaMessage(msg);
-                if( mobilePusher.push(msg) )
-                    Tools.printLog("Successful push");
                 handleState();
                 return;
             }
@@ -1135,7 +1148,7 @@ public class elim extends SubspaceBot {
         
         String pushAuth = ba.getGeneralSettings().getString("PushAuth");
         String pushChannel = rules.getString("PushChannel");
-        mobilePusher = new MobilePusher(pushAuth, pushChannel, Tools.TimeInMillis.MINUTE * 0);
+        mobilePusher = new MobilePusher(pushAuth, pushChannel, Tools.TimeInMillis.MINUTE * 15);
                
         ba.joinArena(arena);
     }
