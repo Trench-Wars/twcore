@@ -944,7 +944,8 @@ public class elim extends SubspaceBot {
             else
                 msg += "Shrap: [OFF]";
         }
-        mobilePusher.push(msg);
+        if( mobilePusher.push(msg) == false )
+            Tools.printLog("Got false return from mobile pusher");
         
         ba.sendArenaMessage("Enter to play. Arena will be locked in 30 seconds!", 9);
         timer = new TimerTask() {
@@ -1148,7 +1149,7 @@ public class elim extends SubspaceBot {
         
         String pushAuth = ba.getGeneralSettings().getString("PushAuth");
         String pushChannel = rules.getString("PushChannel");
-        mobilePusher = new MobilePusher(pushAuth, pushChannel, Tools.TimeInMillis.MINUTE * 15);
+        mobilePusher = new MobilePusher(pushAuth, pushChannel, 0);
                
         ba.joinArena(arena);
     }

@@ -4,8 +4,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
-//import java.io.BufferedReader;
-//import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import twcore.core.util.Tools;
 import twcore.core.util.json.JSONObject;
@@ -105,7 +105,6 @@ public class MobilePusher {
             con.disconnect();
             
             // Uncomment to test return status.
-            /*
             if (con.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 throw new RuntimeException("Failed : HTTP error code : " + con.getResponseCode());
             }
@@ -116,7 +115,6 @@ public class MobilePusher {
             while ((output = br.readLine()) != null) {
                 System.out.println(output);
             }
-            */
 
         } catch (Exception e) {
             Tools.printStackTrace("Error encountered when pushing message to mobile: " + body, e);
