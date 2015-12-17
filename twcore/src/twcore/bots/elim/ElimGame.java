@@ -391,6 +391,7 @@ public class ElimGame {
                     if (ep != null) {
                         ba.scoreReset(name);
                         ep.resetPersonalScoreLVZ();
+                        ep.resetStreak();
                         if (ship.inBase() && ship != ShipType.WEASEL)
                             ep.handleStart();
                         else if (ship == ShipType.WEASEL)

@@ -270,6 +270,10 @@ public class ElimPlayer {
         }
     }
     
+    public void resetStreak() {
+        consecutiveKills = 0; 
+    }
+    
     /** Returns this players current rating */
     public int getRating() {
         return stats.getRating();
