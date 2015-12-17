@@ -940,12 +940,11 @@ public class elim extends SubspaceBot {
 
         if (shipType.hasShrap()) {
             if (shrap)
-                msg += "Shrap: [ON]";
+                msg += ", with shrap";
             else
-                msg += "Shrap: [OFF]";
+                msg += ", no shrap";
         }
-        if( mobilePusher.push(msg) == false )
-            Tools.printLog("Got false return from mobile pusher");
+        mobilePusher.push(msg);
         
         ba.sendArenaMessage("Enter to play. Arena will be locked in 30 seconds!", 9);
         timer = new TimerTask() {
@@ -1149,7 +1148,7 @@ public class elim extends SubspaceBot {
         
         String pushAuth = ba.getGeneralSettings().getString("PushAuth");
         String pushChannel = rules.getString("PushChannel");
-        mobilePusher = new MobilePusher(pushAuth, pushChannel, 0);
+        mobilePusher = new MobilePusher(pushAuth, pushChannel, Tools.TimeInMillis.MINUTE * 15);
                
         ba.joinArena(arena);
     }
