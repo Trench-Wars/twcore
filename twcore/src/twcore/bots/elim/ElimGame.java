@@ -377,6 +377,7 @@ public class ElimGame {
                     return;
                 }
                 bot.state = State.PLAYING;
+                bot.lastGamePlayed = System.currentTimeMillis();
                 state = GameState.PLAYING;
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
                 if (shrap)

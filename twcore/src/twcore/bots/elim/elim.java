@@ -120,7 +120,9 @@ public class elim extends SubspaceBot {
     private boolean m_showOnEntry = false;
     
     // Push to mobile data
-    private MobilePusher mobilePusher;
+    MobilePusher mobilePusher;
+    long lastGamePlayed;
+    long timeBetweenPushes = Tools.TimeInMillis.HOUR * 1;       // Only push if last elim was >1hr ago (slow time that is now reviving elim)
 
     public elim(BotAction botAction) {
         super(botAction);
@@ -128,6 +130,7 @@ public class elim extends SubspaceBot {
         elimOps = new ArrayList<String>();
         loadOps();
         random = new Random();
+        lastGamePlayed = System.currentTimeMillis() + timeBetweenPushes;
     }
 
     /** Prevents the game from starting usually due to lack of players */
@@ -932,19 +935,22 @@ public class elim extends SubspaceBot {
     /** Starting state creates new ElimGame and initiates player stat trackers */
     private void doStarting() {
         game = new ElimGame(this, shipType, goal, shrap);
-        String msg;
-        if (gameType == ELIM)
-            msg = Tools.shipNameSlang(shipType.getNum()) + "s to " + goal;
-        else
-            msg = Tools.shipNameSlang(shipType.getNum()) + " race to " + goal;
 
-        if (shipType.hasShrap()) {
-            if (shrap)
-                msg += ", with shrap";
+        if( lastGamePlayed + timeBetweenPushes > System.currentTimeMillis() ) {
+            String msg;
+            if (gameType == ELIM)
+                msg = Tools.shipNameSlang(shipType.getNum()) + "s to " + goal;
             else
-                msg += ", no shrap";
+                msg = Tools.shipNameSlang(shipType.getNum()) + " race to " + goal;
+
+            if (shipType.hasShrap()) {
+                if (shrap)
+                    msg += ", with shrap";
+                else
+                    msg += ", no shrap";
+            }
+            mobilePusher.push(msg);
         }
-        mobilePusher.push(msg);
         
         ba.sendArenaMessage("Enter to play. Arena will be locked in 30 seconds!", 9);
         timer = new TimerTask() {
