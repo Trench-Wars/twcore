@@ -936,7 +936,7 @@ public class elim extends SubspaceBot {
     private void doStarting() {
         game = new ElimGame(this, shipType, goal, shrap);
 
-        if( lastGamePlayed + timeBetweenPushes > System.currentTimeMillis() ) {
+        if( lastGamePlayed + timeBetweenPushes < System.currentTimeMillis() ) {
             String msg;
             if (gameType == ELIM)
                 msg = Tools.shipNameSlang(shipType.getNum()) + "s to " + goal;
