@@ -1820,7 +1820,7 @@ class Channel
                                 m_bA.SQLClose(m_bA.SQLQuery(database, "UPDATE tblChannel SET fcOwner = '"+Tools.addSlashesToString(player)+"' WHERE fcChannelName = '" + Tools.addSlashesToString(channelName.toLowerCase()) + "'"));
 			} catch(Exception e) { Tools.printStackTrace( e ); }
 			owner = player;
-			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
+			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !read to receive it.");
 			leaveMessage(name, player, "You have been made the owner of " + channelName + " channel.");
 			m_bA.sendSmartPrivateMessage(name, player + " has been granted ownership of " + channelName);
 		}
@@ -1842,7 +1842,7 @@ class Channel
 		if(members.containsKey(player.toLowerCase()))
 		{
 			updateSQL(player.toLowerCase(), 2);
-			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
+			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !read to receive it.");
 			leaveMessage(name, player, "You have been made an operator in " + channelName + " channel.");
 			m_bA.sendSmartPrivateMessage(name, player + " has been granted op powers in " + channelName);
 		}
@@ -1864,7 +1864,7 @@ class Channel
 				return;
 			}
 			updateSQL(player.toLowerCase(), 1);
-			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
+			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !read to receive it.");
 			leaveMessage(name, player, "Your operator priveleges in " + channelName + " channel have been revoked.");
 			m_bA.sendSmartPrivateMessage(name, player + "'s op powers in " + channelName + " have been revoked.");
 		}
@@ -1923,7 +1923,7 @@ class Channel
 			    */
 			    numMsgd++;
 				leaveMessage(name, player, message);
-				m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
+				m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !read to receive it.");
 			}
 		}
 		return numMsgd;
@@ -2045,7 +2045,7 @@ class Channel
 		{
 			updateSQL(player.toLowerCase(), new Integer(1));
 			if (!silent)
-				m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
+				m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !read to receive it.");
 			leaveMessage(name, player, "You have been accepted into " + channelName + " channel.");
 			if (!silent)
 				m_bA.sendSmartPrivateMessage(name, player + " accepted.");
@@ -2066,7 +2066,7 @@ class Channel
 		if(members.containsKey(player.toLowerCase()))
 		{
 			updateSQL(player, -5);
-			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !messages receive it.");
+			m_bA.sendSmartPrivateMessage(player, "I have just left you an important message. PM me with !read to receive it.");
 			leaveMessage(name, player, "You have been rejected from " + channelName + " channel.");
 			m_bA.sendSmartPrivateMessage(name, player + " rejected.");
 		}
