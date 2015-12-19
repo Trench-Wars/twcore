@@ -644,12 +644,14 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
 
-            // Protection from players spamming !add and !remove to DC others
-            Long added = listJustAdded.get(p.getPlayerName());
-            if (added != null) {
-                if (added + (Tools.TimeInMillis.SECOND * 10) > System.currentTimeMillis()) {
-                    m_botAction.sendPrivateMessage(name, "Error: Could not add " + p.getPlayerName() + " -- was added to the game already very recently." );                    
-                    return;
+            // Protection from players spamming !add and !remove to DC others (bypass for self)
+            if (!name.equals(p.getPlayerName())) {
+                Long added = listJustAdded.get(p.getPlayerName());
+                if (added != null) {
+                    if (added + (Tools.TimeInMillis.SECOND * 10) > System.currentTimeMillis()) {
+                        m_botAction.sendPrivateMessage(name, "Error: Could not add " + p.getPlayerName() + " -- was added to the game already very recently." );                    
+                        return;
+                    }
                 }
             }
             
