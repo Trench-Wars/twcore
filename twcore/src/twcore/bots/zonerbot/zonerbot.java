@@ -21,6 +21,7 @@ import twcore.core.events.InterProcessEvent;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 import twcore.core.events.SQLResultEvent;
+import twcore.core.net.MobilePusher;
 import twcore.core.util.Tools;
 import twcore.core.util.Vectoid;
 import twcore.core.util.ipc.IPCMessage;
@@ -71,6 +72,10 @@ public class zonerbot extends SubspaceBot {
     private long lastPeriodic;
 
     private String currentUser;
+    
+    // Push to mobile data
+    MobilePusher mobilePusher;
+    long timeBetweenPushes = Tools.TimeInMillis.MINUTE * 10;
 
     public zonerbot(BotAction botAction) {
         super(botAction);
@@ -89,6 +94,9 @@ public class zonerbot extends SubspaceBot {
         loadEventsHeads();
         DEBUG = false;
         debugger = "";
+        String pushAuth = ba.getGeneralSettings().getString("PushAuth");
+        String pushChannel = ba.getBotSettings().getString("PushChannel");
+        mobilePusher = new MobilePusher(pushAuth, pushChannel, timeBetweenPushes);
     }
 
 
@@ -390,6 +398,7 @@ public class zonerbot extends SubspaceBot {
         	announceMessageBot(zone);
         	ba.sendChatMessage(2, zone);
         }
+        mobilePusher.push(zone);
     }
     
     /** Handles the !arenas command which lists the arenas available to a ZH not supervised */
@@ -898,6 +907,7 @@ public class zonerbot extends SubspaceBot {
                         announceMessageBot(adv);
                         ba.sendChatMessage(2, adv);
                     }
+                    mobilePusher.push(adv);
 
                     advertTimer = new AdvertTimer(ADVERT_DELAY);
                     ba.scheduleTask(advertTimer, ADVERT_DELAY * Tools.TimeInMillis.MINUTE);
@@ -906,7 +916,7 @@ public class zonerbot extends SubspaceBot {
                     storeAdvert(advert);
                     queue.remove(0);
                     usedAdverts.add(0, advert);
-                    ba.sendSmartPrivateMessage(name, "A readvert will be available for " + advert.readvertTime() + ".");
+                    ba.sendSmartPrivateMessage(name, "A re-advert will be available for " + advert.readvertTime() + ".");
                     prepareNext();
                 }
             }
