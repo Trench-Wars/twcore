@@ -33,6 +33,7 @@ import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
 import twcore.core.game.Player;
 import twcore.core.lvz.Objset;
+import twcore.core.net.MobilePusher;
 import twcore.core.util.Tools;
 import twcore.core.util.Spy;
 
@@ -77,6 +78,12 @@ public class bwjsbot extends SubspaceBot {
     
     //Keep connection alive workaround
     private KeepAliveConnection keepAliveConnection = new KeepAliveConnection();
+    
+    // Push to mobile data
+    MobilePusher mobilePusherWBDuel;
+    MobilePusher mobilePusherJavDuel;
+    MobilePusher mobilePusherBase;
+    long timeBetweenPushes = Tools.TimeInMillis.MINUTE * 30;
     
     /** Class constructor */
     public bwjsbot(BotAction botAction) {
@@ -1895,10 +1902,16 @@ public class bwjsbot extends SubspaceBot {
         if (cfg.getGameType() == BWJSConfig.BASE) {
             m_botAction.sendArenaMessage("Captains you have 10 minutes to set up your lineup correctly!", 
                     Tools.Sound.BEEP2);
+            mobilePusherBase.push("Base starting.");
         } else {
             m_botAction.sendArenaMessage("Captains you have 5 minutes to set up your lineup correctly!", 
                     Tools.Sound.BEEP2);
-        }
+            if (cfg.getGameType() == BWJSConfig.WBDUEL) {
+                mobilePusherWBDuel.push("WBDuel starting.");
+            } else if (cfg.getGameType() == BWJSConfig.JAVDUEL) {
+                mobilePusherJavDuel.push("JavDuel starting.");
+            }
+        }        
         
         if (cfg.getAllowAutoCaps()) {
             newGameAlert(null, null);
@@ -2223,6 +2236,14 @@ public class bwjsbot extends SubspaceBot {
         
         /* LVZ */
         scoreboard = m_botAction.getObjectSet();
+        String pushAuth = ba.getGeneralSettings().getString("PushAuth");
+        String pushChannelWBDuel = ba.getBotSettings().getString("PushChannelWBDuel");
+        String pushChannelJavDuel = ba.getBotSettings().getString("PushChannelJavDuel");
+        String pushChannelBase = ba.getBotSettings().getString("PushChannelBase");
+
+        mobilePusherWBDuel = new MobilePusher(pushAuth, pushChannelWBDuel, timeBetweenPushes);        
+        mobilePusherJavDuel = new MobilePusher(pushAuth, pushChannelJavDuel, timeBetweenPushes);        
+        mobilePusherBase = new MobilePusher(pushAuth, pushChannelBase, timeBetweenPushes);        
     }
     
     /** Requests Subspace events */ 
