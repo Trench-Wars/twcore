@@ -1898,18 +1898,20 @@ public class bwjsbot extends SubspaceBot {
         if (hasDatabase) {
             sql.addGame();
         }
-            
+        
+        String cap0 = team[0].getCaptainName();
+        String cap1 = team[1].getCaptainName();
         if (cfg.getGameType() == BWJSConfig.BASE) {
             m_botAction.sendArenaMessage("Captains you have 10 minutes to set up your lineup correctly!", 
                     Tools.Sound.BEEP2);
-            mobilePusherBase.push("Base starting.");
+            mobilePusherBase.push(cap0 + " v. " + cap1);
         } else {
             m_botAction.sendArenaMessage("Captains you have 5 minutes to set up your lineup correctly!", 
                     Tools.Sound.BEEP2);
             if (cfg.getGameType() == BWJSConfig.WBDUEL) {
-                mobilePusherWBDuel.push("WBDuel starting.");
+                mobilePusherWBDuel.push(cap0 + " v. " + cap1);
             } else if (cfg.getGameType() == BWJSConfig.JAVDUEL) {
-                mobilePusherJavDuel.push("JavDuel starting.");
+                mobilePusherJavDuel.push(cap0 + " v. " + cap1);
             }
         }        
         
