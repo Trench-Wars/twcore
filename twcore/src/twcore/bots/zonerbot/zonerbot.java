@@ -398,7 +398,6 @@ public class zonerbot extends SubspaceBot {
         	announceMessageBot(zone);
         	ba.sendChatMessage(2, zone);
         }
-        mobilePusher.push(zone);
     }
     
     /** Handles the !arenas command which lists the arenas available to a ZH not supervised */
@@ -907,7 +906,7 @@ public class zonerbot extends SubspaceBot {
                         announceMessageBot(adv);
                         ba.sendChatMessage(2, adv);
                     }
-                    mobilePusher.push(adv);
+                    mobilePusher.push(advert.getArena(), adv);
 
                     advertTimer = new AdvertTimer(ADVERT_DELAY);
                     ba.scheduleTask(advertTimer, ADVERT_DELAY * Tools.TimeInMillis.MINUTE);
