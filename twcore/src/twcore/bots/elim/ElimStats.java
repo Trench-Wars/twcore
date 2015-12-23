@@ -87,10 +87,51 @@ public class ElimStats {
         setStat(StatType.AVE, (Float) (((getAve(StatType.AVE)) * (float) getTotal(StatType.KILLS)) + (float) rating) / ((float) getTotal(StatType.KILLS) + 1f));
     }
     
-    /** Computes and sets the player's rating after a game */
-    public void crunchRating() {
+    /**
+     * Computes and sets the player's rating after a game
+     * @return Old rating
+     */
+    public int crunchRating() {
+        int oldRating = getStat(StatType.RATING);
+        /* Old method 12/23/2015
         if (getTotal(StatType.DEATHS) > 0 && getTotal(StatType.KILLS) > 0) 
             setStat(StatType.RATING, Math.round((float)getTotal(StatType.KILLS) / getTotal(StatType.DEATHS) * getAve(StatType.AVE)));
+        */
+        float kills = (float)getTotal(StatType.KILLS);
+        float deaths = (float)getTotal(StatType.DEATHS); 
+        float wins = (float)getTotal(StatType.WINS);
+        float games = (float)getTotal(StatType.GAMES);
+        if (kills > 0 && deaths > 0) {
+            if(wins == 0.0f)
+                wins = 0.01f;
+            if(games == 0.0f)
+                games = 0.01f;
+            int rating = Math.round((kills / deaths) * getAve(StatType.AVE) * (1.0f + (wins / (games * 0.5f))) );            
+            setStat(StatType.RATING, rating);
+        }
+        return oldRating;
+    }
+        
+    /**
+     * Computes and sets the player's rating after a game
+     * @return Old rating
+     */
+    public int crunchAdjRating() {
+        int oldAdjRating = getStat(StatType.ADJRATING);
+
+        setStat(StatType.ADJRATING, Math.round((float)getStat(StatType.RATING) * getConfidence()));
+        return oldAdjRating;
+    }
+
+    public float getConfidence() {
+        int games = getTotal(StatType.GAMES);
+        if( games > 0 ) {
+            if( games > 400 )
+                return 1.0f;
+            else
+                return ((float)games / 500.0f) + 0.2f;
+        }
+        return 0.0f;
     }
     
     /** Decrements the stat of type StatType as long as it is an integer data stat */
@@ -137,6 +178,14 @@ public class ElimStats {
         return stats.get(StatType.RATING).getInt();
     }
 
+    /**
+     * Rating corrected for confidence (games played).
+     * @return
+     */
+    public int getAdjustedRating() {
+        return stats.get(StatType.ADJRATING).getInt();
+    }
+
     /** Returns the double value of stat */
     public double getAim(StatType stat) {
         return stats.get(stat).getDouble();
@@ -177,7 +226,7 @@ public class ElimStats {
         String[] msg = {
                 "" + Tools.shipName(ship) + " stats for " + name + ":  Rank(" + getDB(StatType.RANK) + ")",
                 "Kills(" + getStat(StatType.KILLS) + ") Deaths(" + getStat(StatType.DEATHS) + ") Shots(" + getTotal(StatType.SHOTS) + ")  Status(" + status + ")",
-                "Rating(" + getStat(StatType.RATING) + ") TotalKills(" + getTotal(StatType.KILLS) + ") TotalDeaths(" + getTotal(StatType.DEATHS) + ")",
+                "Rating(" + getStat(StatType.RATING) + ") Adj.Rating(" + getStat(StatType.ADJRATING) + ") TotalKills(" + getTotal(StatType.KILLS) + ") TotalDeaths(" + getTotal(StatType.DEATHS) + ")",
                 "TopKillStreak(" + getStat(StatType.BEST_KILL_STREAK) + ") TopDeathStreak(" + getStat(StatType.WORST_DEATH_STREAK) + ") KillStreak(" + getStat(StatType.KILL_STREAK) + ") DeathStreak(" + getStat(StatType.DEATH_STREAK) + ")",
                 "TopMultiKill(" + getStat(StatType.BEST_MULTI_KILL) + ") MultiKills(" + getStat(StatType.MULTI_KILLS) + ") KOs(" + getStat(StatType.KNOCK_OUTS) + ") KillJoys(" + getStat(StatType.KILL_JOYS) + ")",
                 "Shots(" + getStat(StatType.SHOTS) + ") WinStreak(" + getStat(StatType.WIN_STREAK) + ") TopWinStreak(" + getStat(StatType.BEST_WIN_STREAK) + ") AVE(" + getStat(StatType.AVE) + ") AIM(" + decimal.format(crunchAim(false)) + ") AIM(" + crunchAim(true) + ")"
@@ -207,7 +256,7 @@ public class ElimStats {
         if (getDB(StatType.RANK) > 0)
             rank = "#" + getDB(StatType.RANK); 
         String[] msg = {
-                "" + ShipType.type(ship).toString() + " stats for " + name + ": Rank " + rank + " Rating: " + getDB(StatType.RATING),
+                "" + ShipType.type(ship).toString() + " stats for " + name + ": Rank " + rank + " Rating: " + getDB(StatType.RATING) + " Adj.Rating: " + getDB(StatType.ADJRATING),
                 " K:" + getTotal(StatType.KILLS) + " D:" + getTotal(StatType.DEATHS) + " Ave:" + getAve(StatType.AVE) + " Aim:" + decimal.format(getAimDB(StatType.AIM)) + "% BestKillStreak:" + getDB(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getDB(StatType.WORST_DEATH_STREAK),
                 " KOs:" + getDB(StatType.KNOCK_OUTS) + " KillJoys:" + getDB(StatType.KILL_JOYS) + " MultiKills:" + getDB(StatType.MULTI_KILLS) + " BestMultiKill:" + getDB(StatType.BEST_MULTI_KILL),
                 " Games:" + getDB(StatType.GAMES) + " Wins:" + getDB(StatType.WINS) + " BestWinStreak:" + getDB(StatType.BEST_WIN_STREAK) + " CurrentStreak:" + getDB(StatType.WIN_STREAK),
@@ -225,7 +274,7 @@ public class ElimStats {
         if (getDB(StatType.RANK) > 0)
             rank = "#" + getDB(StatType.RANK); 
         String[] msg = {
-                "Total ship stats for " + name + ": BestRank " + rank + " BestRating: " + getDB(StatType.RATING),
+                "Total ship stats for " + name + ": BestRank " + rank + " BestRating: " + getDB(StatType.RATING) + " BestAdjRating: " + getDB(StatType.ADJRATING),
                 " K:" + getTotal(StatType.KILLS) + " D:" + getTotal(StatType.DEATHS) + " BestAve:" + getAveDB(StatType.AVE) + " Aim:" + decimal.format(crunchAim(true)) + "% BestKillStreak:" + getDB(StatType.BEST_KILL_STREAK) + " WorstDeathStreak:" + getDB(StatType.WORST_DEATH_STREAK),
                 " KOs:" + getDB(StatType.KNOCK_OUTS) + " KillJoys:" + getDB(StatType.KILL_JOYS) + " MultiKills:" + getDB(StatType.MULTI_KILLS) + " BestMultiKill:" + getDB(StatType.BEST_MULTI_KILL),
                 " Games:" + getDB(StatType.GAMES) + " Wins:" + getDB(StatType.WINS) + " BestWinStreak:" + getDB(StatType.BEST_WIN_STREAK),
@@ -293,7 +342,6 @@ public class ElimStats {
     /** Updates the local database stats with the recent game stats to prepare for saving */
     private void unload() {
         crunchAim(true);
-        crunchRating();
         total.get(StatType.KILLS).add(getStat(StatType.KILLS));
         total.get(StatType.DEATHS).add(getStat(StatType.DEATHS));
         total.get(StatType.WINS).add(getStat(StatType.WINS));
@@ -303,6 +351,7 @@ public class ElimStats {
         total.get(StatType.KNOCK_OUTS).add(getStat(StatType.KNOCK_OUTS));
         total.get(StatType.MULTI_KILLS).add(getStat(StatType.MULTI_KILLS));
         loadStat(StatType.RATING, getStat(StatType.RATING));
+        loadStat(StatType.ADJRATING, getStat(StatType.ADJRATING));
         loadStat(StatType.AVE, getAve(StatType.AVE));
         loadStat(StatType.AIM, getAim(StatType.AIM));
         loadStat(StatType.WIN_STREAK, getStat(StatType.WIN_STREAK));
@@ -323,6 +372,7 @@ public class ElimStats {
         loadStat(StatType.KILLS, rs.getInt("fnKills"));
         loadStat(StatType.DEATHS, rs.getInt("fnDeaths"));
         loadStat(StatType.RATING, rs.getInt("fnRating"));
+        loadStat(StatType.ADJRATING, rs.getInt("fnAdjRating"));
         loadStat(StatType.RANK, rs.getInt("fnRank"));
         loadStat(StatType.WINS, rs.getInt("fnWins"));
         loadStat(StatType.GAMES, rs.getInt("fnGames"));
@@ -346,6 +396,7 @@ public class ElimStats {
         loadStat(StatType.KILLS, rs.getInt("fnKills"));
         loadStat(StatType.DEATHS, rs.getInt("fnDeaths"));
         loadStat(StatType.RATING, rs.getInt("fnRating"));
+        loadStat(StatType.ADJRATING, rs.getInt("fnAdjRating"));
         loadStat(StatType.RANK, rs.getInt("fnRank"));
         loadStat(StatType.WINS, rs.getInt("fnWins"));
         loadStat(StatType.GAMES, rs.getInt("fnGames"));
@@ -373,6 +424,9 @@ public class ElimStats {
             int value = rs.getInt("fnRating");
             if (getDB(StatType.RATING) < value)
                 loadStat(StatType.RATING, value);
+            value = rs.getInt("fnAdjRating");
+            if (getDB(StatType.ADJRATING) < value)
+                loadStat(StatType.ADJRATING, value);
             value = rs.getInt("fnRank");
             if (getDB(StatType.RANK) < value)
                 loadStat(StatType.RANK, value);

@@ -12,7 +12,7 @@ public enum StatType {
     SHOTS("fnShots", StatData.INT, false), KILL_JOYS("fnKillJoys", StatData.INT, false), KNOCK_OUTS("fnKnockOuts", StatData.INT, false), 
     BEST_MULTI_KILL("fnTopMultiKill", StatData.INT, false), BEST_KILL_STREAK("fnTopKillStreak", StatData.INT, false), 
     WORST_DEATH_STREAK("fnTopDeathStreak", StatData.INT, false), BEST_WIN_STREAK("fnTopWinStreak", StatData.INT, false),
-    AVE("fnAve", StatData.FLOAT, true), RATING("fnRating", StatData.INT, true), AIM("fnAim", StatData.DOUBLE, false), 
+    AVE("fnAve", StatData.FLOAT, true), RATING("fnRating", StatData.INT, true), ADJRATING("fnAdjRating", StatData.INT, true), AIM("fnAim", StatData.DOUBLE, false), 
     WINS("fnWins", StatData.INT, false), GAMES("fnGames", StatData.INT, false), RANK("fnRank", StatData.INT, true);
     
     private String dbName;

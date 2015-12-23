@@ -49,6 +49,7 @@ public class ElimPlayer {
     public static final int STREAK_INIT = 5;
     public static final int STREAK_REPEAT = 2;
     public static final int MULTI_KILL_TIME = 5; // seconds 
+    int kdNeededToLadder = 25;
     public static final String db = "website";
     public Status status;
     public String name;
@@ -72,6 +73,7 @@ public class ElimPlayer {
     public ElimPlayer(BotAction act, ElimGame elimGame, String name, int ship, int deaths) {
         ba = act;
         currentSeason = ba.getBotSettings().getInt("CurrentSeason");
+        kdNeededToLadder = ba.getBotSettings().getInt("KDToLadder");
         this.name = name;
         spawn = null;
         bounds = null;
@@ -406,6 +408,34 @@ public class ElimPlayer {
     public void saveWin() {
         cancelTasks();
         stats.handleWin();
+        int wins = stats.getStat(StatType.WINS);
+        int streak = stats.getStat(StatType.WIN_STREAK);
+        if( wins == 1 )
+            ba.sendPrivateMessage(name, "You have won! Your first win this season in " + Tools.shipName(stats.getShip()) + "!");
+        else
+            ba.sendPrivateMessage(name, "You have won! Win #" + wins + (streak > 2 ? " (Streak: " + streak + ")" : "") + " in " + Tools.shipName(stats.getShip()) + ".");
+    }
+    
+    public void showGameStats() {
+        int oldrating = stats.crunchRating();
+        int oldadjrating = stats.crunchAdjRating();
+        int kills = stats.getStat(StatType.KILLS);
+        int deaths = stats.getStat(StatType.DEATHS);
+        String msg = Tools.shipNameSlang(stats.getShip()) + " Game " + stats.getStat(StatType.GAMES) + " ... ";
+        float ratio = 0.0f;
+        if( kills > 0 && deaths > 0 )
+            ratio = kills / deaths;
+        msg += "K:" + kills + " D:" + deaths + " Ratio: " + (ratio != 0.0f ? String.format("%.2f%", ratio) + ":1": "N/A") + "  ";
+        
+        kills = stats.getTotal(StatType.KILLS);
+        deaths = stats.getTotal(StatType.DEATHS);
+        if( kills + deaths < kdNeededToLadder ) {
+            msg += (kdNeededToLadder - (kills + deaths)) + " more kills/deaths needed to ladder.";
+        } else {
+            msg += "Rating: " + oldrating + " -> " + stats.getStat(StatType.RATING) + "  Ladder: " + oldadjrating + " -> " + stats.getStat(StatType.ADJRATING) + "  Confidence: " + (stats.getConfidence() * 100.0f) + "%";
+        }
+        ba.sendPrivateMessage(name, msg);
+        // WB Game 3 ... K:10 D:5 Ratio: 2:1  Rating: 500 -> 456
     }
     
     public void cancelTasks() {
