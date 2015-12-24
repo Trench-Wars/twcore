@@ -8,9 +8,9 @@ import twcore.core.events.ArenaJoined;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 //import twcore.core.net.MobilePusher;
-import twcore.core.util.Tools;
+//import twcore.core.util.Tools;
 import java.util.List;
-import java.util.concurrent.Future;
+//import java.util.concurrent.Future;
 import twcore.core.net.iharder.*;
 
 
@@ -113,13 +113,15 @@ public class pushbulletbot extends SubspaceBot {
         	String msg;
         	msg = event.getMessage();
         	msg = msg.substring(msg.indexOf(" ") + 1);
-        	m_botAction.sendSmartPrivateMessage(name, "Private Message: '" + msg + "' Pushed Successfully!");
+        	
         	
         	 try{
+        		 pbClient.sendNote( null, getEmailFromPlayerName(name), "", msg);
+        		 m_botAction.sendSmartPrivateMessage(name, "Private Message: '" + msg + "' Pushed Successfully!");
         	     //pbClient.sendNote( null, "tapeboy27@gmail.com", "", msg);
         	     //pbClient.sendNote( null, "trenchwars24@gmail.com", "", msg);
         	     //pbClient.sendNote( null, "khaitran-@hotmail.com", "", msg);
-        	     pbClient.sendNote( null, "dugwyler@gmail.com", "", msg);
+        	     //pbClient.sendNote( null, "dugwyler@gmail.com", "", msg);
         	     
         	     
         	 } catch( PushbulletException e ){
@@ -252,13 +254,33 @@ public class pushbulletbot extends SubspaceBot {
     	String playerName = "";
     	if (email.contentEquals("trenchwars24@gmail.com")) { playerName = "24";}
     	if (email.contentEquals("tapeboy27@gmail.com")) { playerName = "Board";}
-    	if (email.contentEquals("khaitritran@gmail.com")) { playerName = "Kado";}
+    	//if (email.contentEquals("khaitritran@gmail.com")) { playerName = "Kado";}
     	if (email.contentEquals("khaitran-@hotmail.com")) { playerName = "Kado";} 
     	if (email.contentEquals("twpushbulletbot@gmail.com")) { playerName = "PushBulletBot";}
     	if (email.contentEquals("dugwyler@gmail.com")) {playerName = "qan";}
     	m_botAction.sendPublicMessage(playerName + " : " + email.toLowerCase());
     	return playerName;
     }
+    
+    /**
+     * This is temporary and will be replaced with a database call matching up email to player name.
+     * @param email
+     * @return
+     */
+    public String getEmailFromPlayerName(String playerName) {
+    	String email = "";
+    	if (playerName.toLowerCase().contentEquals("24")) { email = "trenchwars24@gmail.com";}
+    	if (playerName.toLowerCase().contentEquals("board")) { email = "tapeboy27@gmail.com";}
+    	//if (playerName.toLowerCase().contentEquals("Kado")) { email = "khaitritran@gmail.com";}
+    	if (playerName.toLowerCase().contentEquals("kado")) { email = "khaitran-@hotmail.como";} 
+    	if (playerName.toLowerCase().contentEquals("pushbulletbot")) { email = "twpushbulletbot@gmail.com";}
+    	if (playerName.toLowerCase().contentEquals("qan")) {email = "dugwyler@gmail.com";}
+    	m_botAction.sendPublicMessage(email + " : " + playerName.toLowerCase());
+    	return email;
+    }
+    
+    
+    
     
     
     public void StartPushbulletListener() {
