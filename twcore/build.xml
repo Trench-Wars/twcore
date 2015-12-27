@@ -101,5 +101,10 @@
 			use="true" 
 			version="true"/>
 	</target>
+	
+	<target name="path" description="Echo project classpath">
+	    <pathconvert property="classpath" refid="build.path"/>
+	    <echo>${classpath}</echo>
+	</target>
     
 </project>
