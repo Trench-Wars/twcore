@@ -104,7 +104,7 @@
 	
 	<target name="path" description="Echo project classpath">
 	    <pathconvert property="classpath" refid="build.path"/>
-	    <echo>${classpath}</echo>
+	    <echo>${classpath}:src</echo>
 	</target>
     
 </project>
