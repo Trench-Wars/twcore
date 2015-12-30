@@ -12,13 +12,22 @@
 	<property name="twitter4j" value="lib/twitter4j-core-3.0.3.jar"/>
 	<property name="chatterbot" value="lib/chatter-bot-api-r40.jar"/>
 	<property name="tyrus" value="lib/tyrus-standalone-client-1.8.3.jar"/>
-	<property name="javax" value="lib/javaee-api-7.0.jar"/>
-	<property name="httpclient" value="lib/httpclient-4.3.5.jar"/>
-	<property name="httpclient-cache" value="lib/httpclient-cache-4.3.4.jar"/>
-	<property name="httpcore" value="lib/httpcore-4.3.2.jar"/>
-	<property name="httpmime" value="lib/httpmime-4.3.5.jar"/>
 	<property name="slf4j" value="lib/slf4j-api-1.7.7.jar"/>
-		
+	<property name="logbackcore" value="lib/logback-core-1.1.2.jar"/>
+	<property name="logbackclassic" value="lib/logback-classic-1.1.2.jar"/>
+	<property name="jclslf4j" value="lib/jcl-over-slf4j-1.7.7.jar"/>
+	<property name="javax" value="lib/javax.json-1.0.4.jar"/>
+	<property name="httpmime" value="lib/httpmime-4.3.5.jar"/>
+	<property name="httpcore" value="lib/httpcore-4.3.2.jar"/>
+	<property name="httpclient-cache" value="lib/httpclient-cache-4.3.4.jar"/>
+	<property name="httpclient" value="lib/httpclient-4.3.5.jar"/>
+	<property name="fluenthc" value="lib/fluent-hc-4.3.4.jar"/>
+	<property name="commonslogging" value="lib/commons-logging-1.2.jar"/>
+	<property name="commonslang" value="lib/commons-lang3-3.3.2.jar"/>
+	<property name="commonscodec" value="lib/commons-codec-1.6.jar"/>
+	<property name="mysqlconnector" value="lib/mysql-connector-java-5.1.25-bin.jar"/>
+	<property name="googleapi" value="lib/googleapi.jar"/>
+			
 	<path id="build.path">
 		<pathelement location="${mail.jar}"/>
 		<pathelement location="${activation.jar}"/>
@@ -27,12 +36,21 @@
 		<pathelement location="${twitter4j}"/>
 		<pathelement location="${chatterbot}"/>
 		<pathelement location="${tyrus}"/>
-		<pathelement location="${javax}"/>
-		<pathelement location="${httpclient}"/>
-		<pathelement location="${httpclient-cache}"/>
-		<pathelement location="${httpcore}"/>
-		<pathelement location="${httpmime}"/>
 		<pathelement location="${slf4j}"/>
+		<pathelement location="${logbackcore}"/>
+		<pathelement location="${logbackclassic}"/>
+		<pathelement location="${jclslf4j}"/>	
+		<pathelement location="${javax}"/>
+		<pathelement location="${httpmime}"/>
+		<pathelement location="${httpcore}"/>
+		<pathelement location="${httpclient-cache}"/>
+		<pathelement location="${httpclient}"/>
+		<pathelement location="${fluenthc}"/>
+		<pathelement location="${commonslogging}"/>
+		<pathelement location="${commonslang}"/>
+		<pathelement location="${commonscodec}"/>
+		<pathelement location="${mysqlconnector}"/>
+		<pathelement location="${googleapi}"/>
 	</path>
 	
     <target name="core" description="Builds the TWCore core" depends="configCopy">
@@ -53,7 +71,7 @@
       
     <target name="bots" description="Builds the TWCore bots" depends="configCopy">
     	<echo>Compiling Bots (this may take a moment)</echo>
-    	<javac classpath="bin/twcore.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar;lib/twitter4j-core-3.0.3.jar;lib/chatter-bot-api-r40.jar;lib/tyrus-standalone-client-1.8.3.jar" srcdir="src/twcore/bots" destdir="bin" debug="on" debuglevel="lines,vars,source" includeantruntime="false" /> 
+    	<javac classpath="bin/twcore.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar;lib/twitter4j-core-3.0.3.jar;lib/chatter-bot-api-r40.jar;lib/tyrus-standalone-client-1.8.3.jar;lib/slf4j-api-1.7.7.jar;lib/logback-core-1.1.2.jar;lib/logback-classic-1.1.2.jar;lib/jcl-over-slf4j-1.7.7.jar;lib/javax.json-1.0.4.jar;lib/httpmime-4.3.5.jar;lib/httpcore-4.3.2.jar;lib/httpclient-cache-4.3.4.jar;lib/httpclient-4.3.5.jar;lib/fluent-hc-4.3.4.jar;lib/commons-logging-1.2.jar;lib/commons-lang3-3.3.2.jar;lib/commons-codec-1.6.jar" srcdir="src/twcore/bots" destdir="bin" debug="on" debuglevel="lines,vars,source" includeantruntime="false" /> 
     </target> 
 
     <target name="clean" description="Deletes the jar and all class files">
@@ -70,7 +88,7 @@
 	
 	<target name="botdir" description="Builds a specific directory under twcore/bots. Specify the directory name on the environment variable 'botdir' (with -D on command line)" depends="configCopy">
 		<echo>Compiling bot directory ${botdir}</echo>
-		<javac classpath="bin/twcore.jar;lib/gson.jar;lib/twitter4j-core-3.0.3.jar;lib/facebook4j-core-1.1.3.jar;lib/chatter-bot-api-r40.jar;lib/tyrus-standalone-client-1.8.3.jar" srcdir="src/twcore/bots/${botdir}" destdir="bin" debug="on" debuglevel="lines,vars,source" includeantruntime="false" />
+		<javac classpath="bin/twcore.jar;lib/gson.jar;lib/twitter4j-core-3.0.3.jar;lib/facebook4j-core-1.1.3.jar;lib/chatter-bot-api-r40.jar;lib/tyrus-standalone-client-1.8.3.jar;lib/slf4j-api-1.7.7.jar;lib/logback-core-1.1.2.jar;lib/logback-classic-1.1.2.jar;lib/jcl-over-slf4j-1.7.7.jar;lib/javax.json-1.0.4.jar;lib/httpmime-4.3.5.jar;lib/httpcore-4.3.2.jar;lib/httpclient-cache-4.3.4.jar;lib/httpclient-4.3.5.jar;lib/fluent-hc-4.3.4.jar;lib/commons-logging-1.2.jar;lib/commons-lang3-3.3.2.jar;lib/commons-codec-1.6.jar" srcdir="src/twcore/bots/${botdir}" destdir="bin" debug="on" debuglevel="lines,vars,source" includeantruntime="false" />
 	</target>
 	
 	<target name="configCopy" description="Copies all the .cfg files from the src directory to the bin directory if file doesn't exist">
@@ -87,7 +105,7 @@
 		<javadoc 
 			access="package" 
 			author="true" 
-			classpath="lib/mysql-connector-java-5.0.7-bin.jar;lib/googleapi.jar;lib/aim.jar;lib/mail.jar;lib/activation.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar;lib/twitter4j-core-3.0.3.jar;lib/chatter-bot-api-r40.jar;lib/tyrus-standalone-client-1.8.3.jar" 
+			classpath="lib/mysql-connector-java-5.1.25-bin.jar;lib/googleapi.jar;lib/aim.jar;lib/mail.jar;lib/activation.jar;lib/gson.jar;lib/facebook4j-core-1.1.3.jar;lib/twitter4j-core-3.0.3.jar;lib/chatter-bot-api-r40.jar;lib/tyrus-standalone-client-1.8.3.jar;lib/slf4j-api-1.7.7.jar;lib/logback-core-1.1.2.jar;lib/logback-classic-1.1.2.jar;lib/jcl-over-slf4j-1.7.7.jar;lib/javax.json-1.0.4.jar;lib/httpmime-4.3.5.jar;lib/httpcore-4.3.2.jar;lib/httpclient-cache-4.3.4.jar;lib/httpclient-4.3.5.jar;lib/fluent-hc-4.3.4.jar;lib/commons-logging-1.2.jar;lib/commons-lang3-3.3.2.jar;lib/commons-codec-1.6.jar" 
 			destdir="javadoc" 
 			doctitle="Trench Wars Bot Core (TWCore) API Documentation" 
 			nodeprecated="false" 
