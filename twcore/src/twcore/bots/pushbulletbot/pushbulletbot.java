@@ -106,6 +106,57 @@ public class pushbulletbot extends SubspaceBot {
         	m_botAction.sendSmartPrivateMessage(name, "https://www.pushbullet.com/channel?tag=envysquad");
         }
         
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!challenge")) {
+        	String msg;
+        	msg = "(MatchBot3)>Axwell is challenging you for a game of 3vs3 TWJD versus Rage. Captains/assistants, ?go twjd and pm me with '!accept Rage'";
+        	
+        	try {
+				pbClient.sendChannelMsg( "envysquad", "", msg);
+				m_botAction.sendPublicMessage(msg);
+			} catch (PushbulletException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!accept")) {
+        	String msg;
+        	msg = "(MatchBot3)>A game of 3vs3 TWJD versus Rage will start in ?go twjd in 30 seconds";
+        	
+        	try {
+				pbClient.sendChannelMsg( "envysquad", "", msg);
+				m_botAction.sendPublicMessage(msg);
+			} catch (PushbulletException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+        
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!beep ")) {
+        	String msg;
+        	msg = event.getMessage();
+        	msg = msg.substring(msg.indexOf(" ") + 1);
+        	
+        	String postMsg;
+        	postMsg = "";
+        	
+        	if (msg.toLowerCase().contentEquals("jd")) {postMsg = name + " is in for a TWJD match!";}
+        	if (msg.toLowerCase().contentEquals("dd")) {postMsg = name + " is in for a TWDD match!";}
+        	if (msg.toLowerCase().contentEquals("bd")) {postMsg = name + " is in for a TWBD match!";}
+        	if (msg.toLowerCase().contentEquals("sd")) {postMsg = name + " is in for a TWSD match!";}
+        	if (msg.toLowerCase().contentEquals("fd")) {postMsg = name + " is in for a TWFD match!";}
+        	if (msg.toLowerCase().contentEquals("any")) {postMsg = name + " is in for any TWD match!";}
+        	
+        	if (postMsg != "") {
+	        	 try{
+	        	     pbClient.sendChannelMsg( "envysquad", "", postMsg);
+	        	     m_botAction.sendPublicMessage(postMsg);
+	        	 } catch( PushbulletException e ){
+	        	     // Huh, didn't work
+	        	 }
+        	}
+        }
+        
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!push ")) {
         	//m_botAction.sendSmartPrivateMessage(name, "Message: '" + msg + "' Pushed Successfully!");
         	
@@ -117,7 +168,8 @@ public class pushbulletbot extends SubspaceBot {
         	
         	 try{
         		 pbClient.sendNote( null, getEmailFromPlayerName(name), "", msg);
-        		 m_botAction.sendSmartPrivateMessage(name, "Private Message: '" + msg + "' Pushed Successfully!");
+        		 m_botAction.sendPublicMessage("Private Message: '" + msg + "' Pushed Successfully!");
+        		 //m_botAction.sendSmartPrivateMessage(name, "Private Message: '" + msg + "' Pushed Successfully!");
         	     //pbClient.sendNote( null, "tapeboy27@gmail.com", "", msg);
         	     //pbClient.sendNote( null, "trenchwars24@gmail.com", "", msg);
         	     //pbClient.sendNote( null, "khaitran-@hotmail.com", "", msg);
@@ -141,7 +193,8 @@ public class pushbulletbot extends SubspaceBot {
         	
         	 try{
         	     pbClient.sendChannelMsg( "envysquad", "", msg);
-        	     m_botAction.sendSmartPrivateMessage(name, "Channel Message: '" + msg + "' Pushed Successfully!");
+        	     m_botAction.sendPublicMessage("Channel Message: '" + msg + "' Pushed Successfully!");
+        	     //m_botAction.sendSmartPrivateMessage(name, "Channel Message: '" + msg + "' Pushed Successfully!");
         	 } catch( PushbulletException e ){
         	     // Huh, didn't work
         	 }
@@ -258,7 +311,9 @@ public class pushbulletbot extends SubspaceBot {
     	if (email.contentEquals("khaitran-@hotmail.com")) { playerName = "Kado";} 
     	if (email.contentEquals("twpushbulletbot@gmail.com")) { playerName = "PushBulletBot";}
     	if (email.contentEquals("dugwyler@gmail.com")) {playerName = "qan";}
-    	m_botAction.sendPublicMessage(playerName + " : " + email.toLowerCase());
+    	if (email.contentEquals("buesingftw@gmail.com")) {playerName = "Hack";}
+    	
+    	//m_botAction.sendPublicMessage(playerName + " : " + email.toLowerCase());
     	return playerName;
     }
     
@@ -275,7 +330,8 @@ public class pushbulletbot extends SubspaceBot {
     	if (playerName.toLowerCase().contentEquals("kado")) { email = "khaitran-@hotmail.como";} 
     	if (playerName.toLowerCase().contentEquals("pushbulletbot")) { email = "twpushbulletbot@gmail.com";}
     	if (playerName.toLowerCase().contentEquals("qan")) {email = "dugwyler@gmail.com";}
-    	m_botAction.sendPublicMessage(email + " : " + playerName.toLowerCase());
+    	if (playerName.toLowerCase().contentEquals("hack")) {email = "buesingftw@gmail.com";}
+    	//m_botAction.sendPublicMessage(email + " : " + playerName.toLowerCase());
     	return email;
     }
     
@@ -316,6 +372,10 @@ public class pushbulletbot extends SubspaceBot {
 
 				if (body.toLowerCase().contentEquals("fd")) {
 					msg = playerName + " is in for a TWFD match!";
+				}
+				
+				if (body.toLowerCase().contentEquals("any")) {
+					msg = playerName + " is in for any TWD match!";
 				}
 				
 				
