@@ -329,8 +329,7 @@ public class pushbulletbot extends SubspaceBot {
 			break;
 		case "getemailbyusername": //can't use @Params if expecting recordset results
 			preparedStatement = 
-					" SELECT PBA.fcPushBulletEmail"
-				+	" FROM trench_TrenchWars.tblPBAccount AS PBA"
+					" SELECT PBA.fcPushBulletEmail FROM trench_TrenchWars.tblPBAccount AS PBA"
 				+	" JOIN trench_TrenchWars.tblUser AS U ON PBA.fnPlayerID = U.fnUserID WHERE U.fcUserName = ?;";
 			break;
     	}
@@ -343,12 +342,10 @@ public class pushbulletbot extends SubspaceBot {
 		try {
 			ps_getusernamebyemail.clearParameters();
 			ps_getusernamebyemail.setString(1, Tools.addSlashesToString(email));
-			m_botAction.sendPublicMessage(ps_getusernamebyemail.toString());
 			ps_getusernamebyemail.execute();
 			try (ResultSet rs = ps_getusernamebyemail.getResultSet()) {
 				if (rs.next()) { 	
 					userName = rs.getString(1);
-					m_botAction.sendPublicMessage(userName);
 				}
 			}
 		} catch (SQLException e) {
@@ -361,16 +358,14 @@ public class pushbulletbot extends SubspaceBot {
     public String getEmailByUserName(String userName) {
 		
     	String email = "";
-		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getemailbyusernamename"));
+		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getemailbyusername"));
 		try {
 			ps_getemailbyusername.clearParameters();
 			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userName));
-			m_botAction.sendPublicMessage(ps_getemailbyusername.toString());
 			ps_getemailbyusername.execute();
 			try (ResultSet rs = ps_getemailbyusername.getResultSet()) {
 				if (rs.next()) { 	
 					email = rs.getString(1);
-					m_botAction.sendPublicMessage(email);
 				}
 			}
 		} catch (SQLException e) {
@@ -429,6 +424,7 @@ public class pushbulletbot extends SubspaceBot {
 				if (senderEmail == "") { return; } //means it came from the channel, no need to push it back to the channel
 				//String type = lastPush.getBody()
 				String playerName = getUserNameByEmail(senderEmail);
+				if (playerName == "") {playerName = "You Said";}
 	        	String msg = body;
 				
 				if (body.toLowerCase().contentEquals("jd")) {
