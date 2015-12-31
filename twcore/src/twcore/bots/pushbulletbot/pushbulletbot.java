@@ -261,6 +261,7 @@ public class pushbulletbot extends SubspaceBot {
 				ps_signup.clearParameters();
 				ps_signup.setString(1, Tools.addSlashesToString(name));
 				ps_signup.setString(2, Tools.addSlashesToString(email));
+				m_botAction.sendPublicMessage(ps_signup.toString());
 				ps_signup.execute();
 				m_botAction.sendPublicMessage("Signed Up " + name + " : " + email + " Successfully!");
 			} catch (SQLException e1) {
