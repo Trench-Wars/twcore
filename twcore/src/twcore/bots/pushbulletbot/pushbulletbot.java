@@ -7,12 +7,14 @@ import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
-//import twcore.core.net.MobilePusher;
-//import twcore.core.util.Tools;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
 import java.util.List;
-//import java.util.concurrent.Future;
 import twcore.core.net.iharder.*;
-
+import twcore.core.util.Tools;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 
 /**
@@ -29,6 +31,10 @@ public class pushbulletbot extends SubspaceBot {
     private BotSettings m_botSettings;          // Stores settings for your bot as found in the .cfg file.
     //BotSettings rules;                                            // In this case, it would be settings from pushbulletbot.cfg
 
+    private String connectionID = "pushbulletbot";
+    static final String db = "bots";
+    
+    
     /**
      * Creates a new instance of your bot.
      */
@@ -99,6 +105,7 @@ public class pushbulletbot extends SubspaceBot {
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!die")) {
             //m_botAction.sendPublicMessage(name + " commanded me to die. Disconnecting...");
             try { Thread.sleep(50); } catch (Exception e) {};
+            handleDisconnect();
             m_botAction.die("!die by " + name);
         }
         
@@ -131,6 +138,11 @@ public class pushbulletbot extends SubspaceBot {
 				e.printStackTrace();
 			}
         }
+       
+        
+        
+        
+        
         
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!beep ")) {
         	String msg;
@@ -158,39 +170,29 @@ public class pushbulletbot extends SubspaceBot {
         }
         
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!push ")) {
-        	//m_botAction.sendSmartPrivateMessage(name, "Message: '" + msg + "' Pushed Successfully!");
-        	
-        	
-        	String msg;
-        	msg = event.getMessage();
-        	msg = msg.substring(msg.indexOf(" ") + 1);
-        	
-        	
+         	String msg = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
         	 try{
-        		 pbClient.sendNote( null, getEmailFromPlayerName(name), "", msg);
-        		 m_botAction.sendPublicMessage("Private Message: '" + msg + "' Pushed Successfully!");
-        		 //m_botAction.sendSmartPrivateMessage(name, "Private Message: '" + msg + "' Pushed Successfully!");
-        	     //pbClient.sendNote( null, "tapeboy27@gmail.com", "", msg);
-        	     //pbClient.sendNote( null, "trenchwars24@gmail.com", "", msg);
-        	     //pbClient.sendNote( null, "khaitran-@hotmail.com", "", msg);
-        	     //pbClient.sendNote( null, "dugwyler@gmail.com", "", msg);
-        	     
-        	     
+        		 pbClient.sendNote( null, getEmailByUserName(name), "", msg);
+        		 m_botAction.sendPublicMessage("Private Message: '" + msg + "' Pushed Successfully to " + name + ": " + getEmailByUserName(name));
         	 } catch( PushbulletException e ){
         	     // Huh, didn't work
         	 }
-       	
-            
+        }
+        
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!notify ")) {
+         	String userName = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
+        	String msg = "Reply to me with commands like 'jd' to beep on channel!"; 
+         	try{
+        		 pbClient.sendNote( null, getEmailByUserName(userName), "", msg);
+        		 m_botAction.sendPublicMessage("Private Message: '" + msg + "' Pushed Successfully!");
+        	 } catch( PushbulletException e ){
+        	     // Huh, didn't work
+        	 }
         }
         
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!pushchannel ")) {
         	//m_botAction.sendSmartPrivateMessage(name, "Message: '" + msg + "' Pushed Successfully!");
-        	
-        	
-        	String msg;
-        	msg = event.getMessage();
-        	msg = msg.substring(msg.indexOf(" ") + 1);
-        	
+        	String msg = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
         	 try{
         	     pbClient.sendChannelMsg( "envysquad", "", msg);
         	     m_botAction.sendPublicMessage("Channel Message: '" + msg + "' Pushed Successfully!");
@@ -200,23 +202,6 @@ public class pushbulletbot extends SubspaceBot {
         	 }
         }
 
-        if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!pushchannel2 ")) {
-        	//m_botAction.sendSmartPrivateMessage(name, "Message: '" + msg + "' Pushed Successfully!");
-        	
-        	
-        	String msg;
-        	msg = event.getMessage();
-        	msg = msg.substring(msg.indexOf(" ") + 1);
-        	
-        	 try{
-        	     pbClient.sendChannelMsg( "envysquad", "", msg);
-        	     m_botAction.sendSmartPrivateMessage(name, "Channel Message: '" + msg + "' Pushed Successfully!");
-        	 } catch( PushbulletException e ){
-        	     // Huh, didn't work
-        	 }
-        }
-        
-        
         
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!pushes")) {
 	        List<Push> pushes = null;
@@ -247,9 +232,6 @@ public class pushbulletbot extends SubspaceBot {
         
         }
         
-        
-       
-
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!listen")) {
         	m_botAction.sendSmartPrivateMessage(name, "Listening Started!");
         	pbClient.startWebsocket();
@@ -262,13 +244,148 @@ public class pushbulletbot extends SubspaceBot {
         }
         
         
-        
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!signup ")) {
+        	String email = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
+        	
+        	//check if valid email address, if not then exit
+        	if (!email.contains("@") || !email.contains(".")) {
+        		m_botAction.sendPublicMessage("Invalid Email Adress entered!");
+        		return;
+        	}
+        	
+        	//get signup Query
+        	PreparedStatement ps_signup = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("signup"));      	
+        	
+        	//put values in prepared statement
+        	try {
+				ps_signup.clearParameters();
+				ps_signup.setString(1, Tools.addSlashesToString(name));
+				ps_signup.setString(2, Tools.addSlashesToString(email));
+				ps_signup.execute();
+				m_botAction.sendPublicMessage("Signed Up " + name + " : " + email + " Successfully!");
+			} catch (SQLException e1) {
+				try {
+					for (Throwable x : ps_signup.getWarnings()) {
+						if (x.getMessage().toLowerCase().contains("unique")) {
+							m_botAction.sendPublicMessage(email + " is already registered by " + getUserNameByEmail(email));
+						} else {
+							m_botAction.sendPublicMessage(x.getMessage());
+							e1.printStackTrace();
+						}
+					}
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					m_botAction.sendPublicMessage("Something crazy happened...");
+					e.printStackTrace();
+				}
+			}
+        }
         
     }
     
     
     
     
+    
+    /**
+     * 
+     * @param statementName = signup : @PlayerName, @PushBulletEmail
+     * @param statementName = createchannel : @PlayerName, @ChannelName
+     * @param statementName = getusernamebyemail : @PushBulletEmail
+     * @param statementName = getemailbyusername : @PlayerName
+     * 
+     * @return preparedStatement Query
+     */
+    public String getPreparedStatement(String statementName) {
+    	String preparedStatement = "";
+    	switch (statementName.toLowerCase()) {
+    	case "signup":
+    		preparedStatement = 
+    				" SET @PlayerName = ?, @PushBulletEmail = ?;"
+    			+	" DELETE PBA FROM trench_TrenchWars.tblPBAccount AS PBA"
+				+	" JOIN trench_TrenchWars.tblUser AS U ON U.fnUserID = PBA.fnPlayerID AND U.fcUserName = @PlayerName;"
+				+	" INSERT INTO trench_TrenchWars.tblPBAccount (fnPlayerID, fcPushBulletEmail)"
+				+	" SELECT fnUserID, @PushBulletEmail FROM trench_TrenchWars.tblUser WHERE fcUserName = @PlayerName;";
+    		break;
+		case "createchannel":
+			preparedStatement = 
+		    		" SET @PlayerName = ?, @ChannelName = ?;"
+				+	" DELETE FROM trench_TrenchWars.tblPBSquadChannel WHERE fnSquadID ="
+				+	"	(SELECT T.fnTeamID FROM trench_TrenchWars.tblTeam AS T"
+				+	"	JOIN trench_TrenchWars.tblTeamUser AS TU ON T.fnTeamID = TU.fnTeamID AND fnCurrentTeam = 1"
+				+	"	JOIN trench_TrenchWars.tblUser AS U ON TU.fnUserID = U.fnUserID"
+				+	"	WHERE U.fcUserName = @PlayerName AND isnull(T.fdDeleted));"
+				+	" INSERT INTO trench_TrenchWars.tblPBSquadChannel (fnSquadID, fcChannelName)"
+				+	" SELECT T.fnTeamID, @ChannelName AS fcChannelName"
+				+	" FROM trench_TrenchWars.tblTeam AS T"
+				+	" JOIN trench_TrenchWars.tblTeamUser AS TU ON T.fnTeamID = TU.fnTeamID AND fnCurrentTeam = 1"
+				+	" JOIN trench_TrenchWars.tblUser AS U ON TU.fnUserID = U.fnUserID"
+				+	" WHERE U.fcUserName = @PlayerName AND isnull(T.fdDeleted);";
+			break;
+		case "getusernamebyemail": //can't use @Params if expecting recordset results
+			preparedStatement = 
+					" SELECT U.fcUserName FROM trench_TrenchWars.tblPBAccount AS PBA"
+				+	" JOIN trench_TrenchWars.tblUser AS U ON PBA.fnPlayerID = U.fnUserID WHERE PBA.fcPushBulletEmail = ?;";
+			break;
+		case "getemailbyusername": //can't use @Params if expecting recordset results
+			preparedStatement = 
+					" SELECT PBA.fcPushBulletEmail"
+				+	" FROM trench_TrenchWars.tblPBAccount AS PBA"
+				+	" JOIN trench_TrenchWars.tblUser AS U ON PBA.fnPlayerID = U.fnUserID WHERE U.fcUserName = ?;";
+			break;
+    	}
+		return preparedStatement;
+    }
+    
+    public String getUserNameByEmail(String email) {
+		String userName = "";
+		PreparedStatement ps_getusernamebyemail = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getusernamebyemail"));
+		try {
+			ps_getusernamebyemail.clearParameters();
+			ps_getusernamebyemail.setString(1, Tools.addSlashesToString(email));
+			m_botAction.sendPublicMessage(ps_getusernamebyemail.toString());
+			ps_getusernamebyemail.execute();
+			try (ResultSet rs = ps_getusernamebyemail.getResultSet()) {
+				if (rs.next()) { 	
+					userName = rs.getString(1);
+					m_botAction.sendPublicMessage(userName);
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	return userName;
+    }
+    
+    public String getEmailByUserName(String userName) {
+		
+    	String email = "";
+		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getemailbyusernamename"));
+		try {
+			ps_getemailbyusername.clearParameters();
+			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userName));
+			m_botAction.sendPublicMessage(ps_getemailbyusername.toString());
+			ps_getemailbyusername.execute();
+			try (ResultSet rs = ps_getemailbyusername.getResultSet()) {
+				if (rs.next()) { 	
+					email = rs.getString(1);
+					m_botAction.sendPublicMessage(email);
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	return email;
+    }
+    
+    
+    
+    public void handleDisconnect() {
+        //ba.closePreparedStatement(db, connectionID, this.ps_signup);
+        ba.cancelTasks();
+    }
     
     /**
      * The LoggedOn event is fired when the bot has logged on to the system, but
@@ -298,47 +415,7 @@ public class pushbulletbot extends SubspaceBot {
         m_botAction.setReliableKills(1);
     }
     
-    /**
-     * This is temporary and will be replaced with a database call matching up email to player name.
-     * @param email
-     * @return
-     */
-    public String getPlayerNameFromEmail(String email) {
-    	String playerName = "";
-    	if (email.contentEquals("trenchwars24@gmail.com")) { playerName = "24";}
-    	if (email.contentEquals("tapeboy27@gmail.com")) { playerName = "Board";}
-    	//if (email.contentEquals("khaitritran@gmail.com")) { playerName = "Kado";}
-    	if (email.contentEquals("khaitran-@hotmail.com")) { playerName = "Kado";} 
-    	if (email.contentEquals("twpushbulletbot@gmail.com")) { playerName = "PushBulletBot";}
-    	if (email.contentEquals("dugwyler@gmail.com")) {playerName = "qan";}
-    	if (email.contentEquals("buesingftw@gmail.com")) {playerName = "Hack";}
-    	
-    	//m_botAction.sendPublicMessage(playerName + " : " + email.toLowerCase());
-    	return playerName;
-    }
-    
-    /**
-     * This is temporary and will be replaced with a database call matching up email to player name.
-     * @param email
-     * @return
-     */
-    public String getEmailFromPlayerName(String playerName) {
-    	String email = "";
-    	if (playerName.toLowerCase().contentEquals("24")) { email = "trenchwars24@gmail.com";}
-    	if (playerName.toLowerCase().contentEquals("board")) { email = "tapeboy27@gmail.com";}
-    	//if (playerName.toLowerCase().contentEquals("Kado")) { email = "khaitritran@gmail.com";}
-    	if (playerName.toLowerCase().contentEquals("kado")) { email = "khaitran-@hotmail.como";} 
-    	if (playerName.toLowerCase().contentEquals("pushbulletbot")) { email = "twpushbulletbot@gmail.com";}
-    	if (playerName.toLowerCase().contentEquals("qan")) {email = "dugwyler@gmail.com";}
-    	if (playerName.toLowerCase().contentEquals("hack")) {email = "buesingftw@gmail.com";}
-    	//m_botAction.sendPublicMessage(email + " : " + playerName.toLowerCase());
-    	return email;
-    }
-    
-    
-    
-    
-    
+
     public void StartPushbulletListener() {
 	    pbClient.addPushbulletListener(new PushbulletListener(){
 	        @Override
@@ -351,7 +428,7 @@ public class pushbulletbot extends SubspaceBot {
 				String senderEmail = lastPush.getSender_email().toString();
 				if (senderEmail == "") { return; } //means it came from the channel, no need to push it back to the channel
 				//String type = lastPush.getBody()
-				String playerName = getPlayerNameFromEmail(senderEmail);
+				String playerName = getUserNameByEmail(senderEmail);
 	        	String msg = body;
 				
 				if (body.toLowerCase().contentEquals("jd")) {
