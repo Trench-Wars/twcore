@@ -488,33 +488,43 @@ public class pushbulletbot extends SubspaceBot {
     
 
     public void StartPushbulletListener() {
+    	m_botAction.sendPublicMessage("1");
 	    pbClient.addPushbulletListener(new PushbulletListener(){
 	        @Override
 	        public void pushReceived(PushbulletEvent pushEvent) {
-	        	
+	        	m_botAction.sendPublicMessage("2");
 	        	List<Push> pushes = null;
 				pushes = pushEvent.getPushes();
 				Push lastPush = pushes.get(0);
 				String body = lastPush.getBody().toString();
+				m_botAction.sendPublicMessage("3");
 				String senderEmail = lastPush.getSender_email().toString();
 				if (senderEmail == "") { return; } //means it came from the channel, no need to push it back to the channel
 				//String type = lastPush.getBody()
+				m_botAction.sendPublicMessage("4");
 				String playerName = getUserNameByEmail(senderEmail);
 				if (playerName == "") { return; } //means it came from the bot account, probably using !push
-	        	String squadChannel = getSquadChannel(playerName);
+				m_botAction.sendPublicMessage("5");
+				String squadChannel = getSquadChannel(playerName);
 				if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
+				m_botAction.sendPublicMessage("6");
 				String channelPost = getInterpretBeep(playerName, body);
-
+				m_botAction.sendPublicMessage("7");
 				//m_botAction.sendPublicMessage(type);
 				if (channelPost != "") {
 					try{
-		        	     pbClient.sendChannelMsg( squadChannel, "", channelPost);
+						m_botAction.sendPublicMessage("8");
+		        	     pbClient.sendChannelMsg(squadChannel, "", channelPost);
 		        	     m_botAction.sendPublicMessage(playerName + " :x: " + channelPost);
+		        	     m_botAction.sendPublicMessage("9");
 		        	 } catch( PushbulletException e ){
 		        	     // Huh, didn't work
+		        		 m_botAction.sendPublicMessage(e.getMessage());
+		        		 m_botAction.sendPublicMessage(squadChannel);
 		        	 }
 				} else {
-					m_botAction.sendPublicMessage(playerName + " : " + channelPost);
+					m_botAction.sendPublicMessage(playerName + " : " + body);
+					m_botAction.sendPublicMessage("10");
 				}
 	        }
 	
