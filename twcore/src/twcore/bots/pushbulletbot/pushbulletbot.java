@@ -345,7 +345,7 @@ public class pushbulletbot extends SubspaceBot {
 			break;
 		case "interpretbeep": //can't use @Params if expecting recordset results
 			preparedStatement = 
-					" SELECT fcCommand, fcCommandShortDescription FROM trench_trenchwars.tblPBCommands"
+					" SELECT fcCommand, fcCommandShortDescription FROM trench_TrenchWars.tblPBCommands"
 				+	" WHERE INSTR(?, fcCommand) > 0;";
 			break;
 		case "getsquadchannel": //can't use @Params if expecting recordset results
