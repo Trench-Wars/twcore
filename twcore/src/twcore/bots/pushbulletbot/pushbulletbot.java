@@ -110,28 +110,35 @@ public class pushbulletbot extends SubspaceBot {
         }
         
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!getlink")) {
-        	m_botAction.sendSmartPrivateMessage(name, "https://www.pushbullet.com/channel?tag=envysquad");
+        	String squadChannel = getSquadChannel(name);
+			if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
+			m_botAction.sendSmartPrivateMessage(name, "https://www.pushbullet.com/channel?tag=" + squadChannel);
         }
         
+        //this is a temporary fake challenge 
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!challenge")) {
-        	String msg;
-        	msg = "(MatchBot3)>Axwell is challenging you for a game of 3vs3 TWJD versus Rage. Captains/assistants, ?go twjd and pm me with '!accept Rage'";
+        	String msg = "(MatchBot3)>Axwell is challenging you for a game of 3vs3 TWJD versus Rage. Captains/assistants, ?go twjd and pm me with '!accept Rage'";
+        	
+        	String squadChannel = getSquadChannel(name);
+			if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
         	
         	try {
-				pbClient.sendChannelMsg( "envysquad", "", msg);
+				pbClient.sendChannelMsg( squadChannel, "", msg);
 				m_botAction.sendPublicMessage(msg);
 			} catch (PushbulletException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
         }
-
+        
+        //this is a temporary fake challenge
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!accept")) {
-        	String msg;
-        	msg = "(MatchBot3)>A game of 3vs3 TWJD versus Rage will start in ?go twjd in 30 seconds";
+        	String msg = "(MatchBot3)>A game of 3vs3 TWJD versus Rage will start in ?go twjd in 30 seconds";
+        	String squadChannel = getSquadChannel(name);
+			if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
         	
         	try {
-				pbClient.sendChannelMsg( "envysquad", "", msg);
+				pbClient.sendChannelMsg(squadChannel, "", msg);
 				m_botAction.sendPublicMessage(msg);
 			} catch (PushbulletException e) {
 				// TODO Auto-generated catch block
@@ -145,29 +152,30 @@ public class pushbulletbot extends SubspaceBot {
         
         
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!beep ")) {
-        	String msg;
-        	msg = event.getMessage();
-        	msg = msg.substring(msg.indexOf(" ") + 1);
+        	String msg = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
+        	String channelPost = this.getInterpretBeep(name, msg);
+        	String squadChannel = getSquadChannel(name);
+			if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
         	
-        	String postMsg;
-        	postMsg = "";
-        	
-        	if (msg.toLowerCase().contentEquals("jd")) {postMsg = name + " is in for a TWJD match!";}
-        	if (msg.toLowerCase().contentEquals("dd")) {postMsg = name + " is in for a TWDD match!";}
-        	if (msg.toLowerCase().contentEquals("bd")) {postMsg = name + " is in for a TWBD match!";}
-        	if (msg.toLowerCase().contentEquals("sd")) {postMsg = name + " is in for a TWSD match!";}
-        	if (msg.toLowerCase().contentEquals("fd")) {postMsg = name + " is in for a TWFD match!";}
-        	if (msg.toLowerCase().contentEquals("any")) {postMsg = name + " is in for any TWD match!";}
-        	
-        	if (postMsg != "") {
+        	if (channelPost != "") {
 	        	 try{
-	        	     pbClient.sendChannelMsg( "envysquad", "", postMsg);
-	        	     m_botAction.sendPublicMessage(postMsg);
+	        	     pbClient.sendChannelMsg(squadChannel, "", channelPost);
+	        	     m_botAction.sendPublicMessage(channelPost);
 	        	 } catch( PushbulletException e ){
 	        	     // Huh, didn't work
 	        	 }
         	}
         }
+
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!createchannel ")) {
+        	String squadChannel = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
+			if (this.createSquadChannel(name, squadChannel)) { 
+				m_botAction.sendPublicMessage(squadChannel + " created successfully!");
+			} else {
+				m_botAction.sendPublicMessage(squadChannel + " creation failed!");
+			}
+        }
+        
         
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!push ")) {
          	String msg = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
@@ -193,8 +201,11 @@ public class pushbulletbot extends SubspaceBot {
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!pushchannel ")) {
         	//m_botAction.sendSmartPrivateMessage(name, "Message: '" + msg + "' Pushed Successfully!");
         	String msg = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
+        	String squadChannel = getSquadChannel(name);
+			if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
+        	
         	 try{
-        	     pbClient.sendChannelMsg( "envysquad", "", msg);
+        	     pbClient.sendChannelMsg(squadChannel, "", msg);
         	     m_botAction.sendPublicMessage("Channel Message: '" + msg + "' Pushed Successfully!");
         	     //m_botAction.sendSmartPrivateMessage(name, "Channel Message: '" + msg + "' Pushed Successfully!");
         	 } catch( PushbulletException e ){
@@ -202,7 +213,6 @@ public class pushbulletbot extends SubspaceBot {
         	 }
         }
 
-        
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!pushes")) {
 	        List<Push> pushes = null;
 			try {
@@ -333,6 +343,19 @@ public class pushbulletbot extends SubspaceBot {
 					" SELECT PBA.fcPushBulletEmail FROM trench_TrenchWars.tblPBAccount AS PBA"
 				+	" JOIN trench_TrenchWars.tblUser AS U ON PBA.fnPlayerID = U.fnUserID WHERE U.fcUserName = ?;";
 			break;
+		case "interpretbeep": //can't use @Params if expecting recordset results
+			preparedStatement = 
+					" SELECT fcCommand, fcCommandShortDescription FROM trench_trenchwars.tblPBCommands"
+				+	" WHERE INSTR(?, fcCommand) > 0;";
+			break;
+		case "getsquadchannel": //can't use @Params if expecting recordset results
+			preparedStatement = 
+					" SELECT PBS.fcChannelName FROM trench_TrenchWars.tblPBSquadChannel AS PBS"
+				+	" JOIN trench_TrenchWars.tblTeam AS T ON T.fnTeamID = PBS.fnSquadID"
+				+ 	" JOIN trench_TrenchWars.tblTeamUser AS TU ON T.fnTeamID = TU.fnTeamID AND fnCurrentTeam = 1"
+				+	" JOIN trench_TrenchWars.tblUser AS U ON TU.fnUserID = U.fnUserID AND U.fcUserName = ? AND isnull(T.fdDeleted);";
+			break;    	
+    	
     	}
 		return preparedStatement;
     }
@@ -357,7 +380,6 @@ public class pushbulletbot extends SubspaceBot {
     }
     
     public String getEmailByUserName(String userName) {
-		
     	String email = "";
 		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getemailbyusername"));
 		try {
@@ -375,7 +397,62 @@ public class pushbulletbot extends SubspaceBot {
 		}
     	return email;
     }
+
+    public String getInterpretBeep(String userName, String userMsg) {
+    	String channelPost = userName + " beeped for: ";
+    	String channelPostOriginal = channelPost;
+		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("interpretbeep"));
+		try {
+			ps_getemailbyusername.clearParameters();
+			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userMsg));
+			ps_getemailbyusername.execute();
+			try (ResultSet rs = ps_getemailbyusername.getResultSet()) {
+				while (rs.next()) {
+					if (channelPost != channelPostOriginal) {channelPost += ",";}
+					channelPost += rs.getString("fcCommandShortDescription");
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (channelPost == channelPostOriginal) {channelPost = "";}
+    	return channelPost;
+    }
     
+    public String getSquadChannel(String userName) {
+    	String squadChannel = "";
+		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getsquadchannel"));
+		try {
+			ps_getemailbyusername.clearParameters();
+			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userName));
+			ps_getemailbyusername.execute();
+			try (ResultSet rs = ps_getemailbyusername.getResultSet()) {
+				if (rs.next()) { 	
+					squadChannel = rs.getString(1);
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	return squadChannel;
+    }
+
+    public Boolean createSquadChannel(String userName, String squadChannel) {
+		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("createchannel"));
+		try {
+			ps_getemailbyusername.clearParameters();
+			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userName));
+			ps_getemailbyusername.setString(2, Tools.addSlashesToString(squadChannel));
+			ps_getemailbyusername.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+    	return true;
+    }
     
     
     public void handleDisconnect() {
@@ -394,8 +471,6 @@ public class pushbulletbot extends SubspaceBot {
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena(m_botSettings.getString("arena"));
         String pushAuth = ba.getGeneralSettings().getString("PushAuth");
-        String pushChannel = m_botSettings.getString("PushChannel");
-        //mobilePusher = new MobilePusher(pushAuth, pushChannel, 1);
         pbClient = new PushbulletClient(pushAuth);
         StartPushbulletListener();
     }
@@ -425,44 +500,21 @@ public class pushbulletbot extends SubspaceBot {
 				if (senderEmail == "") { return; } //means it came from the channel, no need to push it back to the channel
 				//String type = lastPush.getBody()
 				String playerName = getUserNameByEmail(senderEmail);
-				if (playerName == "") {playerName = "You Said";}
-	        	String msg = body;
-				
-				if (body.toLowerCase().contentEquals("jd")) {
-					msg = playerName + " is in for a TWJD match!";
-				}
+				if (playerName == "") { return; } //means it came from the bot account, probably using !push
+	        	String squadChannel = getSquadChannel(playerName);
+				if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
+				String channelPost = getInterpretBeep(playerName, body);
 
-				if (body.toLowerCase().contentEquals("bd")) {
-					msg = playerName + " is in for a TWBD match!";
-				}
-				
-				if (body.toLowerCase().contentEquals("dd")) {
-					msg = playerName + " is in for a TWDD match!";
-				}
-				
-				if (body.toLowerCase().contentEquals("sd")) {
-					msg = playerName + " is in for a TWSD match!";
-				}
-
-				if (body.toLowerCase().contentEquals("fd")) {
-					msg = playerName + " is in for a TWFD match!";
-				}
-				
-				if (body.toLowerCase().contentEquals("any")) {
-					msg = playerName + " is in for any TWD match!";
-				}
-				
-				
 				//m_botAction.sendPublicMessage(type);
-				if (msg != body) {
+				if (channelPost != "") {
 					try{
-		        	     pbClient.sendChannelMsg( "envysquad", "", msg);
-		        	     m_botAction.sendPublicMessage(playerName + " :x: " + msg);
+		        	     pbClient.sendChannelMsg( squadChannel, "", channelPost);
+		        	     m_botAction.sendPublicMessage(playerName + " :x: " + channelPost);
 		        	 } catch( PushbulletException e ){
 		        	     // Huh, didn't work
 		        	 }
 				} else {
-					m_botAction.sendPublicMessage(playerName + " : " + msg);
+					m_botAction.sendPublicMessage(playerName + " : " + channelPost);
 				}
 	        }
 	
