@@ -320,11 +320,12 @@ public class pushbulletbot extends SubspaceBot {
     	switch (statementName.toLowerCase()) {
     	case "signup":
     		preparedStatement = 
-    				" SET @PlayerName = ?, @PushBulletEmail = ?;"
-    			+	" DELETE PBA FROM trench_TrenchWars.tblPBAccount AS PBA"
-				+	" JOIN trench_TrenchWars.tblUser AS U ON U.fnUserID = PBA.fnPlayerID AND U.fcUserName = @PlayerName;"
-				+	" INSERT INTO trench_TrenchWars.tblPBAccount (fnPlayerID, fcPushBulletEmail)"
-				+	" SELECT fnUserID, @PushBulletEmail FROM trench_TrenchWars.tblUser WHERE fcUserName = @PlayerName;";
+    				"USE trench_TrenchWars;"
+		    	+	"SET @PlayerName = ?, @PushBulletEmail = ?;"
+		    	+	"DELETE PBA FROM trench_TrenchWars.tblPBAccount AS PBA "
+		    	+	"JOIN trench_TrenchWars.tblUser AS U ON U.fnUserID = PBA.fnPlayerID AND U.fcUserName = @PlayerName;"
+		    	+	"INSERT INTO trench_TrenchWars.tblPBAccount (fnPlayerID, fcPushBulletEmail)"
+		    	+	"SELECT fnUserID, @PushBulletEmail FROM trench_TrenchWars.tblUser WHERE fcUserName = @PlayerName  AND ISNULL(fdDeleted) LIMIT 1;";
     		break;
 		case "createchannel":
 			preparedStatement = 
