@@ -168,7 +168,8 @@ public class pushbulletbot extends SubspaceBot {
 	        	 //try{
 	        		 messagePlayerSquadMembers(name, channelPost);
 	        	     //pbClient.sendChannelMsg(squadChannel, "", channelPost);
-	        	     m_botAction.sendPublicMessage(channelPost);
+	        		 
+	        		 m_botAction.sendPublicMessage(channelPost);
 	        	 //} catch( PushbulletException e ){
 	        	     // Huh, didn't work
 	        	 //}
@@ -189,7 +190,7 @@ public class pushbulletbot extends SubspaceBot {
          	String msg = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
         	 try{
         		 pbClient.sendNote( null, getEmailByUserName(name), "", msg);
-        		 m_botAction.sendPublicMessage("Private Message: '" + msg + "' Pushed Successfully to " + name + ": " + getEmailByUserName(name));
+//        		 m_botAction.sendPublicMessage("Private Message: '" + msg + "' Pushed Successfully to " + name + ": " + getEmailByUserName(name));
         	 } catch( PushbulletException e ){
         	     // Huh, didn't work
         	 }
@@ -279,9 +280,9 @@ public class pushbulletbot extends SubspaceBot {
 				ps_signup.clearParameters();
 				ps_signup.setString(1, Tools.addSlashesToString(name));
 				ps_signup.setString(2, Tools.addSlashesToString(email));
-				m_botAction.sendPublicMessage(ps_signup.toString());
+//				m_botAction.sendPublicMessage(ps_signup.toString());
 				ps_signup.execute();
-				m_botAction.sendPublicMessage("Signed Up " + name + " : " + email + " Successfully!");
+//				m_botAction.sendPublicMessage("Signed Up " + name + " : " + email + " Successfully!");
 			} catch (SQLException e1) {
 				try {
 					for (Throwable x : ps_signup.getWarnings()) {
@@ -367,7 +368,7 @@ public class pushbulletbot extends SubspaceBot {
 
 		case "getplayersquadmembers": //can't use @Params if expecting recordset results
 			preparedStatement = 
-					" SELECT U.fnUserID, U.fcUserName, PBA.fcPushBulletEmail FROM trench_TrenchWars.tblUser AS U"
+					" SELECT U.fnUserID, U.fcUserName, PBA.fcPushBulletEmail, T.fcTeamName FROM trench_TrenchWars.tblUser AS U"
 				+	" JOIN trench_TrenchWars.tblTeamUser AS TU ON TU.fnUserID = U.fnUserID"
 				+	" JOIN trench_TrenchWars.tblTeam AS T ON T.fnTeamID = TU.fnTeamID AND fnCurrentTeam = 1"
 				+	" JOIN (	SELECT T.fnTeamID FROM trench_TrenchWars.tblTeam AS T"
@@ -477,7 +478,9 @@ public class pushbulletbot extends SubspaceBot {
     }
     
     public void messagePlayerSquadMembers(String userName, String msg) {
-		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getplayersquadmembers"));
+		String squadName = "";
+		if (msg == "") { return; }
+    	PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getplayersquadmembers"));
 		try {
 			ps_getemailbyusername.clearParameters();
 			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userName));
@@ -485,7 +488,8 @@ public class pushbulletbot extends SubspaceBot {
 			try (ResultSet rs = ps_getemailbyusername.getResultSet()) {
 				while (rs.next()) {
 					pbClient.sendNote( null, rs.getString("fcPushBulletEmail"), "", msg);
-					m_botAction.sendPublicMessage("Push to :" + rs.getString("fcUserName") + " | " + rs.getString("fcPushBulletEmail") );
+//					m_botAction.sendPublicMessage("Push to :" + rs.getString("fcUserName") + " | " + rs.getString("fcPushBulletEmail") );
+					squadName = rs.getString("T.fcTeamName");
 				}
 			} catch (PushbulletException e) {
 				// TODO Auto-generated catch block
@@ -496,6 +500,10 @@ public class pushbulletbot extends SubspaceBot {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			m_botAction.sendPublicMessage(e.getMessage());
+		} finally {
+			if (squadName != "") {
+				m_botAction.sendSquadMessage(squadName, msg);
+			}
 		}
     }
         
