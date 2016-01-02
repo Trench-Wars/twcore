@@ -166,7 +166,7 @@ public class pushbulletbot extends SubspaceBot {
         	
         	//if (channelPost != "") {
 	        	 //try{
-	        		 messagePlayerSquadMembers(name, msg);
+	        		 messagePlayerSquadMembers(name, channelPost);
 	        	     //pbClient.sendChannelMsg(squadChannel, "", channelPost);
 	        	     m_botAction.sendPublicMessage(channelPost);
 	        	 //} catch( PushbulletException e ){
