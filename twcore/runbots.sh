@@ -1,16 +1,2 @@
 #!/bin/bash
-
-set -e
-
-ctrl_c() {
-  exit 0
-}
-
-main() {
-  java -jar bin/twcore.jar bin/setup.cfg
-}
-
-trap ctrl_c INT TERM
-while true
-  do main
-done
+while true; do java -Xmx386m -cp bin/twcore.jar:libs/googleapi.jar:libs/tyrus-standalone-client-1.8.3.jar:libs/aim.jar:lib/mysql-connector-java-5.0.7-bin.jar:lib/gson.jar twcore.core.Start bin/setup.cfg; done
