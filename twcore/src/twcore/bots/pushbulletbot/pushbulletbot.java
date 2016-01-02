@@ -164,7 +164,7 @@ public class pushbulletbot extends SubspaceBot {
         	//String squadChannel = getSquadChannel(name);
 			//if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
         	
-        	//if (channelPost != "") {
+        	if (channelPost != "") {
 	        	 //try{
 	        		 messagePlayerSquadMembers(name, channelPost);
 	        	     //pbClient.sendChannelMsg(squadChannel, "", channelPost);
@@ -172,7 +172,7 @@ public class pushbulletbot extends SubspaceBot {
 	        	 //} catch( PushbulletException e ){
 	        	     // Huh, didn't work
 	        	 //}
-        	//}
+        	}
         }
 
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!createchannel ")) {
