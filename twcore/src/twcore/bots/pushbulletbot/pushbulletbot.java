@@ -268,7 +268,8 @@ public class pushbulletbot extends SubspaceBot {
         	
         	//check if valid email address, if not then exit
         	if (!email.contains("@") || !email.contains(".")) {
-        		m_botAction.sendPublicMessage("Invalid Email Adress entered!");
+//        		m_botAction.sendPublicMessage("Invalid Email Adress entered!");
+        		m_botAction.sendSmartPrivateMessage(name, "Invalid Email Adress entered!");
         		return;
         	}
         	
@@ -283,11 +284,13 @@ public class pushbulletbot extends SubspaceBot {
 //				m_botAction.sendPublicMessage(ps_signup.toString());
 				ps_signup.execute();
 //				m_botAction.sendPublicMessage("Signed Up " + name + " : " + email + " Successfully!");
+				m_botAction.sendSmartPrivateMessage(name, "Signed Up " + name + " : " + email + " Successfully!");
 			} catch (SQLException e1) {
 				try {
 					for (Throwable x : ps_signup.getWarnings()) {
 						if (x.getMessage().toLowerCase().contains("unique")) {
-							m_botAction.sendPublicMessage(email + " is already registered by " + getUserNameByEmail(email));
+//							m_botAction.sendPublicMessage(email + " is already registered by " + getUserNameByEmail(email));
+							m_botAction.sendSmartPrivateMessage(name, email + " is already registered by " + getUserNameByEmail(email));
 						} else {
 							m_botAction.sendPublicMessage(x.getMessage());
 							e1.printStackTrace();
@@ -325,8 +328,8 @@ public class pushbulletbot extends SubspaceBot {
 		    	+	"SET @PlayerName = ?, @PushBulletEmail = ?;"
 		    	+	"DELETE PBA FROM trench_TrenchWars.tblPBAccount AS PBA "
 		    	+	"JOIN trench_TrenchWars.tblUser AS U ON U.fnUserID = PBA.fnPlayerID AND U.fcUserName = @PlayerName;"
-		    	+	"INSERT INTO trench_TrenchWars.tblPBAccount (fnPlayerID, fcPushBulletEmail)"
-		    	+	"SELECT fnUserID, @PushBulletEmail FROM trench_TrenchWars.tblUser WHERE fcUserName = @PlayerName  AND ISNULL(fdDeleted) LIMIT 1;";
+		    	+	"INSERT INTO trench_TrenchWars.tblPBAccount (fnPlayerID, fcPushBulletEmail, fdCreated)"
+		    	+	"SELECT fnUserID, @PushBulletEmail, NOW() FROM trench_TrenchWars.tblUser WHERE fcUserName = @PlayerName  AND ISNULL(fdDeleted) LIMIT 1;";
     		break;
 		case "createchannel":
 			preparedStatement = 
@@ -488,7 +491,7 @@ public class pushbulletbot extends SubspaceBot {
 			try (ResultSet rs = ps_getemailbyusername.getResultSet()) {
 				while (rs.next()) {
 					pbClient.sendNote( null, rs.getString("fcPushBulletEmail"), "", msg);
-//					m_botAction.sendPublicMessage("Push to :" + rs.getString("fcUserName") + " | " + rs.getString("fcPushBulletEmail") );
+					m_botAction.sendPublicMessage("Pushed to :" + rs.getString("fcUserName")); //+ " | " + rs.getString("fcPushBulletEmail") );
 					squadName = rs.getString("T.fcTeamName");
 				}
 			} catch (PushbulletException e) {
@@ -568,7 +571,7 @@ public class pushbulletbot extends SubspaceBot {
 						//m_botAction.sendPublicMessage("8");
 		        	     //pbClient.sendChannelMsg(squadChannel, "", channelPost);
 		        	     messagePlayerSquadMembers(playerName, channelPost);
-		        	     m_botAction.sendPublicMessage(playerName + " :x: " + channelPost);
+		        	     m_botAction.sendPublicMessage(playerName + " : " + channelPost);
 		        	     //m_botAction.sendPublicMessage("9");
 		        	 //} catch( PushbulletException e ){
 		        	     // Huh, didn't work
