@@ -371,7 +371,7 @@ public class pushbulletbot extends SubspaceBot {
 
 		case "getplayersquadmembers": //can't use @Params if expecting recordset results
 			preparedStatement = 
-					" SELECT U.fnUserID, U.fcUserName, PBA.fcPushBulletEmail, T.fcTeamName FROM trench_TrenchWars.tblUser AS U"
+					" SELECT U.fnUserID, U.fcUserName, PBA.fcPushBulletEmail, PBA.fbDisabled, T.fcTeamName FROM trench_TrenchWars.tblUser AS U"
 				+	" JOIN trench_TrenchWars.tblTeamUser AS TU ON TU.fnUserID = U.fnUserID"
 				+	" JOIN trench_TrenchWars.tblTeam AS T ON T.fnTeamID = TU.fnTeamID AND fnCurrentTeam = 1"
 				+	" JOIN (	SELECT T.fnTeamID FROM trench_TrenchWars.tblTeam AS T"
@@ -380,8 +380,21 @@ public class pushbulletbot extends SubspaceBot {
 				+	"	 ) AS SID ON SID.fnTeamID = T.fnTeamID"
 				+	" JOIN trench_TrenchWars.tblPBAccount AS PBA ON U.fnUserID = PBA.fnPlayerID;";
 			break; 
-			
-			
+
+		case "disablepb": //can't use @Params if expecting recordset results
+			preparedStatement = 
+					" SET @PlayerName = ?;"
+				+	" UPDATE trench_TrenchWars.tblPBAccount"
+				+	" SET fbDisabled = 1"
+				+	" WHERE fnPlayerID = (SELECT U.fnUserID FROM trench_TrenchWars.tblUser AS U WHERE U.fcUserName = @PlayerName LIMIT 1);";
+			break; 
+		case "enablepb": //can't use @Params if expecting recordset results
+			preparedStatement = 
+					" SET @PlayerName = ?;"
+				+	" UPDATE trench_TrenchWars.tblPBAccount"
+				+	" SET fbDisabled = 0"
+				+	" WHERE fnPlayerID = (SELECT U.fnUserID FROM trench_TrenchWars.tblUser AS U WHERE U.fcUserName = @PlayerName LIMIT 1);";
+			break; 
     	}
 		return preparedStatement;
     }
@@ -425,16 +438,16 @@ public class pushbulletbot extends SubspaceBot {
     }
 
     public String getInterpretBeep(String userName, String userMsg) {
-    	String channelPost = userName + " beeped for: ";
-    	String channelPostOriginal = channelPost;
-		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("interpretbeep"));
+    	String channelPost = "";
+    	//String channelPostOriginal = channelPost;
+		PreparedStatement ps_getinterpretbeep = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("interpretbeep"));
 		try {
-			ps_getemailbyusername.clearParameters();
-			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userMsg));
-			ps_getemailbyusername.execute();
-			try (ResultSet rs = ps_getemailbyusername.getResultSet()) {
+			ps_getinterpretbeep.clearParameters();
+			ps_getinterpretbeep.setString(1, Tools.addSlashesToString(userMsg));
+			ps_getinterpretbeep.execute();
+			try (ResultSet rs = ps_getinterpretbeep.getResultSet()) {
 				while (rs.next()) {
-					if (channelPost != channelPostOriginal) {channelPost += ",";}
+					if (channelPost != "") {channelPost += ",";}
 					channelPost += rs.getString("fcCommandShortDescription");
 				}
 			}
@@ -442,18 +455,18 @@ public class pushbulletbot extends SubspaceBot {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (channelPost == channelPostOriginal) {channelPost = "";}
+		//if (channelPost == channelPostOriginal) {channelPost = "";}
     	return channelPost;
     }
     
     public String getSquadChannel(String userName) {
     	String squadChannel = "";
-		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getsquadchannel"));
+		PreparedStatement ps_getsquadchannel = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getsquadchannel"));
 		try {
-			ps_getemailbyusername.clearParameters();
-			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userName));
-			ps_getemailbyusername.execute();
-			try (ResultSet rs = ps_getemailbyusername.getResultSet()) {
+			ps_getsquadchannel.clearParameters();
+			ps_getsquadchannel.setString(1, Tools.addSlashesToString(userName));
+			ps_getsquadchannel.execute();
+			try (ResultSet rs = ps_getsquadchannel.getResultSet()) {
 				if (rs.next()) { 	
 					squadChannel = rs.getString(1);
 				}
@@ -466,12 +479,12 @@ public class pushbulletbot extends SubspaceBot {
     }
 
     public Boolean createSquadChannel(String userName, String squadChannel) {
-		PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("createchannel"));
+		PreparedStatement ps_createsquadchannel = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("createchannel"));
 		try {
-			ps_getemailbyusername.clearParameters();
-			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userName));
-			ps_getemailbyusername.setString(2, Tools.addSlashesToString(squadChannel));
-			ps_getemailbyusername.execute();
+			ps_createsquadchannel.clearParameters();
+			ps_createsquadchannel.setString(1, Tools.addSlashesToString(userName));
+			ps_createsquadchannel.setString(2, Tools.addSlashesToString(squadChannel));
+			ps_createsquadchannel.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -480,19 +493,45 @@ public class pushbulletbot extends SubspaceBot {
     	return true;
     }
     
+    public void disablePB (String userName) {
+		PreparedStatement ps_disablepb = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("disablepb"));
+		try {
+			ps_disablepb.clearParameters();
+			ps_disablepb.setString(1, Tools.addSlashesToString(userName));
+			ps_disablepb.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public void enablePB (String userName) {
+		PreparedStatement ps_enablepb = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("enablepb"));
+		try {
+			ps_enablepb.clearParameters();
+			ps_enablepb.setString(1, Tools.addSlashesToString(userName));
+			ps_enablepb.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
     public void messagePlayerSquadMembers(String userName, String msg) {
 		String squadName = "";
 		if (msg == "") { return; }
-    	PreparedStatement ps_getemailbyusername = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getplayersquadmembers"));
+    	PreparedStatement ps_messagePlayerSquadMembers = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getplayersquadmembers"));
 		try {
-			ps_getemailbyusername.clearParameters();
-			ps_getemailbyusername.setString(1, Tools.addSlashesToString(userName));
-			ps_getemailbyusername.execute();
-			try (ResultSet rs = ps_getemailbyusername.getResultSet()) {
+			ps_messagePlayerSquadMembers.clearParameters();
+			ps_messagePlayerSquadMembers.setString(1, Tools.addSlashesToString(userName));
+			ps_messagePlayerSquadMembers.execute();
+			try (ResultSet rs = ps_messagePlayerSquadMembers.getResultSet()) {
 				while (rs.next()) {
-					pbClient.sendNote( null, rs.getString("fcPushBulletEmail"), "", msg);
-					m_botAction.sendPublicMessage("Pushed to :" + rs.getString("fcUserName")); //+ " | " + rs.getString("fcPushBulletEmail") );
-					squadName = rs.getString("T.fcTeamName");
+					if (rs.getInt("fbDisabled") != 1) {
+						pbClient.sendNote( null, rs.getString("fcPushBulletEmail"), "", msg);
+						m_botAction.sendPublicMessage("Pushed to :" + rs.getString("fcUserName")); //+ " | " + rs.getString("fcPushBulletEmail") );
+						squadName = rs.getString("T.fcTeamName");
+					}
 				}
 			} catch (PushbulletException e) {
 				// TODO Auto-generated catch block
@@ -566,7 +605,22 @@ public class pushbulletbot extends SubspaceBot {
 				String channelPost = getInterpretBeep(playerName, body);
 				//m_botAction.sendPublicMessage("7");
 				//m_botAction.sendPublicMessage(type);
-				if (channelPost != "") {
+		    	m_botAction.sendPublicMessage("Test:" + channelPost);
+				//need to clean this up later...
+				Boolean changeSetting = false;
+				if (channelPost.toLowerCase().contains("enable")) {enablePB(playerName); changeSetting = true;}
+				if (channelPost.toLowerCase().contains("disable")) {disablePB(playerName); changeSetting = true;}
+				if (changeSetting == true) {
+					try {
+						pbClient.sendNote( null, getEmailByUserName(playerName), "", channelPost);
+					} catch (PushbulletException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				
+				if (channelPost != "" && changeSetting == false) {
+					channelPost = playerName + " beeped for: " + channelPost;
 					//try{
 						//m_botAction.sendPublicMessage("8");
 		        	     //pbClient.sendChannelMsg(squadChannel, "", channelPost);
