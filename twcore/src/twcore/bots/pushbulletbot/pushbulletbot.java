@@ -599,8 +599,8 @@ public class pushbulletbot extends SubspaceBot {
 				String playerName = getUserNameByEmail(senderEmail);
 				if (playerName == "") { return; } //means it came from the bot account, probably using !push
 				//m_botAction.sendPublicMessage("5");
-				String squadChannel = getSquadChannel(playerName);
-				if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
+				//String squadChannel = getSquadChannel(playerName);
+				//if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
 				//m_botAction.sendPublicMessage("6");
 				String channelPost = getInterpretBeep(playerName, body);
 				//m_botAction.sendPublicMessage("7");
