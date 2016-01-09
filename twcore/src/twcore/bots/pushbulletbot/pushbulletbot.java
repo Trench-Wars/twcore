@@ -331,6 +331,7 @@ public class pushbulletbot extends SubspaceBot {
 		    	+	"INSERT INTO trench_TrenchWars.tblPBAccount (fnPlayerID, fcPushBulletEmail, fdCreated)"
 		    	+	"SELECT fnUserID, @PushBulletEmail, NOW() FROM trench_TrenchWars.tblUser WHERE fcUserName = @PlayerName  AND ISNULL(fdDeleted) LIMIT 1;";
     		break;
+		/*
 		case "createchannel":
 			preparedStatement = 
 		    		" SET @PlayerName = ?, @ChannelName = ?;"
@@ -346,6 +347,7 @@ public class pushbulletbot extends SubspaceBot {
 				+	" JOIN trench_TrenchWars.tblUser AS U ON TU.fnUserID = U.fnUserID"
 				+	" WHERE U.fcUserName = @PlayerName AND isnull(T.fdDeleted);";
 			break;
+		 */
 		case "getusernamebyemail": //can't use @Params if expecting recordset results
 			preparedStatement = 
 					" SELECT U.fcUserName FROM trench_TrenchWars.tblPBAccount AS PBA"
@@ -361,14 +363,15 @@ public class pushbulletbot extends SubspaceBot {
 					" SELECT fcCommand, fcCommandShortDescription FROM trench_TrenchWars.tblPBCommands"
 				+	" WHERE INSTR(?, fcCommand) > 0;";
 			break;
-		case "getsquadchannel": //can't use @Params if expecting recordset results
+		/*	
+		  case "getsquadchannel": //can't use @Params if expecting recordset results
 			preparedStatement = 
 					" SELECT PBS.fcChannelName FROM trench_TrenchWars.tblPBSquadChannel AS PBS"
 				+	" JOIN trench_TrenchWars.tblTeam AS T ON T.fnTeamID = PBS.fnSquadID"
 				+ 	" JOIN trench_TrenchWars.tblTeamUser AS TU ON T.fnTeamID = TU.fnTeamID AND fnCurrentTeam = 1"
 				+	" JOIN trench_TrenchWars.tblUser AS U ON TU.fnUserID = U.fnUserID AND U.fcUserName = ? AND isnull(T.fdDeleted);";
 			break;    	
-
+		*/
 		case "getplayersquadmembers": //can't use @Params if expecting recordset results
 			preparedStatement = 
 					" SELECT U.fnUserID, U.fcUserName, PBA.fcPushBulletEmail, PBA.fbDisabled, T.fcTeamName FROM trench_TrenchWars.tblUser AS U"
@@ -381,18 +384,20 @@ public class pushbulletbot extends SubspaceBot {
 				+	" JOIN trench_TrenchWars.tblPBAccount AS PBA ON U.fnUserID = PBA.fnPlayerID;";
 			break; 
 
-		case "disablepb": //can't use @Params if expecting recordset results
+		/*
+	     case "disablepb": //can't use @Params if expecting recordset results
 			preparedStatement = 
 					" SET @PlayerName = ?;"
 				+	" UPDATE trench_TrenchWars.tblPBAccount"
 				+	" SET fbDisabled = 1"
 				+	" WHERE fnPlayerID = (SELECT U.fnUserID FROM trench_TrenchWars.tblUser AS U WHERE U.fcUserName = @PlayerName LIMIT 1);";
 			break; 
-		case "enablepb": //can't use @Params if expecting recordset results
+		*/
+		case "enabledisablepb": //can't use @Params if expecting recordset results
 			preparedStatement = 
 					" SET @PlayerName = ?;"
 				+	" UPDATE trench_TrenchWars.tblPBAccount"
-				+	" SET fbDisabled = 0"
+				+	" SET fbDisabled = ?"
 				+	" WHERE fnPlayerID = (SELECT U.fnUserID FROM trench_TrenchWars.tblUser AS U WHERE U.fcUserName = @PlayerName LIMIT 1);";
 			break; 
     	}
@@ -493,7 +498,7 @@ public class pushbulletbot extends SubspaceBot {
     	return true;
     }
     
-    public void disablePB (String userName) {
+    /*public void disablePB (String userName) {
 		PreparedStatement ps_disablepb = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("disablepb"));
 		try {
 			ps_disablepb.clearParameters();
@@ -503,17 +508,20 @@ public class pushbulletbot extends SubspaceBot {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    }
+    }*/
     
-    public void enablePB (String userName) {
-		PreparedStatement ps_enablepb = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("enablepb"));
+    public void switchAlertsPB (String userName, Integer Disable) {
+		PreparedStatement ps_enablepb = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("enabledisablepb"));
 		try {
 			ps_enablepb.clearParameters();
 			ps_enablepb.setString(1, Tools.addSlashesToString(userName));
+			ps_enablepb.setInt(2, Disable);
 			ps_enablepb.execute();
+			m_botAction.sendPublicMessage(ps_enablepb.toString());
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			m_botAction.sendPublicMessage(e.getMessage());
 		}
     }
     
@@ -608,8 +616,8 @@ public class pushbulletbot extends SubspaceBot {
 		    	m_botAction.sendPublicMessage("Test:" + channelPost);
 				//need to clean this up later...
 				Boolean changeSetting = false;
-				if (channelPost.toLowerCase().contains("enable")) {enablePB(playerName); changeSetting = true;}
-				if (channelPost.toLowerCase().contains("disable")) {disablePB(playerName); changeSetting = true;}
+				if (channelPost.toLowerCase().contains("enable")) {switchAlertsPB(playerName, 0); changeSetting = true;}
+				if (channelPost.toLowerCase().contains("disable")) {switchAlertsPB(playerName, 1); changeSetting = true;}
 				if (changeSetting == true) {
 					try {
 						pbClient.sendNote( null, getEmailByUserName(playerName), "", channelPost);
