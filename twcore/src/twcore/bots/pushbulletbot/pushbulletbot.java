@@ -168,23 +168,29 @@ public class pushbulletbot extends SubspaceBot {
 	
 	@Override
 	public void handleEvent(Message event) {
+		
 		// Retrieve name. If the message is remote, then event.getMessager() returns null, and event.getPlayerID returns a value.
 		// If the message is from the same arena, event.getMessager() returns a string, and event.getPlayerID will return 0.	
 		String message = event.getMessage();
-        String name = m_botAction.getPlayerName(event.getPlayerID());
-		int type = event.getMessageType();
-        
+		
+		// name isn't being captured when sent from outside the same arena bot is in
+		String name = m_botAction.getPlayerName(event.getPlayerID());
+		if (name == null) return;
+		Integer type = event.getMessageType();
 		
 		
+		//m_botAction.sendSmartPrivateMessage("24", name);    
+		
+		/*
 	 	m_botAction.sendSmartPrivateMessage(name, "Private :" + Integer.toString(Message.PRIVATE_MESSAGE));
 		m_botAction.sendSmartPrivateMessage(name, "Remote  :" + Integer.toString(Message.REMOTE_PRIVATE_MESSAGE));
 		m_botAction.sendSmartPrivateMessage(name, "Chat    :" + Integer.toString(Message.CHAT_MESSAGE));
 		m_botAction.sendSmartPrivateMessage(name, "Type    :" + Integer.toString(type));	
-		
+		*/
 		
 		
 		if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.CHAT_MESSAGE) {
-        	if (message.toLowerCase().startsWith("!signup "))
+			if (message.toLowerCase().startsWith("!signup "))
                 cmd_signup(name, message.substring(message.indexOf(" ") + 1));
             else if (message.equalsIgnoreCase("!enable"))
                 cmd_enable(name);
