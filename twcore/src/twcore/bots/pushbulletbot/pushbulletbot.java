@@ -173,6 +173,15 @@ public class pushbulletbot extends SubspaceBot {
         String name = m_botAction.getPlayerName(event.getPlayerID());
 		int type = event.getMessageType();
         
+		
+		/*
+	 	m_botAction.sendSmartPrivateMessage(name, "Private :" + Integer.toString(Message.PRIVATE_MESSAGE));
+		m_botAction.sendSmartPrivateMessage(name, "Remote  :" + Integer.toString(Message.REMOTE_PRIVATE_MESSAGE));
+		m_botAction.sendSmartPrivateMessage(name, "Chat    :" + Integer.toString(Message.CHAT_MESSAGE));
+		m_botAction.sendSmartPrivateMessage(name, "Type    :" + Integer.toString(type));	
+		*/
+		
+		
 		if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.CHAT_MESSAGE) {
         	if (message.toLowerCase().startsWith("!signup "))
                 cmd_Signup(name, message.substring(message.indexOf(" ") + 1));
@@ -498,7 +507,7 @@ public class pushbulletbot extends SubspaceBot {
 				while (rs.next()) {
 					if (rs.getInt("fbDisabled") != 1) {
 						pbClient.sendNote( null, rs.getString("fcPushBulletEmail"), "", msg);
-						m_botAction.sendPublicMessage("Pushed to :" + rs.getString("fcUserName")); //+ " | " + rs.getString("fcPushBulletEmail") );
+						m_botAction.sendPublicMessage("Debug: Pushed to " + rs.getString("fcUserName")); //+ " | " + rs.getString("fcPushBulletEmail") );
 						squadName = rs.getString("T.fcTeamName");
 					}
 				}
@@ -561,7 +570,7 @@ public class pushbulletbot extends SubspaceBot {
 		if (squadAlert != "") {
 			squadAlert = playerName + " beeped for: " + squadAlert;
 				messagePlayerSquadMembers(playerName, squadAlert);
-				m_botAction.sendPublicMessage("Debug:" + playerName + " : " + squadAlert);
+				m_botAction.sendPublicMessage("Debug: " + playerName + " : " + squadAlert);
 		} else {
 			m_botAction.sendPublicMessage("Filtered Message From " + playerName + " : " + userMsg);
 		}
