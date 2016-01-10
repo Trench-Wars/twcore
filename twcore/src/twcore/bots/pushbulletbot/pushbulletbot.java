@@ -32,16 +32,12 @@ public class pushbulletbot extends SubspaceBot {
 	static final String[] helpmsg = {
 		"Commands:",
 		"!signup <email>     -- signs up <email> for notifications",
-		"!stoplisten         -- ",
-		"!listen             -- ",
-		"!pushes             -- ",
-		"!pushchannel <>     -- ",
-		"!push <>            -- ",
-		"!createchannel <>   -- ",
-		"!beep <>            -- ",
-		"!accept             -- ",
-		"!challenge          -- ",
-		"!getlink            -- ",
+		"!enable             -- enable alerts to your pushbullet account",
+		"!disable            -- disable alerts to your pushbullet account",
+		"!push <>            -- Push a test msg to yourself",
+		"!beep <>            -- Beep for TWD match. Commands: jd dd bd fd sd any ",
+		"!challenge          -- Mimic squad challenge for TWJD",
+		"!accept             -- Mimic squad acceptance for TWJD",
 		"Standard Bot Commands:",
 		"!go <arena>         -- sends the bot to <arena>",
 		"!die                -- initiates shut down sequence",
@@ -82,30 +78,126 @@ public class pushbulletbot extends SubspaceBot {
 		// req.request(EventRequester.FLAG_CLAIMED);
 	}
 
+	
+	
+	public void cmd_Help(String name) {
+		m_botAction.smartPrivateMessageSpam( name, helpmsg );
+	}
+	
+	public void cmd_Signup(String name, String email) {
+		//check if valid email address, if not then exit
+		if (!email.contains("@") || !email.contains(".")) {
+			// m_botAction.sendPublicMessage("Invalid Email Adress entered!");
+			m_botAction.sendSmartPrivateMessage(name, "Invalid Email Adress entered!");
+			return;
+		}
+
+		//get signup Query
+		PreparedStatement ps_signup = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("signup"));
+
+		//put values in prepared statement
+		try {
+				ps_signup.clearParameters();
+				ps_signup.setString(1, Tools.addSlashesToString(name));
+				ps_signup.setString(2, Tools.addSlashesToString(email));
+				// m_botAction.sendPublicMessage(ps_signup.toString());
+				ps_signup.execute();
+				m_botAction.sendSmartPrivateMessage(name, "Signed Up " + name + " : " + email + " Successfully!");
+				m_botAction.sendPublicMessage("Debug: Signed Up " + name + " Successfully!");
+		} catch (SQLException e1) {
+			try {
+				for (Throwable x : ps_signup.getWarnings()) {
+					if (x.getMessage().toLowerCase().contains("unique")) {
+						// m_botAction.sendPublicMessage(email + " is already registered by " + getUserNameByEmail(email));
+						m_botAction.sendSmartPrivateMessage(name, email + " is already registered by " + getUserNameByEmail(email));
+					} else {
+						m_botAction.sendPublicMessage("Error: " + x.getMessage());
+						e1.printStackTrace();
+					}
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				m_botAction.sendPublicMessage("Error: " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public void cmd_Enable(String name) {
+		handleNewPush(name, "enable");
+	}
+	
+	public void cmd_Disable(String name) {
+		handleNewPush(name, "disable");
+	}
+	
+	public void cmd_Push(String name, String msg) {
+		try{
+			pbClient.sendNote( null, getEmailByUserName(name), "", msg);
+			// m_botAction.sendPublicMessage("Private Message: '" + msg + "' Pushed Successfully to " + name + ": " + getEmailByUserName(name));
+		} catch( PushbulletException e ){
+			// Huh, didn't work
+		}
+	}
+	
+	public void cmd_Beep(String name, String msg) {
+		handleNewPush(name, msg);	
+	}
+	
+	public void cmd_Challenge(String name) {
+		String msg = "(MatchBot3)>Axwell is challenging you for a game of 3vs3 TWJD versus Rage. Captains/assistants, ?go twjd and pm me with '!accept Rage'";
+		messagePlayerSquadMembers(name, msg);
+		m_botAction.sendPublicMessage("Debug: " + msg);
+	}
+	
+	public void cmd_Accept(String name) {
+		String msg = "(MatchBot3)>A game of 3vs3 TWJD versus Rage will start in ?go twjd in 30 seconds";
+		messagePlayerSquadMembers(name, msg);
+		m_botAction.sendPublicMessage("Debug: " + msg);
+	}
+
+	public void cmd_Go(String name, String arena) {
+		m_botAction.sendPublicMessage("!go Doesn't do anything right now...");
+	}
+	
+	public void cmd_Die(String name) {
+		try { Thread.sleep(50); } catch (Exception e) {};
+		handleDisconnect();
+		m_botAction.die("!die by " + name);
+	}
+		
 	public void handleEvent(Message event) {
 		// Retrieve name. If the message is remote, then event.getMessager() returns null, and event.getPlayerID returns a value.
-		// If the message is from the same arena, event.getMessager() returns a string, and event.getPlayerID will return 0.
-		String name = event.getMessager() != null ? event.getMessager() : m_botAction.getPlayerName(event.getPlayerID());
-		if (name == null) name = "-anonymous-";
+		// If the message is from the same arena, event.getMessager() returns a string, and event.getPlayerID will return 0.	
+		String message = event.getMessage();
+        String name = m_botAction.getPlayerName(event.getPlayerID());
+		int type = event.getMessageType();
+        
+		if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.CHAT_MESSAGE) {
+        	if (message.toLowerCase().startsWith("!signup "))
+                cmd_Signup(name, message.substring(message.indexOf(" ") + 1));
+            else if (message.equalsIgnoreCase("!enable"))
+                cmd_Enable(name);
+            else if (message.equalsIgnoreCase("!disable"))
+                cmd_Disable(name);
+            else if (message.toLowerCase().startsWith("!push "))
+                cmd_Push(name, message.substring(message.indexOf(" ") + 1));
+            else if (message.toLowerCase().startsWith("!beep "))
+                cmd_Beep(name, message.substring(message.indexOf(" ") + 1));
+            else if (message.equalsIgnoreCase("!challenge"))
+                cmd_Challenge(name);
+            else if (message.equalsIgnoreCase("!accept"))
+                cmd_Accept(name);
+            else if (message.toLowerCase().startsWith("!go "))
+                cmd_Go(name, message.substring(message.indexOf(" ") + 1));
+            else if (message.equalsIgnoreCase("!die"))
+                cmd_Die(name);
+            else if (message.equalsIgnoreCase("!help"))
+                cmd_Help(name);
+        }
+		
 
 		/*
-		m_botAction.sendPublicMessage("I received a Message event type ("+ event.getMessageType()+") from " + name +
-					" containing the following text: " + event.getMessage());
-		*/
-
-		// Default implemented command: !help
-		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!help")) {
-			m_botAction.smartPrivateMessageSpam( name, helpmsg );
-		}
-
-		// Default implemented command: !die
-		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!die")) {
-			//m_botAction.sendPublicMessage(name + " commanded me to die. Disconnecting...");
-			try { Thread.sleep(50); } catch (Exception e) {};
-			handleDisconnect();
-			m_botAction.die("!die by " + name);
-		}
-
 		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!getlink")) {
 			String squadChannel = getSquadChannel(name);
 				if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
@@ -114,58 +206,9 @@ public class pushbulletbot extends SubspaceBot {
 			m_botAction.sendPublicMessage(name);
 			m_botAction.sendPublicMessage(String.valueOf(event.getPlayerID()));
 		}
+		*/
 
-		//this is a temporary fake challenge
-		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!challenge")) {
-			String msg = "(MatchBot3)>Axwell is challenging you for a game of 3vs3 TWJD versus Rage. Captains/assistants, ?go twjd and pm me with '!accept Rage'";
-
-			//String squadChannel = getSquadChannel(name);
-			//if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
-
-			//try {
-				//pbClient.sendChannelMsg( squadChannel, "", msg);
-			messagePlayerSquadMembers(name, msg);
-			m_botAction.sendPublicMessage(msg);
-			//} catch (PushbulletException e) {
-				// TODO Auto-generated catch block
-				//e.printStackTrace();
-			//}
-		}
-
-		//this is a temporary fake challenge
-		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().equalsIgnoreCase("!accept")) {
-			String msg = "(MatchBot3)>A game of 3vs3 TWJD versus Rage will start in ?go twjd in 30 seconds";
-			//String squadChannel = getSquadChannel(name);
-			//if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
-
-			//try {
-			// pbClient.sendChannelMsg(squadChannel, "", msg);
-			messagePlayerSquadMembers(name, msg);
-			m_botAction.sendPublicMessage(msg);
-			//} catch (PushbulletException e) {
-				// TODO Auto-generated catch block
-				// e.printStackTrace();
-			//}
-		}
-
-		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!beep ")) {
-			String msg = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
-			String channelPost = this.getInterpretBeep(name, msg);
-			//String squadChannel = getSquadChannel(name);
-			//if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
-
-			if (channelPost != "") {
-				//try{
-					messagePlayerSquadMembers(name, channelPost);
-					//pbClient.sendChannelMsg(squadChannel, "", channelPost);
-
-					m_botAction.sendPublicMessage(channelPost);
-				//} catch( PushbulletException e ){
-					// Huh, didn't work
-				//}
-			}
-		}
-
+		/*
 		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!createchannel ")) {
 			String squadChannel = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
 				if (this.createSquadChannel(name, squadChannel)) {
@@ -174,17 +217,7 @@ public class pushbulletbot extends SubspaceBot {
 					m_botAction.sendPublicMessage(squadChannel + " creation failed!");
 				}
 		}
-
-
-		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!push ")) {
-			String msg = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
-			try{
-				pbClient.sendNote( null, getEmailByUserName(name), "", msg);
-				// m_botAction.sendPublicMessage("Private Message: '" + msg + "' Pushed Successfully to " + name + ": " + getEmailByUserName(name));
-			} catch( PushbulletException e ){
-				// Huh, didn't work
-			}
-		}
+		*/
 
 		/*if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!notify ")) {
 			String userName = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
@@ -196,7 +229,7 @@ public class pushbulletbot extends SubspaceBot {
 				// Huh, didn't work
 			}
 		}*/
-
+		/*
 		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!pushchannel ")) {
 			//m_botAction.sendSmartPrivateMessage(name, "Message: '" + msg + "' Pushed Successfully!");
 			String msg = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
@@ -211,6 +244,7 @@ public class pushbulletbot extends SubspaceBot {
 				// Huh, didn't work
 			}
 		}
+		 */
 
 		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!pushes")) {
 			List<Push> pushes = null;
@@ -251,46 +285,6 @@ public class pushbulletbot extends SubspaceBot {
 			pbClient.stopWebsocket();
 		}
 
-		if (event.getMessageType() == Message.PRIVATE_MESSAGE && event.getMessage().toLowerCase().startsWith("!signup ")) {
-			String email = event.getMessage().substring(event.getMessage().indexOf(" ") + 1);
-
-			//check if valid email address, if not then exit
-			if (!email.contains("@") || !email.contains(".")) {
-				// m_botAction.sendPublicMessage("Invalid Email Adress entered!");
-				m_botAction.sendSmartPrivateMessage(name, "Invalid Email Adress entered!");
-				return;
-			}
-
-			//get signup Query
-			PreparedStatement ps_signup = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("signup"));
-
-			//put values in prepared statement
-			try {
-					ps_signup.clearParameters();
-					ps_signup.setString(1, Tools.addSlashesToString(name));
-					ps_signup.setString(2, Tools.addSlashesToString(email));
-					// m_botAction.sendPublicMessage(ps_signup.toString());
-					ps_signup.execute();
-					// m_botAction.sendPublicMessage("Signed Up " + name + " : " + email + " Successfully!");
-					m_botAction.sendSmartPrivateMessage(name, "Signed Up " + name + " : " + email + " Successfully!");
-			} catch (SQLException e1) {
-				try {
-					for (Throwable x : ps_signup.getWarnings()) {
-						if (x.getMessage().toLowerCase().contains("unique")) {
-							// m_botAction.sendPublicMessage(email + " is already registered by " + getUserNameByEmail(email));
-							m_botAction.sendSmartPrivateMessage(name, email + " is already registered by " + getUserNameByEmail(email));
-						} else {
-							m_botAction.sendPublicMessage(x.getMessage());
-							e1.printStackTrace();
-						}
-					}
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					m_botAction.sendPublicMessage("Something crazy happened...");
-					e.printStackTrace();
-				}
-			}
-		}
 	}
 
 	/**
@@ -346,6 +340,12 @@ public class pushbulletbot extends SubspaceBot {
 					" SELECT fcCommand, fcCommandShortDescription FROM trench_TrenchWars.tblPBCommands"
 				+	" WHERE INSTR(?, fcCommand) > 0;";
 			break;
+
+		case "interpretcommand": //can't use @Params if expecting recordset results
+			preparedStatement =
+					" SELECT fcCommand, fcCommandShortDescription, fnSettingUpdate  FROM trench_TrenchWars.tblPBCommands"
+				+	" WHERE INSTR(?, fcCommand) > 0;";
+		break;
 		/*
 		case "getsquadchannel": //can't use @Params if expecting recordset results
 			preparedStatement =
@@ -365,16 +365,7 @@ public class pushbulletbot extends SubspaceBot {
 				+	"		JOIN trench_TrenchWars.tblUser AS U ON TU.fnUserID = U.fnUserID AND U.fcUserName = ?"
 				+	"	 ) AS SID ON SID.fnTeamID = T.fnTeamID"
 				+	" JOIN trench_TrenchWars.tblPBAccount AS PBA ON U.fnUserID = PBA.fnPlayerID;";
-			break;
-		/*
-		case "disablepb": //can't use @Params if expecting recordset results
-			preparedStatement =
-					" SET @PlayerName = ?;"
-				+	" UPDATE trench_TrenchWars.tblPBAccount"
-				+	" SET fbDisabled = 1"
-				+	" WHERE fnPlayerID = (SELECT U.fnUserID FROM trench_TrenchWars.tblUser AS U WHERE U.fcUserName = @PlayerName LIMIT 1);";
-			break;
-		*/
+		break;
 		case "enabledisablepb": //can't use @Params if expecting recordset results
 			preparedStatement =
 					" SET @PlayerName = ?;"
@@ -423,29 +414,26 @@ public class pushbulletbot extends SubspaceBot {
 		}
 		return email;
 	}
-
-	public String getInterpretBeep(String userName, String userMsg) {
-		String channelPost = "";
-		//String channelPostOriginal = channelPost;
-		PreparedStatement ps_getinterpretbeep = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("interpretbeep"));
+	
+	public ResultSet getInterpretCommand(String userName, String userMsg) {
+	    	//String commandResponseOriginal = commandResponse;
+		ResultSet rs = null;
+		PreparedStatement ps_getinterpretbeep = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("interpretcommand"));
 		try {
 			ps_getinterpretbeep.clearParameters();
 			ps_getinterpretbeep.setString(1, Tools.addSlashesToString(userMsg));
 			ps_getinterpretbeep.execute();
-			try (ResultSet rs = ps_getinterpretbeep.getResultSet()) {
-				while (rs.next()) {
-					if (channelPost != "") {channelPost += ",";}
-					channelPost += rs.getString("fcCommandShortDescription");
-				}
-			}
-		} catch (SQLException e) {
+			rs = ps_getinterpretbeep.getResultSet();
+		}
+			catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//if (channelPost == channelPostOriginal) {channelPost = "";}
-		return channelPost;
-	}
-
+			//if (commandResponse == commandResponseOriginal) {commandResponse = "";}
+			return rs;
+    }
+	
+	/*
 	public String getSquadChannel(String userName) {
 		String squadChannel = "";
 		PreparedStatement ps_getsquadchannel = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("getsquadchannel"));
@@ -464,7 +452,9 @@ public class pushbulletbot extends SubspaceBot {
 		}
 		return squadChannel;
 	}
+	*/
 
+	/*
 	public Boolean createSquadChannel(String userName, String squadChannel) {
 		PreparedStatement ps_createsquadchannel = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("createchannel"));
 		try {
@@ -479,18 +469,7 @@ public class pushbulletbot extends SubspaceBot {
 		}
 		return true;
 	}
-
-	/*public void disablePB (String userName) {
-		PreparedStatement ps_disablepb = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("disablepb"));
-		try {
-			ps_disablepb.clearParameters();
-			ps_disablepb.setString(1, Tools.addSlashesToString(userName));
-			ps_disablepb.execute();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}*/
+	*/
 
 	public void switchAlertsPB (String userName, Integer Disable) {
 		PreparedStatement ps_enablepb = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("enabledisablepb"));
@@ -499,7 +478,7 @@ public class pushbulletbot extends SubspaceBot {
 			ps_enablepb.setString(1, Tools.addSlashesToString(userName));
 			ps_enablepb.setInt(2, Disable);
 			ps_enablepb.execute();
-			m_botAction.sendPublicMessage(ps_enablepb.toString());
+			//m_botAction.sendPublicMessage(ps_enablepb.toString());
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -538,6 +517,58 @@ public class pushbulletbot extends SubspaceBot {
 			}
 		}
 	}
+	
+	public void handleNewPush(String playerName, String userMsg) {
+		String squadAlert = "";
+		Boolean settingChange = false;
+		ResultSet rs_InterpretCommand = getInterpretCommand(playerName, userMsg);
+		try {
+			while (rs_InterpretCommand.next()) {
+				if (rs_InterpretCommand.getInt("fnSettingUpdate") == 1) {  
+					//This is a setting command
+					try {
+						switch (rs_InterpretCommand.getString("fcCommand").toLowerCase()) {
+							case "enable":
+								switchAlertsPB(playerName, 0);
+								settingChange = true;
+							break;
+							case "disable":
+								switchAlertsPB(playerName, 1);
+								settingChange = true;
+							break;
+						}
+						//if setting change above matches, send personal note to player's pushbullet account letting them know of successful change
+						if (settingChange) {
+							pbClient.sendNote( null, getEmailByUserName(playerName), "", rs_InterpretCommand.getString("fcCommandShortDescription"));
+							m_botAction.sendSmartPrivateMessage(playerName, rs_InterpretCommand.getString("fcCommandShortDescription"));
+						}
+					} catch (PushbulletException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} finally { settingChange = false;}
+				} else {
+					//This is a beep
+					if (squadAlert != "") {squadAlert += ",";}
+					squadAlert += rs_InterpretCommand.getString("fcCommandShortDescription");
+				}
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		//send a message to everyone on squad who has pushbullet setup to alert of beep
+		if (squadAlert != "") {
+			squadAlert = playerName + " beeped for: " + squadAlert;
+				messagePlayerSquadMembers(playerName, squadAlert);
+				m_botAction.sendPublicMessage("Debug:" + playerName + " : " + squadAlert);
+		} else {
+			m_botAction.sendPublicMessage("Filtered Message From " + playerName + " : " + userMsg);
+		}
+	}
+	
+	
+	
 
 	public void handleDisconnect() {
 		//ba.closePreparedStatement(db, connectionID, this.ps_signup);
@@ -556,56 +587,21 @@ public class pushbulletbot extends SubspaceBot {
 		pbClient.addPushbulletListener(new PushbulletListener() {
 		@Override
 		public void pushReceived(PushbulletEvent pushEvent) {
-			//m_botAction.sendPublicMessage("2");
+			//This is probably doubling dipping on the rate limit by pulling the message the bot just posted
+			//possibly need to change this once we confirm
 			List<Push> pushes = null;
 			pushes = pushEvent.getPushes();
 			Push lastPush = pushes.get(0);
-			String body = lastPush.getBody().toString();
-			//m_botAction.sendPublicMessage("3");
+			String userMsg = lastPush.getBody().toString();
+			
 			String senderEmail = lastPush.getSender_email().toString();
 			if (senderEmail == "") { return; } //means it came from the channel, no need to push it back to the channel
-			//String type = lastPush.getBody()
-			//m_botAction.sendPublicMessage("4");
+			
 			String playerName = getUserNameByEmail(senderEmail);
 			if (playerName == "") { return; } //means it came from the bot account, probably using !push
-			//m_botAction.sendPublicMessage("5");
-			//String squadChannel = getSquadChannel(playerName);
-			//if (squadChannel == "") {return; } //means player's squad doesn't have a registered channel
-			//m_botAction.sendPublicMessage("6");
-			String channelPost = getInterpretBeep(playerName, body);
-			//m_botAction.sendPublicMessage("7");
-			//m_botAction.sendPublicMessage(type);
-			m_botAction.sendPublicMessage("Test:" + channelPost);
-			//need to clean this up later...
-			Boolean changeSetting = false;
-			if (channelPost.toLowerCase().contains("enable")) {switchAlertsPB(playerName, 0); changeSetting = true;}
-			if (channelPost.toLowerCase().contains("disable")) {switchAlertsPB(playerName, 1); changeSetting = true;}
-			if (changeSetting == true) {
-				try {
-					pbClient.sendNote( null, getEmailByUserName(playerName), "", channelPost);
-				} catch (PushbulletException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
 
-			if (channelPost != "" && changeSetting == false) {
-				channelPost = playerName + " beeped for: " + channelPost;
-				//try{
-					//m_botAction.sendPublicMessage("8");
-					//pbClient.sendChannelMsg(squadChannel, "", channelPost);
-					messagePlayerSquadMembers(playerName, channelPost);
-					m_botAction.sendPublicMessage(playerName + " : " + channelPost);
-					//m_botAction.sendPublicMessage("9");
-				//} catch( PushbulletException e ){
-					// Huh, didn't work
-					//m_botAction.sendPublicMessage(e.getMessage());
-					//m_botAction.sendPublicMessage(squadChannel);
-			//}
-			} else {
-				m_botAction.sendPublicMessage(playerName + " : " + body);
-				//m_botAction.sendPublicMessage("10");
-			}
+			//handle push
+			handleNewPush(playerName, userMsg);
 		}
 
 		@Override
