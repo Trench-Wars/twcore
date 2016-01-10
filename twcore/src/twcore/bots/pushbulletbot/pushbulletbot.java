@@ -80,11 +80,11 @@ public class pushbulletbot extends SubspaceBot {
 
 	
 	
-	public void cmd_Help(String name) {
+	public void cmd_help(String name) {
 		m_botAction.smartPrivateMessageSpam( name, helpmsg );
 	}
 	
-	public void cmd_Signup(String name, String email) {
+	public void cmd_signup(String name, String email) {
 		//check if valid email address, if not then exit
 		if (!email.contains("@") || !email.contains(".")) {
 			// m_botAction.sendPublicMessage("Invalid Email Adress entered!");
@@ -123,15 +123,15 @@ public class pushbulletbot extends SubspaceBot {
 		}
 	}
 
-	public void cmd_Enable(String name) {
+	public void cmd_enable(String name) {
 		handleNewPush(name, "enable");
 	}
 	
-	public void cmd_Disable(String name) {
+	public void cmd_disable(String name) {
 		handleNewPush(name, "disable");
 	}
 	
-	public void cmd_Push(String name, String msg) {
+	public void cmd_push(String name, String msg) {
 		try{
 			pbClient.sendNote( null, getEmailByUserName(name), "", msg);
 			// m_botAction.sendPublicMessage("Private Message: '" + msg + "' Pushed Successfully to " + name + ": " + getEmailByUserName(name));
@@ -140,32 +140,33 @@ public class pushbulletbot extends SubspaceBot {
 		}
 	}
 	
-	public void cmd_Beep(String name, String msg) {
+	public void cmd_beep(String name, String msg) {
 		handleNewPush(name, msg);	
 	}
 	
-	public void cmd_Challenge(String name) {
+	public void cmd_challenge(String name) {
 		String msg = "(MatchBot3)>Axwell is challenging you for a game of 3vs3 TWJD versus Rage. Captains/assistants, ?go twjd and pm me with '!accept Rage'";
 		messagePlayerSquadMembers(name, msg);
 		m_botAction.sendPublicMessage("Debug: " + msg);
 	}
 	
-	public void cmd_Accept(String name) {
+	public void cmd_accept(String name) {
 		String msg = "(MatchBot3)>A game of 3vs3 TWJD versus Rage will start in ?go twjd in 30 seconds";
 		messagePlayerSquadMembers(name, msg);
 		m_botAction.sendPublicMessage("Debug: " + msg);
 	}
 
-	public void cmd_Go(String name, String arena) {
+	public void cmd_go(String name, String arena) {
 		m_botAction.sendPublicMessage("!go Doesn't do anything right now...");
 	}
 	
-	public void cmd_Die(String name) {
+	public void cmd_die(String name) {
 		try { Thread.sleep(50); } catch (Exception e) {};
 		handleDisconnect();
 		m_botAction.die("!die by " + name);
 	}
-		
+	
+	@Override
 	public void handleEvent(Message event) {
 		// Retrieve name. If the message is remote, then event.getMessager() returns null, and event.getPlayerID returns a value.
 		// If the message is from the same arena, event.getMessager() returns a string, and event.getPlayerID will return 0.	
@@ -174,35 +175,35 @@ public class pushbulletbot extends SubspaceBot {
 		int type = event.getMessageType();
         
 		
-		/*
+		
 	 	m_botAction.sendSmartPrivateMessage(name, "Private :" + Integer.toString(Message.PRIVATE_MESSAGE));
 		m_botAction.sendSmartPrivateMessage(name, "Remote  :" + Integer.toString(Message.REMOTE_PRIVATE_MESSAGE));
 		m_botAction.sendSmartPrivateMessage(name, "Chat    :" + Integer.toString(Message.CHAT_MESSAGE));
 		m_botAction.sendSmartPrivateMessage(name, "Type    :" + Integer.toString(type));	
-		*/
+		
 		
 		
 		if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.CHAT_MESSAGE) {
         	if (message.toLowerCase().startsWith("!signup "))
-                cmd_Signup(name, message.substring(message.indexOf(" ") + 1));
+                cmd_signup(name, message.substring(message.indexOf(" ") + 1));
             else if (message.equalsIgnoreCase("!enable"))
-                cmd_Enable(name);
+                cmd_enable(name);
             else if (message.equalsIgnoreCase("!disable"))
-                cmd_Disable(name);
+                cmd_disable(name);
             else if (message.toLowerCase().startsWith("!push "))
-                cmd_Push(name, message.substring(message.indexOf(" ") + 1));
+                cmd_push(name, message.substring(message.indexOf(" ") + 1));
             else if (message.toLowerCase().startsWith("!beep "))
-                cmd_Beep(name, message.substring(message.indexOf(" ") + 1));
+                cmd_beep(name, message.substring(message.indexOf(" ") + 1));
             else if (message.equalsIgnoreCase("!challenge"))
-                cmd_Challenge(name);
+                cmd_challenge(name);
             else if (message.equalsIgnoreCase("!accept"))
-                cmd_Accept(name);
+                cmd_accept(name);
             else if (message.toLowerCase().startsWith("!go "))
-                cmd_Go(name, message.substring(message.indexOf(" ") + 1));
+                cmd_go(name, message.substring(message.indexOf(" ") + 1));
             else if (message.equalsIgnoreCase("!die"))
-                cmd_Die(name);
+                cmd_die(name);
             else if (message.equalsIgnoreCase("!help"))
-                cmd_Help(name);
+                cmd_help(name);
         }
 		
 
