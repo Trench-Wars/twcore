@@ -20,7 +20,7 @@ import twcore.core.util.Tools.Ship;
 
 /**
  * Pictionary.
- * 
+ *
  * @author milosh - 12.07
  */
 public class pictionary extends MultiModule {
@@ -50,22 +50,52 @@ public class pictionary extends MultiModule {
     public String m_prec = "-- ", gameType = "Bot's Pick.";
     public String t_definition, t_word = " ", curArtist = " ", theWinner, lastWord = " ";
 
-    public String[] helpmsg = { "Commands:", "!help               -- displays this.", "!rules              -- displays the rules.",
-            "!lagout             -- puts you back in the game if you're drawing.", "!pass               -- gives your drawing turn to a random player (-1pt)",
-            "!reset              -- resets your mines if drawing.", "!score              -- displays the current scores.", "!repeat             -- will repeat the hint or answer.",
-            "!stats              -- will display your statistics.", "!stats <name>       -- displays <name>'s statistics.", "!topten             -- displays top ten player stats.",
-            "!red/!yellow!/!blue -- changes your mine colours.",    "!ship  <shipnumber> -- will change ship type"};
-    public String[] opmsg = { "Moderator Commands:", "!start         -- Starts a default game of Pictionary to 10.", "!start <num>   -- Starts a game to <num> points.",
-            "!gametype      -- Toggles between player pick or bot pick.", "!cancel        -- Cancels this game of Pictionary.", "!showanswer    -- Shows you the answer(You can't win that round).",
-            "!displayrules  -- Shows the rules in *arena messages.", "!reset         -- Resets the current artist's mines.", "!pass          -- gives your drawing turn to a random player.",
-            "!pass <name>   -- passes the turn drawing to a specific player.", "!score         -- displays the current scores.", "!repeat        -- will repeat the hint or answer.",
-            "!stats         -- will display your statistics.", "!stats <name>  -- displays <name>'s statistics.", "!topten        -- displays top ten player stats.",
-            "!help          -- displays this." };
-    public String[] regrules = { "Rules: Racism and pornography are strictly forbidden. The bot will designate", "an artist. Players attempt to guess what the artist is drawing before the time",
-            "ends. The first player to reach the round's needed points wins.", "-Note: You must have played at least 30 rounds to qualify for the top ten.", };
-    public String[] displayrules = { "''''RULES: Racism and pornography are strictly forbidden. The bot will designate  ''''",
-            "'''  an artist. Players attempt to guess what the artist is drawing before the time'''", "''   ends to gain points. If you guess correctly then it is your turn to draw       ''",
-            "'    The first player to reach the round's needed points wins.                       '" };
+    public String[] helpmsg = { "Commands:",
+        "!help               -- displays this.",
+        "!rules              -- displays the rules.",
+        "!lagout             -- puts you back in the game if you're drawing.",
+        "!pass               -- gives your drawing turn to a random player (-1pt)",
+        "!reset              -- resets your mines if drawing.",
+        "!score              -- displays the current scores.",
+        "!repeat             -- will repeat the hint or answer.",
+        "!stats              -- will display your statistics.",
+        "!stats <name>       -- displays <name>'s statistics.",
+        "!topten             -- displays top ten player stats.",
+        "!red/!yellow!/!blue -- changes your mine colours.",
+        "!ship  <shipnumber> -- will change ship type"
+    };
+
+    public String[] opmsg = { "Moderator Commands:",
+        "!start         -- Starts a default game of Pictionary to 10.",
+        "!start <num>   -- Starts a game to <num> points.",
+        "!gametype      -- Toggles between player pick or bot pick.",
+        "!cancel        -- Cancels this game of Pictionary.",
+        "!showanswer    -- Shows you the answer(You can't win that round).",
+        "!displayrules  -- Shows the rules in *arena messages.",
+        "!reset         -- Resets the current artist's mines.",
+        "!pass          -- gives your drawing turn to a random player.",
+        "!pass <name>   -- passes the turn drawing to a specific player.",
+        "!score         -- displays the current scores.",
+        "!repeat        -- will repeat the hint or answer.",
+        "!stats         -- will display your statistics.",
+        "!stats <name>  -- displays <name>'s statistics.",
+        "!topten        -- displays top ten player stats.",
+        "!help          -- displays this."
+    };
+
+    public String[] regrules = {
+        "Rules: Racism and pornography are strictly forbidden. The bot will designate",
+        "an artist. Players attempt to guess what the artist is drawing before the time",
+        "ends. The first player to reach the round's needed points wins.",
+        "-Note: You must have played at least 30 rounds to qualify for the top ten.",
+    };
+
+    public String[] displayrules = {
+        "''''RULES: Racism and pornography are strictly forbidden. The bot will designate  ''''",
+        "'''  an artist. Players attempt to guess what the artist is drawing before the time'''",
+        "''   ends to gain points. If you guess correctly then it is your turn to draw       ''",
+        "'    The first player to reach the round's needed points wins.                       '",
+    };
 
     /**
      * Initializes.
@@ -118,8 +148,7 @@ public class pictionary extends MultiModule {
         return opmsg;
     }
 
-    public void requestEvents(ModuleEventRequester events) {
-    }
+    public void requestEvents(ModuleEventRequester events) {}
 
     public boolean isUnloadable() {
         return true;
@@ -198,48 +227,42 @@ public class pictionary extends MultiModule {
         else if (msg.equalsIgnoreCase("!rules"))
             m_botAction.smartPrivateMessageSpam(name, regrules);
         else if (msg.equalsIgnoreCase("!help"))
-            m_botAction.smartPrivateMessageSpam(name, helpmsg);  
-       	else if (msg.equalsIgnoreCase("!red"))
+            m_botAction.smartPrivateMessageSpam(name, helpmsg);
+        else if (msg.equalsIgnoreCase("!red"))
             doChangeColour(name, 1);
         else if (msg.equalsIgnoreCase("!yellow"))
             doChangeColour(name, 2);
         else if (msg.equalsIgnoreCase("!blue"))
             doChangeColour(name, 3);
         else if (msg.startsWith("!ship "))
-        	doShipSet(name, msg.substring(6));        	
+            doShipSet(name, msg.substring(6));
         else
-            doCustomWord(name, msg); 
+            doCustomWord(name, msg);
     }
+
     /**
      * Added a feature to allow players to change ships by using !ship <shipnumber>.
      * @param name
      * @param ShipType
      */
-        public void doShipSet(String name, String ShipType) {
-        	int realShipType = 0;
-        if(!name.equals(curArtist)) return;
-        	//Empty check
-        	if (ShipType.isEmpty())return;
-        
-        	//Convert shiptype to number
-        	try {
-        		realShipType = Integer.parseInt(ShipType);
-        	} catch (NumberFormatException e) {
-        		//This happens when not a vaild number has been found.
-        		return;        	
-        	}
-        	
-        	//Check if shiptype is a valid shiptype
-        	if (realShipType < 1 || realShipType > 8)return;
-        	
-        	//Action to setship
-        	m_botAction.setShip(name, realShipType);
-        	
-        	//check if player is drawer
-        	
+    public void doShipSet(String name, String ShipType) {
+        int realShipType = 0;
+        if(!name.equals(curArtist) || ShipType.isEmpty()) return;
+
+        //Convert shiptype to number
+        try {
+            realShipType = Integer.parseInt(ShipType);
+        } catch (NumberFormatException e) {
+            return;
         }
-            
-    
+
+        //Check if shiptype is a valid shiptype
+        if (realShipType < 1 || realShipType > 8)return;
+
+        //Action to setship
+        m_botAction.setShip(name, realShipType);
+    }
+
     /** ************************************************************* */
     /** * Toggles between default/custom game types. ** */
     /** ************************************************************* */
@@ -421,9 +444,9 @@ public class pictionary extends MultiModule {
     public void doPass(String name) {
         if (!opList.isER(name) && !name.equals(curArtist))
             return;
-        String passing = curArtist;        
+        String passing = curArtist;
         m_botAction.specWithoutLock(curArtist);
-        
+
         if (playerMap.containsKey(curArtist)) {
             PlayerProfile tempPlayer = playerMap.get(curArtist);
             tempPlayer.decData(0);
@@ -437,7 +460,7 @@ public class pictionary extends MultiModule {
         while (passing.equals(curArtist)) {
             pickPlayer();
         }
-        
+
         m_botAction.sendArenaMessage(passing + " passes to " + curArtist + " (-1pt).");
         cantPlay.clear();
         cantPlay.add(curArtist);
@@ -533,7 +556,12 @@ public class pictionary extends MultiModule {
                 randomPlayerBag.add(addPlayerName);
             }
             addPlayerName = randomPlayerBag.grabAndRemove();
-            if (!(m_botAction.getOperatorList().isSysopExact(addPlayerName) && !addPlayerName.equalsIgnoreCase("Pure_Luck") && !addPlayerName.equalsIgnoreCase("Beasty") && !addPlayerName.equalsIgnoreCase("Demonic") && !addPlayerName.equalsIgnoreCase("M_M God") && !addPlayerName.equalsIgnoreCase("Arobas+"))
+            // TODO Dunno who added the below, but there shouldn't be a reason to specify sysops by name
+            if (!(m_botAction.getOperatorList().isSysopExact(addPlayerName) &&
+                        !addPlayerName.equalsIgnoreCase("Pure_Luck") &&
+                        !addPlayerName.equalsIgnoreCase("Beasty") &&
+                        !addPlayerName.equalsIgnoreCase("Demonic") &&
+                        !addPlayerName.equalsIgnoreCase("M_M God") && !addPlayerName.equalsIgnoreCase("Arobas+"))
                     && !addPlayerName.equals(m_botAction.getBotName()) && !notPlaying.contains(addPlayerName))
                 curArtist = addPlayerName;
             else
@@ -601,7 +629,9 @@ public class pictionary extends MultiModule {
         m_botAction.sendArenaMessage(m_prec + "Picture #" + pictNumber + ":");
         m_botAction.setShip(curArtist, Ship.TERRIER);
         m_botAction.warpTo(curArtist, XSpot, YSpot);
-        m_botAction.sendSmartPrivateMessage(curArtist, "Draw: " + t_word);
+        m_botAction.sendSmartPrivateMessage(curArtist, "YOUR WORD IS >>> " + t_word + " <<<");
+        m_botAction.sendSmartPrivateMessage(curArtist, "PM me !yellow !red or !blue to change your color");
+        m_botAction.sendSmartPrivateMessage(curArtist, "PM me !reset to erase your drawing");
         timerQuestion = new TimerTask() {
             @Override
             public void run() {
