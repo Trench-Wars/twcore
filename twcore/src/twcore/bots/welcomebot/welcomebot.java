@@ -836,8 +836,13 @@ public class welcomebot extends SubspaceBot {
 
     private void cmd_tutorial(String player) {
         if (!tutorials.containsKey(player)) {
-            if (ba.getPlayer(player).getShipType() == 0)
+            // HACK: Forcing new players to see the 3-stage base wall objons after downloading.
+            if (ba.getPlayer(player).getShipType() != 1) {
                 ba.setShip(player, 1);
+            } else {
+                ba.setShip(player, 2);
+                ba.setShip(player, 1);                
+            }
             ba.sendUnfilteredPrivateMessage(player, "*objon 2011");
             ba.sendUnfilteredPrivateMessage(player, "*objoff 2010");
             ba.sendUnfilteredPrivateMessage(player, "*objoff 2020");
