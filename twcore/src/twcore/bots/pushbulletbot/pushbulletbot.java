@@ -3,6 +3,7 @@ package twcore.bots.pushbulletbot;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
 import twcore.core.EventRequester;
+import twcore.core.OperatorList;
 import twcore.core.SubspaceBot;
 import twcore.core.events.ArenaJoined;
 import twcore.core.events.LoggedOn;
@@ -23,10 +24,12 @@ import java.sql.SQLException;
 public class pushbulletbot extends SubspaceBot {
 
 	private BotSettings m_botSettings; // Stores settings for your bot as found in the .cfg file.
+	private OperatorList m_opList;
 	//BotSettings rules; // In this case, it would be settings from pushbulletbot.cfg
 
 	private String connectionID = "pushbulletbot";
 	private PushbulletClient pbClient; // Push to mobile data, private MobilePusher mobilePusher;
+
 	static final String db = "bots";
 
 	static final String[] helpmsg = {
@@ -49,6 +52,7 @@ public class pushbulletbot extends SubspaceBot {
 		requestEvents();
 
 		m_botSettings = m_botAction.getBotSettings();
+		m_opList = m_botAction.getOperatorList();
 	}
 
 	public void requestEvents() {
@@ -168,27 +172,17 @@ public class pushbulletbot extends SubspaceBot {
 	
 	@Override
 	public void handleEvent(Message event) {
-		
-		// Retrieve name. If the message is remote, then event.getMessager() returns null, and event.getPlayerID returns a value.
-		// If the message is from the same arena, event.getMessager() returns a string, and event.getPlayerID will return 0.	
 		String message = event.getMessage();
-		
-		// name isn't being captured when sent from outside the same arena bot is in
-		String name = m_botAction.getPlayerName(event.getPlayerID());
-		if (name == null) return;
 		Integer type = event.getMessageType();
+		String name = null;
+		if(type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.CHAT_MESSAGE)
+            name = event.getMessager();
+        else
+            name = m_botAction.getPlayerName( event.getPlayerID() );
 		
-		
-		//m_botAction.sendSmartPrivateMessage("24", name);    
-		
-		/*
-	 	m_botAction.sendSmartPrivateMessage(name, "Private :" + Integer.toString(Message.PRIVATE_MESSAGE));
-		m_botAction.sendSmartPrivateMessage(name, "Remote  :" + Integer.toString(Message.REMOTE_PRIVATE_MESSAGE));
-		m_botAction.sendSmartPrivateMessage(name, "Chat    :" + Integer.toString(Message.CHAT_MESSAGE));
-		m_botAction.sendSmartPrivateMessage(name, "Type    :" + Integer.toString(type));	
-		*/
-		
-		
+		//exit if name isn't returned
+		if (name == null) return;
+	
 		if (type == Message.PRIVATE_MESSAGE || type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.CHAT_MESSAGE) {
 			if (message.toLowerCase().startsWith("!signup "))
                 cmd_signup(name, message.substring(message.indexOf(" ") + 1));
@@ -206,7 +200,7 @@ public class pushbulletbot extends SubspaceBot {
                 cmd_accept(name);
             else if (message.toLowerCase().startsWith("!go "))
                 cmd_go(name, message.substring(message.indexOf(" ") + 1));
-            else if (message.equalsIgnoreCase("!die"))
+            else if (message.equalsIgnoreCase("!die") && m_opList.isSmod(name))
                 cmd_die(name);
             else if (message.equalsIgnoreCase("!help"))
                 cmd_help(name);
@@ -488,13 +482,13 @@ public class pushbulletbot extends SubspaceBot {
 	*/
 
 	public void switchAlertsPB (String userName, Integer Disable) {
-		PreparedStatement ps_enablepb = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("enabledisablepb"));
+		PreparedStatement ps_switchalerts = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("enabledisablepb"));
 		try {
-			ps_enablepb.clearParameters();
-			ps_enablepb.setString(1, Tools.addSlashesToString(userName));
-			ps_enablepb.setInt(2, Disable);
-			ps_enablepb.execute();
-			//m_botAction.sendPublicMessage(ps_enablepb.toString());
+			ps_switchalerts.clearParameters();
+			ps_switchalerts.setString(1, Tools.addSlashesToString(userName));
+			ps_switchalerts.setInt(2, Disable);
+			ps_switchalerts.execute();
+			//m_botAction.sendPublicMessage(ps_switchalerts.toString());
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -573,7 +567,7 @@ public class pushbulletbot extends SubspaceBot {
 			e1.printStackTrace();
 		}
 
-		//send a message to everyone on squad who has pushbullet setup to alert of beep
+		//send a message to everyone on squad (in game) and everyone who has pushbullet setup to alert of beep
 		if (squadAlert != "") {
 			squadAlert = playerName + " beeped for: " + squadAlert;
 				messagePlayerSquadMembers(playerName, squadAlert);
@@ -584,11 +578,10 @@ public class pushbulletbot extends SubspaceBot {
 	}
 	
 	
-	
-
 	public void handleDisconnect() {
 		//ba.closePreparedStatement(db, connectionID, this.ps_signup);
 		ba.cancelTasks();
+		pbClient.stopWebsocket();
 	}
 
 	public void handleEvent(LoggedOn event) {
