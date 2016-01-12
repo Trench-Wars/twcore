@@ -464,7 +464,7 @@ public class ElimLeaderBoard {
             
             while(rs.next()) {
                 newNames.add(rs.getString("fcName"));
-                newScores.add(rs.getInt("fnRating"));
+                newScores.add(rs.getInt("fnAdjRating"));
             }
             
             if(!newNames.isEmpty() && !newScores.isEmpty()) {

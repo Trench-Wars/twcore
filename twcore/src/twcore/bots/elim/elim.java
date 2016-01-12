@@ -383,7 +383,7 @@ public class elim extends SubspaceBot {
                 ResultSet rs = showLadder.executeQuery();
                 ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
                 while (rs.next())
-                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName") + " - " + rs.getInt("fnRating"));
+                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName") + " - " + rs.getInt("fnAdjRating"));
                 rs.close();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
@@ -415,7 +415,7 @@ public class elim extends SubspaceBot {
                 ResultSet rs = showLadder.executeQuery();
                 ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
                 while (rs.next())
-                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName") + " - " + rs.getInt("fnRating"));
+                    ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName") + " - " + rs.getInt("fnAdjRating"));
                 rs.close();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
@@ -1139,7 +1139,7 @@ public class elim extends SubspaceBot {
         voteType = VoteType.NA;
         gameType = ELIM;
         allowRace = false;
-        updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
+        updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAdjRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         // Temporary, until the fix is in place from the new code
         connectionID = connectionID.concat(Integer.toString(random.nextInt(1000)));
         currentSeason = rules.getInt("CurrentSeason");
@@ -1475,9 +1475,9 @@ public class elim extends SubspaceBot {
             ba.closePreparedStatement(db, connectionID, showLadder);
         }
 
-        updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ? AND fnSeason = ?");
+        updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAdjRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ? AND fnSeason = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating, fnSeason) VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
-        showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? AND fnSeason = ? ORDER BY fnRank ASC LIMIT ?");
+        showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnAdjRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? AND fnSeason = ? ORDER BY fnRank ASC LIMIT ?");
         
         if (!checkStatements(false)) {
             debug("Update was null.");

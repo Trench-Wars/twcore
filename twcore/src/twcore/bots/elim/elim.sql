@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS `tblElim__Player` (
   `fcName` varchar(30) NOT NULL,
   `fnShip` smallint(1) NOT NULL DEFAULT '1',
   `fnRating` int(5) NOT NULL DEFAULT '300',
+  `fnAdjRating` int(5) NOT NULL DEFAULT '300',
   `fnAve` float NOT NULL DEFAULT '300',
   `fnWins` int(10) NOT NULL DEFAULT '0',
   `fnGames` int(10) NOT NULL DEFAULT '0',
