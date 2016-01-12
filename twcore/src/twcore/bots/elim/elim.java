@@ -1008,9 +1008,9 @@ public class elim extends SubspaceBot {
         } else if (voteType == VoteType.SHIP) {
             voteType = VoteType.DEATHS;
             if (allowRace)
-                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + " or 15-30 for KillRace" + ")");
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + " or 15-30 for KillRace of 5-20)");
             else
-                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + ")");;
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + ")");
             ba.sendChatMessage(2, Tools.shipName(shipType.getNum()) + " elim is beginning now.");
             ba.sendChatMessage(3, "ELIM: " + Tools.shipName(shipType.getNum()) + " elim now beginning.");
         } else if (voteType == VoteType.DEATHS) {
@@ -1138,7 +1138,7 @@ public class elim extends SubspaceBot {
         state = State.IDLE;
         voteType = VoteType.NA;
         gameType = ELIM;
-        allowRace = false;
+        allowRace = true;
         updateFields = "fnKills, fnDeaths, fnMultiKills, fnKillStreak, fnDeathStreak, fnWinStreak, fnShots, fnKillJoys, fnKnockOuts, fnTopMultiKill, fnTopKillStreak, fnTopDeathStreak, fnTopWinStreak, fnAve, fnRating, fnAdjRating, fnAim, fnWins, fnGames, fnShip, fcName".split(", ");
         // Temporary, until the fix is in place from the new code
         connectionID = connectionID.concat(Integer.toString(random.nextInt(1000)));
