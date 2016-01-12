@@ -117,6 +117,7 @@ public class ElimPlayer {
             ba.spec(name);
             ba.sendArenaMessage(name + " is out. " + getScore());
             game.removePlayer(this);
+            clearPersonalScoreLVZ();
             killer.handleKO();
         } else {
             game.handleSpawn(this, false);
@@ -214,6 +215,7 @@ public class ElimPlayer {
             ba.spec(name);
             ba.spec(name);
             lagouts = 0; //Remaining lagouts set to 0 so player can not return.
+            clearPersonalScoreLVZ();
             game.removePlayer(this);
         } else {
         	ba.sendArenaMessage(name + " lagged out! (+1 death)");
@@ -402,6 +404,8 @@ public class ElimPlayer {
     /** Record the loss of an elimination game and flush dynamic game stats */
     public void saveLoss() {
         cancelTasks();
+        clearPersonalScoreLVZ();
+        showGameStats();        
         stats.handleLoss();
     }
 
@@ -409,12 +413,14 @@ public class ElimPlayer {
     public void saveWin() {
         cancelTasks();
         stats.handleWin();
-        int wins = stats.getStat(StatType.WINS);
-        int streak = stats.getStat(StatType.WIN_STREAK);
+        clearPersonalScoreLVZ();
+        int wins = stats.getTotal(StatType.WINS);
+        int streak = stats.getTotal(StatType.WIN_STREAK);
         if( wins == 1 )
             ba.sendPrivateMessage(name, "You have won! Your first win this season in " + Tools.shipName(stats.getShip()) + "!");
         else
             ba.sendPrivateMessage(name, "You have won! Win #" + wins + (streak > 2 ? " (Streak: " + streak + ")" : "") + " in " + Tools.shipName(stats.getShip()) + ".");
+        showGameStats();
     }
     
     public void showGameStats() {
@@ -433,7 +439,7 @@ public class ElimPlayer {
         if( kills + deaths < kdNeededToLadder ) {
             msg += (kdNeededToLadder - (kills + deaths)) + " more kills/deaths needed to ladder.";
         } else {
-            msg += "Rating: " + oldrating + " -> " + stats.getStat(StatType.RATING) + "  Ladder: " + oldadjrating + " -> " + stats.getStat(StatType.ADJRATING) + "  Confidence: " + (stats.getConfidence() * 100.0f) + "%";
+            msg += "Ladder Rating: " + oldadjrating + " -> " + stats.getStat(StatType.ADJRATING) + " Base Rating: " + oldrating + " -> " + stats.getStat(StatType.RATING) + "  Confidence: " + (stats.getConfidence() * 100.0f) + "%";
         }
         ba.sendPrivateMessage(name, msg);
         // WB Game 3 ... K:10 D:5 Ratio: 2:1  Rating: 500 -> 456
@@ -547,6 +553,16 @@ public class ElimPlayer {
         objset.showObject(ba.getPlayer(name).getPlayerID(), LVZ_DEATH_ONES);
         ba.setObjects(ba.getPlayer(name).getPlayerID());
     }
+    
+    /**
+     * Clears the personal score LVZ.
+     */
+    public void clearPersonalScoreLVZ() {
+        if (ba.getPlayer(name) == null)
+            return;
+        objset.hideAllObjects(ba.getPlayer(name).getPlayerID());
+        ba.setObjects(ba.getPlayer(name).getPlayerID());
+    }    
     
     /**
      * Updates personal score LVZ after each kill or death.
