@@ -416,7 +416,7 @@ public class ElimPlayer {
         if( wins == 1 )
             ba.sendPrivateMessage(name, "You have won! Your first win this season in " + Tools.shipName(stats.getShip()) + "!");
         else
-            ba.sendPrivateMessage(name, "You have won! Win #" + wins + (streak > 2 ? " (Streak: " + streak + ")" : "") + " in " + Tools.shipName(stats.getShip()) + ".");
+            ba.sendPrivateMessage(name, "You have won! Win #" + wins + " in " + Tools.shipName(stats.getShip()) + ".");
         showGameStats();
         stats.handleWin();
     }
@@ -426,7 +426,7 @@ public class ElimPlayer {
         int oldadjrating = stats.crunchAdjRating();
         int kills = stats.getStat(StatType.KILLS);
         int deaths = stats.getStat(StatType.DEATHS);
-        String msg = "[" + Tools.shipNameSlang(stats.getShip()) + " GAME " + stats.getTotal(StatType.GAMES) + "]  ";
+        String msg = "[" + Tools.shipNameSlang(stats.getShip()).toUpperCase() + " GAME " + stats.getTotal(StatType.GAMES) + "]  ";
         float ratio = 0.0f;
         if( kills > 0 && deaths > 0 )
             ratio = (float)kills / (float)deaths;
