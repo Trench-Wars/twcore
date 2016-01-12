@@ -432,8 +432,9 @@ public class ElimGame {
         ep.setFreq(freq);
         players.put(low, ep);        
         TimerTask task = new TimerTask() {
+            final String name = low;
             public void run() {
-                addLatePlayer(low);
+                addLatePlayer(name);
             }
         };
         ba.scheduleTask(task, 3000);
