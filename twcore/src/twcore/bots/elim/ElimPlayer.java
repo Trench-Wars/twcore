@@ -429,7 +429,7 @@ public class ElimPlayer {
         String msg = "[" + Tools.shipNameSlang(stats.getShip()) + " GAME " + stats.getTotal(StatType.GAMES) + "]  ";
         float ratio = 0.0f;
         if( kills > 0 && deaths > 0 )
-            ratio = kills / deaths;
+            ratio = (float)kills / (float)deaths;
         msg += "K:" + kills + " D:" + deaths + " Ratio: " + (ratio != 0.0f ? String.format("%.2f", ratio) + ":1": "N/A") + "  ";
         kills = stats.getTotal(StatType.KILLS);
         deaths = stats.getTotal(StatType.DEATHS);
