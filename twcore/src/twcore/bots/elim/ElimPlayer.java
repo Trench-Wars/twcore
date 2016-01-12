@@ -410,7 +410,6 @@ public class ElimPlayer {
     /** Record the win of an elimination game and flush dynamic game stats */
     public void saveWin() {
         cancelTasks();
-        stats.handleWin();
         clearPersonalScoreLVZ();
         int wins = stats.getTotal(StatType.WINS);
         int streak = stats.getTotal(StatType.WIN_STREAK);
@@ -419,6 +418,7 @@ public class ElimPlayer {
         else
             ba.sendPrivateMessage(name, "You have won! Win #" + wins + (streak > 2 ? " (Streak: " + streak + ")" : "") + " in " + Tools.shipName(stats.getShip()) + ".");
         showGameStats();
+        stats.handleWin();
     }
     
     public void showGameStats() {
