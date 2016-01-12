@@ -428,21 +428,21 @@ public class ElimPlayer {
         int oldadjrating = stats.crunchAdjRating();
         int kills = stats.getStat(StatType.KILLS);
         int deaths = stats.getStat(StatType.DEATHS);
-        String msg = Tools.shipNameSlang(stats.getShip()) + " Game " + stats.getStat(StatType.GAMES) + " ... ";
+        String msg = "[" + Tools.shipNameSlang(stats.getShip()) + " GAME " + stats.getTotal(StatType.GAMES) + "]  ";
         float ratio = 0.0f;
         if( kills > 0 && deaths > 0 )
             ratio = kills / deaths;
-        msg += "K:" + kills + " D:" + deaths + " Ratio: " + (ratio != 0.0f ? String.format("%.2f%", ratio) + ":1": "N/A") + "  ";
+        msg += "K:" + kills + " D:" + deaths + " Ratio: " + (ratio != 0.0f ? String.format("%.2f", ratio) + ":1": "N/A") + "  ";
         
         kills = stats.getTotal(StatType.KILLS);
         deaths = stats.getTotal(StatType.DEATHS);
         if( kills + deaths < kdNeededToLadder ) {
             msg += (kdNeededToLadder - (kills + deaths)) + " more kills/deaths needed to ladder.";
         } else {
-            msg += "Ladder Rating: " + oldadjrating + " -> " + stats.getStat(StatType.ADJRATING) + " Base Rating: " + oldrating + " -> " + stats.getStat(StatType.RATING) + "  Confidence: " + (stats.getConfidence() * 100.0f) + "%";
+            msg += "Ladder: " + oldadjrating + "->" + stats.getStat(StatType.ADJRATING) + "  Base Rating: " + oldrating + "->" + stats.getStat(StatType.RATING) + "  Confidence: " + (stats.getConfidence() * 100.0f) + "%";
         }
         ba.sendPrivateMessage(name, msg);
-        // WB Game 3 ... K:10 D:5 Ratio: 2:1  Rating: 500 -> 456
+        // [WB GAME 3]  K:10 D:5 Ratio: 2:1  Ladder: 500->456  Base Rating:900->850  Confidence: 25.4%
     }
     
     public void cancelTasks() {
