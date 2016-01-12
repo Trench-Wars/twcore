@@ -112,12 +112,11 @@ public class ElimPlayer {
         updatePersonalScoreLVZ();
         if (game.bot.gameType == elim.ELIM && stats.getStat(StatType.DEATHS) >= specAt) {
             status = Status.OUT;
-            stats.handleLoss();
+            saveLoss();
             ba.spec(name);
             ba.spec(name);
             ba.sendArenaMessage(name + " is out. " + getScore());
             game.removePlayer(this);
-            clearPersonalScoreLVZ();
             killer.handleKO();
         } else {
             game.handleSpawn(this, false);
@@ -211,7 +210,6 @@ public class ElimPlayer {
     	//Check if player has reached final number of deaths..
         if (game.bot.gameType == elim.ELIM && stats.getStat(StatType.DEATHS) >= specAt) {
             status = Status.OUT;
-            stats.handleLoss(); //Reset win streak
             ba.spec(name);
             ba.spec(name);
             lagouts = 0; //Remaining lagouts set to 0 so player can not return.
@@ -433,13 +431,12 @@ public class ElimPlayer {
         if( kills > 0 && deaths > 0 )
             ratio = kills / deaths;
         msg += "K:" + kills + " D:" + deaths + " Ratio: " + (ratio != 0.0f ? String.format("%.2f", ratio) + ":1": "N/A") + "  ";
-        
         kills = stats.getTotal(StatType.KILLS);
         deaths = stats.getTotal(StatType.DEATHS);
         if( kills + deaths < kdNeededToLadder ) {
             msg += (kdNeededToLadder - (kills + deaths)) + " more kills/deaths needed to ladder.";
         } else {
-            msg += "Ladder: " + oldadjrating + "->" + stats.getStat(StatType.ADJRATING) + "  Base Rating: " + oldrating + "->" + stats.getStat(StatType.RATING) + "  Confidence: " + (stats.getConfidence() * 100.0f) + "%";
+            msg += "Ladder: " + oldadjrating + "->" + stats.getStat(StatType.ADJRATING) + "  Base Rating: " + oldrating + "->" + stats.getStat(StatType.RATING) + "  Confidence: " + String.format("%.2f", (stats.getConfidence() * 100.0f)) + "%";
         }
         ba.sendPrivateMessage(name, msg);
         // [WB GAME 3]  K:10 D:5 Ratio: 2:1  Ladder: 500->456  Base Rating:900->850  Confidence: 25.4%
