@@ -49,7 +49,8 @@ public class ElimPlayer {
     public static final int STREAK_INIT = 5;
     public static final int STREAK_REPEAT = 2;
     public static final int MULTI_KILL_TIME = 5; // seconds 
-    int kdNeededToLadder = 25;
+    int kdNeededToLadder = 300;                  // Combined kills & deaths needed before being ranked
+    int lateEntryDeaths = 0;                     // Extra deaths given for late entry (not counted in final score/ladder)
     public static final String db = "website";
     public Status status;
     public String name;
@@ -224,7 +225,7 @@ public class ElimPlayer {
             return false;
         } else {
             status = Status.OUT;
-            ba.sendArenaMessage(name + " is out. " + getScore() + " (Lagged Out)");
+            ba.sendArenaMessage(name + " is out. " + getScore() + " (lagout/spec)");
             saveLoss();
             return true;
         }
@@ -476,7 +477,7 @@ public class ElimPlayer {
         public void run() {
             if (status != Status.SPAWN) return;
             if (!warned) {
-                ba.sendPrivateMessage(name, "GET IN THE BASE! Unless you want to experience the wrath of Robo Ref.");
+                ba.sendPrivateMessage(name, "Please GET IN BASE!");
                 warned = true;
                 spawn = new Spawn(true);
                 ba.scheduleTask(spawn, SPAWN_BOUND * Tools.TimeInMillis.SECOND);

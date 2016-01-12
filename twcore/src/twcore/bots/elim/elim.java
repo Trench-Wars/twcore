@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
+import twcore.bots.elim.ElimGame.GameState;
 import twcore.bots.elim.ElimPlayer.Status;
 import twcore.core.BotAction;
 import twcore.core.BotSettings;
@@ -83,7 +84,8 @@ public class elim extends SubspaceBot {
     static final String db = "website";
     static final String pub = "pubstats";
     static final int INITIAL_RATING = 300;
-    int kdNeededToLadder = 300;
+    int kdNeededToLadder = 300;            // Combined kills & deaths needed before being ranked
+    int lateEntrySeconds = 0;              // # seconds a player is allowed to late-enter; 0 if not allowed
     static final int MIN_ZONER = 10;       // The minimum amount of minutes in between zoners
     static final int ALERT_DELAY = 2;      // Minimum amount of time between alert messages
     TimerTask timer;
@@ -447,6 +449,25 @@ public class elim extends SubspaceBot {
                 ba.sendPrivateMessage(name, "You are not in the game.");
         } else
             ba.sendPrivateMessage(name, "There is not a game being played.");
+    }
+    
+    /**
+     * Handles the !late command, which lets a player enter late
+     */
+    public void cmd_late(String name) {
+        if (game != null) {
+            ElimPlayer ep = game.getPlayer(name);
+            if (ep != null) {
+                ba.sendPrivateMessage(name, "You're already in this game.");
+            } else {
+                if (game.getState() == GameState.PLAYING) {
+                    // do late
+                } else {
+                    ba.sendPrivateMessage(name, "There is no game being played. Simply enter into a ship.");                    
+                }
+            }
+        } else
+            ba.sendPrivateMessage(name, "There is no game being played. Simply enter into a ship.");
     }
 
     /** Handles the !mvp command which lists the top 3 best and worst players */
@@ -1122,6 +1143,7 @@ public class elim extends SubspaceBot {
         // Temporary, until the fix is in place from the new code
         connectionID = connectionID.concat(Integer.toString(random.nextInt(1000)));
         currentSeason = rules.getInt("CurrentSeason");
+        lateEntrySeconds = rules.getInt("LateEntrySeconds");
         
         minDeaths = rules.getIntArray("MinDeaths", ",");
         maxDeaths = rules.getIntArray("MaxDeaths", ",");
@@ -1198,6 +1220,8 @@ public class elim extends SubspaceBot {
                 cmd_lag(name, msg);
             else if (cmd.equals("!lagout"))
                 cmd_lagout(name);
+            //else if (cmd.equals("!late"))
+            //    cmd_late(name);
             else if (cmd.startsWith("!rank "))
                 cmd_rank(name, msg);
             else if (cmd.startsWith("!rec "))

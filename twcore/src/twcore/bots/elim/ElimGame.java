@@ -59,11 +59,12 @@ public class ElimGame {
     
     GameState state;
     ShipType ship;
-    int freq;
+    int freq;                                           // Last freq used in this elim game
     int goal;
     int playerCount;
     int ratingCount;
     boolean shrap;
+    long roundStartTime = 0;                            // Time round started
     TimerTask starter;
     
     HiderFinder hiderFinder;
@@ -363,7 +364,7 @@ public class ElimGame {
                         requestStats(name);
                 }
             };
-            ba.scheduleTask(task, 3000);            
+            ba.scheduleTask(task, 3000);
         }
     }
     
@@ -412,12 +413,74 @@ public class ElimGame {
                 };
                 ba.scheduleTask(lagCheck, 3000);
                 starter = null;
-                if (playerCount > 9)
-                    ba.sendArenaMessage("The winner of this game gets pubbux!");
+                // Elim players really don't care. Let's keep it quiet. They'll hear at the end.
+                //if (playerCount > 9)
+                //    ba.sendArenaMessage("The winner of this game will receive pubbux.");
             }
         };
         ba.scheduleTask(starter, 10 * Tools.TimeInMillis.SECOND);
         setShipFreqs();
+    }
+
+    /** Handles the !late entrance command */
+    public void do_late(String name) {
+        String low = name.toLowerCase();
+        ElimPlayer ep = new ElimPlayer(ba, this, name, ship.getNum(), goal);
+        freq += 2;
+        while (ba.getFrequencySize(freq) != 0)
+            freq += 2;
+        ep.setFreq(freq);
+        players.put(low, ep);        
+        TimerTask task = new TimerTask() {
+            public void run() {
+                addLatePlayer(low);
+            }
+        };
+        ba.scheduleTask(task, 3000);
+    }
+    
+    /** Handles late entrance after stats are loaded */
+    public void addLatePlayer(String name) {
+        String low = name.toLowerCase();
+        ElimPlayer ep = getPlayer(name);
+
+        if (ep == null || !ep.isLoaded()) {
+            ba.sendPrivateMessage(name, "Unable to load your stats. Please wait until next round to play.");
+            return;
+        }
+        
+        // Check all other players' deaths and set specAt
+        
+        
+        // Do standard startround resetting 
+        winners.add(low);
+        lagChecks.add(low);
+        
+        if (shrap)
+            ba.specificPrize(name, Tools.Prize.SHRAPNEL);
+        else {
+            ba.specificPrize(name, -Tools.Prize.SHRAPNEL);
+            ba.specificPrize(name, -Tools.Prize.SHRAPNEL);
+        }
+        ba.specificPrize(name, Tools.Prize.MULTIFIRE);
+        
+        ba.scoreReset(name);
+        ep.resetPersonalScoreLVZ();
+        ep.resetStreak();
+        if (ship.inBase() && ship != ShipType.WEASEL)
+            ep.handleStart();
+        else if (ship == ShipType.WEASEL)
+            sendWarp(name);
+        
+        lagChecks.add(low(name));
+        if (ship.inBase())
+            ep.setStatus(Status.SPAWN);
+        else
+            ep.setStatus(Status.IN);
+        
+        played.put(low(name), ep);
+        playerCount++;
+        ratingCount += ep.getRating();
     }
     
     /** Handles the !lagout player return command */
