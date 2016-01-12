@@ -1008,7 +1008,7 @@ public class elim extends SubspaceBot {
         } else if (voteType == VoteType.SHIP) {
             voteType = VoteType.DEATHS;
             if (allowRace)
-                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + " or 15-30 for KillRace of 5-20)");
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + ") (or 15-30 for a KillRace of 5-20)");
             else
                 ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + ")");
             ba.sendChatMessage(2, Tools.shipName(shipType.getNum()) + " elim is beginning now.");
@@ -1378,7 +1378,10 @@ public class elim extends SubspaceBot {
                     String target = rs.getString("n");
                     int r = rs.getInt("r");
                     int s = rs.getInt("s");
-                    ba.sendPrivateMessage(args[1], target + " rank in " + ShipType.type(s).toString() + ": " + r);
+                    if (r != 0)
+                        ba.sendPrivateMessage(args[1], target + " rank in " + ShipType.type(s).toString() + ": " + r);
+                    else
+                        ba.sendPrivateMessage(args[1], args[2] + " is not yet ranked in " + ShipType.type(Integer.valueOf(args[3])).toString());
                 } else
                     ba.sendPrivateMessage(args[1], args[2] + " is not yet ranked in " + ShipType.type(Integer.valueOf(args[3])).toString());
             }
