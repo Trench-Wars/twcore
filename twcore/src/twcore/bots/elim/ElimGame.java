@@ -430,7 +430,8 @@ public class ElimGame {
         while (ba.getFrequencySize(freq) != 0)
             freq += 2;
         ep.setFreq(freq);
-        players.put(low, ep);        
+        players.put(low, ep);
+        /*
         TimerTask task = new TimerTask() {
             final String name = low;
             public void run() {
@@ -438,6 +439,7 @@ public class ElimGame {
             }
         };
         ba.scheduleTask(task, 3000);
+        */
     }
     
     /** Handles late entrance after stats are loaded */
