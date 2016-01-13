@@ -313,6 +313,7 @@ public class pushbulletbot extends SubspaceBot {
 			preparedStatement =
 					"USE trench_TrenchWars;"
 				+	"SET @PlayerName = ?, @PushBulletEmail = ?;"
+				+	"DELETE PBA FROM trench_TrenchWars.tblPBAccount AS PBA WHERE fbVerified = 0 AND TIMESTAMPDIFF(MINUTE, fdCreated ,NOW()) > 30;"
 				+	"DELETE PBA FROM trench_TrenchWars.tblPBAccount AS PBA "
 				+	"JOIN trench_TrenchWars.tblUser AS U ON U.fnUserID = PBA.fnPlayerID AND U.fcUserName = @PlayerName;"
 				+	"INSERT INTO trench_TrenchWars.tblPBAccount (fnPlayerID, fcPushBulletEmail, fdCreated)"
