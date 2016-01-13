@@ -403,22 +403,21 @@ public class ElimPlayer {
     public void saveLoss() {
         cancelTasks();
         clearPersonalScoreLVZ();
-        showGameStats();        
         stats.handleLoss();
+        showGameStats();
     }
 
     /** Record the win of an elimination game and flush dynamic game stats */
     public void saveWin() {
         cancelTasks();
         clearPersonalScoreLVZ();
+        stats.handleWin();
         int wins = stats.getTotal(StatType.WINS);
-        int streak = stats.getTotal(StatType.WIN_STREAK);
         if( wins == 1 )
             ba.sendPrivateMessage(name, "You have won! Your first win this season in " + Tools.shipName(stats.getShip()) + "!");
         else
             ba.sendPrivateMessage(name, "You have won! Win #" + wins + " in " + Tools.shipName(stats.getShip()) + ".");
         showGameStats();
-        stats.handleWin();
     }
     
     public void showGameStats() {
