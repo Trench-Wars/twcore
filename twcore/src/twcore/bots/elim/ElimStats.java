@@ -93,22 +93,8 @@ public class ElimStats {
      */
     public int crunchRating() {
         int oldRating = getStat(StatType.RATING);
-        /* Old method 12/23/2015
         if (getTotal(StatType.DEATHS) > 0 && getTotal(StatType.KILLS) > 0) 
             setStat(StatType.RATING, Math.round((float)getTotal(StatType.KILLS) / getTotal(StatType.DEATHS) * getAve(StatType.AVE)));
-        */
-        float kills = (float)getTotal(StatType.KILLS);
-        float deaths = (float)getTotal(StatType.DEATHS); 
-        float wins = (float)getTotal(StatType.WINS);
-        float games = (float)getTotal(StatType.GAMES);
-        if (kills > 0 && deaths > 0) {
-            if(wins == 0.0f)
-                wins = 0.01f;
-            if(games == 0.0f)
-                games = 0.01f;
-            int rating = Math.round((kills / deaths) * getAve(StatType.AVE) * (1.0f + (wins / (games * 0.5f))) );            
-            setStat(StatType.RATING, rating);
-        }
         return oldRating;
     }
         
