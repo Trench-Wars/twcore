@@ -465,9 +465,9 @@ public class OperatorList {
     
     
     /**
-     * Check if a given name is at least of ER status.
+     * Check if a given name is at least of ZH status.
      * @param name Name in question
-     * @return True if player is at least an ER
+     * @return True if player is at least a ZH
      */
     public boolean isZH( String name ){
 
@@ -479,9 +479,9 @@ public class OperatorList {
     }
 
     /**
-     * Check if a given name is an ER.
+     * Check if a given name is a ZH.
      * @param name Name in question
-     * @return True if player is an ER
+     * @return True if player is a ZH
      */
     public boolean isZHExact( String name ){
 
