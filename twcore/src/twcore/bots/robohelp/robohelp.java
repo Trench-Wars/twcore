@@ -168,12 +168,14 @@ public class robohelp extends SubspaceBot {
         m_commandInterpreter.registerCommand("!unban", acceptedMessages, this, "unbanTell", OperatorList.SMOD_LEVEL);
         m_commandInterpreter.registerCommand("!addban", acceptedMessages, this, "handleAddBan", OperatorList.SMOD_LEVEL);
         m_commandInterpreter.registerCommand("!die", acceptedMessages, this, "handleDie", OperatorList.SMOD_LEVEL);
-
+        m_commandInterpreter.registerCommand("!reload", acceptedMessages, this, "handleReload", OperatorList.SMOD_LEVEL);
 
         // Sysop+ 
-        m_commandInterpreter.registerCommand("!reload", acceptedMessages, this, "handleReload", OperatorList.SYSOP_LEVEL);
         m_commandInterpreter.registerCommand("!loadnewbs", acceptedMessages, this, "loadLastNewbs", OperatorList.SYSOP_LEVEL);
 
+        // Special (via bot)
+        m_commandInterpreter.registerCommand(">echo<", acceptedMessages, this, "echoMessageToChat", OperatorList.BOT_LEVEL);        
+        
         // *** Chat-only cmds       
         acceptedMessages = Message.CHAT_MESSAGE;
         
@@ -297,9 +299,36 @@ public class robohelp extends SubspaceBot {
            }
        }*/
 
-    public void handleSay(String name, String msg) {
-
-        m_botAction.sendSmartPrivateMessage(name, "Unfortunately, we are not mature enough to handle this. :(");
+    /**
+     * Because we're definitely too immature NOT to have this command.
+     * @param name
+     * @param msg
+     */
+    public void handleSay(String name, String msg) {        
+        // Let's cause mischief with mischief-causers.
+        int i = random.nextInt(15);
+        if( i == 0 ) {
+            i = random.nextInt(5);
+            switch (i) {
+            case 0: m_botAction.sendChatMessage( name + "> im a pretty pretty princess"); break;
+            case 1: m_botAction.sendChatMessage( "Oh, god ... it smells like " + name + " in here."); break;
+            case 2: m_botAction.sendChatMessage( "Anyone else think " + name + " should be axed?"); break;
+            case 3: m_botAction.sendChatMessage( name + "> ITTY BITTY BABY ITTY BITTY BOAT"); break;
+            case 4: m_botAction.sendChatMessage( "When I think about " + name + ", I touch myself."); break;
+            }
+        } else {
+            echoMessageToChat(name,msg);
+        }
+            
+    }
+    
+    /**
+     * Echoes provided message to chat. Used by PubSystem for the event buy system, but can be used elsewhere too.
+     * @param name
+     * @param msg
+     */
+    public void echoMessageToChat(String name, String msg) {
+        m_botAction.sendChatMessage(msg);
     }
 
     public void handleBanNumber(String name, String message) {
