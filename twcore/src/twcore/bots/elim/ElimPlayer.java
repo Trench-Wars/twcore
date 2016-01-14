@@ -439,6 +439,7 @@ public class ElimPlayer {
         }
         ba.sendPrivateMessage(name, msg);
         // [WB GAME 3]  K:10 D:5 Ratio: 2:1  Ladder: 500->456  Base Rating:900->850  Confidence: 25.4%
+        stats.unload();
     }
     
     public void cancelTasks() {

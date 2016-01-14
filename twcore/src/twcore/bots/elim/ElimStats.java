@@ -310,13 +310,11 @@ public class ElimStats {
         incrementStat(StatType.WIN_STREAK);
         if (getStat(StatType.WIN_STREAK) > getStat(StatType.BEST_WIN_STREAK))
             setStat(StatType.BEST_WIN_STREAK, getStat(StatType.WIN_STREAK));
-        unload();
     }
     
     public void handleLoss() {
         incrementStat(StatType.GAMES);
         setStat(StatType.WIN_STREAK, 0);
-        unload();
     }
     
     public void handleMultiKill(int kills) {
@@ -326,7 +324,7 @@ public class ElimStats {
     }
     
     /** Updates the local database stats with the recent game stats to prepare for saving */
-    private void unload() {
+    public void unload() {
         crunchAim(true);
         total.get(StatType.KILLS).add(getStat(StatType.KILLS));
         total.get(StatType.DEATHS).add(getStat(StatType.DEATHS));
