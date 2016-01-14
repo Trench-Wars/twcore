@@ -433,7 +433,7 @@ public class ElimPlayer {
         kills = stats.getTotal(StatType.KILLS);
         deaths = stats.getTotal(StatType.DEATHS);
         if( kills + deaths < kdNeededToLadder ) {
-            msg += (kdNeededToLadder - (kills + deaths)) + " more kills/deaths needed to ladder.";
+            msg += (kdNeededToLadder - (kills + deaths)) + " more kills/deaths needed to ladder. Base Rating: " + oldrating + "->" + stats.getStat(StatType.RATING);
         } else {
             msg += "Ladder: " + oldadjrating + "->" + stats.getStat(StatType.ADJRATING) + "  Base Rating: " + oldrating + "->" + stats.getStat(StatType.RATING) + "  Confidence: " + String.format("%.2f", (stats.getConfidence() * 100.0f)) + "%";
         }

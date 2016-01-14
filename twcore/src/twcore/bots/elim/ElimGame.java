@@ -258,6 +258,11 @@ public class ElimGame {
                 ba.sendSmartPrivateMessage(name, "" + p + ": I:" + stat.getInt() + " D:" + stat.getDouble() + " F:" + stat.getFloat());
                 stat = stats.total.get(StatType.RATING);
                 ba.sendSmartPrivateMessage(name, "" + p + " Total: I:" + stat.getInt() + " D:" + stat.getDouble() + " F:" + stat.getFloat());
+                ElimStat deathsNow = stats.stats.get(StatType.DEATHS);
+                ElimStat deathsTot = stats.total.get(StatType.DEATHS);
+                ElimStat killsNow = stats.stats.get(StatType.KILLS);
+                ElimStat killsTot = stats.total.get(StatType.KILLS);
+                ba.sendSmartPrivateMessage(name, "" + p + " DN:" + deathsNow.getInt() + " DT:" + deathsTot.getInt() + " KN:" + killsNow.getInt() + " KT:" + killsTot.getInt());
             }
         }
     }

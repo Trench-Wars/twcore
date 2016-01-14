@@ -1278,9 +1278,14 @@ public class elim extends SubspaceBot {
                 else if (cmd.startsWith("!game "))
                     cmd_game(name, msg);
             }
-            if (oplist.isOwner(name))
-                if (cmd.startsWith("!svi "))
+            if (oplist.isOwner(name)) {
+                if (cmd.startsWith("!svi ")) {
                     cmd_setStats(name, msg);
+                } else if (cmd.startsWith("!getrating ")) {
+                    if (game != null)
+                        game.cmd_getRating(name, msg);
+                }
+            }
         }
         spy.handleEvent(event);
     }
