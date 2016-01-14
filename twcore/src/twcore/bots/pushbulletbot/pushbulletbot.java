@@ -106,9 +106,10 @@ public class pushbulletbot extends SubspaceBot {
 				ps_signup.setString(2, Tools.addSlashesToString(email));
 				// m_botAction.sendPublicMessage(ps_signup.toString());
 				ps_signup.execute();
+				pbClient.sendNote( null, getEmailByUserName(name), "", "Reply with 'verify' to complete signup!");
 				m_botAction.sendSmartPrivateMessage(name, "Signed Up " + name + " : " + email + " Successfully!");
 				m_botAction.sendPublicMessage("Debug: Signed Up " + name + " Successfully!");
-		} catch (SQLException e1) {
+		} catch (SQLException | PushbulletException e1) {
 			try {
 				for (Throwable x : ps_signup.getWarnings()) {
 					if (x.getMessage().toLowerCase().contains("unique")) {
@@ -128,11 +129,11 @@ public class pushbulletbot extends SubspaceBot {
 	}
 
 	public void cmd_enable(String name) {
-		handleNewPush(name, "enable");
+		handleNewPush(name, "enable", true);
 	}
 	
 	public void cmd_disable(String name) {
-		handleNewPush(name, "disable");
+		handleNewPush(name, "disable", true);
 	}
 	
 	public void cmd_push(String name, String msg) {
@@ -145,7 +146,7 @@ public class pushbulletbot extends SubspaceBot {
 	}
 	
 	public void cmd_beep(String name, String msg) {
-		handleNewPush(name, msg);	
+		handleNewPush(name, msg, false);	
 	}
 	
 	public void cmd_challenge(String name) {
@@ -355,7 +356,7 @@ public class pushbulletbot extends SubspaceBot {
 		case "interpretcommand": //can't use @Params if expecting recordset results
 			preparedStatement =
 					" SELECT fcCommand, fcCommandShortDescription, fnSettingUpdate  FROM trench_TrenchWars.tblPBCommands"
-				+	" WHERE INSTR(?, fcCommand) > 0;";
+				+	" WHERE (INSTR(?, fcCommand) > 0 AND fnSettingUpdate = 0) OR (? = fcCommand);";
 		break;
 		/*
 		case "getsquadchannel": //can't use @Params if expecting recordset results
@@ -382,6 +383,13 @@ public class pushbulletbot extends SubspaceBot {
 					" SET @PlayerName = ?;"
 				+	" UPDATE trench_TrenchWars.tblPBAccount"
 				+	" SET fbDisabled = ?"
+				+	" WHERE fnPlayerID = (SELECT U.fnUserID FROM trench_TrenchWars.tblUser AS U WHERE U.fcUserName = @PlayerName LIMIT 1);";
+			break;
+		case "verifyaccount": //can't use @Params if expecting recordset results
+			preparedStatement =
+					" SET @PlayerName = ?;"
+				+	" UPDATE trench_TrenchWars.tblPBAccount"
+				+	" SET fbVerified = 1"
 				+	" WHERE fnPlayerID = (SELECT U.fnUserID FROM trench_TrenchWars.tblUser AS U WHERE U.fcUserName = @PlayerName LIMIT 1);";
 			break;
 		}
@@ -433,6 +441,7 @@ public class pushbulletbot extends SubspaceBot {
 		try {
 			ps_getinterpretbeep.clearParameters();
 			ps_getinterpretbeep.setString(1, Tools.addSlashesToString(userMsg));
+			ps_getinterpretbeep.setString(2, Tools.addSlashesToString(userMsg));
 			ps_getinterpretbeep.execute();
 			rs = ps_getinterpretbeep.getResultSet();
 		}
@@ -497,6 +506,21 @@ public class pushbulletbot extends SubspaceBot {
 		}
 	}
 
+	public void verifyAccount (String userName) {
+		PreparedStatement ps_verifyaccount = ba.createPreparedStatement(db, connectionID, this.getPreparedStatement("verifyaccount"));
+		try {
+			ps_verifyaccount.clearParameters();
+			ps_verifyaccount.setString(1, Tools.addSlashesToString(userName));
+			ps_verifyaccount.execute();
+			//m_botAction.sendPublicMessage(ps_verifyaccount.toString());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			m_botAction.sendPublicMessage(e.getMessage());
+		}
+	}
+	
+	
 	public void messagePlayerSquadMembers(String userName, String msg) {
 		String squadName = "";
 		if (msg == "") { return; }
@@ -529,13 +553,13 @@ public class pushbulletbot extends SubspaceBot {
 		}
 	}
 	
-	public void handleNewPush(String playerName, String userMsg) {
+	public void handleNewPush(String playerName, String userMsg, Boolean allowSystemUpdates) {
 		String squadAlert = "";
 		Boolean settingChange = false;
 		ResultSet rs_InterpretCommand = getInterpretCommand(playerName, userMsg);
 		try {
 			while (rs_InterpretCommand.next()) {
-				if (rs_InterpretCommand.getInt("fnSettingUpdate") == 1) {  
+				if (rs_InterpretCommand.getInt("fnSettingUpdate") == 1 && allowSystemUpdates) {  
 					//This is a setting command
 					try {
 						switch (rs_InterpretCommand.getString("fcCommand").toLowerCase()) {
@@ -545,6 +569,10 @@ public class pushbulletbot extends SubspaceBot {
 							break;
 							case "disable":
 								switchAlertsPB(playerName, 1);
+								settingChange = true;
+							break;
+							case "verify":
+								verifyAccount(playerName);
 								settingChange = true;
 							break;
 						}
@@ -611,7 +639,7 @@ public class pushbulletbot extends SubspaceBot {
 			if (playerName == "") { return; } //means it came from the bot account, probably using !push
 
 			//handle push
-			handleNewPush(playerName, userMsg);
+			handleNewPush(playerName, userMsg, true);
 		}
 
 		@Override
