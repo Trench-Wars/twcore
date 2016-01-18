@@ -409,10 +409,10 @@ public class polls extends MultiUtil {
 	public boolean isTWDRegistered(String message){
 		String qr = "SELECT A.fnStatus FROM tblAliasSuppression AS A " +
 					"JOIN tblUser AS U ON U.fnUserId = A.fnUserId " +
-					"WHERE U.fcUserName = '" + Tools.addSlashesToString(message) + "'";
+					"WHERE A.fnStatus = 1 AND U.fcUserName = '" + Tools.addSlashesToString(message) + "'";
 		try {
 			ResultSet rs = m_botAction.SQLQuery(db, qr);
-			if (rs.next() && rs.getInt("fnStatus") == 1)
+			if (rs.next())
 				return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -516,7 +516,7 @@ private class CustomPoll {
 	}
 
 	private void schedule(long startTime){
-		if(isScheduled)return;
+		if (isScheduled) return;
 		else isScheduled = true;
 		task = new TimerTask(){
 			public void run(){
