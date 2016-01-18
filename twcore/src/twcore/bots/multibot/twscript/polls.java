@@ -92,6 +92,8 @@ public class polls extends MultiUtil {
 			do_addOption(name, cmd.substring(11));
 		else if(cmd.startsWith("!removepoll "))
 			do_removePoll(name, cmd.substring(12));
+		else if(cmd.startsWith("!setpoll "))
+			do_setPoll(name, cmd.substring(9));
 		else if(cmd.startsWith("!poll "))
 			do_poll(name, cmd.substring(6));
 		else if(cmd.startsWith("!cancelpoll "))
