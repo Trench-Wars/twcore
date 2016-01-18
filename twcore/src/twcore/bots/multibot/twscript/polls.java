@@ -57,7 +57,7 @@ public class polls extends MultiUtil {
 			"|                               - TWScript <msg> that's sent to the bot if it wins.   |",
 			"| !removepoll <poll>            - Removes <poll> and all of its options.              |",
 			"| !removepoll <poll>:<index>    - Removes option at index <index> on poll <poll>      |",
-			"| !setpoll <poll>:<type>        - Set type (0: no check, 1: unique (default), 2: twd) |",
+			"| !setpoll <poll>:<true/false>  - Restrict poll to TWD registered players             |",
 			"| !poll <poll>:d:h:m:s          - Starts poll <poll> which will end in d:h:m:s        |",
 			"| !poll <poll>:MM:DD:YYYY:h:m:s - Starts poll <poll> which will end at a specific date|",
 			"| !cancelpoll <poll>            - Cancels the timer and removes votes for <poll>      |",
