@@ -228,6 +228,10 @@ public class polls extends MultiUtil {
 	}
 
 	public void do_setPoll(String name, String message){
+		if (!opList.isSmod(name)) {
+			m_botAction.sendSmartPrivateMessage( name, "This command is currently limited to Smod+ only.");
+			return;
+		}
 		String[] msgs = message.split(":");
 		if(msgs.length > 2){
 			m_botAction.sendSmartPrivateMessage( name, "Incorrect Usage. For example, to exclude poll to TWD registered players only use: !setpoll favcolor:true");
