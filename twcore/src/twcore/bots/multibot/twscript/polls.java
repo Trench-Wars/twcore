@@ -189,6 +189,10 @@ public class polls extends MultiUtil {
 			m_botAction.sendSmartPrivateMessage( name, "Poll '" + pollName + "' does not exist. Use !addpoll to create it.");
 			return;
 		}
+		if(polls.get(pollName).twdOnly && !opList.isSmod(name)){
+			m_botAction.sendSmartPrivateMessage(name, "Only an Smod can add an option to this poll.");
+			return;
+		}
 		polls.get(pollName).addOption(option, twsMsg);
 		m_botAction.sendSmartPrivateMessage( name, "Option '" + option + "' added to poll '" + pollName + "'.");
 	}
@@ -197,6 +201,10 @@ public class polls extends MultiUtil {
 		int index = message.indexOf(":");
 		if (index == -1) {
 			if (polls.containsKey(message)) {
+				if(polls.get(message).twdOnly && !opList.isSmod(name)){
+					m_botAction.sendSmartPrivateMessage(name, "Only an Smod can remove this poll.");
+					return;
+				}
 				if(polls.get(message).isScheduled)
 					polls.get(message).cancelTask();
 				polls.remove(message);
@@ -219,6 +227,10 @@ public class polls extends MultiUtil {
 			return;
 		}
 		poll = polls.get(pollString);
+		if(poll.twdOnly && !opList.isSmod(name)){
+			m_botAction.sendSmartPrivateMessage(name, "Only an Smod can modify this poll.");
+			return;
+		}
 		if (poll.options.indexOf(actionIndex) != -1 && poll.messages.indexOf(actionIndex) != -1) {
 			poll.removeOption(actionIndex);
 			m_botAction.sendSmartPrivateMessage(name, "Option of '" + pollString + "' at index " + actionIndex + " removed.");
@@ -263,7 +275,7 @@ public class polls extends MultiUtil {
 			return;
 		}
 		if(polls.get(poll).isScheduled){
-			m_botAction.sendSmartPrivateMessage( name, "Poll '" + poll + "' is already scheduled. Use !canceltimer <timer> to cancel.");
+			m_botAction.sendSmartPrivateMessage( name, "Poll '" + poll + "' is already scheduled. Use !cancelpoll <poll> to cancel.");
 			return;
 		}
 		String[] timeString = message.substring(index + 1).split(":");
@@ -273,6 +285,10 @@ public class polls extends MultiUtil {
 				time[i] = Integer.parseInt(timeString[i]);
 		}catch(NumberFormatException e){
 			m_botAction.sendSmartPrivateMessage( name, "Incorrect Usage. Example: !poll favcolor:0:0:2:0");
+			return;
+		}
+		if(polls.get(poll).twdOnly && !opList.isSmod(name)){
+			m_botAction.sendSmartPrivateMessage(name, "Only an Smod can schedule this poll.");
 			return;
 		}
 		if(time.length == 4)
@@ -292,6 +308,10 @@ public class polls extends MultiUtil {
 		}
 		if(!polls.get(message).isScheduled){
 			m_botAction.sendSmartPrivateMessage( name, "Poll '" + message + "' is not currently scheduled.");
+			return;
+		}
+		if(polls.get(message).twdOnly && !opList.isSmod(name)){
+			m_botAction.sendSmartPrivateMessage(name, "Only an Smod can remove this poll.");
 			return;
 		}
 		polls.get(message).cancelTask();
