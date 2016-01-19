@@ -3869,6 +3869,9 @@ public class BotAction
      */
     public Player getFuzzyPlayer(String playerName)
     {
+        Player p = getPlayer(playerName);
+        if (p != null)
+            return p;
         String fuzzyResult = getFuzzyPlayerName(playerName);
         if (fuzzyResult != null)
             return getPlayer(fuzzyResult);
