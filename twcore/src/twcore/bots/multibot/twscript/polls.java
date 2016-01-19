@@ -312,13 +312,17 @@ public class polls extends MultiUtil {
 		m_botAction.sendSmartPrivateMessage(name, "==================== Custom Polls ====================");
 		while (it.hasNext()) {
 			CustomPoll p = it.next();
-			m_botAction.sendSmartPrivateMessage(name, "| Poll: " + p.pollName);
-			m_botAction.sendSmartPrivateMessage(name, "| - " + p.getScheduleString());
-			Iterator<String> i = p.options.iterator();
-			while (i.hasNext()) {
-				String msg = i.next();
-				m_botAction.sendSmartPrivateMessage(name, "|  " + p.options.indexOf(msg) + ") " + msg + " - " + p.votes.get(p.options.indexOf(msg)) + " votes.");
-				m_botAction.sendSmartPrivateMessage(name, "|         - " + p.messages.get(p.options.indexOf(msg)));
+			if (p.twdOnly && !opList.isSmod(name)) {
+				m_botAction.smartPrivateMessageSpam(name, p.toStringArray());
+			} else {
+				m_botAction.sendSmartPrivateMessage(name, "| Poll: " + p.pollName);
+				m_botAction.sendSmartPrivateMessage(name, "| - " + p.getScheduleString());
+				Iterator<String> i = p.options.iterator();
+				while (i.hasNext()) {
+					String msg = i.next();
+					m_botAction.sendSmartPrivateMessage(name, "|  " + p.options.indexOf(msg) + ") " + msg + " - " + p.votes.get(p.options.indexOf(msg)) + " votes.");
+					m_botAction.sendSmartPrivateMessage(name, "|         - " + p.messages.get(p.options.indexOf(msg)));
+				}
 			}
 		}
 		m_botAction.sendSmartPrivateMessage(name, "======================================================");
