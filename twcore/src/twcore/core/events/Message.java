@@ -1,7 +1,6 @@
 package twcore.core.events;
 
 import twcore.core.util.ByteArray;
-import twcore.core.util.Tools;
 
 /**
  * (S2C 0x07) Event fired when a chat message is received. <code><pre>

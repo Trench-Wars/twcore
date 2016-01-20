@@ -1495,7 +1495,8 @@ public class messagebot extends SubspaceBot
      	return false;
      }
 
-     private boolean isCaptainOrAssistant(String name) {
+    @SuppressWarnings("unused")
+    private boolean isCaptainOrAssistant(String name) {
          boolean isCapAss = false;
          String query = "SELECT fnRankID\n" +
                  "FROM tblUserRank\n" +

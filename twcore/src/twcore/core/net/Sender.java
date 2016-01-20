@@ -6,8 +6,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import twcore.core.util.Tools;
-
 /**
  * A packet sending queue.  Packets are formatted properly from inside
  * GamePacketGenerator, and then added to Sender's queue to be sent out as

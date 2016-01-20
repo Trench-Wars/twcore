@@ -929,7 +929,7 @@ public class duel1bot extends SubspaceBot {
         ba.cancelTasks();
         ba.scheduleTask((new TimerTask() {
             public void run() {
-                ba.die();
+                ba.die("Disconnecting via !die");
             }
         }), 2000);
     }

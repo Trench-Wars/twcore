@@ -527,10 +527,6 @@ public class updates extends SubspaceBot {
             ba.scheduleTask(this, 1500);
         }
         
-        public Die() {
-            this(null);
-        }
-        
         public void run() {
             if (msg != null)
                 ba.die(msg);

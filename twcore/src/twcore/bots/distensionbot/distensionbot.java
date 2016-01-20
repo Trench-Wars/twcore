@@ -6975,8 +6975,8 @@ public class distensionbot extends SubspaceBot {
         try {
             // Parse first as int
             Integer value = Integer.parseInt( msg );
-            if( value == null )
-                throw new TWCoreException("Unable to read '" + msg + "'" );
+            //if( value == null )
+            //    throw new TWCoreException("Unable to read '" + msg + "'" );
             if( value < 1000 )
                 throw new TWCoreException("Value too small." );
             if( value > 10000 )

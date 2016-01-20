@@ -15,7 +15,7 @@ public class tictactoe extends SubspaceBot {
     //Creates a new mybot 
     
     enum Token {
-        X(0), O(1), _(2);
+        X(0), O(1), blank(2);
         
         int player;
         Token(int p) {
@@ -26,7 +26,7 @@ public class tictactoe extends SubspaceBot {
             switch (p) {
                 case 0: return X; 
                 case 1: return O; 
-                default: return _;
+                default: return blank;
             }
         }
     }
@@ -266,7 +266,7 @@ public class tictactoe extends SubspaceBot {
         }
         x--;
         y--;
-        if (board[x][y] != Token._) {
+        if (board[x][y] != Token.blank) {
             ba.sendSmartPrivateMessage(name, "You must choose an empty box.");
         } else {
             // O Player //
@@ -421,7 +421,7 @@ public class tictactoe extends SubspaceBot {
             board[x][y] = Token.get(playerTurn);
             Token winner = getWinner();
             if (winner != null) {
-                if (winner == Token._)
+                if (winner == Token.blank)
                     ba.sendArenaMessage("GAME OVER: Draw!", 5);
                 else
                     ba.sendArenaMessage("GAME OVER: " + players[winner.player] + " wins as " + winner.toString() + "'s!" , 5);
@@ -447,9 +447,9 @@ public class tictactoe extends SubspaceBot {
     private void newGame() {
         ba.sendArenaMessage("A game of TicTacToe is starting between " + challenge.challer + " and " + challenge.challed + "!", 19);
         board = new Token[][] {
-                { Token._, Token._, Token._ }, 
-                { Token._, Token._, Token._ }, 
-                { Token._, Token._, Token._ }, 
+                { Token.blank, Token.blank, Token.blank }, 
+                { Token.blank, Token.blank, Token.blank }, 
+                { Token.blank, Token.blank, Token.blank }, 
         };
         m_botAction.sendUnfilteredPublicMessage("*objoff 90");
         m_botAction.sendUnfilteredPublicMessage("*objoff 91");
@@ -504,7 +504,7 @@ public class tictactoe extends SubspaceBot {
     
     private Token getWinner() {
         Token result = null;
-        if (board[0][0] != Token._) {
+        if (board[0][0] != Token.blank) {
             if (board[0][0] == board[0][1] && board[0][1] == board[0][2]){
                 result = board[0][0];
             m_botAction.sendUnfilteredPublicMessage("*objon 90");
@@ -534,7 +534,7 @@ public class tictactoe extends SubspaceBot {
             }
             
         }
-        if (board[0][2] != Token._) {
+        if (board[0][2] != Token.blank) {
         	
             if (board[0][2] == board[1][2] && board[1][2] == board[2][2]){
                 result = board[0][2];
@@ -556,7 +556,7 @@ public class tictactoe extends SubspaceBot {
             // +---+---+---+
             }
         } 
-        if (board[2][2] != Token._) {
+        if (board[2][2] != Token.blank) {
             if (board[2][2] == board[2][1] && board[2][1] == board[2][0]){
                 result = board[2][2];
                 m_botAction.sendUnfilteredPublicMessage("*objon 97");
@@ -567,7 +567,7 @@ public class tictactoe extends SubspaceBot {
             // +---+---+---+
             }
         } 
-        if (board[1][1] != Token._) {
+        if (board[1][1] != Token.blank) {
         	
             if (board[1][1] == board[1][0] && board[1][0] == board[1][2]){
                 result = board[1][1];
@@ -593,9 +593,9 @@ public class tictactoe extends SubspaceBot {
         else {
             for (int x = 0; x < 3; x++)
                 for (int y = 0; y < 3; y++)
-                    if (board[x][y] == Token._)
+                    if (board[x][y] == Token.blank)
                         return null;
-            return Token._;
+            return Token.blank;
         }
     }
     
