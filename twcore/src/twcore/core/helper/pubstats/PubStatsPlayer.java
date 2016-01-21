@@ -7,43 +7,43 @@ import java.util.Map;
 
 
 /**
- * Domain object for storing the (public) statistics
- * This object is used by the pubbotstats and pubhubstats modules
- * 
- * @author Maverick
- */
+    Domain object for storing the (public) statistics
+    This object is used by the pubbotstats and pubhubstats modules
+
+    @author Maverick
+*/
 public class PubStatsPlayer {
-	private String name;
-	private String squad;
-	private short ship;
-	private String banner;
-	private boolean bannerReceived;
-	
-	// Information from *info
-	private String IP;
-	private String machineID;
-	private int timezone;
-	private String usage;
-	private Date dateCreated;
-	
-	// Information from *einfo
+    private String name;
+    private String squad;
+    private short ship;
+    private String banner;
+    private boolean bannerReceived;
+
+    // Information from *info
+    private String IP;
+    private String machineID;
+    private int timezone;
+    private String usage;
+    private Date dateCreated;
+
+    // Information from *einfo
     private int userID = -1;
     private String resolution;
     private String client;
-	
+
     // Score variables (overall)
     private int flagPoints;
     private int killPoints;
     private int wins;
     private int losses;
-    
+
     // Extra score variables for pubstats
-    private Map<Short,PubStatsScore> shipScores = Collections.synchronizedMap(new HashMap<Short, PubStatsScore>());
+    private Map<Short, PubStatsScore> shipScores = Collections.synchronizedMap(new HashMap<Short, PubStatsScore>());
     // < shipnr (1-8), number of kills >
-    
-    private HashMap<Short,Long> shipTime = new HashMap<Short, Long>();
+
+    private HashMap<Short, Long> shipTime = new HashMap<Short, Long>();
     // < shipnr (1-8), amount of seconds in ship >
-    
+
     private long lastUpdate;
     private long lastSeen;
     private long lastShipchange;
@@ -51,499 +51,506 @@ public class PubStatsPlayer {
     private boolean scorereset = false;
     private boolean periodReset = false;
     private boolean inArena = false;
-    
+
     private String countryCode = null;
-    
-    
-    
-	public PubStatsPlayer(String name, String squad, short ship) {
-		this.name = name;
-		this.squad = squad;
-		this.ship = ship;
-		this.lastUpdate = System.currentTimeMillis();
-		this.lastSeen = System.currentTimeMillis();
-		this.lastShipchange = System.currentTimeMillis();
-	}
-	
-	private int convertTimezone(String timezone) {
-	    int tz;
-	    try {
-	        tz = Integer.parseInt(timezone);
-	    } catch(NumberFormatException nfe) {
-	        tz = 0;    // Too bad, something went wrong
-	    }
-	    return tz;
-	}
-	
-	public void scorereset() {
-	    this.scorereset = true;
-	    
-	    shipScores.clear();
-	    this.flagPoints = 0;
-	    this.killPoints = 0;
-	    this.wins = 0;
-	    this.losses = 0;
-	}
-	
-	public void updated() {
-	    this.lastUpdate = System.currentTimeMillis();
-	}
-	public void seen() {
-	    this.lastSeen = System.currentTimeMillis();
+
+
+
+    public PubStatsPlayer(String name, String squad, short ship) {
+        this.name = name;
+        this.squad = squad;
+        this.ship = ship;
+        this.lastUpdate = System.currentTimeMillis();
+        this.lastSeen = System.currentTimeMillis();
+        this.lastShipchange = System.currentTimeMillis();
+    }
+
+    private int convertTimezone(String timezone) {
+        int tz;
+
+        try {
+            tz = Integer.parseInt(timezone);
+        } catch(NumberFormatException nfe) {
+            tz = 0;    // Too bad, something went wrong
+        }
+
+        return tz;
+    }
+
+    public void scorereset() {
+        this.scorereset = true;
+
+        shipScores.clear();
+        this.flagPoints = 0;
+        this.killPoints = 0;
+        this.wins = 0;
+        this.losses = 0;
+    }
+
+    public void updated() {
+        this.lastUpdate = System.currentTimeMillis();
+    }
+    public void seen() {
+        this.lastSeen = System.currentTimeMillis();
         inArena = true;
-	}
-	
-	public void shipchange(short newShip) {
-	    long time = 0;
-	    
-	    if(shipTime.containsKey(ship)) {
-	        time = shipTime.get(ship);
-	    }
-	    
-	    // calculate difference
-	    long diff = (System.currentTimeMillis() - this.lastShipchange)/1000;
-	    time = time + diff;
-	    
-	    // Save total time (sec)
-	    shipTime.put(ship, time);
-	    
-	    // Perform ship change
-	    this.ship = newShip;
-	    this.lastShipchange = System.currentTimeMillis();
-	}
-	
-	/**
-	 * Adds scores for the given ship 
-	 * (note; cumulative numbers must be given as they are added to the current known ship scores)
-	 * 
-	 * @param ship
-	 */
-	public void updateShipScore(short ship, int flagPoints, int killPoints, int wins, int losses) {
-	    if(shipScores.containsKey(ship)) {
-	        PubStatsScore score = shipScores.get(ship);
-	        score.setFlagPoints(score.getFlagPoints()+flagPoints);
-	        score.setKillPoints(score.getKillPoints()+killPoints);
-	        score.setWins(score.getWins()+wins);
-	        score.setLosses(score.getLosses()+losses);
-	    } else {
-	        PubStatsScore score = new PubStatsScore();
-	        score.setFlagPoints(flagPoints);
-	        score.setKillPoints(killPoints);
-	        score.setWins(wins);
-	        score.setLosses(losses);
-	        shipScores.put(ship, score);
-	    }
-	}
-	
-	/** 
-	 * Adds a teamkill count to the specified ship-score of this player
-	 * @param ship
-	 */
-	public void addTeamkill(short ship) {
-	    if(shipScores.containsKey(ship)) {
-	        PubStatsScore score = shipScores.get(ship);
-	        score.setTeamkills(score.getTeamkills()+1);
-	    }
-	}
-	
-	public PubStatsScore getShipScore(short ship) {
-	    if(shipScores.containsKey(ship)) {
-	        return shipScores.get(ship);
-	    }
-	    return null;
-	}
-	
-	public PubStatsScore getCurrentShipScore() {
-	    return this.getShipScore(this.ship);
-	}
-	
-	public void removeShipScore(short ship) {
-	    shipScores.remove(ship);
-	}
-	
-	public void removeShipScores() {
-	    shipScores.clear();
-	}
-	
-	/**
-	 * Returns whether the information from *info is filled 
-	 * @return True if all the information is present, false if at least one of them is missing.
-	 */
-	public boolean isExtraInfoFilled() {
-	    return 
-	        userID != -1 &&
-	        resolution != null && resolution.trim().length() > 0 &&
-	        IP != null && IP.trim().length() > 0 &&
-	        machineID != null && machineID.trim().length() > 0 &&
-	        usage != null && usage.trim().length() > 0 &&
-	        dateCreated != null;
-	    
-	}
-	
-	//******************************* Getters & Setters *************************************//
-	
-	
+    }
 
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
+    public void shipchange(short newShip) {
+        long time = 0;
 
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+        if(shipTime.containsKey(ship)) {
+            time = shipTime.get(ship);
+        }
 
-	/**
-	 * @return the squad
-	 */
-	public String getSquad() {
-		return squad;
-	}
+        // calculate difference
+        long diff = (System.currentTimeMillis() - this.lastShipchange) / 1000;
+        time = time + diff;
 
-	/**
-	 * @param squad the squad to set
-	 */
-	public void setSquad(String squad) {
-		this.squad = squad;
-	}
+        // Save total time (sec)
+        shipTime.put(ship, time);
 
-	/**
-	 * @return the iP
-	 */
-	public String getIP() {
-		return IP;
-	}
+        // Perform ship change
+        this.ship = newShip;
+        this.lastShipchange = System.currentTimeMillis();
+    }
 
-	/**
-	 * @param ip the iP to set
-	 */
-	public void setIP(String ip) {
-		IP = ip;
-	}
-	
-	/**
-     * @return the machineID
-     */
+    /**
+        Adds scores for the given ship
+        (note; cumulative numbers must be given as they are added to the current known ship scores)
+
+        @param ship
+    */
+    public void updateShipScore(short ship, int flagPoints, int killPoints, int wins, int losses) {
+        if(shipScores.containsKey(ship)) {
+            PubStatsScore score = shipScores.get(ship);
+            score.setFlagPoints(score.getFlagPoints() + flagPoints);
+            score.setKillPoints(score.getKillPoints() + killPoints);
+            score.setWins(score.getWins() + wins);
+            score.setLosses(score.getLosses() + losses);
+        } else {
+            PubStatsScore score = new PubStatsScore();
+            score.setFlagPoints(flagPoints);
+            score.setKillPoints(killPoints);
+            score.setWins(wins);
+            score.setLosses(losses);
+            shipScores.put(ship, score);
+        }
+    }
+
+    /**
+        Adds a teamkill count to the specified ship-score of this player
+        @param ship
+    */
+    public void addTeamkill(short ship) {
+        if(shipScores.containsKey(ship)) {
+            PubStatsScore score = shipScores.get(ship);
+            score.setTeamkills(score.getTeamkills() + 1);
+        }
+    }
+
+    public PubStatsScore getShipScore(short ship) {
+        if(shipScores.containsKey(ship)) {
+            return shipScores.get(ship);
+        }
+
+        return null;
+    }
+
+    public PubStatsScore getCurrentShipScore() {
+        return this.getShipScore(this.ship);
+    }
+
+    public void removeShipScore(short ship) {
+        shipScores.remove(ship);
+    }
+
+    public void removeShipScores() {
+        shipScores.clear();
+    }
+
+    /**
+        Returns whether the information from *info is filled
+        @return True if all the information is present, false if at least one of them is missing.
+    */
+    public boolean isExtraInfoFilled() {
+        return
+            userID != -1 &&
+            resolution != null && resolution.trim().length() > 0 &&
+            IP != null && IP.trim().length() > 0 &&
+            machineID != null && machineID.trim().length() > 0 &&
+            usage != null && usage.trim().length() > 0 &&
+            dateCreated != null;
+
+    }
+
+    //******************************* Getters & Setters *************************************//
+
+
+
+    /**
+        @return the name
+    */
+    public String getName() {
+        return name;
+    }
+
+    /**
+        @param name the name to set
+    */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+        @return the squad
+    */
+    public String getSquad() {
+        return squad;
+    }
+
+    /**
+        @param squad the squad to set
+    */
+    public void setSquad(String squad) {
+        this.squad = squad;
+    }
+
+    /**
+        @return the iP
+    */
+    public String getIP() {
+        return IP;
+    }
+
+    /**
+        @param ip the iP to set
+    */
+    public void setIP(String ip) {
+        IP = ip;
+    }
+
+    /**
+        @return the machineID
+    */
     public String getMachineID() {
         return machineID;
     }
 
     /**
-     * @param machineID the machineID to set
-     */
+        @param machineID the machineID to set
+    */
     public void setMachineID(String machineID) {
         this.machineID = machineID;
     }
 
     /**
-	 * @return the timezone
-	 */
-	public int getTimezone() {
-		return timezone;
-	}
+        @return the timezone
+    */
+    public int getTimezone() {
+        return timezone;
+    }
 
-	/**
-	 * @param timezone the timezone to set
-	 */
-	public void setTimezone(String timezone) {
-		this.timezone = convertTimezone(timezone);
-	}
-
-	/**
-	 * @return the usage
-	 */
-	public String getUsage() {
-		return usage;
-	}
-
-	/**
-	 * @param usage the usage to set
-	 */
-	public void setUsage(String usage) {
-		this.usage = usage;
-	}
-	
     /**
-     * @return the dateCreated
-     */
+        @param timezone the timezone to set
+    */
+    public void setTimezone(String timezone) {
+        this.timezone = convertTimezone(timezone);
+    }
+
+    /**
+        @return the usage
+    */
+    public String getUsage() {
+        return usage;
+    }
+
+    /**
+        @param usage the usage to set
+    */
+    public void setUsage(String usage) {
+        this.usage = usage;
+    }
+
+    /**
+        @return the dateCreated
+    */
     public Date getDateCreated() {
         return dateCreated;
     }
 
     /**
-     * @param dateCreated the dateCreated to set
-     */
+        @param dateCreated the dateCreated to set
+    */
     public void setDateCreated(Date dateCreated) {
         this.dateCreated = dateCreated;
     }
-    
+
     /**
-     * @return the userID
-     */
+        @return the userID
+    */
     public int getUserID() {
         return userID;
     }
 
     /**
-     * @param userID the userID to set
-     */
+        @param userID the userID to set
+    */
     public void setUserID(int userID) {
         this.userID = userID;
     }
 
     /**
-     * @return the resolution
-     */
+        @return the resolution
+    */
     public String getResolution() {
         return resolution;
     }
 
     /**
-     * @param resolution the resolution to set
-     */
+        @param resolution the resolution to set
+    */
     public void setResolution(String resolution) {
         this.resolution = resolution;
     }
-    
+
     /**
-     * @return the client
-     */
+        @return the client
+    */
     public String getClient() {
         return client;
     }
 
     /**
-     * @param client the client to set
-     */
+        @param client the client to set
+    */
     public void setClient(String client) {
         this.client = client;
     }
 
     /**
-     * @return the ship
-     */
+        @return the ship
+    */
     public short getShip() {
         return ship;
     }
 
     /**
-     * @param ship the ship to set
-     */
+        @param ship the ship to set
+    */
     public void setShip(short ship) {
         this.ship = ship;
     }
-    
+
     /**
-     * @return the banner
-     */
+        @return the banner
+    */
     public String getBanner() {
         return banner;
     }
 
     /**
-     * @param banner the banner to set
-     */
+        @param banner the banner to set
+    */
     public void setBanner(String banner) {
         this.banner = banner;
     }
-    
+
     /**
-     * @return the bannerReceived
-     */
+        @return the bannerReceived
+    */
     public boolean isBannerReceived() {
         return bannerReceived;
     }
 
     /**
-     * @param bannerReceived the bannerReceived to set
-     */
+        @param bannerReceived the bannerReceived to set
+    */
     public void setBannerReceived(boolean bannerReceived) {
         this.bannerReceived = bannerReceived;
     }
 
     /**
-     * @return the flagPoints
-     */
+        @return the flagPoints
+    */
     public int getFlagPoints() {
         return flagPoints;
     }
 
     /**
-     * @param flagPoints the flagPoints to set
-     */
+        @param flagPoints the flagPoints to set
+    */
     public void setFlagPoints(int flagPoints) {
         this.flagPoints = flagPoints;
     }
 
     /**
-     * @return the killPoints
-     */
+        @return the killPoints
+    */
     public int getKillPoints() {
         return killPoints;
     }
 
     /**
-     * @param killPoints the killPoints to set
-     */
+        @param killPoints the killPoints to set
+    */
     public void setKillPoints(int killPoints) {
         this.killPoints = killPoints;
     }
 
     /**
-     * @return the wins
-     */
+        @return the wins
+    */
     public int getWins() {
         return wins;
     }
 
     /**
-     * @param wins the wins to set
-     */
+        @param wins the wins to set
+    */
     public void setWins(int wins) {
         this.wins = wins;
     }
 
     /**
-     * @return the losses
-     */
+        @return the losses
+    */
     public int getLosses() {
         return losses;
     }
 
     /**
-     * @param losses the losses to set
-     */
+        @param losses the losses to set
+    */
     public void setLosses(int losses) {
         this.losses = losses;
     }
 
     /**
-     * @return the lastUpdate
-     */
+        @return the lastUpdate
+    */
     public long getLastUpdate() {
         return lastUpdate;
     }
 
     /**
-     * @param lastUpdate the lastUpdate to set
-     */
+        @param lastUpdate the lastUpdate to set
+    */
     public void setLastUpdate(long lastUpdate) {
         this.lastUpdate = lastUpdate;
     }
 
     /**
-     * @return the lastSave
-     */
+        @return the lastSave
+    */
     public long getLastSave() {
         return lastSave;
     }
 
     /**
-     * @param lastSave the lastSave to set
-     */
+        @param lastSave the lastSave to set
+    */
     public void setLastSave(long lastSave) {
         this.lastSave = lastSave;
     }
 
     /**
-     * @return the scorereset
-     */
+        @return the scorereset
+    */
     public boolean isScorereset() {
         return scorereset;
     }
-    
+
     /**
-     * @return the periodReset
-     */
+        @return the periodReset
+    */
     public boolean isPeriodReset() {
         return periodReset;
     }
 
     /**
-     * @param periodReset the periodReset to set
-     */
+        @param periodReset the periodReset to set
+    */
     public void setPeriodReset(boolean periodReset) {
         this.periodReset = periodReset;
     }
 
     /**
-     * @param scorereset the scorereset to set
-     */
+        @param scorereset the scorereset to set
+    */
     public void setScorereset(boolean scorereset) {
         this.scorereset = scorereset;
     }
 
     /**
-     * @param timezone the timezone to set
-     */
+        @param timezone the timezone to set
+    */
     public void setTimezone(int timezone) {
         this.timezone = timezone;
     }
-    
+
     /**
-     * @return the countryCode
-     */
+        @return the countryCode
+    */
     public String getCountryCode() {
         return countryCode;
     }
 
     /**
-     * @param countryCode the countryCode to set
-     */
+        @param countryCode the countryCode to set
+    */
     public void setCountryCode(String countryCode) {
         this.countryCode = countryCode;
     }
 
     /**
-     * @return the lastSeen
-     */
+        @return the lastSeen
+    */
     public long getLastSeen() {
         return lastSeen;
     }
-    
+
     /**
-     * @param here true if the player is still in the arena 
-     *             (has not left) false after PlayerLeft event
-     */
+        @param here true if the player is still in the arena
+                   (has not left) false after PlayerLeft event
+    */
     public void setStatus(boolean here) {
         inArena = here;
     }
-    
+
     /**
-     * @return true if the player has not left the arena or is still in the arena
-     */
+        @return true if the player has not left the arena or is still in the arena
+    */
     public boolean inArena() {
         return inArena;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
+    /*  (non-Javadoc)
+        @see java.lang.Object#equals(java.lang.Object)
+    */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
+
         if (obj == null)
             return false;
+
         if (getClass() != obj.getClass())
             return false;
-        
-        
+
+
         final PubStatsPlayer other = (PubStatsPlayer) obj;
+
         if( !this.name.equals(other.name) ||
-            !this.squad.equals(other.squad) ||
-            !this.IP.equals(other.IP) ||
-            this.timezone != other.timezone ||
-            !this.usage.equals(other.usage))
+                !this.squad.equals(other.squad) ||
+                !this.IP.equals(other.IP) ||
+                this.timezone != other.timezone ||
+                !this.usage.equals(other.usage))
             return false;
+
         return true;
     }
-	
-	
-	
+
+
+
 }

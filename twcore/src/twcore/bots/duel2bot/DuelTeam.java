@@ -9,10 +9,10 @@ import twcore.core.BotSettings;
 import twcore.core.util.Tools;
 
 /**
- * Manages and represents a team of two duel partners.
- *
- * @author WingZero
- */
+    Manages and represents a team of two duel partners.
+
+    @author WingZero
+*/
 public class DuelTeam {
 
     BotAction               ba;
@@ -83,6 +83,7 @@ public class DuelTeam {
         // BACKTRACK
         player[0] = bot.getPlayer(names[0]);
         player[1] = bot.getPlayer(names[1]);
+
         if (player[0] == null || player[1] == null) {
             ba.sendChatMessage("[NULL POINTER] Error creating team for " + names[0] + " and " + names[1] + ", getPlayer was null.");
             Tools.printLog("[duel2bot] (NULL POINTER) Error creating team for " + names[0] + " and " + names[1] + ", getPlayer was null.");
@@ -92,6 +93,7 @@ public class DuelTeam {
             bot.players.put(names[0].toLowerCase(), new DuelPlayer(ba.getPlayer(names[0]), bot));
             bot.players.put(names[1].toLowerCase(), new DuelPlayer(ba.getPlayer(names[1]), bot));
         }
+
         player[0].setTeam(this);
         player[1].setTeam(this);
         userID = new int[] { player[0].userID, player[1].userID };
@@ -100,7 +102,7 @@ public class DuelTeam {
     public void setScore(int s) {
         score = s;
     }
-    
+
     public int getStatus() {
         return status;
     }
@@ -108,15 +110,15 @@ public class DuelTeam {
     public int getDeaths() {
         return player[0].getDeaths() + player[1].getDeaths();
     }
-    
+
     public int getKills() {
         return player[0].getKills() + player[1].getKills();
     }
-    
+
     public int getLagouts() {
         return player[0].getLagouts() + player[1].getLagouts();
     }
-    
+
     public int getTime() {
         return player[0].getTime() + player[1].getTime();
     }
@@ -132,19 +134,19 @@ public class DuelTeam {
     public String[] getNames() {
         return pname;
     }
-    
+
     public DuelPlayer[] getPlayers() {
         return player;
     }
 
     /**
-     * Returns the name of the player's partner given the player's name.
-     *
-     * @param name
-     *      name String of the known player
-     * @return
-     *      name String of the unknown partner
-     */
+        Returns the name of the player's partner given the player's name.
+
+        @param name
+            name String of the known player
+        @return
+            name String of the unknown partner
+    */
     public String getPartner(String name) {
         if (name.equalsIgnoreCase(pname[0]))
             return pname[1];
@@ -153,11 +155,11 @@ public class DuelTeam {
     }
 
     /**
-     * Returns the DuelPlayer object for the specified name if name is on team.
-     *
-     * @param name
-     * @return
-     */
+        Returns the DuelPlayer object for the specified name if name is on team.
+
+        @param name
+        @return
+    */
     public DuelPlayer getPlayer(String name) {
         if (name.equalsIgnoreCase(pname[0]))
             return player[0];
@@ -175,11 +177,11 @@ public class DuelTeam {
         else
             return -1;
     }
-    
+
     public boolean getCancel() {
         return cancel;
     }
-    
+
     public String[] getStatString(boolean ranked) {
         String[] str = new String[2];
         str[0] = "| " + padString(pname[0], 19) + game.padNum(player[0].getKills(), 3) + " |" + game.padNum(player[0].getDeaths(), 3) + " |" + game.padNum(player[0].getLagouts(), 3) + " |" + game.padNum(player[0].getTime(), 9) + " | " + (ranked ? "" + game.padNum(player[0].getRating(), 6) + " |" : "");
@@ -197,6 +199,7 @@ public class DuelTeam {
     public void playerOut(DuelPlayer p) {
         if ((player[0].getStatus() == DuelPlayer.OUT) && (player[1].getStatus() == DuelPlayer.OUT))
             out = true;
+
         // BACKTRACK
         game.playerOut(p);
     }
@@ -208,7 +211,7 @@ public class DuelTeam {
     /** Sends a message to partner about partner lagout */
     public void partnerLagout(String name) {
         ba.sendPrivateMessage(getPartner(name),
-                "Your partner has lagged out or specced, and has 1 minute to return or will forefeit.");
+                              "Your partner has lagged out or specced, and has 1 minute to return or will forefeit.");
         // BACKTRACK
         game.lagout(teamID);
     }
@@ -216,9 +219,9 @@ public class DuelTeam {
     /** Sends messages to each player about an opponent lagout */
     public void opponentLagout() {
         ba.sendPrivateMessage(pname[0],
-                "Your opponent has lagged out or specced, and has 1 minute to return or will forfeit.");
+                              "Your opponent has lagged out or specced, and has 1 minute to return or will forfeit.");
         ba.sendPrivateMessage(pname[1],
-                "Your opponent has lagged out or specced, and has 1 minute to return or will forfeit.");
+                              "Your opponent has lagged out or specced, and has 1 minute to return or will forfeit.");
     }
 
     /** Reports a partner return from lagout and calls game */
@@ -237,8 +240,10 @@ public class DuelTeam {
     public void startGame(boolean mixed, String[] nme) {
         status = GAME;
         int divis = div;
+
         if (!ranked)
             divis = -1;
+
         player[0].starting(divis, ship, safe1[0], safe1[1]);
         player[1].starting(divis, ship, safe2[0], safe2[1]);
         go = new TimerTask() {
@@ -250,21 +255,22 @@ public class DuelTeam {
             }
         };
         String r = ranked ? "[RANKED] " : "[CASUAL] ";
+
         if (mixed) {
             ba.sendPrivateMessage(pname[0], r + "Duel Begins in 30 Seconds Against '" + nme[0]
-                    + "' and '" + nme[1] + "'", 29);
+                                  + "' and '" + nme[1] + "'", 29);
             ba.sendPrivateMessage(pname[0],
-                    "You may change your ship until that time! No ship changes will be allowed after the duel starts.");
+                                  "You may change your ship until that time! No ship changes will be allowed after the duel starts.");
             ba.sendPrivateMessage(pname[1], r + "Duel Begins in 30 Seconds Against '" + nme[0]
-                    + "' and '" + nme[1] + "'", 29);
+                                  + "' and '" + nme[1] + "'", 29);
             ba.sendPrivateMessage(pname[1],
-                    "You may change your ship until that time! No ship changes will be allowed after the duel starts.");
+                                  "You may change your ship until that time! No ship changes will be allowed after the duel starts.");
             ba.scheduleTask(go, 30000);
         } else {
             ba.sendPrivateMessage(pname[0], r + "Duel Begins in 15 Seconds Against '" + nme[0]
-                    + "' and '" + nme[1] + "'", 27);
+                                  + "' and '" + nme[1] + "'", 27);
             ba.sendPrivateMessage(pname[1], r + "Duel Begins in 15 Seconds Against '" + nme[0]
-                    + "' and '" + nme[1] + "'", 27);
+                                  + "' and '" + nme[1] + "'", 27);
             ba.scheduleTask(go, 15000);
         }
     }
@@ -285,12 +291,12 @@ public class DuelTeam {
         player[0].endGame();
         player[1].endGame();
     }
-    
+
     public void sendStats(String[] stats) {
         ba.smartPrivateMessageSpam(pname[0], stats);
         ba.smartPrivateMessageSpam(pname[1], stats);
     }
-    
+
     public boolean setCancel() {
         cancel = !cancel;
         return cancel;
@@ -298,6 +304,7 @@ public class DuelTeam {
 
     public void warpToSpawn(DuelPlayer player) {
         String name = player.getName();
+
         if (name.equalsIgnoreCase(pname[0]))
             player.warp(spawn1[0], spawn1[1]);
         else
@@ -306,6 +313,7 @@ public class DuelTeam {
 
     public void warpToSafe(DuelPlayer player) {
         String name = player.getName();
+
         if (name.equalsIgnoreCase(pname[0]))
             player.warp(safe1[0], safe1[1]);
         else
@@ -337,14 +345,18 @@ public class DuelTeam {
         String query1 = "SELECT * FROM tblDuel2__team WHERE fnDivision = " + div + " AND  (fnUser1 = " + userID[0] + " AND fnUser2 = " + userID[1] + ") OR (fnUser1 = " + userID[1] + " AND fnUser2 = " + userID[0] + ") LIMIT 1";
         String query2 = "INSERT INTO tblDuel2__team (fnDivision, fnUser1, fnUser2, " + (won ? "fnWins" : "fnLosses") + ") VALUES(" + div + ", " + userID[0] + ", " + userID[1] + ", 1)";
         int id = -1;
+
         try {
             ResultSet rs = ba.SQLQuery(db, query1);
+
             if (rs.next()) {
                 id = rs.getInt(1);
                 query1 = "UPDATE tblDuel2__team SET " + (won ? "fnWins = fnWins + 1" : "fnLosses = fnLosses + 1") + " WHERE fnTeamID = " + id + " AND fnDivision = " + div;
                 ba.SQLQueryAndClose(db, query1);
             }
+
             ba.SQLClose(rs);
+
             if (id < 0) {
                 ba.SQLQueryAndClose(db, query2);
                 rs = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
@@ -352,19 +364,22 @@ public class DuelTeam {
                 id = rs.getInt(1);
                 ba.SQLClose(rs);
             }
+
             player[0].sql_storeStats(id, won);
             player[1].sql_storeStats(id, won);
             return id;
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return -1;
     }
-    
+
     /** Helper method adds spaces to a string to meet a certain length **/
     private String padString(String str, int length) {
         for (int i = str.length(); i < length; i++)
             str += " ";
+
         return str.substring(0, length);
     }
 }

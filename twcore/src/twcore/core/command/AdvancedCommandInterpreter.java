@@ -1,8 +1,8 @@
 /*
- * AdvancedCommandInterpreter.java
- *
- * Created on March 17, 2004, 1:06 PM
- */
+    AdvancedCommandInterpreter.java
+
+    Created on March 17, 2004, 1:06 PM
+*/
 
 package twcore.core.command;
 
@@ -18,9 +18,9 @@ import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
 /**
- *
- * @author  Stefan / Mythrandir
- */
+
+    @author  Stefan / Mythrandir
+*/
 public class AdvancedCommandInterpreter {
 
     Map<String, CommandDefinition> m_commandDefinitions;
@@ -66,7 +66,7 @@ public class AdvancedCommandInterpreter {
                         Class<?>    parameterTypes[] = { c.getClass() };
 
                         methodClass.getClass().getMethod( cd.getMethodName(), parameterTypes ).invoke( methodClass, parameters );
-                    } catch( Exception e ){
+                    } catch( Exception e ) {
                         Tools.printLog("Could not invoke method '" + cd.getMethodName() + "()' in class " + cd.getMethodClass());
                         Tools.printStackTrace( e );
                     }
@@ -83,10 +83,12 @@ public class AdvancedCommandInterpreter {
         ArrayList<String> a = new ArrayList<String>();
         Iterator<String> i = m_commandDefinitions.keySet().iterator();
         String s;
+
         while (i.hasNext()) {
             s = (String)i.next();
             a.add(m_commandDefinitions.get(s).getHelpMessage());
         }
+
         return a;
     }
 

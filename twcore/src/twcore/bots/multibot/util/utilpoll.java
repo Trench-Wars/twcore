@@ -12,10 +12,10 @@ import twcore.core.util.Tools;
 import twcore.core.game.Player;
 
 /**
- * Generates a poll.
- *
- * @author  Harvey Yau
- */
+    Generates a poll.
+
+    @author  Harvey Yau
+*/
 public class utilpoll extends MultiUtil {
     private Poll currentPoll = null;
     private LinkedList<Integer> allowedFreqs = new LinkedList<Integer>();
@@ -25,57 +25,62 @@ public class utilpoll extends MultiUtil {
     }
 
     /**
-     * Requests events.
-     */
+        Requests events.
+    */
     public void requestEvents( ModuleEventRequester modEventReq ) {
     }
 
     public void cancel() {
 
     }
-    
+
     /**
-     * Handles all messages and choices, contains execution code
-     * for each choice.
-     */
-    public void handleEvent( Message event ){
+        Handles all messages and choices, contains execution code
+        for each choice.
+    */
+    public void handleEvent( Message event ) {
         if( event.getMessageType() != Message.PRIVATE_MESSAGE ) return;
+
         String name = m_botAction.getPlayerName( event.getPlayerID() );
         String message = event.getMessage();
         int id = event.getPlayerID();
 
-        if( currentPoll != null ){
+        if( currentPoll != null ) {
             currentPoll.handlePollCount( name, event.getMessage() );
         }
 
         if( !m_opList.isER( name )) return;
-        if( message.startsWith( "!poll " )){
-            if( currentPoll != null ){
+
+        if( message.startsWith( "!poll " )) {
+            if( currentPoll != null ) {
                 m_botAction.sendPrivateMessage( name, "A poll is currently in "
-                + "session.  End this poll before beginning another one." );
+                                                + "session.  End this poll before beginning another one." );
                 return;
             }
+
             StringTokenizer izer = new StringTokenizer( message.substring( 6 ),
-            ":" );
+                    ":" );
             int tokens = izer.countTokens();
-            if( tokens < 2 ){
+
+            if( tokens < 2 ) {
                 m_botAction.sendPrivateMessage( id, "Sorry but the poll format "
-                + "is wrong." );
+                                                + "is wrong." );
                 return;
             }
 
             String[] polls = new String[tokens];
             int i = 0;
-            while( izer.hasMoreTokens() ){
+
+            while( izer.hasMoreTokens() ) {
                 polls[i] = izer.nextToken();
                 i++;
             }
 
             currentPoll = new Poll( polls );
-        } else if( message.startsWith( "!endpoll" )){
-            if( currentPoll == null ){
+        } else if( message.startsWith( "!endpoll" )) {
+            if( currentPoll == null ) {
                 m_botAction.sendPrivateMessage( id,
-                "There is no poll running right now." );
+                                                "There is no poll running right now." );
             } else {
                 currentPoll.endPoll();
                 currentPoll = null;
@@ -105,10 +110,10 @@ public class utilpoll extends MultiUtil {
             }
         }
     }
-    
+
     /**
-     * Returns help messages.
-     */
+        Returns help messages.
+    */
     public String[] getHelpMessages() {
         String[] helps = {
             "------ Commands for the poll module -------",
@@ -120,63 +125,73 @@ public class utilpoll extends MultiUtil {
         };
         return helps;
     }
-    
+
     /**
-     * Poll Object that holds all poll related inquiries.
-     */
-    public class Poll{
+        Poll Object that holds all poll related inquiries.
+    */
+    public class Poll {
 
         private String[] poll;
         private int range;
         private HashMap<String, Integer> votes;
 
-        public Poll( String[] poll ){
+        public Poll( String[] poll ) {
             this.poll = poll;
             votes = new HashMap<String, Integer>();
             range = poll.length - 1;
             m_botAction.sendArenaMessage( "Poll: " + poll[0] , 2 );
-            for( int i = 1; i < poll.length; i++ ){
+
+            for( int i = 1; i < poll.length; i++ ) {
                 m_botAction.sendArenaMessage( i + ": " + poll[i] );
             }
+
             m_botAction.sendArenaMessage(
-            "Private message your answers to " + m_botAction.getBotName() );
+                "Private message your answers to " + m_botAction.getBotName() );
+
             if( allowedFreqs.size() > 0 ) {
                 String allowedMsg = "NOTE, only the following frequencies may vote: ";
+
                 for( Integer i : allowedFreqs )
                     allowedMsg += " " + i + " ";
+
                 m_botAction.sendArenaMessage( allowedMsg );
             }
         }
-        
+
         /**
-         * Tallies up the votes
-         * @param name is the voting player
-         * @param message is the player's choice presumably
-         */
-        public void handlePollCount( String name, String message ){
-        	if(name == m_botAction.getBotName())
-        		return;
-        	
-            try{
-                if( !Tools.isAllDigits( message )){
+            Tallies up the votes
+            @param name is the voting player
+            @param message is the player's choice presumably
+        */
+        public void handlePollCount( String name, String message ) {
+            if(name == m_botAction.getBotName())
+                return;
+
+            try {
+                if( !Tools.isAllDigits( message )) {
                     return;
                 }
+
                 if( allowedFreqs.size() > 0 ) {
                     Player p = m_botAction.getPlayer(name);
+
                     if( p == null )
                         return;
+
                     if( !allowedFreqs.contains( p.getFrequency() ) ) {
                         m_botAction.sendPrivateMessage( p.getPlayerID(), "Sorry, players on your frequency are not allowed to vote in this poll!" );
                         return;
                     }
                 }
+
                 int vote;
-                try{
+
+                try {
                     vote = Integer.parseInt( message );
-                } catch( NumberFormatException nfe ){
+                } catch( NumberFormatException nfe ) {
                     m_botAction.sendSmartPrivateMessage( name, "Invalid vote.  "
-                    + "Your vote must be a number corresponding to the choices "
-                    + "in the poll." );
+                                                         + "Your vote must be a number corresponding to the choices "
+                                                         + "in the poll." );
                     return;
                 }
 
@@ -187,41 +202,45 @@ public class utilpoll extends MultiUtil {
                 votes.put( name, new Integer( vote ));
 
                 m_botAction.sendSmartPrivateMessage( name, "Your vote has been "
-                + "counted." );
+                                                     + "counted." );
 
-            } catch( Exception e ){
+            } catch( Exception e ) {
                 m_botAction.sendArenaMessage( e.getMessage() );
                 m_botAction.sendArenaMessage( e.getClass().getName() );
             }
         }
-        
+
         /**
-         * Repeats the poll question and choices.
-         */
-        public void repeatPoll()	{
-        	m_botAction.sendArenaMessage( "Poll: " + poll[0] , 2 );
-            for( int i = 1; i < poll.length; i++ ){
+            Repeats the poll question and choices.
+        */
+        public void repeatPoll()    {
+            m_botAction.sendArenaMessage( "Poll: " + poll[0] , 2 );
+
+            for( int i = 1; i < poll.length; i++ ) {
                 m_botAction.sendArenaMessage( i + ": " + poll[i] );
             }
-            m_botAction.sendArenaMessage(
-                    "Private message your answers to " + m_botAction.getBotName() );
-        }
-        
-        /**
-         * Ends the poll and displays the vote tallies
-         */
-        public void endPoll(){
-            m_botAction.sendArenaMessage( "The poll has ended! Question: "
-            + poll[0] , 22 );
 
-            int[] counters = new int[range+1];
+            m_botAction.sendArenaMessage(
+                "Private message your answers to " + m_botAction.getBotName() );
+        }
+
+        /**
+            Ends the poll and displays the vote tallies
+        */
+        public void endPoll() {
+            m_botAction.sendArenaMessage( "The poll has ended! Question: "
+                                          + poll[0] , 22 );
+
+            int[] counters = new int[range + 1];
             Iterator<Integer> iterator = votes.values().iterator();
-            while( iterator.hasNext() ){
+
+            while( iterator.hasNext() ) {
                 counters[((Integer)iterator.next()).intValue()]++;
             }
-            for( int i = 1; i < counters.length; i++ ){
+
+            for( int i = 1; i < counters.length; i++ ) {
                 m_botAction.sendArenaMessage( i + ". " + poll[i] + ": "
-                + counters[i] );
+                                              + counters[i] );
             }
         }
 

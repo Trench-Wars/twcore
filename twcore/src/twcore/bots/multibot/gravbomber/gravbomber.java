@@ -57,6 +57,7 @@ public class gravbomber extends MultiModule {
         m_botAction.sendUnfilteredPublicMessage("*relkills 1");
 
         int time = m_botSettings.getInt("TurnTime");
+
         if (time < 5000) {
             m_botAction.sendChatMessage("Invalid turn time set for GravBomber (<5000ms)!  Ensure CFG is set up properly.  Dying...");
             m_botAction.die("Invalid turn time set for GravBomber (<5000ms)!  Ensure CFG is set up properly.");
@@ -81,9 +82,12 @@ public class gravbomber extends MultiModule {
     public void handleEvent(Message event) {
         if (event == null)
             return;
+
         Player p = m_botAction.getPlayer(event.getPlayerID());
+
         if (p == null)
             return;
+
         String name = p.getPlayerName();
         String message = event.getMessage();
 
@@ -154,6 +158,7 @@ public class gravbomber extends MultiModule {
                 }
             } else if (message.toLowerCase().equals("!quit")) {
                 Player player = m_botAction.getPlayer(name);
+
                 if (!player.isPlaying())
                     return;
 
@@ -176,6 +181,7 @@ public class gravbomber extends MultiModule {
     public void handleEvent(WeaponFired event) {
         if (!m_gameStarted)
             return;
+
         String playerName = m_botAction.getPlayerName(event.getPlayerID());
 
         if (m_currentPlayer.getPlayerName().equals(playerName)) {
@@ -186,17 +192,20 @@ public class gravbomber extends MultiModule {
 
                 if (m_currentWeapon == WEAP_L1BULLET || m_currentWeapon == WEAP_BURST) {
                     m_timer.schedule((TimerTask) m_turnTasks.get(playerName), m_botSettings.getInt("BulletAliveTime"));
+
                     //debug
                     if (m_debug) {
                         m_botAction.sendChatMessage(2, "Timer schedule for " + playerName + " Interval: " + m_botSettings.getInt("BulletAliveTime"));
                     }
                 } else if (m_currentWeapon == WEAP_REPEL) {
                     m_timer.schedule((TimerTask) m_turnTasks.get(playerName), m_botSettings.getInt("RepelAliveTime"));
+
                     //debug
                     if (m_debug) {
                         m_botAction.sendChatMessage(2, "Timer schedule for " + playerName + " Interval: " + m_botSettings.getInt("RepelAliveTime"));
                     } else if (m_currentWeapon == WEAP_SHRAPBOMB) {
                         m_timer.schedule((TimerTask) m_turnTasks.get(playerName), m_botSettings.getInt("BombAliveTime") + m_botSettings.getInt("BulletAliveTime"));
+
                         //debug
                         if (m_debug) {
                             m_botAction.sendChatMessage(2, "Timer schedule for " + playerName + " Interval: " + m_botSettings.getInt("BombAliveTime") + m_botSettings.getInt("BulletAliveTime"));
@@ -204,6 +213,7 @@ public class gravbomber extends MultiModule {
                     }
                 } else {
                     m_timer.schedule((TimerTask) m_turnTasks.get(playerName), m_botSettings.getInt("BombAliveTime"));
+
                     //debug
                     if (m_debug) {
                         m_botAction.sendChatMessage(2, "Timer schedule for " + playerName + " Interval: " + m_botSettings.getInt("BombAliveTime"));
@@ -222,7 +232,7 @@ public class gravbomber extends MultiModule {
         //debug
         if (m_debug)
             m_botAction.sendChatMessage(2, "Hit watchdamage for: " + m_botAction.getPlayerName(event.getVictim()) + "(" + event.getVictim() + ") Attacker: " + playerName + "(" + event.getAttacker()
-                    + ") Damage: " + event.getEnergyLost());
+                                        + ") Damage: " + event.getEnergyLost());
 
         if (m_playerList.indexOf(playerName) != -1 && !playerName.equals(m_botAction.getPlayerName(event.getVictim())) && event.getEnergyLost() > 0) {
             m_botAction.sendUnfilteredPrivateMessage(playerName, "*points " + event.getEnergyLost());
@@ -242,9 +252,9 @@ public class gravbomber extends MultiModule {
     }
 
     /*
-     * This part doesn't work at all so using handleevent prize instead -Fusha
-     *
-    public void handleArena( String message ){
+        This part doesn't work at all so using handleevent prize instead -Fusha
+
+        public void handleArena( String message ){
         if(!m_gameStarted) return;
 
         //debug
@@ -263,7 +273,7 @@ public class gravbomber extends MultiModule {
                 } else if( message.endsWith(" Top Speed") ){
                     points = m_botSettings.getInt("TopSpeedPoints");
                 }
-                
+
 
                 if(points != 0){
                     m_botAction.sendArenaMessage( playerName + " has picked up a bonus " + points + " points!" );
@@ -271,12 +281,12 @@ public class gravbomber extends MultiModule {
                 }
             }
         }
-    }
+        }
     */
 
     /**
-     * There was no handleevent for watching greens so adding one //Fusha's patchwork
-     */
+        There was no handleevent for watching greens so adding one //Fusha's patchwork
+    */
     public void handleEvent(Prize event) {
         if (m_gameStarted) {
 
@@ -286,14 +296,19 @@ public class gravbomber extends MultiModule {
             int green = 0;
 
             p = m_botAction.getPlayer(event.getPlayerID());
+
             if (p == null) {
                 return;
             }
+
             playerName = m_botAction.getPlayerName(p.getPlayerID());
+
             if (playerName == null) {
                 return;
             }
+
             green = event.getPrizeType();
+
             if (green == 2) {
                 points = m_botSettings.getInt("EnergyPoints");
             } else if (green == 3) {
@@ -302,12 +317,14 @@ public class gravbomber extends MultiModule {
                 points = m_botSettings.getInt("TopSpeedPoints");
             } else if (green == 10) {
                 points = m_botSettings.getInt("BouncePoints");
+
                 if (m_currentWeapon != WEAP_SHRAPBOMB) {
                     m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-10");
                 }
             }
+
             if (points == m_botSettings.getInt("BouncePoints")) {
-                m_botAction.sendArenaMessage(playerName + " has picked up the SUPER RARE bonus of " + points +" points!!!", 5);
+                m_botAction.sendArenaMessage(playerName + " has picked up the SUPER RARE bonus of " + points + " points!!!", 5);
                 m_botAction.sendUnfilteredPrivateMessage(playerName, "*points " + points);
             } else if (points != 0) {
                 m_botAction.sendArenaMessage(playerName + " has picked up a bonus " + points + " points!", 29);
@@ -351,15 +368,17 @@ public class gravbomber extends MultiModule {
         String[] helpText;
 
         helpText = new String[] { "Player Commands: (can be sent publicly or privatly)", "!end                - Ends your turn if you don't want to wait for the timer to run out",
-                "!liston/!listoff    - Toggle the display of the shopping list window", "!buy (num)          - Will purchase that weapon if it is your turn and you have enough points",
-                "!power/!pow (num)   - Adjust the power of your shot", "!quit               - Use this command if you wish to leave the arena/game and do not have enough energy" };
+                                  "!liston/!listoff    - Toggle the display of the shopping list window", "!buy (num)          - Will purchase that weapon if it is your turn and you have enough points",
+                                  "!power/!pow (num)   - Adjust the power of your shot", "!quit               - Use this command if you wish to leave the arena/game and do not have enough energy"
+                                };
 
         m_botAction.privateMessageSpam(name, helpText);
     }
 
     public String[] getModHelpMessage() {
         String[] helpText = new String[] { "Host Commands:", "!start              - Starts the game", "!stop               - Stops the game",
-                "!skip               - Used for the host to skip another player's turn if they are taking too long", "!die                - Unload bot" };
+                                           "!skip               - Used for the host to skip another player's turn if they are taking too long", "!die                - Unload bot"
+                                         };
         return helpText;
     }
 
@@ -401,7 +420,7 @@ public class gravbomber extends MultiModule {
             m_botAction.sendPrivateMessage(hostName, "Cannot start game, there is one currently in progress");
             return;
         }
-        
+
         m_currentPlayerIndex = 0; //JOYRIDER FIXED THE ANNOYING PLAYER SKIPPING BUG WITH THIS HOORAY 4 HIM
 
         m_boughtWeapon = false;
@@ -415,6 +434,7 @@ public class gravbomber extends MultiModule {
 
         if (i == null)
             return;
+
         while (i.hasNext()) {
             pTemp = i.next();
             GBPlayerBag.add(pTemp.getPlayerName());
@@ -431,6 +451,7 @@ public class gravbomber extends MultiModule {
 
         int dataSize = GBPlayerBag.size(); //need to take a snapshot since we alter it
         int points = m_botSettings.getInt("InitialPoints");
+
         for (int x = 0; x < dataSize; x++) {
             String playerName = GBPlayerBag.grab();
             m_playerData.put(playerName, new GBPlayer(playerName));
@@ -466,7 +487,7 @@ public class gravbomber extends MultiModule {
             m_botAction.cancelTasks();
             m_playerList.clear();
             m_playerData.clear();
-            
+
         }
     }
 
@@ -486,6 +507,7 @@ public class gravbomber extends MultiModule {
     public void startTurn(String playerName) {
         if (playerName == null)
             return;
+
         //if( m_playerList.size() == 1 && m_gameStarted ){
         //    gameOver();
         //}
@@ -535,6 +557,7 @@ public class gravbomber extends MultiModule {
             //debug
             if (m_debug)
                 m_botAction.sendChatMessage(2, playerName + " does not equal " + endPlayerName);
+
             return;
         }
 
@@ -568,17 +591,17 @@ public class gravbomber extends MultiModule {
         if (!m_gameStarted)
             return null;
 
-        /*int i = m_playerList.indexOf( currentPlayerName );
-        if( i == -1 ) return null; //not found
-        int last = (m_playerList.size() - 1);
+        /*  int i = m_playerList.indexOf( currentPlayerName );
+            if( i == -1 ) return null; //not found
+            int last = (m_playerList.size() - 1);
 
-        if (i == last){
+            if (i == last){
             return m_playerList.getFirst().toString();
-        } else if (i < last ){
+            } else if (i < last ){
             return m_playerList.get(++i).toString();
-        } else {
+            } else {
             return null;
-        }*/
+            }*/
 
         int pos = m_currentPlayerIndex;
         int last = (m_playerList.size() - 1);
@@ -598,6 +621,7 @@ public class gravbomber extends MultiModule {
         if (increment) {
             m_currentPlayerIndex = pos;
         }
+
         return m_playerList.get(pos).toString();
     }
 
@@ -607,6 +631,7 @@ public class gravbomber extends MultiModule {
 
         if (spec) {
             Player player = m_botAction.getPlayer(playerName);
+
             if (player.isPlaying()) { //Spec them if they're still in a ship
                 m_botAction.spec(playerName);
                 m_botAction.spec(playerName);
@@ -674,6 +699,7 @@ public class gravbomber extends MultiModule {
         if (player.getScore() >= weapon.getPrice()) {
             if (weaponID == WEAP_ROCKET) {
                 GBPlayer gbplayer = m_playerData.get(playerName);
+
                 if (gbplayer.getTurnsTillNextRocket() > 0) {
                     m_botAction.sendPrivateMessage(playerName, "There is a turn limit for buying " + weapon.getName() + "s. Turns left to wait: " + gbplayer.getTurnsTillNextRocket());
                     return;
@@ -688,6 +714,7 @@ public class gravbomber extends MultiModule {
             if (weapon.getPrice() != 0) {
                 m_botAction.sendUnfilteredPrivateMessage(playerName, "*points -" + weapon.getPrice());
             }
+
             m_currentWeapon = weaponID;
             m_botAction.sendPrivateMessage(playerName, weapon.getName() + " loaded");
             m_boughtWeapon = true;
@@ -699,50 +726,60 @@ public class gravbomber extends MultiModule {
     public void loadWeapon(String playerName, int weaponID) {
 
         switch (weaponID) {
-            case WEAP_ROCKET:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #27");
-                break;
-            case WEAP_L1BOMB:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
-                break;
-            case WEAP_TRACER:
-                m_botAction.sendUnfilteredPublicMessage("?set All:EmpBomb:1");
-                m_botAction.sendUnfilteredPublicMessage("?set All:BombFireDelay:10");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
-                break;
-            case WEAP_THRUSTBOMB:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #27");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
-                break;
-            case WEAP_L1BULLET:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #8");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #15");
-                break;
-            case WEAP_L3BOMB:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
-                break;
-            case WEAP_BOUNCEBOMB:
-                m_botAction.sendUnfilteredPublicMessage("?set All:BombBounceCount:3");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
-                break;
-            case WEAP_BURST:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #22");
-                break;
-            case WEAP_THOR:
-                m_botAction.sendUnfilteredPublicMessage("?set Bomb:JitterTime:250");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #24");
-                break;
-            case WEAP_SHRAPBOMB:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #19");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #10");
-                break;
-            case WEAP_REPEL:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #21");
-                break;
+        case WEAP_ROCKET:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #27");
+            break;
+
+        case WEAP_L1BOMB:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
+            break;
+
+        case WEAP_TRACER:
+            m_botAction.sendUnfilteredPublicMessage("?set All:EmpBomb:1");
+            m_botAction.sendUnfilteredPublicMessage("?set All:BombFireDelay:10");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
+            break;
+
+        case WEAP_THRUSTBOMB:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #27");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
+            break;
+
+        case WEAP_L1BULLET:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #8");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #15");
+            break;
+
+        case WEAP_L3BOMB:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
+            break;
+
+        case WEAP_BOUNCEBOMB:
+            m_botAction.sendUnfilteredPublicMessage("?set All:BombBounceCount:3");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
+            break;
+
+        case WEAP_BURST:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #22");
+            break;
+
+        case WEAP_THOR:
+            m_botAction.sendUnfilteredPublicMessage("?set Bomb:JitterTime:250");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #24");
+            break;
+
+        case WEAP_SHRAPBOMB:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #9");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #19");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #10");
+            break;
+
+        case WEAP_REPEL:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #21");
+            break;
         }
     }
 
@@ -750,50 +787,60 @@ public class gravbomber extends MultiModule {
         m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
 
         switch (weaponID) {
-            case WEAP_ROCKET:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-27");
-                break;
-            case WEAP_L1BOMB:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
-                break;
-            case WEAP_TRACER:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
-                m_botAction.sendUnfilteredPublicMessage("?set All:EmpBomb:0");
-                m_botAction.sendUnfilteredPublicMessage("?set All:BombFireDelay:" + m_turnTime / 10);
-                break;
-            case WEAP_THRUSTBOMB:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-27");
-                break;
-            case WEAP_L1BULLET:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-15");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");
-                break;
-            case WEAP_L3BOMB:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
-                break;
-            case WEAP_BOUNCEBOMB:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
-                m_botAction.sendUnfilteredPublicMessage("?set All:BombBounceCount:0");
-                break;
-            case WEAP_BURST:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-22");
-                break;
-            case WEAP_THOR:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-24");
-                m_botAction.sendUnfilteredPublicMessage("?set Bomb:JitterTime:32");
-                break;
-            case WEAP_SHRAPBOMB:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-19");
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-10");
-                break;
-            case WEAP_REPEL:
-                m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-21");
-                break;
+        case WEAP_ROCKET:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-27");
+            break;
+
+        case WEAP_L1BOMB:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
+            break;
+
+        case WEAP_TRACER:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
+            m_botAction.sendUnfilteredPublicMessage("?set All:EmpBomb:0");
+            m_botAction.sendUnfilteredPublicMessage("?set All:BombFireDelay:" + m_turnTime / 10);
+            break;
+
+        case WEAP_THRUSTBOMB:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-27");
+            break;
+
+        case WEAP_L1BULLET:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-15");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-8");
+            break;
+
+        case WEAP_L3BOMB:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
+            break;
+
+        case WEAP_BOUNCEBOMB:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
+            m_botAction.sendUnfilteredPublicMessage("?set All:BombBounceCount:0");
+            break;
+
+        case WEAP_BURST:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-22");
+            break;
+
+        case WEAP_THOR:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-24");
+            m_botAction.sendUnfilteredPublicMessage("?set Bomb:JitterTime:32");
+            break;
+
+        case WEAP_SHRAPBOMB:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-9");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-19");
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-10");
+            break;
+
+        case WEAP_REPEL:
+            m_botAction.sendUnfilteredPrivateMessage(playerName, "*prize #-21");
+            break;
         }
     }
 

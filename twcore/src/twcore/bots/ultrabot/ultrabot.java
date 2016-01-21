@@ -12,10 +12,10 @@ import twcore.core.events.LoggedOn;
 import twcore.core.events.Message;
 
 /**
- * A basic form of a bot, but with command interpretation not provided in
- * the "basicbot" class template.  Use this one instead.
- * @author  Stefan / Mythrandir
- */
+    A basic form of a bot, but with command interpretation not provided in
+    the "basicbot" class template.  Use this one instead.
+    @author  Stefan / Mythrandir
+*/
 public class ultrabot extends SubspaceBot {
 
     //
@@ -69,13 +69,13 @@ public class ultrabot extends SubspaceBot {
 
         // test
         m_commandInterpreter.add(
-                new CommandDefinition(this, "handleTest", "!game Integer 'type number' required:String 'name 1' 'freq 1':String 'name 2' 'freq 2'", Message.PRIVATE_MESSAGE,
-                    "Start a new game.")
-            );
+            new CommandDefinition(this, "handleTest", "!game Integer 'type number' required:String 'name 1' 'freq 1':String 'name 2' 'freq 2'", Message.PRIVATE_MESSAGE,
+                                  "Start a new game.")
+        );
 
         m_commandInterpreter.add(
             new CommandDefinition(this, "handleHelp", "!help", Message.PRIVATE_MESSAGE, "Show this list")
-            );
+        );
 
     }
 

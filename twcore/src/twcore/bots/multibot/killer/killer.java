@@ -1,20 +1,20 @@
 /*
- * twbotkiller - Killer module - qan (gdugwyler@hotmail.com)
- *
- * Created 5/29/04 - Last modified 8/5/04
- *
- *
- *
- * DESC: Normal elimination match, except:
- *
- *       - One person privately designated at the start of match as "the killer"
- *       - Anyone dying by the killer's hand is spec'd w/o arena msg.
- *       - Players still in the game can PM the bot with the killer's name.
- *           ... if they're correct, they become the new killer, and a msg
- *               is displayed saying the killer's identity has changed.
- *           ... if they're not correct, they are spec'd.
- *       - Players MUST NOT give away identity of the Killer (as it's cheating).
- */
+    twbotkiller - Killer module - qan (gdugwyler@hotmail.com)
+
+    Created 5/29/04 - Last modified 8/5/04
+
+
+
+    DESC: Normal elimination match, except:
+
+         - One person privately designated at the start of match as "the killer"
+         - Anyone dying by the killer's hand is spec'd w/o arena msg.
+         - Players still in the game can PM the bot with the killer's name.
+             ... if they're correct, they become the new killer, and a msg
+                 is displayed saying the killer's identity has changed.
+             ... if they're not correct, they are spec'd.
+         - Players MUST NOT give away identity of the Killer (as it's cheating).
+*/
 
 
 
@@ -36,24 +36,24 @@ import twcore.core.util.Tools;
 
 
 /** TWBot Extension for use in any arena, particularly deathmatch.  One person
- * is the killer, and all of their shots spec without message.  If a person
- * guesses who they are, they become the killer, but guess wrong and they are
- * spec'd.  When there are two people left, it becomes a showdown, with the
- * next hit spec'ing.  Other than that, a normal elim.  Last person standing wins.
- *
- * @author  qan
- * @version 1.9
- */
+    is the killer, and all of their shots spec without message.  If a person
+    guesses who they are, they become the killer, but guess wrong and they are
+    spec'd.  When there are two people left, it becomes a showdown, with the
+    next hit spec'ing.  Other than that, a normal elim.  Last person standing wins.
+
+    @author  qan
+    @version 1.9
+*/
 public class killer extends MultiModule {
 
     public void init() {
     }
 
-	public void requestEvents(ModuleEventRequester events)	{
-		events.request(this, EventRequester.PLAYER_DEATH);
-		events.request(this, EventRequester.PLAYER_LEFT);
-		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
-	}
+    public void requestEvents(ModuleEventRequester events)  {
+        events.request(this, EventRequester.PLAYER_DEATH);
+        events.request(this, EventRequester.PLAYER_LEFT);
+        events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+    }
 
     // Bot stats
     final static String f_version = "1.9";         // Version of bot
@@ -80,15 +80,17 @@ public class killer extends MultiModule {
 
 
     /** Handles event received message, and if from an ER or above,
-     * tries to parse it as an event mod command.  Otherwise, parses
-     * as a general command.
-     * @param event Passed event.
-     */
-    public void handleEvent( Message event ){
+        tries to parse it as an event mod command.  Otherwise, parses
+        as a general command.
+        @param event Passed event.
+    */
+    public void handleEvent( Message event ) {
 
         String message = event.getMessage();
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
+
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
+
             if( opList.isER( name ))
                 handleCommand( name, message );
             else
@@ -99,21 +101,22 @@ public class killer extends MultiModule {
 
 
     /** Initializes number of lives & starting killer, gives rules, 10
-     * second warning, and starts game.
-     * @param lives Number of lives to spec players at.
-     * @param killerName Name of player to be the starting Killer.  If
-     *                   left blank, random starting killer.
-     */
-    public void doInit( final int lives, String killerName ){
+        second warning, and starts game.
+        @param lives Number of lives to spec players at.
+        @param killerName Name of player to be the starting Killer.  If
+                         left blank, random starting killer.
+    */
+    public void doInit( final int lives, String killerName ) {
         m_lives = lives;
 
         if ( killerName == "" ) {
             makeNewRandomKiller();
         } else {
             Player p = m_botAction.getFuzzyPlayer( killerName );
+
             if( p != null) {
                 m_killer = p.getPlayerName();
-                m_botAction.sendPrivateMessage( m_killer, "You have been selected to be the Killer!  All your shots force others into spec.  Be careful not to reveal your identity.",1);
+                m_botAction.sendPrivateMessage( m_killer, "You have been selected to be the Killer!  All your shots force others into spec.  Be careful not to reveal your identity.", 1);
             }
         }
 
@@ -161,9 +164,9 @@ public class killer extends MultiModule {
 
 
     /** Checks if killer is still playing in the arena.
-     * @return true if player associated with current killer's ID is
-     *         in the arena, false if not.
-     */
+        @return true if player associated with current killer's ID is
+               in the arena, false if not.
+    */
     public boolean killerStillPlaying() {
         Player p = m_botAction.getPlayer( m_killer );
 
@@ -176,8 +179,8 @@ public class killer extends MultiModule {
 
 
     /** Assign a new killer (not actually the slightest bit random)
-     * FIX: Feed all eligible players into a list and use a random number generator to choose one.
-     */
+        FIX: Feed all eligible players into a list and use a random number generator to choose one.
+    */
     public void makeNewRandomKiller() {
         m_killer = "";
 
@@ -187,7 +190,7 @@ public class killer extends MultiModule {
             if (i != null) {
                 m_killer = ((Player) i.next()).getPlayerName();
 
-                m_botAction.sendPrivateMessage( m_killer, "You have been selected to be the Killer!  All your shots force others into spec.  Be careful not to reveal your identity by keeping your kills secretive.",1);
+                m_botAction.sendPrivateMessage( m_killer, "You have been selected to be the Killer!  All your shots force others into spec.  Be careful not to reveal your identity by keeping your kills secretive.", 1);
             }
         }
     }
@@ -195,14 +198,14 @@ public class killer extends MultiModule {
 
 
     /** Intermediary method that passes information from handleCommand to doInit
-     * based on the parameters of the !start command.
-     * @param name Name of mod executing !start command (for reporting purposes)
-     * @param params String array containing each parameter
-     */
-    public void start( String name, String[] params ){
-        try{
+        based on the parameters of the !start command.
+        @param name Name of mod executing !start command (for reporting purposes)
+        @param params String array containing each parameter
+    */
+    public void start( String name, String[] params ) {
+        try {
 
-            switch( params.length){
+            switch( params.length) {
 
             // Default # lives, random starting killer
             case 0:
@@ -230,10 +233,11 @@ public class killer extends MultiModule {
                 } else {
                     m_botAction.sendPrivateMessage( name, "Unrecognized user name.  Please check the spelling and try again." );
                 }
+
                 break;
             }
 
-        }catch( Exception e ){
+        } catch( Exception e ) {
             m_botAction.sendPrivateMessage( name, "Silly " + name + ".  You've made a mistake -- please try again." );
             isRunning = false;
         }
@@ -242,12 +246,12 @@ public class killer extends MultiModule {
 
 
     /** Handles all commands given to the bot.
-     * @param name Name of person who sent the command (not necessarily an ER+)
-     * @param message Message sent
-     */
-    public void handleCommand( String name, String message ){
+        @param name Name of person who sent the command (not necessarily an ER+)
+        @param message Message sent
+    */
+    public void handleCommand( String name, String message ) {
 
-        if( message.startsWith( "!stop" )){
+        if( message.startsWith( "!stop" )) {
             if(isRunning == true) {
                 doStop();
                 m_botAction.sendPrivateMessage( name, "Killer mode stopped." );
@@ -255,7 +259,7 @@ public class killer extends MultiModule {
                 m_botAction.sendPrivateMessage( name, "Killer mode is not currently enabled." );
             }
 
-        } else if( message.startsWith( "!start " )){
+        } else if( message.startsWith( "!start " )) {
             if(isRunning == false) {
                 String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
                 m_killer = "";
@@ -264,7 +268,7 @@ public class killer extends MultiModule {
                 m_botAction.sendPrivateMessage( name, "Killer mode has already been started." );
             }
 
-        } else if( message.startsWith( "!start" )){
+        } else if( message.startsWith( "!start" )) {
             if(isRunning == false) {
                 m_killer = "";
                 doInit( f_deflives, "" );
@@ -293,9 +297,9 @@ public class killer extends MultiModule {
 
 
     /** Handles all general commands given to the bot.
-     * @param name Name of player who sent the command.
-     * @param message Message sent
-     */
+        @param name Name of player who sent the command.
+        @param message Message sent
+    */
     public void handleGeneralCommand( String name, String message ) {
         // Prevent double !help spam (don't be TOO helpful)
         if( message.startsWith( "!bothelp" ) )
@@ -323,7 +327,7 @@ public class killer extends MultiModule {
                 m_botAction.sendPrivateMessage( name, "Killer is not currently running." );
             }
 
-        } else if( message.startsWith( "!guess " )){
+        } else if( message.startsWith( "!guess " )) {
 
             if(isRunning == true) {
 
@@ -340,7 +344,7 @@ public class killer extends MultiModule {
                         Player p = m_botAction.getPlayer( name );
 
                         if ( p.getShipType() != f_specship && guessK != null
-                                                           && suddenDeath == false ) {
+                                && suddenDeath == false ) {
                             if( m_killer.equals( guessK.getPlayerName() ) ) {
                                 m_botAction.sendPrivateMessage( name, "CORRECT!  You are now the new killer!  Try to keep your identity secret from others and make your kills as stealthy as possible.", 103 );
                                 m_botAction.sendArenaMessage( "Beware, a new killer stalks the night...!");
@@ -367,8 +371,8 @@ public class killer extends MultiModule {
 
 
     /** Handles player leaving events.  If player who left is killer, reassign killer.
-     * @param event Contains event information on player who left.
-     */
+        @param event Contains event information on player who left.
+    */
     public void handleEvent( PlayerLeft event ) {
         if( m_killer.equals( m_botAction.getPlayerName(event.getPlayerID()) ) ) {
             makeNewRandomKiller();
@@ -378,10 +382,10 @@ public class killer extends MultiModule {
 
 
     /** Handles player changing ship/freq events.  If killer specs, get a new killer.
-     * If we are down to the last 1 or 2 players, make special arrangements: sudden
-     * death, or declare winner.
-     * @param event Contains event information on player who changed ship or freq.
-     */
+        If we are down to the last 1 or 2 players, make special arrangements: sudden
+        death, or declare winner.
+        @param event Contains event information on player who changed ship or freq.
+    */
     public void handleEvent( FrequencyShipChange event ) {
 
         if( event.getShipType() == f_specship && isRunning ) {
@@ -398,6 +402,7 @@ public class killer extends MultiModule {
 
                 if( numPs > 1 )
                     makeNewRandomKiller();
+
                 if( numPs == 1 ) {
                     announceWinner();
                 }
@@ -417,10 +422,10 @@ public class killer extends MultiModule {
                     Player p = m_botAction.getPlayer( m_killer );
 
                     try {
-                       if( p != null && p.getShipType() != f_specship) {
-                           suddenDeath = true;
-                           m_botAction.sendArenaMessage( p.getPlayerName() + " has been uncovered as the Killer!  The final showdown begins... and the next to die will perish.",103);
-                       }
+                        if( p != null && p.getShipType() != f_specship) {
+                            suddenDeath = true;
+                            m_botAction.sendArenaMessage( p.getPlayerName() + " has been uncovered as the Killer!  The final showdown begins... and the next to die will perish.", 103);
+                        }
                     } catch (Exception e) {
                     }
 
@@ -431,31 +436,31 @@ public class killer extends MultiModule {
         }
     }
 
-    public void announceWinner(){
+    public void announceWinner() {
         Iterator<Player> i2 = m_botAction.getPlayingPlayerIterator();
 
         try {
             Player winner = (Player) i2.next();
 
             if( m_killer.equals( winner.getPlayerName() ) ) {
-                m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + ", the notorious Killer, has emerged victorious, and lives to kill another day...",13);
+                m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + ", the notorious Killer, has emerged victorious, and lives to kill another day...", 13);
                 doStop();
             } else {
-                m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " has triumphed over the Killer and returned peace to this once-quiet city.",5);
+                m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " has triumphed over the Killer and returned peace to this once-quiet city.", 5);
                 doStop();
             }
         } catch (Exception e) {
         }
-        
+
     }
 
     /** Handles player death events.  Spec at appropriate number of deaths, spec
-     * if killed by the killer, and spec if in sudden death.
-     * @param event Contains event information on player who died.
-     */
-    public void handleEvent( PlayerDeath event ){
+        if killed by the killer, and spec if in sudden death.
+        @param event Contains event information on player who died.
+    */
+    public void handleEvent( PlayerDeath event ) {
 
-        if( isRunning ){
+        if( isRunning ) {
 
             Player p = m_botAction.getPlayer( event.getKilleeID() );
 
@@ -496,7 +501,7 @@ public class killer extends MultiModule {
 
 
     /** Performs all necessary operations to stop bot.
-     */
+    */
     public void doStop() {
         isRunning = false;
         suddenDeath = false;
@@ -504,8 +509,8 @@ public class killer extends MultiModule {
         m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
 
         if( ! manual ) {
-            m_botAction.toggleLocked();	// Note: the bot DOES NOT LOCK to start.
-                                          // This is to give host some freedom.
+            m_botAction.toggleLocked(); // Note: the bot DOES NOT LOCK to start.
+            // This is to give host some freedom.
             m_botAction.sendArenaMessage( "Arena and chats unlocked, free to enter." );
         }
     }
@@ -519,9 +524,10 @@ public class killer extends MultiModule {
     // methods below.  Makes a module much more user-friendly.
 
     /** Displays the rules of the event module in readable form.
-     */
+    */
     public void displayRules() {
         String[] rules = getRules();
+
         for( int i = 0; i < rules.length; i++ )
             m_botAction.sendArenaMessage( rules[i] );
     }
@@ -529,8 +535,8 @@ public class killer extends MultiModule {
 
 
     /** Sends rules privately to a player.
-     * @param name Player to send msg to.
-     */
+        @param name Player to send msg to.
+    */
     public void sendRules( String name ) {
         m_botAction.privateMessageSpam( name, getRules() );
     }
@@ -538,8 +544,8 @@ public class killer extends MultiModule {
 
 
     /** Sends about message to a player.
-     * @param name Player to send msg to.
-     */
+        @param name Player to send msg to.
+    */
     public void sendAbout(String name) {
         String about = "Killer module, v" + f_version + ".  Created by qan.  Last modified " + f_modified;
         m_botAction.sendPrivateMessage( name, about );
@@ -548,8 +554,8 @@ public class killer extends MultiModule {
 
 
     /** Sends general help to a player.
-     * @param name Player to send msg to.
-     */
+        @param name Player to send msg to.
+    */
     public void sendHelp( String name ) {
         String[] help = {
             "General Help for Killer Module",
@@ -566,11 +572,11 @@ public class killer extends MultiModule {
 
 
     /** Returns the rules of the event in readable form.
-     * @return String array containing rules.
-     */
+        @return String array containing rules.
+    */
     public String[] getRules() {
         String[] rules = {
-          // | Max line length for rules to display correctly on 800x600.....................|
+            // | Max line length for rules to display correctly on 800x600.....................|
             ".....                          - RULES of KILLER -                          .....",
             "...   One person is, in secret, the Killer.  If anyone is killed by the       ...",
             "..    Killer, they are specced.  Revealing the Killer's identity = CHEATING.   ..",
@@ -586,8 +592,8 @@ public class killer extends MultiModule {
 
 
     /** Returns help message.
-     * @return A string array containing help msgs for this bot.
-     */
+        @return A string array containing help msgs for this bot.
+    */
     public String[] getModHelpMessage() {
         String[] KillerHelp = {
             "!start              - Starts Killer mode with standard config (10 lives, random killer)",
@@ -605,11 +611,11 @@ public class killer extends MultiModule {
 
 
     /** (blank method)
-     */
+    */
     public void cancel() {
     }
 
-    public boolean isUnloadable()	{
-		return true;
-	}
+    public boolean isUnloadable()   {
+        return true;
+    }
 }

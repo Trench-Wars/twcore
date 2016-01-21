@@ -5,30 +5,30 @@ import java.util.EventObject;
 import java.util.List;
 
 /**
- *
- * @author Robert.Harder
- */
-public class PushbulletEvent extends EventObject{
+
+    @author Robert.Harder
+*/
+public class PushbulletEvent extends EventObject {
     private List<Push> pushes;
 
     public PushbulletEvent(PushbulletClient aThis) {
         super(aThis);
     }
-    
+
     public PushbulletEvent(PushbulletClient aThis, List<Push> pushes) {
         super(aThis);
         this.pushes = pushes;
     }
-    
-    
-    
-    public PushbulletClient getPushbulletClient(){
+
+
+
+    public PushbulletClient getPushbulletClient() {
         return (PushbulletClient) getSource();
     }
-    
-    
-    public List<Push> getPushes(){
+
+
+    public List<Push> getPushes() {
         return pushes;
     }
-    
+
 }

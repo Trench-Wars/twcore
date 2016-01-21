@@ -33,15 +33,15 @@ import twcore.core.events.WatchDamage;
 import twcore.core.events.WeaponFired;
 
 /*
- * PortabotExtension.java
- *
- * Created on March 21, 2002, 2:46 PM
- */
+    PortabotExtension.java
+
+    Created on March 21, 2002, 2:46 PM
+*/
 
 /**
- *
- * @author  harvey
- */
+
+    @author  harvey
+*/
 public abstract class TWBotExtension {
     protected BotAction m_botAction;
     protected OperatorList m_opList;
@@ -50,7 +50,7 @@ public abstract class TWBotExtension {
     public TWBotExtension() {
     }
 
-    public final void set( BotAction action, OperatorList opList, SubspaceBot twBot ){
+    public final void set( BotAction action, OperatorList opList, SubspaceBot twBot ) {
         m_botAction = action;
         m_opList = opList;
         m_twBot = twBot;
@@ -59,11 +59,11 @@ public abstract class TWBotExtension {
     public abstract String[] getHelpMessages();
     public abstract void cancel();
 
-    /*private final void sendBotCommand( String name, String message ){
-   //     m_twBot.handleCommand( name, message );
-    }*/
+    /*  private final void sendBotCommand( String name, String message ){
+        //     m_twBot.handleCommand( name, message );
+        }*/
 
-    public final void handleEvent( SubspaceEvent event ){
+    public final void handleEvent( SubspaceEvent event ) {
         if( event instanceof ScoreReset )
             handleEvent( (ScoreReset)event );
         else if( event instanceof PlayerEntered )
@@ -111,39 +111,39 @@ public abstract class TWBotExtension {
         else if( event instanceof SQLResultEvent )
             handleEvent( (SQLResultEvent)event );
         else if( event instanceof TurretEvent )
-        	handleEvent( (TurretEvent)event );
+            handleEvent( (TurretEvent)event );
         else if( event instanceof PlayerBanner )
-        	handleEvent( (PlayerBanner)event );
+            handleEvent( (PlayerBanner)event );
         else if( event instanceof ArenaList )
-        	handleEvent( (ArenaList)event);
+            handleEvent( (ArenaList)event);
         else if( event instanceof TurfFlagUpdate )
             handleEvent( (TurfFlagUpdate)event);
     }
-    public void handleEvent( ScoreReset event ){}
-    public void handleEvent( PlayerEntered event ){}
-    public void handleEvent( Message event ){}
-    public void handleEvent( PlayerLeft event ){}
-    public void handleEvent( PlayerPosition event ){}
-    public void handleEvent( PlayerDeath event ){}
-    public void handleEvent( ScoreUpdate event ){}
-    public void handleEvent( WeaponFired event ){}
-    public void handleEvent( FrequencyChange event ){}
-    public void handleEvent( FrequencyShipChange event ){}
-    public void handleEvent( ArenaJoined event ){}
-    public void handleEvent( FileArrived event ){}
-    public void handleEvent( FlagReward event ){}
-    public void handleEvent( FlagVictory event ){}
-    public void handleEvent( LoggedOn event ){}
-    public void handleEvent( WatchDamage event ){}
-    public void handleEvent( SoccerGoal event ){}
-    public void handleEvent( Prize event ){}
-    public void handleEvent( BallPosition event ){}
-    public void handleEvent( FlagPosition event ){}
-    public void handleEvent( FlagDropped event ){}
-    public void handleEvent( FlagClaimed event ){}
-    public void handleEvent( SQLResultEvent event ){}
-    public void handleEvent( TurretEvent event ){}
-    public void handleEvent( PlayerBanner event ){}
-    public void handleEvent( ArenaList event ){}
-    public void handleEvent( TurfFlagUpdate event ){}
+    public void handleEvent( ScoreReset event ) {}
+    public void handleEvent( PlayerEntered event ) {}
+    public void handleEvent( Message event ) {}
+    public void handleEvent( PlayerLeft event ) {}
+    public void handleEvent( PlayerPosition event ) {}
+    public void handleEvent( PlayerDeath event ) {}
+    public void handleEvent( ScoreUpdate event ) {}
+    public void handleEvent( WeaponFired event ) {}
+    public void handleEvent( FrequencyChange event ) {}
+    public void handleEvent( FrequencyShipChange event ) {}
+    public void handleEvent( ArenaJoined event ) {}
+    public void handleEvent( FileArrived event ) {}
+    public void handleEvent( FlagReward event ) {}
+    public void handleEvent( FlagVictory event ) {}
+    public void handleEvent( LoggedOn event ) {}
+    public void handleEvent( WatchDamage event ) {}
+    public void handleEvent( SoccerGoal event ) {}
+    public void handleEvent( Prize event ) {}
+    public void handleEvent( BallPosition event ) {}
+    public void handleEvent( FlagPosition event ) {}
+    public void handleEvent( FlagDropped event ) {}
+    public void handleEvent( FlagClaimed event ) {}
+    public void handleEvent( SQLResultEvent event ) {}
+    public void handleEvent( TurretEvent event ) {}
+    public void handleEvent( PlayerBanner event ) {}
+    public void handleEvent( ArenaList event ) {}
+    public void handleEvent( TurfFlagUpdate event ) {}
 }

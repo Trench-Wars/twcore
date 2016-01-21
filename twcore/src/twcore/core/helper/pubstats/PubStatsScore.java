@@ -6,67 +6,67 @@ public class PubStatsScore {
     private int wins;
     private int losses;
     private int teamkills;
-    
+
     /**
-     * @return the flagPoints
-     */
+        @return the flagPoints
+    */
     public int getFlagPoints() {
         return flagPoints;
     }
     /**
-     * @param flagPoints the flagPoints to set
-     */
+        @param flagPoints the flagPoints to set
+    */
     public void setFlagPoints(int flagPoints) {
         this.flagPoints = flagPoints;
     }
     /**
-     * @return the killPoints
-     */
+        @return the killPoints
+    */
     public int getKillPoints() {
         return killPoints;
     }
     /**
-     * @param killPoints the killPoints to set
-     */
+        @param killPoints the killPoints to set
+    */
     public void setKillPoints(int killPoints) {
         this.killPoints = killPoints;
     }
     /**
-     * @return the wins
-     */
+        @return the wins
+    */
     public int getWins() {
         return wins;
     }
     /**
-     * @param wins the wins to set
-     */
+        @param wins the wins to set
+    */
     public void setWins(int wins) {
         this.wins = wins;
     }
     /**
-     * @return the losses
-     */
+        @return the losses
+    */
     public int getLosses() {
         return losses;
     }
     /**
-     * @param losses the losses to set
-     */
+        @param losses the losses to set
+    */
     public void setLosses(int losses) {
         this.losses = losses;
     }
     /**
-     * @return the teamkills
-     */
+        @return the teamkills
+    */
     public int getTeamkills() {
         return teamkills;
     }
     /**
-     * @param teamkills the teamkills to set
-     */
+        @param teamkills the teamkills to set
+    */
     public void setTeamkills(int teamkills) {
         this.teamkills = teamkills;
     }
-    
-    
+
+
 }

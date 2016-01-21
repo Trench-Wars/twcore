@@ -32,6 +32,7 @@ public class serverbot extends SubspaceBot {
         String msg = event.getMessage();
         int msgtype = event.getMessageType();
         String name = event.getMessager();
+
         if (name == null)
             name = BA.getPlayerName(event.getPlayerID());
 
@@ -39,13 +40,13 @@ public class serverbot extends SubspaceBot {
             pname = name;
 
         if ((msgtype == Message.PRIVATE_MESSAGE) || (msgtype == Message.REMOTE_PRIVATE_MESSAGE)) {
-        	if(oplist.isSmod(name)){
-        		if(msg.equalsIgnoreCase("!die")){
-        			ba.die("!die by " + name);
-        		} else if(msg.startsWith("!go ")){
-        			ba.changeArena(msg.substring(4));
-        		}
-        	}
+            if(oplist.isSmod(name)) {
+                if(msg.equalsIgnoreCase("!die")) {
+                    ba.die("!die by " + name);
+                } else if(msg.startsWith("!go ")) {
+                    ba.changeArena(msg.substring(4));
+                }
+            }
         }
     }
 
@@ -62,24 +63,25 @@ public class serverbot extends SubspaceBot {
     }
 
     public void handleEvent(InterProcessEvent event) {
-      
+
     }
 
-    public void handleEvent(SocketMessageEvent event){
+    public void handleEvent(SocketMessageEvent event) {
 
-    	if (event.getRequest().equals("GETPLAYERS")) {
-    		ba.sendSmartPrivateMessage("Dezmond", "Connected successfully.");
-    		Iterator<Player> it = m_botAction.getPlayerIterator();
-    		
-    		// Building a JSON-format result
-    		StringBuilder builder = new StringBuilder();
-    		while(it.hasNext()) {
-    			Player p = it.next();
-    			builder.append(p.getPlayerName()+":"+p.getXTileLocation()+":"+p.getYTileLocation()+":"+p.getShipType() + "$$:$$");
-        		ba.sendSmartPrivateMessage("Dezmond", "Successfully sent to script...");
-    		}
+        if (event.getRequest().equals("GETPLAYERS")) {
+            ba.sendSmartPrivateMessage("Dezmond", "Connected successfully.");
+            Iterator<Player> it = m_botAction.getPlayerIterator();
 
-    		event.setResponse(builder.toString());
-    	}
+            // Building a JSON-format result
+            StringBuilder builder = new StringBuilder();
+
+            while(it.hasNext()) {
+                Player p = it.next();
+                builder.append(p.getPlayerName() + ":" + p.getXTileLocation() + ":" + p.getYTileLocation() + ":" + p.getShipType() + "$$:$$");
+                ba.sendSmartPrivateMessage("Dezmond", "Successfully sent to script...");
+            }
+
+            event.setResponse(builder.toString());
+        }
     }
 }

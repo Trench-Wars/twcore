@@ -11,12 +11,12 @@ import twcore.core.BotSettings;
 import twcore.core.util.Tools;
 
 /**
- * Manages and represents a 2v2 TWEL duel. Holds team and player objects
- * and any immediate relevant information as well as methods involved in
- * general duel management.
- *
- * @author WingZero
- */
+    Manages and represents a 2v2 TWEL duel. Holds team and player objects
+    and any immediate relevant information as well as methods involved in
+    general duel management.
+
+    @author WingZero
+*/
 public class DuelGame {
 
     BotAction           ba;
@@ -66,9 +66,11 @@ public class DuelGame {
 
         // Ax1,Ay1,safeAx1,safeAy1,Ax2,Ay2,safeAx2,safeAy2
         int[] coords1 = new int[] { box.getAX1(), box.getAY1(), box.getSafeAX1(), box.getSafeAY1(),
-                box.getAX2(), box.getAY2(), box.getSafeAX2(), box.getSafeAY2() };
+                                    box.getAX2(), box.getAY2(), box.getSafeAX2(), box.getSafeAY2()
+                                  };
         int[] coords2 = new int[] { box.getBX1(), box.getBY1(), box.getSafeBX1(), box.getSafeBY1(),
-                box.getBX2(), box.getBY2(), box.getSafeBX2(), box.getSafeBY2() };
+                                    box.getBX2(), box.getBY2(), box.getSafeBX2(), box.getSafeBY2()
+                                  };
 
         box.toggleUse();
         // since team wasn't given, add to main collection
@@ -80,14 +82,18 @@ public class DuelGame {
 
         bot.games.put(id, this);
     }
-    
+
     public DuelTeam[] getTeams(String name) {
         DuelPlayer p = team1.getPlayer(name);
+
         if (p != null)
             return new DuelTeam[] { team1, team2 };
+
         p = team2.getPlayer(name);
+
         if (p != null)
             return new DuelTeam[] { team2, team1 };
+
         return null;
     }
 
@@ -100,9 +106,9 @@ public class DuelGame {
         score = new int[] { t1, t2 };
 
         ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "Score: " + score[0] + "-"
-                + score[1], 26);
+                                              + score[1], 26);
         ba.sendOpposingTeamMessageByFrequency(team2.getFreq(), "Score: " + score[0] + "-"
-                + score[1], 26);
+                                              + score[1], 26);
 
         if (team1.out() || team2.out())
             endGame(t1, t2);
@@ -118,7 +124,7 @@ public class DuelGame {
         String[] t1 = team1.getNames();
         String[] t2 = team2.getNames();
         return "" + score[0] + "-" + score[1] + " : " + t1[0] + " and " + t1[1] + " vs " + t2[0]
-                + " and " + t2[1];
+               + " and " + t2[1];
     }
 
     /** Converts the division ID into a String */
@@ -136,9 +142,10 @@ public class DuelGame {
         else
             return "Unknown";
     }
-    
+
     public String[] getStats() {
         ArrayList<String> statArray = new ArrayList<String>();
+
         if (ranked) {
             statArray.add(",------------------------+----+----+----------+--------.");
             statArray.add("|                      K |  D | LO | PlayTime | Rating |");
@@ -175,8 +182,9 @@ public class DuelGame {
             statArray.add(stats[0]);
             statArray.add(stats[1]);
             statArray.add("`------------------------+----+----+----------'");
-            
+
         }
+
         return statArray.toArray(new String[statArray.size()]);
     }
 
@@ -194,6 +202,7 @@ public class DuelGame {
         bot.playing.put(names2[1].toLowerCase(), id);
 
         score = new int[] { 0, 0 };
+
         if (div == 5) {
             team1.startGame(true, team2.getNames());
             team2.startGame(true, team1.getNames());
@@ -201,19 +210,20 @@ public class DuelGame {
             team1.startGame(false, team2.getNames());
             team2.startGame(false, team1.getNames());
         }
+
         ba.sendTeamMessage("A " + (ranked ? "RANKED " : "CASUAL ") + getDivision() + " duel is starting: '" + names1[0] + "' and '"
-                + names1[1] + "' VS '" + names2[0] + "' and '" + names2[1] + "'");
+                           + names1[1] + "' VS '" + names2[0] + "' and '" + names2[1] + "'");
     }
 
     /**
-     * Ends the duel by sending announcements and initiating post-game
-     * cleanup and database updating.
-     *
-     * @param t1
-     *      the final score for team 1
-     * @param t2
-     *      the final score for team 2
-     */
+        Ends the duel by sending announcements and initiating post-game
+        cleanup and database updating.
+
+        @param t1
+            the final score for team 1
+        @param t2
+            the final score for team 2
+    */
     public void endGame(int t1, int t2) {
         state = ENDING;
         score[0] = t1;
@@ -222,6 +232,7 @@ public class DuelGame {
         DuelPlayer[] win = null;
         DuelPlayer[] loss = null;
         int winnerScore, loserScore;
+
         if (t1 > t2) {
             winner = team1.getNames();
             loser = team2.getNames();
@@ -237,6 +248,7 @@ public class DuelGame {
             winnerScore = t2;
             loserScore = t1;
         }
+
         win[0].endTimePlayed();
         win[1].endTimePlayed();
         loss[0].endTimePlayed();
@@ -244,10 +256,10 @@ public class DuelGame {
         int winRatings = win[0].getRating() + win[1].getRating();
         int lossRatings = loss[0].getRating() + loss[1].getRating();
         int diff = lossRatings - winRatings;
-        
+
         double p1 = 1.0 / (1.0 + Math.pow(10, (-diff / 400.0)));
         double p2 = 1.0 - p1;
-        
+
         // losers
         int drLoss = (int) Math.round((10 * 5 * (0.0 - p1)));
         int drWin =  (int) Math.round((10 * 5 * (1.0 - p2)));
@@ -259,13 +271,13 @@ public class DuelGame {
         ratio[2] = ratio[0] + ratio[1];
         ratio[0] = ratio[0] / ratio[2];
         ratio[1] = ratio[1] / ratio[2];
-        
+
         int drLoser1 = (int) Math.round(drLoss * ratio[1]);
         int drLoser2 = (int) (drLoser1 - drLoss) * -1;
         //bot.debug("[RATING] drLoss=" + drLoss + " (" + loser[0] + ") drLoser1=" + drLoser1 + " (" + loser[1] + ") drLoser2=" + drLoser2);
         loss[0].setRating(loss[0].getRating() + drLoser1);
         loss[1].setRating(loss[1].getRating() + drLoser2);
-        
+
         // winners
         kills = new double[] { win[0].getKills() + 1, win[1].getKills() + 1 };
         deaths = new double[] { win[0].getDeaths() + 1, win[1].getDeaths() + 1 };
@@ -274,7 +286,7 @@ public class DuelGame {
         ratio[2] = ratio[0] + ratio[1];
         ratio[0] = ratio[0] / ratio[2];
         ratio[1] = ratio[1] / ratio[2];
-        
+
         int drWinner1 = (int) Math.round(drWin * ratio[0]);
         int drWinner2 = (int) drWin - drWinner1;
         //bot.debug("[RATING] drWin=" + drWin + " (" + winner[0] + ") drWinner1=" + drWinner1 + " (" + winner[1] + ") drWinner2=" + drWinner2);
@@ -290,13 +302,13 @@ public class DuelGame {
         String[] stats = getStats();
         team1.sendStats(stats);
         team2.sendStats(stats);
-        
+
         if (ranked)
             sql_storeGame();
-        
+
         t1 = team1.getTeamID();
         t2 = team2.getTeamID();
-        
+
         team1.endGame();
         team2.endGame();
 
@@ -324,11 +336,11 @@ public class DuelGame {
         names = team1.getNames();
         ba.sendSmartPrivateMessage(names[0], msg);
         ba.sendSmartPrivateMessage(names[1], msg);
-        
+
         String[] stats = getStats();
         team1.sendStats(stats);
         team2.sendStats(stats);
-        
+
         team1.endGame();
         team2.endGame();
 
@@ -341,8 +353,10 @@ public class DuelGame {
         names = team2.getNames();
         bot.playing.remove(names[0].toLowerCase());
         bot.playing.remove(names[1].toLowerCase());
+
         if (name != null)
             ba.sendPrivateMessage(name, "Duel cancelled.");
+
         box.toggleUse();
     }
 
@@ -368,50 +382,55 @@ public class DuelGame {
     public void playerOut(DuelPlayer player) {
         bot.laggers.remove(player.getName().toLowerCase());
         int why = player.getReason();
+
         if (why == DuelPlayer.NORMAL) {
             ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "'" + player.getName()
-                    + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
+                                                  + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
             ba.sendOpposingTeamMessageByFrequency(team2.getFreq(), "'" + player.getName()
-                    + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
+                                                  + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
         } else if (why == DuelPlayer.WARPS) {
             ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "'" + player.getName()
-                    + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
             ba.sendOpposingTeamMessageByFrequency(team2.getFreq(), "'" + player.getName()
-                    + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         } else if (why == DuelPlayer.LAGOUTS) {
             ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "'" + player.getName()
-                    + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
             ba.sendOpposingTeamMessageByFrequency(team2.getFreq(), "'" + player.getName()
-                    + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         } else if (why == DuelPlayer.SPAWNS) {
             ba.sendOpposingTeamMessageByFrequency(team1.getFreq(), "'" + player.getName()
-                    + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
             ba.sendOpposingTeamMessageByFrequency(team2.getFreq(), "'" + player.getName()
-                    + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         }
+
         updateScore();
     }
-    
+
     /**
-     * Helper method adds spaces in front of a number to fit a certain length
-     * @param n
-     * @param length
-     * @return String of length with spaces preceeding a number
-     */
+        Helper method adds spaces in front of a number to fit a certain length
+        @param n
+        @param length
+        @return String of length with spaces preceeding a number
+    */
     public String padNum(int n, int length) {
         String str = "";
         String x = "" + n;
+
         for (int i = 0; i + x.length() < length; i++)
             str += " ";
+
         return str + x;
     }
-    
+
     /** Records the duel results in the database */
     public void sql_storeGame() {
         //TODO:
         String query = "INSERT INTO tblDuel2__match (fnDivision, fnTeam1, fnTeam2, fnScore1, fnScore2) VALUES(" +
-                    "" + div + ", ";
+                       "" + div + ", ";
         int t1, t2;
+
         if (score[0] > score[1]) {
             t1 = team1.sql_storeTeam(true);
             t2 = team2.sql_storeTeam(false);
@@ -423,9 +442,11 @@ public class DuelGame {
             Tools.printLog("[TEAMDUEL] Tied duel encountered.");
             return;
         }
-            
+
         if (t1 < 0 || t2 < 0) return;
+
         query += t1 + ", " + t2 + ", " + score[0] + ", " + score[1] + ")";
+
         try {
             ba.SQLQueryAndClose(db, query);
         } catch (SQLException e) {

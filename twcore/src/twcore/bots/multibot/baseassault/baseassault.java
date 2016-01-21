@@ -1,8 +1,8 @@
 /*
- * twbotbaseassault - Base Assault module - script (nblackman@gmail.com)
- *
- * Created on November 11, 2004 - Last modified January 2, 2005
- */
+    twbotbaseassault - Base Assault module - script (nblackman@gmail.com)
+
+    Created on November 11, 2004 - Last modified January 2, 2005
+*/
 
 
 package twcore.bots.multibot.baseassault;
@@ -22,16 +22,16 @@ import twcore.core.game.Player;
 
 
 /**
- * TWBot Extension for use in basing maps.  Lagouts and late adds will be
- * possible. Consists of two teams. One team will begin the match with the base
- * in their possession. The other team will try to capture the flag as quickly
- * as possible. Once the seconds team succeeds, the two teams swap positions.
- * Two game modes will exist: a) The team with the fastest time wins. b) the
- * game will continue until a time has not been beat.
- *
- * @author  script
- * @version 0.89
- */
+    TWBot Extension for use in basing maps.  Lagouts and late adds will be
+    possible. Consists of two teams. One team will begin the match with the base
+    in their possession. The other team will try to capture the flag as quickly
+    as possible. Once the seconds team succeeds, the two teams swap positions.
+    Two game modes will exist: a) The team with the fastest time wins. b) the
+    game will continue until a time has not been beat.
+
+    @author  script
+    @version 0.89
+*/
 public class baseassault extends MultiModule {
 
     /** Creates a new instance of twbotbaseassault */
@@ -40,12 +40,12 @@ public class baseassault extends MultiModule {
         confirmedMap = mapsTable.get("0");
     }
 
-    public void requestEvents(ModuleEventRequester events)	{
-		events.request(this, EventRequester.PLAYER_DEATH);
-		events.request(this, EventRequester.PLAYER_LEFT);
-		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
-		events.request(this, EventRequester.FLAG_CLAIMED);
-	}
+    public void requestEvents(ModuleEventRequester events)  {
+        events.request(this, EventRequester.PLAYER_DEATH);
+        events.request(this, EventRequester.PLAYER_LEFT);
+        events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+        events.request(this, EventRequester.FLAG_CLAIMED);
+    }
 
     //info
     private String hostName;
@@ -72,11 +72,12 @@ public class baseassault extends MultiModule {
     private boolean betweenRounds = false;
 
     /**
-     * Begins the game of Base Assault itself, after settings have been confirmed.
-     * @param name Name of the host who started Base Assault.
-     */
+        Begins the game of Base Assault itself, after settings have been confirmed.
+        @param name Name of the host who started Base Assault.
+    */
     public void startBA(String name) {
         hostName = name;
+
         if (!gameStarted) {
             if (settingsConfirmed) {
                 //BasingMap confirmedMap = (BasingMap) mapsTable.get(Integer.toString(selectedMap));
@@ -113,8 +114,8 @@ public class baseassault extends MultiModule {
     }
 
     /**
-     * Stops any currently running games.
-     */
+        Stops any currently running games.
+    */
     public void stopBA() {
         gameStarted = false;
         roundNum = 0;
@@ -130,8 +131,8 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Sets all settings to default.
-     */
+        Sets all settings to default.
+    */
     public void defaultSettings() {
         firstDefendingTeam = 0;
         firstAttackingTeam = 1;
@@ -144,13 +145,15 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Detects whether or not time has expired yet.
-     */
+        Detects whether or not time has expired yet.
+    */
     public void detectMaxTime() {
         long currentMaxMillis = maxTime;
+
         if (roundNum > 1) {
             currentMaxMillis = fastestTime;
         }
+
         timeExpired = new TimerTask() {
             public void run() {
                 m_botAction.sendArenaMessage("Time is up!");
@@ -162,18 +165,18 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Creates a hashTable of BasingMap objects.
-     */
+        Creates a hashTable of BasingMap objects.
+    */
     public void makeMapsTable() {
         mapsTable.put("0", new BasingMap("Default Map", 310, 482, 512, 265));
         mapsTable.put("1", new BasingMap("Weird Base", 314, 703, 511, 262));
     }
 
     /**
-     * Converts milliseconds to minutes.
-     * @param millis The number of milliseconds to convert to minutes.
-     * @return Returns a string with the conversion result.
-     */
+        Converts milliseconds to minutes.
+        @param millis The number of milliseconds to convert to minutes.
+        @return Returns a string with the conversion result.
+    */
     public String millisToMinutes(long millis) {
         long seconds = millis / 1000;
         long minutes = seconds / 60;
@@ -184,8 +187,8 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Starts the next round of Base Assault.
-     */
+        Starts the next round of Base Assault.
+    */
     public void newRound() {
         betweenRounds = true;
         long elapsedTime = endTime - startTime;
@@ -210,8 +213,8 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Resets all data.
-     */
+        Resets all data.
+    */
     public void resetData() {
         fastestTime = maxTime;
         startTime = 0;
@@ -220,13 +223,13 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Used to create a custom map as specified by the host.
-     * @param mapName Name of the map.
-     * @param x1 X coordinate of the safe zone.
-     * @param y1 Y coordinate of the safe zone.
-     * @param x2 X coordinate of the flag room.
-     * @param y2 Y coordinate of the flag room.
-     */
+        Used to create a custom map as specified by the host.
+        @param mapName Name of the map.
+        @param x1 X coordinate of the safe zone.
+        @param y1 Y coordinate of the safe zone.
+        @param x2 X coordinate of the flag room.
+        @param y2 Y coordinate of the flag room.
+    */
     public void createMap(String mapName, int x1, int y1, int x2, int y2) {
         int numMaps = mapsTable.size();
         int newNum = numMaps + 1;
@@ -235,8 +238,8 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Used to warp players to the appropriate coordinates.
-     */
+        Used to warp players to the appropriate coordinates.
+    */
     public void warpPlayers() {
         int flagRoomX = confirmedMap.getFlagRoomX();
         int flagRoomY = confirmedMap.getFlagRoomY();
@@ -247,9 +250,9 @@ public class baseassault extends MultiModule {
     }
 
     /**
-     * Takes the appropriate action if a winner is detected.
-     * @param freqNum The number of the winning frequency.
-     */
+        Takes the appropriate action if a winner is detected.
+        @param freqNum The number of the winning frequency.
+    */
     public void winner(int freqNum) {
         if (roundNum > 1) {
             m_botAction.sendArenaMessage("Game over! Freq " + freqNum + " wins after round " + roundNum + " with the fastest time: " + millisToMinutes(fastestTime));
@@ -257,6 +260,7 @@ public class baseassault extends MultiModule {
         else if (roundNum == 1) {
             m_botAction.sendArenaMessage("Freq " + attackingTeam + " could not conquer the base in time! Freq " + freqNum + " wins by default!");
         }
+
         stopBA();
     }
 
@@ -267,10 +271,10 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Creates a new map from the command's parameters.
-     * @param message The message originally sent to the bot.
-     * @param name The command's submitter.
-     */
+        Creates a new map from the command's parameters.
+        @param message The message originally sent to the bot.
+        @param name The command's submitter.
+    */
     public void newMap(String message, String name) {
         try {
             String data = message.trim().substring(8);
@@ -294,19 +298,20 @@ public class baseassault extends MultiModule {
             m_botAction.sendPrivateMessage(name, "New map created.");
         }
         catch (Exception e) {
-            m_botAction.sendPrivateMessage(name,"Syntax error.");
+            m_botAction.sendPrivateMessage(name, "Syntax error.");
         }
     }
 
 
     /**
-     * Sends the host a list of available maps to select from.
-     * @param name The command's submitter.
-     */
+        Sends the host a list of available maps to select from.
+        @param name The command's submitter.
+    */
     public void sendMaps(String name) {
         int numMaps = mapsTable.size();
         m_botAction.sendPrivateMessage(name, "Currently available maps: ");
         m_botAction.sendPrivateMessage(name, "------------------------- ");
+
         for (int i = 0; i < numMaps; i++) {
             BasingMap tempMap = mapsTable.get(Integer.toString(i));
             m_botAction.sendPrivateMessage(name, i + ". " + tempMap);
@@ -315,9 +320,9 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Displays the currently selected settings. Asks the host to confirm them if he has yet to do so.
-     * @param name Name of player to whom the message will be sent.
-     */
+        Displays the currently selected settings. Asks the host to confirm them if he has yet to do so.
+        @param name Name of player to whom the message will be sent.
+    */
     public void sendSettings(String name) {
         //BasingMap tempMap = (BasingMap) mapsTable.get(Integer.toString(selectedMap));
         String maxTimeMinutes = millisToMinutes(maxTime);
@@ -336,9 +341,9 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Displays the status of the current game.
-     * @param name Name of player to whom the message will be sent.
-     */
+        Displays the status of the current game.
+        @param name Name of player to whom the message will be sent.
+    */
     public void sendStatus(String name) {
         long elapsedTime = System.currentTimeMillis() - startTime;
         m_botAction.sendPrivateMessage(name, "Freq " + attackingTeam + " is attacking in round " + roundNum + ". Elapsed time: " + millisToMinutes(elapsedTime) + ". Time to beat: " + millisToMinutes(fastestTime));
@@ -346,12 +351,13 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Changes which team will be first to attack.
-     * @param name Name of the host who sent the command.
-     * @param message Content of the command sent by the host.
-     */
+        Changes which team will be first to attack.
+        @param name Name of the host who sent the command.
+        @param message Content of the command sent by the host.
+    */
     public void setAttacker(String name, String message) {
         String newFreq = message.trim().substring(13);
+
         try {
             firstAttackingTeam = Integer.parseInt(newFreq);
             attackingTeam = firstAttackingTeam;
@@ -364,12 +370,13 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Changes which team will be first to defend.
-     * @param name Name of the host who sent the command.
-     * @param message Content of the command sent by the host.
-     */
+        Changes which team will be first to defend.
+        @param name Name of the host who sent the command.
+        @param message Content of the command sent by the host.
+    */
     public void setDefender(String name, String message) {
         String newFreq = message.trim().substring(10);
+
         try {
             firstDefendingTeam = Integer.parseInt(newFreq);
             defendingTeam = firstDefendingTeam;
@@ -382,12 +389,13 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Changes the selected map to the one specified by the host.
-     * @param name Name of the host who sent the command.
-     * @param message Content of the command sent by the host.
-     */
+        Changes the selected map to the one specified by the host.
+        @param name Name of the host who sent the command.
+        @param message Content of the command sent by the host.
+    */
     public void setMap(String name, String message) {
         String mapIndex = message.trim().substring(8);
+
         if (mapsTable.containsKey(mapIndex)) {
             confirmedMap = mapsTable.get(mapIndex);
             m_botAction.sendPrivateMessage(name, "Map number " + mapIndex + " selected.");
@@ -399,12 +407,13 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Changes the maxTime to the time specified by the host.
-     * @param name Name of the host who sent the command.
-     * @param message Content of the command sent by the host.
-     */
+        Changes the maxTime to the time specified by the host.
+        @param name Name of the host who sent the command.
+        @param message Content of the command sent by the host.
+    */
     public void setMaxTime(String name, String message) {
         String newMaxTime = message.trim().substring(9);
+
         try {
             maxTime = Integer.parseInt(newMaxTime);
             fastestTime = maxTime;
@@ -417,8 +426,8 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Displays the Base Assault rules in an arena message.
-     */
+        Displays the Base Assault rules in an arena message.
+    */
     public void showRules() {
         String currentMode = continuousMode ? "B." : "A.";
         String[] rules = {
@@ -430,16 +439,17 @@ public class baseassault extends MultiModule {
             "|   time wins. b) The game will continue until a time has not       |",
             "|   been beaten. The current mode is Mode " + currentMode
         };
+
         for (int i = 0; i < rules.length; i++) {
-           m_botAction.sendArenaMessage(rules[i]);
-       }
+            m_botAction.sendArenaMessage(rules[i]);
+        }
     }
 
 
     /**
-     * Warps host to selected coordinates for testing purposes.
-     * @param name Name of the host who will be warped.
-     */
+        Warps host to selected coordinates for testing purposes.
+        @param name Name of the host who will be warped.
+    */
     public void testWarp(final String name) {
         m_botAction.sendPrivateMessage(name, "Testing coordinates for " + confirmedMap);
         TimerTask safeWarp = new TimerTask() {
@@ -465,15 +475,16 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Handles event received message, and if from an ER or above, tries to
-     * parse it as an event mod command. Otherwise, parses as a general command.
-     * @param event Passed event.
-     */
+        Handles event received message, and if from an ER or above, tries to
+        parse it as an event mod command. Otherwise, parses as a general command.
+        @param event Passed event.
+    */
     public void handleEvent(Message event) {
         String message = event.getMessage();
 
         if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
+
             if (opList.isER(name)) {
                 handleCommand(name, message);
             }
@@ -485,31 +496,31 @@ public class baseassault extends MultiModule {
 
 
     /**
-     * Handles event player death.
-     * @param event Passed event.
-     */
+        Handles event player death.
+        @param event Passed event.
+    */
     public void handleEvent(PlayerDeath event) {
     }
 
     /**
-     * Handles player leaving events. Details still to be sorted out.
-     * @param event Contains event information on player who left.
-     */
+        Handles player leaving events. Details still to be sorted out.
+        @param event Contains event information on player who left.
+    */
     public void handleEvent(PlayerLeft event) {
     }
 
     /**
-     * Handles player changing ship/freq events.
-     * @param event Contains event information on player who changed ship or freq.
-     */
+        Handles player changing ship/freq events.
+        @param event Contains event information on player who changed ship or freq.
+    */
     public void handleEvent(FrequencyShipChange event) {
     }
 
 
     /**
-     * Handles flag claimed event. Used to detect the moment of conquering.
-     * @param event Contains event information on who claimed the flag.
-     */
+        Handles flag claimed event. Used to detect the moment of conquering.
+        @param event Contains event information on who claimed the flag.
+    */
     public void handleEvent(FlagClaimed event) {
         Player tempPlayer = m_botAction.getPlayer(event.getPlayerID());
 
@@ -538,6 +549,7 @@ public class baseassault extends MultiModule {
                         winner(defendingTeam);
                     }
                 }
+
                 if (continuousMode) {
                     if (elapsedTime < fastestTime) {
                         fastestTime = elapsedTime;
@@ -558,9 +570,9 @@ public class baseassault extends MultiModule {
 
 
     /** Handles commands sent by a bot owner.
-     * @param name Name of the player who submitted the command.
-     * @param message The message that the player submitted to the bot.
-     */
+        @param name Name of the player who submitted the command.
+        @param message The message that the player submitted to the bot.
+    */
     public void handleCommand(String name, String message) {
         //---------------
         // !start
@@ -704,10 +716,10 @@ public class baseassault extends MultiModule {
     }
 
     /**
-     * Handles all general commands given to the bot.
-     * @param name Name of player who sent the command.
-     * @param message Message sent
-     */
+        Handles all general commands given to the bot.
+        @param name Name of player who sent the command.
+        @param message Message sent
+    */
     public void handlePublicCommand(String name, String message) {
 
         //-------------
@@ -739,50 +751,50 @@ public class baseassault extends MultiModule {
     //*************************************************************************
     // BasingMap private class
     //*************************************************************************
-     private class BasingMap {
-         private String mapName;
-         private int safeX;
-         private int safeY;
-         private int flagRoomX;
-         private int flagRoomY;
+    private class BasingMap {
+        private String mapName;
+        private int safeX;
+        private int safeY;
+        private int flagRoomX;
+        private int flagRoomY;
 
-         public BasingMap(String name, int X1, int Y1, int X2, int Y2) {
-             mapName = name;
-             safeX = X1;
-             safeY = Y1;
-             flagRoomX = X2;
-             flagRoomY = Y2;
-         }
+        public BasingMap(String name, int X1, int Y1, int X2, int Y2) {
+            mapName = name;
+            safeX = X1;
+            safeY = Y1;
+            flagRoomX = X2;
+            flagRoomY = Y2;
+        }
 
-         public int getSafeX() {
-             return safeX;
-         }
+        public int getSafeX() {
+            return safeX;
+        }
 
-         public int getSafeY() {
-             return safeY;
-         }
+        public int getSafeY() {
+            return safeY;
+        }
 
-         public int getFlagRoomX() {
-             return flagRoomX;
-         }
+        public int getFlagRoomX() {
+            return flagRoomX;
+        }
 
-         public int getFlagRoomY() {
-             return flagRoomY;
-         }
+        public int getFlagRoomY() {
+            return flagRoomY;
+        }
 
-         public String toString() {
-             return mapName;
-         }
-     }
+        public String toString() {
+            return mapName;
+        }
+    }
 
     //--------------------------------------------------------------------------
     // Display Info / Help
     //--------------------------------------------------------------------------
 
     /**
-     * Gets the module help for bot owners.
-     * @return Returns a string array consisting of module help information.
-     */
+        Gets the module help for bot owners.
+        @return Returns a string array consisting of module help information.
+    */
     public String[] getModHelpMessage() {
         String[] help = {
             "Commands for the BA module (Author: script)",
@@ -804,9 +816,9 @@ public class baseassault extends MultiModule {
     }
 
     /**
-     * getGenHelp
-     * @return Returns a String array of the help message.
-     */
+        getGenHelp
+        @return Returns a String array of the help message.
+    */
     public String[] getGenHelp() {
         String[] help = {
             "|---------------------------------------------------------------|",
@@ -815,17 +827,17 @@ public class baseassault extends MultiModule {
             "|   !host          - Tells who the current host is.             |",
             "|---------------------------------------------------------------|"
         };
-      return help;
-  }
+        return help;
+    }
 
-  /**
-   * Empty method.
-   */
-  public void cancel() {
-  }
+    /**
+        Empty method.
+    */
+    public void cancel() {
+    }
 
-  public boolean isUnloadable()	{
-		return true;
-	}
+    public boolean isUnloadable() {
+        return true;
+    }
 
 }

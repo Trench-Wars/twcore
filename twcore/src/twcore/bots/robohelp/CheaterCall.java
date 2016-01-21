@@ -7,7 +7,7 @@ public class CheaterCall extends Call {
     static final int MINE = 2;
     static final int FORGOT = 3;
     static final int CLEAN = 4;
-    
+
     public CheaterCall(String player, String msg, int type) {
         super();
         this.playerName = player;

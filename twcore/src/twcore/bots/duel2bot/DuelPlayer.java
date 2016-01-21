@@ -15,11 +15,11 @@ import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
- * Represents a potential 2v2 TWEL player by holding all relevant information
- * and methods for all activities/functions.
- *
- * @author WingZero
- */
+    Represents a potential 2v2 TWEL player by holding all relevant information
+    and methods for all activities/functions.
+
+    @author WingZero
+*/
 public class DuelPlayer {
 
     boolean create, registered, banned, enabled;
@@ -41,7 +41,7 @@ public class DuelPlayer {
     int userID;
     int userMID;
     String userIP;
-    
+
     String staffer;
 
     UserData user;
@@ -78,7 +78,7 @@ public class DuelPlayer {
     static final int LAGOUTS = 2;
     static final int SPAWNS = 3;
 
-    
+
     private long lastFoul = 0;
     private long lastDeath = 0;
     private long lastSpec = 0;
@@ -101,10 +101,12 @@ public class DuelPlayer {
         freq = p.getFrequency();
         ship = p.getShipType();
         rating = 1000;
+
         if (ship > 0)
             status = IN;
         else
             status = SPEC;
+
         create = false;
         registered = false;
         banned = false;
@@ -128,10 +130,12 @@ public class DuelPlayer {
         freq = -1;
         ship = -1;
         rating = -1;
+
         if (ship > 0)
             status = IN;
         else
             status = SPEC;
+
         create = false;
         registered = false;
         banned = false;
@@ -140,6 +144,7 @@ public class DuelPlayer {
         userIP = "";
         getRules();
         user = new UserData(ba, db, name, true);
+
         if (user == null || user.getUserID() < 1)
             user = null;
         else
@@ -154,8 +159,8 @@ public class DuelPlayer {
         d_spawnLimit = bot.d_spawnLimit;
         d_maxLagouts = bot.d_maxLagouts;
     }
-    
-    
+
+
     /** Handles position events  */
     public void handlePosition(PlayerPosition event) {
         if (status == WARPING || status == LAGGED || status == OUT || status == REOUT
@@ -163,6 +168,7 @@ public class DuelPlayer {
 
         int x = event.getXLocation() / 16;
         int y = event.getYLocation() / 16;
+
         // Player p = ba.getPlayer(name);
         // 416 591
         if (team != null)
@@ -173,6 +179,7 @@ public class DuelPlayer {
 
     public void handleFreq(FrequencyChange event) {
         if (status == WARPING || status == RETURN) return;
+
         int f = event.getFrequency();
 
         if (team != null && team.game != null) {
@@ -193,8 +200,9 @@ public class DuelPlayer {
                     setStatus(OUT);
                 }
         } else if (bot.freqs.contains(f)) {
-            if (freq == 9999) 
+            if (freq == 9999)
                 ba.specWithoutLock(name);
+
             ba.setFreq(name, freq);
         } else {
             if (f != duelFreq) {
@@ -202,38 +210,47 @@ public class DuelPlayer {
                 partner = null;
                 duelFreq = -1;
             }
+
             freq = f;
         }
     }
 
     public void handleFSC(FrequencyShipChange event) {
         int shipNum = event.getShipType();
-        if (status == WARPING || ((status == LAGGED || status == OUT) && shipNum == 0) || status == RETURN) 
+
+        if (status == WARPING || ((status == LAGGED || status == OUT) && shipNum == 0) || status == RETURN)
             return;
+
         int f = event.getFrequency();
         int statusID = status;
         setStatus(WARPING);
+
         if (statusID == OUT) {
             ba.sendPrivateMessage(name, "Please stay in spec and on your freq until your duel is finished.");
             ba.specWithoutLock(name);
+
             if (freq != f) ba.setFreq(name, freq);
+
             setStatus(OUT);
             return;
         } else if (statusID == LAGGED) {
             ba.specWithoutLock(name);
-            if (freq != f) 
+
+            if (freq != f)
                 ba.setFreq(name, freq);
+
             ba.sendPrivateMessage(name, "Please use !lagout to return to your duel.");
             setStatus(LAGGED);
             return;
         }
-        
+
         if (team == null) {
             if (shipNum == 4 || shipNum == 6) {
                 if (ship != 0)
                     ba.setShip(name, ship);
                 else
                     ba.specWithoutLock(name);
+
                 ba.sendPrivateMessage(name, "Invalid ship!");
             } else if (shipNum == 0 && duelFreq > -1 && partner != null) {
                 bot.removeChalls(duelFreq);
@@ -246,12 +263,13 @@ public class DuelPlayer {
             } else
                 ship = shipNum;
 
-            /* if (bot.freqs.contains(freq)) ba.setFreq(name, freq); else freq =
-             * freq; */
+            /*  if (bot.freqs.contains(freq)) ba.setFreq(name, freq); else freq =
+                freq; */
 
         } else {
 
             boolean foul = false;
+
             if (shipNum == 0 && (statusID == PLAYING)) {
                 ba.setFreq(name, freq);
                 handleLagout();
@@ -269,7 +287,7 @@ public class DuelPlayer {
                     ba.setShip(name, ship);
                 else
                     ship = shipNum;
-            } else if ((shipNum != ship) && (team.game.div != 5) && (team.game.state == DuelGame.SETUP)) 
+            } else if ((shipNum != ship) && (team.game.div != 5) && (team.game.state == DuelGame.SETUP))
                 ba.setShip(name, ship);
 
             if (foul || team.game.state == DuelGame.IN_PROGRESS) {
@@ -279,13 +297,14 @@ public class DuelPlayer {
             } else
                 team.warpToSafe(this);
         }
+
         setStatus(statusID);
     }
 
-    
+
     /**
-     * Sends a message to a lagged out player with return instructions.
-     */
+        Sends a message to a lagged out player with return instructions.
+    */
     public void handleReturn() {
         setStatus(RETURN);
         ba.specWithoutLock(name);
@@ -296,11 +315,13 @@ public class DuelPlayer {
 
     public void handleDeath(String killerName) {
         if (team == null) return;
+
         setStatus(WARPING);
         long now = System.currentTimeMillis();
         DuelPlayer killer = bot.players.get(killerName.toLowerCase());
 
         team.warpToSafe(this);
+
         // DoubleKill check - remember to add a timer in case its the last death
         if ((killer != null) && (killer.getTimeFromLastDeath() < 2001)
                 && (name.equalsIgnoreCase(killer.getLastKiller()))) {
@@ -353,23 +374,26 @@ public class DuelPlayer {
 
     public void handleSpawnKill() {
         if (team == null) return;
+
         stats.handleSpawn();
+
         if (stats.getStat(StatType.SPAWNS) < d_spawnLimit)
             ba.sendPrivateMessage(name,
-                    "Spawn killing is illegal. If you should continue to spawn kill you will forfeit your match.");
+                                  "Spawn killing is illegal. If you should continue to spawn kill you will forfeit your match.");
         else
             remove(SPAWNS);
     }
 
     /**
-     * Handles the event of a player warping.
-     */
+        Handles the event of a player warping.
+    */
     public void handleWarp(boolean pos) {
         if (status == WARPING || status == RETURN) return;
 
         setStatus(WARPING);
 
         long now = System.currentTimeMillis();
+
         if ((now - lastFoul > 500) && (team.game.state == DuelGame.IN_PROGRESS))
             stats.handleWarp();
 
@@ -377,10 +401,11 @@ public class DuelPlayer {
             if (now - lastFoul > 500)
                 if (pos)
                     ba.sendPrivateMessage(name,
-                            "Warping is illegal in this league and if you warp again, you will forfeit.");
+                                          "Warping is illegal in this league and if you warp again, you will forfeit.");
                 else
                     ba.sendPrivateMessage(name,
-                            "Changing freq or ship is illegal in this league and if you do this again, you will forfeit.");
+                                          "Changing freq or ship is illegal in this league and if you do this again, you will forfeit.");
+
             // BACKTRACK
             team.warpWarper(this);
         } else if (team.game.state != DuelGame.IN_PROGRESS)
@@ -395,24 +420,27 @@ public class DuelPlayer {
     }
 
     /**
-     * Called when a player lags out of a game.
-     */
+        Called when a player lags out of a game.
+    */
     public void handleLagout() {
         if (team == null) return;
-        
+
         setStatus(LAGGED);
-        if (team.game.state == DuelGame.IN_PROGRESS) 
+
+        if (team.game.state == DuelGame.IN_PROGRESS)
             stats.handleLagout();
+
         doPlaytime();
+
         if (stats.getStat(StatType.LAGOUTS) < d_maxLagouts) {
             ba.sendSmartPrivateMessage(name,
-                    "You have 1 minute to return (!lagout) to your duel or you will forfeit! (!lagout)");
+                                       "You have 1 minute to return (!lagout) to your duel or you will forfeit! (!lagout)");
             lagout = new TimerTask() {
                 @Override
                 public void run() {
                     bot.laggers.remove(name.toLowerCase());
                     ba.sendSmartPrivateMessage(name,
-                            "You have forfeited since you have been lagged out for over a minute.");
+                                               "You have forfeited since you have been lagged out for over a minute.");
                     remove(LAGOUTS);
                     lagout = null;
                 }
@@ -423,23 +451,24 @@ public class DuelPlayer {
             team.partnerLagout(name);
         } else {
             ba.sendSmartPrivateMessage(name,
-                    "You have exceeded the lagout limit and forfeit your duel.");
+                                       "You have exceeded the lagout limit and forfeit your duel.");
             remove(LAGOUTS);
         }
     }
-    
+
     public void sendDeaths() {
         ba.sendSmartPrivateMessage(name, "You have " + (specAt - getDeaths()) + " deaths remaining.");
     }
 
     /**
-     * Handles a player's !lagout command
-     */
+        Handles a player's !lagout command
+    */
     public void doLagout() {
         if (status != LAGGED) {
             ba.sendPrivateMessage(name, "You are not lagged out.");
             return;
         }
+
         setStatus(RETURN);
         cancelTask(lagout);
         bot.laggers.remove(name.toLowerCase());
@@ -447,13 +476,14 @@ public class DuelPlayer {
         lastFoul = System.currentTimeMillis();
         ba.setShip(name, ship);
         ba.setFreq(name, freq);
+
         if (team != null && team.game != null && team.game.state == DuelGame.IN_PROGRESS) {
             lastSpec = lastFoul;
             team.warpPlayer(this);
-        } else if (team != null && team.game != null && team.game.state == DuelGame.SETUP) 
+        } else if (team != null && team.game != null && team.game.state == DuelGame.SETUP)
             team.warpToSafe(this);
     }
-    
+
     /** Handles a player !signup command */
     public void doSignup() {
         if (registered) {
@@ -464,7 +494,7 @@ public class DuelPlayer {
             ba.sendUnfilteredPrivateMessage(name, "*info");
         }
     }
-    
+
     /** Handles a staffer force !signup command */
     public void doSignup(String staff) {
         if (registered)
@@ -474,9 +504,9 @@ public class DuelPlayer {
             staffer = staff;
             bot.debug("[signup] Attempting to signup player: " + name);
             ba.sendUnfilteredPrivateMessage(name, "*info");
-        }        
+        }
     }
-    
+
     /** Handles a player !disable command */
     public void doDisable(String staff) {
         if (staff != null && staffer != null) {
@@ -484,10 +514,10 @@ public class DuelPlayer {
             return;
         } else if (staff != null)
             staffer = staff;
-        
+
         if (registered && enabled && !banned)
             sql_disablePlayer();
-        else if (staff == null)  
+        else if (staff == null)
             ba.sendSmartPrivateMessage(name, "Could not disable because name is not registered/enabled or is banned.");
         else {
             staffer = null;
@@ -502,34 +532,35 @@ public class DuelPlayer {
             return;
         } else if (staff != null)
             staffer = staff;
-        
+
         if (registered && !enabled && !banned)
             sql_enablePlayer();
-        else if (staff == null)  
+        else if (staff == null)
             ba.sendSmartPrivateMessage(name, "A name can only be enabled if not banned and already registered but disabled");
         else {
             staffer = null;
             ba.sendSmartPrivateMessage(staff, "A name can only be enabled if not banned and already registered but disabled");
         }
     }
-    
+
     public void doRating() {
         ba.sendPrivateMessage(name, "Current rating: " + rating);
     }
-    
+
     public void doRec() {
         ba.sendPrivateMessage(name, "" + getKills() + ":" + getDeaths());
     }
 
     /**
-     * Sets the player as part of a team.
-     *
-     * @param team
-     */
+        Sets the player as part of a team.
+
+        @param team
+    */
     public void setTeam(DuelTeam team) {
         this.team = team;
         rules = team.rules;
         freq = team.freq;
+
         if (team.div != 5)
             ship = team.ship;
         else {
@@ -539,20 +570,20 @@ public class DuelPlayer {
     }
 
     /**
-     * Assigns the player's duel partner and freq.
-     *
-     * @param name
-     * @param freq
-     */
+        Assigns the player's duel partner and freq.
+
+        @param name
+        @param freq
+    */
     public void setDuel(String name, int freq) {
         partner = name;
         duelFreq = freq;
     }
-    
+
     public void setRating(int r) {
         rating = r;
     }
-    
+
     /** Resets partner and duel freq (-1). */
     public void cancelDuel() {
         partner = null;
@@ -562,24 +593,24 @@ public class DuelPlayer {
     public String getName() {
         return name;
     }
-    
+
     /** Determines if a player is eligible for league play */
     public boolean canPlay() {
         return registered && enabled && !banned;
     }
-    
+
     public boolean isEnabled() {
         return enabled;
     }
-    
+
     public boolean isRegistered() {
         return registered;
     }
-    
+
     public boolean isBanned() {
         return banned;
     }
-    
+
     public boolean isSpecced() {
         return status == SPEC && status == OUT && status == REOUT && status == LAGGED;
     }
@@ -610,22 +641,25 @@ public class DuelPlayer {
     public String getLastKiller() {
         return lastKiller;
     }
-    
+
     public void startGame(int[] spawn) {
         stats = new PlayerStats(ship);
         ba.scoreReset(name);
+
         if (!bot.laggers.containsKey(name.toLowerCase())) {
             warp(spawn[0], spawn[1]);
             ba.sendPrivateMessage(name, "GO GO GO!!!", 104);
         }
+
         lastSpec = System.currentTimeMillis();
     }
-    
+
     public void endTimePlayed() {
         if (out == -1 && lastSpec > 0) {
             int secs = (int) (System.currentTimeMillis() - lastSpec) / 1000;
             stats.handleTimePlayed(secs);
         }
+
         lastSpec = 0;
     }
 
@@ -635,6 +669,7 @@ public class DuelPlayer {
             status = SPEC;
         else
             status = IN;
+
         cancelTask(lagout);
         cancelTask(spawner);
         cancelTask(dying);
@@ -647,6 +682,7 @@ public class DuelPlayer {
     /** Decrements a death and sets status accordingly */
     public void removeDeath() {
         if (stats.getStat(StatType.DEATHS) == specAt) setStatus(PLAYING);
+
         if (stats.getStat(StatType.DEATHS) > 0) stats.decrementStat(StatType.DEATHS);
     }
 
@@ -669,7 +705,7 @@ public class DuelPlayer {
     public int getDeaths() {
         return stats.getStat(StatType.DEATHS);
     }
-    
+
     public int getLagouts() {
         return stats.getStat(StatType.LAGOUTS);
     }
@@ -678,11 +714,11 @@ public class DuelPlayer {
     public int getStatus() {
         return status;
     }
-    
+
     public int getRating() {
         return rating;
     }
-    
+
     public int getTime() {
         return stats.getStat(StatType.PLAYTIME);
     }
@@ -693,33 +729,40 @@ public class DuelPlayer {
     }
 
     /**
-     * Removes the player from the duel and reports the reason for it.
-     *
-     * @param reason
-     */
+        Removes the player from the duel and reports the reason for it.
+
+        @param reason
+    */
     public void remove(int reason) {
         ba.specWithoutLock(name);
         ba.setFreq(name, freq);
         endTimePlayed();
+
         if (lagout != null) {
             cancelTask(lagout);
             bot.laggers.remove(name.toLowerCase());
         }
+
         if (status == REOUT) {
             setStatus(OUT);
             return;
         }
+
         out = reason;
-        if (stats.getStat(StatType.DEATHS) != specAt) 
+
+        if (stats.getStat(StatType.DEATHS) != specAt)
             stats.setStat(StatType.DEATHS, specAt);
+
         setStatus(OUT);
         team.playerOut(this);
     }
-    
+
     private void doPlaytime() {
-        if (team.game.state != DuelGame.IN_PROGRESS) 
-            return; 
+        if (team.game.state != DuelGame.IN_PROGRESS)
+            return;
+
         long now = System.currentTimeMillis();
+
         if (lastSpec > 0) {
             int secs = (int) (now - lastSpec) / 1000;
             stats.handleTimePlayed(secs);
@@ -731,8 +774,10 @@ public class DuelPlayer {
     public void warp(int x, int y) {
         setStatus(WARPING);
         Player p1 = ba.getPlayer(name);
+
         if (p1 == null)
             return;
+
         ba.shipReset(name);
         ba.warpTo(name, x, y);
         p1.updatePlayerPositionManuallyAfterWarp(x, y);
@@ -752,15 +797,19 @@ public class DuelPlayer {
     /** Prepares the player for a duel in the given ship and coordinates. */
     public void starting(int div, int shipNum, int x, int y) {
         if (status == LAGGED) return;
+
         if (div != -1)
             sql_checkDivision(div);
+
         setStatus(WARPING);
+
         if (shipNum > -1)
             ba.setShip(name, ship);
         else if (ship == 0) {
             ba.setShip(name, shipNum);
             ship = shipNum;
         }
+
         ba.setFreq(name, freq);
         stats = new PlayerStats(ship);
 
@@ -780,14 +829,14 @@ public class DuelPlayer {
         } else
             team.game.cancelDuel(name);
     }
-    
+
     private void cancelTask(TimerTask task) {
         if (task != null) {
             ba.cancelTask(task);
             task = null;
         }
     }
-    
+
     public void sql_checkDivision(int div) {
         String query = "SELECT fnUserID, fnRating FROM tblDuel2__league WHERE fnSeason = " + d_season + " AND fnDivision = " + div + " AND fnUserID = " + userID + " LIMIT 1";
         ba.SQLBackgroundQuery(db, "league:" + userID + ":" + div + ":" + name, query);
@@ -808,20 +857,21 @@ public class DuelPlayer {
             e.printStackTrace();
         }
     }
-    
+
     /**
-     * Stores the player statistics using the specified team ID.
-     *
-     * @param teamID
-     */
+        Stores the player statistics using the specified team ID.
+
+        @param teamID
+    */
     public void sql_storeStats(int teamID, boolean won) {
         String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
-        String query = "INSERT INTO tblDuel2__stats (fnTeamID, fnUserID, fnShip, fnKills, fnDeaths, fnShots, fnKillJoys, " + 
-                "fnKnockOuts, fnKillStreak, fnDeathStreak, fnLagouts, fnTimePlayed) VALUES(" + teamID + ", " + userID + ", " + ship + ", " + stats.getStat(StatType.KILLS) + ", " + stats.getStat(StatType.DEATHS) + ", " +
-                stats.getStat(StatType.SHOTS) + ", " + stats.getStat(StatType.KILL_JOYS) + ", " + 
-                stats.getStat(StatType.KNOCK_OUTS) + ", " + 
-                stats.getStat(StatType.BEST_KILL_STREAK) + ", " + stats.getStat(StatType.WORST_DEATH_STREAK) + ", " +
-                stats.getStat(StatType.LAGOUTS) + ", " + stats.getStat(StatType.PLAYTIME) + ")";
+        String query = "INSERT INTO tblDuel2__stats (fnTeamID, fnUserID, fnShip, fnKills, fnDeaths, fnShots, fnKillJoys, " +
+                       "fnKnockOuts, fnKillStreak, fnDeathStreak, fnLagouts, fnTimePlayed) VALUES(" + teamID + ", " + userID + ", " + ship + ", " + stats.getStat(StatType.KILLS) + ", " + stats.getStat(StatType.DEATHS) + ", " +
+                       stats.getStat(StatType.SHOTS) + ", " + stats.getStat(StatType.KILL_JOYS) + ", " +
+                       stats.getStat(StatType.KNOCK_OUTS) + ", " +
+                       stats.getStat(StatType.BEST_KILL_STREAK) + ", " + stats.getStat(StatType.WORST_DEATH_STREAK) + ", " +
+                       stats.getStat(StatType.LAGOUTS) + ", " + stats.getStat(StatType.PLAYTIME) + ")";
+
         try {
             ba.SQLQueryAndClose(db, query);
             query = "UPDATE tblDuel2__player SET fdLastPlayed = '" + date + "' WHERE fnUserID = " + userID;
@@ -829,33 +879,39 @@ public class DuelPlayer {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         sql_updateDivision(team.div, won);
     }
 
     /**
-     * Creates a player profile in the database using the given
-     * IP address and MID as long as no active aliases are found
-     * (unless a staffer is set to have issued the signup).
-     *
-     * @param ip
-     *      IP String
-     * @param mid
-     *      machine ID number
-     */
+        Creates a player profile in the database using the given
+        IP address and MID as long as no active aliases are found
+        (unless a staffer is set to have issued the signup).
+
+        @param ip
+            IP String
+        @param mid
+            machine ID number
+    */
     public void sql_createPlayer(String ip, String mid) {
         if (!create) return;
+
         create = false;
         //String a = "SELECT a2.fnUserID FROM tblDuel2__player P, tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP WHERE a1.fnUserID = " + userID + " AND p.fnUserID = a2.fnUserID AND p.fnEnabled = 1";
         //String query = "SELECT fnUserID FROM tblDuel2__player P WHERE fnEnabled = 1 AND ((fcIP = '" + Tools.addSlashesToString(ip) + "' OR (fcIP = '" + ip + "' AND fnMID = " + mid + ")) OR fnUserID = " + userID + ")";
         //String query = "SELECT fnUserID FROM tblDuel2__player WHERE fnEnabled = 1 AND fnUserID IN (" + a + ")";
         String query = "SELECT DISTINCT DP.fnUserID FROM tblDuel2__player DP JOIN (tblAlias a1 JOIN tblAlias a2 ON a1.fnIP = a2.fnIP) ON a2.fnUserID = DP.fnUserID WHERE  a1.fnUserID = " + userID + " AND a1.fdUpdated > DATE_SUB(NOW(), INTERVAL 2 YEAR) AND a2.fdUpdated > DATE_SUB(NOW(), INTERVAL 2 YEAR) AND DP.fnEnabled = 1";
         ResultSet rs = null;
+
         try {
             rs = ba.SQLQuery(db, query);
+
             if (staffer == null && rs.next()) {
                 String ids = "" + rs.getInt(1);
+
                 while (rs.next())
                     ids += ", " + rs.getInt(1);
+
                 sql_reportAlias(ids);
             } else {
                 query = "INSERT INTO tblDuel2__player (fnUserID, fcIP, fnMID) VALUES(" + userID + ", '" + Tools.addSlashesToString(ip) + "', " + mid + ")";
@@ -863,6 +919,7 @@ public class DuelPlayer {
                 registered = true;
                 enabled = true;
                 ba.sendSmartPrivateMessage(name, "You have been successfully registered to play ranked team duels!");
+
                 if (staffer != null) {
                     ba.sendSmartPrivateMessage(staffer, "Registration successful for " + name);
                     staffer = null;
@@ -876,15 +933,17 @@ public class DuelPlayer {
             ba.SQLClose(rs);
         }
     }
-    
+
     /** Disables this player from league play and updates database */
     private void sql_disablePlayer() {
         String query = "UPDATE tblDuel2__player SET fnEnabled = 0 WHERE fnUserID = " + userID;
+
         try {
             ba.SQLQueryAndClose(db, query);
             enabled = false;
             create = false;
             ba.sendSmartPrivateMessage(name, "Successfully disabled name from use in 2v2 TWEL duels. ");
+
             if (staffer != null) {
                 ba.sendSmartPrivateMessage(staffer, "Successfully disabled '" + name + "' from use in 2v2 TWEL duels. ");
                 staffer = null;
@@ -895,27 +954,33 @@ public class DuelPlayer {
                 ba.sendSmartPrivateMessage(staffer, "Error encounterd disabling '" + name + "' for use in 2v2 TWEL duels! ");
             } else
                 ba.sendSmartPrivateMessage(name, "Error encounterd disabling '" + name + "' for use in 2v2 TWEL duels! ");
+
             bot.debug("[sql_disablePlayer] Could not disable: " + name);
             e.printStackTrace();
         }
     }
-    
+
     /** Enables the player and updates it in the database */
     private void sql_enablePlayer() {
         String query = "SELECT fnUserID FROM tblDuel2__player WHERE fnEnabled = 1 AND (fcIP = '" + userIP + "' OR (fcIP = '" + userIP + "' AND fnMID = " + userMID + ") OR fnUserID = " + userID + ")";
         ResultSet rs = null;
+
         try {
             rs = ba.SQLQuery(db, query);
+
             if (staffer == null && rs.next()) {
                 String ids = "" + rs.getInt(1);
+
                 while (rs.next())
                     ids += ", " + rs.getInt(1);
+
                 sql_reportAlias(ids);
             } else {
                 query = "UPDATE tblDuel2__player SET fnEnabled = 1 WHERE fnUserID = " + userID;
                 ba.SQLQueryAndClose(db, query);
                 enabled = true;
                 ba.sendSmartPrivateMessage(name, "You have been successfully registered to play ranked team duels!");
+
                 if (staffer != null) {
                     ba.sendSmartPrivateMessage(staffer, "Successfully enabled '" + name + "' for use in 2v2 TWEL duels. ");
                     staffer = null;
@@ -927,29 +992,34 @@ public class DuelPlayer {
                 ba.sendSmartPrivateMessage(staffer, "Error encounterd enabling '" + name + "' for use in 2v2 TWEL duels! ");
             } else
                 ba.sendSmartPrivateMessage(name, "Error encounterd enabling '" + name + "' for use in 2v2 TWEL duels! ");
+
             bot.debug("[sql_enablePlayer] Could not enable: " + name);
             e.printStackTrace();
         } finally {
             ba.SQLClose(rs);
         }
     }
-    
+
     /**
-     * Reports a list of aliases preventing the registration of the player.
-     *
-     * @param ids
-     *      a String of user IDs of all the player's active aliases
-     */
+        Reports a list of aliases preventing the registration of the player.
+
+        @param ids
+            a String of user IDs of all the player's active aliases
+    */
     private void sql_reportAlias(String ids) {
         String query = "SELECT fcUserName FROM tblUser WHERE fnUserID IN (" + ids + ")";
         ResultSet rs = null;
+
         try {
             rs = ba.SQLQuery(db, query);
+
             if (rs.next()) {
                 String msg = "The following name(s) must first be disabled before you can register a different name: ";
                 msg += rs.getString(1);
+
                 while (rs.next())
                     msg += ", " + rs.getString(1);
+
                 ba.sendSmartPrivateMessage(name, msg);
             } else
                 ba.sendSmartPrivateMessage(name, "[ERROR] Failed to find alias names and/or register player.");
@@ -959,7 +1029,7 @@ public class DuelPlayer {
             ba.SQLClose(rs);
         }
     }
-    
+
     /** Prepares player information collected from the database */
     private void sql_setupUser() {
         userID = user.getUserID();
@@ -967,18 +1037,24 @@ public class DuelPlayer {
         // check if registered
         String query = "SELECT fnEnabled, fcIP, fnMID FROM tblDuel2__player WHERE fnUserID = " + userID + " LIMIT 1";
         ResultSet rs = null;
+
         try {
             rs = ba.SQLQuery(db, query);
+
             if (rs.next()) {
                 registered = true;
+
                 if (rs.getInt("fnEnabled") == 1)
                     enabled = true;
+
                 userIP = rs.getString("fcIP");
                 userMID = rs.getInt("fnMID");
             }
+
             ba.SQLClose(rs);
             query = "SELECT fnActive FROM tblDuel2__ban WHERE fnUserID = " + userID + " AND fnActive = 1";
             rs = ba.SQLQuery(db, query);
+
             if (rs.next())
                 banned = true;
         } catch (SQLException e) {
@@ -992,8 +1068,10 @@ public class DuelPlayer {
     public void sql_getRating(String div) {
         String query = "SELECT fnRating FROM tblDuel2__league WHERE fnUserID = " + userID + " AND fnDivision = " + div + " LIMIT 1";
         ResultSet rs = null;
+
         try {
             rs = ba.SQLQuery(db, query);
+
             if (rs.next())
                 rating = rs.getInt("fnRating");
         } catch (SQLException e) {

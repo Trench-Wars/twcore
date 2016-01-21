@@ -5,17 +5,17 @@ import twcore.core.events.*;
 public abstract class EventListener {
 
     /**
-     * The constructor is protected to make it so that this class cannot be
-     * instantiated.
-     */
+        The constructor is protected to make it so that this class cannot be
+        instantiated.
+    */
     protected EventListener() {
     }
 
     /**
-     * This method distributes the events to the appropriate event handlers.
-     *
-     * @param event is the event to distribute.
-     */
+        This method distributes the events to the appropriate event handlers.
+
+        @param event is the event to distribute.
+    */
     public void handleEvent(SubspaceEvent event) {
         if (event instanceof Message)
             handleEvent((Message) event);
@@ -68,9 +68,9 @@ public abstract class EventListener {
     }
 
     /*
-     * All of these stub functions handle the various events.  When this class
-     * is extended, these methods will be overridden to add functionality.
-     */
+        All of these stub functions handle the various events.  When this class
+        is extended, these methods will be overridden to add functionality.
+    */
     public void handleEvent(Message event) {
     }
 

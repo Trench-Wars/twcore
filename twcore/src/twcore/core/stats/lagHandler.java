@@ -44,7 +44,7 @@ public class lagHandler
     boolean lagLimitsInEffect = false;
     boolean free = true;
     int state;
-	int lastRequestStarted = 0;
+    int lastRequestStarted = 0;
 
     String playerName = "";
     String requester = "";
@@ -72,8 +72,13 @@ public class lagHandler
 
     public void requestLag(String lagger, String req)
     {
-        if (lagger == null) { return; }
-        if (req == null) { req = "[BOT]"; }
+        if (lagger == null) {
+            return;
+        }
+
+        if (req == null) {
+            req = "[BOT]";
+        }
 
         if (free)
         {
@@ -81,12 +86,12 @@ public class lagHandler
         }
         else
         {
-			if (((int)System.currentTimeMillis() / 1000) - lastRequestStarted > 3)
-			{
-				startLagRequest(lagger, req);
-			} else {
-	            m_lagRequest.add(new lagRequest(lagger, req));
-			}
+            if (((int)System.currentTimeMillis() / 1000) - lastRequestStarted > 3)
+            {
+                startLagRequest(lagger, req);
+            } else {
+                m_lagRequest.add(new lagRequest(lagger, req));
+            }
         }
     }
 
@@ -108,24 +113,29 @@ public class lagHandler
                 {
                     doGetPing(message);
                 }
+
                 if (message.startsWith("LOSS:"))
                 {
                     doGetPloss(message);
                 }
+
                 if (message.startsWith("C2S CURRENT:"))
                 {
                     c2SSlowPackets = getPacketInfo(message);
                     c2SSlowPercent = getPercentInfo(message);
                 }
+
                 if (message.startsWith("S2C CURRENT:"))
                 {
                     s2CSlowPackets = getPacketInfo(message);
                     s2CSlowPercent = getPercentInfo(message);
                 }
+
                 if (message.startsWith("TIME:"))
                 {
                     sessionTime = parseSessionTime(getInfoString(message, "Session:"));
                 }
+
                 if (message.startsWith("Bytes/Sec:"))
                 {
                     state = 2;
@@ -167,10 +177,11 @@ public class lagHandler
 
                         if (sTime - uTime == diff)
                         {
-							if (tinfoValues.size() == 0) {
-								serverTime[0] = sTime;
-								userTime[0] = uTime;
-							}
+                            if (tinfoValues.size() == 0) {
+                                serverTime[0] = sTime;
+                                userTime[0] = uTime;
+                            }
+
                             tinfoValues.add(new Integer(diff));
 
                             serverTime[1] = sTime;
@@ -179,7 +190,7 @@ public class lagHandler
                             if (tinfoValues.size() >= 32)
                             {
                                 m_botAction.cancelTask(tITimer);
-								tInfoCheck();
+                                tInfoCheck();
                             }
                         }
                     }
@@ -324,6 +335,7 @@ public class lagHandler
 
             stringBuffer.deleteCharAt(removeIndex);
         }
+
         return stringBuffer.toString();
     }
 
@@ -338,6 +350,7 @@ public class lagHandler
             if (charAt != targetChar)
                 return index;
         }
+
         return -1;
     }
 
@@ -369,6 +382,7 @@ public class lagHandler
             tinfoValue = tinfoValues.get(index);
             mean = mean + tinfoValue.intValue();
         }
+
         return mean / tinfoValues.size();
     }
 
@@ -384,6 +398,7 @@ public class lagHandler
             delta = tinfoValue.intValue() - spikeMean;
             sd = sd + delta * delta;
         }
+
         return Math.sqrt(sd / tinfoValues.size()) * 10;
     }
 
@@ -404,27 +419,29 @@ public class lagHandler
 
             lastTinfo = thisTinfo;
         }
+
         return spikeCount;
     }
 
-	public void adjustTinfoValues()
-	{
-		int deltaServerTime = serverTime[1] - serverTime[0];
-		int deltaUserTime = userTime[1] - userTime[0];
+    public void adjustTinfoValues()
+    {
+        int deltaServerTime = serverTime[1] - serverTime[0];
+        int deltaUserTime = userTime[1] - userTime[0];
 
-		double delta = ((double)deltaServerTime - (double)deltaUserTime) / 32.0;
+        double delta = ((double)deltaServerTime - (double)deltaUserTime) / 32.0;
 
-//		m_botAction.sendPrivateMessage("Sika", "Adjusting: " + playerName + " Delta: " + delta + "("+deltaServerTime+"/"+deltaUserTime+")");
+        //      m_botAction.sendPrivateMessage("Sika", "Adjusting: " + playerName + " Delta: " + delta + "("+deltaServerTime+"/"+deltaUserTime+")");
 
         Integer tinfoValue;
-		for (int index = 1; index < tinfoValues.size(); index++)
+
+        for (int index = 1; index < tinfoValues.size(); index++)
         {
             tinfoValue = tinfoValues.get(index);
             int newValue = tinfoValue.intValue() - (int)(delta * index);
-//			m_botAction.sendPrivateMessage("Sika", tinfoValue.intValue() + " -> " + newValue);
+            //          m_botAction.sendPrivateMessage("Sika", tinfoValue.intValue() + " -> " + newValue);
             tinfoValues.set(index, new Integer(newValue));
         }
-	}
+    }
 
     public void startLagRequest(String pName, String req)
     {
@@ -449,16 +466,18 @@ public class lagHandler
     public void spamLagInfo(boolean tI, boolean present)
     {
         LagReport report;
-  
+
         if (present) {
-        	
-        	int ship=0;
-        	if (m_botAction.getPlayer(playerName) != null) {
-        		ship = m_botAction.getPlayer(playerName).getShipType();
-        	}
+
+            int ship = 0;
+
+            if (m_botAction.getPlayer(playerName) != null) {
+                ship = m_botAction.getPlayer(playerName).getShipType();
+            }
 
             String[] lag = new String[2];
             lag[0] = playerName + ": PING Cur: " + currentPing + "ms Ave: " + averagePing + "ms Low: " + lowPing + "ms Hi: " + highPing + "ms PLOSS S2C: " + s2C + "% C2S: " + c2S + "% S2CWeapons: " + s2CWeapons + "%";
+
             if (!tI) {
                 lag[1] = Tools.formatString("", playerName.length(), "-") + "  SLOW S2C: " + s2CSlowPercent + "% C2S: " + c2SSlowPercent + "% NO SPIKE INFO WAS RETRIEVED";
             } else {
@@ -471,65 +490,65 @@ public class lagHandler
 
                 boolean spec = false;
 
-                if (m_botSettings.getInt("CurPing"+ship)!=0 && m_botSettings.getInt("CurPing"+ship) < currentPing && !spec) {
-                	spec = true;
-                    lagReport = "PING Cur. [" + currentPing + "  LIMIT (SHIP:"+ship+"): " + m_botSettings.getInt("CurPing"+ship) + "]";
+                if (m_botSettings.getInt("CurPing" + ship) != 0 && m_botSettings.getInt("CurPing" + ship) < currentPing && !spec) {
+                    spec = true;
+                    lagReport = "PING Cur. [" + currentPing + "  LIMIT (SHIP:" + ship + "): " + m_botSettings.getInt("CurPing" + ship) + "]";
                 }
-                else if (m_botSettings.getInt("CurPing"+ship)==0 && m_botSettings.getInt("CurPing") < currentPing && !spec) {
+                else if (m_botSettings.getInt("CurPing" + ship) == 0 && m_botSettings.getInt("CurPing") < currentPing && !spec) {
                     spec = true;
                     lagReport = "PING Cur. [" + currentPing + "  LIMIT: " + m_botSettings.getInt("CurPing") + "]";
                 }
-                
-                if (m_botSettings.getInt("AvePing"+ship)!=0 && m_botSettings.getInt("AvePing"+ship) < averagePing && !spec) {
-                	spec = true;
-                    lagReport = "PING Ave. [" + averagePing + "  LIMIT (SHIP:"+ship+"): " + m_botSettings.getInt("AvePing"+ship) + "]";
+
+                if (m_botSettings.getInt("AvePing" + ship) != 0 && m_botSettings.getInt("AvePing" + ship) < averagePing && !spec) {
+                    spec = true;
+                    lagReport = "PING Ave. [" + averagePing + "  LIMIT (SHIP:" + ship + "): " + m_botSettings.getInt("AvePing" + ship) + "]";
                 }
-                else if (m_botSettings.getInt("AvePing"+ship)==0 && m_botSettings.getInt("AvePing") < averagePing && !spec) {
+                else if (m_botSettings.getInt("AvePing" + ship) == 0 && m_botSettings.getInt("AvePing") < averagePing && !spec) {
                     spec = true;
                     lagReport = "PING Ave. [" + averagePing + "  LIMIT: " + m_botSettings.getInt("AvePing") + "]";
                 }
-                
-                if (m_botSettings.getDouble("S2CPloss"+ship)!=0 && m_botSettings.getDouble("S2CPloss"+ship) < s2C && !spec) {
-                	spec = true;
-                    lagReport = "PLOSS S2C. [" + s2C + "  LIMIT (SHIP:"+ship+"): " + m_botSettings.getDouble("S2CPloss"+ship) + "]";
+
+                if (m_botSettings.getDouble("S2CPloss" + ship) != 0 && m_botSettings.getDouble("S2CPloss" + ship) < s2C && !spec) {
+                    spec = true;
+                    lagReport = "PLOSS S2C. [" + s2C + "  LIMIT (SHIP:" + ship + "): " + m_botSettings.getDouble("S2CPloss" + ship) + "]";
                 }
-                else if (m_botSettings.getInt("S2CPloss"+ship)==0 && m_botSettings.getDouble("S2CPloss") < s2C && !spec) {
+                else if (m_botSettings.getInt("S2CPloss" + ship) == 0 && m_botSettings.getDouble("S2CPloss") < s2C && !spec) {
                     spec = true;
                     lagReport = "PLOSS S2C. [" + s2C + "  LIMIT: " + m_botSettings.getDouble("S2CPloss") + "]";
                 }
-                
-                if (m_botSettings.getDouble("C2SPloss"+ship)!=0 && m_botSettings.getDouble("C2SPloss"+ship) < c2S && !spec) {
-                	spec = true;
-                    lagReport = "PLOSS C2S. [" + c2S + "  LIMIT (SHIP:"+ship+"): " + m_botSettings.getDouble("C2SPloss"+ship) + "]";
+
+                if (m_botSettings.getDouble("C2SPloss" + ship) != 0 && m_botSettings.getDouble("C2SPloss" + ship) < c2S && !spec) {
+                    spec = true;
+                    lagReport = "PLOSS C2S. [" + c2S + "  LIMIT (SHIP:" + ship + "): " + m_botSettings.getDouble("C2SPloss" + ship) + "]";
                 }
-                else if (m_botSettings.getInt("C2SPloss"+ship)==0 && m_botSettings.getDouble("C2SPloss") < c2S && !spec) {
+                else if (m_botSettings.getInt("C2SPloss" + ship) == 0 && m_botSettings.getDouble("C2SPloss") < c2S && !spec) {
                     spec = true;
                     lagReport = "PLOSS C2S. [" + c2S + "  LIMIT: " + m_botSettings.getDouble("C2SPloss") + "]";
                 }
-                
-                if (m_botSettings.getDouble("WeaponPloss"+ship)!=0 && m_botSettings.getDouble("WeaponPloss"+ship) < s2CWeapons && !spec) {
+
+                if (m_botSettings.getDouble("WeaponPloss" + ship) != 0 && m_botSettings.getDouble("WeaponPloss" + ship) < s2CWeapons && !spec) {
                     spec = true;
-                    lagReport = "PLOSS S2CWeapons [" + s2CWeapons + "  LIMIT (SHIP:"+ship+"): " + m_botSettings.getDouble("WeaponPloss"+ship) + "]";
+                    lagReport = "PLOSS S2CWeapons [" + s2CWeapons + "  LIMIT (SHIP:" + ship + "): " + m_botSettings.getDouble("WeaponPloss" + ship) + "]";
                 }
-                else if (m_botSettings.getInt("WeaponPloss"+ship)==0 && m_botSettings.getDouble("WeaponPloss") < s2CWeapons && !spec) {
+                else if (m_botSettings.getInt("WeaponPloss" + ship) == 0 && m_botSettings.getDouble("WeaponPloss") < s2CWeapons && !spec) {
                     spec = true;
                     lagReport = "PLOSS S2CWeapons [" + s2CWeapons + "  LIMIT: " + m_botSettings.getDouble("WeaponPloss") + "]";
                 }
-                
-                if (m_botSettings.getDouble("SlowS2C"+ship)!=0 && m_botSettings.getDouble("SlowS2C"+ship) < s2CSlowPercent && !spec) {
+
+                if (m_botSettings.getDouble("SlowS2C" + ship) != 0 && m_botSettings.getDouble("SlowS2C" + ship) < s2CSlowPercent && !spec) {
                     spec = true;
-                    lagReport = "PLOSS Slow S2C [" + s2CSlowPercent + "  LIMIT (SHIP:"+ship+"): " + m_botSettings.getDouble("SlowS2C"+ship) + "]";
+                    lagReport = "PLOSS Slow S2C [" + s2CSlowPercent + "  LIMIT (SHIP:" + ship + "): " + m_botSettings.getDouble("SlowS2C" + ship) + "]";
                 }
-                else if (m_botSettings.getInt("SlowS2C"+ship)==0 && m_botSettings.getDouble("SlowS2C") < s2CSlowPercent && !spec) {
+                else if (m_botSettings.getInt("SlowS2C" + ship) == 0 && m_botSettings.getDouble("SlowS2C") < s2CSlowPercent && !spec) {
                     spec = true;
                     lagReport = "PLOSS Slow S2C [" + s2CSlowPercent + "  LIMIT: " + m_botSettings.getDouble("SlowS2C") + "]";
                 }
-                
-                if (m_botSettings.getDouble("SlowC2S"+ship)!=0 && m_botSettings.getDouble("SlowC2S"+ship) < c2SSlowPercent && !spec) {
+
+                if (m_botSettings.getDouble("SlowC2S" + ship) != 0 && m_botSettings.getDouble("SlowC2S" + ship) < c2SSlowPercent && !spec) {
                     spec = true;
-                    lagReport = "PLOSS Slow C2S [" + c2SSlowPercent + "  LIMIT (SHIP:"+ship+"): " + m_botSettings.getDouble("SlowC2S"+ship) + "]";
+                    lagReport = "PLOSS Slow C2S [" + c2SSlowPercent + "  LIMIT (SHIP:" + ship + "): " + m_botSettings.getDouble("SlowC2S" + ship) + "]";
                 }
-                else if (m_botSettings.getInt("SlowC2S"+ship)==0 && m_botSettings.getDouble("SlowC2S") < c2SSlowPercent && !spec) {
+                else if (m_botSettings.getInt("SlowC2S" + ship) == 0 && m_botSettings.getDouble("SlowC2S") < c2SSlowPercent && !spec) {
                     spec = true;
                     lagReport = "PLOSS Slow C2S [" + c2SSlowPercent + "  LIMIT: " + m_botSettings.getDouble("SlowC2S") + "]";
                 }
@@ -539,6 +558,7 @@ public class lagHandler
                         spec = true;
                         lagReport = "SPIKE Med. [" + medF.format(spikeSD) + "  LIMIT: " + m_botSettings.getInt("Med") + "]";
                     }
+
                     if (m_botSettings.getInt("SpikeCount") < numSpikes && !spec) {
                         spec = true;
                         lagReport = "SPIKE Count [" + numSpikes + "  LIMIT: " + m_botSettings.getInt("SpikeCount") + "]";
@@ -551,9 +571,10 @@ public class lagHandler
                     lagReport = null;
                 }
             }
+
             report = new LagReport(requester, playerName, lag, lagReport, tI, present);
         } else {
-            String[] lag = { "Player ["+playerName+"] was not found in the arena" };
+            String[] lag = { "Player [" + playerName + "] was not found in the arena" };
             report = new LagReport(requester, playerName, lag, null, tI, present);
         }
 
@@ -572,6 +593,7 @@ public class lagHandler
         state = 0;
 
         ListIterator<lagRequest> i = m_lagRequest.listIterator();
+
         while (i.hasNext())
         {
             lagRequest t = i.next();
@@ -580,12 +602,14 @@ public class lagHandler
             startLagRequest(t.getPlayerName(), t.getRequester());
             return;
         };
+
         free = true;
     }
 
     public String getStatus()
     {
         String s = "LagHandler Status: ";
+
         if (free)
         {
             s += "free ";

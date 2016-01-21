@@ -1,19 +1,19 @@
 /**
- * @(#)IntQueue.java
- *
- *
- * @author
- * @version 1.00 2007/7/10
- */
+    @(#)IntQueue.java
+
+
+    @author
+    @version 1.00 2007/7/10
+*/
 package twcore.bots.javelim;
 
 import twcore.core.util.ShortMap;
 
 /**
- * doubly linked list with an index table so that any element
- * can be quickly moved to the back of the queue
- * intended for periodically switching which player is spectated by the bot
- */
+    doubly linked list with an index table so that any element
+    can be quickly moved to the back of the queue
+    intended for periodically switching which player is spectated by the bot
+*/
 final class IntQueue {
 
     //head is at the left and tail is at the right
@@ -43,6 +43,7 @@ final class IntQueue {
 
     synchronized int getAndSendToBack() {
         QItem item = m_head.right;
+
         //Declaration was never used. -Pio
         //QItem right = item.right;
         if(m_size > 1) {
@@ -63,9 +64,11 @@ final class IntQueue {
 
     synchronized void sendToBack(int id) {
         QItem item = m_itemMap.get(id);
+
         if(item == null) {
             return;
         }
+
         item.left.right = item.right;
         item.right.left = item.left;
 
@@ -78,6 +81,7 @@ final class IntQueue {
 
     synchronized void remove(int id) {
         QItem item = m_itemMap.remove(id);
+
         if(item != null) {
             item.left.right = item.right;
             item.right.left = item.left;

@@ -38,11 +38,11 @@ import twcore.core.util.Tools;
 import twcore.core.util.Spy;
 
 /**
- * BWJSBot hosts base, wbduel, javduel and spidduel
- *
- *
- * @author fantus
- */
+    BWJSBot hosts base, wbduel, javduel and spidduel
+
+
+    @author fantus
+*/
 public class bwjsbot extends SubspaceBot {
     private boolean hasDatabase = true;
 
@@ -55,9 +55,9 @@ public class bwjsbot extends SubspaceBot {
     private BWJSTeam[] team;                                //Teams
     private Spy racismWatcher;                              //Racism watcher
 
-    private HashMap<String,Long> listNotplaying;            //List of notplaying players
-    private HashMap<String,Long> listJustAdded;             //List of when players were added
-	private long NOTPLAYING_SECS_TO_WAIT = 45 * 1000;       //Time players must wait after enabling !np to disable
+    private HashMap<String, Long> listNotplaying;           //List of notplaying players
+    private HashMap<String, Long> listJustAdded;            //List of when players were added
+    private long NOTPLAYING_SECS_TO_WAIT = 45 * 1000;       //Time players must wait after enabling !np to disable
     private ArrayList<String> listAlert;                    //List of players who toggled !subscribe on
     private ArrayList<ExtendedLog> listExtendedLog;         //Logs more information of a game
 
@@ -96,15 +96,15 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /*
-     * Events
-     */
+        Events
+    */
 
     /**
-     * Handles ArenaJoined event
-     * - Sets up reliable kills
-     * - Sets up chats
-     * - Autostarts bot
-     */
+        Handles ArenaJoined event
+        - Sets up reliable kills
+        - Sets up chats
+        - Autostarts bot
+    */
     public void handleEvent(ArenaJoined event) {
         m_botAction.setReliableKills(1);  //Reliable kills so the bot receives every packet
         m_botAction.sendUnfilteredPublicMessage("?chat=" + cfg.getChats());  //Join all the chats
@@ -113,9 +113,9 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles FlagClaimed event
-     * - Notify both teams of a flag claim
-     */
+        Handles FlagClaimed event
+        - Notify both teams of a flag claim
+    */
     public void handleEvent(FlagClaimed event) {
         if (state.getCurrentState() == BWJSState.GAME_IN_PROGRESS) {
             String playerName;  //Name of the player that claimed the flag
@@ -134,10 +134,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles FlagReward event
-     * - Give flag points to the specified team
-     * - Check if the frequency that gets the points is of one of the teams
-     */
+        Handles FlagReward event
+        - Give flag points to the specified team
+        - Check if the frequency that gets the points is of one of the teams
+    */
     public void handleEvent(FlagReward event) {
         if (state.getCurrentState() == BWJSState.GAME_IN_PROGRESS) {
             //Check if points go to one of the teams
@@ -148,10 +148,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles FrequencyChange event
-     * - since this event looks almost the same as FrequencyShipChange
-     *   event its passed on to checkFCandFSC(name, frequency, ship).
-     */
+        Handles FrequencyChange event
+        - since this event looks almost the same as FrequencyShipChange
+         event its passed on to checkFCandFSC(name, frequency, ship).
+    */
     public void handleEvent(FrequencyChange event) {
         if (state.getCurrentState() > BWJSState.OFF) {
             Player p;
@@ -168,10 +168,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles FrequencyShipChange event
-     * - since this event looks almost the same as FrequencyChange
-     *   event its passed on to checkFCandFSC(name, frequency, ship).
-     */
+        Handles FrequencyShipChange event
+        - since this event looks almost the same as FrequencyChange
+         event its passed on to checkFCandFSC(name, frequency, ship).
+    */
     public void handleEvent(FrequencyShipChange event) {
         if (state.getCurrentState() > BWJSState.OFF) {
             Player p;
@@ -188,10 +188,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles LoggedOn event
-     * - Join arena
-     * - Set antispam measurements
-     */
+        Handles LoggedOn event
+        - Join arena
+        - Set antispam measurements
+    */
     public void handleEvent(LoggedOn event) {
         GotoArena(cfg.getArena());
     }
@@ -212,11 +212,11 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles Message event
-     * - Racism watcher
-     * - Arena lock
-     * - Player commands
-     */
+        Handles Message event
+        - Racism watcher
+        - Arena lock
+        - Player commands
+    */
     public void handleEvent(Message event) {
         String message;     //Message
         String sender;      //Sender of the message
@@ -225,6 +225,7 @@ public class bwjsbot extends SubspaceBot {
         message = event.getMessage();
         sender = m_botAction.getPlayerName(event.getPlayerID());
         messageType = event.getMessageType();
+
         if (messageType != Message.REMOTE_PRIVATE_MESSAGE && messageType != Message.PRIVATE_MESSAGE && messageType != Message.CHAT_MESSAGE)
             racismWatcher.handleEvent(event);   //Racism watcher
 
@@ -235,6 +236,7 @@ public class bwjsbot extends SubspaceBot {
             if (sender == null) {
                 return;
             }
+
             handleCommand(sender, message, -1);   //Handle commands
         }
     }
@@ -256,19 +258,19 @@ public class bwjsbot extends SubspaceBot {
 
             for (BWJSTeam i : team) {
                 i.playerDeath(killee.getPlayerName(),
-                        killer.getPlayerName(),
-                        killee.getShipType(),
-                        killee.getFrequency(),
-                        event.getKilledPlayerBounty());
+                              killer.getPlayerName(),
+                              killee.getShipType(),
+                              killee.getFrequency(),
+                              event.getKilledPlayerBounty());
             }
         }
     }
 
     /**
-     * Handles PlayerEntered event
-     * - Sends welcome message
-     * - Puts the player on the corresponding frequency
-     */
+        Handles PlayerEntered event
+        - Sends welcome message
+        - Puts the player on the corresponding frequency
+    */
     public void handleEvent(PlayerEntered event) {
         if (state.getCurrentState() > BWJSState.OFF) {
             String name;    //Name of the player that entered the zone
@@ -287,10 +289,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles PlayerLeft event
-     * - Checks if the player that left was a captain
-     * - Checks if the player that left lagged out
-     */
+        Handles PlayerLeft event
+        - Checks if the player that left was a captain
+        - Checks if the player that left lagged out
+    */
     public void handleEvent(PlayerLeft event) {
         if (state.getCurrentState() > BWJSState.OFF) {
             String name;    //Name of the player that left
@@ -308,10 +310,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles PlayerPosition event
-     * - Warps players back to their safes during PRE_GAME
-     * - Timestamps last received position for out of border time
-     */
+        Handles PlayerPosition event
+        - Warps players back to their safes during PRE_GAME
+        - Timestamps last received position for out of border time
+    */
     public void handleEvent(PlayerPosition event) {
         String name;    //Name of the player
         BWJSTeam t;     //Team
@@ -331,32 +333,37 @@ public class bwjsbot extends SubspaceBot {
         }
 
         switch (state.getCurrentState()) {
-            case BWJSState.PRE_GAME :
-                int x_coord;    //X location
-                int y_coord;    //Y location
+        case BWJSState.PRE_GAME :
+            int x_coord;    //X location
+            int y_coord;    //Y location
 
-                x_coord = event.getXLocation() / 16;
-                y_coord = event.getYLocation() / 16;
+            x_coord = event.getXLocation() / 16;
+            y_coord = event.getYLocation() / 16;
 
-                t.checkPostionPreGame(name, x_coord, y_coord);
-                break;
-            case BWJSState.GAME_IN_PROGRESS :
-                if (t != null) {
-                    t.timestampLastPosition(name); //Timestamp last position update
-                }
-                break;
+            t.checkPostionPreGame(name, x_coord, y_coord);
+            break;
+
+        case BWJSState.GAME_IN_PROGRESS :
+            if (t != null) {
+                t.timestampLastPosition(name); //Timestamp last position update
+            }
+
+            break;
         }
     }
 
     /**
-     * Handles WeaponFired event
-     * - Notify the team of the weapontype that got fired and who did it
-     */
+        Handles WeaponFired event
+        - Notify the team of the weapontype that got fired and who did it
+    */
     public void handleEvent(WeaponFired event) {
         if (state.getCurrentState() == BWJSState.GAME_IN_PROGRESS) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
+
             if (name == null) return;
+
             BWJSTeam t = getTeam(name);
+
             if (t == null) return;
 
             t.weaponFired(name, event.getWeaponType());
@@ -388,39 +395,39 @@ public class bwjsbot extends SubspaceBot {
 
             //Log in extendedLogfile
             listExtendedLog.add(new ExtendedLog(
-                    killer.getPlayerName(),
-                    killee.getPlayerName(),
-                    killer.getShipType(),
-                    killee.getShipType(),
-                    killer.getXLocation(),
-                    killee.getXLocation(),
-                    killer.getYLocation(),
-                    killee.getYLocation(),
-                    event.getWeaponType()));
+                                    killer.getPlayerName(),
+                                    killee.getPlayerName(),
+                                    killer.getShipType(),
+                                    killee.getShipType(),
+                                    killer.getXLocation(),
+                                    killee.getXLocation(),
+                                    killer.getYLocation(),
+                                    killee.getYLocation(),
+                                    event.getWeaponType()));
         }
     }
 
     /**
-     * Hanldes a disconnect
-     * - cancel all tasks
-     * - close all sql connections
-     */
-    public void handleDisconnect(){
+        Hanldes a disconnect
+        - cancel all tasks
+        - close all sql connections
+    */
+    public void handleDisconnect() {
         m_botAction.cancelTasks();
         sql.closePreparedStatements();
     }
 
     /*
-     * Commands
-     */
+        Commands
+    */
 
     /**
-     * Handles player commands
-     *
-     * @param name Sender of the command
-     * @param cmd command
-     * @param override Override number, -1 for default, 0 for Freq 0, 1 for Freq 1
-     */
+        Handles player commands
+
+        @param name Sender of the command
+        @param cmd command
+        @param override Override number, -1 for default, 0 for Freq 0, 1 for Freq 1
+    */
     private void handleCommand(String name, String command, int override) {
         String cmd = command.toLowerCase();
 
@@ -454,8 +461,8 @@ public class bwjsbot extends SubspaceBot {
             cmd_lagout(name);
         } else if (cmd.equals("!list")) {
             cmd_list(name);
-//        } else if (cmd.startsWith("!listbest")) {
-//            cmd_listBest(name, cmd);
+            //        } else if (cmd.startsWith("!listbest")) {
+            //            cmd_listBest(name, cmd);
         } else if (cmd.equals("!myfreq")) {
             cmd_myfreq(name);
         } else if (cmd.equals("!mvp")) {
@@ -472,8 +479,8 @@ public class bwjsbot extends SubspaceBot {
             cmd_subscribe(name);
         } else if (cmd.startsWith("!stats")) {
             cmd_stats(name, cmd);
-//        } else if (cmd.startsWith("!top10")) {
-//            cmd_top10(name, cmd);
+            //        } else if (cmd.startsWith("!top10")) {
+            //            cmd_top10(name, cmd);
         }
 
         /* Staff commands ZH+ */
@@ -510,7 +517,7 @@ public class bwjsbot extends SubspaceBot {
         if (m_botAction.getOperatorList().isSmod(name)) {
             if (cmd.equals("!allowzoner")) {
                 cmd_allowZoner(name);
-            } else if (cmd.startsWith(("!go "))){
+            } else if (cmd.startsWith(("!go "))) {
                 cmd_go(name, cmd);
             }
         }
@@ -520,6 +527,7 @@ public class bwjsbot extends SubspaceBot {
         if (state.getCurrentState() == BWJSState.OFF
                 || state.getCurrentState() == BWJSState.WAITING_FOR_CAPS) {
             String[] parts = cmd.split(" ");
+
             if (!parts[1].isEmpty()) {
                 m_botAction.sendPrivateMessage(name, "Sending bot to " + parts[1]);
                 GotoArena(parts[1]);
@@ -576,7 +584,7 @@ public class bwjsbot extends SubspaceBot {
                 return;
             }
 
-            if (m_botAction.getOperatorList().isBotExact(p.getPlayerName())){
+            if (m_botAction.getOperatorList().isBotExact(p.getPlayerName())) {
                 m_botAction.sendPrivateMessage(name, "Bots don't make for very good players :(");
                 return;
             }
@@ -602,13 +610,13 @@ public class bwjsbot extends SubspaceBot {
             }
 
             /*
-             * Check if the player was already on the team
-             * Note: BASE games skip this check
-             */
+                Check if the player was already on the team
+                Note: BASE games skip this check
+            */
             if (cfg.getGameType() != BWJSConfig.BASE) {
                 if (t.isPlayer(p_lc)) {
                     m_botAction.sendPrivateMessage(name, "Error: " + p.getPlayerName() +
-                            " is already on your team, check with !list");
+                                                   " is already on your team, check with !list");
                     return;
                 }
             }
@@ -616,7 +624,7 @@ public class bwjsbot extends SubspaceBot {
             /* Check if the player is already on the team and playing */
             if (t.isIN(p_lc)) {
                 m_botAction.sendPrivateMessage(name, "Error: " + p.getPlayerName() +
-                    " is already on your team, check with !list");
+                                               " is already on your team, check with !list");
                 return;
             }
 
@@ -646,14 +654,15 @@ public class bwjsbot extends SubspaceBot {
             /* Check if the maximum amount of ships of this type is reached */
             if (t.getShipCount(shipType) >= cfg.getMaxShips(shipType) && cfg.getMaxShips(shipType) != -1) {
                 m_botAction.sendPrivateMessage(name, "Error: Could not add " + p.getPlayerName() + " as " +
-                    Tools.shipName(shipType) + ", team has already reached the maximum number of " +
-                    Tools.shipName(shipType) + "s allowed.");
+                                               Tools.shipName(shipType) + ", team has already reached the maximum number of " +
+                                               Tools.shipName(shipType) + "s allowed.");
                 return;
             }
 
             // Protection from players spamming !add and !remove to DC others (bypass for self)
             if (!name.equals(p.getPlayerName())) {
                 Long added = listJustAdded.get(p.getPlayerName());
+
                 if (added != null) {
                     if (added + (Tools.TimeInMillis.SECOND * 10) > System.currentTimeMillis()) {
                         m_botAction.sendPrivateMessage(name, "Error: Could not add " + p.getPlayerName() + " -- was added to the game already very recently." );
@@ -670,8 +679,8 @@ public class bwjsbot extends SubspaceBot {
             }
 
             /*
-             * All checks are done
-             */
+                All checks are done
+            */
 
             listJustAdded.put(name, System.currentTimeMillis());
 
@@ -687,10 +696,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !cap command
-     *
-     * @param name player that issued the !cap command
-     */
+        Handles the !cap command
+
+        @param name player that issued the !cap command
+    */
     private void cmd_cap(String name) {
         BWJSTeam t;
         name = name.toLowerCase();
@@ -719,10 +728,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /*
-         * Check if the sender is already on one of the teams
-         * If so he can only get captain of his own team
-         */
+            Check if the sender is already on one of the teams
+            If so he can only get captain of his own team
+        */
         t = getTeam(name);
+
         if (t != null) {
             if (t.hasCaptain()) {
                 sendCaptainList(name);
@@ -753,12 +763,12 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !change command
-     *
-     * @param name name of the player that issued the command
-     * @param cmd command
-     * @param override teamnumber to override, else -1
-     */
+        Handles the !change command
+
+        @param name name of the player that issued the command
+        @param cmd command
+        @param override teamnumber to override, else -1
+    */
     private void cmd_change(String name, String cmd, int override) {
         BWJSTeam t;
         String[] splitCmd;
@@ -787,7 +797,7 @@ public class bwjsbot extends SubspaceBot {
         /* Check command syntax */
         if (cmd.length() < 8) {
             m_botAction.sendPrivateMessage(name,
-                    "Error: Please specify a playername and shiptype, !change <player>:<# shiptype>");
+                                           "Error: Please specify a playername and shiptype, !change <player>:<# shiptype>");
             return;
         }
 
@@ -796,7 +806,7 @@ public class bwjsbot extends SubspaceBot {
         /* Check command syntax */
         if (splitCmd.length < 2) {
             m_botAction.sendPrivateMessage(name,
-                    "Error: Please specify a playername and shiptype, !change <player>:<# shiptype>");
+                                           "Error: Please specify a playername and shiptype, !change <player>:<# shiptype>");
             return;
         }
 
@@ -830,28 +840,28 @@ public class bwjsbot extends SubspaceBot {
         /* Check if the specified shiptype is allowed */
         if (t.getShipCount(shipType) >= cfg.getMaxShips(shipType) && cfg.getMaxShips(shipType) != -1) {
             m_botAction.sendPrivateMessage(name, "Error: Could not change " + p.getName() + " to " +
-                    Tools.shipName(shipType) + ", team has already reached the maximum number of " +
-                    Tools.shipName(shipType) + "s allowed.");
+                                           Tools.shipName(shipType) + ", team has already reached the maximum number of " +
+                                           Tools.shipName(shipType) + "s allowed.");
             return;
         }
 
         /* Check if the player is already on that ship */
         if (p.getCurrentShipType() == shipType) {
             m_botAction.sendPrivateMessage(name, "Error: Could not change " + p.getName() + " to " +
-                    Tools.shipName(shipType) + ", player already in that ship.");
+                                           Tools.shipName(shipType) + ", player already in that ship.");
             return;
         }
 
         /* Check when the last !change happened and if this change is allowed */
         if (!p.isChangeAllowed()) {
             m_botAction.sendPrivateMessage(name, "Error: Changed not allowed yet for this player, wait " +
-                    p.getTimeUntilNextChange() + " more seconds before next !change");
+                                           p.getTimeUntilNextChange() + " more seconds before next !change");
             return;
         }
 
         /*
-         * All checks done
-         */
+            All checks done
+        */
         p.change(shipType); //Change player
 
         /* Notify sender of successful change */
@@ -859,12 +869,12 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !forcenp command
-     * Forces a player to !notplaying
-     *
-     * @param name name of the player that issued the command
-     * @param cmd name of the player that needs to get forced into !notplaying
-     */
+        Handles the !forcenp command
+        Forces a player to !notplaying
+
+        @param name name of the player that issued the command
+        @param cmd name of the player that needs to get forced into !notplaying
+    */
     private void cmd_forcenp(String name, String cmd) {
         Player p;
 
@@ -888,10 +898,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !help command
-     *
-     * @param name name of the player that issued the !help command
-     */
+        Handles the !help command
+
+        @param name name of the player that issued the !help command
+    */
     private void cmd_help(String name) {
         ArrayList<String> help = new ArrayList<String>();   //Help messages
 
@@ -901,44 +911,52 @@ public class bwjsbot extends SubspaceBot {
             } else {
                 help.add("!cap                      -- List captains");
             }
+
             if (isCaptain(name)) {
                 help.add("!removecap                -- Removes you as a captain");
             }
+
             if (cfg.getGameType() != BWJSConfig.BASE) {
                 help.add("!stats <player>           -- Displays your/<player> stats");
             }
-//            else {
-//                help.add("!stats <player>:<ship>    -- Displays your/<player>:<ship> stats");
-//            }
+
+            //            else {
+            //                help.add("!stats <player>:<ship>    -- Displays your/<player>:<ship> stats");
+            //            }
         } else if (state.getCurrentState() >= BWJSState.ADDING_PLAYERS) {
             help.add("!cap                      -- Become captain of a team / shows current captains!");
 
             if (isCaptain(name)) {
                 help.add("!removecap                -- Removes you as a captain");
                 help.add("!add <player>             -- Adds player");
+
                 if (cfg.getGameType() == BWJSConfig.BASE ||
-                    cfg.getGameType() == BWJSConfig.FIGHTERDUEL ||
-                    cfg.getGameType() == BWJSConfig.TURRETDUEL ) {
+                        cfg.getGameType() == BWJSConfig.FIGHTERDUEL ||
+                        cfg.getGameType() == BWJSConfig.TURRETDUEL ) {
                     help.add("!add <player>:<ship>      -- Adds player in the specified ship");
                     help.add("!change <player>:<ship>   -- Sets the player in the specified ship");
                     help.add("!switch <player>:<player> -- Exchanges the ship of both players");
                 }
+
                 help.add("!sub <playerA>:<playerB>  -- Substitutes <playerA> with <playerB>");
             }
+
             help.add("!lagout                   -- Puts you back into the game if you have lagged out");
             help.add("!list                     -- Lists all players on this team");
-//            if (cfg.getGameType() != BWJSConfig.BASE) {
-//                help.add("!listbest <ship>          -- Lists the players in the arena and orders them according to their rank");
-//            } else {
-//                help.add("!listbest                 -- Lists the players in the arena and orders them according to their rank");
-//            }
+            //            if (cfg.getGameType() != BWJSConfig.BASE) {
+            //                help.add("!listbest <ship>          -- Lists the players in the arena and orders them according to their rank");
+            //            } else {
+            //                help.add("!listbest                 -- Lists the players in the arena and orders them according to their rank");
+            //            }
             help.add("!myfreq                   -- Puts you on your team's frequency");
             help.add("!mvp                      -- Displays the current mvp");
             help.add("!rating <player>          -- Displays your/<player> current rating");
             help.add("!score <player>           -- Displays your/<player> current score");
+
             if (cfg.getGameType() != BWJSConfig.BASE) {
                 help.add("!stats <player>           -- Displays your/<player> stats");
             }
+
             if (state.getCurrentState() == BWJSState.ADDING_PLAYERS && isCaptain(name)) {
                 help.add("!remove <player>          -- Removes specified player)");
                 help.add("!ready                    -- Use this when you're done setting your lineup");
@@ -969,21 +987,27 @@ public class bwjsbot extends SubspaceBot {
                 help.add("!setcaptain <frq>:<plr>   -- Sets <plr> as captain for <frq> (short: !sc)");
                 help.add("!squadcaptain <frq>:<plr> -- Squad vs world game; <plr> as cap, only their squad on <frq>");
                 help.add("-- Prepend your command with !t1- for 'Freq 0', !t2- for 'Freq 1' --");
+
                 if ( state.getCurrentState() >= BWJSState.ADDING_PLAYERS) {
                     help.add("!add <player>             -- Adds player");
+
                     if (cfg.getGameType() == BWJSConfig.BASE) {
                         help.add("!add <player>:<ship>      -- Adds player in the specified ship");
                         help.add("!change <player>:<ship>   -- Sets the player in the specified ship");
                     }
+
                     if (state.getCurrentState() == BWJSState.ADDING_PLAYERS) {
                         help.add("!ready                    -- Ready the team");
                         help.add("!remove <player>          -- Removes specified player)");
                     }
+
                     help.add("!sub <playerA>:<playerB>  -- Substitutes <playerA> with <playerB>");
+
                     if (cfg.getGameType() == BWJSConfig.BASE) {
                         help.add("!switch <player>:<player> -- Exchanges the ship of both players");
                     }
                 }
+
                 //help.add("!setcaptain <player>      -- Sets <player> to captain (short: !sc)");
                 help.add("!removecap                -- Removes the cap of team !t#");
             }
@@ -999,10 +1023,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !lagout/!return command
-     *
-     * @param name name of the player that issued the !lagout command
-     */
+        Handles the !lagout/!return command
+
+        @param name name of the player that issued the !lagout command
+    */
     private void cmd_lagout(String name) {
         if (state.getCurrentState() == BWJSState.ADDING_PLAYERS ||
                 state.getCurrentState() == BWJSState.GAME_IN_PROGRESS ||
@@ -1032,10 +1056,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles !list command
-     *
-     * @param name player that issued the !list command
-     */
+        Handles !list command
+
+        @param name player that issued the !list command
+    */
     private void cmd_list(String name) {
         BWJSTeam t;
 
@@ -1067,36 +1091,38 @@ public class bwjsbot extends SubspaceBot {
 
             /* Display set up */
             ArrayList<String> list = new ArrayList<String>();
+
             if (t == null) {
                 /* Display both teams */
                 for (int i = 0; i < 2; i++) {
                     list.add(team[i].getName() + " (captain: " + team[i].captainName + ")");
                     list.add(Tools.formatString("Name:", 23) + " - " +
-                            Tools.formatString("Ship:", 10) + " - " + "Status:");
+                             Tools.formatString("Ship:", 10) + " - " + "Status:");
 
                     BWJSPlayer[] players = team[i].players.values().toArray(
-                            new BWJSPlayer[team[i].players.values().size()]);
+                                               new BWJSPlayer[team[i].players.values().size()]);
                     Arrays.sort(players, comparator);
 
                     for (BWJSPlayer p : players)
                         list.add(Tools.formatString(p.p_name, 23) + " - "
-                                + Tools.formatString(Tools.shipName(p.getCurrentShipType()), 10) + " - "
-                                + p.getStatus());
+                                 + Tools.formatString(Tools.shipName(p.getCurrentShipType()), 10) + " - "
+                                 + p.getStatus());
+
                     list.add("`");
                 }
             } else {
                 /* Display one team */
                 list.add(t.getName() + " (captain: " + t.getCaptainName() + ")");
                 list.add(Tools.formatString("Name:", 23) + " - " +
-                        Tools.formatString("Ship:", 10) + " - " + "Status:");
+                         Tools.formatString("Ship:", 10) + " - " + "Status:");
 
                 BWJSPlayer[] players = t.players.values().toArray(
-                        new BWJSPlayer[t.players.values().size()]);
+                                           new BWJSPlayer[t.players.values().size()]);
                 Arrays.sort(players, comparator);
 
                 for (BWJSPlayer p : players)
                     list.add(Tools.formatString(p.p_name, 23) + " - "
-                            + Tools.formatString(Tools.shipName(p.getCurrentShipType()), 10) + " - " + p.getStatus());
+                             + Tools.formatString(Tools.shipName(p.getCurrentShipType()), 10) + " - " + p.getStatus());
             }
 
             String[] spam = list.toArray(new String[list.size()]);
@@ -1105,10 +1131,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !mvp command
-     *
-     * @param name name of the player that issued the !mvp command
-     */
+        Handles the !mvp command
+
+        @param name name of the player that issued the !mvp command
+    */
     private void cmd_mvp(String name) {
         if (state.getCurrentState() == BWJSState.GAME_IN_PROGRESS) {
             m_botAction.sendPrivateMessage(name, "Current MVP: " + getMVP());
@@ -1116,10 +1142,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !myfreq command
-     *
-     * @param name name of the player that issued the !myfreq command
-     */
+        Handles the !myfreq command
+
+        @param name name of the player that issued the !myfreq command
+    */
     private void cmd_myfreq(String name) {
         BWJSTeam t;
 
@@ -1144,10 +1170,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !notplaying command
-     *
-     * @param name name of the player that issued the !notplaying command
-     */
+        Handles the !notplaying command
+
+        @param name name of the player that issued the !notplaying command
+    */
     private void cmd_notplaying(String name) {
         BWJSTeam t;
 
@@ -1155,28 +1181,29 @@ public class bwjsbot extends SubspaceBot {
             t = getTeam(name);
 
             /* Check if player is on the notplaying list and if so remove him from that list */
-				Long timeSinceNP;
-				timeSinceNP = listNotplaying.get(name.toLowerCase());
+            Long timeSinceNP;
+            timeSinceNP = listNotplaying.get(name.toLowerCase());
+
             if (timeSinceNP != null) {
-				    if (System.currentTimeMillis() < timeSinceNP + NOTPLAYING_SECS_TO_WAIT) {
+                if (System.currentTimeMillis() < timeSinceNP + NOTPLAYING_SECS_TO_WAIT) {
                     m_botAction.sendPrivateMessage(name,
-                        "You must wait awhile longer before issuing another !np command, out of respect for fairness.");   //Notify the player
-						  return;
-					 } else {
+                                                   "You must wait awhile longer before issuing another !np command, out of respect for fairness.");   //Notify the player
+                    return;
+                } else {
                     listNotplaying.remove(name.toLowerCase());  //Remove from him from the notplaying list
                     m_botAction.sendPrivateMessage(name,
-                        "You have been removed from the not playing list.");   //Notify the player
+                                                   "You have been removed from the not playing list.");   //Notify the player
                     /* Put the player on the spectator frequency */
                     m_botAction.setShip(name, 1);
                     m_botAction.specWithoutLock(name);
                     return;
-					 }
+                }
             }
 
             /* Add the player to the notplaying list */
-            listNotplaying.put(name.toLowerCase(),System.currentTimeMillis()); //Add the player to the notplaying list
+            listNotplaying.put(name.toLowerCase(), System.currentTimeMillis()); //Add the player to the notplaying list
             m_botAction.sendPrivateMessage(name, "You have been added to the not playing list. " +
-                    "(Captains will be unable to add or sub you in.)"); //Notify the player
+                                           "(Captains will be unable to add or sub you in.)"); //Notify the player
             m_botAction.specWithoutLock(name);  //Spectate the player
             m_botAction.setFreq(name, FREQ_NOTPLAYING);  //Set the player to the notplaying frequency
 
@@ -1212,30 +1239,32 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !off command
-     *
-     * @param name name of the player that issued the !off command
-     */
+        Handles the !off command
+
+        @param name name of the player that issued the !off command
+    */
     private void cmd_off(String name) {
         switch (state.getCurrentState()) {
-            case BWJSState.OFF:
-                m_botAction.sendPrivateMessage(name, "Bot is already OFF");
-                break;
-            case BWJSState.WAITING_FOR_CAPS:
-                cmd_stop(name);
-                break;
-            default :
-                m_botAction.sendPrivateMessage(name, "Turning OFF after this game");
-                lockLastGame = true;
+        case BWJSState.OFF:
+            m_botAction.sendPrivateMessage(name, "Bot is already OFF");
+            break;
+
+        case BWJSState.WAITING_FOR_CAPS:
+            cmd_stop(name);
+            break;
+
+        default :
+            m_botAction.sendPrivateMessage(name, "Turning OFF after this game");
+            lockLastGame = true;
         }
     }
 
     /**
-     * Handles the override commands (!t1/!t2)
-     *
-     * @param name Name of the player that issued the command
-     * @param cmd Command that should be overriden
-     */
+        Handles the override commands (!t1/!t2)
+
+        @param name Name of the player that issued the command
+        @param cmd Command that should be overriden
+    */
     private void cmd_overrideCmd(String name, String cmd) {
         int override; //Teamnumber of the team that has to be overriden
 
@@ -1260,11 +1289,11 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !rating command
-     *
-     * @param name name of the player that issued the !rating command
-     * @param cmd extra parameters to the command
-     */
+        Handles the !rating command
+
+        @param name name of the player that issued the !rating command
+        @param cmd extra parameters to the command
+    */
     private void cmd_rating(String name, String cmd) {
         BWJSPlayer p;
 
@@ -1289,17 +1318,17 @@ public class bwjsbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage(name, "Current rating: " + p.getTotalRating());
             } else {
                 m_botAction.sendPrivateMessage(name, "Current Rating of " + p.p_name + ": "
-                    + p.getTotalRating());
+                                               + p.getTotalRating());
             }
         }
     }
 
     /**
-     * Handles the !ready command
-     *
-     * @param name name of the player that issued the command
-     * @param override override 0/1 for teams, -1 if not overriden
-     */
+        Handles the !ready command
+
+        @param name name of the player that issued the command
+        @param override override 0/1 for teams, -1 if not overriden
+    */
     private void cmd_ready(String name, int override) {
         BWJSTeam t;
 
@@ -1316,12 +1345,12 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !remove command
-     *
-     * @param name name of the player that issued the !remove command
-     * @param cmd command parameters
-     * @param override override 0/1 for teams, -1 if not overriden
-     */
+        Handles the !remove command
+
+        @param name name of the player that issued the !remove command
+        @param cmd command parameters
+        @param override override 0/1 for teams, -1 if not overriden
+    */
     private void cmd_remove(String name, String cmd, int override) {
         BWJSTeam t;
         BWJSPlayer p;   //Player to be removed
@@ -1358,11 +1387,11 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !removecap command
-     *
-     * @param name name of the player that issued the !removecap command
-     * @param override override 0/1 for teams, -1 if not overriden
-     */
+        Handles the !removecap command
+
+        @param name name of the player that issued the !removecap command
+        @param override override 0/1 for teams, -1 if not overriden
+    */
     private void cmd_removecap(String name, int override) {
         BWJSTeam t;
 
@@ -1374,12 +1403,12 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !score command
-     *
-     * @param name name of the player that issued the !score command
-     * @param cmd command parameters
-     * @param override override 0/1 for teams, -1 if not overriden
-     */
+        Handles the !score command
+
+        @param name name of the player that issued the !score command
+        @param cmd command parameters
+        @param override override 0/1 for teams, -1 if not overriden
+    */
     private void cmd_score(String name, String cmd) {
         BWJSPlayer p;
 
@@ -1404,19 +1433,19 @@ public class bwjsbot extends SubspaceBot {
                 m_botAction.sendPrivateMessage(name, "Current score: " + p.getTotalScore());
             } else {
                 m_botAction.sendPrivateMessage(name, "Current score of " + p.p_name + ": "
-                    + p.getTotalScore());
+                                               + p.getTotalScore());
             }
         }
     }
 
     /**
-     * Handles the !setcaptain command
-     *
-     * @param name name of the player that issued the !setcaptain command
-     * @param cmd command parameters
-     * @param True if only members of the captain's squad may be added
-     * @param override override 0/1 for teams, -1 if not overriden
-     */
+        Handles the !setcaptain command
+
+        @param name name of the player that issued the !setcaptain command
+        @param cmd command parameters
+        @param True if only members of the captain's squad may be added
+        @param override override 0/1 for teams, -1 if not overriden
+    */
     private void cmd_setCaptain(String name, String cmd, boolean isSquadOnly, int override) {
         int frequency;
         Player p;
@@ -1426,12 +1455,13 @@ public class bwjsbot extends SubspaceBot {
             //Separate the command from its arguments if applicable.
             if(!cmd.isEmpty() && cmd.contains(" ")) {
                 int index = cmd.indexOf(" ");
+
                 if(cmd.length() > ++index)
                     cmd = cmd.substring(index).trim();
             } else {
                 m_botAction.sendPrivateMessage(name, "Error: please specify a player, " +
-                        "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
-                    return;
+                                               "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
+                return;
             }
 
             /* Alter command if overriden */
@@ -1444,7 +1474,7 @@ public class bwjsbot extends SubspaceBot {
             /* Check command syntax */
             if (splitCmd.length < 2) {
                 m_botAction.sendPrivateMessage(name, "Error: please specify a player, " +
-                    "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
+                                               "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
                 return;
             }
 
@@ -1461,14 +1491,14 @@ public class bwjsbot extends SubspaceBot {
                 frequency = Integer.parseInt(splitCmd[0]);
             } catch (Exception e) {
                 m_botAction.sendPrivateMessage(name, "Error: please specify a correct frequency, " +
-                    "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
+                                               "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
                 return;
             }
 
             /* Check if frequency is valid */
             if (frequency < 0 || frequency > 1) {
                 m_botAction.sendPrivateMessage(name, "Error: please specify a correct frequency, " +
-                    "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
+                                               "'!setcaptain <# freq>:<player>', or '!t1-/!t2-setcaptain <player>'");
                 return;
             }
 
@@ -1477,10 +1507,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !start command
-     *
-     * @param name player that issued the !start command
-     */
+        Handles the !start command
+
+        @param name player that issued the !start command
+    */
     private void cmd_start(String name, String command) {
         if (state.getCurrentState() == BWJSState.OFF) {
             start(command);
@@ -1516,10 +1546,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !status command
-     *
-     * @param name name of the player that issued the command
-     */
+        Handles the !status command
+
+        @param name name of the player that issued the command
+    */
     private void cmd_status(String name) {
         String[] status;    //Status message
 
@@ -1528,32 +1558,38 @@ public class bwjsbot extends SubspaceBot {
         status[1] = ""; //Default value
 
         switch(state.getCurrentState()) {
-            case BWJSState.OFF :
-                status[0] = "Bot turned off, no games can be started at this moment.";
-                break;
-            case BWJSState.WAITING_FOR_CAPS :
-                if (cfg.getAllowAutoCaps()) {
-                    status[0] =  "A new game will start when two people message me with !cap. For squad vs world, send ?help";
-                } else {
-                    status[0] =  "Request a new game with '?help start "+cfg.getGameTypeString().toLowerCase()+" please'";
-                }
-                break;
-            case BWJSState.ADDING_PLAYERS :
-                status[0] = "Teams: " + team[0].getName() + " vs. " + team[1].getName() +
-                    ". We are currently arranging lineups";
-                break;
-            case BWJSState.PRE_GAME :
-                status[0] = "Teams: " + team[0].getName() + " vs. " + team[1].getName() +
-                    ". We are currently starting the game";
-                break;
-            case BWJSState.GAME_IN_PROGRESS :
-                status[0] = "Game is in progress, " + (((cfg.getTime() * 60) - timeLeft) / 60) + " minutes played.";
-                status[1] = "Score " + team[0].getName() + " vs. " + team[1].getName() + ": " + score();
-                break;
-            case BWJSState.GAME_OVER :
-                status[0] = "Teams: " + team[0].getName() + " vs. " + team[1].getName() +
-                    ". We are currently ending the game";
-                break;
+        case BWJSState.OFF :
+            status[0] = "Bot turned off, no games can be started at this moment.";
+            break;
+
+        case BWJSState.WAITING_FOR_CAPS :
+            if (cfg.getAllowAutoCaps()) {
+                status[0] =  "A new game will start when two people message me with !cap. For squad vs world, send ?help";
+            } else {
+                status[0] =  "Request a new game with '?help start " + cfg.getGameTypeString().toLowerCase() + " please'";
+            }
+
+            break;
+
+        case BWJSState.ADDING_PLAYERS :
+            status[0] = "Teams: " + team[0].getName() + " vs. " + team[1].getName() +
+                        ". We are currently arranging lineups";
+            break;
+
+        case BWJSState.PRE_GAME :
+            status[0] = "Teams: " + team[0].getName() + " vs. " + team[1].getName() +
+                        ". We are currently starting the game";
+            break;
+
+        case BWJSState.GAME_IN_PROGRESS :
+            status[0] = "Game is in progress, " + (((cfg.getTime() * 60) - timeLeft) / 60) + " minutes played.";
+            status[1] = "Score " + team[0].getName() + " vs. " + team[1].getName() + ": " + score();
+            break;
+
+        case BWJSState.GAME_OVER :
+            status[0] = "Teams: " + team[0].getName() + " vs. " + team[1].getName() +
+                        ". We are currently ending the game";
+            break;
         }
 
         /* Send status message */
@@ -1567,10 +1603,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !stop command
-     *
-     * @param name player that issued the !stop command
-     */
+        Handles the !stop command
+
+        @param name player that issued the !stop command
+    */
     private void cmd_stop(String name) {
         if (state.getCurrentState() != BWJSState.OFF) {
             m_botAction.sendArenaMessage("Bot has been turned OFF");
@@ -1583,12 +1619,12 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !sub command
-     *
-     * @param name name of the player that issued the !sub command
-     * @param cmd command parameters
-     * @param override 0/1 for teams, -1 for not overriden
-     */
+        Handles the !sub command
+
+        @param name name of the player that issued the !sub command
+        @param cmd command parameters
+        @param override 0/1 for teams, -1 for not overriden
+    */
     private void cmd_sub(String name, String cmd, int override) {
         BWJSTeam t;
         String[] splitCmd;
@@ -1649,7 +1685,7 @@ public class bwjsbot extends SubspaceBot {
             /* Check if <playerB> is on the notplaying list */
             if (listNotplaying.containsKey(playerBnew.getPlayerName().toLowerCase())) {
                 m_botAction.sendPrivateMessage(name,
-                    "Error: " + playerBnew.getPlayerName() + " is set to not playing.");
+                                               "Error: " + playerBnew.getPlayerName() + " is set to not playing.");
                 return;
             }
 
@@ -1661,6 +1697,7 @@ public class bwjsbot extends SubspaceBot {
 
             /* Check if <playerB> was already on the team */
             playerB = t.searchPlayer(playerBnew.getPlayerName());
+
             if (playerB != null) {
                 /* <playerB> was on the team */
                 if (cfg.getGameType() != BWJSConfig.BASE || !playerB.isOut()) {
@@ -1671,7 +1708,7 @@ public class bwjsbot extends SubspaceBot {
                 /* Check when last !sub was and if this sub is allowed */
                 if (!playerB.isSubAllowed()) {
                     m_botAction.sendPrivateMessage(name, "Error: Sub not allowed yet for this player, wait " +
-                        playerB.getTimeUntilNextSub() + " more seconds before next !sub");
+                                                   playerB.getTimeUntilNextSub() + " more seconds before next !sub");
                     return;
                 }
             }
@@ -1684,6 +1721,7 @@ public class bwjsbot extends SubspaceBot {
 
             // Protection from players spamming !sub and !remove to DC others
             Long added = listJustAdded.get(playerBnew.getPlayerName());
+
             if (added != null) {
                 if (added + (Tools.TimeInMillis.SECOND * 10) > System.currentTimeMillis()) {
                     m_botAction.sendPrivateMessage(name, "Error: Could not sub in " + playerBnew.getPlayerName() + " -- was added to the game already very recently." );
@@ -1699,10 +1737,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !subscribe command
-     *
-     * @param name player that issued the !subscribe command
-     */
+        Handles the !subscribe command
+
+        @param name player that issued the !subscribe command
+    */
     private void cmd_subscribe(String name) {
         if (state.getCurrentState() > BWJSState.OFF) {
             name = name.toLowerCase();
@@ -1718,12 +1756,12 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !switch command
-     *
-     * @param name player that issued the !switch command
-     * @param cmd command parameters
-     * @param override override 0/1 for teams, -1 for not overriden
-     */
+        Handles the !switch command
+
+        @param name player that issued the !switch command
+        @param cmd command parameters
+        @param override override 0/1 for teams, -1 for not overriden
+    */
     private void cmd_switch(String name, String cmd, int override) {
         BWJSTeam t;
         String[] splitCmd;
@@ -1745,7 +1783,7 @@ public class bwjsbot extends SubspaceBot {
             /* Check command syntax */
             if (cmd.isEmpty()) {
                 m_botAction.sendPrivateMessage(name,
-                    "Error: Specify players to be switched, !switch <playerA>:<playerB>");
+                                               "Error: Specify players to be switched, !switch <playerA>:<playerB>");
                 return;
             }
 
@@ -1754,7 +1792,7 @@ public class bwjsbot extends SubspaceBot {
             /* Check command syntax */
             if (splitCmd.length < 2) {
                 m_botAction.sendPrivateMessage(name,
-                    "Error: Specify players to be switched, !switch <playerA>:<playerB>");
+                                               "Error: Specify players to be switched, !switch <playerA>:<playerB>");
                 return;
             }
 
@@ -1776,12 +1814,13 @@ public class bwjsbot extends SubspaceBot {
             /* Check if a switch is allowed timewise */
             if (!playerA.isSwitchAllowed()) {
                 m_botAction.sendPrivateMessage(name, "Error: Switch not allowed yet for " + playerA.getName() +
-                        ", wait " + playerA.getTimeUntilNextSwitch() + " more seconds before next !switch");
+                                               ", wait " + playerA.getTimeUntilNextSwitch() + " more seconds before next !switch");
                 return;
             }
+
             if (!playerB.isSwitchAllowed()) {
                 m_botAction.sendPrivateMessage(name, "Error: Switch not allowed yet for " + playerB.getName() +
-                        ", wait " + playerB.getTimeUntilNextSwitch() + " more seconds before next !switch");
+                                               ", wait " + playerB.getTimeUntilNextSwitch() + " more seconds before next !switch");
                 return;
             }
 
@@ -1792,15 +1831,16 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles the !zone command
-     *
-     * @param name name of the player that issued the command
-     * @param message message to use for zoner
-     */
+        Handles the !zone command
+
+        @param name name of the player that issued the command
+        @param message message to use for zoner
+    */
     private void cmd_zone(String name, String message) {
 
         //grab message from !zone message if there
         String msg = null;
+
         if (message.length() > 6) {
             msg = message.substring(6);
         }
@@ -1811,8 +1851,8 @@ public class bwjsbot extends SubspaceBot {
         }
 
         if (!(state.getCurrentState() == BWJSState.GAME_OVER ||
-                            state.getCurrentState() == BWJSState.WAITING_FOR_CAPS ||
-                            state.getCurrentState() == BWJSState.ADDING_PLAYERS)) {
+                state.getCurrentState() == BWJSState.WAITING_FOR_CAPS ||
+                state.getCurrentState() == BWJSState.ADDING_PLAYERS)) {
             m_botAction.sendPrivateMessage(name, "Zoner not allowed at this stage of the game.");
             return;
         }
@@ -1827,16 +1867,16 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /*
-     * Game modes
-     */
+        Game modes
+    */
 
     private void start() {
         start(null);
     }
 
     /**
-     * Starts the bot
-     */
+        Starts the bot
+    */
     private void start(String command) {
         lockLastGame = false;
         lockArena();
@@ -1858,8 +1898,8 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Starts the gameticker
-     */
+        Starts the gameticker
+    */
     private void startGameTicker() {
         try {
             gameticker.cancel();
@@ -1870,27 +1910,28 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Starts waiting for caps
-     */
+        Starts waiting for caps
+    */
     private void startWaitingForCaps() {
         reset();
 
         state.setState(BWJSState.WAITING_FOR_CAPS);
+
         if (cfg.getAllowAutoCaps()) {
             m_botAction.sendArenaMessage("A new game will start when two people message me with !cap -" +
-                    m_botAction.getBotName(), Tools.Sound.BEEP2);
+                                         m_botAction.getBotName(), Tools.Sound.BEEP2);
         } else {
-            m_botAction.sendArenaMessage("Request a new game with '?help start "+cfg.getGameTypeString().toLowerCase()+" please'"
-                    + " -" + m_botAction.getBotName(), Tools.Sound.BEEP2);
+            m_botAction.sendArenaMessage("Request a new game with '?help start " + cfg.getGameTypeString().toLowerCase() + " please'"
+                                         + " -" + m_botAction.getBotName(), Tools.Sound.BEEP2);
         }
     }
 
     /**
-     * Start adding players state
-     * - Notify arena
-     * - Notify chats
-     * - Determine next pick
-     */
+        Start adding players state
+        - Notify arena
+        - Notify chats
+        - Determine next pick
+    */
     private void startAddingPlayers() {
         state.setState(BWJSState.ADDING_PLAYERS);
 
@@ -1901,13 +1942,15 @@ public class bwjsbot extends SubspaceBot {
 
         String cap0 = team[0].getCaptainName();
         String cap1 = team[1].getCaptainName();
+
         if (cfg.getGameType() == BWJSConfig.BASE) {
             m_botAction.sendArenaMessage("Captains you have 10 minutes to set up your lineup correctly!",
-                    Tools.Sound.BEEP2);
+                                         Tools.Sound.BEEP2);
             mobilePusherBase.push(cap0 + " v. " + cap1);
         } else {
             m_botAction.sendArenaMessage("Captains you have 5 minutes to set up your lineup correctly!",
-                    Tools.Sound.BEEP2);
+                                         Tools.Sound.BEEP2);
+
             if (cfg.getGameType() == BWJSConfig.WBDUEL) {
                 mobilePusherWBDuel.push(cap0 + " v. " + cap1);
             } else if (cfg.getGameType() == BWJSConfig.JAVDUEL) {
@@ -1929,8 +1972,8 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Starts pre game
-     */
+        Starts pre game
+    */
     private void startPreGame() {
         m_botAction.resetFlagGame();
         m_botAction.shipResetAll();
@@ -1943,8 +1986,8 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Starts a game
-     */
+        Starts a game
+    */
     private void startGame() {
         state.setState(BWJSState.GAME_IN_PROGRESS);
 
@@ -1967,8 +2010,8 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * What to do with when game is over
-     */
+        What to do with when game is over
+    */
     private void gameOver() {
         int winningFreq;
 
@@ -2034,14 +2077,14 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /*
-     * Tools
-     */
+        Tools
+    */
 
     /**
-     * Returns name of the current MVP
-     *
-     * @return name of the MVP
-     */
+        Returns name of the current MVP
+
+        @return name of the MVP
+    */
     private String getMVP() {
         String mvp;
         int highestRating;
@@ -2062,8 +2105,8 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Check if there are enough captains to start the game
-     */
+        Check if there are enough captains to start the game
+    */
     private void checkIfEnoughCaps() {
         if (state.getCurrentState() == BWJSState.WAITING_FOR_CAPS) {
             if (team[0].hasCaptain() && team[1].hasCaptain()) {
@@ -2073,11 +2116,11 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Alerts players that a new game is starting
-     * - Send alert to chats
-     * - Send alert to subscribers
-     * - Send alert to zone
-     */
+        Alerts players that a new game is starting
+        - Send alert to chats
+        - Send alert to subscribers
+        - Send alert to zone
+    */
     private void newGameAlert(String name, String message) {
 
         String nameTag = " -" + m_botAction.getBotName();
@@ -2085,8 +2128,8 @@ public class bwjsbot extends SubspaceBot {
         //Build generic message in one is not passed
         if (message == null || message.isEmpty()) {
             message = "A game of " + cfg.getGameTypeString() +
-                    " is starting! Type ?go " + m_botAction.getArenaName() +
-                    " to play.";
+                      " is starting! Type ?go " + m_botAction.getArenaName() +
+                      " to play.";
         } else if (message.toLowerCase().contains("?go")) {
             m_botAction.sendPrivateMessage(name, "Please do not include ?go base in the zoner as I will add this for you automatically.");
             return;
@@ -2117,10 +2160,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Returns if a zoner can be send or not
-     *
-     * @return True if a zoner can be send, else false
-     */
+        Returns if a zoner can be send or not
+
+        @return True if a zoner can be send, else false
+    */
     private boolean allowZoner() {
         if ((System.currentTimeMillis() - zonerTimestamp) <= (ZONER_WAIT_TIME * Tools.TimeInMillis.MINUTE)) {
             return false;
@@ -2130,10 +2173,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Returns if a zoner can be send or not
-     *
-     * @return True if a zoner can be send, else false
-     */
+        Returns if a zoner can be send or not
+
+        @return True if a zoner can be send, else false
+    */
     private boolean allowManualZoner() {
         if ((System.currentTimeMillis() - manualZonerTimestamp) <= (10 * Tools.TimeInMillis.MINUTE)) {
             return false;
@@ -2143,32 +2186,34 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Returns the score in form of a String
-     *
-     * @return game score
-     */
+        Returns the score in form of a String
+
+        @return game score
+    */
     private String score() {
         String score = "";
+
         if (cfg.getTimeTarget() != 0) {
             String team1Minutes = String.format("%02d", (int)Math.floor( team[0].getFlagTime() / 60.0 ));
             String team2Minutes = String.format("%02d", (int)Math.floor( team[1].getFlagTime() / 60.0 ));
             String team1Seconds = String.format("%02d", (team[0].getFlagTime() -
-                    (int)Math.floor( team[0].getFlagTime() / 60.0 ) * 60));
+                                                (int)Math.floor( team[0].getFlagTime() / 60.0 ) * 60));
             String team2Seconds = String.format("%02d", (team[1].getFlagTime() -
-                    (int)Math.floor( team[1].getFlagTime() / 60.0 ) * 60));
+                                                (int)Math.floor( team[1].getFlagTime() / 60.0 ) * 60));
 
             score = team1Minutes + ":" + team1Seconds + " - " + team2Minutes + ":" + team2Seconds;
         } else {
             score = team[1].getDeaths() + " - " + team[0].getDeaths();
         }
+
         return score;
     }
 
     /**
-     * Checks if name was a captain on one of the teams and notifies the team of the leave
-     *
-     * @param name name of the player that left the game and could be captain
-     */
+        Checks if name was a captain on one of the teams and notifies the team of the leave
+
+        @param name name of the player that left the game and could be captain
+    */
     private void checkCaptainLeft(String name) {
         for (BWJSTeam i : team) {
             if (i.getCaptainName().equalsIgnoreCase(name)) {
@@ -2188,36 +2233,37 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Puts a player on a frequency if not playing
-     *
-     * @param name name of the player that should be put on a frequency
-     */
+        Puts a player on a frequency if not playing
+
+        @param name name of the player that should be put on a frequency
+    */
     private void putOnFreq(String name) {
         name = name.toLowerCase();
 
         if (listNotplaying.containsKey(name)) {
             m_botAction.setFreq(name, FREQ_NOTPLAYING);
             m_botAction.sendPrivateMessage(name, "You are on the !notplaying-list, " +
-                    "captains are unable to sub or put you in. " +
-                    "Message me with !notplaying again to get you off this list.");
+                                           "captains are unable to sub or put you in. " +
+                                           "Message me with !notplaying again to get you off this list.");
             return;
         }
     }
 
     /**
-     * Sends a welcome message with status info to the player
-     *
-     * @param name Name of the player that should receive the welcome message
-     */
+        Sends a welcome message with status info to the player
+
+        @param name Name of the player that should receive the welcome message
+    */
     private void sendWelcomeMessage(String name) {
-       m_botAction.sendPrivateMessage(name, "Welcome to " + cfg.getGameTypeString());
-       cmd_status(name);    //Sends status info to the player
+        m_botAction.sendPrivateMessage(name, "Welcome to " + cfg.getGameTypeString());
+        cmd_status(name);    //Sends status info to the player
     }
 
     /** Initializes all the variables used in this class */
     private void initializeVariables() {
         cfg = new BWJSConfig();                 //Game configuration
         state = new BWJSState();                //Game state
+
         if (hasDatabase)
             sql = new BWJSSQL();                    //Game sql methods
 
@@ -2227,9 +2273,9 @@ public class bwjsbot extends SubspaceBot {
 
         racismWatcher = new Spy(m_botAction);   //Racism watcher
 
-        listNotplaying = new HashMap<String,Long>();
-        listNotplaying.put(m_botAction.getBotName().toLowerCase(),new Long(0));
-        listJustAdded = new HashMap<String,Long>();
+        listNotplaying = new HashMap<String, Long>();
+        listNotplaying.put(m_botAction.getBotName().toLowerCase(), new Long(0));
+        listJustAdded = new HashMap<String, Long>();
         listAlert = new ArrayList<String>();
         listExtendedLog = new ArrayList<ExtendedLog>();
 
@@ -2268,29 +2314,29 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Handles FrequencyChange event and FrequencyShipChange event
-     * - Checks if the player has lagged out
-     * - Checks if the player is allowed in
-     *
-     * @param name Name of the player
-     * @param frequency Frequency of the player
-     * @param ship Ship type of the player
-     */
+        Handles FrequencyChange event and FrequencyShipChange event
+        - Checks if the player has lagged out
+        - Checks if the player is allowed in
+
+        @param name Name of the player
+        @param frequency Frequency of the player
+        @param ship Ship type of the player
+    */
     private void checkFCandFSC(String name, int frequency, int ship) {
         checkLagout(name, ship);  //Check if the player has lagged out
         checkPlayer(name, frequency, ship);  //Check if the player is allowed in
     }
 
     /**
-     * Checks if a player has lagged out
-     * - Check if the player is on one of the teams
-     * - Check if the player is in spectator mode
-     * - Check if the player is a player on the team
-     *
-     * @param name Name of the player
-     * @param frequency Frequency of the player
-     * @param ship Ship type of the player
-     */
+        Checks if a player has lagged out
+        - Check if the player is on one of the teams
+        - Check if the player is in spectator mode
+        - Check if the player is a player on the team
+
+        @param name Name of the player
+        @param frequency Frequency of the player
+        @param ship Ship type of the player
+    */
     private void checkLagout(String name, int ship) {
         BWJSTeam t;
 
@@ -2322,12 +2368,12 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Checks if a player is allowed in or not
-     *
-     * @param name Name of the player
-     * @param frequency Frequency of the player
-     * @param ship Ship type of the player
-     */
+        Checks if a player is allowed in or not
+
+        @param name Name of the player
+        @param frequency Frequency of the player
+        @param ship Ship type of the player
+    */
     private void checkPlayer(String name, int frequency, int ship) {
         BWJSTeam t;
 
@@ -2374,11 +2420,11 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Returns BWJSTeam of the player with "name"
-     *
-     * @param name name of the player
-     * @return BWJSTeam of the player, null if not on any team
-     */
+        Returns BWJSTeam of the player with "name"
+
+        @param name name of the player
+        @return BWJSTeam of the player, null if not on any team
+    */
     private BWJSTeam getTeam(String name) {
         BWJSTeam t;
 
@@ -2394,12 +2440,12 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Returns the opposite team of the player
-     *
-     * @param name name of the player
-     * @param override override number 0 for Freq 0, 1 for Freq 1, -1 for normal
-     * @return BWJSTeam, null if player doesn't belong to any team
-     */
+        Returns the opposite team of the player
+
+        @param name name of the player
+        @param override override number 0 for Freq 0, 1 for Freq 1, -1 for normal
+        @return BWJSTeam, null if player doesn't belong to any team
+    */
     private BWJSTeam getOtherTeam(String name, int override) {
         if (override == -1) {
             if (team[0].isOnTeam(name)) {
@@ -2417,11 +2463,11 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Returns the opposite team according to BWJSTeam
-     *
-     * @param t current team
-     * @return other team
-     */
+        Returns the opposite team according to BWJSTeam
+
+        @param t current team
+        @return other team
+    */
     private BWJSTeam getOtherTeam(BWJSTeam t) {
         if (t.getFrequency() == 0) {
             return team[1];
@@ -2433,12 +2479,12 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Returns BWJSTeam of the player with "name" or according to the override
-     *
-     * @param name name of the player
-     * @param override override number 0 for Freq 0, 1 for Freq 1, -1 for normal
-     * @return BWJSTeam, null if player doesn't belong to any team
-     */
+        Returns BWJSTeam of the player with "name" or according to the override
+
+        @param name name of the player
+        @param override override number 0 for Freq 0, 1 for Freq 1, -1 for normal
+        @return BWJSTeam, null if player doesn't belong to any team
+    */
     private BWJSTeam getTeam(String name, int override) {
         if (override == -1) {
             return getTeam(name);
@@ -2451,24 +2497,25 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Checks if the arena should be locked or not
-     *
-     * @param message Arena message
-     */
+        Checks if the arena should be locked or not
+
+        @param message Arena message
+    */
     private void checkArenaLock(String message) {
         if (message.equals("Arena UNLOCKED") && lockArena)
             m_botAction.toggleLocked();
+
         if (message.equals("Arena LOCKED") && !lockArena)
             m_botAction.toggleLocked();
     }
 
     /**
-     * Checks if name is a captain on one of the teams
-     * Returns true if true, else false
-     *
-     * @param name Name of the player that could be captain
-     * @return true if name is captain, else false
-     */
+        Checks if name is a captain on one of the teams
+        Returns true if true, else false
+
+        @param name Name of the player that could be captain
+        @return true if name is captain, else false
+    */
     private boolean isCaptain(String name) {
         boolean isCaptain;
         BWJSTeam t;
@@ -2486,18 +2533,21 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Checks if lineups are ok
-     */
+        Checks if lineups are ok
+    */
     private void checkLineup() {
         state.setState(BWJSState.PRE_GAME);
 
         if (team[0].players.size() >= cfg.getMinPlayers() && team[1].players.size() >= cfg.getMinPlayers()) {
             m_botAction.sendArenaMessage("Lineups are ok! Game will start in 30 seconds!", Tools.Sound.CROWD_OOO);
+
             for (Iterator<Player> it = m_botAction.getPlayerIterator(); it.hasNext();) {
                 Player i = it.next();
+
                 if (i.getFrequency() != FREQ_SPEC && !listNotplaying.containsKey(i.getPlayerName().toLowerCase()))
                     m_botAction.sendSmartPrivateMessage(i.getPlayerName(), "You have been added to the game. Game will start in 30 seconds!");
             }
+
             startPreGame();
         } else {
             m_botAction.sendArenaMessage("Lineups are NOT ok! :( Game has been reset.", Tools.Sound.CROWD_GEE);
@@ -2506,8 +2556,8 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Resets variables to their default value
-     */
+        Resets variables to their default value
+    */
     private void reset() {
         listExtendedLog.clear();
 
@@ -2523,34 +2573,34 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Locks arena
-     */
+        Locks arena
+    */
     private void lockArena() {
         lockArena = true;
         m_botAction.toggleLocked();
     }
 
     /**
-     * Unlocks arena
-     */
+        Unlocks arena
+    */
     private void unlockArena() {
         lockArena = false;
         m_botAction.toggleLocked();
     }
 
     /**
-     * Locks all doors in the arena
-     */
+        Locks all doors in the arena
+    */
     private void lockDoors() {
         m_botAction.setDoors(255);
     }
 
     /**
-     * Searches in both teams for player
-     *
-     * @param name name of the player
-     * @return BWJSPlayer
-     */
+        Searches in both teams for player
+
+        @param name name of the player
+        @return BWJSPlayer
+    */
     private BWJSPlayer searchBWJSPlayer(String name) {
         BWJSPlayer p;
 
@@ -2564,16 +2614,18 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Sets everyone in spec and on right frequency
-     */
+        Sets everyone in spec and on right frequency
+    */
     private void setSpecAndFreq() {
         for (Iterator<Player> it = m_botAction.getPlayerIterator(); it.hasNext();) {
             Player i = it.next();
             int id = i.getPlayerID();
             int freq = i.getFrequency();
+
             if (i.getShipType() != Tools.Ship.SPECTATOR) {
                 m_botAction.specWithoutLock(id);
             }
+
             if (listNotplaying.containsKey(i.getPlayerName().toLowerCase()) && freq != FREQ_NOTPLAYING) {
                 m_botAction.setFreq(id, FREQ_NOTPLAYING);
             } else if (freq != FREQ_SPEC && !listNotplaying.containsKey(i.getPlayerName().toLowerCase())) {
@@ -2584,13 +2636,14 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Updates the scoreboard
-     */
+        Updates the scoreboard
+    */
     private void updateScoreboard() {
         scoreboard.hideAllObjects();
+
         /*
-         * Base
-         */
+            Base
+        */
         if (cfg.getTimeTarget() != 0) {
             int team1Minutes = (int)Math.floor( team[0].flagTime / 60.0 );
             int team2Minutes = (int)Math.floor( team[1].flagTime / 60.0 );
@@ -2599,15 +2652,15 @@ public class bwjsbot extends SubspaceBot {
 
             //Team 1
             scoreboard.showObject( 100 + team1Seconds % 10 );
-            scoreboard.showObject( 110 + (team1Seconds - team1Seconds % 10)/10 );
+            scoreboard.showObject( 110 + (team1Seconds - team1Seconds % 10) / 10 );
             scoreboard.showObject( 130 + team1Minutes % 10 );
-            scoreboard.showObject( 140 + (team1Minutes - team1Minutes % 10)/10 );
+            scoreboard.showObject( 140 + (team1Minutes - team1Minutes % 10) / 10 );
 
             //Team 2
             scoreboard.showObject( 200 + team2Seconds % 10 );
-            scoreboard.showObject( 210 + (team2Seconds - team2Seconds % 10)/10 );
+            scoreboard.showObject( 210 + (team2Seconds - team2Seconds % 10) / 10 );
             scoreboard.showObject( 230 + team2Minutes % 10 );
-            scoreboard.showObject( 240 + (team2Minutes - team2Minutes % 10)/10 );
+            scoreboard.showObject( 240 + (team2Minutes - team2Minutes % 10) / 10 );
 
             //Flag status
             if(team[0].flag) {
@@ -2628,23 +2681,24 @@ public class bwjsbot extends SubspaceBot {
             }
         }
         /*
-         * Wbduel, javduel, spidduel, fighterduel
-         */
+            Wbduel, javduel, spidduel, fighterduel
+        */
         else {
             String scoreTeam1 = "" + team[1].getDeaths();
             String scoreTeam2 = "" + team[0].getDeaths();
 
             for (int i = scoreTeam1.length() - 1; i > -1; i--)
                 scoreboard.showObject(
-                        Integer.parseInt("" + scoreTeam1.charAt(i)) + 100 + (scoreTeam1.length() - 1 - i) * 10);
+                    Integer.parseInt("" + scoreTeam1.charAt(i)) + 100 + (scoreTeam1.length() - 1 - i) * 10);
+
             for (int i = scoreTeam2.length() - 1; i > -1; i--)
                 scoreboard.showObject(
-                        Integer.parseInt("" + scoreTeam2.charAt(i)) + 200 + (scoreTeam2.length() - 1 - i) * 10);
+                    Integer.parseInt("" + scoreTeam2.charAt(i)) + 200 + (scoreTeam2.length() - 1 - i) * 10);
         }
 
         /*
-         * Game Time Left
-         */
+            Game Time Left
+        */
         if (timeLeft >= 0) {
             int seconds = timeLeft % 60;
             int minutes = (timeLeft - seconds) / 60;
@@ -2655,12 +2709,14 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /*
-         * Show Team Names
-         */
+            Show Team Names
+        */
         String n1 = team[0].getName().toLowerCase();
         String n2 = team[1].getName().toLowerCase();
+
         if (n1.equalsIgnoreCase("Freq 0"))
             n1 = "freq0";
+
         if (n2.equalsIgnoreCase("Freq 1"))
             n2 = "freq1";
 
@@ -2676,21 +2732,25 @@ public class bwjsbot extends SubspaceBot {
 
         for (int i = 0; i < s1.length(); i++) {
             int t = new Integer(Integer.toString(
-                    ((s1.getBytes()[i]) - 97) + 30) + Integer.toString(i + 0)).intValue();
+                                    ((s1.getBytes()[i]) - 97) + 30) + Integer.toString(i + 0)).intValue();
+
             if (t < -89) {
                 t = new Integer(Integer.toString(((s1.getBytes()[i])) + 30) + Integer.toString(i + 0)).intValue();
                 t -= 220;
             }
+
             scoreboard.showObject(t);
         }
 
         for (int i = 0; i < s2.length(); i++) {
             int t = new Integer(Integer.toString(
-                    ((s2.getBytes()[i]) - 97) + 30) + Integer.toString(i + 5)).intValue();
+                                    ((s2.getBytes()[i]) - 97) + 30) + Integer.toString(i + 5)).intValue();
+
             if (t < -89) {
                 t = new Integer(Integer.toString(((s2.getBytes()[i])) + 30) + Integer.toString(i + 5)).intValue();
                 t -= 220;
             }
+
             scoreboard.showObject(t);
         }
 
@@ -2699,14 +2759,15 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Displays the scores
-     */
+        Displays the scores
+    */
     private void displayScores() {
         ArrayList<String> spam = new ArrayList<String>();
+
         if (cfg.getGameType() == BWJSConfig.BASE) {
             spam.add(",---------------------------------+------+------+-----------+------+------+-----+-----------+----.");
             spam.add("|                               K |    D |   TK |    Points |   FT |  TeK | RPD |    Rating | LO |");
-        } else  if (cfg.getGameType() == BWJSConfig.JAVDUEL){
+        } else  if (cfg.getGameType() == BWJSConfig.JAVDUEL) {
             spam.add(",---------------------------------+------+------+-----------+----.");
             spam.add("|                               K |    D |   TK |    Rating | LO |");
         } else {
@@ -2763,11 +2824,11 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * BWJSConfig - Configuration file for BWJS
-     *
-     * @author fantus
-     *
-     */
+        BWJSConfig - Configuration file for BWJS
+
+        @author fantus
+
+    */
     private class BWJSConfig {
         private BotSettings botSettings;
         private String chats;
@@ -2814,6 +2875,7 @@ public class bwjsbot extends SubspaceBot {
 
             //Game Type
             String gameTypeString = botSettings.getString("GameType" + botNumber);
+
             if (gameTypeString.equals("base"))
                 gameType = BASE;
             else if (gameTypeString.equals("wbduel"))
@@ -2851,11 +2913,15 @@ public class bwjsbot extends SubspaceBot {
             //Max Ships
             maxShips = new int[9];
             maxShipsString = botSettings.getString("MaxShips" + gameType).split(",");
+
             if (m_botAction.getArenaName().equalsIgnoreCase("base2"))
                 maxShipsString[5] = "2";
+
             tmpAnnounceShipCounter = 0; //Counter for Announce Ship Type
+
             for (int i = Tools.Ship.WARBIRD; i <= maxShipsString.length; i++) {
                 maxShips[i] = Integer.parseInt(maxShipsString[i - 1]);
+
                 if (maxShips[i] != 0)
                     tmpAnnounceShipCounter++;
             }
@@ -2875,6 +2941,7 @@ public class bwjsbot extends SubspaceBot {
             //LVZ Objects
             objectsString = botSettings.getString("Objects" + gameType).split(",");
             objects = new int[objectsString.length];
+
             for (int i = 0; i < objectsString.length; i++)
                 objects[i] = Integer.parseInt(objectsString[i]);
 
@@ -2887,15 +2954,18 @@ public class bwjsbot extends SubspaceBot {
             //Warp Spots
             warpSpots = new int[8];
             warpSpotsString = botSettings.getString("WarpSpots" + gameType).split(",");
+
             for (int i = 0; i < warpSpotsString.length; i++)
                 warpSpots[i] = Integer.parseInt(warpSpotsString[i]);
 
             //YBorder
             yborder = botSettings.getInt("Yborder" + gameType);
+
             if (yborder != -1)
                 inBase = true;
             else
                 inBase = false;
+
             outOfBorderTime = botSettings.getInt("OutOfBorderTime" + gameType);
 
             //Zone after squad vs world has begun?
@@ -2903,216 +2973,235 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns whether to announce the shiptype
-         *
-         * @return true if shiptype should be announced, else false
-         */
+            Returns whether to announce the shiptype
+
+            @return true if shiptype should be announced, else false
+        */
         private boolean announceShipType() {
             return announceShipType;
         }
 
         /**
-         * Returns max amount of ships of shiptype
-         *
-         * @param shipType type of ship
-         * @return max amount of ships of shiptype
-         */
+            Returns max amount of ships of shiptype
+
+            @param shipType type of ship
+            @return max amount of ships of shiptype
+        */
         private int getMaxShips(int shipType) {
             return maxShips[shipType];
         }
 
         /**
-         * Returns the default ship type
-         *
-         * @return default shiptype
-         */
+            Returns the default ship type
+
+            @return default shiptype
+        */
         private int getDefaultShipType() {
             return defaultShipType;
         }
 
         /**
-         * Returns string with chats
-         *
-         * @return String with all the chats
-         */
+            Returns string with chats
+
+            @return String with all the chats
+        */
         private String getChats() {
             return chats;
         }
 
         /**
-         * Returns gameType number
-         *
-         * @return Game Type number
-         */
-        private int getGameType(){
+            Returns gameType number
+
+            @return Game Type number
+        */
+        private int getGameType() {
             return gameType;
         }
 
         /**
-         * Returns the amount of maximum lagouts
-         *
-         * @return amount of maximum lagouts, -1 if unlimited
-         */
+            Returns the amount of maximum lagouts
+
+            @return amount of maximum lagouts, -1 if unlimited
+        */
         private int getMaxLagouts() {
             return maxLagouts;
         }
 
         /**
-         * Returns the maximum amount of deaths allowed, 0 if unlimited
-         *
-         * @return maximum amount of deaths allowed, 0 if unlimited
-         */
+            Returns the maximum amount of deaths allowed, 0 if unlimited
+
+            @return maximum amount of deaths allowed, 0 if unlimited
+        */
         private int getMaxDeaths() {
             return maxDeaths;
         }
 
         /**
-         * Returns the arena name
-         *
-         * @return arena name
-         */
+            Returns the arena name
+
+            @return arena name
+        */
         private String getArena() {
             return arena;
         }
 
         /**
-         * Returns the game type in the String format
-         *
-         * @return Game Type
-         */
+            Returns the game type in the String format
+
+            @return Game Type
+        */
         private String getGameTypeString() {
             String gameTypeString;
 
             switch (gameType) {
-                case WBDUEL : gameTypeString = "WBDUEL"; break;
-                case BASE : gameTypeString = "BASE"; break;
-                case JAVDUEL : gameTypeString = "JAVDUEL"; break;
-                case SPIDDUEL : gameTypeString = "SPIDDUEL"; break;
-                case FIGHTERDUEL : gameTypeString = "FIGHTERDUEL"; break;
-                case TURRETDUEL : gameTypeString = "TURRETDUEL"; break;
-                default : gameTypeString = "";
+            case WBDUEL :
+                gameTypeString = "WBDUEL";
+                break;
+
+            case BASE :
+                gameTypeString = "BASE";
+                break;
+
+            case JAVDUEL :
+                gameTypeString = "JAVDUEL";
+                break;
+
+            case SPIDDUEL :
+                gameTypeString = "SPIDDUEL";
+                break;
+
+            case FIGHTERDUEL :
+                gameTypeString = "FIGHTERDUEL";
+                break;
+
+            case TURRETDUEL :
+                gameTypeString = "TURRETDUEL";
+                break;
+
+            default :
+                gameTypeString = "";
             }
 
             return gameTypeString;
         }
 
         /**
-         * Returns maximum out of border time
-         *
-         * @return maximum out of border time
-         */
+            Returns maximum out of border time
+
+            @return maximum out of border time
+        */
         private int getOutOfBorderTime() {
             return outOfBorderTime;
         }
 
         /**
-         * Returns game time
-         *
-         * @return Maximum time of one game
-         */
+            Returns game time
+
+            @return Maximum time of one game
+        */
         private int getTime() {
             return time;
         }
 
         /**
-         * Returns the time target
-         *
-         * @return time target
-         */
+            Returns the time target
+
+            @return time target
+        */
         private int getTimeTarget() {
             return timetarget;
         }
 
         /**
-         * Returns the maximum amount of players allowed
-         *
-         * @return maximum amount of players allowed
-         */
+            Returns the maximum amount of players allowed
+
+            @return maximum amount of players allowed
+        */
         private int getMaxPlayers() {
             return maxPlayers;
         }
 
         /**
-         * Returns the warpspot
-         *
-         * @param index index number
-         * @return warpspot location
-         */
+            Returns the warpspot
+
+            @param index index number
+            @return warpspot location
+        */
         private int getWarpSpot(int index) {
             return warpSpots[index];
         }
 
         /**
-         * Returns true if auto caps is on, else false
-         *
-         * @return Returns true if auto caps is on, else false
-         */
+            Returns true if auto caps is on, else false
+
+            @return Returns true if auto caps is on, else false
+        */
         private boolean getAllowAutoCaps() {
             return allowAutoCaps;
         }
 
         /**
-         * Returns if a zoner can be send
-         *
-         * @return true if a zoner can be send, else false
-         */
+            Returns if a zoner can be send
+
+            @return true if a zoner can be send, else false
+        */
         private boolean getAllowZoner() {
             return allowZoner;
         }
 
         /**
-         * Returns minimal amount of players needed in
-         *
-         * @return minimal amount of players
-         */
+            Returns minimal amount of players needed in
+
+            @return minimal amount of players
+        */
         private int getMinPlayers() {
             return minPlayers;
         }
 
         /**
-         * Returns whether players should stay in a base
-         *
-         * @return true if players should stau in the base, else false
-         */
+            Returns whether players should stay in a base
+
+            @return true if players should stau in the base, else false
+        */
         private boolean getInBase() {
             return inBase;
         }
 
         /**
-         * Returns y border
-         *
-         * @return y border
-         */
+            Returns y border
+
+            @return y border
+        */
         private int getYBorder() {
             return yborder;
         }
 
         /**
-         * Returns object number
-         *
-         * @param index index number
-         * @return object number
-         */
+            Returns object number
+
+            @param index index number
+            @return object number
+        */
         private int getObject(int index) {
             return objects[index];
         }
 
         /**
-         * Returns maximum allowed substitutes
-         *
-         * @return maximum allowed substitutes
-         */
+            Returns maximum allowed substitutes
+
+            @return maximum allowed substitutes
+        */
         private int getMaxSubs() {
             return maxSubs;
         }
     }
 
     /**
-     * BWJSPlayer - Player
-     *
-     * @author fantus
-     *
-     */
+        BWJSPlayer - Player
+
+        @author fantus
+
+    */
     private class BWJSPlayer {
         private String p_name;
         private int[][] p_ship;
@@ -3181,6 +3270,7 @@ public class bwjsbot extends SubspaceBot {
             p_lagouts = 0;
             p_outOfBorderTime = cfg.getOutOfBorderTime();
             p_outOfBorderWarning = false;
+
             if (hasDatabase) {
                 p_userID = sql.getUserID(p_name);
             }
@@ -3197,9 +3287,9 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Adds a player into the game
-         * - Resets out of border time
-         */
+            Adds a player into the game
+            - Resets out of border time
+        */
         private void addPlayer() {
             p_state = IN;
             p_ship[p_currentShip][USED] = 1;
@@ -3215,50 +3305,50 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Puts player IN in shiptype
-         *
-         * @param shipType ship type
-         */
+            Puts player IN in shiptype
+
+            @param shipType ship type
+        */
         private void putIN(int shipType) {
             p_currentShip = shipType;
             addPlayer();
         }
 
         /**
-         * Handles a flag claim
-         * - add one to the flag claimed counter
-         */
+            Handles a flag claim
+            - add one to the flag claimed counter
+        */
         private void flagClaimed() {
             p_ship[p_currentShip][FLAGS_CLAIMED]++;
         }
 
         /**
-         * Handles flag reward
-         *
-         * @param points points of the flag reward
-         */
+            Handles flag reward
+
+            @param points points of the flag reward
+        */
         private void flagReward(Short points) {
             p_ship[p_currentShip][SCORE] += points;
         }
 
         /**
-         * Returns the current ship state
-         *
-         * @return int current ship state
-         */
+            Returns the current ship state
+
+            @return int current ship state
+        */
         private int getCurrentState() {
             return p_state;
         }
 
         /**
-         * Handles a lagout event
-         * - Notes down the timestamp of the lagout
-         * - Adds one to the lagout counter
-         * - Adds a death if gametype is WBDUEL,JAVDUEL or SPIDDUEL
-         * - Check if the player hits loss/deaths limit
-         * - Check if the player is out due maximum of lagouts
-         * - Tell the player how to get back in
-         */
+            Handles a lagout event
+            - Notes down the timestamp of the lagout
+            - Adds one to the lagout counter
+            - Adds a death if gametype is WBDUEL,JAVDUEL or SPIDDUEL
+            - Check if the player hits loss/deaths limit
+            - Check if the player is out due maximum of lagouts
+            - Tell the player how to get back in
+        */
         private void lagout() {
             p_state = LAGOUT;
             p_timestampLagout = System.currentTimeMillis();
@@ -3299,8 +3389,8 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Checks if the player reached the death limit, at least if there is a death limit
-         */
+            Checks if the player reached the death limit, at least if there is a death limit
+        */
         private void checkIfOut() {
             if (p_maxDeaths <= getDeaths() && cfg.getMaxDeaths() != 0) {
                 out("death limit");
@@ -3308,10 +3398,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the amount of deaths of all ships combined
-         *
-         * @return amount of deaths of all ships combined
-         */
+            Returns the amount of deaths of all ships combined
+
+            @return amount of deaths of all ships combined
+        */
         private int getDeaths() {
             int deaths;
 
@@ -3325,10 +3415,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the total amount of kills of all ships combined
-         *
-         * @return amount of kills of all ships combined
-         */
+            Returns the total amount of kills of all ships combined
+
+            @return amount of kills of all ships combined
+        */
         private int getKills() {
             int kills;
 
@@ -3344,15 +3434,16 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the repels per death if this player was a shark
-         *
-         * @return string containing a double value or a dash if not applicable
-         */
+            Returns the repels per death if this player was a shark
+
+            @return string containing a double value or a dash if not applicable
+        */
         public String getRPD() {
             double reps = getRepels();
             double deaths = p_ship[Tools.Ship.SHARK][DEATHS];
+
             if (reps > 0 && deaths > 0)
-                return Tools.rightString(new DecimalFormat("0.0").format((reps/deaths)), 3);
+                return Tools.rightString(new DecimalFormat("0.0").format((reps / deaths)), 3);
             else if (deaths > 0 && reps == 0)
                 return Tools.rightString("0.0", 3);
             else if (reps > 0 && deaths == 0)
@@ -3361,22 +3452,22 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns sum of repels
-         *
-         * @return sum of repels
-         */
+            Returns sum of repels
+
+            @return sum of repels
+        */
         public int getRepels() {
             if (p_ship[Tools.Ship.SHARK][USED] == 1)
-                return (p_ship[Tools.Ship.SHARK][REPELS_USED]/2);
+                return (p_ship[Tools.Ship.SHARK][REPELS_USED] / 2);
             else
                 return 0;
         }
 
         /**
-         * Returns sum of teamkills
-         *
-         * @return sum of teamkills
-         */
+            Returns sum of teamkills
+
+            @return sum of teamkills
+        */
         private int getTeamKills() {
             int teamkills;
 
@@ -3392,14 +3483,14 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * This method handles a player going out
-         * - Changes player state
-         * - Spectates the player
-         * - Notifies the arena
-         * - Change state according to reason
-         *
-         * @param reason Reason why the player went out
-         */
+            This method handles a player going out
+            - Changes player state
+            - Spectates the player
+            - Notifies the arena
+            - Change state according to reason
+
+            @param reason Reason why the player went out
+        */
         private void out(String reason) {
             String arenaMessage = "";
 
@@ -3415,8 +3506,8 @@ public class bwjsbot extends SubspaceBot {
             if (reason.equals("death limit")) {
                 arenaMessage = p_name + " is out. " + getKills() + " wins " + getDeaths() + " losses";
             } else if (reason.equals("lagout limit")) {
-                arenaMessage = p_name+ " is out, (too many lagouts). " + getKills() + " wins " + getDeaths() +
-                    " losses. (NOTICE: player can still be subbed)";
+                arenaMessage = p_name + " is out, (too many lagouts). " + getKills() + " wins " + getDeaths() +
+                               " losses. (NOTICE: player can still be subbed)";
                 p_state = OUT_SUBABLE;
             } else if (reason.equals("out of border")) {
                 arenaMessage = p_name + " is out, (too long outside of base). " + getKills() + " wins " + getDeaths() + " losses";
@@ -3429,11 +3520,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Handles a death of the player
-         * - Adds death
-         * - Checks if out
-         * - Reset out of border time
-         */
+            Handles a death of the player
+            - Adds death
+            - Checks if out
+            - Reset out of border time
+        */
         private void died() {
             p_ship[p_currentShip][DEATHS]++;
             checkIfOut();
@@ -3441,14 +3532,14 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Handles a kill of the player
-         * - Check if its a teamkill or not
-         * - Keep count of what ship got killed
-         *
-         * @param killeeShip Ship of the player that got killed
-         * @param killeeFreq Frequency of the player that got killed
-         * @param killeeBounty Bounty of the player that got killed
-         */
+            Handles a kill of the player
+            - Check if its a teamkill or not
+            - Keep count of what ship got killed
+
+            @param killeeShip Ship of the player that got killed
+            @param killeeFreq Frequency of the player that got killed
+            @param killeeBounty Bounty of the player that got killed
+        */
         private void killed(int killeeShip, int killeeFreq, int killeeBounty) {
             int ship;
 
@@ -3456,51 +3547,98 @@ public class bwjsbot extends SubspaceBot {
 
             if (p_frequency != killeeFreq) {
                 switch (killeeShip) {
-                    case Tools.Ship.WARBIRD : ship = WARBIRD_KILL; break;
-                    case Tools.Ship.JAVELIN : ship = JAVELIN_KILL; break;
-                    case Tools.Ship.SPIDER : ship = SPIDER_KILL; break;
-                    case Tools.Ship.LEVIATHAN : ship = LEVIATHAN_KILL; break;
-                    case Tools.Ship.TERRIER : ship = TERRIER_KILL; break;
-                    case Tools.Ship.WEASEL : ship = WEASEL_KILL; break;
-                    case Tools.Ship.LANCASTER : ship = LANCASTER_KILL; break;
-                    case Tools.Ship.SHARK : ship = SHARK_KILL; break;
+                case Tools.Ship.WARBIRD :
+                    ship = WARBIRD_KILL;
+                    break;
+
+                case Tools.Ship.JAVELIN :
+                    ship = JAVELIN_KILL;
+                    break;
+
+                case Tools.Ship.SPIDER :
+                    ship = SPIDER_KILL;
+                    break;
+
+                case Tools.Ship.LEVIATHAN :
+                    ship = LEVIATHAN_KILL;
+                    break;
+
+                case Tools.Ship.TERRIER :
+                    ship = TERRIER_KILL;
+                    break;
+
+                case Tools.Ship.WEASEL :
+                    ship = WEASEL_KILL;
+                    break;
+
+                case Tools.Ship.LANCASTER :
+                    ship = LANCASTER_KILL;
+                    break;
+
+                case Tools.Ship.SHARK :
+                    ship = SHARK_KILL;
+                    break;
                 }
             } else {
                 switch (killeeShip) {
-                    case Tools.Ship.WARBIRD : ship = WARBIRD_TEAMKILL; break;
-                    case Tools.Ship.JAVELIN : ship = JAVELIN_TEAMKILL; break;
-                    case Tools.Ship.SPIDER : ship = SPIDER_TEAMKILL; break;
-                    case Tools.Ship.LEVIATHAN : ship = LEVIATHAN_TEAMKILL; break;
-                    case Tools.Ship.TERRIER : ship = TERRIER_TEAMKILL; break;
-                    case Tools.Ship.WEASEL : ship = WEASEL_TEAMKILL; break;
-                    case Tools.Ship.LANCASTER : ship = LANCASTER_TEAMKILL; break;
-                    case Tools.Ship.SHARK : ship = SHARK_TEAMKILL; break;
+                case Tools.Ship.WARBIRD :
+                    ship = WARBIRD_TEAMKILL;
+                    break;
+
+                case Tools.Ship.JAVELIN :
+                    ship = JAVELIN_TEAMKILL;
+                    break;
+
+                case Tools.Ship.SPIDER :
+                    ship = SPIDER_TEAMKILL;
+                    break;
+
+                case Tools.Ship.LEVIATHAN :
+                    ship = LEVIATHAN_TEAMKILL;
+                    break;
+
+                case Tools.Ship.TERRIER :
+                    ship = TERRIER_TEAMKILL;
+                    break;
+
+                case Tools.Ship.WEASEL :
+                    ship = WEASEL_TEAMKILL;
+                    break;
+
+                case Tools.Ship.LANCASTER :
+                    ship = LANCASTER_TEAMKILL;
+                    break;
+
+                case Tools.Ship.SHARK :
+                    ship = SHARK_TEAMKILL;
+                    break;
                 }
             }
+
             p_ship[p_currentShip][ship]++;
             p_ship[p_currentShip][SCORE] += killeeBounty;
         }
 
         /**
-         * Resets out of border time and the warning lock
-         */
+            Resets out of border time and the warning lock
+        */
         private void resetOutOfBorderTime() {
             p_outOfBorderTime = cfg.getOutOfBorderTime();
             p_outOfBorderWarning = false;
         }
 
         /**
-         * Timestamps last position received
-         */
+            Timestamps last position received
+        */
         private void timestampLastPosition() {
             p_lastPositionUpdate = System.currentTimeMillis();
         }
 
         /**
-         * Keeps track of the weapons that were fired
-         *
-         * @param weaponType weapon type
-         */
+            Keeps track of the weapons that were fired
+
+            @param weaponType weapon type
+        */
         private void weaponFired(int weaponType) {
             if (weaponType == WeaponFired.WEAPON_BULLET) {
                 p_ship[p_currentShip][BULLET_FIRED]++;
@@ -3516,19 +3654,19 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the name of this player
-         *
-         * @return Returns the name of this player
-         */
+            Returns the name of this player
+
+            @return Returns the name of this player
+        */
         private String getName() {
             return p_name;
         }
 
         /**
-         * Returns whether a player is out or not
-         *
-         * @return Returns true if the player is out, else false
-         */
+            Returns whether a player is out or not
+
+            @return Returns true if the player is out, else false
+        */
         private boolean isOut() {
             if (p_state >= OUT_SUBABLE) {
                 return true;
@@ -3538,19 +3676,19 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns current type of ship
-         *
-         * @return Returns current type of ship
-         */
+            Returns current type of ship
+
+            @return Returns current type of ship
+        */
         private int getCurrentShipType() {
             return p_currentShip;
         }
 
         /**
-         * Returns whether a !change is allowed on this player
-         *
-         * @return true if change is allowed, else false
-         */
+            Returns whether a !change is allowed on this player
+
+            @return true if change is allowed, else false
+        */
         private boolean isChangeAllowed() {
             if ((System.currentTimeMillis() - p_timestampChange) <= (CHANGE_WAIT_TIME * Tools.TimeInMillis.SECOND)) {
                 return false;
@@ -3560,19 +3698,19 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns time in seconds until next change
-         *
-         * @return Returns time in seconds until next change
-         */
+            Returns time in seconds until next change
+
+            @return Returns time in seconds until next change
+        */
         private long getTimeUntilNextChange() {
             return (CHANGE_WAIT_TIME - ((System.currentTimeMillis() - p_timestampChange) / Tools.TimeInMillis.SECOND));
         }
 
         /**
-         * Returns whether a !sub is allowed on this player
-         *
-         * @return true if sub is allowed, else false
-         */
+            Returns whether a !sub is allowed on this player
+
+            @return true if sub is allowed, else false
+        */
         private boolean isSubAllowed() {
             if ((System.currentTimeMillis() - p_timestampSub) <= (SUB_WAIT_TIME * Tools.TimeInMillis.SECOND)) {
                 return false;
@@ -3582,19 +3720,19 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns time in seconds until next sub
-         *
-         * @return Returns time in seconds until next sub
-         */
+            Returns time in seconds until next sub
+
+            @return Returns time in seconds until next sub
+        */
         private long getTimeUntilNextSub() {
             return (SUB_WAIT_TIME - ((System.currentTimeMillis() - p_timestampSub) / Tools.TimeInMillis.SECOND));
         }
 
         /**
-         * Returns whether a !switch is allowed on this player
-         *
-         * @return true if switch is allowed, else false
-         */
+            Returns whether a !switch is allowed on this player
+
+            @return true if switch is allowed, else false
+        */
         private boolean isSwitchAllowed() {
             if ((System.currentTimeMillis() - p_timestampSwitch) <= (SWITCH_WAIT_TIME * Tools.TimeInMillis.SECOND)) {
                 return false;
@@ -3604,22 +3742,22 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns time in seconds until next switch
-         *
-         * @return Returns time in seconds until next switch
-         */
+            Returns time in seconds until next switch
+
+            @return Returns time in seconds until next switch
+        */
         private long getTimeUntilNextSwitch() {
             return (SWITCH_WAIT_TIME - ((System.currentTimeMillis() - p_timestampSwitch) / Tools.TimeInMillis.SECOND));
         }
 
         /**
-         * Changes player to shipType
-         *
-         * @param shipType Shiptype to change to
-         */
+            Changes player to shipType
+
+            @param shipType Shiptype to change to
+        */
         private void change(int shipType) {
             m_botAction.sendArenaMessage(p_name + " changed from " + Tools.shipName(p_currentShip) +
-                    " to " + Tools.shipName(shipType));
+                                         " to " + Tools.shipName(shipType));
             p_currentShip = shipType;
 
             p_ship[p_currentShip][USED] = 1;
@@ -3632,43 +3770,54 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns lagout time
-         *
-         * @return lagout time
-         */
+            Returns lagout time
+
+            @return lagout time
+        */
         private long getLagoutTimestamp() {
             return p_timestampLagout;
         }
 
         /**
-         * Returns a player into the game
-         */
+            Returns a player into the game
+        */
         private void lagin() {
             m_botAction.sendOpposingTeamMessageByFrequency(p_frequency, p_name + " returned from lagout.");
             addPlayer();
         }
 
         /**
-         * Returns status
-         *
-         * @return status
-         */
+            Returns status
+
+            @return status
+        */
         private String getStatus() {
             switch (p_state) {
-                case (IN) : return "IN";
-                case (LAGOUT) : return "LAGGED OUT";
-                case (SUBBED) : return "SUBSTITUTED";
-                case (OUT) : return "OUT";
-                case (OUT_SUBABLE) : return "OUT (still substitutable)";
-                default : return "";
+            case (IN) :
+                return "IN";
+
+            case (LAGOUT) :
+                return "LAGGED OUT";
+
+            case (SUBBED) :
+                return "SUBSTITUTED";
+
+            case (OUT) :
+                return "OUT";
+
+            case (OUT_SUBABLE) :
+                return "OUT (still substitutable)";
+
+            default :
+                return "";
+            }
         }
-    }
 
         /**
-         * Returns total rating
-         *
-         * @return sum of all ratings
-         */
+            Returns total rating
+
+            @return sum of all ratings
+        */
         private int getTotalRating() {
             int totalRating;
 
@@ -3682,158 +3831,170 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns rating of shiptype
-         *
-         * @param shipType shiptype
-         * @return rating
-         */
+            Returns rating of shiptype
+
+            @param shipType shiptype
+            @return rating
+        */
         private int getRating(int shipType) {
             int rating = 0;
 
             switch(shipType) {
-                case Tools.Ship.WARBIRD :
-                    rating = (int) (
-                            .45 * p_ship[Tools.Ship.WARBIRD][SCORE] *
+            case Tools.Ship.WARBIRD :
+                rating = (int) (
+                             .45 * p_ship[Tools.Ship.WARBIRD][SCORE] *
 
-                            (.07 * p_ship[Tools.Ship.WARBIRD][WARBIRD_KILL] +
-                            .07 * p_ship[Tools.Ship.WARBIRD][JAVELIN_KILL] +
-                            .05 * p_ship[Tools.Ship.WARBIRD][SPIDER_KILL] +
-                            .12 * p_ship[Tools.Ship.WARBIRD][TERRIER_KILL] +
-                            .05 * p_ship[Tools.Ship.WARBIRD][WEASEL_KILL] +
-                            .06 * p_ship[Tools.Ship.WARBIRD][LANCASTER_KILL] +
-                            .08 * p_ship[Tools.Ship.WARBIRD][SHARK_KILL] -
-                            .04 * getDeaths())
-                            );
-                    break;
-                case Tools.Ship.JAVELIN :
-                    rating = (int) (
-                            .6 * p_ship[Tools.Ship.JAVELIN][SCORE] *
+                             (.07 * p_ship[Tools.Ship.WARBIRD][WARBIRD_KILL] +
+                              .07 * p_ship[Tools.Ship.WARBIRD][JAVELIN_KILL] +
+                              .05 * p_ship[Tools.Ship.WARBIRD][SPIDER_KILL] +
+                              .12 * p_ship[Tools.Ship.WARBIRD][TERRIER_KILL] +
+                              .05 * p_ship[Tools.Ship.WARBIRD][WEASEL_KILL] +
+                              .06 * p_ship[Tools.Ship.WARBIRD][LANCASTER_KILL] +
+                              .08 * p_ship[Tools.Ship.WARBIRD][SHARK_KILL] -
+                              .04 * getDeaths())
+                         );
+                break;
 
-                            (.05 * p_ship[Tools.Ship.JAVELIN][WARBIRD_KILL] +
-                            .06 * p_ship[Tools.Ship.JAVELIN][JAVELIN_KILL] +
-                            .066 * p_ship[Tools.Ship.JAVELIN][SPIDER_KILL] +
-                            .14 * p_ship[Tools.Ship.JAVELIN][TERRIER_KILL] +
-                            .07 * p_ship[Tools.Ship.JAVELIN][WEASEL_KILL] +
-                            .05 * p_ship[Tools.Ship.JAVELIN][LANCASTER_KILL] +
-                            .09 * p_ship[Tools.Ship.JAVELIN][SHARK_KILL] -
-                            .05 * getDeaths() - (
-                                    .07 * p_ship[Tools.Ship.JAVELIN][WARBIRD_TEAMKILL] +
-                                    .07 * p_ship[Tools.Ship.JAVELIN][JAVELIN_TEAMKILL] +
-                                    .06 * p_ship[Tools.Ship.JAVELIN][SPIDER_TEAMKILL] +
-                                    .13 * p_ship[Tools.Ship.JAVELIN][TERRIER_TEAMKILL] +
-                                    .06 * p_ship[Tools.Ship.JAVELIN][WEASEL_TEAMKILL] +
-                                    .07 * p_ship[Tools.Ship.JAVELIN][LANCASTER_TEAMKILL] +
-                                    .09 * p_ship[Tools.Ship.JAVELIN][SHARK_TEAMKILL]
-                                                )
-                            )
-                            );
-                    break;
-                case Tools.Ship.SPIDER :
-                    rating = (int) (
-                            .4 * p_ship[Tools.Ship.SPIDER][SCORE] *
+            case Tools.Ship.JAVELIN :
+                rating = (int) (
+                             .6 * p_ship[Tools.Ship.JAVELIN][SCORE] *
 
-                            (.06 * p_ship[Tools.Ship.SPIDER][WARBIRD_KILL] +
-                            .06 * p_ship[Tools.Ship.SPIDER][JAVELIN_KILL] +
-                            .04 * p_ship[Tools.Ship.SPIDER][SPIDER_KILL] +
-                            .09 * p_ship[Tools.Ship.SPIDER][TERRIER_KILL] +
-                            .05 * p_ship[Tools.Ship.SPIDER][WEASEL_KILL] +
-                            .05 * p_ship[Tools.Ship.SPIDER][LANCASTER_KILL] +
-                            .089 * p_ship[Tools.Ship.SPIDER][SHARK_KILL] -
-                            .05 * getDeaths()
-                            )
-                            );
-                    break;
-                case Tools.Ship.TERRIER :
-                    rating = (int) (
-                            2.45 * p_ship[Tools.Ship.TERRIER][SCORE] *
+                             (.05 * p_ship[Tools.Ship.JAVELIN][WARBIRD_KILL] +
+                              .06 * p_ship[Tools.Ship.JAVELIN][JAVELIN_KILL] +
+                              .066 * p_ship[Tools.Ship.JAVELIN][SPIDER_KILL] +
+                              .14 * p_ship[Tools.Ship.JAVELIN][TERRIER_KILL] +
+                              .07 * p_ship[Tools.Ship.JAVELIN][WEASEL_KILL] +
+                              .05 * p_ship[Tools.Ship.JAVELIN][LANCASTER_KILL] +
+                              .09 * p_ship[Tools.Ship.JAVELIN][SHARK_KILL] -
+                              .05 * getDeaths() - (
+                                  .07 * p_ship[Tools.Ship.JAVELIN][WARBIRD_TEAMKILL] +
+                                  .07 * p_ship[Tools.Ship.JAVELIN][JAVELIN_TEAMKILL] +
+                                  .06 * p_ship[Tools.Ship.JAVELIN][SPIDER_TEAMKILL] +
+                                  .13 * p_ship[Tools.Ship.JAVELIN][TERRIER_TEAMKILL] +
+                                  .06 * p_ship[Tools.Ship.JAVELIN][WEASEL_TEAMKILL] +
+                                  .07 * p_ship[Tools.Ship.JAVELIN][LANCASTER_TEAMKILL] +
+                                  .09 * p_ship[Tools.Ship.JAVELIN][SHARK_TEAMKILL]
+                              )
+                             )
+                         );
+                break;
 
-                            (.03 * p_ship[Tools.Ship.TERRIER][WARBIRD_KILL] +
-                            .03 * p_ship[Tools.Ship.TERRIER][JAVELIN_KILL] +
-                            .036 * p_ship[Tools.Ship.TERRIER][SPIDER_KILL] +
-                            .12 * p_ship[Tools.Ship.TERRIER][TERRIER_KILL] +
-                            .35 * p_ship[Tools.Ship.TERRIER][WEASEL_KILL] +
-                            .025 * p_ship[Tools.Ship.TERRIER][LANCASTER_KILL] +
-                            .052 * p_ship[Tools.Ship.TERRIER][SHARK_KILL] -
-                            .21 * getDeaths()
-                            )
-                            );
-                    break;
-                case Tools.Ship.WEASEL :
-                    rating = (int) (
-                            2.45 * p_ship[Tools.Ship.WEASEL][SCORE] * (.09 * getKills() - .21 * getDeaths())
-                            );
-                    break;
-                case Tools.Ship.LANCASTER :
-                    rating = (int) (
-                            .6 * p_ship[Tools.Ship.LANCASTER][SCORE] *
+            case Tools.Ship.SPIDER :
+                rating = (int) (
+                             .4 * p_ship[Tools.Ship.SPIDER][SCORE] *
 
-                            (.07 * p_ship[Tools.Ship.LANCASTER][WARBIRD_KILL] +
-                            .07 * p_ship[Tools.Ship.LANCASTER][JAVELIN_KILL] +
-                            .055 * p_ship[Tools.Ship.LANCASTER][SPIDER_KILL] +
-                            .12 * p_ship[Tools.Ship.LANCASTER][TERRIER_KILL] +
-                            .05 * p_ship[Tools.Ship.LANCASTER][WEASEL_KILL] +
-                            .06 * p_ship[Tools.Ship.LANCASTER][LANCASTER_KILL] +
-                            .08 * p_ship[Tools.Ship.LANCASTER][SHARK_KILL] -
-                            .04 * getDeaths()
-                            )
-                            );
-                    break;
-                case Tools.Ship.SHARK :
-                    int tmpShark;
-                    if (p_ship[Tools.Ship.SHARK][DEATHS] != 0)
-                        tmpShark = (p_ship[Tools.Ship.SHARK][REPELS_USED]/2) / p_ship[Tools.Ship.SHARK][DEATHS];
-                    else
-                        tmpShark = 0;
+                             (.06 * p_ship[Tools.Ship.SPIDER][WARBIRD_KILL] +
+                              .06 * p_ship[Tools.Ship.SPIDER][JAVELIN_KILL] +
+                              .04 * p_ship[Tools.Ship.SPIDER][SPIDER_KILL] +
+                              .09 * p_ship[Tools.Ship.SPIDER][TERRIER_KILL] +
+                              .05 * p_ship[Tools.Ship.SPIDER][WEASEL_KILL] +
+                              .05 * p_ship[Tools.Ship.SPIDER][LANCASTER_KILL] +
+                              .089 * p_ship[Tools.Ship.SPIDER][SHARK_KILL] -
+                              .05 * getDeaths()
+                             )
+                         );
+                break;
 
-                    rating = (int) (
-                            p_ship[Tools.Ship.SHARK][SCORE] *
+            case Tools.Ship.TERRIER :
+                rating = (int) (
+                             2.45 * p_ship[Tools.Ship.TERRIER][SCORE] *
 
-                            (.065 * (tmpShark) +
-                            .001 * p_ship[Tools.Ship.SHARK][WARBIRD_KILL] +
-                            .001 * p_ship[Tools.Ship.SHARK][JAVELIN_KILL] +
-                            .001 * p_ship[Tools.Ship.SHARK][SPIDER_KILL] +
-                            .005 * p_ship[Tools.Ship.SHARK][TERRIER_KILL] +
-                            .001 * p_ship[Tools.Ship.SHARK][WEASEL_KILL] +
-                            .001 * p_ship[Tools.Ship.SHARK][LANCASTER_KILL] +
-                            .0015 * p_ship[Tools.Ship.SHARK][SHARK_KILL] -
-                            .001 * getDeaths() - (
-                                    .07 * p_ship[Tools.Ship.SHARK][WARBIRD_TEAMKILL] +
-                                    .07 * p_ship[Tools.Ship.SHARK][JAVELIN_TEAMKILL] +
-                                    .072 * p_ship[Tools.Ship.SHARK][SPIDER_TEAMKILL] +
-                                    .15 * p_ship[Tools.Ship.SHARK][TERRIER_TEAMKILL] +
-                                    .05 * p_ship[Tools.Ship.SHARK][WEASEL_TEAMKILL] +
-                                    .07 * p_ship[Tools.Ship.SHARK][LANCASTER_TEAMKILL] +
-                                    .08 * p_ship[Tools.Ship.SHARK][SHARK_TEAMKILL]
-                                                )
-                            )
-                            );
-                    break;
-                default :
-                    rating = 0;
+                             (.03 * p_ship[Tools.Ship.TERRIER][WARBIRD_KILL] +
+                              .03 * p_ship[Tools.Ship.TERRIER][JAVELIN_KILL] +
+                              .036 * p_ship[Tools.Ship.TERRIER][SPIDER_KILL] +
+                              .12 * p_ship[Tools.Ship.TERRIER][TERRIER_KILL] +
+                              .35 * p_ship[Tools.Ship.TERRIER][WEASEL_KILL] +
+                              .025 * p_ship[Tools.Ship.TERRIER][LANCASTER_KILL] +
+                              .052 * p_ship[Tools.Ship.TERRIER][SHARK_KILL] -
+                              .21 * getDeaths()
+                             )
+                         );
+                break;
+
+            case Tools.Ship.WEASEL :
+                rating = (int) (
+                             2.45 * p_ship[Tools.Ship.WEASEL][SCORE] * (.09 * getKills() - .21 * getDeaths())
+                         );
+                break;
+
+            case Tools.Ship.LANCASTER :
+                rating = (int) (
+                             .6 * p_ship[Tools.Ship.LANCASTER][SCORE] *
+
+                             (.07 * p_ship[Tools.Ship.LANCASTER][WARBIRD_KILL] +
+                              .07 * p_ship[Tools.Ship.LANCASTER][JAVELIN_KILL] +
+                              .055 * p_ship[Tools.Ship.LANCASTER][SPIDER_KILL] +
+                              .12 * p_ship[Tools.Ship.LANCASTER][TERRIER_KILL] +
+                              .05 * p_ship[Tools.Ship.LANCASTER][WEASEL_KILL] +
+                              .06 * p_ship[Tools.Ship.LANCASTER][LANCASTER_KILL] +
+                              .08 * p_ship[Tools.Ship.LANCASTER][SHARK_KILL] -
+                              .04 * getDeaths()
+                             )
+                         );
+                break;
+
+            case Tools.Ship.SHARK :
+                int tmpShark;
+
+                if (p_ship[Tools.Ship.SHARK][DEATHS] != 0)
+                    tmpShark = (p_ship[Tools.Ship.SHARK][REPELS_USED] / 2) / p_ship[Tools.Ship.SHARK][DEATHS];
+                else
+                    tmpShark = 0;
+
+                rating = (int) (
+                             p_ship[Tools.Ship.SHARK][SCORE] *
+
+                             (.065 * (tmpShark) +
+                              .001 * p_ship[Tools.Ship.SHARK][WARBIRD_KILL] +
+                              .001 * p_ship[Tools.Ship.SHARK][JAVELIN_KILL] +
+                              .001 * p_ship[Tools.Ship.SHARK][SPIDER_KILL] +
+                              .005 * p_ship[Tools.Ship.SHARK][TERRIER_KILL] +
+                              .001 * p_ship[Tools.Ship.SHARK][WEASEL_KILL] +
+                              .001 * p_ship[Tools.Ship.SHARK][LANCASTER_KILL] +
+                              .0015 * p_ship[Tools.Ship.SHARK][SHARK_KILL] -
+                              .001 * getDeaths() - (
+                                  .07 * p_ship[Tools.Ship.SHARK][WARBIRD_TEAMKILL] +
+                                  .07 * p_ship[Tools.Ship.SHARK][JAVELIN_TEAMKILL] +
+                                  .072 * p_ship[Tools.Ship.SHARK][SPIDER_TEAMKILL] +
+                                  .15 * p_ship[Tools.Ship.SHARK][TERRIER_TEAMKILL] +
+                                  .05 * p_ship[Tools.Ship.SHARK][WEASEL_TEAMKILL] +
+                                  .07 * p_ship[Tools.Ship.SHARK][LANCASTER_TEAMKILL] +
+                                  .08 * p_ship[Tools.Ship.SHARK][SHARK_TEAMKILL]
+                              )
+                             )
+                         );
+                break;
+
+            default :
+                rating = 0;
             }
 
             return rating;
         }
 
         /**
-         * Returns total score
-         *
-         * @return total score
-         */
+            Returns total score
+
+            @return total score
+        */
         private int getTotalScore() {
             int score = 0;
+
             for (int i = Tools.Ship.WARBIRD; i <= Tools.Ship.SHARK; i++)
                 score += p_ship[i][SCORE];
+
             return score;
         }
 
         /**
-         * Subs the player OUT
-         */
+            Subs the player OUT
+        */
         private void sub() {
             p_state = SUBBED;
+
             if (m_botAction.getPlayer(p_name) != null) {
                 m_botAction.specWithoutLock(p_name);
+
                 if (!listNotplaying.containsKey(p_name.toLowerCase())) {
                     m_botAction.setFreq(p_name, p_frequency);
                 }
@@ -3843,8 +4004,8 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Checks if player is in the base
-         */
+            Checks if player is in the base
+        */
         private void checkIfInBase() {
             Player p;
 
@@ -3862,7 +4023,7 @@ public class bwjsbot extends SubspaceBot {
 
                     if (p_outOfBorderTime == (cfg.getOutOfBorderTime() / 2) && !p_outOfBorderWarning) {
                         m_botAction.sendPrivateMessage(p_name, "Go to base! You have " + p_outOfBorderTime +
-                              " seconds before you'll get a +1 death added!", Tools.Sound.BEEP3);
+                                                       " seconds before you'll get a +1 death added!", Tools.Sound.BEEP3);
                         p_outOfBorderWarning = true;
                     } else if (p_outOfBorderTime <= 0) {
                         if (cfg.getMaxDeaths() != 0) {
@@ -3881,8 +4042,8 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Adds a second to playtime
-         */
+            Adds a second to playtime
+        */
         private void addPlayTime() {
             if (p_state == IN) {
                 p_ship[p_currentShip][PLAY_TIME]++;
@@ -3890,59 +4051,65 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns sum of flags claimed
-         *
-         * @return sum of flags claimed
-         */
+            Returns sum of flags claimed
+
+            @return sum of flags claimed
+        */
         private int getFlagsClaimed() {
             int flags = 0;
+
             for (int i = Tools.Ship.WARBIRD; i <= Tools.Ship.SHARK; i++) {
                 flags += p_ship[i][FLAGS_CLAIMED];
             }
+
             return flags;
         }
 
         /**
-         * Returns the sum of terriers killed
-         *
-         * @return sum of terriers killed
-         */
+            Returns the sum of terriers killed
+
+            @return sum of terriers killed
+        */
         private int getTerrKills() {
             int kills = 0;
+
             for (int i = Tools.Ship.WARBIRD; i <= Tools.Ship.SHARK; i++) {
                 kills += p_ship[i][TERRIER_KILL];
             }
+
             return kills;
         }
 
         /**
-         * Returns lagouts
-         *
-         * @return lagouts
-         */
+            Returns lagouts
+
+            @return lagouts
+        */
         private int getLagouts() {
             return p_lagouts;
         }
 
         /**
-         * Returns kills made in a specific ship
-         *
-         * @param shipType shipType
-         * @return kills made in a specific ship
-         */
+            Returns kills made in a specific ship
+
+            @param shipType shipType
+            @return kills made in a specific ship
+        */
         @SuppressWarnings("unused")
         private int getKills(int shipType) {
             int kills = 0;
+
             for (int j = WARBIRD_KILL; j <= SHARK_KILL; j++)
                 kills += p_ship[shipType][j];
+
             return kills;
         }
 
         /**
-         * Returns teamkills made in a specific ship
-         * @param shipType ship
-         * @return teamkills made in a specific ship
-         */
+            Returns teamkills made in a specific ship
+            @param shipType ship
+            @return teamkills made in a specific ship
+        */
         @SuppressWarnings("unused")
         private int getTeamKills(int shipType) {
             int kills = 0;
@@ -3954,10 +4121,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Switches player
-         * - puts the player in
-         * - timestamps the event
-         */
+            Switches player
+            - puts the player in
+            - timestamps the event
+        */
         private void switchPlayer() {
             addPlayer();
             p_timestampSwitch = System.currentTimeMillis();
@@ -3965,11 +4132,11 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * BWJSState - Game state
-     *
-     * @author fantus
-     *
-     */
+        BWJSState - Game state
+
+        @author fantus
+
+    */
     private class BWJSState {
         private int current;    //Current state
         private long stateTimestamp;
@@ -3988,40 +4155,40 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the current state
-         *
-         * @return int current state
-         */
+            Returns the current state
+
+            @return int current state
+        */
         private int getCurrentState() {
             return current;
         }
 
         /**
-         * Sets state
-         *
-         * @param stateNumber state
-         */
+            Sets state
+
+            @param stateNumber state
+        */
         private void setState(int stateNumber) {
             current = stateNumber;
             stateTimestamp = System.currentTimeMillis();
         }
 
         /**
-         * Returns the timestamp of the current state
-         *
-         * @return timestamp of the current state
-         */
+            Returns the timestamp of the current state
+
+            @return timestamp of the current state
+        */
         private long getTimeStamp() {
             return stateTimestamp;
         }
     }
 
     /**
-     * BWJSTeam - Team
-     *
-     * @author fantus
-     *
-     */
+        BWJSTeam - Team
+
+        @author fantus
+
+    */
     private class BWJSTeam {
         private boolean flag;
         private boolean turnToPick;
@@ -4056,8 +4223,8 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Resets all variables except frequency
-         */
+            Resets all variables except frequency
+        */
         private void resetVariables() {
             players.clear();
             flag = false;
@@ -4073,10 +4240,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Handles flag claim
-         *
-         * @param playerName name of the player that claimed a flag
-         */
+            Handles flag claim
+
+            @param playerName name of the player that claimed a flag
+        */
         private void flagClaimed(String playerName) {
             playerName = playerName.toLowerCase();
 
@@ -4091,11 +4258,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Handles flag reward
-         * - Give all the players that are IN the points that were rewarded
-         *
-         * @param points Rewarded flag points
-         */
+            Handles flag reward
+            - Give all the players that are IN the points that were rewarded
+
+            @param points Rewarded flag points
+        */
         private void flagReward(Short points) {
             for (BWJSPlayer i : players.values()) {
                 if (i.getCurrentState() == BWJSPlayer.IN) {
@@ -4105,28 +4272,28 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the teamname
-         *
-         * @return teamname
-         */
+            Returns the teamname
+
+            @return teamname
+        */
         private String getName() {
             return teamName;
         }
 
         /**
-         * Sets the team name
-         * @param name
-         */
+            Sets the team name
+            @param name
+        */
         private void setName(String name) {
             this.teamName = name;
         }
 
         /**
-         * Returns the current state of the player
-         *
-         * @param name name of the player
-         * @return current state of the player
-         */
+            Returns the current state of the player
+
+            @param name name of the player
+            @return current state of the player
+        */
         private int getPlayerState(String name) {
             int playerState;    //Current state of the player
 
@@ -4142,11 +4309,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Checks if the player is on this team
-         *
-         * @param name name of the player
-         * @return true if on team, false if not
-         */
+            Checks if the player is on this team
+
+            @param name name of the player
+            @return true if on team, false if not
+        */
         private boolean isOnTeam(String name) {
             boolean isOnTeam;
 
@@ -4164,11 +4331,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Checks if the player is a player on the team
-         *
-         * @param name Name of the player
-         * @return true if is a player, false if not
-         */
+            Checks if the player is a player on the team
+
+            @param name Name of the player
+            @return true if is a player, false if not
+        */
         private boolean isPlayer(String name) {
             boolean isPlayer;
 
@@ -4184,11 +4351,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Checks if the player is playing or has played for the team
-         *
-         * @param name Name of the player
-         * @return return if player was IN, else false
-         */
+            Checks if the player is playing or has played for the team
+
+            @param name Name of the player
+            @return return if player was IN, else false
+        */
         private boolean isIN(String name) {
             boolean isIN;
 
@@ -4205,11 +4372,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Checks if a player has lagged out or not
-         *
-         * @param name name of the player that could have lagged out
-         * @return true if player has lagged out, else false
-         */
+            Checks if a player has lagged out or not
+
+            @param name name of the player that could have lagged out
+            @return true if player has lagged out, else false
+        */
         private boolean laggedOut(String name) {
             BWJSPlayer p;
             Player player;
@@ -4241,12 +4408,12 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Handles a lagout event
-         * - Sends a lagout event to the player
-         * - Notify the captain
-         *
-         * @param name Name of the player that lagged out
-         */
+            Handles a lagout event
+            - Sends a lagout event to the player
+            - Notify the captain
+
+            @param name Name of the player that lagged out
+        */
         private void lagout(String name) {
             name = name.toLowerCase();
 
@@ -4263,14 +4430,14 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * This method handles a player death
-         *
-         * @param killee player that got killed
-         * @param killer the killer
-         * @param killeeShip Ship of the player that got killed
-         * @param killeeFreq Frequency of the player that got killed
-         * @param killeeBounty Bounty of the player that got killed
-         */
+            This method handles a player death
+
+            @param killee player that got killed
+            @param killer the killer
+            @param killeeShip Ship of the player that got killed
+            @param killeeFreq Frequency of the player that got killed
+            @param killeeBounty Bounty of the player that got killed
+        */
         private void playerDeath(String killee, String killer, int killeeShip, int killeeFreq, int killeeBounty) {
             killee = killee.toLowerCase(); //Name of the player that got killed
             killer = killer.toLowerCase(); //Name of the killer
@@ -4287,19 +4454,19 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the flagtime
-         *
-         * @return flag time in seconds
-         */
+            Returns the flagtime
+
+            @return flag time in seconds
+        */
         private int getFlagTime() {
             return flagTime;
         }
 
         /**
-         * Returns the total amount of deaths of the team including missing players penalty
-         *
-         * @return amount of deaths
-         */
+            Returns the total amount of deaths of the team including missing players penalty
+
+            @return amount of deaths
+        */
         private int getDeaths() {
             int deaths;
             int counter;
@@ -4323,19 +4490,19 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the name of the current captain
-         *
-         * @return name of the current captain
-         */
+            Returns the name of the current captain
+
+            @return name of the current captain
+        */
         private String getCaptainName() {
             return captainName;
         }
 
         /**
-         * Removes captain
-         * - Notifies arena
-         * - Sets captainName to [NONE]
-         */
+            Removes captain
+            - Notifies arena
+            - Sets captainName to [NONE]
+        */
         private void captainLeft() {
             m_botAction.sendArenaMessage(captainName + " has been removed as captain of " + teamName + ".");
             lastCaptainName = captainName;
@@ -4347,26 +4514,26 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Notify the arena that the captain has left the arena
-         */
+            Notify the arena that the captain has left the arena
+        */
         private void captainLeftArena() {
             if (cfg.getAllowAutoCaps()) {
                 m_botAction.sendArenaMessage("The captain of " + teamName
-                        + " has left the arena, anyone of Freq " + frequency + " can claim cap with !cap");
+                                             + " has left the arena, anyone of Freq " + frequency + " can claim cap with !cap");
             } else {
                 m_botAction.sendArenaMessage("The captain of " + teamName
-                        + " has left the arena.");
+                                             + " has left the arena.");
             }
         }
 
         /**
-         * Checks the position of the player if he or she is still located on the warpspot
-         * If not it warps the player back on the warpspot
-         *
-         * @param name Name of the player
-         * @param x_coord X location of the player
-         * @param y_coord Y location of the player
-         */
+            Checks the position of the player if he or she is still located on the warpspot
+            If not it warps the player back on the warpspot
+
+            @param name Name of the player
+            @param x_coord X location of the player
+            @param y_coord Y location of the player
+        */
         private void checkPostionPreGame(String name, int x_coord, int y_coord) {
             int x_index;
             int y_index;
@@ -4385,24 +4552,25 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Timestamps last position of the player
-         *
-         * @param name name of the player
-         */
+            Timestamps last position of the player
+
+            @param name name of the player
+        */
         private void timestampLastPosition(String name) {
             name = name.toLowerCase();
+
             if (players.containsKey(name)) {
                 players.get(name).timestampLastPosition();
             }
         }
 
         /**
-         * Handles weaponFired event
-         * - Passes it on to the player
-         *
-         * @param name name of the player that fired the weapon
-         * @param weaponType weapon type
-         */
+            Handles weaponFired event
+            - Passes it on to the player
+
+            @param name name of the player that fired the weapon
+            @param weaponType weapon type
+        */
         private void weaponFired(String name, int weaponType) {
             name = name.toLowerCase();
 
@@ -4412,20 +4580,20 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns if its the team's turn to pick
-         *
-         * @return true if its the team's turn, else false
-         */
+            Returns if its the team's turn to pick
+
+            @return true if its the team's turn, else false
+        */
         private boolean isTurn() {
             return turnToPick;
         }
 
         /**
-         * Returns the amount of players in the team.
-         * Meaning all the players but the subbed ones
-         *
-         * @return amount of players IN
-         */
+            Returns the amount of players in the team.
+            Meaning all the players but the subbed ones
+
+            @return amount of players IN
+        */
         private int getSizeIN() {
             int sizeIn;
 
@@ -4441,20 +4609,21 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the amount of ships of shiptype in use
-         *
-         * @param shiptype type of ship
-         * @return amount of shiptype in
-         */
+            Returns the amount of ships of shiptype in use
+
+            @param shiptype type of ship
+            @return amount of shiptype in
+        */
         private int getShipCount(int shiptype) {
             int shipCount;
 
             shipCount = 0;
             boolean wzls = m_botAction.getArenaName().equalsIgnoreCase("base2") && (shiptype == 6 || shiptype == 8);
+
             for (BWJSPlayer i : players.values()) {
                 if (i.p_state < BWJSPlayer.SUBBED) {
                     if (wzls && (i.p_currentShip == 8 || i.p_currentShip == 6))
-                            shipCount++;
+                        shipCount++;
                     else if (i.p_currentShip == shiptype)
                         shipCount++;
                 }
@@ -4464,13 +4633,13 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Adds a player to the team
-         * - Sending the arena, captain and the player a message
-         * - Adding the player
-         *
-         * @param p Player that is added
-         * @param shipType shiptype
-         */
+            Adds a player to the team
+            - Sending the arena, captain and the player a message
+            - Adding the player
+
+            @param p Player that is added
+            @param shipType shiptype
+        */
         private void addPlayer(Player p, int shipType) {
             String arenaMessage;    //Arena message
             String captainMessage;  //Captain message
@@ -4501,36 +4670,36 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns turn value
-         *
-         * @return true if its the teams turn to pick, else false
-         */
+            Returns turn value
+
+            @return true if its the teams turn to pick, else false
+        */
         private boolean getTurn() {
             return turnToPick;
         }
 
         /**
-         * Team has picked a player
-         * - turnToPick set to false
-         */
+            Team has picked a player
+            - turnToPick set to false
+        */
         private void picked() {
             turnToPick = false;
         }
 
         /**
-         * Sets turn to true
-         */
+            Sets turn to true
+        */
         private void setTurn() {
             turnToPick = true;
         }
 
         /**
-         * Checks if the team has a captain
-         * - Checks if captainName is equal to [NONE]
-         * - Checks if captain is in the arena
-         *
-         * @return true if the team has a captain, else false
-         */
+            Checks if the team has a captain
+            - Checks if captainName is equal to [NONE]
+            - Checks if captain is in the arena
+
+            @return true if the team has a captain, else false
+        */
         private boolean hasCaptain() {
             if (captainName.equals("[NONE]")) {
                 return false;
@@ -4542,13 +4711,13 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Sets captain
-         * - Sets timestamp
-         * - Sends arena message
-         *
-         * @param name Name of the captain
-         * @param isSquadOnly True if only members of this captain's squad will be allowed to be added
-         */
+            Sets captain
+            - Sets timestamp
+            - Sends arena message
+
+            @param name Name of the captain
+            @param isSquadOnly True if only members of this captain's squad will be allowed to be added
+        */
         private void setCaptain(String name, boolean isSquadOnly ) {
             Player p;
 
@@ -4562,8 +4731,8 @@ public class bwjsbot extends SubspaceBot {
             if (name.equalsIgnoreCase(lastCaptainName)) {
                 if ((System.currentTimeMillis() - captainTimestamp) <= (5 * Tools.TimeInMillis.SECOND)) {
                     m_botAction.sendPrivateMessage(name, "You will have to wait " +
-                            (System.currentTimeMillis() - captainTimestamp)/1000 +
-                            " more seconds before you can claim cap again.");
+                                                   (System.currentTimeMillis() - captainTimestamp) / 1000 +
+                                                   " more seconds before you can claim cap again.");
                     sendCaptainList(name);
                     return;
                 }
@@ -4572,17 +4741,19 @@ public class bwjsbot extends SubspaceBot {
 
             captainName = p.getPlayerName();
             captainTimestamp = System.currentTimeMillis();
+
             if (isSquadOnly) {
                 squadLimited = p.getSquadName();
                 teamName = squadLimited;
                 m_botAction.sendArenaMessage(captainName + " is assigned as captain for " +
-                        teamName, Tools.Sound.BEEP1);
+                                             teamName, Tools.Sound.BEEP1);
                 m_botAction.sendArenaMessage("This will be a squad vs world match. Only squad members of " + teamName + " will be added to team " + frequency + ".");
+
                 if (zoneSquadVWorld)
                     m_botAction.sendZoneMessage( squadLimited + " v World starting now in ?go " + cfg.arena, Tools.Sound.BEEP2);
             } else {
                 m_botAction.sendArenaMessage(captainName + " is assigned as captain for " +
-                        teamName, Tools.Sound.BEEP1);
+                                             teamName, Tools.Sound.BEEP1);
             }
 
             if (captains.containsKey(captainsIndex)) {
@@ -4598,18 +4769,18 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Sets the current captain in the captainlist
-         */
+            Sets the current captain in the captainlist
+        */
         private void putCaptainInList() {
             captainsIndex++;
             captains.put(captainsIndex, new BWJSCaptain(captainName));
         }
 
         /**
-         * Returns if name is a captain or not
-         *
-         * @return true if name is captain, else false
-         */
+            Returns if name is a captain or not
+
+            @return true if name is captain, else false
+        */
         private boolean isCaptain(String name) {
             if (captainName.equalsIgnoreCase(name)) {
                 return true;
@@ -4619,11 +4790,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Searches for name in team
-         *
-         * @param name name of the player that needs to get found
-         * @return BWJSPlayer if found, else null
-         */
+            Searches for name in team
+
+            @param name name of the player that needs to get found
+            @return BWJSPlayer if found, else null
+        */
         private BWJSPlayer searchPlayer(String name) {
             BWJSPlayer p;
 
@@ -4634,7 +4805,7 @@ public class bwjsbot extends SubspaceBot {
                 if (i.getName().toLowerCase().startsWith(name)) {
                     if (p == null) {
                         p = i;
-                    } else if (i.getName().toLowerCase().compareTo(p.getName().toLowerCase()) > 0 ){
+                    } else if (i.getName().toLowerCase().compareTo(p.getName().toLowerCase()) > 0 ) {
                         p = i;
                     }
                 }
@@ -4644,11 +4815,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Determines if a player is allowed back in with !lagout/!return
-         *
-         * @param name name of the player that needs to get checked
-         * @return true if allowed back in, else false
-         */
+            Determines if a player is allowed back in with !lagout/!return
+
+            @param name name of the player that needs to get checked
+            @return true if allowed back in, else false
+        */
         private boolean laginAllowed(String name) {
             BWJSPlayer p;
             Player player;
@@ -4665,22 +4836,25 @@ public class bwjsbot extends SubspaceBot {
             p = players.get(name);
 
             switch (p.getCurrentState()) {
-                case BWJSPlayer.IN :
-                    player = m_botAction.getPlayer(name);
+            case BWJSPlayer.IN :
+                player = m_botAction.getPlayer(name);
 
-                    if (player == null) {
-                        return false;
-                    }
+                if (player == null) {
+                    return false;
+                }
 
-                    if (player.getShipType() != Tools.Ship.SPECTATOR) {
-                        return false;
-                    }
+                if (player.getShipType() != Tools.Ship.SPECTATOR) {
+                    return false;
+                }
 
-                    skipLagoutTime = true;
-                    break;
-                case BWJSPlayer.LAGOUT :
-                    break;
-                default : return false;
+                skipLagoutTime = true;
+                break;
+
+            case BWJSPlayer.LAGOUT :
+                break;
+
+            default :
+                return false;
             }
 
             //Check if enough time has passed
@@ -4691,17 +4865,17 @@ public class bwjsbot extends SubspaceBot {
             }
 
             /*
-             * All checks done
-             */
+                All checks done
+            */
             return true;
         }
 
         /**
-         * Returns the corresponding error message of a not allowed !lagout
-         *
-         * @param name name of the player that issued the !lagout command
-         * @return Error message string
-         */
+            Returns the corresponding error message of a not allowed !lagout
+
+            @param name name of the player that issued the !lagout command
+            @return Error message string
+        */
         private String getLaginErrorMessage(String name) {
             BWJSPlayer p;
             Player player;
@@ -4718,30 +4892,33 @@ public class bwjsbot extends SubspaceBot {
             p = players.get(name);
 
             switch (p.getCurrentState()) {
-                case BWJSPlayer.IN :
-                    player = m_botAction.getPlayer(name);
+            case BWJSPlayer.IN :
+                player = m_botAction.getPlayer(name);
 
-                    if (player == null) {
-                        return "ERROR: Unknown";
-                    }
+                if (player == null) {
+                    return "ERROR: Unknown";
+                }
 
-                    if (player.getShipType() != Tools.Ship.SPECTATOR) {
-                        return "Error: You have not lagged out.";
-                    }
+                if (player.getShipType() != Tools.Ship.SPECTATOR) {
+                    return "Error: You have not lagged out.";
+                }
 
-                    skipLagoutTime = true;
-                    break;
-                case BWJSPlayer.LAGOUT :
-                    break;
-                default : return "ERROR: You have not lagged out.";
+                skipLagoutTime = true;
+                break;
+
+            case BWJSPlayer.LAGOUT :
+                break;
+
+            default :
+                return "ERROR: You have not lagged out.";
             }
 
             //Check if enough time has passed
             if (!skipLagoutTime) {
                 if (System.currentTimeMillis() - p.getLagoutTimestamp() < BWJSPlayer.LAGOUT_TIME) {
                     return "You must wait for " + (BWJSPlayer.LAGOUT_TIME -
-                            (System.currentTimeMillis() - p.getLagoutTimestamp()))/Tools.TimeInMillis.SECOND
-                             + " more seconds before you can return into the game.";
+                                                   (System.currentTimeMillis() - p.getLagoutTimestamp())) / Tools.TimeInMillis.SECOND
+                           + " more seconds before you can return into the game.";
                 }
             }
 
@@ -4749,10 +4926,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns player into the game
-         *
-         * @param name name of the player
-         */
+            Returns player into the game
+
+            @param name name of the player
+        */
         private void lagin(String name) {
             name = name.toLowerCase();
 
@@ -4764,11 +4941,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns if player is currently playing or not
-         *
-         * @param name name of the player
-         * @return true if the player is IN, else false
-         */
+            Returns if player is currently playing or not
+
+            @param name name of the player
+            @return true if the player is IN, else false
+        */
         private boolean isPlaying(String name) {
             name = name.toLowerCase();
 
@@ -4784,19 +4961,19 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns team's frequency
-         *
-         * @return frequency
-         */
+            Returns team's frequency
+
+            @return frequency
+        */
         private int getFrequency() {
             return frequency;
         }
 
         /**
-         * Completely removes player from the team
-         *
-         * @param name name of the player that needs to get removed
-         */
+            Completely removes player from the team
+
+            @param name name of the player that needs to get removed
+        */
         private void removePlayer(String name) {
             Player p;
             name = name.toLowerCase();
@@ -4825,10 +5002,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Sets player to not playing modus, player will still be subable
-         *
-         * @param name Name of the player that should be set to out notplaying
-         */
+            Sets player to not playing modus, player will still be subable
+
+            @param name Name of the player that should be set to out notplaying
+        */
         private void setOutNotPlaying(String name) {
             name = name.toLowerCase();
 
@@ -4838,8 +5015,8 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Readies the team or sets it to not ready
-         */
+            Readies the team or sets it to not ready
+        */
         private void ready() {
             if (!ready) {
                 if (players.size() >= cfg.getMinPlayers()) {
@@ -4854,18 +5031,18 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Sets the team to not ready
-         */
+            Sets the team to not ready
+        */
         private void notReady() {
             ready = false;
             m_botAction.sendArenaMessage(teamName + " is NOT ready to begin.");
         }
 
         /**
-         * Returns if team is ready or not
-         *
-         * @return true if team is ready, else false
-         */
+            Returns if team is ready or not
+
+            @return true if team is ready, else false
+        */
         private boolean isReady() {
             if (ready) {
                 return true;
@@ -4875,10 +5052,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns if the team has any substitutes left
-         *
-         * @return True if team has substitutes left, else false
-         */
+            Returns if the team has any substitutes left
+
+            @return True if team has substitutes left, else false
+        */
         private boolean hasSubtitutesLeft() {
             if (substitutesLeft > 0 || substitutesLeft == -1) {
                 return true;
@@ -4888,11 +5065,11 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Handles the sub further
-         *
-         * @param playerOne playerone
-         * @param playerTwo playertwo
-         */
+            Handles the sub further
+
+            @param playerOne playerone
+            @param playerTwo playertwo
+        */
         private void sub(BWJSPlayer playerOne, Player playerTwo) {
             int shipType = playerOne.p_currentShip;
             int maxDeaths;
@@ -4914,19 +5091,20 @@ public class bwjsbot extends SubspaceBot {
                 }
                 else
                     players.put(playerTwo.getPlayerName().toLowerCase(),
-                            new BWJSPlayer(playerTwo.getPlayerName(), shipType, maxDeaths, frequency));
+                                new BWJSPlayer(playerTwo.getPlayerName(), shipType, maxDeaths, frequency));
             } else {
                 players.put(playerTwo.getPlayerName().toLowerCase(),
-                        new BWJSPlayer(playerTwo.getPlayerName(), shipType, maxDeaths, frequency));
+                            new BWJSPlayer(playerTwo.getPlayerName(), shipType, maxDeaths, frequency));
             }
+
             m_botAction.sendPrivateMessage(playerTwo.getPlayerID(), "You are subbed in the game.");
 
             if (cfg.maxDeaths == 0)
                 m_botAction.sendArenaMessage(playerOne.p_name + " has been substituted by " +
-                        playerTwo.getPlayerName());
+                                             playerTwo.getPlayerName());
             else
                 m_botAction.sendArenaMessage(playerOne.p_name + " has been substituted by " +
-                        playerTwo.getPlayerName() + ", with " + maxDeaths + " deaths left");
+                                             playerTwo.getPlayerName() + ", with " + maxDeaths + " deaths left");
 
             if (substitutesLeft != -1) {
                 substitutesLeft--;
@@ -4938,14 +5116,14 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Switches playerOne with playerTwo
-         *
-         * @param playerOne playerOne
-         * @param playerTwo playerTwo
-         */
+            Switches playerOne with playerTwo
+
+            @param playerOne playerOne
+            @param playerTwo playerTwo
+        */
         private void switchPlayers(BWJSPlayer playerOne, BWJSPlayer playerTwo) {
             m_botAction.sendArenaMessage(playerOne.p_name + " (" + Tools.shipName(playerOne.p_currentShip) + ") and "
-                    + playerTwo.p_name + " (" + Tools.shipName(playerTwo.p_currentShip) + ") switched ships.");
+                                         + playerTwo.p_name + " (" + Tools.shipName(playerTwo.p_currentShip) + ") switched ships.");
 
             int playerOneShipType = playerTwo.p_currentShip;
             int playerTwoShipType = playerOne.p_currentShip;
@@ -4963,32 +5141,34 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the timestamp when the captain was set
-         *
-         * @return timestamp of when the captain was set
-         */
+            Returns the timestamp when the captain was set
+
+            @return timestamp of when the captain was set
+        */
         private long getCaptainTimeStamp() {
             return captainTimestamp;
         }
 
         /**
-         * Adds a second to the flag time, and sends a warning on 3 and 1 minute left
-         */
+            Adds a second to the flag time, and sends a warning on 3 and 1 minute left
+        */
         private void addTimePoint() {
             if (flag) {
                 flagTime++;
+
                 if (((cfg.getTimeTarget() * 60) - flagTime) == 3 * 60)
                     m_botAction.sendArenaMessage(teamName + " needs 3 mins of flag time to win");
+
                 if (((cfg.getTimeTarget() * 60) - flagTime) == 1 * 60)
                     m_botAction.sendArenaMessage(teamName + " needs 1 minute of flag time to win");
             }
         }
 
         /**
-         * Check if team is dead
-         *
-         * @return true if team is dead, else false
-         */
+            Check if team is dead
+
+            @return true if team is dead, else false
+        */
         private boolean isDead() {
             for (BWJSPlayer i : players.values()) {
                 if (i.getCurrentState() < BWJSPlayer.LAGOUT) {
@@ -4999,14 +5179,15 @@ public class bwjsbot extends SubspaceBot {
                     }
                 }
             }
+
             return true;
         }
 
         /**
-         * Returns sum of kills
-         *
-         * @return sum of kills
-         */
+            Returns sum of kills
+
+            @return sum of kills
+        */
         private int getKills() {
             int kills = 0;
 
@@ -5017,10 +5198,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns sum of teamkills
-         *
-         * @return sum of teamkills
-         */
+            Returns sum of teamkills
+
+            @return sum of teamkills
+        */
         private int getTeamKills() {
             int kills = 0;
 
@@ -5031,10 +5212,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns sum of scores
-         *
-         * @return sum of scores
-         */
+            Returns sum of scores
+
+            @return sum of scores
+        */
         private int getScore() {
             int score = 0;
 
@@ -5045,10 +5226,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns sum of flags claimed
-         *
-         * @return sum of flags claimed
-         */
+            Returns sum of flags claimed
+
+            @return sum of flags claimed
+        */
         private int getFlagsClaimed() {
             int flags = 0;
 
@@ -5059,10 +5240,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the sum of terriers killed
-         *
-         * @return sum of terriers killed
-         */
+            Returns the sum of terriers killed
+
+            @return sum of terriers killed
+        */
         private int getTerrKills() {
             int kills = 0;
 
@@ -5073,10 +5254,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the sum of repels used
-         *
-         * @return sum of repels used
-         */
+            Returns the sum of repels used
+
+            @return sum of repels used
+        */
         private int getRepels() {
             int reps = 0;
 
@@ -5087,10 +5268,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the sum of all ratings
-         *
-         * @return sum of all ratings
-         */
+            Returns the sum of all ratings
+
+            @return sum of all ratings
+        */
         private int getRating() {
             int rating = 0;
 
@@ -5101,10 +5282,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Returns the total sum of all lagouts
-         *
-         * @return total sum of all lagouts
-         */
+            Returns the total sum of all lagouts
+
+            @return total sum of all lagouts
+        */
         private int getLagouts() {
             int lagouts = 0;
 
@@ -5115,10 +5296,10 @@ public class bwjsbot extends SubspaceBot {
         }
 
         /**
-         * Get scores
-         *
-         * @return returns a array with scores
-         */
+            Get scores
+
+            @return returns a array with scores
+        */
         private ArrayList<String> getScores() {
             ArrayList<String> out = new ArrayList<String>();
 
@@ -5150,21 +5331,21 @@ public class bwjsbot extends SubspaceBot {
                             + Tools.rightString(Integer.toString(p.getTotalRating()), 9) + " | "
                             + Tools.rightString(Integer.toString(p.getLagouts()), 2) + " | ");
                     //Per ship
-//                    for (int i = 0; i < 9; i++) {
-//                        if (p.p_ship[i][BWJSPlayer.USED] == 1) {
-//                            out.add("|  " + Tools.formatString(" `-- " + Tools.shipName(i), 25) + " "
-//                                    + Tools.rightString(Integer.toString(p.getKills(i)), 4) + " | "
-//                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.DEATHS]), 4) + " | "
-//                                    + Tools.rightString(Integer.toString(p.getTeamKills(i)), 4) + " | "
-//                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.SCORE]), 9) + " | "
-//                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.FLAGS_CLAIMED]), 4) + " | "
-//                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.TERRIER_KILL]), 4) + " | "
-//                                    + Tools.rightString(Integer.toString(p.getRating(i)), 9) + " | "
-//                                    + Tools.rightString("-", 2) + " |");
-//                        }
-//                    }
+                    //                    for (int i = 0; i < 9; i++) {
+                    //                        if (p.p_ship[i][BWJSPlayer.USED] == 1) {
+                    //                            out.add("|  " + Tools.formatString(" `-- " + Tools.shipName(i), 25) + " "
+                    //                                    + Tools.rightString(Integer.toString(p.getKills(i)), 4) + " | "
+                    //                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.DEATHS]), 4) + " | "
+                    //                                    + Tools.rightString(Integer.toString(p.getTeamKills(i)), 4) + " | "
+                    //                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.SCORE]), 9) + " | "
+                    //                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.FLAGS_CLAIMED]), 4) + " | "
+                    //                                    + Tools.rightString(Integer.toString(p.p_ship[i][BWJSPlayer.TERRIER_KILL]), 4) + " | "
+                    //                                    + Tools.rightString(Integer.toString(p.getRating(i)), 9) + " | "
+                    //                                    + Tools.rightString("-", 2) + " |");
+                    //                        }
+                    //                    }
                 }
-            } else  if (cfg.getGameType() == BWJSConfig.JAVDUEL){
+            } else  if (cfg.getGameType() == BWJSConfig.JAVDUEL) {
                 out.add("|                          ,------+------+------+-----------+----+");
                 out.add("| " + Tools.formatString(teamName, 23) + " /  "
                         + Tools.rightString(Integer.toString(getKills()), 4) + " | "
@@ -5199,15 +5380,16 @@ public class bwjsbot extends SubspaceBot {
                             + Tools.rightString(Integer.toString(p.getLagouts()), 2) + " |");
                 }
             }
+
             return out;
         }
 
         /**
-         * Warps player to coords
-         *
-         * @param x_coord x_coord
-         * @param y_coord y_coord
-         */
+            Warps player to coords
+
+            @param x_coord x_coord
+            @param y_coord y_coord
+        */
         private void warpTo(int x_coord, int y_coord) {
             for (BWJSPlayer i : players.values()) {
                 int playerID = m_botAction.getPlayerID(i.p_name);
@@ -5222,10 +5404,10 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * BWJSSQL - SQL related methods
-     *
-     * @author fantus
-     */
+        BWJSSQL - SQL related methods
+
+        @author fantus
+    */
     private class BWJSSQL {
         private String database = "bots";
         private String uniqueID = "bwjs";
@@ -5262,290 +5444,291 @@ public class bwjsbot extends SubspaceBot {
             if (!hasDatabase) {
                 return;
             }
+
             /* Game related */
             psAddGame = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__Game(timeStarted, type) " +
-                    "VALUES(NOW(),?)", true);
+                        "INSERT INTO tblBWJS__Game(timeStarted, type) " +
+                        "VALUES(NOW(),?)", true);
             psEndGame = m_botAction.createPreparedStatement(database, uniqueID,
-                    "UPDATE tblBWJS__Game " +
-                    "SET timeEnded = NOW(), winner = ?, Score0 = ?, Score1 = ? " +
-                    "WHERE matchID = ?");
+                        "UPDATE tblBWJS__Game " +
+                        "SET timeEnded = NOW(), winner = ?, Score0 = ?, Score1 = ? " +
+                        "WHERE matchID = ?");
 
             /* Player related */
             psGetUserID = m_botAction.createPreparedStatement(database, uniqueID,
-                    "SELECT userID FROM tblBWJS__Player " +
-                    "WHERE playerName = ?");
+                          "SELECT userID FROM tblBWJS__Player " +
+                          "WHERE playerName = ?");
             psSetUserID = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__Player(playerName) " +
-                    "VALUES(?)", true);
+                          "INSERT INTO tblBWJS__Player(playerName) " +
+                          "VALUES(?)", true);
 
             /* Stats related */
             psPutGamePlayerShipInfo = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GamePlayerShipInfo(" +
-                        "matchID, " +       //1
-                        "userID, " +        //2
-                        "ship, " +          //3
-                        "score, " +         //4
-                        "deaths, " +        //5
-                        "WBkill, " +        //6
-                        "JAVkill, " +       //7
-                        "SPIDkill, " +      //8
-                        "LEVkill, " +       //9
-                        "TERRkill, " +      //10
-                        "WEASkill, " +      //11
-                        "LANCkill, " +      //12
-                        "SHARKkill, " +     //13
-                        "WBteamkill, " +    //14
-                        "JAVteamkill, " +   //15
-                        "SPIDteamkill, " +  //16
-                        "LEVteamkill, " +   //17
-                        "TERRteamkill, " +  //18
-                        "WEASteamkill, " +  //19
-                        "LANCteamkill, " +  //20
-                        "SHARKteamkill, " + //21
-                        "flagsclaimed, " +  //22
-                        "bullets, " +       //23
-                        "repels, " +        //24
-                        "bombs, " +         //25
-                        "mines, " +         //26
-                        "burst, " +         //27
-                        "playTime," +       //28
-                        "rating) " +        //29
-                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                                      "INSERT INTO tblBWJS__GamePlayerShipInfo(" +
+                                      "matchID, " +       //1
+                                      "userID, " +        //2
+                                      "ship, " +          //3
+                                      "score, " +         //4
+                                      "deaths, " +        //5
+                                      "WBkill, " +        //6
+                                      "JAVkill, " +       //7
+                                      "SPIDkill, " +      //8
+                                      "LEVkill, " +       //9
+                                      "TERRkill, " +      //10
+                                      "WEASkill, " +      //11
+                                      "LANCkill, " +      //12
+                                      "SHARKkill, " +     //13
+                                      "WBteamkill, " +    //14
+                                      "JAVteamkill, " +   //15
+                                      "SPIDteamkill, " +  //16
+                                      "LEVteamkill, " +   //17
+                                      "TERRteamkill, " +  //18
+                                      "WEASteamkill, " +  //19
+                                      "LANCteamkill, " +  //20
+                                      "SHARKteamkill, " + //21
+                                      "flagsclaimed, " +  //22
+                                      "bullets, " +       //23
+                                      "repels, " +        //24
+                                      "bombs, " +         //25
+                                      "mines, " +         //26
+                                      "burst, " +         //27
+                                      "playTime," +       //28
+                                      "rating) " +        //29
+                                      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             psPutGamePlayer = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GamePlayer(" +
-                        "matchID, " +       //1
-                        "userID, " +        //2
-                        "team, " +          //3
-                        "lagouts, " +       //4
-                        "MVP, " +           //5
-                        "status) " +        //6
-                    "VALUES(?,?,?,?,?,?)");
+                              "INSERT INTO tblBWJS__GamePlayer(" +
+                              "matchID, " +       //1
+                              "userID, " +        //2
+                              "team, " +          //3
+                              "lagouts, " +       //4
+                              "MVP, " +           //5
+                              "status) " +        //6
+                              "VALUES(?,?,?,?,?,?)");
             psPutGameCaptain = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameCaptain(" +
-                        "matchID, " +       //1
-                        "userID, " +        //2
-                        "team, " +          //3
-                        "startTime, " +     //4
-                        "endTime) " +       //5
-                    "VALUES(?,?,?,?,?)");
+                               "INSERT INTO tblBWJS__GameCaptain(" +
+                               "matchID, " +       //1
+                               "userID, " +        //2
+                               "team, " +          //3
+                               "startTime, " +     //4
+                               "endTime) " +       //5
+                               "VALUES(?,?,?,?,?)");
 
             psKeepAlive = m_botAction.createPreparedStatement(database, uniqueID, "SHOW DATABASES");
 
             psGetCurrentRank = m_botAction.createPreparedStatement(database, uniqueID,
-                    "SELECT * FROM ( "
-                            + "SELECT *, @rownum:=@rownum+1 rank "
-                            + "FROM ( "
-                                + "SELECT  userID, "
-                                    + "playerName as name, "
-                                    + "avg(rating) AS rat, "
-                                    + "count(matchID) as co, "
-                                    + "sum(deaths) as losses, "
-                                    + "sum(WBkill) as wbkill, "
-                                    + "sum(JAVkill) as javkill, "
-                                    + "sum(SPIDkill) as spidkill, "
-                                    + "sum(LEVkill) as levkill, "
-                                    + "sum(TERRkill) as terrkill, "
-                                    + "sum(WEASkill) as weaskill, "
-                                    + "sum(LANCkill) as lanckill, "
-                                    + "sum(SHARKkill) as sharkkill "
-                                + "FROM tblBWJS__Game "
-                                + "LEFT JOIN tblBWJS__GamePlayerShipInfo "
-                                + "USING (matchID) "
-                                + "LEFT JOIN tblBWJS__Player "
-                                + "USING (userID) "
-                                + "WHERE ( "
-                                    + "timeEnded > DATE_ADD(NOW(), INTERVAL  -1 MONTH) "
-                                    + "AND type = ? "
-                                + ") "
-                                + "GROUP BY playerName "
-                                + "HAVING co > 5 "
-                                + "ORDER BY rat DESC"
-                            + ") as z, (SELECT @rownum:=0) r "
-                        + ") as y WHERE userID = ? ");
+                               "SELECT * FROM ( "
+                               + "SELECT *, @rownum:=@rownum+1 rank "
+                               + "FROM ( "
+                               + "SELECT  userID, "
+                               + "playerName as name, "
+                               + "avg(rating) AS rat, "
+                               + "count(matchID) as co, "
+                               + "sum(deaths) as losses, "
+                               + "sum(WBkill) as wbkill, "
+                               + "sum(JAVkill) as javkill, "
+                               + "sum(SPIDkill) as spidkill, "
+                               + "sum(LEVkill) as levkill, "
+                               + "sum(TERRkill) as terrkill, "
+                               + "sum(WEASkill) as weaskill, "
+                               + "sum(LANCkill) as lanckill, "
+                               + "sum(SHARKkill) as sharkkill "
+                               + "FROM tblBWJS__Game "
+                               + "LEFT JOIN tblBWJS__GamePlayerShipInfo "
+                               + "USING (matchID) "
+                               + "LEFT JOIN tblBWJS__Player "
+                               + "USING (userID) "
+                               + "WHERE ( "
+                               + "timeEnded > DATE_ADD(NOW(), INTERVAL  -1 MONTH) "
+                               + "AND type = ? "
+                               + ") "
+                               + "GROUP BY playerName "
+                               + "HAVING co > 5 "
+                               + "ORDER BY rat DESC"
+                               + ") as z, (SELECT @rownum:=0) r "
+                               + ") as y WHERE userID = ? ");
 
             psGetRankMonth = m_botAction.createPreparedStatement(database, uniqueID,
-                    "SELECT * FROM ( "
-                            + "SELECT *, @rownum:=@rownum+1 rank "
-                            + "FROM ( "
-                                + "SELECT  userID, "
-                                    + "playerName as name, "
-                                    + "avg(rating) AS rat, "
-                                    + "count(matchID) as co, "
-                                    + "sum(deaths) as losses, "
-                                    + "sum(WBkill) as wbkill, "
-                                    + "sum(JAVkill) as javkill, "
-                                    + "sum(SPIDkill) as spidkill, "
-                                    + "sum(LEVkill) as levkill, "
-                                    + "sum(TERRkill) as terrkill, "
-                                    + "sum(WEASkill) as weaskill, "
-                                    + "sum(LANCkill) as lanckill, "
-                                    + "sum(SHARKkill) as sharkkill "
-                                + "FROM tblBWJS__Game "
-                                + "LEFT JOIN tblBWJS__GamePlayerShipInfo "
-                                + "USING (matchID) "
-                                + "LEFT JOIN tblBWJS__Player "
-                                + "USING (userID) "
-                                + "WHERE ( "
-                                    + "MONTH(timeEnded) = ? "
-                                    + "AND YEAR(timeEnded) = ? "
-                                    + "AND type = ? "
-                                + ") "
-                                + "GROUP BY playerName "
-                                + "HAVING co > 5 "
-                                + "ORDER BY rat DESC"
-                            + ") as z, (SELECT @rownum:=0) r "
-                        + ") as y WHERE userID = ? ");
+                             "SELECT * FROM ( "
+                             + "SELECT *, @rownum:=@rownum+1 rank "
+                             + "FROM ( "
+                             + "SELECT  userID, "
+                             + "playerName as name, "
+                             + "avg(rating) AS rat, "
+                             + "count(matchID) as co, "
+                             + "sum(deaths) as losses, "
+                             + "sum(WBkill) as wbkill, "
+                             + "sum(JAVkill) as javkill, "
+                             + "sum(SPIDkill) as spidkill, "
+                             + "sum(LEVkill) as levkill, "
+                             + "sum(TERRkill) as terrkill, "
+                             + "sum(WEASkill) as weaskill, "
+                             + "sum(LANCkill) as lanckill, "
+                             + "sum(SHARKkill) as sharkkill "
+                             + "FROM tblBWJS__Game "
+                             + "LEFT JOIN tblBWJS__GamePlayerShipInfo "
+                             + "USING (matchID) "
+                             + "LEFT JOIN tblBWJS__Player "
+                             + "USING (userID) "
+                             + "WHERE ( "
+                             + "MONTH(timeEnded) = ? "
+                             + "AND YEAR(timeEnded) = ? "
+                             + "AND type = ? "
+                             + ") "
+                             + "GROUP BY playerName "
+                             + "HAVING co > 5 "
+                             + "ORDER BY rat DESC"
+                             + ") as z, (SELECT @rownum:=0) r "
+                             + ") as y WHERE userID = ? ");
 
             psGetNOCurrentRank = m_botAction.createPreparedStatement(database, uniqueID,
-                        "SELECT * "
-                            + "FROM ( "
-                                + "SELECT  userID, "
-                                    + "playerName as name, "
-                                    + "avg(rating) AS rat, "
-                                    + "count(matchID) as co, "
-                                    + "sum(deaths) as losses, "
-                                    + "sum(WBkill) as wbkill, "
-                                    + "sum(JAVkill) as javkill, "
-                                    + "sum(SPIDkill) as spidkill, "
-                                    + "sum(LEVkill) as levkill, "
-                                    + "sum(TERRkill) as terrkill, "
-                                    + "sum(WEASkill) as weaskill, "
-                                    + "sum(LANCkill) as lanckill, "
-                                    + "sum(SHARKkill) as sharkkill "
-                                + "FROM tblBWJS__Game "
-                                + "LEFT JOIN tblBWJS__GamePlayerShipInfo "
-                                + "USING (matchID) "
-                                + "LEFT JOIN tblBWJS__Player "
-                                + "USING (userID) "
-                                + "WHERE ( "
-                                    + "timeEnded > DATE_ADD(NOW(), INTERVAL  -1 MONTH) "
-                                    + "AND type = ? "
-                                    + "AND userID = ? "
-                                + ") "
-                                + "GROUP BY playerName "
-                        + ") as y ");
+                                 "SELECT * "
+                                 + "FROM ( "
+                                 + "SELECT  userID, "
+                                 + "playerName as name, "
+                                 + "avg(rating) AS rat, "
+                                 + "count(matchID) as co, "
+                                 + "sum(deaths) as losses, "
+                                 + "sum(WBkill) as wbkill, "
+                                 + "sum(JAVkill) as javkill, "
+                                 + "sum(SPIDkill) as spidkill, "
+                                 + "sum(LEVkill) as levkill, "
+                                 + "sum(TERRkill) as terrkill, "
+                                 + "sum(WEASkill) as weaskill, "
+                                 + "sum(LANCkill) as lanckill, "
+                                 + "sum(SHARKkill) as sharkkill "
+                                 + "FROM tblBWJS__Game "
+                                 + "LEFT JOIN tblBWJS__GamePlayerShipInfo "
+                                 + "USING (matchID) "
+                                 + "LEFT JOIN tblBWJS__Player "
+                                 + "USING (userID) "
+                                 + "WHERE ( "
+                                 + "timeEnded > DATE_ADD(NOW(), INTERVAL  -1 MONTH) "
+                                 + "AND type = ? "
+                                 + "AND userID = ? "
+                                 + ") "
+                                 + "GROUP BY playerName "
+                                 + ") as y ");
 
             psGetNORankMonth = m_botAction.createPreparedStatement(database, uniqueID,
-                    "SELECT * "
-                        + "FROM ( "
-                            + "SELECT userID, "
-                                + "playerName as name, "
-                                + "avg(rating) AS rat, "
-                                + "count(matchID) as co, "
-                                + "sum(deaths) as losses, "
-                                + "sum(WBkill) as wbkill, "
-                                + "sum(JAVkill) as javkill, "
-                                + "sum(SPIDkill) as spidkill, "
-                                + "sum(LEVkill) as levkill, "
-                                + "sum(TERRkill) as terrkill, "
-                                + "sum(WEASkill) as weaskill, "
-                                + "sum(LANCkill) as lanckill, "
-                                + "sum(SHARKkill) as sharkkill "
-                            + "FROM tblBWJS__Game "
-                            + "LEFT JOIN tblBWJS__GamePlayerShipInfo "
-                            + "USING (matchID) "
-                            + "LEFT JOIN tblBWJS__Player "
-                            + "USING (userID) "
-                            + "WHERE ( "
-                                + "MONTH(timeEnded) = ? "
-                                + "AND YEAR(timeEnded) = ? "
-                                + "AND type = ? "
-                                + "AND userID = ? "
-                            + ") "
-                            + "GROUP BY playerName "
-                        + ") as y ");
+                               "SELECT * "
+                               + "FROM ( "
+                               + "SELECT userID, "
+                               + "playerName as name, "
+                               + "avg(rating) AS rat, "
+                               + "count(matchID) as co, "
+                               + "sum(deaths) as losses, "
+                               + "sum(WBkill) as wbkill, "
+                               + "sum(JAVkill) as javkill, "
+                               + "sum(SPIDkill) as spidkill, "
+                               + "sum(LEVkill) as levkill, "
+                               + "sum(TERRkill) as terrkill, "
+                               + "sum(WEASkill) as weaskill, "
+                               + "sum(LANCkill) as lanckill, "
+                               + "sum(SHARKkill) as sharkkill "
+                               + "FROM tblBWJS__Game "
+                               + "LEFT JOIN tblBWJS__GamePlayerShipInfo "
+                               + "USING (matchID) "
+                               + "LEFT JOIN tblBWJS__Player "
+                               + "USING (userID) "
+                               + "WHERE ( "
+                               + "MONTH(timeEnded) = ? "
+                               + "AND YEAR(timeEnded) = ? "
+                               + "AND type = ? "
+                               + "AND userID = ? "
+                               + ") "
+                               + "GROUP BY playerName "
+                               + ") as y ");
 
             psPutExtendedLog = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameExtended(" +
-                    "matchID, " +       //1
-                    "userIDKiller, " +  //2
-                    "userIDKillee, " +  //3
-                    "shipKiller, " +    //4
-                    "shipKillee, " +    //5
-                    "time_stamp, " +    //6
-                    "x_coordKiller, " + //7
-                    "x_coordKilled, " + //8
-                    "y_coordKiller, " + //9
-                    "y_coordKilled, " + //10
-                    "weaponType) " +    //11
-                    "VALUES(?,?,?,?,?,?,?,?,?,?,?)");
+                               "INSERT INTO tblBWJS__GameExtended(" +
+                               "matchID, " +       //1
+                               "userIDKiller, " +  //2
+                               "userIDKillee, " +  //3
+                               "shipKiller, " +    //4
+                               "shipKillee, " +    //5
+                               "time_stamp, " +    //6
+                               "x_coordKiller, " + //7
+                               "x_coordKilled, " + //8
+                               "y_coordKiller, " + //9
+                               "y_coordKilled, " + //10
+                               "weaponType) " +    //11
+                               "VALUES(?,?,?,?,?,?,?,?,?,?,?)");
 
             psPutExtendedLogAdd = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameExtended__Add(" +
-                    "matchID, " +       //1
-                    "time_stamp, " +    //2
-                    "playerID, " +      //3
-                    "shipType) " +      //4
-                    "VALUES(?,?,?,?)");
+                                  "INSERT INTO tblBWJS__GameExtended__Add(" +
+                                  "matchID, " +       //1
+                                  "time_stamp, " +    //2
+                                  "playerID, " +      //3
+                                  "shipType) " +      //4
+                                  "VALUES(?,?,?,?)");
 
             psPutExtendedLogLagout = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameExtended__Lagout(" +
-                    "matchID, " +       //1
-                    "time_stamp, " +    //2
-                    "playerID) " +      //3
-                    "VALUES(?,?,?)");
+                                     "INSERT INTO tblBWJS__GameExtended__Lagout(" +
+                                     "matchID, " +       //1
+                                     "time_stamp, " +    //2
+                                     "playerID) " +      //3
+                                     "VALUES(?,?,?)");
 
             psPutExtendedLogOut = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameExtended__Out(" +
-                    "matchID, " +       //1
-                    "time_stamp, " +    //2
-                    "playerID, " +      //3
-                    "reason, " +        //4
-                    "kills, " +         //5
-                    "deaths) " +        //6
-                    "VALUES(?,?,?,?,?,?)");
+                                  "INSERT INTO tblBWJS__GameExtended__Out(" +
+                                  "matchID, " +       //1
+                                  "time_stamp, " +    //2
+                                  "playerID, " +      //3
+                                  "reason, " +        //4
+                                  "kills, " +         //5
+                                  "deaths) " +        //6
+                                  "VALUES(?,?,?,?,?,?)");
 
             psPutExtendedLogPlayerDeath = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameExtended__PlayerDeath(" +
-                    "matchID, " +           //1
-                    "time_stamp, " +        //2
-                    "VictimID, " +          //3
-                    "AttackerID, " +        //4
-                    "Victim_x_coord, " +    //5
-                    "Victim_y_coord, " +    //6
-                    "Attacker_x_coord, " +  //7
-                    "Attacker_y_coord, " +  //8
-                    "Victim_ShipType, " +   //9
-                    "Attacker_ShipType, " + //10
-                    "WeaponType) " +        //11
-                    "VALUES(?,?,?,?,?,?,?,?,?,?,?)");
+                                          "INSERT INTO tblBWJS__GameExtended__PlayerDeath(" +
+                                          "matchID, " +           //1
+                                          "time_stamp, " +        //2
+                                          "VictimID, " +          //3
+                                          "AttackerID, " +        //4
+                                          "Victim_x_coord, " +    //5
+                                          "Victim_y_coord, " +    //6
+                                          "Attacker_x_coord, " +  //7
+                                          "Attacker_y_coord, " +  //8
+                                          "Victim_ShipType, " +   //9
+                                          "Attacker_ShipType, " + //10
+                                          "WeaponType) " +        //11
+                                          "VALUES(?,?,?,?,?,?,?,?,?,?,?)");
 
             psPutExtendedLogReturn = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameExtended__Return(" +
-                    "matchID, " +       //1
-                    "time_stamp, " +    //2
-                    "playerID) " +      //3
-                    "VALUES(?,?,?)");
+                                     "INSERT INTO tblBWJS__GameExtended__Return(" +
+                                     "matchID, " +       //1
+                                     "time_stamp, " +    //2
+                                     "playerID) " +      //3
+                                     "VALUES(?,?,?)");
 
             psPutExtendedLogShipChange = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameExtended__ShipChange(" +
-                    "matchID, " +       //1
-                    "time_stamp, " +    //2
-                    "playerID, " +      //3
-                    "oldShipType, " +   //4
-                    "newShipType) " +   //5
-                    "VALUES(?,?,?,?,?)");
+                                         "INSERT INTO tblBWJS__GameExtended__ShipChange(" +
+                                         "matchID, " +       //1
+                                         "time_stamp, " +    //2
+                                         "playerID, " +      //3
+                                         "oldShipType, " +   //4
+                                         "newShipType) " +   //5
+                                         "VALUES(?,?,?,?,?)");
 
             psPutExtendedLogSub = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameExtended__Sub(" +
-                    "matchID, " +       //1
-                    "time_stamp, " +    //2
-                    "playerINID, " +    //3
-                    "playerOUTID, " +   //4
-                    "ShipType, " +      //5
-                    "DeathsLeft) " +    //6
-                    "VALUES(?,?,?,?,?,?)");
+                                  "INSERT INTO tblBWJS__GameExtended__Sub(" +
+                                  "matchID, " +       //1
+                                  "time_stamp, " +    //2
+                                  "playerINID, " +    //3
+                                  "playerOUTID, " +   //4
+                                  "ShipType, " +      //5
+                                  "DeathsLeft) " +    //6
+                                  "VALUES(?,?,?,?,?,?)");
 
             psPutExtendedLogSwitch = m_botAction.createPreparedStatement(database, uniqueID,
-                    "INSERT INTO tblBWJS__GameExtended__Switch(" +
-                    "matchID, " +       //1
-                    "time_stamp, " +    //2
-                    "player1ID, " +     //3
-                    "shipType1, " +     //4
-                    "player2ID, " +     //5
-                    "shipType2) " +     //6
-                    "VALUES(?,?,?,?,?,?)");
+                                     "INSERT INTO tblBWJS__GameExtended__Switch(" +
+                                     "matchID, " +       //1
+                                     "time_stamp, " +    //2
+                                     "player1ID, " +     //3
+                                     "shipType1, " +     //4
+                                     "player2ID, " +     //5
+                                     "shipType2) " +     //6
+                                     "VALUES(?,?,?,?,?,?)");
         }
 
         private void addGame() {
@@ -5555,16 +5738,20 @@ public class bwjsbot extends SubspaceBot {
 
                 //Get matchID, -1 on database error
                 ResultSet rs = psAddGame.getGeneratedKeys();
+
                 if (rs != null && rs.next())
                     matchID = rs.getInt(1);
                 else
                     matchID = -1;
-            } catch (Exception e) { matchID = -1; }
+            } catch (Exception e) {
+                matchID = -1;
+            }
         }
 
         private void endGame(int winner) {
             try {
                 psEndGame.setInt(1, winner);
+
                 if (cfg.gameType == BWJSConfig.BASE) {
                     psEndGame.setInt(2, team[0].getFlagTime());
                     psEndGame.setInt(3, team[1].getFlagTime());
@@ -5572,6 +5759,7 @@ public class bwjsbot extends SubspaceBot {
                     psEndGame.setInt(2, team[1].getDeaths());
                     psEndGame.setInt(3, team[0].getDeaths());
                 }
+
                 psEndGame.setInt(4, matchID);
                 psEndGame.execute();
             } catch (Exception e) {}
@@ -5601,6 +5789,7 @@ public class bwjsbot extends SubspaceBot {
                 psSetUserID.execute();
 
                 ResultSet rs = psSetUserID.getGeneratedKeys();
+
                 if (rs != null && rs.next())
                     userID = rs.getInt(1);
 
@@ -5655,10 +5844,12 @@ public class bwjsbot extends SubspaceBot {
                         psPutGamePlayer.setInt(2, p.p_userID);                 //userID
                         psPutGamePlayer.setInt(3, p.p_frequency);              //freq
                         psPutGamePlayer.setInt(4, p.p_lagouts);                //lagouts
+
                         if (p.p_name.equalsIgnoreCase(getMVP()))
                             psPutGamePlayer.setInt(5, 1);                      //MVP
                         else
                             psPutGamePlayer.setInt(5, 0);                      //MVP
+
                         psPutGamePlayer.setString(6, p.getStatus());           //State
 
                         psPutGamePlayer.execute();
@@ -5704,7 +5895,9 @@ public class bwjsbot extends SubspaceBot {
 
                     psPutExtendedLog.execute();
                 }
-            } catch (Exception e) { Tools.printLog(e.getMessage());}
+            } catch (Exception e) {
+                Tools.printLog(e.getMessage());
+            }
         }
 
         private void closePreparedStatements() {
@@ -5733,9 +5926,9 @@ public class bwjsbot extends SubspaceBot {
 
         private void displayURL() {
             String url = "Statistics url: http://www.trenchwars.org/"
-                + cfg.getGameTypeString().toLowerCase()
-                + "/"
-                + matchID;
+                         + cfg.getGameTypeString().toLowerCase()
+                         + "/"
+                         + matchID;
             m_botAction.sendArenaMessage(url);
         }
 
@@ -5903,7 +6096,9 @@ public class bwjsbot extends SubspaceBot {
                             lastMonth[3] = rs.getInt("losses");
                         }
                     }
-                } catch (Exception e) {Tools.printLog("BWJS ERROR: " + e.getMessage());}
+                } catch (Exception e) {
+                    Tools.printLog("BWJS ERROR: " + e.getMessage());
+                }
 
                 int[] length = new int[5];
 
@@ -5921,34 +6116,43 @@ public class bwjsbot extends SubspaceBot {
 
                 currentString = Tools.formatString("CURRENT", 13);
                 currentString += "Rank: ";
+
                 if (current[4] == -1) {
                     currentString += Tools.rightString("-", length[4]);
                 } else {
                     currentString += Tools.rightString(Integer.toString(current[4]), length[4]);
                 }
+
                 currentString += "   ";
                 currentString += "Rating: ";
+
                 if (current[1] == -1) {
                     currentString += Tools.rightString("-", length[0]);
                 } else {
                     currentString += Tools.rightString(Integer.toString(current[0]), length[0]);
                 }
+
                 currentString += "   ";
                 currentString += "Kills: ";
+
                 if (current[2] == -1) {
                     currentString += Tools.rightString("-", length[2]);
                 } else {
                     currentString += Tools.rightString(Integer.toString(current[2]), length[2]);
                 }
+
                 currentString += "   ";
                 currentString += "Losses: ";
+
                 if (current[3] == -1) {
                     currentString += Tools.rightString("-", length[3]);
                 } else {
                     currentString += Tools.rightString(Integer.toString(current[3]), length[3]);
                 }
+
                 currentString += "   ";
                 currentString += "Games: ";
+
                 if (current[1] == -1) {
                     currentString += Tools.rightString("-", length[1]);
                 } else {
@@ -5957,34 +6161,43 @@ public class bwjsbot extends SubspaceBot {
 
                 thisMonthString = Tools.formatString("THIS MONTH", 13);
                 thisMonthString += "Rank: ";
+
                 if (thisMonth[4] == -1) {
                     thisMonthString += Tools.rightString("-", length[4]);
                 } else {
                     thisMonthString += Tools.rightString(Integer.toString(thisMonth[4]), length[4]);
                 }
+
                 thisMonthString += "   ";
                 thisMonthString += "Rating: ";
+
                 if (thisMonth[1] == -1) {
                     thisMonthString += Tools.rightString("-", length[0]);
                 } else {
                     thisMonthString += Tools.rightString(Integer.toString(thisMonth[0]), length[0]);
                 }
+
                 thisMonthString += "   ";
                 thisMonthString += "Kills: ";
+
                 if (thisMonth[2] == -1) {
                     thisMonthString += Tools.rightString("-", length[2]);
                 } else {
                     thisMonthString += Tools.rightString(Integer.toString(thisMonth[2]), length[2]);
                 }
+
                 thisMonthString += "   ";
                 thisMonthString += "Losses: ";
+
                 if (thisMonth[3] == -1) {
                     thisMonthString += Tools.rightString("-", length[3]);
                 } else {
                     thisMonthString += Tools.rightString(Integer.toString(thisMonth[3]), length[3]);
                 }
+
                 thisMonthString += "   ";
                 thisMonthString += "Games: ";
+
                 if (thisMonth[1] == -1) {
                     thisMonthString += Tools.rightString("-", length[1]);
                 } else {
@@ -5993,34 +6206,43 @@ public class bwjsbot extends SubspaceBot {
 
                 lastMonthString = Tools.formatString("LAST MONTH", 13);
                 lastMonthString += "Rank: ";
+
                 if (lastMonth[4] == -1) {
                     lastMonthString += Tools.rightString("-", length[4]);
                 } else {
                     lastMonthString += Tools.rightString(Integer.toString(lastMonth[4]), length[4]);
                 }
+
                 lastMonthString += "   ";
                 lastMonthString += "Rating: ";
+
                 if (lastMonth[1] == -1) {
                     lastMonthString += Tools.rightString("-", length[0]);
                 } else {
                     lastMonthString += Tools.rightString(Integer.toString(lastMonth[0]), length[0]);
                 }
+
                 lastMonthString += "   ";
                 lastMonthString += "Kills: ";
+
                 if (lastMonth[2] == -1) {
                     lastMonthString += Tools.rightString("-", length[2]);
                 } else {
                     lastMonthString += Tools.rightString(Integer.toString(lastMonth[2]), length[2]);
                 }
+
                 lastMonthString += "   ";
                 lastMonthString += "Losses: ";
+
                 if (lastMonth[3] == -1) {
                     lastMonthString += Tools.rightString("-", length[3]);
                 } else {
                     lastMonthString += Tools.rightString(Integer.toString(lastMonth[3]), length[3]);
                 }
+
                 lastMonthString += "   ";
                 lastMonthString += "Games: ";
+
                 if (lastMonth[1] == -1) {
                     lastMonthString += Tools.rightString("-", length[1]);
                 } else {
@@ -6036,29 +6258,45 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Game Ticker
-     * - Runs each second
-     * - Checks what needs to get checked
-     * - Runs what needs to get runned
-     *
-     * @author fantus
-     */
+        Game Ticker
+        - Runs each second
+        - Checks what needs to get checked
+        - Runs what needs to get runned
+
+        @author fantus
+    */
     private class Gameticker extends TimerTask {
         public void run() {
             switch (state.getCurrentState()) {
-                case BWJSState.OFF : break;
-                case BWJSState.WAITING_FOR_CAPS : doWaitingForCaps(); break;
-                case BWJSState.ADDING_PLAYERS : doAddingPlayers(); break;
-                case BWJSState.PRE_GAME : doPreGame(); break;
-                case BWJSState.GAME_IN_PROGRESS : doGameInProgress(); break;
-                case BWJSState.GAME_OVER : doGameOver(); break;
+            case BWJSState.OFF :
+                break;
+
+            case BWJSState.WAITING_FOR_CAPS :
+                doWaitingForCaps();
+                break;
+
+            case BWJSState.ADDING_PLAYERS :
+                doAddingPlayers();
+                break;
+
+            case BWJSState.PRE_GAME :
+                doPreGame();
+                break;
+
+            case BWJSState.GAME_IN_PROGRESS :
+                doGameInProgress();
+                break;
+
+            case BWJSState.GAME_OVER :
+                doGameOver();
+                break;
             }
         }
 
         private void doWaitingForCaps() {
             /*
-             * Need two captains within one minute, else remove captain
-             */
+                Need two captains within one minute, else remove captain
+            */
             if (team[0].hasCaptain()) {
                 if ((System.currentTimeMillis() - team[0].getCaptainTimeStamp()) >= Tools.TimeInMillis.MINUTE) {
                     team[0].captainLeft();
@@ -6076,8 +6314,8 @@ public class bwjsbot extends SubspaceBot {
 
         private void doAddingPlayers() {
             /*
-             * Check if time has ended for adding players
-             */
+                Check if time has ended for adding players
+            */
             int multiplier;
 
             if (cfg.getGameType() == BWJSConfig.BASE) {
@@ -6120,6 +6358,7 @@ public class bwjsbot extends SubspaceBot {
             if (cfg.getTimeTarget() != 0) {
                 for (BWJSTeam t : team) {
                     t.addTimePoint();
+
                     if (t.getFlagTime() == (cfg.getTimeTarget() * 60)) {
                         gameOver();
                     }
@@ -6149,7 +6388,7 @@ public class bwjsbot extends SubspaceBot {
 
             if (!lockLastGame && (time >= 15)) {
                 startWaitingForCaps();
-            } else if (time >= 15){
+            } else if (time >= 15) {
                 state.setState(BWJSState.OFF);
                 m_botAction.sendArenaMessage("Bot has been shutdown.", Tools.Sound.GAME_SUCKS);
                 reset();
@@ -6159,11 +6398,11 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * (This method is copied from forumbot.java and altered a bit to fit in here)
-     *
-     * This TimerTask executes psKeepAlive which just sends a query to the database to keep the connection alive
-     * @author Maverick
-     */
+        (This method is copied from forumbot.java and altered a bit to fit in here)
+
+        This TimerTask executes psKeepAlive which just sends a query to the database to keep the connection alive
+        @author Maverick
+    */
     private class KeepAliveConnection extends TimerTask {
         public void run() {
             if (hasDatabase)
@@ -6172,8 +6411,8 @@ public class bwjsbot extends SubspaceBot {
     }
 
     /**
-     * Extended log
-     */
+        Extended log
+    */
     private class ExtendedLog {
         private int userIDKiller;
         private int userIDKillee;

@@ -14,18 +14,18 @@ import twcore.core.game.Player;
 import twcore.core.util.Tools;
 
 /**
- * The Untouchable module
- * 
- * Multibot Module for use in any arena, particularly deathmatch.  One person
- * is the untouchable, and anyone who kills them is spec'd w/o message.
- * When there are two people left (the UT and one other), the non-UT
- * is declared the winner.  Other than that, a normal elim.
- *
- * Created 5/30/04 - Last modified 7/24/04
- *
- * @author  qan
- * @version 1.7
- */
+    The Untouchable module
+
+    Multibot Module for use in any arena, particularly deathmatch.  One person
+    is the untouchable, and anyone who kills them is spec'd w/o message.
+    When there are two people left (the UT and one other), the non-UT
+    is declared the winner.  Other than that, a normal elim.
+
+    Created 5/30/04 - Last modified 7/24/04
+
+    @author  qan
+    @version 1.7
+*/
 public class untouchable extends MultiModule {
 
 
@@ -44,11 +44,11 @@ public class untouchable extends MultiModule {
     public void init() {
     }
 
-    public void requestEvents(ModuleEventRequester events)	{
-		events.request(this, EventRequester.PLAYER_DEATH);
-		events.request(this, EventRequester.PLAYER_LEFT);
-		events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
-	}
+    public void requestEvents(ModuleEventRequester events)  {
+        events.request(this, EventRequester.PLAYER_DEATH);
+        events.request(this, EventRequester.PLAYER_LEFT);
+        events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
+    }
 
     TimerTask startGame;
     TimerTask giveStartWarning;
@@ -62,15 +62,17 @@ public class untouchable extends MultiModule {
 
 
     /** Handles event received message, and if from an ER or above,
-     * tries to parse it as an event mod command.  Otherwise, parses
-     * as a general command.
-     * @param event Passed event.
-     */
-    public void handleEvent( Message event ){
+        tries to parse it as an event mod command.  Otherwise, parses
+        as a general command.
+        @param event Passed event.
+    */
+    public void handleEvent( Message event ) {
 
         String message = event.getMessage();
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
+
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
+
             if( opList.isER( name ))
                 handleCommand( name, message );
             else
@@ -81,12 +83,12 @@ public class untouchable extends MultiModule {
 
 
     /** Initializes number of lives & starting Untouchable, gives rules, 10
-     * second warning, and starts game.
-     * @param lives Number of lives to spec players at.
-     * @param UTName Name of player to be the starting Untouchable.  If
-     *                   left blank, random starting UT.
-     */
-    public void doInit( final int lives, final int utLives, String UTName ){
+        second warning, and starts game.
+        @param lives Number of lives to spec players at.
+        @param UTName Name of player to be the starting Untouchable.  If
+                         left blank, random starting UT.
+    */
+    public void doInit( final int lives, final int utLives, String UTName ) {
         m_lives = lives;
         m_utLives = utLives;
 
@@ -94,6 +96,7 @@ public class untouchable extends MultiModule {
             makeNewRandomUntouchable();
         } else {
             Player p = m_botAction.getFuzzyPlayer( UTName );
+
             if( p != null) {
                 m_untouchable = p.getPlayerName();
                 m_botAction.sendPrivateMessage( m_untouchable, "You have been selected to be the Untouchable!  You have a " + utLives + " death limit, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
@@ -147,8 +150,8 @@ public class untouchable extends MultiModule {
 
 
     /** Assign a new UT (not actually the slightest bit random)
-     * FIX: Feed all eligible players into a list and use a random number generator to choose one.
-     */
+        FIX: Feed all eligible players into a list and use a random number generator to choose one.
+    */
     public void makeNewRandomUntouchable() {
         m_untouchable = "";
 
@@ -165,14 +168,14 @@ public class untouchable extends MultiModule {
 
 
     /** Intermediary method that passes information from handleCommand to doInit
-     * based on the parameters of the !start command.
-     * @param name Name of mod executing !start command (for reporting purposes)
-     * @param params String array containing each parameter
-     */
-    public void start( String name, String[] params ){
-        try{
+        based on the parameters of the !start command.
+        @param name Name of mod executing !start command (for reporting purposes)
+        @param params String array containing each parameter
+    */
+    public void start( String name, String[] params ) {
+        try {
 
-            switch( params.length){
+            switch( params.length) {
 
             // Default: 10 lives, random starting Untouchable
             case 0:
@@ -189,14 +192,15 @@ public class untouchable extends MultiModule {
                 m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
                 break;
 
-            // User-defined number of both player and Untouchable lives    
+            // User-defined number of both player and Untouchable lives
             case 2:
-            	int pLives2 = Integer.parseInt(params[0]);
-            	int utLives2 = Integer.parseInt(params[1]);
-            	m_untouchable = "";
-            	doInit( pLives2, utLives2, "");
-            	m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
-            	break;
+                int pLives2 = Integer.parseInt(params[0]);
+                int utLives2 = Integer.parseInt(params[1]);
+                m_untouchable = "";
+                doInit( pLives2, utLives2, "");
+                m_botAction.sendPrivateMessage( name, "Untouchable mode started." );
+                break;
+
             // User-defined number of player lives, Untouchable lives, and starting Untouchable
             case 3:
                 int pLives3 = Integer.parseInt(params[0]);
@@ -214,7 +218,7 @@ public class untouchable extends MultiModule {
                 break;
             }
 
-        }catch( Exception e ){
+        } catch( Exception e ) {
             m_botAction.sendPrivateMessage( name, "Silly " + name + ".  You've made a mistake -- please try again." );
             isRunning = false;
         }
@@ -223,23 +227,24 @@ public class untouchable extends MultiModule {
 
 
     /** Handles all commands given to the bot.
-     * @param name Name of ER or above who sent the command.
-     * @param message Message sent
-     */
-    public void handleCommand( String name, String message ){
+        @param name Name of ER or above who sent the command.
+        @param message Message sent
+    */
+    public void handleCommand( String name, String message ) {
 
-        if( message.startsWith( "!stop" )){
+        if( message.startsWith( "!stop" )) {
             if(isRunning == true) {
                 m_botAction.sendPrivateMessage( name, "Untouchable mode stopped." );
                 m_untouchable = "";
                 isRunning = false;
+
                 if( ! manual )
                     m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
             } else {
                 m_botAction.sendPrivateMessage( name, "Untouchable mode is not currently enabled." );
             }
 
-        } else if( message.startsWith( "!start " )){
+        } else if( message.startsWith( "!start " )) {
             if(isRunning == false) {
                 String[] parameters = Tools.stringChopper( message.substring( f_startmsglength ), ' ' );
                 start( name, parameters );
@@ -247,7 +252,7 @@ public class untouchable extends MultiModule {
                 m_botAction.sendPrivateMessage( name, "Untouchable mode is already enabled." );
             }
 
-        } else if( message.startsWith( "!start" )){
+        } else if( message.startsWith( "!start" )) {
             if(isRunning == false) {
                 m_untouchable = "";
                 doInit( 10, 99, "" );
@@ -258,14 +263,14 @@ public class untouchable extends MultiModule {
 
         } else if( message.startsWith( "!rules" )) {
             displayRules();
-        } else if( message.equalsIgnoreCase("!allowguessing")){
-        	if( allowGuessing ) {
-        		allowGuessing = false;
-        		m_botAction.sendSmartPrivateMessage( name, "Guessing OFF. Players are not allowed to guess the untouchable.");
-        	} else {
-        		allowGuessing = true;
-        		m_botAction.sendSmartPrivateMessage( name, "Guessing ON. Players are allowed to guess the untouchable.");
-        	}
+        } else if( message.equalsIgnoreCase("!allowguessing")) {
+            if( allowGuessing ) {
+                allowGuessing = false;
+                m_botAction.sendSmartPrivateMessage( name, "Guessing OFF. Players are not allowed to guess the untouchable.");
+            } else {
+                allowGuessing = true;
+                m_botAction.sendSmartPrivateMessage( name, "Guessing ON. Players are allowed to guess the untouchable.");
+            }
         } else if( message.startsWith( "!manual" )) {
             if( manual ) {
                 manual = false;
@@ -285,10 +290,10 @@ public class untouchable extends MultiModule {
         // Prevent double !help spam (don't be TOO helpful)
         if( message.startsWith( "!bothelp" ) )
             sendHelp( name );
-        
+
         else if( message.startsWith("!guess " ))
-        	guessUT( name, message.substring(7));
-        
+            guessUT( name, message.substring(7));
+
         else if( message.startsWith( "!botrules" ) )
             sendRules( name );
 
@@ -306,12 +311,12 @@ public class untouchable extends MultiModule {
             }
         }
 
-   }
+    }
 
 
     /** Handles player leaving events.  If player who left is UT, reassign UT.
-     * @param event Contains event information on player who left.
-     */
+        @param event Contains event information on player who left.
+    */
     public void handleEvent( PlayerLeft event ) {
         if( m_untouchable.equals( m_botAction.getPlayerName( event.getPlayerID() ) ) ) {
             makeNewRandomUntouchable();
@@ -321,9 +326,9 @@ public class untouchable extends MultiModule {
 
 
     /** Handles player changing ship/freq events.  If the UT specs, get a new one.
-     * If we are down to the last 2 players, we have a winner: the one that isn't the UT.
-     * @param event Contains event information on player who changed ship or freq.
-     */
+        If we are down to the last 2 players, we have a winner: the one that isn't the UT.
+        @param event Contains event information on player who changed ship or freq.
+    */
     public void handleEvent( FrequencyShipChange event ) {
 
         if( event.getShipType() == f_specship && isRunning ) {
@@ -361,7 +366,7 @@ public class untouchable extends MultiModule {
                         if( m_untouchable.equals( winner.getPlayerName() ) )
                             winner = (Player) i2.next();
 
-                        m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " stayed on the Untouchable " + m_untouchable + "'s good side and triumphed!",5);
+                        m_botAction.sendArenaMessage( "GAME OVER!  " + winner.getPlayerName() + " stayed on the Untouchable " + m_untouchable + "'s good side and triumphed!", 5);
 
                     } catch (Exception e) {
                     }
@@ -373,15 +378,15 @@ public class untouchable extends MultiModule {
 
 
     /** Performs all necessary operations to stop bot.
-     */
+    */
     public void doStop() {
         m_untouchable = "";
         isRunning = false;
         m_botAction.sendUnfilteredPublicMessage( "*lockpublic" );
 
         if( ! manual ) {
-            m_botAction.toggleLocked();	// Note: the bot DOES NOT LOCK to start.
-                                          // This is to give host some freedom.
+            m_botAction.toggleLocked(); // Note: the bot DOES NOT LOCK to start.
+            // This is to give host some freedom.
             m_botAction.sendArenaMessage( "Arena and chats unlocked, free to enter." );
         }
 
@@ -390,34 +395,38 @@ public class untouchable extends MultiModule {
 
 
     /** Handles player death events.  Spec killed at appropriate number of deaths,
-     * and spec killer if they've kill the Untouchable.
-     * @param event Contains event information on player who died.
-     */
-    public void handleEvent( PlayerDeath event ){
+        and spec killer if they've kill the Untouchable.
+        @param event Contains event information on player who died.
+    */
+    public void handleEvent( PlayerDeath event ) {
 
-        if( isRunning ){
+        if( isRunning ) {
 
             Player p = m_botAction.getPlayer( event.getKilleeID() );
+
             if(p == null)return;
 
             // If someone's shot the Untouchable . . .
             if( m_untouchable.equals( p.getPlayerName() ) ) {
                 Player killer = m_botAction.getPlayer( event.getKillerID() );
+
                 if(killer == null)return;
+
                 String killerName = killer.getPlayerName();
 
                 m_botAction.sendPrivateMessage(killerName, "You've made the permanent mistake of trying to kill the Untouchable ... now you're sleeping with the fishes!", 13);
                 m_botAction.sendPrivateMessage(killerName, "REMEMBER: Revealing the identity of the Untouchable is strictly forbidden!");
                 m_botAction.specWithoutLock(killerName);
+
                 // Spec UT over certain amount of lives m_utLives
-                if(p.getLosses() >= m_utLives ){
-                	m_botAction.sendArenaMessage(p.getPlayerName() + " was the untouchable, but is now out (" + p.getWins() + 
-                			" - " + p.getLosses() +  ")! A new untouchable has been selected.");
-                	m_botAction.specWithoutLock(p.getPlayerName());
-                	makeNewRandomUntouchable();
+                if(p.getLosses() >= m_utLives ) {
+                    m_botAction.sendArenaMessage(p.getPlayerName() + " was the untouchable, but is now out (" + p.getWins() +
+                                                 " - " + p.getLosses() +  ")! A new untouchable has been selected.");
+                    m_botAction.specWithoutLock(p.getPlayerName());
+                    makeNewRandomUntouchable();
                 }
 
-            // Spec non-UTs over certain amount of lives m_lives
+                // Spec non-UTs over certain amount of lives m_lives
             } else if( p.getLosses() >= m_lives ) {
 
                 String playerName = p.getPlayerName();
@@ -440,41 +449,44 @@ public class untouchable extends MultiModule {
     // methods below.  Makes a module much more user-friendly.
 
     /** Displays the rules of the event module in readable form.
-     */
+    */
     public void displayRules() {
         String[] rules = getRules();
+
         for( int i = 0; i < rules.length; i++ )
             m_botAction.sendArenaMessage( rules[i] );
     }
 
     public void guessUT( String name, String message ) {
-    	Player p = m_botAction.getPlayer(name);
-    	Player guess = m_botAction.getFuzzyPlayer(message);
-    	if( p == null || guess == null)return;
-    	if(!allowGuessing){
-    		m_botAction.sendSmartPrivateMessage( name, "Guessing is currently disabled.");
-    		return;
-    	} else if(!p.isPlaying()) {
-    		m_botAction.sendSmartPrivateMessage( name, "You must be playing to guess!");
-    	} else {
-    		if(guess.getPlayerName().equalsIgnoreCase(m_untouchable)){
-    			m_botAction.sendSmartPrivateMessage( m_untouchable, "You've been discovered!");
-    			m_botAction.sendArenaMessage(guess.getPlayerName() + " was the untouchable, but is now out (" + guess.getWins() + 
-            			" - " + guess.getLosses() +  ")! A new untouchable has been selected.");
-    			m_botAction.specWithoutLock(m_untouchable);
-    			m_untouchable = p.getPlayerName();
+        Player p = m_botAction.getPlayer(name);
+        Player guess = m_botAction.getFuzzyPlayer(message);
+
+        if( p == null || guess == null)return;
+
+        if(!allowGuessing) {
+            m_botAction.sendSmartPrivateMessage( name, "Guessing is currently disabled.");
+            return;
+        } else if(!p.isPlaying()) {
+            m_botAction.sendSmartPrivateMessage( name, "You must be playing to guess!");
+        } else {
+            if(guess.getPlayerName().equalsIgnoreCase(m_untouchable)) {
+                m_botAction.sendSmartPrivateMessage( m_untouchable, "You've been discovered!");
+                m_botAction.sendArenaMessage(guess.getPlayerName() + " was the untouchable, but is now out (" + guess.getWins() +
+                                             " - " + guess.getLosses() +  ")! A new untouchable has been selected.");
+                m_botAction.specWithoutLock(m_untouchable);
+                m_untouchable = p.getPlayerName();
                 m_botAction.sendPrivateMessage( m_untouchable, "You have been selected to be the Untouchable!  You have a " + m_utLives + " death limit, and anyone who kills you will be spec'd.  Be careful not to reveal your identity.");
-    		} else {
-    			m_botAction.sendSmartPrivateMessage( name, "Incorrect guess!");
-    			m_botAction.sendArenaMessage(name + " chose poorly and is now out! " + p.getWins() + " wins " + p.getLosses() + " losses.");
-    			m_botAction.specWithoutLock(name);
-    		}
-    	}
+            } else {
+                m_botAction.sendSmartPrivateMessage( name, "Incorrect guess!");
+                m_botAction.sendArenaMessage(name + " chose poorly and is now out! " + p.getWins() + " wins " + p.getLosses() + " losses.");
+                m_botAction.specWithoutLock(name);
+            }
+        }
     }
 
     /** Sends rules privately to a player.
-     * @param name Player to send msg to.
-     */
+        @param name Player to send msg to.
+    */
     public void sendRules( String name ) {
         m_botAction.privateMessageSpam( name, getRules() );
     }
@@ -482,8 +494,8 @@ public class untouchable extends MultiModule {
 
 
     /** Sends about message to a player.
-     * @param name Player to send msg to.
-     */
+        @param name Player to send msg to.
+    */
     public void sendAbout(String name) {
         String about = "Untouchable module, v" + f_version + ".  Created by qan.  Last modified " + f_modified;
         m_botAction.sendPrivateMessage( name, about );
@@ -492,8 +504,8 @@ public class untouchable extends MultiModule {
 
 
     /** Sends general help to a player.
-     * @param name Player to send msg to.
-     */
+        @param name Player to send msg to.
+    */
     public void sendHelp( String name ) {
         String[] help = {
             "General Help for Untouchable Module",
@@ -508,11 +520,11 @@ public class untouchable extends MultiModule {
 
 
     /** Returns the rules of the event in readable form.
-     * @return String array containing rules.
-     */
+        @return String array containing rules.
+    */
     public String[] getRules() {
         String[] rules = {
-          // | Max line length for rules to display correctly on 800x600.....................|
+            // | Max line length for rules to display correctly on 800x600.....................|
             ".....                       - RULES of UNTOUCHABLE -                        .....",
             "...   One person is, in secret, the Untouchable.  If anyone kills the         ...",
             "..    Untouchable, they are specced.  Revealing the UT's identity = CHEATING.  ..",
@@ -527,8 +539,8 @@ public class untouchable extends MultiModule {
 
 
     /** Returns help message.
-     * @return A string array containing help msgs for this bot.
-     */
+        @return A string array containing help msgs for this bot.
+    */
     public String[] getModHelpMessage() {
         String[] untouchableHelp = {
             "!start                            - Starts Untouchable mode w/ defaults (10 lives, random UT)",
@@ -547,12 +559,12 @@ public class untouchable extends MultiModule {
 
 
     /** (blank method)
-     */
+    */
     public void cancel() {
     }
 
-    public boolean isUnloadable()	{
-		return true;
-	}
+    public boolean isUnloadable()   {
+        return true;
+    }
 
 }

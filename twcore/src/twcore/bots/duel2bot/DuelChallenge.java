@@ -12,7 +12,7 @@ class DuelChallenge extends TimerTask {
     boolean   ranked;
 
     public DuelChallenge(duel2bot bot, BotAction action, boolean ranked, int f1, int f2,
-            String[] n1, String[] n2, int type) {
+                         String[] n1, String[] n2, int type) {
         freq1 = f1;
         freq2 = f2;
         team1 = n1;
@@ -55,8 +55,9 @@ class DuelChallenge extends TimerTask {
     public void run() {
         // expire challenge
         DuelChallenge chall = bot.challs.remove("" + freq1 + " " + freq2 + "");
+
         if (chall != null)
             ba.sendOpposingTeamMessageByFrequency(chall.freq1(), "Your " + bot.getDivision(div)
-                    + " challenge to " + team2[0] + " and " + team2[1] + " has expired.", 26);
+                                                  + " challenge to " + team2[0] + " and " + team2[1] + " has expired.", 26);
     }
 }

@@ -22,13 +22,13 @@ public class ModuleHandler
     private BotAction m_botAction;
 
     /**
-     * This method initializes a new ModuleHandler class.
-     *
-     * @param modulePath is the path of the module .class files.
-     * @param moduleGroup is the name of the group of modules.  All of the
-     * module files must begin with this string.
-     * @param botAction is the botAction of the bot.
-     */
+        This method initializes a new ModuleHandler class.
+
+        @param modulePath is the path of the module .class files.
+        @param moduleGroup is the name of the group of modules.  All of the
+        module files must begin with this string.
+        @param botAction is the botAction of the bot.
+    */
 
     public ModuleHandler(BotAction botAction, String modulePath, String moduleGroup)
     {
@@ -39,10 +39,10 @@ public class ModuleHandler
     }
 
     /**
-     * This method loads a module into the handler.
-     *
-     * @param moduleName is the name of the module to load.
-     */
+        This method loads a module into the handler.
+
+        @param moduleName is the name of the module to load.
+    */
 
     public void loadModule(String moduleName)
     {
@@ -55,6 +55,7 @@ public class ModuleHandler
         {
             if(loader.shouldReload())
                 loader.reinstantiate();
+
             Module module = (Module) loader.loadClass("twcore.bots." + moduleGroup + "." + moduleGroup + moduleName).newInstance();
             module.initializeModule(m_botAction);
             moduleList.put(lowerName, module);
@@ -67,26 +68,28 @@ public class ModuleHandler
     }
 
     /**
-     * This method unloads a module.
-     *
-     * @param moduleName is the name of the module to unload.
-     */
+        This method unloads a module.
+
+        @param moduleName is the name of the module to unload.
+    */
 
     public void unloadModule(String moduleName)
     {
-    	String lowerName = moduleName.toLowerCase();
+        String lowerName = moduleName.toLowerCase();
+
         if(!moduleList.containsKey(lowerName))
             throw new IllegalArgumentException("ERROR: Module: " + moduleName + " is not loaded.");
+
         moduleList.get(lowerName).cancel();
         moduleList.remove(lowerName);
     }
 
     /**
-     * This method checks to see if a module is loaded.
-     *
-     * @param moduleName is the name of the module to load.
-     * @param true is returned if the module is loaded.
-     */
+        This method checks to see if a module is loaded.
+
+        @param moduleName is the name of the module to load.
+        @param true is returned if the module is loaded.
+    */
 
     public boolean isLoaded(String moduleName)
     {
@@ -94,30 +97,32 @@ public class ModuleHandler
     }
 
     /**
-     * This method checks to see if a module is able to be loaded.
-     *
-     * @param moduleName is the module name to check.
-     * @return true is returned if the module can be loaded.
-     */
+        This method checks to see if a module is able to be loaded.
+
+        @param moduleName is the module name to check.
+        @return true is returned if the module can be loaded.
+    */
 
     public boolean isModule(String moduleName)
     {
         String fileName = moduleGroup + moduleName.toLowerCase() + ".class";
 
         String[] moduleNames = moduleLocation.list(new ModuleFilenameFilter());
+
         for(int index = 0; index < moduleNames.length; index++)
         {
             if(fileName.equals(moduleNames[index]))
                 return true;
         }
+
         return false;
     }
 
     /**
-     * This method gets a loaded Module instance from the module list.
-     *
-     * @param moduleName is the name of the module to get.
-     */
+        This method gets a loaded Module instance from the module list.
+
+        @param moduleName is the name of the module to get.
+    */
 
     public Module getModule(String moduleName)
     {
@@ -125,16 +130,17 @@ public class ModuleHandler
 
         if(!moduleList.containsKey(lowerName))
             throw new IllegalArgumentException("ERROR: " + moduleName + " is not loaded.");
+
         return moduleList.get(lowerName);
     }
 
     /**
-     * This method gets a sorted list of the modules that the module handler is
-     * able to load.  The files must begin with the module group name and end with
-     * .class.  It must also not have a $ in the name.
-     *
-     * @return a sorted collection of module names is returned.
-     */
+        This method gets a sorted list of the modules that the module handler is
+        able to load.  The files must begin with the module group name and end with
+        .class.  It must also not have a $ in the name.
+
+        @return a sorted collection of module names is returned.
+    */
 
     public Collection<? extends String> getModuleNames()
     {
@@ -148,15 +154,16 @@ public class ModuleHandler
             fileName = fileNames[index];
             modules.add(fileName.substring(beginIndex, fileName.length() - 6));
         }
+
         Collections.sort(modules);
         return modules;
     }
 
     /**
-     * This method handles all of the subspace events.
-     *
-     * @param event is the event to handle.
-     */
+        This method handles all of the subspace events.
+
+        @param event is the event to handle.
+    */
 
     public void handleEvent(SubspaceEvent event)
     {
@@ -179,21 +186,21 @@ public class ModuleHandler
     }
 
     /**
-     * Unloads all modules loaded on this ModuleHandler
-     */
+        Unloads all modules loaded on this ModuleHandler
+    */
     public void unloadAllModules() {
-        for(String module:moduleList.keySet()) {
+        for(String module : moduleList.keySet()) {
             this.unloadModule(module);
         }
     }
 
     /**
-     * This method initializes the Adaptive Class Loader so that modules may be
-     * loaded.  The modules should be located in the modulePath directory.
-     *
-     * @param modulePath is the path where the moduleHandler will look for the
-     * modules.
-     */
+        This method initializes the Adaptive Class Loader so that modules may be
+        loaded.  The modules should be located in the modulePath directory.
+
+        @param modulePath is the path where the moduleHandler will look for the
+        modules.
+    */
 
     private void initializeLoader(String modulePath)
     {
@@ -206,10 +213,10 @@ public class ModuleHandler
     }
 
     /**
-     * This class is used to filter the files in modulePath.  It selects files
-     * that begin with moduleGroup, that end in .class and that do not have $
-     * in their names.
-     */
+        This class is used to filter the files in modulePath.  It selects files
+        that begin with moduleGroup, that end in .class and that do not have $
+        in their names.
+    */
 
     private class ModuleFilenameFilter implements FilenameFilter
     {
@@ -217,7 +224,7 @@ public class ModuleHandler
         {
             int minLength = moduleGroup.length() + 6;
             return name.startsWith(moduleGroup) && name.endsWith(".class") &&
-            name.length() > minLength && name.indexOf('$') == -1;
+                   name.length() > minLength && name.indexOf('$') == -1;
         }
     }
 }

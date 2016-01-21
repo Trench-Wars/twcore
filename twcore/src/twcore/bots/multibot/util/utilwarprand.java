@@ -17,357 +17,373 @@ import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
 /**
- * Warps players that enter one defined region to a random point contained within
- * another defined map region.
- *
- * @author D1st0rt
- * @version 06.06.21
- */
+    Warps players that enter one defined region to a random point contained within
+    another defined map region.
+
+    @author D1st0rt
+    @version 06.06.21
+*/
 public class utilwarprand extends MultiUtil
 {
-	/** The regions on the map. */
-	private MapRegions regions;
-	/** The positions the bot sits at. */
-	private Point[] positions;
-	/** The mapping between initial and destination regions. */
-	private int[] targetRegions;
-	/** The task to keep the bot moving. */
-	private Reposition jumpTask;
-	/** Whether the module is engaged or not. */
-	private boolean active;
-	/** The warp cooldown list. */
-	private HashSet<String> queue;
-	
-	String debugger;
-	boolean DEBUG;
+    /** The regions on the map. */
+    private MapRegions regions;
+    /** The positions the bot sits at. */
+    private Point[] positions;
+    /** The mapping between initial and destination regions. */
+    private int[] targetRegions;
+    /** The task to keep the bot moving. */
+    private Reposition jumpTask;
+    /** Whether the module is engaged or not. */
+    private boolean active;
+    /** The warp cooldown list. */
+    private HashSet<String> queue;
 
-	/** The help message to be sent to bot operators */
-	private final String helpMessage[] =
-	{
-		"+--------------------Random Warps Module-------------------+",
-		"|  Release 1.0 [06/21/06] - http://d1st0rt.sscentral.com   |",
-		"+----------------------------------------------------------+",
-		"! !activate  - Toggles the module doing anything when a    |",
-		"|              player flies over a designated warp region  |",
-		"|                                                          |",
-		"| !loadwarps <cfg> - Sets up the warping system for a given|",
-		"|                    warp configuration, ie !loadwarps javs|",
-		"+----------------------------------------------------------+"
-	};
+    String debugger;
+    boolean DEBUG;
 
-	/**
-     * Creates a new instance of twbotwarprand
-     */
-	public void init()
-	{
-	    DEBUG = false;
-	    debugger = "";
-		regions = new MapRegions();
-		positions = new Point[0];
-		queue = new HashSet<String>();
-	}
-    
+    /** The help message to be sent to bot operators */
+    private final String helpMessage[] =
+    {
+        "+--------------------Random Warps Module-------------------+",
+        "|  Release 1.0 [06/21/06] - http://d1st0rt.sscentral.com   |",
+        "+----------------------------------------------------------+",
+        "! !activate  - Toggles the module doing anything when a    |",
+        "|              player flies over a designated warp region  |",
+        "|                                                          |",
+        "| !loadwarps <cfg> - Sets up the warping system for a given|",
+        "|                    warp configuration, ie !loadwarps javs|",
+        "+----------------------------------------------------------+"
+    };
+
     /**
-     * Requests events.
-     */
+        Creates a new instance of twbotwarprand
+    */
+    public void init()
+    {
+        DEBUG = false;
+        debugger = "";
+        regions = new MapRegions();
+        positions = new Point[0];
+        queue = new HashSet<String>();
+    }
+
+    /**
+        Requests events.
+    */
     public void requestEvents( ModuleEventRequester modEventReq ) {
         modEventReq.request(this, EventRequester.PLAYER_POSITION );
     }
 
-	/**
-     * Get the help message for this module.
-     * @return a String array containing the help message
-     */
-	public String[] getHelpMessages()
-	{
-		return helpMessage;
-	}
+    /**
+        Get the help message for this module.
+        @return a String array containing the help message
+    */
+    public String[] getHelpMessages()
+    {
+        return helpMessage;
+    }
 
-	/**
-     * Cancel the repositioning task when module is unloaded.
-     */
-	public void cancel()
-	{
-		if(jumpTask != null)
+    /**
+        Cancel the repositioning task when module is unloaded.
+    */
+    public void cancel()
+    {
+        if(jumpTask != null)
             m_botAction.cancelTask(jumpTask);
-	}
+    }
 
-	/**
-     * Sets up the positions the bot should sit at from a provided config file
-     * @param cfg the configuration file containing the spec positions
-     */
-	private void readSpecPositions(BotSettings cfg)
-	{
-		ArrayList<Point> posList = new ArrayList<Point>();
+    /**
+        Sets up the positions the bot should sit at from a provided config file
+        @param cfg the configuration file containing the spec positions
+    */
+    private void readSpecPositions(BotSettings cfg)
+    {
+        ArrayList<Point> posList = new ArrayList<Point>();
 
-		int count = 0;
-		String pos = cfg.getString("Position0");
-		while(pos != null)
-		{
-			String[] part = pos.split(",");
-			if(part.length == 2)
-			{
-				Point p = new Point(Integer.parseInt(part[0]),
-								    Integer.parseInt(part[1]));
-				posList.add(p);
-			}
-			count++;
-			pos = cfg.getString("Position"+ count);
-		}
+        int count = 0;
+        String pos = cfg.getString("Position0");
 
-		positions = posList.toArray(positions);
-	}
+        while(pos != null)
+        {
+            String[] part = pos.split(",");
 
-	/**
-     * Sets up the warps from a provided config file
-     * @param cfg the configuration file containing the warp parameters
-     */
-	private void readWarpSetups(BotSettings cfg)
-	{
-		targetRegions = new int[regions.getRegionCount()];
+            if(part.length == 2)
+            {
+                Point p = new Point(Integer.parseInt(part[0]),
+                                    Integer.parseInt(part[1]));
+                posList.add(p);
+            }
 
-		for(int i = 0; i < targetRegions.length; i++)
-		{
-			int target = cfg.getInt("Warp"+ i);
+            count++;
+            pos = cfg.getString("Position" + count);
+        }
 
-			targetRegions[i] = target;
-		}
-	}
+        positions = posList.toArray(positions);
+    }
 
-	/**
-     * Generates a random point within the specified region
-     * @param region the region the point should be in
-     * @return A point object, or null if the first 10000 points generated
-     *         were not within the desired region.
-     */
-	private Point getRandomPoint(int region)
-	{
-		boolean valid = false;
-		Point p = null;
+    /**
+        Sets up the warps from a provided config file
+        @param cfg the configuration file containing the warp parameters
+    */
+    private void readWarpSetups(BotSettings cfg)
+    {
+        targetRegions = new int[regions.getRegionCount()];
 
-		int count = 0;
-		while(!valid)
-		{
-			int x = (int)(Math.random() * 1024);
-			int y = (int)(Math.random() * 1024);
-			p = new Point(x, y);
-			valid = regions.checkRegion(x, y, region);
-			count++;
-			if(count > 10000)
-				valid = true;
-		}
+        for(int i = 0; i < targetRegions.length; i++)
+        {
+            int target = cfg.getInt("Warp" + i);
 
-		return p;
-	}
+            targetRegions[i] = target;
+        }
+    }
 
-	/**
-     * Event: Message
-     * Handle incoming commands.
-     */
-	public void handleEvent(Message event)
-	{
-		if(event.getMessageType() == Message.PRIVATE_MESSAGE)
-		{
-			String name = m_botAction.getPlayerName(event.getPlayerID());
-			if(m_opList.isER(name))
-			{
-				String message = event.getMessage().toLowerCase();
-				if(message.startsWith("!activate"))
-				{
-					c_Activate(name, message);
-				}
-				else if(message.startsWith("!loadwarps "))
-				{
-					c_LoadWarps(name, message.substring(11));
-				}
-				else if (message.equalsIgnoreCase("!debug"))
-				    cmd_debug(name);
+    /**
+        Generates a random point within the specified region
+        @param region the region the point should be in
+        @return A point object, or null if the first 10000 points generated
+               were not within the desired region.
+    */
+    private Point getRandomPoint(int region)
+    {
+        boolean valid = false;
+        Point p = null;
+
+        int count = 0;
+
+        while(!valid)
+        {
+            int x = (int)(Math.random() * 1024);
+            int y = (int)(Math.random() * 1024);
+            p = new Point(x, y);
+            valid = regions.checkRegion(x, y, region);
+            count++;
+
+            if(count > 10000)
+                valid = true;
+        }
+
+        return p;
+    }
+
+    /**
+        Event: Message
+        Handle incoming commands.
+    */
+    public void handleEvent(Message event)
+    {
+        if(event.getMessageType() == Message.PRIVATE_MESSAGE)
+        {
+            String name = m_botAction.getPlayerName(event.getPlayerID());
+
+            if(m_opList.isER(name))
+            {
+                String message = event.getMessage().toLowerCase();
+
+                if(message.startsWith("!activate"))
+                {
+                    c_Activate(name, message);
+                }
+                else if(message.startsWith("!loadwarps "))
+                {
+                    c_LoadWarps(name, message.substring(11));
+                }
+                else if (message.equalsIgnoreCase("!debug"))
+                    cmd_debug(name);
                 else if (message.equalsIgnoreCase("!wu"))
                     cmd_where(name);
                 else if (message.equalsIgnoreCase("!stopspec"))
                     cmd_stopSpec(name);
-			}
-		}
-	}
-	
-	private void cmd_debug(String name) {
-	    DEBUG = !DEBUG;
-	    if (DEBUG) {
-	        debugger = name;
-	        m_botAction.sendPrivateMessage(name, "Debugger ENABLED");
-	    } else {
+            }
+        }
+    }
+
+    private void cmd_debug(String name) {
+        DEBUG = !DEBUG;
+
+        if (DEBUG) {
+            debugger = name;
+            m_botAction.sendPrivateMessage(name, "Debugger ENABLED");
+        } else {
             debugger = "";
             m_botAction.sendPrivateMessage(name, "Debugger DISABLED");
-	    }
-	}
-	
-	private void cmd_where(String name) {
-	    m_botAction.sendPrivateMessage(name, "(" + m_botAction.getShip().getX()/16 + "," + m_botAction.getShip().getY()/16 + ")");
-	}
-	
-	private void cmd_stopSpec(String name) {
-	    m_botAction.sendPrivateMessage(name, "spec: " + m_botAction.getShip().getSpectatorUpdateTime() + " unmov: " + m_botAction.getShip().getUnmovingUpdateTime() + " mov: " + m_botAction.getShip().getMovingUpdateTime());
-	    m_botAction.stopSpectatingPlayer();
+        }
+    }
+
+    private void cmd_where(String name) {
+        m_botAction.sendPrivateMessage(name, "(" + m_botAction.getShip().getX() / 16 + "," + m_botAction.getShip().getY() / 16 + ")");
+    }
+
+    private void cmd_stopSpec(String name) {
+        m_botAction.sendPrivateMessage(name, "spec: " + m_botAction.getShip().getSpectatorUpdateTime() + " unmov: " + m_botAction.getShip().getUnmovingUpdateTime() + " mov: " + m_botAction.getShip().getMovingUpdateTime());
+        m_botAction.stopSpectatingPlayer();
         m_botAction.sendPrivateMessage(name, "Stopped.");
-	}
-    
+    }
+
     private void debug(String msg) {
         if (DEBUG)
             m_botAction.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
     }
 
-	/**
-     * Event: PlayerPosition
-     * Check player positions and warp when necessary.
-     */
-	public void handleEvent(PlayerPosition event)
-	{
-		Player player = m_botAction.getPlayer(event.getPlayerID());
-		if(player == null)return;
-        debug("[Position] " + player.getPlayerName() + ": " + event.getXLocation()/16 + "," + event.getYLocation()/16);
-		if(active)
-		{
-			int current = regions.getRegion(player);
-			if(current != -1)
-			{
-				int dest = targetRegions[current];
-				String name = player.getPlayerName();
-				if(dest != -1 && !queue.contains(name))
-				{
-					queue.add(name);
-					Point p = getRandomPoint(dest);
-					if(p != null)
-					{
-						m_botAction.warpTo(event.getPlayerID(), (int)p.getX(), (int)p.getY());
-						m_botAction.scheduleTask(new WarpCooldown(name), 3000);
-					    m_botAction.stopSpectatingPlayer();
-					}
-				}
-			}
-		}
-	}
+    /**
+        Event: PlayerPosition
+        Check player positions and warp when necessary.
+    */
+    public void handleEvent(PlayerPosition event)
+    {
+        Player player = m_botAction.getPlayer(event.getPlayerID());
 
-	/**
-     * Command: !loadwarps <configuration>
-     * Sets up the warping system for the given parameters.
-     * @param name the name of the person who sent the command
-     * @param message the name of the warp configuration
-     */
-	private void c_LoadWarps(String name, String message)
-	{
-		try{
-			//wipe any existing regions
-			regions.clearRegions();
-			regions.loadRegionImage(message +".png");
-			BotSettings cfg = regions.loadRegionCfg(message +".cfg");
+        if(player == null)return;
 
-			//read in watching positions
-			readSpecPositions(cfg);
+        debug("[Position] " + player.getPlayerName() + ": " + event.getXLocation() / 16 + "," + event.getYLocation() / 16);
 
-			//read in warp configurations
-			readWarpSetups(cfg);
+        if(active)
+        {
+            int current = regions.getRegion(player);
 
-			m_botAction.sendPrivateMessage(name, "Successfully loaded "+ message);
+            if(current != -1)
+            {
+                int dest = targetRegions[current];
+                String name = player.getPlayerName();
 
-		}catch(FileNotFoundException fnf)
-		{
-			m_botAction.sendPrivateMessage(name, "Error: "+ message +".png and "+
-			message +".cfg must be in the data/maps folder.");
-		}
-		catch(javax.imageio.IIOException iie)
-		{
-			m_botAction.sendPrivateMessage(name, "Error: couldn't read image");
-		}
-		catch(Exception e)
-		{
-			m_botAction.sendPrivateMessage(name, "Could not load warps for "+ message);
-			Tools.printStackTrace(e);
-		}
-	}
+                if(dest != -1 && !queue.contains(name))
+                {
+                    queue.add(name);
+                    Point p = getRandomPoint(dest);
 
-	/**
-     * Command: !activate
-     * Turns warping on/off
-     */
-	private void c_Activate(String name, String message)
-	{
-		if(active = !active)
-		{
-			m_botAction.sendPrivateMessage(name, "Warping active.");
+                    if(p != null)
+                    {
+                        m_botAction.warpTo(event.getPlayerID(), (int)p.getX(), (int)p.getY());
+                        m_botAction.scheduleTask(new WarpCooldown(name), 3000);
+                        m_botAction.stopSpectatingPlayer();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+        Command: !loadwarps <configuration>
+        Sets up the warping system for the given parameters.
+        @param name the name of the person who sent the command
+        @param message the name of the warp configuration
+    */
+    private void c_LoadWarps(String name, String message)
+    {
+        try {
+            //wipe any existing regions
+            regions.clearRegions();
+            regions.loadRegionImage(message + ".png");
+            BotSettings cfg = regions.loadRegionCfg(message + ".cfg");
+
+            //read in watching positions
+            readSpecPositions(cfg);
+
+            //read in warp configurations
+            readWarpSetups(cfg);
+
+            m_botAction.sendPrivateMessage(name, "Successfully loaded " + message);
+
+        } catch(FileNotFoundException fnf)
+        {
+            m_botAction.sendPrivateMessage(name, "Error: " + message + ".png and " +
+                                           message + ".cfg must be in the data/maps folder.");
+        }
+        catch(javax.imageio.IIOException iie)
+        {
+            m_botAction.sendPrivateMessage(name, "Error: couldn't read image");
+        }
+        catch(Exception e)
+        {
+            m_botAction.sendPrivateMessage(name, "Could not load warps for " + message);
+            Tools.printStackTrace(e);
+        }
+    }
+
+    /**
+        Command: !activate
+        Turns warping on/off
+    */
+    private void c_Activate(String name, String message)
+    {
+        if(active = !active)
+        {
+            m_botAction.sendPrivateMessage(name, "Warping active.");
             m_botAction.stopReliablePositionUpdating();
             jumpTask = new Reposition();
             m_botAction.scheduleTaskAtFixedRate(jumpTask, 0, 2000);
-		}
-		else
-		{
-			m_botAction.sendPrivateMessage(name, "Warping disabled.");
+        }
+        else
+        {
+            m_botAction.sendPrivateMessage(name, "Warping disabled.");
             m_botAction.cancelTask(jumpTask);
-			jumpTask = null;
-		}
-	}
+            jumpTask = null;
+        }
+    }
 
-	/**
-     * Task to move the bot to all of its watching positions
-     *
-     * @author D1st0rt
-     * @version 06.06.21
-     */
-	private class Reposition extends TimerTask
-	{
-		/** The current index in the position list */
-		private int index;
+    /**
+        Task to move the bot to all of its watching positions
 
-		/**
-	     * Creates a new instance of Reposition.
-	     */
-		public Reposition()
-		{
-			index = 0;
-		}
+        @author D1st0rt
+        @version 06.06.21
+    */
+    private class Reposition extends TimerTask
+    {
+        /** The current index in the position list */
+        private int index;
 
-		/**
-	     * Runs this task, moves to the next position.
-	     */
-		public void run()
-		{
-			if(positions.length > 0)
-			{
-				index++;
-				if(index >= positions.length)
-					index = 0;
-				Point p = positions[index];
-				m_botAction.moveToTile((int)p.getX(), (int)p.getY());
-			}
-		}
-	}
+        /**
+            Creates a new instance of Reposition.
+        */
+        public Reposition()
+        {
+            index = 0;
+        }
 
-	/**
-     * Task to ignore any position packets after the first one received from
-     * a single player that require a warp.
-     *
-     * @author D1st0rt
-     * @version 06.06.21
-     */
-	private class WarpCooldown extends TimerTask
-	{
-		/** The name of the player to remove from the list */
-		private String name;
+        /**
+            Runs this task, moves to the next position.
+        */
+        public void run()
+        {
+            if(positions.length > 0)
+            {
+                index++;
 
-		/**
-	     * Creates a new instance of WarpCooldown.
-	     * @param name the name of the player to remove from the list.
-	     */
-		public WarpCooldown(String name)
-		{
-			this.name = name;
-		}
+                if(index >= positions.length)
+                    index = 0;
 
-		/**
-	     * Runs this task, removes the player from the cooldown list.
-	     */
-		public void run()
-		{
-			queue.remove(name);
-		}
-	}
+                Point p = positions[index];
+                m_botAction.moveToTile((int)p.getX(), (int)p.getY());
+            }
+        }
+    }
+
+    /**
+        Task to ignore any position packets after the first one received from
+        a single player that require a warp.
+
+        @author D1st0rt
+        @version 06.06.21
+    */
+    private class WarpCooldown extends TimerTask
+    {
+        /** The name of the player to remove from the list */
+        private String name;
+
+        /**
+            Creates a new instance of WarpCooldown.
+            @param name the name of the player to remove from the list.
+        */
+        public WarpCooldown(String name)
+        {
+            this.name = name;
+        }
+
+        /**
+            Runs this task, removes the player from the cooldown list.
+        */
+        public void run()
+        {
+            queue.remove(name);
+        }
+    }
 }

@@ -26,12 +26,12 @@ public class utilspawnpmer extends MultiUtil
     }
 
     /**
-     * Requests events.
-     */
+        Requests events.
+    */
     public void requestEvents( ModuleEventRequester modEventReq ) {
         modEventReq.request(this, EventRequester.PLAYER_DEATH );
     }
-    
+
     public String[] getHelpMessages()
     {
         String[] message =
@@ -49,25 +49,28 @@ public class utilspawnpmer extends MultiUtil
     {
         if ( enabled )
             throw new IllegalArgumentException( "SpawnPMer module is already enabled." );
+
         enabled = true;
         controller = sender;
-        m_botAction.sendSmartPrivateMessage(sender,"SpawnPMer enabled.");
+        m_botAction.sendSmartPrivateMessage(sender, "SpawnPMer enabled.");
     }
 
     public void doAntiSpawnOffCmd( String sender )
     {
         if (!enabled)
             throw new IllegalArgumentException( "SpawnPMer module is already disabled." );
+
         enabled = false;
         controller = null;
         times.clear();
-        m_botAction.sendSmartPrivateMessage(sender,"SpawnPMer disabled.");
+        m_botAction.sendSmartPrivateMessage(sender, "SpawnPMer disabled.");
     }
 
     public void doNotifyStatusCmd( String sender )
     {
-        m_botAction.sendSmartPrivateMessage( sender, "SpawnPMer module currently: " + (enabled ? "ON":"OFF") );
-        m_botAction.sendSmartPrivateMessage( sender,"Delay set at: " + ((float)safeTime / 1000) + " seconds" );
+        m_botAction.sendSmartPrivateMessage( sender, "SpawnPMer module currently: " + (enabled ? "ON" : "OFF") );
+        m_botAction.sendSmartPrivateMessage( sender, "Delay set at: " + ((float)safeTime / 1000) + " seconds" );
+
         if ( enabled )
             m_botAction.sendSmartPrivateMessage( sender, "Controller is " + controller );
     }
@@ -77,8 +80,10 @@ public class utilspawnpmer extends MultiUtil
         try
         {
             float time = Float.parseFloat(argString);
+
             if(time < 0.1)
                 throw new IllegalArgumentException( "Invalid safe time." );
+
             safeTime = (new Float(time * 1000)).intValue();
             m_botAction.sendSmartPrivateMessage( sender, "Spawn time adjusted to " + time + " seconds." );
         }
@@ -96,14 +101,17 @@ public class utilspawnpmer extends MultiUtil
         {
             if ( command.equals( "!spawnpm on" ) )
                 doAntiSpawnOnCmd( sender );
+
             if ( command.equals( "!spawnpm off" ) )
                 doAntiSpawnOffCmd( sender );
+
             if ( command.equals( "!spawnpm status" ) )
                 doNotifyStatusCmd( sender );
+
             if ( command.startsWith( "!spawnpmtime " ) )
                 doSafeTimeCmd( sender, message.substring( 13 ) );
         }
-            catch( Exception e )
+        catch( Exception e )
         {
             m_botAction.sendSmartPrivateMessage( sender, e.getMessage() );
         }
@@ -126,6 +134,7 @@ public class utilspawnpmer extends MultiUtil
         {
             Player player = m_botAction.getPlayer( event.getKilleeID() );
             Player killer = m_botAction.getPlayer( event.getKillerID() );
+
             if ( player.getFrequency() != killer.getFrequency() )
             {
 
@@ -134,6 +143,7 @@ public class utilspawnpmer extends MultiUtil
                 if ( times.get( player ) != null )
                 {
                     long difference = time - times.get( player ).longValue();
+
                     if ( times.containsKey( player ) && difference <= safeTime )
                     {
                         m_botAction.sendSmartPrivateMessage( controller, player.getPlayerName() + " spawned by " + killer.getPlayerName() + ": " + ((float)difference / 1000) + " seconds." );

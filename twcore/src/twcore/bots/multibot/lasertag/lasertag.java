@@ -15,10 +15,10 @@ import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.Tools;
 
 /**
- * Woohoo lasertag!
- * 
- * @author JoyRider
- */
+    Woohoo lasertag!
+
+    @author JoyRider
+*/
 public class lasertag extends MultiModule {
     private int[]                   m_totalScores;
     private int[]                   m_totalFlags;
@@ -33,15 +33,15 @@ public class lasertag extends MultiModule {
     private short                   m_ballCarrier;
     private String[]                m_rules;
 
-    final private String[]          m_playerHelp = { 
-            "!rules       - Shows the rules of Lasertag.",
-            "!help        - Shows this message.", 
-            "!score       - Shows the score of the current game.", 
+    final private String[]          m_playerHelp = {
+        "!rules       - Shows the rules of Lasertag.",
+        "!help        - Shows this message.",
+        "!score       - Shows the score of the current game.",
     };
-    
-    final private String[]          m_modHelp    = { 
-            "!start       - Starts a game of Lasertag.",
-            "!stop        - Stops a game currently in progress.", 
+
+    final private String[]          m_modHelp    = {
+        "!start       - Starts a game of Lasertag.",
+        "!stop        - Stops a game currently in progress.",
     };
 
     public void init() {
@@ -54,6 +54,7 @@ public class lasertag extends MultiModule {
         m_ballCarrier = -1;
 
         Integer set = moduleSettings.getInteger("GoalPoints");
+
         if( set == null ) {
             Tools.printLog("lasertag.cfg does not contain a 'GoalPoints' paramater, using default.");
             m_goalPoints = 5;
@@ -62,35 +63,39 @@ public class lasertag extends MultiModule {
         }
 
         set = moduleSettings.getInteger("KillPointsPerFlag");
+
         if( set == null ) {
             Tools.printLog("lasertag.cfg does not contain a 'KillPointsPerFlag' paramater, using default.");
             m_killPoints = 1;
         } else {
             m_killPoints = set;
         }
-        
+
         set = moduleSettings.getInteger("GameTime");
+
         if( set == null ) {
             Tools.printLog("lasertag.cfg does not contain a 'GameTime' paramater, using default.");
             m_gameTime = 15;
         } else {
             m_gameTime = set;
         }
-        
+
         m_rules = new String[] {
-                "+---------------------------[ The Rules of Lasertag ]---------------------------+",
-                "| Two teams fight for control of flags. There is one flag on each team's turf.",
-                "| For each kill you make you will receive " + m_killPoints + " point" + ((m_killPoints > 1) ? "s" : "") + " per flag owned.",
-                "| Ball scores count for " + m_goalPoints + " point" + ((m_goalPoints > 1) ? "s" : "") + ".",
-                "| The team with the most points at the end of " + m_gameTime + " minutes is the winner.",
-                "+-------------------------------------------------------------------------------+",
-        };       
-        
+            "+---------------------------[ The Rules of Lasertag ]---------------------------+",
+            "| Two teams fight for control of flags. There is one flag on each team's turf.",
+            "| For each kill you make you will receive " + m_killPoints + " point" + ((m_killPoints > 1) ? "s" : "") + " per flag owned.",
+            "| Ball scores count for " + m_goalPoints + " point" + ((m_goalPoints > 1) ? "s" : "") + ".",
+            "| The team with the most points at the end of " + m_gameTime + " minutes is the winner.",
+            "+-------------------------------------------------------------------------------+",
+        };
+
         int winLen = m_rules[0].length();
+
         for(int i = 1; i < m_rules.length - 1; ++i) {
             for(int j = m_rules[i].length(); j < winLen - 1; ++j) {
                 m_rules[i] += " ";
             }
+
             m_rules[i] += "|";
         }
 
@@ -116,7 +121,7 @@ public class lasertag extends MultiModule {
 
     public void handleEvent( Message event ) {
         String msg = event.getMessage().toLowerCase();
-        
+
         if( event.getMessageType() == Message.ARENA_MESSAGE ) {
             if( msg.matches("^arena locked$") ) {
                 m_arenaLocked = true;
@@ -172,8 +177,10 @@ public class lasertag extends MultiModule {
         m_totalScores[freq] += m_totalFlags[freq] * m_killPoints;
 
         Integer score = m_playerScores.get(killer);
-        if(score == null) 
+
+        if(score == null)
             score = 0;
+
         m_playerScores.put(killer, score + m_totalFlags[freq] * m_killPoints);
     }
 
@@ -205,15 +212,18 @@ public class lasertag extends MultiModule {
 
         Short freq = event.getFrequency();
         m_totalScores[freq] += m_goalPoints;
-        
+
         Integer score = m_playerScores.get(m_ballCarrier);
-        if(score == null) 
+
+        if(score == null)
             score = 0;
+
         m_playerScores.put(m_ballCarrier, score + m_goalPoints);
-    }   
-    
+    }
+
     public void handleEvent( BallPosition event ) {
         m_ballTimestamp = event.getTimeStamp();
+
         if( event.getCarrier() != -1 )
             m_ballCarrier = event.getCarrier();
     }
@@ -238,7 +248,7 @@ public class lasertag extends MultiModule {
     public void doPrepareGame() {
         if( m_running )
             return;
-        
+
         TimerTask startTask = new TimerTask() {
             public void run() {
                 doStartGame();
@@ -259,7 +269,7 @@ public class lasertag extends MultiModule {
     public void doStartGame() {
         if( !m_arenaLocked )
             m_botAction.toggleLocked();
-        
+
         m_totalScores[0] = 0;
         m_totalScores[1] = 0;
         m_botAction.changeAllShips(1);
@@ -267,7 +277,7 @@ public class lasertag extends MultiModule {
         m_botAction.scoreResetAll();
         m_botAction.resetFlagGame();
         m_botAction.warpAllRandomly();
-        
+
         /*reset ball*/
         m_botAction.getShip().setShip(0);
         m_botAction.getShip().move(512 << 4, 512 << 4);
@@ -289,7 +299,7 @@ public class lasertag extends MultiModule {
 
         if( m_arenaLocked )
             m_botAction.toggleLocked();
-        
+
         m_botAction.setDoors(0x00);
         m_running = false;
     }
@@ -299,7 +309,7 @@ public class lasertag extends MultiModule {
             return;
 
         m_running = false;
-        
+
         if( m_totalScores[0] > m_totalScores[1] ) {
             m_botAction.sendArenaMessage("Freq 0 wins the game: " + m_totalScores[0] + "-" + m_totalScores[1]);
         } else if( m_totalScores[0] < m_totalScores[1] ) {
@@ -307,10 +317,10 @@ public class lasertag extends MultiModule {
         } else {
             m_botAction.sendArenaMessage("The game is a draw: " + m_totalScores[0] + "-" + m_totalScores[1]);
         }
-        
+
         short mvpId = 0;
         int maxScore = -1;
-        
+
         for (Entry<Short, Integer> entry : m_playerScores.entrySet()) {
             if(entry.getValue() > maxScore) {
                 mvpId = entry.getKey();
@@ -336,7 +346,7 @@ public class lasertag extends MultiModule {
     public void doHelpMessage( String name ) {
         m_botAction.privateMessageSpam(name, m_playerHelp);
     }
-    
+
     public void doScoreMessage( String name ) {
         if( !m_running ) {
             m_botAction.sendPrivateMessage(name, "The game hasn't started yet.");

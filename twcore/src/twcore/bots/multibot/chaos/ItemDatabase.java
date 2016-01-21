@@ -1,43 +1,43 @@
 package twcore.bots.multibot.chaos;
 
 public class ItemDatabase {
-    
+
     private String name;
     private int price;
     private int exp;
     private boolean hasLimit;
 
-    public ItemDatabase(){
+    public ItemDatabase() {
     }
-    
-    public ItemDatabase( String newName, int newPrice, int newExp, boolean hasLimit ){
+
+    public ItemDatabase( String newName, int newPrice, int newExp, boolean hasLimit ) {
         this.name = newName;
         this.price = newPrice;
         this.exp = newExp;
         this.hasLimit = hasLimit;
     }
 
-    public String getName(){
+    public String getName() {
         return name;
     }
-    
-    public int getPrice(){
+
+    public int getPrice() {
         return price;
     }
 
-    public int getExp(){
+    public int getExp() {
         return exp;
     }
-    
-    public boolean isBoughtOnce(){
+
+    public boolean isBoughtOnce() {
         return hasLimit;
     }
-    
-    public void hasBeenBought(boolean mode){
+
+    public void hasBeenBought(boolean mode) {
         this.hasLimit = mode;
     }
-    
-    public int alternateNames(String itemName){
+
+    public int alternateNames(String itemName) {
         if(itemName.toLowerCase().startsWith("blood"))
             return 1;
         else if(itemName.toLowerCase().startsWith("selini"))
@@ -52,7 +52,7 @@ public class ItemDatabase {
             return 6;
         else if(itemName.toLowerCase().startsWith("azog"))
             return 7;
-        
+
         return 0;
     }
 }

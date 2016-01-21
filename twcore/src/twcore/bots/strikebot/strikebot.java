@@ -30,19 +30,19 @@ import twcore.core.util.Spy;
 import twcore.core.util.Tools;
 
 /**
- * Class StrikeBot
- * <p>
- * Used for hosting ?go strikeball
- * Main framework stolen from hockeybot.
- *
- * @author Trancid
- */
+    Class StrikeBot
+    <p>
+    Used for hosting ?go strikeball
+    Main framework stolen from hockeybot.
+
+    @author Trancid
+*/
 public class strikebot extends SubspaceBot {
 
     // Various flags
     private boolean lockArena;
     private boolean lockLastGame;
-    
+
     // Various lists
     private SBConfig config;                                //Game configuration
     private SBTeam team0;                                   //Teams
@@ -52,10 +52,10 @@ public class strikebot extends SubspaceBot {
     private Spy racismWatcher;                              //Racism watcher
     private ArrayList<String> listNotplaying;               //List of notplaying players
     private ArrayList<String> listAlert;                    //List of players who toggled !subscribe on
-    
+
     // LVZ display
     private Overlay scoreOverlay;                           // Manages the LVZ overlay display.
-    
+
     // Game tickers & other time related stuff
     private Gameticker gameticker;                          // General ticker of the statemachine for this bot.
     private TimerTask fo_botUpdateTimer;                    // Timer that runs during the face off.
@@ -65,93 +65,93 @@ public class strikebot extends SubspaceBot {
     private long timeStamp;                                 // Used to track the time of various key-moments.
     private int roundTime;                                  // Currently referred to in the code, but never read out. Will be used in the future.
     private int gameTime;                                   // Total (active) game time.
-    
+
     // Zoner related stuff
     private long zonerTimestamp;                            //Timestamp of the last zoner
     private long manualZonerTimestamp;                      //Timestamp of the last manualzoner
     private int zonerWaitTime = 7;                          // Time in minutes for the automatic zoner.
-    
+
     // Other stuff
     private int maxTimeouts;                                //Maximum allowed timeouts per game.
-    
+
     // Frequencies
     private static final int FREQ_SPEC = 8025;              //Frequency of specced players.
     private static final int FREQ_NOTPLAYING = 2;           //Frequency of players that are !np
 
     /**
-     * Game states.
-     * <p>
-     * This holds the various states that can be used during the game. It currently holds the following enums:
-     * <ul>
-     *  <li>OFF: Bot is active, but game is disabled.
-     *  <li>WAITING_FOR_CAPS: First phase, adding of the captains.
-     *  <li>ADDING_PLAYERS: State in which captains are setting up their teams.
-     *  <li>FACE_OFF: State during the face off.
-     *  <li>GAME_IN_PROGRESS: State when the ball is in play for the players.
-     *  <li>REVIEW: State right after a goal is made, where it is judged if it is valid. 
-     *      This is for both the automatic review as well as the manual review.
-     *  <li>TIMEOUT: State during a time out.
-     *  <li>GAME_OVER: State when the final stats are being displayed.
-     *  <li>WAIT: Used during transition of states to prevent racing conditions.
-     * </ul>
-     * This enum also holds the following {@link EnumSet EnumSets}.
-     * <ul>
-     *  <li>ACTIVEGAME: A collection of states of the periods where there is player interaction. Basically MIDGAME, including the setup phase.
-     *  It contains the following states:
-     *  <ul>
-     *      <li>ADDING_PLAYERS;
-     *      <li>FACE_OFF;
-     *      <li>GAME_IN_PROGRESS;
-     *      <li>TIMEOUT;
-     *      <li>WAIT.
-     *  </ul>
-     * </ul>
-     * 
-     * @see Gameticker
-     * @see EnumSet
-     * @author unknown, Trancid
-     *
-     */
+        Game states.
+        <p>
+        This holds the various states that can be used during the game. It currently holds the following enums:
+        <ul>
+        <li>OFF: Bot is active, but game is disabled.
+        <li>WAITING_FOR_CAPS: First phase, adding of the captains.
+        <li>ADDING_PLAYERS: State in which captains are setting up their teams.
+        <li>FACE_OFF: State during the face off.
+        <li>GAME_IN_PROGRESS: State when the ball is in play for the players.
+        <li>REVIEW: State right after a goal is made, where it is judged if it is valid.
+            This is for both the automatic review as well as the manual review.
+        <li>TIMEOUT: State during a time out.
+        <li>GAME_OVER: State when the final stats are being displayed.
+        <li>WAIT: Used during transition of states to prevent racing conditions.
+        </ul>
+        This enum also holds the following {@link EnumSet EnumSets}.
+        <ul>
+        <li>ACTIVEGAME: A collection of states of the periods where there is player interaction. Basically MIDGAME, including the setup phase.
+        It contains the following states:
+        <ul>
+            <li>ADDING_PLAYERS;
+            <li>FACE_OFF;
+            <li>GAME_IN_PROGRESS;
+            <li>TIMEOUT;
+            <li>WAIT.
+        </ul>
+        </ul>
+
+        @see Gameticker
+        @see EnumSet
+        @author unknown, Trancid
+
+    */
     private static enum SBState {
-        OFF, WAITING_FOR_CAPS, ADDING_PLAYERS, PRE_FACE_OFF, 
-        FACE_OFF, GAME_IN_PROGRESS, TIMEOUT, GAME_OVER, 
+        OFF, WAITING_FOR_CAPS, ADDING_PLAYERS, PRE_FACE_OFF,
+        FACE_OFF, GAME_IN_PROGRESS, TIMEOUT, GAME_OVER,
         WAIT;
-        
+
         // Collection of commonly together used SBStates.
         private static final EnumSet<SBState> ACTIVEGAME = EnumSet.of(ADDING_PLAYERS,
-                PRE_FACE_OFF, FACE_OFF, GAME_IN_PROGRESS, TIMEOUT, WAIT);
-        
+        PRE_FACE_OFF, FACE_OFF, GAME_IN_PROGRESS, TIMEOUT, WAIT);
+
         private static final EnumSet<SBState> MIDGAME = EnumSet.of(FACE_OFF, GAME_IN_PROGRESS);
-        
+
     };
-    
+
     /**
-     * Ball states.
-     * <p>
-     * Due to the way the command *restart works, for this bot it is needed to keep track of the current ball state.
-     * After a *restart is done, the ball will disappear for a semi-random amount of time. This enum class will help
-     * keeping track whether ot not the ball can be interacted with again.
-     * <p>
-     * Currently it consists out of the following states:
-     * <ul>
-     *  <li>InGame:         Ball is currently inside the arena, and reachable for normal players.
-     *  <li>PreRespawn:     A *restart has just been issued, the ball is about to disappear.
-     *  <li>Respawning:     The ball is currently being respawned. (No ball present in the arena.)
-     *  <li>PostRespawn:    The ball has just respawned in the arena, after it disappeared.
-     *  <li>OutOfGame:      The ball has been placed outside of the arena, unreachable to normal players.
-     *  <li>FaceOff:        The ball is currently being held by the bot for the initial face off.
-     * </ul>
-     * @author Trancid
-     *
-     */
+        Ball states.
+        <p>
+        Due to the way the command *restart works, for this bot it is needed to keep track of the current ball state.
+        After a *restart is done, the ball will disappear for a semi-random amount of time. This enum class will help
+        keeping track whether ot not the ball can be interacted with again.
+        <p>
+        Currently it consists out of the following states:
+        <ul>
+        <li>InGame:         Ball is currently inside the arena, and reachable for normal players.
+        <li>PreRespawn:     A *restart has just been issued, the ball is about to disappear.
+        <li>Respawning:     The ball is currently being respawned. (No ball present in the arena.)
+        <li>PostRespawn:    The ball has just respawned in the arena, after it disappeared.
+        <li>OutOfGame:      The ball has been placed outside of the arena, unreachable to normal players.
+        <li>FaceOff:        The ball is currently being held by the bot for the initial face off.
+        </ul>
+        @author Trancid
+
+    */
     private static enum BallStates {
         InGame, PreRespawn, Respawning, PostRespawn, OutOfGame, FaceOff;
-        
+
         private static final EnumSet<BallStates> ISRESPAWNING = EnumSet.of(PreRespawn, Respawning, PostRespawn);
     };
 
     private SBState currentState;   // This keeps track of the current, active state.
-    
+
     /** Class constructor */
     public strikebot(BotAction botAction) {
         super(botAction);
@@ -163,17 +163,17 @@ public class strikebot extends SubspaceBot {
     private void initializeVariables() {
         config = new SBConfig();                    //Game configuration
         currentState = SBState.OFF;                 //Game state
-        
+
         ball = new SBBall();
         team0 = new SBTeam(0);                      //Team: Freq 0
         team1 = new SBTeam(1);                      //Team: Freq 1
-        
+
         // List containing the teams. Mainly used to optimize/shorten code.
         teams = new ArrayList<SBTeam>();
         teams.add(team0);
         teams.add(team1);
         teams.trimToSize();
-        
+
         maxTimeouts = 1;                            // Default value of maximum timeouts.
 
         racismWatcher = new Spy(ba);                //Racism watcher
@@ -184,7 +184,7 @@ public class strikebot extends SubspaceBot {
 
         lockArena = true;
         lockLastGame = false;
-        
+
         scoreOverlay = new Overlay();               // LVZ display overlay.
 
     }
@@ -205,16 +205,16 @@ public class strikebot extends SubspaceBot {
     }
 
     /*
-     * Events
-     */
+        Events
+    */
     /**
-     * Handles ArenaJoined event
-     * <ul>
-     *  <li>Sets up reliable kills
-     *  <li>Sets up chats
-     *  <li>Auto-starts bot
-     * </ul>
-     */
+        Handles ArenaJoined event
+        <ul>
+        <li>Sets up reliable kills
+        <li>Sets up chats
+        <li>Auto-starts bot
+        </ul>
+    */
     @Override
     public void handleEvent(ArenaJoined event) {
         ba.getShip().setFreq(FREQ_NOTPLAYING);
@@ -223,38 +223,38 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles FrequencyShipChange event
-     * <ul>
-     *  <li>since this event looks almost the same as FrequencyChange
-     *  <li>event its passed on to checkFCandFSC(name, frequency, ship).
-     * </ul>
-     */
+        Handles FrequencyShipChange event
+        <ul>
+        <li>since this event looks almost the same as FrequencyChange
+        <li>event its passed on to checkFCandFSC(name, frequency, ship).
+        </ul>
+    */
     @Override
     public void handleEvent(FrequencyShipChange event) {
         if (currentState != SBState.OFF && currentState != SBState.WAITING_FOR_CAPS) {
             Player p;
 
             p = ba.getPlayer(event.getPlayerID());
-            
+
             SBTeam team = null;
             team = getTeam(p.getPlayerName());
-            
-            if (team == null){
+
+            if (team == null) {
                 return;
             } else {
-            if (p != null && !p.getPlayerName().equals(ba.getBotName()))
-                checkFCandFSC(p.getPlayerName(), p.getFrequency(), p.getShipType());
+                if (p != null && !p.getPlayerName().equals(ba.getBotName()))
+                    checkFCandFSC(p.getPlayerName(), p.getFrequency(), p.getShipType());
             }
         }
     }
 
     /**
-     * Handles LoggedOn event
-     * <ul>
-     *  <li>Join arena
-     *  <li>Set antispam measurements
-     * </ul>
-     */
+        Handles LoggedOn event
+        <ul>
+        <li>Join arena
+        <li>Set antispam measurements
+        </ul>
+    */
     @Override
     public void handleEvent(LoggedOn event) {
         short resolution;   //Screen resolution of the bot
@@ -272,13 +272,13 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles Message event
-     * <ul>
-     *  <li>Racism watcher
-     *  <li>Arena lock
-     *  <li>Player commands
-     * </ul>
-     */
+        Handles Message event
+        <ul>
+        <li>Racism watcher
+        <li>Arena lock
+        <li>Player commands
+        </ul>
+    */
     @Override
     public void handleEvent(Message event) {
         String message;     //Message
@@ -288,13 +288,13 @@ public class strikebot extends SubspaceBot {
         message = event.getMessage();
         sender = ba.getPlayerName(event.getPlayerID());
         messageType = event.getMessageType();
-        
+
         // Although the sender check is done in the racismWatcher,
         // doing it here as well saves a few executions.
         if(sender != null) {
             racismWatcher.handleEvent(event);   //Racism watcher
         }
-        
+
         if (messageType == Message.ARENA_MESSAGE) {
             checkArenaLock(message);    //Checks if the arena should be locked
             checkRestart(message);
@@ -306,37 +306,37 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles PlayerEntered event
-     * <ul>
-     *  <li>Sends welcome message
-     *  <li>Puts the player on the corresponding frequency
-     * </ul>
-     */
+        Handles PlayerEntered event
+        <ul>
+        <li>Sends welcome message
+        <li>Puts the player on the corresponding frequency
+        </ul>
+    */
     @Override
     public void handleEvent(PlayerEntered event) {
         if (currentState != SBState.OFF) {
             String name;    //Name of the player that entered the zone
             int pID;        //ID of the player that entered the arena
-            
+
             name = ba.getPlayerName(event.getPlayerID());
-            
+
             Player p;
             p = ba.getPlayer(event.getPlayerID());
-            
+
             if (p != null) {
                 pID = p.getPlayerID();
                 scoreOverlay.displayAll(pID);
             }
-            
+
             if (name != null) {
                 sendWelcomeMessage(name);   //Sends welcome message with status info to the player
                 putOnFreq(name);            //Puts the player on the corresponding frequency
-                
+
             }
         } else if (currentState == SBState.OFF && config.getAllowAutoCaps()) {
-            if(ba.getFrequencySize(FREQ_SPEC) 
-                    + ba.getFrequencySize(team0.getFrequency()) 
-                    + ba.getFrequencySize(team1.getFrequency()) 
+            if(ba.getFrequencySize(FREQ_SPEC)
+                    + ba.getFrequencySize(team0.getFrequency())
+                    + ba.getFrequencySize(team1.getFrequency())
                     >= config.getMinPlayers() * 2) {
                 start();
             }
@@ -344,12 +344,12 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles PlayerLeft event
-     * <ul>
-     *  <li>Checks if the player that left was a captain
-     *  <li>Checks if the player that left lagged out
-     * </ul>
-     */
+        Handles PlayerLeft event
+        <ul>
+        <li>Checks if the player that left was a captain
+        <li>Checks if the player that left lagged out
+        </ul>
+    */
     @Override
     public void handleEvent(PlayerLeft event) {
         if (currentState != SBState.OFF && currentState != SBState.WAITING_FOR_CAPS) {
@@ -357,12 +357,13 @@ public class strikebot extends SubspaceBot {
 
             name = ba.getPlayerName(event.getPlayerID());
             SBTeam team = null;
-            
+
             team = getTeam(name);
-            
-            if (team == null){
+
+            if (team == null) {
                 return;
             }
+
             if (name != null) {
                 //Check if the player that left was a captain
                 checkCaptainLeft(name);
@@ -373,61 +374,61 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles PlayerDeath event
-     */
+        Handles PlayerDeath event
+    */
     public void handleEvent(PlayerDeath event) {
         int idKillee, idKiller;
         SBPlayer pKillee, pKiller;
         SBTeam tKillee, tKiller;
         String killee, killer;
-        
+
         //Get the IDs of the killer and killee from the packet.
         idKillee = event.getKilleeID();
         idKiller = event.getKillerID();
-        
+
         //Lookup their names.
         killee = ba.getPlayerName(idKillee);
         killer = ba.getPlayerName(idKiller);
-        
+
         //Check if we actually got their names.
         if(killee == null || killer == null)
             return;
-        
+
         //Get the teams
         tKillee = getTeam(killee);
         tKiller = getTeam(killer);
-        
+
         //Again, check if the fetch succeeded.
         if(tKillee == null || tKiller == null)
             return;
-        
+
         //Get their player object
         pKillee = tKillee.getPlayer(killee);
         pKiller = tKiller.getPlayer(killer);
-        
+
         //Final null checks
         if(pKillee == null || pKiller == null)
             return;
-        
+
         pKillee.addDeath();
         pKiller.addKill();
     }
-    
+
     /**
-     * Handles the BallPosition event.
-     * <p>
-     * This will update the ball's data each time a ball update packet has been received.
-     */
+        Handles the BallPosition event.
+        <p>
+        This will update the ball's data each time a ball update packet has been received.
+    */
     @Override
     public void handleEvent(BallPosition event) {
         ball.update(event);
     }
 
     /**
-     * Handles the SoccerGoal event
-     * <p>
-     * Starts the review of the goal, if it was valid or not.
-     */
+        Handles the SoccerGoal event
+        <p>
+        Starts the review of the goal, if it was valid or not.
+    */
     @Override
     public void handleEvent(SoccerGoal event) {
         if (currentState == SBState.GAME_IN_PROGRESS) {
@@ -436,9 +437,9 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles a disconnect
-     * <li>cancel all tasks
-     */
+        Handles a disconnect
+        <li>cancel all tasks
+    */
     @Override
     public void handleDisconnect() {
         ba.cancelTasks();
@@ -446,24 +447,25 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Removes the ball from play
-     */
+        Removes the ball from play
+    */
     public void doRemoveBall() {
         doGetBall(config.getBallTimeOut());
-        
+
         ballDelay = new TimerTask() {
             @Override
             public void run() {
                 dropBall();
             }
-        }; ba.scheduleTask(ballDelay, 2 * Tools.TimeInMillis.SECOND);
+        };
+        ba.scheduleTask(ballDelay, 2 * Tools.TimeInMillis.SECOND);
     }
-    
+
     /**
-     * Causes the bot to grab the ball and goes to a specific location
-     * 
-     * @param location Location of where to move the ball to.
-     */
+        Causes the bot to grab the ball and goes to a specific location
+
+        @param location Location of where to move the ball to.
+    */
     public void doGetBall(Point location) {
         fo_botUpdateTimer = new TimerTask() {
             @Override
@@ -471,8 +473,9 @@ public class strikebot extends SubspaceBot {
                 if (ba.getShip().needsToBeSent())
                     ba.getShip().sendPositionPacket();
             }
-        }; ba.scheduleTask(fo_botUpdateTimer, 0, 500);
-        
+        };
+        ba.scheduleTask(fo_botUpdateTimer, 0, 500);
+
         if (ba.getShip().getShip() != Ship.INTERNAL_SPIDER || !ball.holding) {
             // Need to do this twice due to arena settings.
             ba.getShip().setShip(Ship.INTERNAL_SPIDER);
@@ -484,8 +487,8 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Drops the ball at current location
-     */
+        Drops the ball at current location
+    */
     public void dropBall() {
         ba.cancelTask(fo_botUpdateTimer);
         // Need to do this twice due to arena settings.
@@ -496,14 +499,14 @@ public class strikebot extends SubspaceBot {
     }
 
     /*
-     * Commands
-     */
+        Commands
+    */
     /**
-     * Handles player commands
-     *
-     * @param name Sender of the command
-     * @param command command
-     */
+        Handles player commands
+
+        @param name Sender of the command
+        @param command command
+    */
     private void handleCommand(String name, String command) {
         String cmd = command.toLowerCase();
         String args = "";
@@ -512,6 +515,7 @@ public class strikebot extends SubspaceBot {
         if(command.contains(" ")) {
             int index = command.indexOf(" ");
             cmd = cmd.substring(0, index);
+
             if(command.length() > ++index)
                 args = command.substring(index).trim();
         }
@@ -579,7 +583,7 @@ public class strikebot extends SubspaceBot {
                 cmd_setteamname(name, args);
             }
         }
-       
+
         /* Staff commands ER+ */
         if (ba.getOperatorList().isER(name)) {
             if (cmd.equals("!settimeout")) {
@@ -602,7 +606,7 @@ public class strikebot extends SubspaceBot {
                 cmd_allowZoner(name);
             }
         }
-        
+
         if(ba.getOperatorList().isOwner(name)) {
             if (cmd.equals("!restart")) {
                 ball.respawn();
@@ -612,13 +616,13 @@ public class strikebot extends SubspaceBot {
         }
     }
 
-    /** 
-     * Handles the !add command (cap)
-     *
-     * @param name Name of the player who issued the command.
-     * @param args the player to be added
-     * @param override Override number, -1 for default, 0 for Freq 0, 1 for Freq 1
-     */
+    /**
+        Handles the !add command (cap)
+
+        @param name Name of the player who issued the command.
+        @param args the player to be added
+        @param override Override number, -1 for default, 0 for Freq 0, 1 for Freq 1
+    */
     private void cmd_add(String name, String args) {
         Player p;           //Specified player (in args)
         String pName;       //Specified player's name in normal case
@@ -678,7 +682,7 @@ public class strikebot extends SubspaceBot {
             /* Check if the player is already on the team and playing */
             if (t.isIN(pName)) {
                 ba.sendPrivateMessage(name, "Error: " + p.getPlayerName()
-                        + " is already on your team, check with !list");
+                                      + " is already on your team, check with !list");
                 return;
             }
 
@@ -689,8 +693,8 @@ public class strikebot extends SubspaceBot {
             }
 
             /*
-             * All checks are done
-             */
+                All checks are done
+            */
 
             /* Add player */
             t.addPlayer(p, config.getDefaultShipType(t.getFrequency()));
@@ -704,44 +708,44 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles the !allowzoner command (sMod+)
-     * 
-     * @param name name of the player who issued the command.
-     */
+        Handles the !allowzoner command (sMod+)
+
+        @param name name of the player who issued the command.
+    */
     private void cmd_allowZoner(String name) {
         zonerTimestamp = zonerTimestamp - (zonerWaitTime * Tools.TimeInMillis.MINUTE);
         manualZonerTimestamp = manualZonerTimestamp - (10 * Tools.TimeInMillis.MINUTE);
         ba.sendPrivateMessage(name, "Zone message timestamps have been reset.");
     }
-    
+
     /**
-     * Handles the !autocap command (Mod+)
-     * 
-     * @param name name of the player who issued the command.
-     */
+        Handles the !autocap command (Mod+)
+
+        @param name name of the player who issued the command.
+    */
     private void cmd_autocap(String name) {
         config.toggleAllowAutoCaps();
         ba.sendSmartPrivateMessage(name, "AutoCaps is now " + (config.getAllowAutoCaps() ? "en" : "dis") + "abled.");
     }
     /**
-     * Handles the !ball command (ZH+)
-     * 
-     * @param name Name of the player who issued the command.
-     */
+        Handles the !ball command (ZH+)
+
+        @param name Name of the player who issued the command.
+    */
     private void cmd_ball(String name) {
         int xCoord = ball.getBallX();
         int yCoord = ball.getBallY();
-        
+
         ba.sendPrivateMessage(name, "Ball was located at: " + xCoord
-                + ", " + yCoord);
+                              + ", " + yCoord);
         doGetBall(config.getBallDrop());
     }
-    
+
     /**
-     * Handles the !cap command
-     *
-     * @param name player that issued the !cap command
-     */
+        Handles the !cap command
+
+        @param name player that issued the !cap command
+    */
     private void cmd_cap(String name) {
         SBTeam t;
 
@@ -769,10 +773,11 @@ public class strikebot extends SubspaceBot {
         }
 
         /*
-         * Check if the sender is already on one of the teams
-         * If so he can only get captain of his own team
-         */
+            Check if the sender is already on one of the teams
+            If so he can only get captain of his own team
+        */
         t = getTeam(name);
+
         if (t != null) {
             if (t.hasCaptain()) {
                 sendCaptainList(name);
@@ -801,23 +806,23 @@ public class strikebot extends SubspaceBot {
             return;
         }
     }
-    
-    /** 
-     * Handles the !drop command (ZH+)
-     *
-     * @param name Name of the player who issued the command.
-     */
+
+    /**
+        Handles the !drop command (ZH+)
+
+        @param name Name of the player who issued the command.
+    */
     private void cmd_drop(String name) {
         dropBall();
     }
-    
+
     /**
-     * Handles the !forcenp command (ZH+)
-     * Forces a player to !notplaying
-     *
-     * @param name name of the player that issued the command
-     * @param args name of the player that needs to get forced into !notplaying
-     */
+        Handles the !forcenp command (ZH+)
+        Forces a player to !notplaying
+
+        @param name name of the player that issued the command
+        @param args name of the player that needs to get forced into !notplaying
+    */
     private void cmd_forcenp(String name, String args) {
         Player p;
 
@@ -825,7 +830,7 @@ public class strikebot extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "Error: Please provide a player's name, '!forcenp <player>'");
             return;
         }
-        
+
         p = ba.getFuzzyPlayer(args);
 
         if (p == null) {
@@ -844,11 +849,11 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles the !help command
-     * 
-     * @param name name of the player
-     * @param args The arguments of the full command message
-     */
+        Handles the !help command
+
+        @param name name of the player
+        @param args The arguments of the full command message
+    */
     private void cmd_help(String name, String args) {
 
         ArrayList<String> help = new ArrayList<String>();   //Help messages
@@ -857,61 +862,66 @@ public class strikebot extends SubspaceBot {
             help.add("StrikeBall Help Menu");
             help.add("-----------------------------------------------------------------------");
             help.add("!subscribe                           Toggles alerts in private messages");
+
             if (ba.getOperatorList().isZH(name)) {
                 help.add("!start [<tn1>:<tn2>]       starts the bot, optional with teamnames <tn1> and <tn2>");
             }
+
             String[] spam = help.toArray(new String[help.size()]);
             ba.privateMessageSpam(name, spam);
-         } else {
-             if (!args.contains("cap") && !args.contains("staff")){
-            help.add("StrikeBall Help Menu");
-            help.add("-----------------------------------------------------------------------");
-            help.add("!notplaying                       Toggles not playing mode  (short !np)");
-            help.add("!cap                                            shows current captains!");
-            help.add("                     NOTE: When autocaps is on, this will make you cap!");
-            help.add("!lagout              Puts you back into the game if you have lagged out");
-            help.add("!list                                    Lists all players on this team");
-            help.add("!myfreq                                   Puts you on your team's freq.");
-            help.add("!status                                        Display status and score");
-            help.add("!subscribe                           Toggles alerts in private messages");
-            help.add("-----------------------------------------------------------------------");
-            help.add("For more help: Private Mesage Me !help <topic>           ex. !help cap ");
-            help.add("                                                                       ");
-            help.add("Topics            Cap (Captain commands for before and during the game)");
-                                  
-             if (ba.getOperatorList().isZH(name))
-                 help.add("              Staff (The staff commands for before and during the game)");
-             }
-                
-                String[] spam = help.toArray(new String[help.size()]);
-                ba.privateMessageSpam(name, spam);
-            
+        } else {
+            if (!args.contains("cap") && !args.contains("staff")) {
+                help.add("StrikeBall Help Menu");
+                help.add("-----------------------------------------------------------------------");
+                help.add("!notplaying                       Toggles not playing mode  (short !np)");
+                help.add("!cap                                            shows current captains!");
+                help.add("                     NOTE: When autocaps is on, this will make you cap!");
+                help.add("!lagout              Puts you back into the game if you have lagged out");
+                help.add("!list                                    Lists all players on this team");
+                help.add("!myfreq                                   Puts you on your team's freq.");
+                help.add("!status                                        Display status and score");
+                help.add("!subscribe                           Toggles alerts in private messages");
+                help.add("-----------------------------------------------------------------------");
+                help.add("For more help: Private Mesage Me !help <topic>           ex. !help cap ");
+                help.add("                                                                       ");
+                help.add("Topics            Cap (Captain commands for before and during the game)");
+
+                if (ba.getOperatorList().isZH(name))
+                    help.add("              Staff (The staff commands for before and during the game)");
+            }
+
+            String[] spam = help.toArray(new String[help.size()]);
+            ba.privateMessageSpam(name, spam);
+
             if (args.contains("cap")) {
-                
-                 ArrayList<String> hCap = new ArrayList<String>();
-                 
-                 hCap.add("StrikeBall Help Menu: Captain Controls");
-                 hCap.add("-----------------------------------------------------------------------");
-                 hCap.add("!add <player>                        Adds player (Default Ship: Spider)");
-                 hCap.add("!add <player>:<ship>                  Adds player in the specified ship");
-                 hCap.add("!remove <player>                              Removes specified player)");
-                 hCap.add("!change <player>:<ship>           Sets the player in the specified ship");
-                 hCap.add("!sub <playerA>:<playerB>           Substitutes <playerA> with <playerB>");
-                 hCap.add("!switch <player>:<player>            Exchanges the ship of both players");
-                 if(config.getAllowAutoCaps())
-                     hCap.add("!timeout                       During faceoff, request a 30 sec timeout");
-                 hCap.add("!ready                    Use this when you're done setting your lineup");
-                 hCap.add("-----------------------------------------------------------------------");
-                 
+
+                ArrayList<String> hCap = new ArrayList<String>();
+
+                hCap.add("StrikeBall Help Menu: Captain Controls");
+                hCap.add("-----------------------------------------------------------------------");
+                hCap.add("!add <player>                        Adds player (Default Ship: Spider)");
+                hCap.add("!add <player>:<ship>                  Adds player in the specified ship");
+                hCap.add("!remove <player>                              Removes specified player)");
+                hCap.add("!change <player>:<ship>           Sets the player in the specified ship");
+                hCap.add("!sub <playerA>:<playerB>           Substitutes <playerA> with <playerB>");
+                hCap.add("!switch <player>:<player>            Exchanges the ship of both players");
+
+                if(config.getAllowAutoCaps())
+                    hCap.add("!timeout                       During faceoff, request a 30 sec timeout");
+
+                hCap.add("!ready                    Use this when you're done setting your lineup");
+                hCap.add("-----------------------------------------------------------------------");
+
                 String[] spamCap = hCap.toArray(new String[hCap.size()]);
                 ba.privateMessageSpam(name, spamCap);
-                
+
             }
+
             if (args.contains("staff")) {
                 if (ba.getOperatorList().isZH(name)) {
-                    
+
                     ArrayList<String> hStaff = new ArrayList<String>();
-                    
+
                     hStaff.add("StrikeBall Help Menu: Staff Controls");
                     hStaff.add("----------------------------------------------------------------------------------");
                     hStaff.add("!start [<tn1>:<tn2>]       starts the bot, optional with teamnames <tn1> and <tn2>");
@@ -924,55 +934,59 @@ public class strikebot extends SubspaceBot {
                     hStaff.add("!remcaptain <# freq>             Removes the captain of freq <# freq> (short: !rc)");
                     hStaff.add("!setteamname <# freq>:<name>          Sets team's name for <# freq>. (short: !stn)");
                     hStaff.add("!hosttimeout                             Request a 30 second timeout (short: !hto)");
+
                     if (ba.getOperatorList().isER(name)) {
                         hStaff.add("!settimeout <amount>                Sets captain timeouts to <amount> (default: 1)");
                     }
+
                     if (ba.getOperatorList().isModerator(name)) {
                         hStaff.add("!autocap                            Enables the auto captain feature. (short: !ac)");
                         hStaff.add("!off                                          stops the bot after the current game");
                         hStaff.add("!die                                                           disconnects the bot");
                     }
+
                     if (ba.getOperatorList().isSmod(name)) {
                         hStaff.add("!allowzoner                         Forces the zone timers to reset allowing !zone");
-                                      
+
                     }
+
                     String[] spamStaff = hStaff.toArray(new String[hStaff.size()]);
                     ba.privateMessageSpam(name, spamStaff);
                 }
             }
-         }
+        }
 
     }
-    
+
     /**
-     * Handles the !hosttimeout command. (ZH+)
-     * 
-     * @param name name of the host.
-     */
+        Handles the !hosttimeout command. (ZH+)
+
+        @param name name of the host.
+    */
     private void cmd_hosttimeout(String name) {
         // Completely ignore the command if the bot is off.
         if(currentState == SBState.OFF)
             return;
-        
-        // If the host requests a timeout, check if the current phase allows it.   
+
+        // If the host requests a timeout, check if the current phase allows it.
         if(!(SBState.MIDGAME.contains(currentState))) {
             ba.sendPrivateMessage(name, "This is currently only available when the game is active.");
         } else if(ball.isRespawning()) {
             ba.sendSmartPrivateMessage(name, "The ball is currently respawning. Please try again in a moment.");
         } else {
             // Send a nice message ...
-            ba.sendArenaMessage(name + 
-                    " has issued a 30-second timeout.", Tools.Sound.BEEP1);
+            ba.sendArenaMessage(name +
+                                " has issued a 30-second timeout.", Tools.Sound.BEEP1);
             // ... and start the timeout
             startTimeout();
         }
     }
-    
+
     /**
-     * Handles the !lagout/!return command
-     *
-     * @param name name of the player that issued the !lagout command
-     */
+        Handles the !lagout/!return command
+
+        @param name name of the player that issued the !lagout command
+    */
     private void cmd_lagout(String name) {
         if (SBState.ACTIVEGAME.contains(currentState)) {
             SBTeam t;
@@ -1000,10 +1014,10 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles !list command
-     *
-     * @param name player that issued the !list command
-     */
+        Handles !list command
+
+        @param name player that issued the !list command
+    */
     private void cmd_list(String name) {
         SBTeam t;
 
@@ -1018,6 +1032,7 @@ public class strikebot extends SubspaceBot {
 
             /* Display set up */
             ArrayList<String> list = new ArrayList<String>();
+
             if (t == null) {
                 /* Display both teams */
                 list.addAll(listTeam(0));
@@ -1034,10 +1049,10 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Creates a sorted list of players for the !list command.
-     * @param frequency Frequency of the team to create the list of.
-     * @return A textual representation of this team, ready to be spammed in PM.
-     */
+        Creates a sorted list of players for the !list command.
+        @param frequency Frequency of the team to create the list of.
+        @return A textual representation of this team, ready to be spammed in PM.
+    */
     private ArrayList<String> listTeam(int frequency) {
         /* Set up sorting */
         Comparator<SBPlayer> comparator = new Comparator<SBPlayer>() {
@@ -1064,41 +1079,43 @@ public class strikebot extends SubspaceBot {
         /* Display one team */
         list.add(t.getName() + " (captain: " + t.getCaptainName() + ")");
         list.add(Tools.formatString("Name:", 23) + " - "
-                + Tools.formatString("Ship:", 10) + " - " + "Status:");
+                 + Tools.formatString("Ship:", 10) + " - " + "Status:");
 
         SBPlayer[] players = t.players.values().toArray(
-                new SBPlayer[t.players.values().size()]);
+                                 new SBPlayer[t.players.values().size()]);
         Arrays.sort(players, comparator);
 
         for (SBPlayer p : players) {
             list.add(Tools.formatString(p.p_name, 23) + " - "
-                    + Tools.formatString(Tools.shipName(p.getCurrentShipType()), 10) + " - " + p.getStatus());
+                     + Tools.formatString(Tools.shipName(p.getCurrentShipType()), 10) + " - " + p.getStatus());
         }
+
         return list;
     }
 
     /**
-     * Handles the !myfreq command.
-     * <p>
-     * Puts the player on his/her team's frequency.
-     * @param name name of the player that issued the !myfreq command
-     */
+        Handles the !myfreq command.
+        <p>
+        Puts the player on his/her team's frequency.
+        @param name name of the player that issued the !myfreq command
+    */
     private void cmd_myfreq(String name) {
         SBTeam t;
-        
+
         if (currentState != SBState.OFF) {
             t = getTeam(name);
+
             if(t != null) {
                 ba.setFreq(name, t.getFrequency());
             }
         }
     }
-    
+
     /**
-     * Handles the !notplaying command
-     *
-     * @param name name of the player that issued the !notplaying command
-     */
+        Handles the !notplaying command
+
+        @param name name of the player that issued the !notplaying command
+    */
     private void cmd_notplaying(String name) {
         SBTeam t;
 
@@ -1109,7 +1126,7 @@ public class strikebot extends SubspaceBot {
             if (listNotplaying.contains(name)) {
                 listNotplaying.remove(name);  //Remove from him from the notplaying list
                 ba.sendPrivateMessage(name,
-                        "You have been removed from the not playing list.");   //Notify the player
+                                      "You have been removed from the not playing list.");   //Notify the player
                 /* Put the player on the spectator frequency */
                 ba.setShip(name, 1);
                 ba.specWithoutLock(name);
@@ -1119,7 +1136,7 @@ public class strikebot extends SubspaceBot {
             /* Add the player to the notplaying list */
             listNotplaying.add(name); //Add the player to the notplaying list
             ba.sendPrivateMessage(name, "You have been added to the not playing list. "
-                    + "(Captains will be unable to add or sub you in.)"); //Notify the player
+                                  + "(Captains will be unable to add or sub you in.)"); //Notify the player
             ba.specWithoutLock(name);  //Spectate the player
             ba.setFreq(name, FREQ_NOTPLAYING);  //Set the player to the notplaying frequency
 
@@ -1135,6 +1152,7 @@ public class strikebot extends SubspaceBot {
                         ba.sendArenaMessage(name + " has been removed from the game. (not playing)");
                         t.removePlayer(name);
                     }
+
                     determineTurn();
                 }
 
@@ -1144,7 +1162,7 @@ public class strikebot extends SubspaceBot {
                     if (t.isOnTeam(name)) {
                         if (t.isPlaying(name) || t.laggedOut(name)) {
                             ba.sendArenaMessage(
-                                    name + " has been removed from the game. (not playing)"); //Notify the player
+                                name + " has been removed from the game. (not playing)"); //Notify the player
                             t.setOutNotPlaying(name); //Set player to out, but subable status
                         }
                     }
@@ -1156,29 +1174,31 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles the !off command (Mod+)
-     *
-     * @param name name of the player that issued the !off command
-     */
+        Handles the !off command (Mod+)
+
+        @param name name of the player that issued the !off command
+    */
     private void cmd_off(String name) {
         switch (currentState) {
-            case OFF:
-                ba.sendPrivateMessage(name, "Bot is already OFF");
-                break;
-            case WAITING_FOR_CAPS:
-                cmd_stop(name);
-                break;
-            default:
-                ba.sendPrivateMessage(name, "Turning OFF after this game");
-                lockLastGame = true;
+        case OFF:
+            ba.sendPrivateMessage(name, "Bot is already OFF");
+            break;
+
+        case WAITING_FOR_CAPS:
+            cmd_stop(name);
+            break;
+
+        default:
+            ba.sendPrivateMessage(name, "Turning OFF after this game");
+            lockLastGame = true;
         }
     }
-    
+
     /**
-     * Handles the !ready command (cap)
-     *
-     * @param name name of the player that issued the command
-     */
+        Handles the !ready command (cap)
+
+        @param name name of the player that issued the command
+    */
     private void cmd_ready(String name) {
         SBTeam t;
 
@@ -1195,11 +1215,11 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles the !remove command (cap)
-     *
-     * @param name name of the player that issued the !remove command
-     * @param args command parameters
-     */
+        Handles the !remove command (cap)
+
+        @param name name of the player that issued the !remove command
+        @param args command parameters
+    */
     private void cmd_remove(String name, String args) {
         SBTeam t;
         SBPlayer p;   //Player to be removed
@@ -1216,7 +1236,7 @@ public class strikebot extends SubspaceBot {
             /* Search for the to be removed player */
             // First try an exact match.
             p = t.searchPlayer(args);
-            
+
             // If it fails, try a fuzzy match.
             if (p == null)
                 p = t.searchPlayer(ba.getFuzzyPlayerName(args));
@@ -1235,11 +1255,11 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles the !remcaptain command (ZH+)
-     *
-     * @param name name of the player that issued the !removecap command
-     * @param args Frequency of the captain to be removed.
-     */
+        Handles the !remcaptain command (ZH+)
+
+        @param name name of the player that issued the !removecap command
+        @param args Frequency of the captain to be removed.
+    */
     private void cmd_removecap(String name, String args) {
         SBTeam t;
         Integer freq = null;
@@ -1249,47 +1269,47 @@ public class strikebot extends SubspaceBot {
             // Ignore, no game in progress.
             return;
         }
-        
+
         if(args.isEmpty()) {
             // No valid arguments sent.
-            ba.sendSmartPrivateMessage(name, 
-                    "Please specify the frequency of the captain you want to remove. '!remcaptain <#freq>'");
+            ba.sendSmartPrivateMessage(name,
+                                       "Please specify the frequency of the captain you want to remove. '!remcaptain <#freq>'");
             return;
         }
-        
+
         // Check if we received a correct frequency.
         try {
             freq = Integer.parseInt(args);
         } catch (NumberFormatException e) {
             // If no valid number has been provided, then this will be taken care of in the next if statement, which combines some stuff.
         }
-        
+
         // If the previous catch triggered or an invalid freq has been given, this if statement will be valid.
         if(freq == null || freq < 0 || freq > 1) {
             // No valid arguments sent.
-            ba.sendSmartPrivateMessage(name, 
-                    "Please specify the frequency of the captain you want to remove. '!remcaptain <#freq>'");
+            ba.sendSmartPrivateMessage(name,
+                                       "Please specify the frequency of the captain you want to remove. '!remcaptain <#freq>'");
             return;
         }
-        
+
         t = teams.get(freq);
-        
+
         if(t != null && t.hasCaptain()) {
             t.captainLeft();   //Remove captain, will auto-sent a message.
         } else {
             // There was no captain on this team.
             ba.sendSmartPrivateMessage(name, "Freq " + freq + " does not have a captain.");
         }
-        
+
         return;
     }
-    
+
     /**
-     * Handles the !setcaptain command (ZH+)
-     *
-     * @param name name of the player that issued the !setcaptain command
-     * @param args command parameters
-     */
+        Handles the !setcaptain command (ZH+)
+
+        @param name name of the player that issued the !setcaptain command
+        @param args command parameters
+    */
     private void cmd_setCaptain(String name, String args) {
         int frequency;
         Player p;
@@ -1299,8 +1319,8 @@ public class strikebot extends SubspaceBot {
 
             /* Check command syntax */
             if (args.isEmpty()) {
-                ba.sendPrivateMessage(name, 
-                        "Error: please specify a player and frequency, '!setcaptain <# freq>:<player>'");
+                ba.sendPrivateMessage(name,
+                                      "Error: please specify a player and frequency, '!setcaptain <# freq>:<player>'");
                 return;
             }
 
@@ -1308,8 +1328,8 @@ public class strikebot extends SubspaceBot {
 
             /* Check command syntax */
             if (splitCmd.length < 2) {
-                ba.sendPrivateMessage(name, 
-                        "Error: please specify a player, '!setcaptain <# freq>:<player>'");
+                ba.sendPrivateMessage(name,
+                                      "Error: please specify a player, '!setcaptain <# freq>:<player>'");
                 return;
             }
 
@@ -1325,8 +1345,8 @@ public class strikebot extends SubspaceBot {
             try {
                 frequency = Integer.parseInt(splitCmd[0]);
             } catch (Exception e) {
-                ba.sendPrivateMessage(name, 
-                        "Error: please specify a correct frequency, '!setcaptain <# freq>:<player>'");
+                ba.sendPrivateMessage(name,
+                                      "Error: please specify a correct frequency, '!setcaptain <# freq>:<player>'");
                 return;
             }
 
@@ -1336,41 +1356,41 @@ public class strikebot extends SubspaceBot {
             } else if (frequency == 1) {
                 team1.setCaptain(p.getPlayerName());
             } else {
-                ba.sendPrivateMessage(name, 
-                        "Error: please specify a correct frequency, '!setcaptain <# freq>:<player>'");
+                ba.sendPrivateMessage(name,
+                                      "Error: please specify a correct frequency, '!setcaptain <# freq>:<player>'");
             }
 
         }
     }
-    
+
     /**
-     * Handles the !setteamname command. (ZH+)
-     * <p>
-     * This command allows the host to change a team's name.
-     * 
-     * @param name Name of the player who issued the commmand.
-     * @param args Command parameters.
-     */
+        Handles the !setteamname command. (ZH+)
+        <p>
+        This command allows the host to change a team's name.
+
+        @param name Name of the player who issued the commmand.
+        @param args Command parameters.
+    */
     private void cmd_setteamname(String name, String args) {
         SBTeam t;
         String splitArgs[];
         int freq = -1;
         String teamName = "";
-        
+
         if(!SBState.ACTIVEGAME.contains(currentState)) {
             // Not currently in a correct state.
             return;
         }
-        
+
         if (args.isEmpty()) {
             // Invalid command syntax.
-            ba.sendSmartPrivateMessage(name, 
-                    "Error: please specify a frequency and team name, '!setteamname <freq>:<name>'");
+            ba.sendSmartPrivateMessage(name,
+                                       "Error: please specify a frequency and team name, '!setteamname <freq>:<name>'");
             return;
         }
-        
+
         splitArgs = args.split(":", 2);
-        
+
         if(splitArgs.length == 2) {
             try {
                 freq = Integer.parseInt(splitArgs[0]);
@@ -1379,88 +1399,91 @@ public class strikebot extends SubspaceBot {
                 // Do nothing, situation will be handled down the line.
             }
         }
-        
+
         if(freq == -1 || teamName.isEmpty()) {
             // Invalid command syntax.
-            ba.sendSmartPrivateMessage(name, 
-                    "Error: please specify a frequency team name, '!setteamname <freq>:<name>'");
-            return;           
-        }
-        
-        if(freq != 0 && freq != 1) {
-            // Invalid frequency number.
-            ba.sendSmartPrivateMessage(name, 
-                    "Error: please specify a correct frequency, '!setteamname <freq>:<name>'");
+            ba.sendSmartPrivateMessage(name,
+                                       "Error: please specify a frequency team name, '!setteamname <freq>:<name>'");
             return;
         }
-        
+
+        if(freq != 0 && freq != 1) {
+            // Invalid frequency number.
+            ba.sendSmartPrivateMessage(name,
+                                       "Error: please specify a correct frequency, '!setteamname <freq>:<name>'");
+            return;
+        }
+
         t = teams.get(freq);
-        
+
         if(t == null) {
             // Shouldn't happen, since a captain's check was done before this function could be called, however, better safe than sorry.
             ba.sendSmartPrivateMessage(name, "Seems that the team you specified doesn't exist.");
             return;
         }
-        
+
         if(t.getName().equals(teamName)) {
             // Team already has this name.
             ba.sendSmartPrivateMessage(name, "That team already has that name.");
             return;
         }
-        
+
         t.setName(teamName);
-        
-        ba.sendArenaMessage(name + " has changed the team name of Freq "+ freq + " to: " + teamName);
+
+        ba.sendArenaMessage(name + " has changed the team name of Freq " + freq + " to: " + teamName);
     }
 
     /**
-     * Handles the !settimeout command. (ER+)
-     * Intended to be used to disable the system in case of abuse by the captains.
-     * 
-     * @param name Name of the player that issued the command.
-     * @param args The arguments of the issued command.
-     */
+        Handles the !settimeout command. (ER+)
+        Intended to be used to disable the system in case of abuse by the captains.
+
+        @param name Name of the player that issued the command.
+        @param args The arguments of the issued command.
+    */
     private void cmd_settimeout(String name, String args) {
         int value;
-        
+
         if(currentState == SBState.OFF)
             return;
-        
+
         if (!(currentState == SBState.GAME_OVER
                 || currentState == SBState.WAITING_FOR_CAPS
                 || currentState == SBState.ADDING_PLAYERS)) {
             // Only allowed to change the setting when no game is in progress.
             ba.sendPrivateMessage(name, "Changing the timeout " +
-                "setting is not allowed at this stage of the game.");
+                                  "setting is not allowed at this stage of the game.");
             return;
         }
+
         try {
             value = Integer.parseInt(args);
         } catch (Exception e) {
-         // No argument or an invalid argument given.
+            // No argument or an invalid argument given.
             ba.sendPrivateMessage(name, "Please provide a valid number. " +
-                    "(Usage: !settimeout <number>)");
+                                  "(Usage: !settimeout <number>)");
             return;
         }
-        
+
         // If value is less than 0, set maxTimeouts to 0. Otherwise the value provided.
-        maxTimeouts = (value < 0)?0:value;
-        
+        maxTimeouts = (value < 0) ? 0 : value;
+
         ba.sendPrivateMessage(name, "Maximum timeouts set to " + maxTimeouts + ".");
-            
+
     }
-    
+
     /**
-     * Handles the !start command (ZH+)
-     *
-     * @param name player that issued the !start command
-     * @param args Optional: [Name_team1:Name_team2]
-     */
+        Handles the !start command (ZH+)
+
+        @param name player that issued the !start command
+        @param args Optional: [Name_team1:Name_team2]
+    */
     private void cmd_start(String name, String args) {
         if (currentState == SBState.OFF) {
             start();
+
             if(!args.isEmpty()) {
-                String teamNames[] = args.split(":",2);
+                String teamNames[] = args.split(":", 2);
+
                 if(teamNames.length == 2) {
                     team0.setName(teamNames[0]);
                     team1.setName(teamNames[1]);
@@ -1472,10 +1495,10 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles the !status command
-     *
-     * @param name name of the player that issued the command
-     */
+        Handles the !status command
+
+        @param name name of the player that issued the command
+    */
     private void cmd_status(String name) {
         String[] status;    //Status message
 
@@ -1484,40 +1507,48 @@ public class strikebot extends SubspaceBot {
         status[1] = ""; //Default value
 
         switch (currentState) {
-            case OFF:
-                status[0] = "Bot turned off, no games can be started at this moment.";
-                break;
-            case WAITING_FOR_CAPS:
-                if (config.getAllowAutoCaps()) {
-                    status[0] = "A new game will start when two people message me with !cap";
-                } else {
-                    status[0] = "Request a new game with '?help start strikeball please'";
-                }
-                break;
-            case ADDING_PLAYERS:
-                status[0] = "Teams: " + team0.getName() + " vs. " + team1.getName()
+        case OFF:
+            status[0] = "Bot turned off, no games can be started at this moment.";
+            break;
+
+        case WAITING_FOR_CAPS:
+            if (config.getAllowAutoCaps()) {
+                status[0] = "A new game will start when two people message me with !cap";
+            } else {
+                status[0] = "Request a new game with '?help start strikeball please'";
+            }
+
+            break;
+
+        case ADDING_PLAYERS:
+            status[0] = "Teams: " + team0.getName() + " vs. " + team1.getName()
                         + ". We are currently arranging lineups";
-                break;
-            case FACE_OFF:
-                status[0] = "Teams: " + team0.getName() + " vs. " + team1.getName()
+            break;
+
+        case FACE_OFF:
+            status[0] = "Teams: " + team0.getName() + " vs. " + team1.getName()
                         + ". We are currently facing off";
-                break;
-            case TIMEOUT:
-                status[0] = "Teams: " + team0.getName() + " vs. " + team1.getName()
+            break;
+
+        case TIMEOUT:
+            status[0] = "Teams: " + team0.getName() + " vs. " + team1.getName()
                         + ". We are currently in a timeout";
-                break;
-            case GAME_IN_PROGRESS:
-                status[0] = "Game is in progress.";
-                status[1] = "Score " + team0.getName() + " vs. " + team1.getName() + ": " + score();
-                break;
-            case GAME_OVER:
-                status[0] = "Teams: " + team0.getName() + " vs. " + team1.getName()
+            break;
+
+        case GAME_IN_PROGRESS:
+            status[0] = "Game is in progress.";
+            status[1] = "Score " + team0.getName() + " vs. " + team1.getName() + ": " + score();
+            break;
+
+        case GAME_OVER:
+            status[0] = "Teams: " + team0.getName() + " vs. " + team1.getName()
                         + ". We are currently ending the game";
-                break;
-            case PRE_FACE_OFF:
-            case WAIT:
-            default:
-                break;
+            break;
+
+        case PRE_FACE_OFF:
+        case WAIT:
+        default:
+            break;
         }
 
         /* Send status message */
@@ -1531,10 +1562,10 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles the !stop command (ZH+)
-     *
-     * @param name player that issued the !stop command
-     */
+        Handles the !stop command (ZH+)
+
+        @param name player that issued the !stop command
+    */
     private void cmd_stop(String name) {
         if (currentState != SBState.OFF) {
             ba.sendArenaMessage("Bot has been turned OFF");
@@ -1547,11 +1578,11 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles the !sub command (cap)
-     *
-     * @param name name of the player that issued the !sub command
-     * @param args command parameters
-     */
+        Handles the !sub command (cap)
+
+        @param name name of the player that issued the !sub command
+        @param args command parameters
+    */
     private void cmd_sub(String name, String args) {
         SBTeam t;
         String[] splitCmd;
@@ -1588,11 +1619,11 @@ public class strikebot extends SubspaceBot {
 
             /* Try to get an exact match first. */
             playerA = t.searchPlayer(splitCmd[0]);
-            
+
             // If an exact match fails, try a fuzzy match.
             if(playerA == null)
                 playerA = t.searchPlayer(ba.getFuzzyPlayerName(splitCmd[0]));   //Search for <playerA>
-            
+
             // Player B must be in spec to be able to be subbed, so no need to go for an exact match first.
             playerBnew = ba.getFuzzyPlayer(splitCmd[1]);   //Search for <playerB>
 
@@ -1607,7 +1638,7 @@ public class strikebot extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Error: You cannot substitute a player with him/herself");
                 return;
             }
-            
+
             /* Check if sub is a bot */
             if (ba.getOperatorList().isBotExact(playerBnew.getPlayerName())) {
                 ba.sendPrivateMessage(name, "Error: Bots are not allowed to play.");
@@ -1623,7 +1654,7 @@ public class strikebot extends SubspaceBot {
             /* Check if <playerB> is on the notplaying list */
             if (listNotplaying.contains(playerBnew.getPlayerName())) {
                 ba.sendPrivateMessage(name,
-                        "Error: " + playerBnew.getPlayerName() + " is set to not playing.");
+                                      "Error: " + playerBnew.getPlayerName() + " is set to not playing.");
                 return;
             }
 
@@ -1635,11 +1666,12 @@ public class strikebot extends SubspaceBot {
 
             /* Check if <playerB> was already on the team */
             playerB = t.searchPlayer(playerBnew.getPlayerName());
+
             if (playerB != null) {
                 /* Check when last !sub was and if this sub is allowed */
                 if (!playerB.isSubAllowed()) {
                     ba.sendPrivateMessage(name, "Error: Sub not allowed yet for this player, wait "
-                            + playerB.getTimeUntilNextSub() + " more seconds before next !sub");
+                                          + playerB.getTimeUntilNextSub() + " more seconds before next !sub");
                     return;
                 }
             }
@@ -1647,12 +1679,12 @@ public class strikebot extends SubspaceBot {
             t.sub(playerA, playerBnew); //Execute the substitute
         }
     }
-    
+
     /**
-     * Handles the !subscribe command
-     *
-     * @param name player that issued the !subscribe command
-     */
+        Handles the !subscribe command
+
+        @param name player that issued the !subscribe command
+    */
     private void cmd_subscribe(String name) {
         if (currentState != SBState.OFF) {
             if (listAlert.contains(name)) {
@@ -1666,43 +1698,43 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Handles the !timeout command (cap)
-     * <p>
-     * Will only work when automatic caps is enabled.
-     * 
-     * @param name name of the player that issued the command.
-     */
+        Handles the !timeout command (cap)
+        <p>
+        Will only work when automatic caps is enabled.
+
+        @param name name of the player that issued the command.
+    */
     private void cmd_timeout(String name) {
         // If a captain requests a timeout, get his team's info.
         SBTeam t = getTeam(name);
-        
+
         // Check if the request is valid
         if(!(SBState.ACTIVEGAME.contains(currentState))) {
             ba.sendPrivateMessage(name, "You can only request a timeout during the FaceOff.");
         } else if(t.timeout == 0) {
             // Checks if the captain has any timeouts left to use
-            ba.sendPrivateMessage(name, "You have already used your timeout" + 
-                    ((maxTimeouts > 1)?"s":"") + ".");
+            ba.sendPrivateMessage(name, "You have already used your timeout" +
+                                  ((maxTimeouts > 1) ? "s" : "") + ".");
         } else if(ball.isRespawning()) {
             ba.sendSmartPrivateMessage(name, "The ball is currently respawning. Please try again in a moment.");
         } else {
             // Good to go. Lower the amount of available timeouts ...
             t.useTimeOut();
             // .. send a nice message ...
-            ba.sendArenaMessage(name + 
-                    " has requested a 30-second timeout for team: " +
-                    t.getName()+ ".", Tools.Sound.CROWD_GEE);
+            ba.sendArenaMessage(name +
+                                " has requested a 30-second timeout for team: " +
+                                t.getName() + ".", Tools.Sound.CROWD_GEE);
             // ... and start the timeout.
             startTimeout();
         }
     }
-    
+
     /**
-     * Handles the !zone command (ZH+)
-     *
-     * @param name name of the player that issued the command
-     * @param args message to use for zoner
-     */
+        Handles the !zone command (ZH+)
+
+        @param name name of the player that issued the command
+        @param args message to use for zoner
+    */
     private void cmd_zone(String name, String args) {
         if (!allowManualZoner()) {
             ba.sendPrivateMessage(name, "Zoner not allowed yet.");
@@ -1721,11 +1753,11 @@ public class strikebot extends SubspaceBot {
     }
 
     /*
-     * Game modes
-     */
+        Game modes
+    */
     /**
-     * Starts the bot
-     */
+        Starts the bot
+    */
     private void start() {
         ba.setMessageLimit(8, false);
         ba.receiveAllPlayerDeaths();
@@ -1744,12 +1776,12 @@ public class strikebot extends SubspaceBot {
 
         startWaitingForCaps();
     }
-  
+
     /**
-     * Starts waiting for caps
-     * 
-     * @see Gameticker#doWaitingForCaps()
-     */
+        Starts waiting for caps
+
+        @see Gameticker#doWaitingForCaps()
+    */
     private void startWaitingForCaps() {
         // To avoid any racing conditions, set the current state to WAIT.
         // This prevents the bot from accidentally doing stuff that influences the commands here.
@@ -1758,39 +1790,40 @@ public class strikebot extends SubspaceBot {
 
         if (config.getAllowAutoCaps()) {
             ba.sendArenaMessage("A new game will start when two people message me with !cap -"
-                    + ba.getBotName(), Tools.Sound.BEEP2);
+                                + ba.getBotName(), Tools.Sound.BEEP2);
         } else {
             ba.sendArenaMessage("Request a new game with '?help start strikeball please'"
-                    + " -" + ba.getBotName(), Tools.Sound.BEEP2);
+                                + " -" + ba.getBotName(), Tools.Sound.BEEP2);
         }
+
         currentState = SBState.WAITING_FOR_CAPS;
     }
 
     /**
-     * Start adding players state.
-     * <ul> 
-     *  <li>Notify arena
-     *  <li>Notify chats
-     *  <li>Determine next pick
-     * </ul>
-     * 
-     * @see Gameticker#doAddingPlayers()
-     */
+        Start adding players state.
+        <ul>
+        <li>Notify arena
+        <li>Notify chats
+        <li>Determine next pick
+        </ul>
+
+        @see Gameticker#doAddingPlayers()
+    */
     private void startAddingPlayers() {
         // To avoid any racing conditions, set the current state to WAIT.
         // This prevents the bot from accidentally doing stuff that influences the commands here.
         currentState = SBState.WAIT;
-               
+
         lockArena();
         ball.respawn();
-        
+
         ba.specAll();
         timeStamp = System.currentTimeMillis();
         ba.sendArenaMessage("Captains you have 10 minutes to set up your lineup correctly!",
-                Tools.Sound.BEEP2);
-        
+                            Tools.Sound.BEEP2);
+
         roundTime = 10 * 60;
-        
+
         scoreOverlay.updateNames();
         scoreOverlay.updateTime(roundTime);
 
@@ -1805,31 +1838,31 @@ public class strikebot extends SubspaceBot {
         if (team1.hasCaptain()) {
             team1.putCaptainInList();
         }
-        
+
         currentState = SBState.ADDING_PLAYERS;
         determineTurn();
     }
 
     /**
-     * Added security routine that starts the PreFaceOff.
-     * <p>
-     * The main intent for this extra phase is to allow the ball to respawn after a *restart, in case the captains
-     * were too quick setting up their teams.
-     */
+        Added security routine that starts the PreFaceOff.
+        <p>
+        The main intent for this extra phase is to allow the ball to respawn after a *restart, in case the captains
+        were too quick setting up their teams.
+    */
     private void startPreFaceOff() {
         currentState = SBState.WAIT;
-        
+
         if(!ball.isOut())
             ba.sendArenaMessage("Waiting for the ball to respawn, one moment please.");
-        
+
         currentState = SBState.PRE_FACE_OFF;
     }
-    
+
     /**
-     * Starts pre game
-     * 
-     * @see Gameticker#doFaceOff()
-     */
+        Starts pre game
+
+        @see Gameticker#doFaceOff()
+    */
     private void startFaceOff() {
         // To avoid any racing conditions, set the current state to WAIT.
         // This prevents the bot from accidentally doing stuff that influences the commands here.
@@ -1845,23 +1878,23 @@ public class strikebot extends SubspaceBot {
         ball.dropDelay = (int) (Math.random() * 9 + 15);
         ball.holding = false;
         doGetBall(config.getBallDrop());
-        
+
         currentState = SBState.FACE_OFF;
     }
 
     /**
-     * Starts the automated review period after a goal has been made.
-     * <p>
-     * This function will check if a violation has occured, or if the goal was an own goal, or if it was a clean goal.
-     * Furthermore will it assign the goal to a player and increase the scorecount of the scoring team.
-     * <p>
-     * When this is a non-timed game, on the final goal, a manual review will be done after the default checks, through {@link #startFinalReview()}.
-     * @param event The original SoccerGoal event.
-     */
+        Starts the automated review period after a goal has been made.
+        <p>
+        This function will check if a violation has occured, or if the goal was an own goal, or if it was a clean goal.
+        Furthermore will it assign the goal to a player and increase the scorecount of the scoring team.
+        <p>
+        When this is a non-timed game, on the final goal, a manual review will be done after the default checks, through {@link #startFinalReview()}.
+        @param event The original SoccerGoal event.
+    */
     private void startReview(SoccerGoal event) {
-        
+
         int freq = event.getFrequency();
-        
+
         // Check if the goal was clean
         if (freq == 0 || freq == 1) {
             // Increase the score.
@@ -1872,21 +1905,21 @@ public class strikebot extends SubspaceBot {
 
         // Check if the game is finished
         if (Math.abs(team0.getScore() - team1.getScore()) >= config.getScoreDifference()
-                && (team0.getScore() >= config.getScoreTarget() 
+                && (team0.getScore() >= config.getScoreTarget()
                     || team1.getScore() >= config.getScoreTarget())) {
             gameOver();
-        /*} else {
-            for(int i = 0; i <= 1; i++)
-                ba.warpFreqToLocation(teams.get(i).getFrequency(), config.getTeamEntryPoint(i).x, config.getTeamEntryPoint(i).y);
-        */
+            /*  } else {
+                for(int i = 0; i <= 1; i++)
+                    ba.warpFreqToLocation(teams.get(i).getFrequency(), config.getTeamEntryPoint(i).x, config.getTeamEntryPoint(i).y);
+            */
         }
     }
-    
+
     /**
-     * Starts a game
-     * 
-     * @see Gameticker#doStartGame()
-     */
+        Starts a game
+
+        @see Gameticker#doStartGame()
+    */
     private void startGame() {
         // To avoid any racing conditions, set the current state to WAIT.
         // This prevents the bot from accidentally doing stuff that influences the commands here.
@@ -1894,25 +1927,25 @@ public class strikebot extends SubspaceBot {
 
         timeStamp = System.currentTimeMillis();
         ba.sendArenaMessage("Go Go Go !!!", Tools.Sound.VICTORY_BELL);
-        
+
         currentState = SBState.GAME_IN_PROGRESS;
     }
-    
+
     /**
-     * Initiates the timeout state.
-     * 
-     * @see Gameticker#doTimeout()
-     */
+        Initiates the timeout state.
+
+        @see Gameticker#doTimeout()
+    */
     private void startTimeout() {
         // To avoid any racing conditions, set the current state to WAIT.
         // This prevents the bot from accidentally doing stuff that influences the commands here.
         currentState = SBState.WAIT;
-        
+
         timeStamp = System.currentTimeMillis();
         doRemoveBall();
-        
+
         // When looking at doRemoveBall(), this code seems to be redundant.
-        // However, due to the bot not always having the latest ball positions, this 
+        // However, due to the bot not always having the latest ball positions, this
         // safeguard is needed to make it function properly, for now.
         ba.getShip().move(config.getBallTimeOut().x, config.getBallTimeOut().y);
         ba.getBall(ball.getBallID(), ball.getTimeStamp());
@@ -1920,35 +1953,35 @@ public class strikebot extends SubspaceBot {
 
         currentState = SBState.TIMEOUT;
     }
-    
+
     /**
-     * What to do with when game is over.
-     * <p>
-     * This starts several timers to display results and whatnot.
-     * <ul>
-     *  <li>After 2 seconds:
-     *  <ul>
-     *      <li>Display "GAME OVER" message.
-     *      <li>Display the final score.
-     *  </ul>
-     *  <li>After 5 seconds:
-     *  <ul>
-     *      <li>Display the MVP.
-     *  </ul>
-     *  <li>After 10 seconds:
-     *  <ul>
-     *      <li>Specs everyone.
-     *      <li>Restarts the game at adding captains or stops the bot.
-     *  </ul>
-     * </ul>
-     * 
-     * @see Gameticker#doGameOver()
-     */
+        What to do with when game is over.
+        <p>
+        This starts several timers to display results and whatnot.
+        <ul>
+        <li>After 2 seconds:
+        <ul>
+            <li>Display "GAME OVER" message.
+            <li>Display the final score.
+        </ul>
+        <li>After 5 seconds:
+        <ul>
+            <li>Display the MVP.
+        </ul>
+        <li>After 10 seconds:
+        <ul>
+            <li>Specs everyone.
+            <li>Restarts the game at adding captains or stops the bot.
+        </ul>
+        </ul>
+
+        @see Gameticker#doGameOver()
+    */
     private void gameOver() {
         // To avoid any racing conditions, set the current state to WAIT.
         // This prevents the bot from accidentally doing stuff that influences the commands here.
         currentState = SBState.WAIT;
-        
+
         scoreOverlay.clearAllObjects();
         scoreOverlay.resetVariables();
 
@@ -1960,82 +1993,88 @@ public class strikebot extends SubspaceBot {
             public void run() {
                 ba.sendArenaMessage("------------ GAME OVER ------------");
                 ba.sendArenaMessage("Result of " + team0.getName() + " vs. "
-                        + team1.getName(), Tools.Sound.HALLELUJAH);
+                                    + team1.getName(), Tools.Sound.HALLELUJAH);
                 dispResults();
             }
-        }; ba.scheduleTask(statsDelay, Tools.TimeInMillis.SECOND * 2);
+        };
+        ba.scheduleTask(statsDelay, Tools.TimeInMillis.SECOND * 2);
 
         mvpDelay = new TimerTask() {
             @Override
             public void run() {
-                ba.sendArenaMessage("Winner: " + teams.get((team0.getScore() > team1.getScore()?0:1)).getName() + "!");
+                ba.sendArenaMessage("Winner: " + teams.get((team0.getScore() > team1.getScore() ? 0 : 1)).getName() + "!");
                 ba.sendArenaMessage("MVP: " + getMVP() + "!", Tools.Sound.INCONCEIVABLE);
             }
-        }; ba.scheduleTask(mvpDelay, Tools.TimeInMillis.SECOND * 5);
-        
+        };
+        ba.scheduleTask(mvpDelay, Tools.TimeInMillis.SECOND * 5);
+
         timeStamp = System.currentTimeMillis();
-        
+
         currentState = SBState.GAME_OVER;
-        
+
     }
-    
+
     /**
-     * Display the statistics of the game
-     */
+        Display the statistics of the game
+    */
     private void dispResults() {
         ArrayList<String> spam = new ArrayList<String>();
+
         for(SBTeam t : teams) {
             spam.add("+----------------------+-------+---------+-------+--------+-----------+--------+");
             spam.add("| " + Tools.centerString(t.getName(), 20)
-                                         + " | Goals | Assists | Kills | Deaths | K/D-Ratio | Rating |");
+                     + " | Goals | Assists | Kills | Deaths | K/D-Ratio | Rating |");
             spam.add("+----------------------+-------+---------+-------+--------+-----------+--------+");
             ////////("012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901");
             ////////("0         1         2         3         4         5         6         7         8         9         10");
-            
+
             spam.addAll(addTeamStats(t));
         }
-        
+
         spam.add("+----------------------+-------+---------+-------+--------+-----------+--------+");
 
         ba.arenaMessageSpam(spam.toArray(new String[spam.size()]));
     }
-    
+
     /**
-     * Looks up all the statistics of the players of a team and neatly formats them into a list.
-     * 
-     * @param team SBTeam for which to look up the statistics.
-     * @return ArrayList<String> of the statistics. 
-     */
+        Looks up all the statistics of the players of a team and neatly formats them into a list.
+
+        @param team SBTeam for which to look up the statistics.
+        @return ArrayList<String> of the statistics.
+    */
     private ArrayList<String> addTeamStats(SBTeam team) {
         ArrayList<String> stats = new ArrayList<String>();
+
         for (SBPlayer p : team.players.values()) {
             stats.add("| " + Tools.formatString(p.getName(), 20)
-                    + " |" + Tools.rightString(Integer.toString(p.getGoals()), 6)
-                    + " |" + Tools.rightString(Integer.toString(p.getAssists()), 8)
-                    + " |" + Tools.rightString(Integer.toString(p.getKills()), 6)
-                    + " |" + Tools.rightString(Integer.toString(p.getDeaths()), 7)
-                    + " |" + Tools.rightString(p.getKDRatio(), 10)
-                    + " |" + Tools.rightString(Integer.toString(p.getTotalRating()), 7)
-                    + " |");
+                      + " |" + Tools.rightString(Integer.toString(p.getGoals()), 6)
+                      + " |" + Tools.rightString(Integer.toString(p.getAssists()), 8)
+                      + " |" + Tools.rightString(Integer.toString(p.getKills()), 6)
+                      + " |" + Tools.rightString(Integer.toString(p.getDeaths()), 7)
+                      + " |" + Tools.rightString(p.getKDRatio(), 10)
+                      + " |" + Tools.rightString(Integer.toString(p.getTotalRating()), 7)
+                      + " |");
         }
+
         return stats;
     }
 
     /**
-     * Handles the assigning of stats when a player scored a goal, including any assists.
-     * <p>
-     * This function should only be called upon valid goals. When adding stats for an own goal, please use {@link #addOwnGoal()}.
-     */
+        Handles the assigning of stats when a player scored a goal, including any assists.
+        <p>
+        This function should only be called upon valid goals. When adding stats for an own goal, please use {@link #addOwnGoal()}.
+    */
     private void addPlayerGoalWithAssist() {
         try {
             // Get the player who scored
             String scorer = ball.getLastCarrierName();
             SBTeam t = getTeam(scorer);
-            
+
             if(t != null) {
                 // Add a point to the team's score.
                 t.getPlayer(scorer).madeGoal();
                 String assister = ball.getLastCarrierName();
+
                 // Check if there was a valid assister.
                 if (t.isOnTeam(assister)) {
                     // Add the stat to the assister.
@@ -2051,13 +2090,13 @@ public class strikebot extends SubspaceBot {
     }
 
     /*
-     * Tools
-     */
+        Tools
+    */
     /**
-     * Determines the MVP of the match
-     * 
-     * @return name of the MVP
-     */
+        Determines the MVP of the match
+
+        @return name of the MVP
+    */
     private String getMVP() {
         String mvp = "";
         int highestRating = 0;
@@ -2073,13 +2112,13 @@ public class strikebot extends SubspaceBot {
                 }
             }
         }
-        
+
         return mvp;
     }
 
     /**
-     * Check if there are enough captains to start the game
-     */
+        Check if there are enough captains to start the game
+    */
     private void checkIfEnoughCaps() {
         if (currentState == SBState.WAITING_FOR_CAPS) {
             if (team0.hasCaptain() && team1.hasCaptain()) {
@@ -2089,16 +2128,16 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Alerts players that a new game is starting
-     * <ul>
-     *  <li>Send alert to chats;
-     *  <li>Send alert to subscribers;
-     *  <li>Send alert to zone.
-     * </ul>
-     * 
-     * @param name Name of the person who's issuing the game alert.
-     * @param message The custom message to be used, if any.
-     */
+        Alerts players that a new game is starting
+        <ul>
+        <li>Send alert to chats;
+        <li>Send alert to subscribers;
+        <li>Send alert to zone.
+        </ul>
+
+        @param name Name of the person who's issuing the game alert.
+        @param message The custom message to be used, if any.
+    */
     private void newGameAlert(String name, String message) {
 
         String nameTag = " -" + ba.getBotName();
@@ -2140,37 +2179,37 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Returns if a zoner can be send or not
-     * @return True if a zoner can be send, else false
-     */
+        Returns if a zoner can be send or not
+        @return True if a zoner can be send, else false
+    */
     private boolean allowZoner() {
         // If more time has passed than the waiting time, return true.
         return ((System.currentTimeMillis() - zonerTimestamp) > (zonerWaitTime * Tools.TimeInMillis.MINUTE));
     }
 
     /**
-     * Returns if a zoner can be send or not
-     * @return True if a zoner can be send, else false
-     */
+        Returns if a zoner can be send or not
+        @return True if a zoner can be send, else false
+    */
     private boolean allowManualZoner() {
         // If more than 10 minutes has passed since the last manual zoner, return true.
         return ((System.currentTimeMillis() - manualZonerTimestamp) > (10 * Tools.TimeInMillis.MINUTE));
     }
 
     /**
-     * Returns the score in form of a String
-     * @return game score
-     */
+        Returns the score in form of a String
+        @return game score
+    */
     private String score() {
         return team0.getName() + " (" + team0.getScore() + ") - "
-                + team1.getName() + " (" + team1.getScore() + ")";
+               + team1.getName() + " (" + team1.getScore() + ")";
     }
 
     /**
-     * Checks if name was a captain on one of the teams and notifies the team of the leave
-     *
-     * @param name name of the player that left the game and could be captain
-     */
+        Checks if name was a captain on one of the teams and notifies the team of the leave
+
+        @param name name of the player that left the game and could be captain
+    */
     private void checkCaptainLeft(String name) {
         for(SBTeam t : teams) {
             if(t.getCaptainName().equalsIgnoreCase(name)) {
@@ -2183,69 +2222,69 @@ public class strikebot extends SubspaceBot {
         }
     }
 
-    /** 
-     * Sends the captain list to the player 
-     * 
-     * @param name Who to send the list to.
-     */
+    /**
+        Sends the captain list to the player
+
+        @param name Who to send the list to.
+    */
     private void sendCaptainList(String name) {
-        for(SBTeam t : teams) 
+        for(SBTeam t : teams)
             ba.sendPrivateMessage(name, t.getCaptainName() + " is captain of " + t.getName() + ".");
     }
 
     /**
-     * Puts a player on a frequency if not playing
-     *
-     * @param name name of the player that should be put on a frequency
-     */
+        Puts a player on a frequency if not playing
+
+        @param name name of the player that should be put on a frequency
+    */
     private void putOnFreq(String name) {
         if (listNotplaying.contains(name)) {
             ba.setFreq(name, FREQ_NOTPLAYING);
             ba.sendPrivateMessage(name, "You are on the !notplaying-list, "
-                    + "captains are unable to sub or put you in. "
-                    + "Message me with !notplaying again to get you off this list.");
+                                  + "captains are unable to sub or put you in. "
+                                  + "Message me with !notplaying again to get you off this list.");
             return;
         }
     }
 
     /**
-     * Sends a welcome message with status info to the player
-     *
-     * @param name Name of the player that should receive the welcome message
-     */
+        Sends a welcome message with status info to the player
+
+        @param name Name of the player that should receive the welcome message
+    */
     private void sendWelcomeMessage(String name) {
         ba.sendPrivateMessage(name, "Welcome to StrikeBall.");
         cmd_status(name);    //Sends status info to the player
     }
 
     /**
-     * Handles FrequencyChange event and FrequencyShipChange event
-     * <ul>
-     *  <li>Checks if the player has lagged out
-     *  <li>Checks if the player is allowed in
-     * </ul>
-     *
-     * @param name Name of the player
-     * @param frequency Frequency of the player
-     * @param ship Ship type of the player
-     */
+        Handles FrequencyChange event and FrequencyShipChange event
+        <ul>
+        <li>Checks if the player has lagged out
+        <li>Checks if the player is allowed in
+        </ul>
+
+        @param name Name of the player
+        @param frequency Frequency of the player
+        @param ship Ship type of the player
+    */
     private void checkFCandFSC(String name, int frequency, int ship) {
         checkLagout(name, ship);  //Check if the player has lagged out
         checkPlayer(name, frequency, ship);  //Check if the player is allowed in
     }
 
     /**
-     * Checks if a player has lagged out
-     * <ul>
-     *  <li>Check if the player is on one of the teams
-     *  <li>Check if the player is in spectator mode
-     *  <li>Check if the player is a player on the team
-     * </ul>
-     *
-     * @param name Name of the player
-     * @param frequency Frequency of the player
-     * @param ship Ship type of the player
-     */
+        Checks if a player has lagged out
+        <ul>
+        <li>Check if the player is on one of the teams
+        <li>Check if the player is in spectator mode
+        <li>Check if the player is a player on the team
+        </ul>
+
+        @param name Name of the player
+        @param frequency Frequency of the player
+        @param ship Ship type of the player
+    */
     private void checkLagout(String name, int ship) {
         SBTeam t;
 
@@ -2275,12 +2314,12 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Checks if a player is allowed in or not
-     *
-     * @param name Name of the player
-     * @param frequency Frequency of the player
-     * @param ship Ship type of the player
-     */
+        Checks if a player is allowed in or not
+
+        @param name Name of the player
+        @param frequency Frequency of the player
+        @param ship Ship type of the player
+    */
     private void checkPlayer(String name, int frequency, int ship) {
         SBTeam t;
 
@@ -2302,12 +2341,12 @@ public class strikebot extends SubspaceBot {
         }
     }
 
-    /** 
-     * Determines who's turn it is to pick a player
-     * <p>
-     * Checks which team currently has the least amount of players in the field and sets the turn to pick to that team.
-     * On a tie, freq 0 is allowed to pick. 
-     */
+    /**
+        Determines who's turn it is to pick a player
+        <p>
+        Checks which team currently has the least amount of players in the field and sets the turn to pick to that team.
+        On a tie, freq 0 is allowed to pick.
+    */
     private void determineTurn() {
         if (team0.getSizeIN() <= team1.getSizeIN()) {
             if (team0.getSizeIN() != config.getMaxPlayers()) {
@@ -2325,11 +2364,11 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Returns SBTeam of the player with "name"
-     *
-     * @param name name of the player
-     * @return SBTeam of the player, null if not on any team
-     */
+        Returns SBTeam of the player with "name"
+
+        @param name name of the player
+        @return SBTeam of the player, null if not on any team
+    */
     private SBTeam getTeam(String name) {
         SBTeam t;
 
@@ -2345,12 +2384,12 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Returns the opposite team of the player
-     *
-     * @param name name of the player
-     * @param freq Frequency of the team that shouldn't be returned.
-     * @return SBTeam, null if player doesn't belong to any team
-     */
+        Returns the opposite team of the player
+
+        @param name name of the player
+        @param freq Frequency of the team that shouldn't be returned.
+        @return SBTeam, null if player doesn't belong to any team
+    */
     private SBTeam getOtherTeam(String name) {
         if (team0.isOnTeam(name)) {
             return team1;
@@ -2362,11 +2401,11 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Returns the opposite team according to SBTeam
-     *
-     * @param t current team
-     * @return other team
-     */
+        Returns the opposite team according to SBTeam
+
+        @param t current team
+        @return other team
+    */
     private SBTeam getOtherTeam(SBTeam t) {
         if (t.getFrequency() == 0) {
             return team1;
@@ -2378,10 +2417,10 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Checks if the arena should be locked or not
-     *
-     * @param message Arena message
-     */
+        Checks if the arena should be locked or not
+
+        @param message Arena message
+    */
     private void checkArenaLock(String message) {
         if (message.equals("Arena UNLOCKED") && lockArena)
             ba.toggleLocked();
@@ -2390,22 +2429,22 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Checks whether or not the arena message was a message that indicates that the ball is being removed.
-     * @param message Arena message
-     */
+        Checks whether or not the arena message was a message that indicates that the ball is being removed.
+        @param message Arena message
+    */
     private void checkRestart(String message) {
         if (message.startsWith("Soccer game over.") && !ball.isRespawning()) {
             ball.setState(BallStates.PreRespawn);
         }
     }
-    
+
     /**
-     * Checks if name is a captain on one of the teams
-     * Returns true if true, else false
-     *
-     * @param name Name of the player that could be captain
-     * @return true if name is captain, else false
-     */
+        Checks if name is a captain on one of the teams
+        Returns true if true, else false
+
+        @param name Name of the player that could be captain
+        @return true if name is captain, else false
+    */
     private boolean isCaptain(String name) {
         boolean isCaptain;
         SBTeam t;
@@ -2423,40 +2462,40 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Checks if lineups are ok
-     * @param timeExpired Must be set to true if this lineup check is caused by exceeding the initial time limit. Otherwise, use false.
-     */
+        Checks if lineups are ok
+        @param timeExpired Must be set to true if this lineup check is caused by exceeding the initial time limit. Otherwise, use false.
+    */
     private void checkLineup(boolean timeExpired) {
         int sizeTeam0, sizeTeam1;
-        
+
         sizeTeam0 = team0.getSizeIN();
         sizeTeam1 = team1.getSizeIN();
-        
+
         // Extended lineup check
         if(sizeTeam0 < config.getMinPlayers()) {
             ba.sendArenaMessage("Freq 0 does not have enough players. " +
-                    "(Current: " + sizeTeam0 + " players; Needed: " + 
-                    config.getMinPlayers() + " players)");
+                                "(Current: " + sizeTeam0 + " players; Needed: " +
+                                config.getMinPlayers() + " players)");
         } else if(sizeTeam1 < config.getMinPlayers()) {
             ba.sendArenaMessage("Freq 1 does not have enough players. " +
-                    "(Current: " + sizeTeam1 + " players; Needed: " + 
-                    config.getMinPlayers() + " players)");
+                                "(Current: " + sizeTeam1 + " players; Needed: " +
+                                config.getMinPlayers() + " players)");
         } else if(sizeTeam0 > config.getMaxPlayers()) {
             ba.sendArenaMessage("Freq 0 has too many players. " +
-                    "(Current: " + sizeTeam0 + " players; Maximum: " + 
-                    config.getMaxPlayers() + " players)");
+                                "(Current: " + sizeTeam0 + " players; Maximum: " +
+                                config.getMaxPlayers() + " players)");
         } else if(sizeTeam1 > config.getMaxPlayers()) {
             ba.sendArenaMessage("Freq 1 has too many players. " +
-                    "(Current: " + sizeTeam1 + " players; Maximum: " + 
-                    config.getMaxPlayers() + " players)");
+                                "(Current: " + sizeTeam1 + " players; Maximum: " +
+                                config.getMaxPlayers() + " players)");
         } else if(sizeTeam0 != sizeTeam1) {
             ba.sendArenaMessage("Teams are unequal. " +
-                    "(Freq 0: " + sizeTeam0 + " players; Freq 1: " + sizeTeam1 + " players)");
+                                "(Freq 0: " + sizeTeam0 + " players; Freq 1: " + sizeTeam1 + " players)");
         } else {
-            
+
             currentState = SBState.FACE_OFF;
             ba.sendArenaMessage("Lineups are ok! Game will start in 30 seconds!", Tools.Sound.CROWD_OOO);
-            
+
             // Inform the players of the type of game.
             ba.sendArenaMessage("First team to score " + config.getScoreTarget() + " goals wins!");
 
@@ -2468,17 +2507,17 @@ public class strikebot extends SubspaceBot {
             startPreFaceOff();
             return;
         }
-        
+
         // Code will only go here if the lineups are not ok, otherwise, the return above kicks in.
         if(timeExpired) {
             // When the maximum lineup time has expired, stop the game.
-            ba.sendArenaMessage("Lineups are NOT ok! " 
-                    + "Game has been cancelled.", Tools.Sound.CROWD_GEE);
+            ba.sendArenaMessage("Lineups are NOT ok! "
+                                + "Game has been cancelled.", Tools.Sound.CROWD_GEE);
             startWaitingForCaps();
         } else {
             // When the time hasn't expired yet, give the captains a chance to fix their teams.
-            ba.sendArenaMessage("Lineups are NOT ok! Status of teams set to NOT ready. " 
-                    + "Captains, fix your lineups and try again.", Tools.Sound.CROWD_GEE);
+            ba.sendArenaMessage("Lineups are NOT ok! Status of teams set to NOT ready. "
+                                + "Captains, fix your lineups and try again.", Tools.Sound.CROWD_GEE);
             team0.ready();
             team1.ready();
             determineTurn();
@@ -2487,58 +2526,60 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * Resets variables to their default value
-     */
+        Resets variables to their default value
+    */
     private void reset() {
         gameTime = 0;
         team0.resetVariables();
         team1.resetVariables();
-        
+
         scoreOverlay.clearAllObjects();
         scoreOverlay.resetVariables();
-        
+
         ball.clear();
 
         setSpecAndFreq();
     }
 
     /**
-     * Locks arena
-     */
+        Locks arena
+    */
     private void lockArena() {
         lockArena = true;
         ba.toggleLocked();
     }
 
     /**
-     * Unlocks arena
-     */
+        Unlocks arena
+    */
     private void unlockArena() {
         lockArena = false;
         ba.toggleLocked();
     }
 
     /**
-     * Locks all doors in the arena
-     */
+        Locks all doors in the arena
+    */
     private void lockDoors() {
         ba.setDoors(255);
     }
 
     /**
-     * Sets everyone in spec and on right frequency
-     */
+        Sets everyone in spec and on right frequency
+    */
     private void setSpecAndFreq() {
         for (Iterator<Player> it = ba.getPlayerIterator(); it.hasNext();) {
             Player i = it.next();
             int id = i.getPlayerID();
             int freq = i.getFrequency();
-            if (ba.getPlayerName(id) == ba.getBotName()){
+
+            if (ba.getPlayerName(id) == ba.getBotName()) {
                 return;
             } else {
                 if (i.getShipType() != Tools.Ship.SPECTATOR) {
                     ba.specWithoutLock(id);
                 }
+
                 if (listNotplaying.contains(i.getPlayerName()) && freq != FREQ_NOTPLAYING) {
                     ba.setFreq(id, FREQ_NOTPLAYING);
                 } else if (freq != FREQ_SPEC && !listNotplaying.contains(i.getPlayerName())) {
@@ -2549,23 +2590,23 @@ public class strikebot extends SubspaceBot {
         }
     }
 
-    /* 
-     * Game classes 
-     */
+    /*
+        Game classes
+    */
     /**
-     * This holds the configuration for this bot.
-     * <p>
-     * This class uses the various configuration files to load up the default settings.
-     * 
-     * @see BottSettings
-     * @author unknown
-     *
-     */
+        This holds the configuration for this bot.
+        <p>
+        This class uses the various configuration files to load up the default settings.
+
+        @see BottSettings
+        @author unknown
+
+    */
     private class SBConfig {
 
         /*
-         * Settings from strikebot.cfg
-         */
+            Settings from strikebot.cfg
+        */
         private BotSettings botSettings;            // Settings from a configuration file.
         private String chats;                       // Various chats this bot joins.
         private String arena;                       // The arena this bot joins as default.
@@ -2592,7 +2633,7 @@ public class strikebot extends SubspaceBot {
 
             //Arena
             arena = botSettings.getString("Arena");
-            
+
             //Allow Zoner
             allowZoner = (botSettings.getInt("AllowZoner") == 1);
 
@@ -2610,176 +2651,178 @@ public class strikebot extends SubspaceBot {
 
             //Min Players
             minPlayers = botSettings.getInt("MinPlayers");
-            
+
             //Max Players
             maxPlayers = botSettings.getInt("MaxPlayers");
-            
+
             //Max Amount of Substitutes Allowed
             maxSubs = botSettings.getInt("MaxSubs");
 
             // Gamemode
             scoreTarget = botSettings.getInt("ScoreTarget");
             scoreDifference = botSettings.getInt("ScoreDifference");
-            
+
             // Various coordinates
             ballDropLocation = botSettings.getPoint("BallDropLocation", ":");
             ballTimeOutLocation = botSettings.getPoint("BallTimeOutLocation", ":");
-            
+
             teamEntryPoint = botSettings.getPointArray("TeamSpawnLocation", ",", ":");
-            
+
         }
 
         /**
-         * Returns the default ship type
-         *
-         * @return default ship type
-         */
+            Returns the default ship type
+
+            @return default ship type
+        */
         private int getDefaultShipType(int freq) {
-            if(freq != 0 && freq != 1) 
+            if(freq != 0 && freq != 1)
                 return Tools.Ship.SPECTATOR;
+
             return defaultShipType[freq];
         }
 
         /**
-         * Returns string with chats
-         *
-         * @return String with all the chats
-         */
+            Returns string with chats
+
+            @return String with all the chats
+        */
         private String getChats() {
             return chats;
         }
 
         /**
-         * Returns the amount of maximum lag outs
-         *
-         * @return amount of maximum lag outs, -1 if unlimited
-         */
+            Returns the amount of maximum lag outs
+
+            @return amount of maximum lag outs, -1 if unlimited
+        */
         private int getMaxLagouts() {
             return maxLagouts;
         }
 
         /**
-         * Returns the arena name
-         *
-         * @return arena name
-         */
+            Returns the arena name
+
+            @return arena name
+        */
         private String getArena() {
             return arena;
         }
 
         /**
-         * Returns the maximum amount of players allowed
-         *
-         * @return maximum amount of players allowed
-         */
+            Returns the maximum amount of players allowed
+
+            @return maximum amount of players allowed
+        */
         private int getMaxPlayers() {
             return maxPlayers;
         }
 
         /**
-         * Returns true if auto caps is on, else false
-         *
-         * @return Returns true if auto caps is on, else false
-         */
+            Returns true if auto caps is on, else false
+
+            @return Returns true if auto caps is on, else false
+        */
         private boolean getAllowAutoCaps() {
             return allowAutoCaps;
         }
-        
+
         /**
-         * Toggles the current state of auto caps.
-         */
+            Toggles the current state of auto caps.
+        */
         private void toggleAllowAutoCaps() {
             allowAutoCaps = !allowAutoCaps;
         }
 
         /**
-         * Returns if a zoner can be send
-         *
-         * @return true if a zoner can be send, else false
-         */
+            Returns if a zoner can be send
+
+            @return true if a zoner can be send, else false
+        */
         private boolean getAllowZoner() {
             return allowZoner;
         }
 
         /**
-         * Returns minimal amount of players needed in
-         *
-         * @return minimal amount of players
-         */
+            Returns minimal amount of players needed in
+
+            @return minimal amount of players
+        */
         private int getMinPlayers() {
             return minPlayers;
         }
 
         /**
-         * Returns maximum allowed substitutes
-         *
-         * @return maximum allowed substitutes
-         */
+            Returns maximum allowed substitutes
+
+            @return maximum allowed substitutes
+        */
         private int getMaxSubs() {
             return maxSubs;
         }
 
         /**
-         * Returns the default goals target.
-         * @return scoreTarget
-         */
+            Returns the default goals target.
+            @return scoreTarget
+        */
         private int getScoreTarget() {
             return scoreTarget;
         }
-        
+
         /**
-         * Returns the "win by X goals" amount
-         * @return scoreDifference
-         */
+            Returns the "win by X goals" amount
+            @return scoreDifference
+        */
         private int getScoreDifference() {
             return scoreDifference;
         }
-        
+
         /**
-         * Returns the coordinates of the ball drop location.
-         * @return the ballDropLocation
-         */
+            Returns the coordinates of the ball drop location.
+            @return the ballDropLocation
+        */
         public Point getBallDrop() {
             return ballDropLocation;
         }
 
         /**
-         * Returns the coordinates of timeout location of the ball
-         * @return the ballTimeOutLocation
-         */
+            Returns the coordinates of timeout location of the ball
+            @return the ballTimeOutLocation
+        */
         public Point getBallTimeOut() {
             return ballTimeOutLocation;
         }
- 
+
         /**
-         * Returns the coordinates of the warp-in point of a specific team.
-         * @param freq Frequency of target team.
-         * @return the entrypoint of the requested team.
-         */
+            Returns the coordinates of the warp-in point of a specific team.
+            @param freq Frequency of target team.
+            @return the entrypoint of the requested team.
+        */
         public Point getTeamEntryPoint(int freq) {
             if(teamEntryPoint.length == 2 && (freq == 0 || freq == 1))
                 return teamEntryPoint[freq];
+
             return null;
         }
-        
+
     }
 
     /**
-     * This class keeps track of anything player related. 
-     * It is mainly used for stat tracking and some other player related values.
-     * @author unknown
-     *
-     */
+        This class keeps track of anything player related.
+        It is mainly used for stat tracking and some other player related values.
+        @author unknown
+
+    */
     private class SBPlayer {
 
         private String p_name;                              // Player's name
         private int p_currentShip;                          // The current ship of the player.
         private int p_state;                                // The current state of the player (IN, SUBBED, etc.)
-        private long p_timestampLagout;                     // Timestamp of the last time the player was lagged out. 
+        private long p_timestampLagout;                     // Timestamp of the last time the player was lagged out.
         private long p_timestampSub;                        // Timestamp of the last time the player was subbed.
         private int p_lagouts;                              // Number of lagouts for this player.
         private int p_frequency;                            // Player's current frequency.
-        
+
         //Ship states for p_state.
         private static final int IN = 0;                    // Player is in a ship and active.
         private static final int LAGOUT = 1;                // Player is lagged out.
@@ -2789,7 +2832,7 @@ public class strikebot extends SubspaceBot {
         //Static variables
         private static final int SUB_WAIT_TIME = 15;        // Wait time between !subs, in seconds
         private static final int LAGOUT_TIME = 15 * Tools.TimeInMillis.SECOND;  // Time in which the player is allowed back into the game with !lagout, in milliseconds.
-        
+
         //Player statistics.
         private int assists = 0;                            // Assists on clean goals.
         private int goals = 0;                              // Clean goals made.
@@ -2811,8 +2854,8 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Adds a player into the game.
-         */
+            Adds a player into the game.
+        */
         private void addPlayer() {
             // Set state to in (active) and ticks the current ship as used.
             p_state = IN;
@@ -2833,16 +2876,16 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Increases the assist stat by one.
-         */
+            Increases the assist stat by one.
+        */
         public void madeAssist() {
             this.assists++;
         }
 
         /**
-         * Adds a goal to the player stats.
-         * If the goal was made by the player himself, adds one to the shotsOnGoal as well.
-         */
+            Adds a goal to the player stats.
+            If the goal was made by the player himself, adds one to the shotsOnGoal as well.
+        */
         public void madeGoal() {
             this.goals++;
 
@@ -2852,33 +2895,33 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Puts player IN in shiptype
-         *
-         * @param shipType ship type
-         */
+            Puts player IN in shiptype
+
+            @param shipType ship type
+        */
         private void putIN(int shipType) {
             p_currentShip = shipType;
             addPlayer();
         }
 
         /**
-         * Returns the current ship state
-         *
-         * @return int current ship state
-         */
+            Returns the current ship state
+
+            @return int current ship state
+        */
         private int getCurrentState() {
             return p_state;
         }
 
         /**
-         * Handles a lagout event
-         * <ul>
-         *  <li>Notes down the timestamp of the lagout
-         *  <li>Adds one to the lagout counter
-         *  <li>Check if the player is out due maximum of lagouts
-         *  <li>Tell the player how to get back in
-         * </ul>
-         */
+            Handles a lagout event
+            <ul>
+            <li>Notes down the timestamp of the lagout
+            <li>Adds one to the lagout counter
+            <li>Check if the player is out due maximum of lagouts
+            <li>Tell the player how to get back in
+            </ul>
+        */
         private void lagout() {
             p_state = LAGOUT;
             p_timestampLagout = System.currentTimeMillis();
@@ -2905,16 +2948,16 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * This method handles a player going out
-         * <ul>
-         *  <li>Changes player state
-         *  <li>Spectates the player
-         *  <li>Notifies the arena
-         *  <li>Change state according to reason
-         * </ul>
-         * 
-         * @param reason Reason why the player went out
-         */
+            This method handles a player going out
+            <ul>
+            <li>Changes player state
+            <li>Spectates the player
+            <li>Notifies the arena
+            <li>Change state according to reason
+            </ul>
+
+            @param reason Reason why the player went out
+        */
         private void out(String reason) {
             String arenaMessage = "";
 
@@ -2936,28 +2979,28 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Returns the name of this player
-         *
-         * @return Returns the name of this player
-         */
+            Returns the name of this player
+
+            @return Returns the name of this player
+        */
         private String getName() {
             return p_name;
         }
 
         /**
-         * Returns current type of ship
-         *
-         * @return Returns current type of ship
-         */
+            Returns current type of ship
+
+            @return Returns current type of ship
+        */
         private int getCurrentShipType() {
             return p_currentShip;
         }
 
         /**
-         * Returns whether a !sub is allowed on this player
-         *
-         * @return true if sub is allowed, else false
-         */
+            Returns whether a !sub is allowed on this player
+
+            @return true if sub is allowed, else false
+        */
         private boolean isSubAllowed() {
             if ((System.currentTimeMillis() - p_timestampSub) <= (SUB_WAIT_TIME * Tools.TimeInMillis.SECOND)) {
                 return false;
@@ -2967,60 +3010,67 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Returns time in seconds until next sub
-         *
-         * @return Returns time in seconds until next sub
-         */
+            Returns time in seconds until next sub
+
+            @return Returns time in seconds until next sub
+        */
         private long getTimeUntilNextSub() {
             return (SUB_WAIT_TIME - ((System.currentTimeMillis() - p_timestampSub) / Tools.TimeInMillis.SECOND));
         }
 
         /**
-         * Returns lagout time
-         *
-         * @return lagout time
-         */
+            Returns lagout time
+
+            @return lagout time
+        */
         private long getLagoutTimestamp() {
             return p_timestampLagout;
         }
 
         /**
-         * Returns a player into the game
-         */
+            Returns a player into the game
+        */
         private void lagin() {
             ba.sendOpposingTeamMessageByFrequency(p_frequency, p_name + " returned from lagout.");
             addPlayer();
         }
 
         /**
-         * Returns status
-         *
-         * @return status
-         */
+            Returns status
+
+            @return status
+        */
         private String getStatus() {
             switch (p_state) {
-                case (IN):
-                    return "IN";
-                case (LAGOUT):
-                    return "LAGGED OUT";
-                case (SUBBED):
-                    return "SUBSTITUTED";
-                case (OUT):
-                    return "OUT";
-                case (OUT_SUBABLE):
-                    return "OUT (still substitutable)";
-                default:
-                    return "";
+            case (IN):
+                return "IN";
+
+            case (LAGOUT):
+                return "LAGGED OUT";
+
+            case (SUBBED):
+                return "SUBSTITUTED";
+
+            case (OUT):
+                return "OUT";
+
+            case (OUT_SUBABLE):
+                return "OUT (still substitutable)";
+
+            default:
+                return "";
             }
         }
 
         /**
-         * Subs the player OUT
-         */
+            Subs the player OUT
+        */
         private void sub() {
             p_state = SUBBED;
+
             if (ba.getPlayer(p_name) != null) {
                 ba.specWithoutLock(p_name);
+
                 if (!listNotplaying.contains(p_name)) {
                     ba.setFreq(p_name, p_frequency);
                 }
@@ -3028,50 +3078,50 @@ public class strikebot extends SubspaceBot {
 
             p_timestampSub = System.currentTimeMillis();
         }
-        
+
         /*
-         * Default getters and setters below.
-         */
+            Default getters and setters below.
+        */
         private int getGoals() {
             return goals;
         }
-        
+
         private int getAssists() {
             return assists;
         }
         private void addKill() {
             kills++;
         }
-        
+
         private void addDeath() {
             deaths++;
         }
-        
+
         private int getKills() {
             return kills;
         }
-        
+
         private int getDeaths() {
             return deaths;
         }
-        
+
         /**
-         * Calculates the player's Kill/Death ratio.
-         * @return K/D ratio or null if the player hasn't died yet.
-         */
+            Calculates the player's Kill/Death ratio.
+            @return K/D ratio or null if the player hasn't died yet.
+        */
         private String getKDRatio() {
             if(deaths == 0)
                 return "0.00";
-            
-            return String.format("%.2f", (float) kills/deaths);
+
+            return String.format("%.2f", (float) kills / deaths);
         }
-        
+
         /**
-         * Calculates the rating of a player.
-         * Used weights might require to be changed in the future
-         * 
-         * @return players rating
-         */
+            Calculates the rating of a player.
+            Used weights might require to be changed in the future
+
+            @return players rating
+        */
         private int getTotalRating() {
             // Random formula, based on twht's one.
             return (goals * 100 + assists * 10 + kills - deaths);
@@ -3079,11 +3129,11 @@ public class strikebot extends SubspaceBot {
     }
 
     /**
-     * This class handles all team related functions and stat tracking.
-     * 
-     * @author unknown
-     *
-     */
+        This class handles all team related functions and stat tracking.
+
+        @author unknown
+
+    */
     private class SBTeam {
 
         private boolean turnToPick;                     // True if it's this team's turn to pick a player.
@@ -3099,7 +3149,7 @@ public class strikebot extends SubspaceBot {
         private long captainTimestamp;                  // Timestamp when the current captain was assigned.
         private int substitutesLeft;                    // Amount of substitutes left for this team.
         private int teamScore;                          // Current score for this team.
-        
+
         /** Class constructor */
         private SBTeam(int frequency) {
             this.frequency = frequency;
@@ -3111,8 +3161,8 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Resets all variables except frequency
-         */
+            Resets all variables except frequency
+        */
         private void resetVariables() {
             players.clear();
             turnToPick = false;
@@ -3124,52 +3174,53 @@ public class strikebot extends SubspaceBot {
             substitutesLeft = config.getMaxSubs();
             captainsIndex = -1;
             teamScore = 0;
-            
+
         }
 
         /**
-         * Increases team score by 1.
-         */
+            Increases team score by 1.
+        */
         private void increaseScore() {
             teamScore++;
             scoreOverlay.updateScores();
         }
-        
+
         /**
-         * Lowers the amount of remaining allowed time outs by one.
-         */
+            Lowers the amount of remaining allowed time outs by one.
+        */
         private void useTimeOut() {
             if(timeout > 0) timeout--;
         }
 
         /**
-         * Returns the teamname
-         *
-         * @return teamname
-         */
+            Returns the teamname
+
+            @return teamname
+        */
         private String getName() {
             return teamName;
         }
-        
+
         /**
-         * Sets the teamname to the parameter provided.
-         * For formatting and safety issues, currently limited to 20 chars max.
-         * @param newName The new name of the team.
-         */
+            Sets the teamname to the parameter provided.
+            For formatting and safety issues, currently limited to 20 chars max.
+            @param newName The new name of the team.
+        */
         private void setName(String newName) {
             if(newName.length() > 20) {
                 newName = newName.substring(0, 20);
             }
+
             teamName = newName;
             scoreOverlay.updateNames();
         }
 
         /**
-         * Returns the current state of the player
-         *
-         * @param name name of the player
-         * @return current state of the player
-         */
+            Returns the current state of the player
+
+            @param name name of the player
+            @return current state of the player
+        */
         private int getPlayerState(String name) {
             int playerState;    //Current state of the player
 
@@ -3186,11 +3237,11 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Checks if the player is on this team
-         *
-         * @param name name of the player
-         * @return true if on team, false if not
-         */
+            Checks if the player is on this team
+
+            @param name name of the player
+            @return true if on team, false if not
+        */
         private boolean isOnTeam(String name) {
             boolean isOnTeam = false;
 
@@ -3209,11 +3260,11 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Checks if the player is a player on the team
-         *
-         * @param name Name of the player
-         * @return true if is a player, false if not
-         */
+            Checks if the player is a player on the team
+
+            @param name Name of the player
+            @return true if is a player, false if not
+        */
         private boolean isPlayer(String name) {
             boolean isPlayer = false;
 
@@ -3230,11 +3281,11 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Checks if the player is playing or has played for the team
-         *
-         * @param name Name of the player
-         * @return return if player was IN, else false
-         */
+            Checks if the player is playing or has played for the team
+
+            @param name Name of the player
+            @return return if player was IN, else false
+        */
         private boolean isIN(String name) {
             boolean isIN = false;
 
@@ -3251,11 +3302,11 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Checks if a player has lagged out or not
-         *
-         * @param name name of the player that could have lagged out
-         * @return true if player has lagged out, else false
-         */
+            Checks if a player has lagged out or not
+
+            @param name name of the player that could have lagged out
+            @return true if player has lagged out, else false
+        */
         private boolean laggedOut(String name) {
             SBPlayer p;
             Player player;
@@ -3290,12 +3341,12 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Handles a lagout event
-         * - Sends a lagout event to the player
-         * - Notify the captain
-         *
-         * @param name Name of the player that lagged out
-         */
+            Handles a lagout event
+            - Sends a lagout event to the player
+            - Notify the captain
+
+            @param name Name of the player that lagged out
+        */
         private void lagout(String name) {
 
             try {
@@ -3314,19 +3365,19 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Returns the name of the current captain
-         *
-         * @return name of the current captain
-         */
+            Returns the name of the current captain
+
+            @return name of the current captain
+        */
         private String getCaptainName() {
             return captainName;
         }
 
         /**
-         * Removes captain
-         * - Notifies arena
-         * - Sets captainName to [NONE]
-         */
+            Removes captain
+            - Notifies arena
+            - Sets captainName to [NONE]
+        */
         private void captainLeft() {
             ba.sendArenaMessage(captainName + " has been removed as captain of " + teamName + ".");
             lastCaptainName = captainName;
@@ -3334,33 +3385,33 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Notify the arena that the captain has left the arena
-         */
+            Notify the arena that the captain has left the arena
+        */
         private void captainLeftArena() {
             if (config.getAllowAutoCaps()) {
                 ba.sendArenaMessage("The captain of " + teamName
-                        + " has left the arena, anyone of Freq " + frequency + " can claim cap with !cap");
+                                    + " has left the arena, anyone of Freq " + frequency + " can claim cap with !cap");
             } else {
                 ba.sendArenaMessage("The captain of " + teamName
-                        + " has left the arena.");
+                                    + " has left the arena.");
             }
         }
 
         /**
-         * Returns if its the team's turn to pick
-         *
-         * @return true if its the team's turn, else false
-         */
+            Returns if its the team's turn to pick
+
+            @return true if its the team's turn, else false
+        */
         private boolean isTurn() {
             return turnToPick;
         }
 
         /**
-         * Returns the amount of players in the team.
-         * Meaning all the players but the subbed ones
-         *
-         * @return amount of players IN
-         */
+            Returns the amount of players in the team.
+            Meaning all the players but the subbed ones
+
+            @return amount of players IN
+        */
         private int getSizeIN() {
             int sizeIn;
 
@@ -3376,13 +3427,13 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Adds a player to the team
-         * - Sending the arena, captain and the player a message
-         * - Adding the player
-         *
-         * @param p Player that is added
-         * @param shipType shiptype
-         */
+            Adds a player to the team
+            - Sending the arena, captain and the player a message
+            - Adding the player
+
+            @param p Player that is added
+            @param shipType shiptype
+        */
         private void addPlayer(Player p, int shipType) {
             String arenaMessage;    //Arena message
             String captainMessage;  //Captain message
@@ -3409,28 +3460,28 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Team has picked a player
-         * - turnToPick set to false
-         */
+            Team has picked a player
+            - turnToPick set to false
+        */
         private void picked() {
             turnToPick = false;
         }
 
         /**
-         * Sets turn to true
-         */
+            Sets turn to true
+        */
         private void setTurn() {
             turnToPick = true;
         }
 
         /**
-         * Checks if the team has a captain
-         * <ul>
-         *  <li>Checks if captainName is equal to [NONE]
-         *  <li>Checks if captain is in the arena
-         * </ul>
-         * @return true if the team has a captain, else false
-         */
+            Checks if the team has a captain
+            <ul>
+            <li>Checks if captainName is equal to [NONE]
+            <li>Checks if captain is in the arena
+            </ul>
+            @return true if the team has a captain, else false
+        */
         private boolean hasCaptain() {
             if (captainName.equals("[NONE]")) {
                 return false;
@@ -3442,14 +3493,14 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Sets captain
-         * <ul>
-         *  <li>Sets timestamp
-         *  <li>Sends arena message
-         * </ul>
-         *
-         * @param name Name of the captain
-         */
+            Sets captain
+            <ul>
+            <li>Sets timestamp
+            <li>Sends arena message
+            </ul>
+
+            @param name Name of the captain
+        */
         private void setCaptain(String name) {
             Player p;
 
@@ -3463,8 +3514,8 @@ public class strikebot extends SubspaceBot {
             if (name.equalsIgnoreCase(lastCaptainName)) {
                 if ((System.currentTimeMillis() - captainTimestamp) <= (5 * Tools.TimeInMillis.SECOND)) {
                     ba.sendPrivateMessage(name, "You will have to wait "
-                            + (System.currentTimeMillis() - captainTimestamp) / 1000
-                            + " more seconds before you can claim cap again.");
+                                          + (System.currentTimeMillis() - captainTimestamp) / 1000
+                                          + " more seconds before you can claim cap again.");
                     sendCaptainList(name);
                     return;
                 }
@@ -3474,7 +3525,7 @@ public class strikebot extends SubspaceBot {
             captainTimestamp = System.currentTimeMillis();
 
             ba.sendArenaMessage(captainName + " is assigned as captain for "
-                    + teamName, Tools.Sound.BEEP1);
+                                + teamName, Tools.Sound.BEEP1);
 
             if (currentState != SBState.WAITING_FOR_CAPS) {
                 captainsIndex++;
@@ -3483,25 +3534,25 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Sets the current captain in the captain list
-         */
+            Sets the current captain in the captain list
+        */
         private void putCaptainInList() {
             captainsIndex++;
             captains.put(captainsIndex, captainName);
         }
 
         /**
-         * Searches for name in team
-         *
-         * @param name name of the player that needs to get found
-         * @return SBPlayer if found, else null
-         */
+            Searches for name in team
+
+            @param name name of the player that needs to get found
+            @return SBPlayer if found, else null
+        */
         private SBPlayer searchPlayer(String name) {
             SBPlayer p;
 
             if(name == null)
                 return null;
-            
+
             p = null;
             name = name.toLowerCase();
 
@@ -3519,11 +3570,11 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Determines if a player is allowed back in with !lagout/!return
-         *
-         * @param name name of the player that needs to get checked
-         * @return true if allowed back in, else false
-         */
+            Determines if a player is allowed back in with !lagout/!return
+
+            @param name name of the player that needs to get checked
+            @return true if allowed back in, else false
+        */
         private boolean laginAllowed(String name) {
             SBPlayer p;
             Player player;
@@ -3538,23 +3589,25 @@ public class strikebot extends SubspaceBot {
             p = players.get(name);
 
             switch (p.getCurrentState()) {
-                case SBPlayer.IN:
-                    player = ba.getPlayer(name);
+            case SBPlayer.IN:
+                player = ba.getPlayer(name);
 
-                    if (player == null) {
-                        return false;
-                    }
-
-                    if (player.getShipType() != Tools.Ship.SPECTATOR) {
-                        return false;
-                    }
-
-                    skipLagoutTime = true;
-                    break;
-                case SBPlayer.LAGOUT:
-                    break;
-                default:
+                if (player == null) {
                     return false;
+                }
+
+                if (player.getShipType() != Tools.Ship.SPECTATOR) {
+                    return false;
+                }
+
+                skipLagoutTime = true;
+                break;
+
+            case SBPlayer.LAGOUT:
+                break;
+
+            default:
+                return false;
             }
 
             //Check if enough time has passed
@@ -3565,17 +3618,17 @@ public class strikebot extends SubspaceBot {
             }
 
             /*
-             * All checks done
-             */
+                All checks done
+            */
             return true;
         }
 
         /**
-         * Returns the corresponding error message of a not allowed !lagout
-         *
-         * @param name name of the player that issued the !lagout command
-         * @return Error message string
-         */
+            Returns the corresponding error message of a not allowed !lagout
+
+            @param name name of the player that issued the !lagout command
+            @return Error message string
+        */
         private String getLaginErrorMessage(String name) {
             SBPlayer p;
             Player player;
@@ -3590,31 +3643,33 @@ public class strikebot extends SubspaceBot {
             p = players.get(name);
 
             switch (p.getCurrentState()) {
-                case SBPlayer.IN:
-                    player = ba.getPlayer(name);
+            case SBPlayer.IN:
+                player = ba.getPlayer(name);
 
-                    if (player == null) {
-                        return "ERROR: Unknown";
-                    }
+                if (player == null) {
+                    return "ERROR: Unknown";
+                }
 
-                    if (player.getShipType() != Tools.Ship.SPECTATOR) {
-                        return "Error: You have not lagged out.";
-                    }
+                if (player.getShipType() != Tools.Ship.SPECTATOR) {
+                    return "Error: You have not lagged out.";
+                }
 
-                    skipLagoutTime = true;
-                    break;
-                case SBPlayer.LAGOUT:
-                    break;
-                default:
-                    return "ERROR: You have not lagged out.";
+                skipLagoutTime = true;
+                break;
+
+            case SBPlayer.LAGOUT:
+                break;
+
+            default:
+                return "ERROR: You have not lagged out.";
             }
 
             //Check if enough time has passed
             if (!skipLagoutTime) {
                 if (System.currentTimeMillis() - p.getLagoutTimestamp() < SBPlayer.LAGOUT_TIME) {
                     return "You must wait for " + (SBPlayer.LAGOUT_TIME
-                            - (System.currentTimeMillis() - p.getLagoutTimestamp())) / Tools.TimeInMillis.SECOND
-                            + " more seconds before you can return into the game.";
+                                                   - (System.currentTimeMillis() - p.getLagoutTimestamp())) / Tools.TimeInMillis.SECOND
+                           + " more seconds before you can return into the game.";
                 }
             }
 
@@ -3622,10 +3677,10 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Returns player into the game
-         *
-         * @param name name of the player
-         */
+            Returns player into the game
+
+            @param name name of the player
+        */
         private void lagin(String name) {
             if (!players.containsKey(name)) {
                 return;
@@ -3635,11 +3690,11 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Returns if player is currently playing or not
-         *
-         * @param name name of the player
-         * @return true if the player is IN, else false
-         */
+            Returns if player is currently playing or not
+
+            @param name name of the player
+            @return true if the player is IN, else false
+        */
         private boolean isPlaying(String name) {
             if (!players.containsKey(name)) {
                 return false;
@@ -3653,19 +3708,19 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Returns team's frequency
-         *
-         * @return frequency
-         */
+            Returns team's frequency
+
+            @return frequency
+        */
         private int getFrequency() {
             return frequency;
         }
 
         /**
-         * Completely removes player from the team
-         *
-         * @param name name of the player that needs to get removed
-         */
+            Completely removes player from the team
+
+            @param name name of the player that needs to get removed
+        */
         private void removePlayer(String name) {
             Player p;
 
@@ -3673,7 +3728,7 @@ public class strikebot extends SubspaceBot {
                 //Remove the player from the team.
                 players.remove(name);
             }
-            
+
             ba.sendArenaMessage(name + " has been removed from " + teamName);
 
             p = ba.getPlayer(name);
@@ -3692,12 +3747,12 @@ public class strikebot extends SubspaceBot {
                 ba.setFreq(name, FREQ_SPEC);
             }
         }
-        
+
         /**
-         * Sets player to not playing modus, player will still be subable
-         *
-         * @param name Name of the player that should be set to out notplaying
-         */
+            Sets player to not playing modus, player will still be subable
+
+            @param name Name of the player that should be set to out notplaying
+        */
         private void setOutNotPlaying(String name) {
             if (players.containsKey(name)) {
                 players.get(name).out("out not playing");
@@ -3705,8 +3760,8 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Readies the team or sets it to not ready
-         */
+            Readies the team or sets it to not ready
+        */
         private void ready() {
             if (!ready) {
                 if (players.size() >= config.getMinPlayers()) {
@@ -3721,18 +3776,18 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Sets the team to not ready
-         */
+            Sets the team to not ready
+        */
         private void notReady() {
             ready = false;
             ba.sendArenaMessage(teamName + " is NOT ready to begin.");
         }
 
         /**
-         * Returns if team is ready or not
-         *
-         * @return true if team is ready, else false
-         */
+            Returns if team is ready or not
+
+            @return true if team is ready, else false
+        */
         private boolean isReady() {
             if (ready) {
                 return true;
@@ -3742,10 +3797,10 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Returns if the team has any substitutes left
-         *
-         * @return True if team has substitutes left, else false
-         */
+            Returns if the team has any substitutes left
+
+            @return True if team has substitutes left, else false
+        */
         private boolean hasSubtitutesLeft() {
             if (substitutesLeft > 0 || substitutesLeft == -1) {
                 return true;
@@ -3755,18 +3810,18 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Handles the sub further
-         *
-         * @param playerOne player one
-         * @param playerTwo player two
-         */
+            Handles the sub further
+
+            @param playerOne player one
+            @param playerTwo player two
+        */
         private void sub(SBPlayer playerOne, Player playerTwo) {
             int shipType = playerOne.p_currentShip;
             String p2Name = playerTwo.getPlayerName();      //Name player 2
 
             //Removing player
             playerOne.sub();
-            
+
             //Adding substitute
             if (players.containsKey(p2Name)) {
                 SBPlayer p = players.get(p2Name);
@@ -3774,7 +3829,7 @@ public class strikebot extends SubspaceBot {
                 p.addPlayer();
             } else {
                 players.put(p2Name,
-                        new SBPlayer(p2Name, shipType, frequency));
+                            new SBPlayer(p2Name, shipType, frequency));
             }
 
             ba.sendSmartPrivateMessage(p2Name, "You are subbed in the game.");
@@ -3787,44 +3842,44 @@ public class strikebot extends SubspaceBot {
 
             if (substitutesLeft >= 0) {
                 ba.sendSmartPrivateMessage(captainName, "You have "
-                        + substitutesLeft + " substitutes left.");
+                                           + substitutesLeft + " substitutes left.");
             }
         }
 
         /**
-         * Returns the timestamp when the captain was set
-         *
-         * @return timestamp of when the captain was set
-         */
+            Returns the timestamp when the captain was set
+
+            @return timestamp of when the captain was set
+        */
         private long getCaptainTimeStamp() {
             return captainTimestamp;
         }
 
         /**
-         * Returns sum of scores
-         *
-         * @return sum of scores
-         */
+            Returns sum of scores
+
+            @return sum of scores
+        */
         private int getScore() {
             return teamScore;
         }
 
         /**
-         * Returns a player's {@link SBPlayer} object from this team's players list..
-         * @param name Name of the player to look up
-         * @return The SBPlayer object associated with this name, or null when the player isn't found.
-         */
+            Returns a player's {@link SBPlayer} object from this team's players list..
+            @param name Name of the player to look up
+            @return The SBPlayer object associated with this name, or null when the player isn't found.
+        */
         public SBPlayer getPlayer(String name) {
             return players.get(name);
         }
     }
 
     /**
-     * This class keeps track of anything related to the ball/ball.
-     * 
-     * @author unknown
-     *
-     */
+        This class keeps track of anything related to the ball/ball.
+
+        @author unknown
+
+    */
     private class SBBall {
 
         private byte ballID;                    // The ID of the ball/ball.
@@ -3834,7 +3889,7 @@ public class strikebot extends SubspaceBot {
         private boolean carried;                // True if the ball is being carried by someone.
         private String carrier;                 // Name of the current carrier.
         private final Stack<String> carriers;   // List of the current and all previous carries of the ball. Sorted according LIFO.
-        private Stack<Point> releases;          // List of points (X- and Y-coordinate) of where the ball was previously released. 
+        private Stack<Point> releases;          // List of points (X- and Y-coordinate) of where the ball was previously released.
         private boolean holding;                // True if the bot is currently carrying the ball.
         private int dropDelay;                  // Delay before the ball is being dropped during face off.
         private BallStates ballState;           // Current state the ball is in.
@@ -3851,35 +3906,36 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Called by handleEvent(BallPosition event)
-         * <p>
-         * Updates almost anything ball related:
-         * <ul>
-         *  <li>BallID.
-         *  <li>Timestamp.
-         *  <li>Coordinates.
-         *  <li>Current velocity.
-         *  <li>Current carrier and carriers stack, if applicable.
-         *  <li>Pick up point, if applicable.
-         *  <li>Release point stack, if applicable.
-         *  <li>Carried and/or holding, if applicable.
-         * </ul>
-         * @param event the ball position
-         */
+            Called by handleEvent(BallPosition event)
+            <p>
+            Updates almost anything ball related:
+            <ul>
+            <li>BallID.
+            <li>Timestamp.
+            <li>Coordinates.
+            <li>Current velocity.
+            <li>Current carrier and carriers stack, if applicable.
+            <li>Pick up point, if applicable.
+            <li>Release point stack, if applicable.
+            <li>Carried and/or holding, if applicable.
+            </ul>
+            @param event the ball position
+        */
         public void update(BallPosition event) {
             ballID = event.getBallID();
             this.timestamp = event.getTimeStamp();
             ballX = event.getXLocation();
             ballY = event.getYLocation();
             short carrierID = event.getCarrier();
-            
+
             // Update ball state
             switch(ballState) {
             case PreRespawn:
+
                 // The actual start of the respawn triggers a ball update, this kinda needs to be ignored by the bot.
                 if(ballRemovalDelay != null)
                     ba.cancelTask(ballRemovalDelay);
-                
+
                 ballRemovalDelay = new TimerTask() {
                     @Override
                     public void run() {
@@ -3887,14 +3943,16 @@ public class strikebot extends SubspaceBot {
                     }
                 };
                 ba.scheduleTask(ballRemovalDelay, Tools.TimeInMillis.SECOND);
-                
+
                 break;
+
             case Respawning:
                 // This will be triggered after the ball has been respawned.
                 ballState = BallStates.PostRespawn;
                 doRemoveBall();
                 ballState = BallStates.OutOfGame;
                 break;
+
             case InGame:
             case PostRespawn:
             case OutOfGame:
@@ -3903,7 +3961,7 @@ public class strikebot extends SubspaceBot {
                 // For now, do nothing.
                 break;
             }
-            
+
             // Updating other lists.
             if (carrierID != -1) {
                 carrier = ba.getPlayerName(carrierID);
@@ -3915,11 +3973,13 @@ public class strikebot extends SubspaceBot {
                 if (!carried && currentState == SBState.GAME_IN_PROGRESS) {
                     carriers.push(carrier);
                 }
+
                 carried = true;
             } else if (carrier == null && carried) {
                 if (carried && currentState == SBState.GAME_IN_PROGRESS) {
                     releases.push(new Point(ballX, ballY));
                 }
+
                 carried = false;
             } else if (carrier != null && carrier.equals(ba.getBotName())) {
                 holding = true;
@@ -3927,126 +3987,131 @@ public class strikebot extends SubspaceBot {
                 if (holding && currentState == SBState.GAME_IN_PROGRESS) {
                     releases.push(new Point(ballX, ballY));
                 }
+
                 holding = false;
             }
         }
 
         /**
-         * Clears local data for ball
-         */
+            Clears local data for ball
+        */
         public void clear() {
             carrier = null;
+
             try {
                 carriers.clear();
                 releases.clear();
             } catch (Exception e) {
             }
+
             ballState = BallStates.InGame;
         }
 
         /**
-         * Returns the current ball ID.
-         * @return ballID
-         */
+            Returns the current ball ID.
+            @return ballID
+        */
         public byte getBallID() {
             return ballID;
         }
 
         /**
-         * Returns the timestamp of the last ball update.
-         * @return timestamp
-         */
+            Returns the timestamp of the last ball update.
+            @return timestamp
+        */
         public int getTimeStamp() {
             return timestamp;
         }
 
         /**
-         * Returns the last known X-coordinate of the ball.
-         * @return ballX
-         */
+            Returns the last known X-coordinate of the ball.
+            @return ballX
+        */
         public short getBallX() {
             return ballX;
         }
 
         /**
-         * Returns the last known Y-coordinate of the ball.
-         * @return ballY
-         */
+            Returns the last known Y-coordinate of the ball.
+            @return ballY
+        */
         public short getBallY() {
             return ballY;
         }
 
         /**
-         * Gets last ball carrier (removes it from stack).
-         * @return short player id or null if empty
-         */
+            Gets last ball carrier (removes it from stack).
+            @return short player id or null if empty
+        */
         public String getLastCarrierName() {
             String id = null;
+
             if (!carriers.empty()) {
                 id = carriers.pop();
             }
+
             return id;
         }
-        
+
         /**
-         * Initiates the respawning of the ball.
-         */
+            Initiates the respawning of the ball.
+        */
         public void respawn() {
             if(ballState == BallStates.InGame) {
                 ba.sendUnfilteredPublicMessage("*restart");
                 ballState = BallStates.PreRespawn;
             }
         }
-        
+
         /**
-         * Forces the ball into a specific state.
-         * @param newState New state the ball will be in.
-         */
+            Forces the ball into a specific state.
+            @param newState New state the ball will be in.
+        */
         public void setState(BallStates newState) {
             ballState = newState;
         }
-        
+
         /**
-         * Checks if the ball is currently being respawned.
-         * @return true if the ball is being respawedn, false otherwise.
-         */
+            Checks if the ball is currently being respawned.
+            @return true if the ball is being respawedn, false otherwise.
+        */
         public boolean isRespawning() {
             return BallStates.ISRESPAWNING.contains(ballState);
         }
-        
+
         /**
-         * Sets the state of the ball to the faceoff state.
-         */
+            Sets the state of the ball to the faceoff state.
+        */
         public void doFaceOff() {
             if(!BallStates.ISRESPAWNING.contains(ballState)) {
                 ballState = BallStates.FaceOff;
             }
         }
-        
+
         /**
-         * Sets the state of the ball to the in game state.
-         */
+            Sets the state of the ball to the in game state.
+        */
         public void postFaceOff() {
             ballState = BallStates.InGame;
         }
-        
+
         /**
-         * Checks whether or not the ball is currently located in a spot that is reachable by normal players.
-         * @return true when the ball is outside of the arena. (Read: ball is still inside the map.)
-         */
+            Checks whether or not the ball is currently located in a spot that is reachable by normal players.
+            @return true when the ball is outside of the arena. (Read: ball is still inside the map.)
+        */
         public boolean isOut() {
             return (ballState == BallStates.OutOfGame);
         }
     }
-    
+
     /**
-     * This class handles all the overlay related actions.
-     * <p>
-     * Using the default {@link Objset} seems chunky, but might fully convert to that system eventually.
-     * 
-     * @author Trancid
-     *
-     */
+        This class handles all the overlay related actions.
+        <p>
+        Using the default {@link Objset} seems chunky, but might fully convert to that system eventually.
+
+        @author Trancid
+
+    */
     private class Overlay {
         ArrayList<String> teamNames;        // Currently active (displayed) teamnames
         ArrayList<Integer> activeObjects;   // Currently active (displayed) objects.
@@ -4059,77 +4124,80 @@ public class strikebot extends SubspaceBot {
             activeObjects = new ArrayList<Integer>();
             scores = new ArrayList<Integer>();
             teamNames = new ArrayList<String>();
-            
+
             resetVariables();
         }
-        
+
         /**
-         * Resets member variables to their initial state.
-         */
+            Resets member variables to their initial state.
+        */
         public void resetVariables() {
             if(!activeObjects.isEmpty())
                 activeObjects.clear();
+
             if(!scores.isEmpty())
                 scores.clear();
-            if(!teamNames.isEmpty()) 
+
+            if(!teamNames.isEmpty())
                 teamNames.clear();
-            
+
             scores.add(9);          // Odd value, but otherwise the initial 0 will not be displayed.
             scores.add(9);
             teamNames.add("     ");
             teamNames.add("     ");
-            time = null;          
+            time = null;
         }
-        
+
         /*
-         * Functions that update only that which differs. 
-         */
+            Functions that update only that which differs.
+        */
         /**
-         * Run all the update functions, to update the display for all players.
-         * @param newTime Time to set the display on. Null if no time is wanted.
-         */
+            Run all the update functions, to update the display for all players.
+            @param newTime Time to set the display on. Null if no time is wanted.
+        */
         public void updateAll(Integer newTime) {
             updateNames();
             updateScores();
             updateTime(newTime);
         }
-        
+
         /**
-         * Updates the currently displayed scores to the real scores, if possible.
-         */
+            Updates the currently displayed scores to the real scores, if possible.
+        */
         public void updateScores() {
             int oldScore = 0;
             int newScore = 0;
             int freq = 0;
-            
+
             for(SBTeam t : teams) {
                 // Can't do anything if we don't have a proper team.
                 if(t == null)
                     continue;
-                
+
                 freq = t.getFrequency();
                 oldScore = scores.get(freq);
                 newScore = t.getScore();
-                
+
                 // If the old score differs from the new score.
                 if(oldScore != newScore) {
                     // Update the score.
                     scores.set(freq, newScore);
-                    
+
                     // For each digit, check which ones are different.
                     for(int i = 0; i < 5; i++) {
-                        if(oldScore%10 != newScore%10) {
+                        if(oldScore % 10 != newScore % 10) {
                             // Update the digit if needed. (I.e. they differ, but don't display leading zeros.)
                             if(i == 0 || oldScore != 0)
-                                removeObject(getObjIDScore(freq, i, oldScore%10));
+                                removeObject(getObjIDScore(freq, i, oldScore % 10));
+
                             if(i == 0 || newScore != 0)
-                                dispObject(getObjIDScore(freq, i, newScore%10));
+                                dispObject(getObjIDScore(freq, i, newScore % 10));
                         }
-                        
+
                         // Remove the last checked digit from the score.
-                        oldScore/=10;
-                        newScore/=10;
-                        
+                        oldScore /= 10;
+                        newScore /= 10;
+
                         // Saves a bit of math to check if there are any significant digits left.
                         if(oldScore == 0 && newScore == 0)
                             break;
@@ -4137,117 +4205,118 @@ public class strikebot extends SubspaceBot {
                 }
             }
         }
-        
+
         /**
-         * Updates the currently displayed names to the current team names.
-         * Only the first five characters will be displayed, from which only the alphanumeric characters will be displayed.
-         * Any non-alphanumeric characters will be treated as spaces.
-         */
+            Updates the currently displayed names to the current team names.
+            Only the first five characters will be displayed, from which only the alphanumeric characters will be displayed.
+            Any non-alphanumeric characters will be treated as spaces.
+        */
         public void updateNames() {
             String oldName, newName;
             int freq = 0;
-            
+
             for(SBTeam t : teams) {
                 // Can't do anything if we don't have a proper team.
                 if(t == null)
                     continue;
-                
+
                 freq = t.getFrequency();
                 oldName = teamNames.get(freq).toUpperCase();
                 // Get the new name and remove the spaces to make a more useful tag.
                 newName = t.getName().toUpperCase().replace(" ", "");
-                
+
                 // old_name should be stored as five characters. For comparison, new_name should be trimmed down or extended to this as well.
                 if(newName.length() != 5) {
                     newName = newName.concat("     ").substring(0, 5);
                 }
-                
+
                 // If the names differ, find out what differs and change it accordingly.
                 if(!oldName.equals(newName)) {
                     // Update the records.
                     teamNames.set(freq, newName);
-                    
+
                     // Iterate through the strings to compare and update.
                     for(int i = 0; i < 5; i++) {
                         char oldCh = oldName.charAt(i);
                         char newCh = newName.charAt(i);
-                        
+
                         if(oldCh != newCh) {
                             // Update the letter/number, but only if it's alphanumeric.
                             if(Character.isLetter(oldCh) || Character.isDigit(oldCh))
                                 removeObject(getObjIDName(freq, i, oldCh));
+
                             if(Character.isLetter(newCh) || Character.isDigit(newCh))
                                 dispObject(getObjIDName(freq, i, newCh));
                         }
                     }
                 }
             }
-            
+
         }
-        
+
         /**
-         * Compares the given time and updates the LVZ display accordingly.
-         * Anything above 99 minutes will be truncated, and anything negative will be treated as null.
-         * 
-         * @param newTime The new time to be displayed, in seconds. When null is sent, the time is erased.
-         */
+            Compares the given time and updates the LVZ display accordingly.
+            Anything above 99 minutes will be truncated, and anything negative will be treated as null.
+
+            @param newTime The new time to be displayed, in seconds. When null is sent, the time is erased.
+        */
         public void updateTime(Integer newTime) {
             Integer oldTime = time;
-            
+
             // Treat negative time as null.
-            if(newTime != null && newTime < 0) 
+            if(newTime != null && newTime < 0)
                 newTime = null;
-            
+
             if(oldTime == null && newTime != null) {
                 // No time previously displayed.
                 // Funky math to convert seconds into mm:ss, while keeping it in one int.
                 newTime = (newTime * 100 / 60) + (newTime % 60);
                 time = newTime;
-                
+
                 for(int i = 0; i < 4; i++) {
                     // Simply display the new time.
-                    dispObject(getObjIDTime(i, newTime%10));
+                    dispObject(getObjIDTime(i, newTime % 10));
                     newTime /= 10;
                 }
-                
+
             } else if(oldTime != null && newTime == null) {
                 // Hide the time.
                 time = newTime;
-                
+
                 for(int i = 0; i < 4; i++) {
                     // Simply remove the old time.
-                    removeObject(getObjIDTime(i, oldTime%10));
+                    removeObject(getObjIDTime(i, oldTime % 10));
                     oldTime /= 10;
                 }
-                
+
             } else if(oldTime != null && newTime != null) {
                 // Update the time, but only where digits differ.
                 // Funky math to convert seconds into mm:ss, while keeping it in one int.
                 newTime = (newTime / 60) * 100 + (newTime % 60);
                 time = newTime;
-                
+
                 for(int i = 0; i < 4; i++) {
-                    if(oldTime%10 != newTime %10) {
+                    if(oldTime % 10 != newTime % 10) {
                         // Remove old digit.
-                        removeObject(getObjIDTime(i, oldTime%10));
+                        removeObject(getObjIDTime(i, oldTime % 10));
                         // Display new digit.
-                        dispObject(getObjIDTime(i, newTime%10));
+                        dispObject(getObjIDTime(i, newTime % 10));
                     }
-                    
+
                     // Remove the last digits.
                     oldTime /= 10;
                     newTime /= 10;
                 }
             }
         }
-        
+
         /*
-         * Functions that display.
-         */
+            Functions that display.
+        */
         /**
-         * Displays/shows a LVZ object to all the players.
-         * @param objID ID of object to be enabled.
-         */
+            Displays/shows a LVZ object to all the players.
+            @param objID ID of object to be enabled.
+        */
         private void dispObject(int objID) {
             if(activeObjects.isEmpty() || !activeObjects.contains(objID)) {
                 activeObjects.add(objID);
@@ -4256,185 +4325,198 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Displays all active LVZ objects to a player.
-         * Only to be used when a player enters the arena.
-         * 
-         * @param playerID ID of player for whom the update is.
-         */
+            Displays all active LVZ objects to a player.
+            Only to be used when a player enters the arena.
+
+            @param playerID ID of player for whom the update is.
+        */
         public void displayAll(int playerID) {
             if(!activeObjects.isEmpty()) {
                 Objset batchObjects = ba.getObjectSet();
+
                 for(int objID : activeObjects) {
                     batchObjects.showObject(playerID, objID);
                 }
+
                 ba.setObjects(playerID);
             }
         }
-        
+
         /*
-         * Functions that remove.
-         */
+            Functions that remove.
+        */
         /**
-         * Removes/hides a single active LVZ object for all players.
-         * @param objID ID of object that needs to be removed.
-         */
+            Removes/hides a single active LVZ object for all players.
+            @param objID ID of object that needs to be removed.
+        */
         private void removeObject(Integer objID) {
             if(!activeObjects.isEmpty() && activeObjects.contains(objID)) {
                 activeObjects.remove(objID);
                 ba.hideObject(objID);
             }
         }
-        
+
         /**
-         * Removes/hides all the active LVZ objects for all the players.
-         */
+            Removes/hides all the active LVZ objects for all the players.
+        */
         public void clearAllObjects() {
             if(!activeObjects.isEmpty()) {
                 Objset batchObjects = ba.getObjectSet();
+
                 for(int objID : activeObjects) {
                     batchObjects.hideObject(objID);
                 }
+
                 ba.setObjects();
                 activeObjects.clear();
             }
         }
-        
+
         /*
-         * Actual LVZ helper functions.
-         */
+            Actual LVZ helper functions.
+        */
         /**
-         * Converts a given letter or number in the name box to its object ID.
-         * This is done according to the following formatting:
-         * <pre>
-         * Boxes: [FREQ0] [FREQ1]
-         * Offset: 01234   01234</pre>
-         * 
-         * Valid values for value are A-Z, a-z and 0-9.
-         * 
-         * @param freq The frequency for which to look up the object id.
-         * @param offset The offset in the name box for the specific frequency.
-         * @param value The letter or digit that needs to be converted.
-         * @return The object ID associated with the given data.
-         */
+            Converts a given letter or number in the name box to its object ID.
+            This is done according to the following formatting:
+            <pre>
+            Boxes: [FREQ0] [FREQ1]
+            Offset: 01234   01234</pre>
+
+            Valid values for value are A-Z, a-z and 0-9.
+
+            @param freq The frequency for which to look up the object id.
+            @param offset The offset in the name box for the specific frequency.
+            @param value The letter or digit that needs to be converted.
+            @return The object ID associated with the given data.
+        */
         private int getObjIDName(int freq, int offset, char value) {
             // Adjust for frequency offset.
             offset = offset + freq * 5;
+
             if(Character.isDigit(value)) {
                 return ((value + 8) * 10 + offset);
             } else {
                 return ((Character.toUpperCase(value) - 35) * 10 + offset);
             }
         }
-        
+
         /**
-         * Converts a given number in the score box to its object ID.
-         * This is done according to the following formatting:
-         * <pre>
-         * Boxes: [FREQ0] [FREQ1]
-         * Offset: 43210   43210</pre>
-         * 
-         * Valid values for number are 0-9.
-         * @param freq The frequency for which to look up the object id.
-         * @param offset The offset in the score box for the specific frequency.
-         * @param number The digit that needs to be converted.
-         * @return The object ID associated with the given data.
-         */
+            Converts a given number in the score box to its object ID.
+            This is done according to the following formatting:
+            <pre>
+            Boxes: [FREQ0] [FREQ1]
+            Offset: 43210   43210</pre>
+
+            Valid values for number are 0-9.
+            @param freq The frequency for which to look up the object id.
+            @param offset The offset in the score box for the specific frequency.
+            @param number The digit that needs to be converted.
+            @return The object ID associated with the given data.
+        */
         private int getObjIDScore(int freq, int offset, int number) {
             freq++;
             return (freq * 100 + offset * 10 + number);
         }
-        
+
         /**
-         * Converts a given number in the time box to its object ID.
-         * This is done according to the following formatting:
-         * <pre>
-         * Box:   [TI:ME]
-         * Offset: 32 10 </pre>
-         * 
-         * Valid values for number are 0-9.
-         * @param offset The offset in the time box.
-         * @param number The digit that needs to be converted.
-         * @return The object ID associated with the given data.
-         */
+            Converts a given number in the time box to its object ID.
+            This is done according to the following formatting:
+            <pre>
+            Box:   [TI:ME]
+            Offset: 32 10 </pre>
+
+            Valid values for number are 0-9.
+            @param offset The offset in the time box.
+            @param number The digit that needs to be converted.
+            @return The object ID associated with the given data.
+        */
         private int getObjIDTime(int offset, int number) {
             return (700 + offset * 10 + number);
         }
     }
 
     /**
-     * Class Gameticker
-     * 
-     * This class is the engine of the strikebot. 
-     * <p>
-     * In essence this is a state machine.
-     * Each tick this class performs a check to see in which state it currently is.
-     * Depending on the current state, the accompanied "do"-functions get called and executed.
-     * <p>
-     * At the current default settings, this class' run function is executed every second.
-     * <p>
-     * Please keep in mind that the run function is threaded, i.e. it runs quasi-simultaniously
-     * to the other functions in this bot. This can lead to racing conditions, if no safeguards are used.
-     * 
-     * @author Unknown
-     * 
-     * @see TimerTask
-     *
-     */
+        Class Gameticker
+
+        This class is the engine of the strikebot.
+        <p>
+        In essence this is a state machine.
+        Each tick this class performs a check to see in which state it currently is.
+        Depending on the current state, the accompanied "do"-functions get called and executed.
+        <p>
+        At the current default settings, this class' run function is executed every second.
+        <p>
+        Please keep in mind that the run function is threaded, i.e. it runs quasi-simultaniously
+        to the other functions in this bot. This can lead to racing conditions, if no safeguards are used.
+
+        @author Unknown
+
+        @see TimerTask
+
+    */
     private class Gameticker extends TimerTask {
 
         /**
-         * The core of the Gameticker class.
-         * This function is run on every tick and determines what to do next.
-         */
+            The core of the Gameticker class.
+            This function is run on every tick and determines what to do next.
+        */
         @Override
         public void run() {
             switch (currentState) {
-                case OFF:
-                    break;
-                case WAITING_FOR_CAPS:
-                    doWaitingForCaps();
-                    break;
-                case ADDING_PLAYERS:
-                    doAddingPlayers();
-                    break;
-                case PRE_FACE_OFF:
-                    doPreFaceOff();
-                    break;
-                case FACE_OFF:
-                    doFaceOff();
-                    break;
-                case GAME_IN_PROGRESS:
-                    doStartGame();
-                    break;
-                case GAME_OVER:
-                    doGameOver();
-                    break;
-                case TIMEOUT:
-                    doTimeout();
-                    break;
-                case WAIT:
-                    /* 
-                     * This state is intended to make the timer skip a round.
-                     * This is useful when someone wants to switch between certain states,
-                     * but not cause any racing conditions.
-                     * 
-                     * For example: 
-                     * When switching from FACE_OFF to GAME_IN_PROGRESS there is a moment when the
-                     * bot is actually in between states. During this period, the bot should not refresh
-                     * holding the ball, but also not yet start the GAME_IN_PROGRESS part while the correct
-                     * things are being set up and done.
-                     */
-                    break;
+            case OFF:
+                break;
+
+            case WAITING_FOR_CAPS:
+                doWaitingForCaps();
+                break;
+
+            case ADDING_PLAYERS:
+                doAddingPlayers();
+                break;
+
+            case PRE_FACE_OFF:
+                doPreFaceOff();
+                break;
+
+            case FACE_OFF:
+                doFaceOff();
+                break;
+
+            case GAME_IN_PROGRESS:
+                doStartGame();
+                break;
+
+            case GAME_OVER:
+                doGameOver();
+                break;
+
+            case TIMEOUT:
+                doTimeout();
+                break;
+
+            case WAIT:
+                /*
+                    This state is intended to make the timer skip a round.
+                    This is useful when someone wants to switch between certain states,
+                    but not cause any racing conditions.
+
+                    For example:
+                    When switching from FACE_OFF to GAME_IN_PROGRESS there is a moment when the
+                    bot is actually in between states. During this period, the bot should not refresh
+                    holding the ball, but also not yet start the GAME_IN_PROGRESS part while the correct
+                    things are being set up and done.
+                */
+                break;
             }
         }
 
         /**
-         * Handles the state in which the captains are assigned.
-         */
+            Handles the state in which the captains are assigned.
+        */
         private void doWaitingForCaps() {
             /*
-             * Need two captains within one minute, else remove captain
-             */
+                Need two captains within one minute, else remove captain
+            */
             if (team0.hasCaptain()) {
                 if ((System.currentTimeMillis() - team0.getCaptainTimeStamp()) >= Tools.TimeInMillis.MINUTE) {
                     team0.captainLeft();
@@ -4451,58 +4533,58 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * Checks if the timelimit has past for adding players.
-         * Initiates {@link strikebot#checkLineup() checkLineup()} if this is the case.
-         */
+            Checks if the timelimit has past for adding players.
+            Initiates {@link strikebot#checkLineup() checkLineup()} if this is the case.
+        */
         private void doAddingPlayers() {
             // Reduce countdown by one second.
             roundTime--;
             // Update display.
             scoreOverlay.updateTime(roundTime);
-            
+
             if ((System.currentTimeMillis() - timeStamp) >= Tools.TimeInMillis.MINUTE * 10) {
                 ba.sendArenaMessage("Time is up! Checking lineups..");
                 checkLineup(true);
             }
         }
 
-        
+
         /**
-         * Handles the pre-faceoff state.
-         * <p>
-         * Game will be stuck in this face until the ball has been respawned.
-         */
+            Handles the pre-faceoff state.
+            <p>
+            Game will be stuck in this face until the ball has been respawned.
+        */
         private void doPreFaceOff() {
             if(ball.isOut()) {
                 ball.doFaceOff();
                 startFaceOff();
             }
         }
-        
+
         /**
-         * During the faceoff, this function checks the following:
-         * <ul>
-         * <li>Checks if the bot needs to pick up the ball;
-         * <li>Checks if it's time to issue a drop warning;
-         * <li>Checks if the ball needs to be dropped;
-         * <li>Checks if a player is offside and warn or penalize them.
-         * </ul>
-         * If there is a faceoff crease, then it will restart the faceoff after
-         * penalizing the offending player(s). Otherwise, it will start the game.
-         * <p>
-         * @see strikebot#startFaceOff()
-         * @see strikebot#startGame()
-         */
+            During the faceoff, this function checks the following:
+            <ul>
+            <li>Checks if the bot needs to pick up the ball;
+            <li>Checks if it's time to issue a drop warning;
+            <li>Checks if the ball needs to be dropped;
+            <li>Checks if a player is offside and warn or penalize them.
+            </ul>
+            If there is a faceoff crease, then it will restart the faceoff after
+            penalizing the offending player(s). Otherwise, it will start the game.
+            <p>
+            @see strikebot#startFaceOff()
+            @see strikebot#startGame()
+        */
         private void doFaceOff() {
             long time = (System.currentTimeMillis() - timeStamp) / Tools.TimeInMillis.SECOND;
-            
+
             // When looking at startFaceOff(), this code seems to be redundant.
-            // However, due to the bot not always having the latest ball positions, this 
+            // However, due to the bot not always having the latest ball positions, this
             // safeguard is needed to make it function properly.
             if(!ball.holding || ba.getShip().getShip() != Ship.INTERNAL_SPIDER) {
                 doGetBall(config.getBallDrop());
             }
-            
+
             //DROP WARNING
             if (time == 10) {
                 ba.sendArenaMessage("Get READY! THE BALL WILL BE DROPPED SOON.", 1);
@@ -4517,28 +4599,28 @@ public class strikebot extends SubspaceBot {
         }
 
         /**
-         * This function is active when the ball is in play.
-         * <p>
-         * Its main tasks is to keep track of various stats, like steals, turnovers and saves,
-         * as well as checking for possible penalties. It also handles the {@link strikebot#gameTime gameTime} counter.
-         * <p>
-         * Depending on the type of crease, this function might initiate a new {@link strikebot#startFaceOff() Faceoff}.
-         */
+            This function is active when the ball is in play.
+            <p>
+            Its main tasks is to keep track of various stats, like steals, turnovers and saves,
+            as well as checking for possible penalties. It also handles the {@link strikebot#gameTime gameTime} counter.
+            <p>
+            Depending on the type of crease, this function might initiate a new {@link strikebot#startFaceOff() Faceoff}.
+        */
         private void doStartGame() {
             gameTime++;
             scoreOverlay.updateTime(gameTime);
         }
 
- 
+
         /**
-         * Handles the GAME_OVER state.
-         * 
-         * This state is active after the game has ended and the final stats have been displayed.
-         * Depending on the settings, it will either automatically start a new game or 
-         * cleans everything up and shuts the strikebot down.
-         * 
-         * @see strikebot#cmd_off(String)
-         */
+            Handles the GAME_OVER state.
+
+            This state is active after the game has ended and the final stats have been displayed.
+            Depending on the settings, it will either automatically start a new game or
+            cleans everything up and shuts the strikebot down.
+
+            @see strikebot#cmd_off(String)
+        */
         private void doGameOver() {
             long time;
 
@@ -4554,19 +4636,19 @@ public class strikebot extends SubspaceBot {
                 scoreOverlay.clearAllObjects();
             }
         }
-        
+
         /**
-         * Handles the TIMEOUT state.
-         * 
-         * Checks if a 10 second warning needs to be fired, or
-         * if the timeout has ended. In case of the latter, 
-         * a new {@link strikebot#startFaceOff() faceoff} will be started.
-         */
+            Handles the TIMEOUT state.
+
+            Checks if a 10 second warning needs to be fired, or
+            if the timeout has ended. In case of the latter,
+            a new {@link strikebot#startFaceOff() faceoff} will be started.
+        */
         private void doTimeout() {
             long time;
-            
+
             time = (System.currentTimeMillis() - timeStamp) / Tools.TimeInMillis.SECOND;
-            
+
             // The timeout has finished, going back to the faceoff.
             if(time >= 30) {
                 ba.sendArenaMessage("The timeout has ended.", Tools.Sound.HALLELUJAH);
@@ -4576,20 +4658,20 @@ public class strikebot extends SubspaceBot {
             } else {
                 doRemoveBall();
             }
-            
+
         }
     }
 
     /**
-     * Used for debugging purposes only. When committing the code, please either temporary remove
-     * the @SuppressWarnings line to doublecheck that this function throws the being unused warning, or
-     * check if you get an "Unnescessary @SuppressWarnings("unused")" message.
-     * <p>
-     * When choosing to send the debugmessages in game, please be aware of the location you are
-     * putting your calls to this function, because this can easily get your bot kicked for flooding.
-     * 
-     * @param msg Message to be sent to either the console and/or ingame.
-     */
+        Used for debugging purposes only. When committing the code, please either temporary remove
+        the @SuppressWarnings line to doublecheck that this function throws the being unused warning, or
+        check if you get an "Unnescessary @SuppressWarnings("unused")" message.
+        <p>
+        When choosing to send the debugmessages in game, please be aware of the location you are
+        putting your calls to this function, because this can easily get your bot kicked for flooding.
+
+        @param msg Message to be sent to either the console and/or ingame.
+    */
     @SuppressWarnings("unused")
     private void debugMessage(String msg) {
         //ba.sendSmartPrivateMessage("ThePAP", msg);

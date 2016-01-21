@@ -1,41 +1,41 @@
 /************************************************************************************
  *                                                                                  *
- * twbotcommander.java - Commander Module - qan                                     *
+    twbotcommander.java - Commander Module - qan
  *                                                                                  *
- * Created 6/04/2004 - Last modified 6/14/04                                        *
+    Created 6/04/2004 - Last modified 6/14/04
  *                                                                                  *
  ************************************************************************************
 
       Commander is an attempt to bring a splash of real-time strategy into
-  Trench Wars via a fairly elaborate point system, ship hierarchy, and command set.
+    Trench Wars via a fairly elaborate point system, ship hierarchy, and command set.
 
 
       GAMEPLAY:
 
       - Two armies compete for points.  The one with the most points at the end of
-  a given amount of time is declared the winner.
+    a given amount of time is declared the winner.
       - Each army starts with one Commander (who remains in spec the entire time),
-  one Lead Terr, and one Lead Levi.  The rest of the players start as warbirds.
+    one Lead Terr, and one Lead Levi.  The rest of the players start as warbirds.
       - Levis (and javelins) are the main point-earners.  Every kill by a levi (or a
-  jav) earns the team 1 point.  1 point is also earned for every 3 kills by an
-  upgraded support ship -- spider, terrier, lanc, or shark.
+    jav) earns the team 1 point.  1 point is also earned for every 3 kills by an
+    upgraded support ship -- spider, terrier, lanc, or shark.
       - Every time a warbird (the basic foot soldier) kills a levi, that warbird
-  becomes a levi, capable of earning points for the team.  The levi is the basic
-  ship that can evolve into any other ship.  Of course, changing a levi into
-  a support ship has consequences: that ship can no longer earn points, but that ship
-  also isn't a target for the enemy to turn their WBs into levis.
+    becomes a levi, capable of earning points for the team.  The levi is the basic
+    ship that can evolve into any other ship.  Of course, changing a levi into
+    a support ship has consequences: that ship can no longer earn points, but that ship
+    also isn't a target for the enemy to turn their WBs into levis.
       - If there are enough team points, the Commander can issue an upgrade for a
-  ship through the bot.  The problem is, those same points are what will win the
-  game -- so it's a careful balance between getting the ships you need to match
-  the enemy, and conserving your points for your victory.  Each game will be unique
-  as the Commanders match their strategies against one another.
+    ship through the bot.  The problem is, those same points are what will win the
+    game -- so it's a careful balance between getting the ships you need to match
+    the enemy, and conserving your points for your victory.  Each game will be unique
+    as the Commanders match their strategies against one another.
       - Other Commander abilities include opening and closing doors on the map at
-  key moments, and purchasing bot-based warps and repels for their lead terr and
-  levis.  BotWarps allow the lead terr to set a warp location with the bot and
-  then warp there, completely independent of their normal warping capabilities.
-  BotRepels are simply prized to levis.
-  
-      
+    key moments, and purchasing bot-based warps and repels for their lead terr and
+    levis.  BotWarps allow the lead terr to set a warp location with the bot and
+    then warp there, completely independent of their normal warping capabilities.
+    BotRepels are simply prized to levis.
+
+
 
       COMMANDER EVOLUTION CHART
       -------------------------
@@ -54,63 +54,63 @@
 
 
 
-SHIP LAYOUT
+    SHIP LAYOUT
 
-  Warbird      - Standard.  Killing a levi turns it into a levi.
-  Javelin      - A little more than half normal speed.  Has levi (L3) bombs.
+    Warbird      - Standard.  Killing a levi turns it into a levi.
+    Javelin      - A little more than half normal speed.  Has levi (L3) bombs.
                  Earns 1 point for every kill.
-  Spider       - Increased recharge, always has antiwarp.
+    Spider       - Increased recharge, always has antiwarp.
                  Every 3 levis killed by a support ship earns 1 point.
-  Leviathan    - 1 repel, no warping, stealth.
+    Leviathan    - 1 repel, no warping, stealth.
                  Earns 1 point for every kill.
-  Terrier      - Can transport 4 ships max.
+    Terrier      - Can transport 4 ships max.
                  Every 3 levis killed by a support ship earns 1 point.
-  Weasel       - Not used.
-  Lancaster    - Warbird-level recharge, always has multi.
+    Weasel       - Not used.
+    Lancaster    - Warbird-level recharge, always has multi.
                  Every 3 levis killed by a support ship earns 1 point.
-  Shark        - 4 repels, cloaking.
+    Shark        - 4 repels, cloaking.
                  Every 3 levis killed by a support ship earns 1 point.
 
-  
 
 
 
-COMMANDER COMMANDS
+
+    COMMANDER COMMANDS
 
     CMD     COST      COMMENTS
-  makewb     +2   Reverts any ship except lead terr or levi back to a WB
-  makejav   -20   Creates a slowjav, much like a levi but w/ stealth & bounce.
+    makewb     +2   Reverts any ship except lead terr or levi back to a WB
+    makejav   -20   Creates a slowjav, much like a levi but w/ stealth & bounce.
                   Every kill adds +1, also like a levi.  However, players
                   killing a slowjav don't turn into levis, rack up pts, etc.
-  makespid   -1   Has anti and slightly increased recharge.  3 levi kills add +1.
-  maketerr  -10   4-person transport.  3 levi kills add +1.
-  makelanc   -1   Multi, & recharge faster than WB.  3 levi kills add +1.
-  makeshark  -8   Has 4 reps & cloak.  3 levi kills add +1.
-  swapdoor   -2   Closes a door between 2 and 8.
-  buywarps   -8   Buys 5 bot-controlled warp points for use by the lead terr.
-  buyrepels  -5   Buys 5 repels that levis can get from the bot.
+    makespid   -1   Has anti and slightly increased recharge.  3 levi kills add +1.
+    maketerr  -10   4-person transport.  3 levi kills add +1.
+    makelanc   -1   Multi, & recharge faster than WB.  3 levi kills add +1.
+    makeshark  -8   Has 4 reps & cloak.  3 levi kills add +1.
+    swapdoor   -2   Closes a door between 2 and 8.
+    buywarps   -8   Buys 5 bot-controlled warp points for use by the lead terr.
+    buyrepels  -5   Buys 5 repels that levis can get from the bot.
 
 
 
-LEAD TERR COMMANDS
+    LEAD TERR COMMANDS
 
     CMD     COST      COMMENTS
-  setwarp     0   Sets a warp location.
-  dowarp      0   Warps to last warp location set.
-  numwarps    0   Shows current number of warps.
+    setwarp     0   Sets a warp location.
+    dowarp      0   Warps to last warp location set.
+    numwarps    0   Shows current number of warps.
 
 
-LEVI COMMANDS
-
-    CMD
-  numrepels   0   Shows current number of repels.
-  getrepel    0   Prizes 1 repel to levi from the stock.
-
-
-ANY PLAYER
+    LEVI COMMANDS
 
     CMD
-  score       0   Shows the game's current score.
+    numrepels   0   Shows current number of repels.
+    getrepel    0   Prizes 1 repel to levi from the stock.
+
+
+    ANY PLAYER
+
+    CMD
+    score       0   Shows the game's current score.
 
 
 
@@ -130,14 +130,14 @@ import twcore.core.util.Tools;
 import twcore.bots.MultiModule;
 
 /**
-* Commander -- strange RTS + SS style game.  90% complete; needs map.
-* @author  qan
+    Commander -- strange RTS + SS style game.  90% complete; needs map.
+    @author  qan
 */
 public class commander extends MultiModule {
 
     public void init() {
     }
-    
+
     public void requestEvents(ModuleEventRequester events) {
         events.request(this, PLAYER_DEATH);
     }
@@ -193,16 +193,18 @@ public class commander extends MultiModule {
 
 
     // Modified handleEvent -- accepts mod and player commands
-    public void handleEvent( Message event ){
+    public void handleEvent( Message event ) {
 
         String message = event.getMessage();
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
+
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
 
             if( opList.isER( name )) {
                 if( modName == "") {
                     modName = name;
                 }
+
                 handleCommand( name, message );
             } else {
                 handlePlayerCommand( name, message );
@@ -211,10 +213,10 @@ public class commander extends MultiModule {
     }
 
 
-    public int getInteger( String input ){
-        try{
+    public int getInteger( String input ) {
+        try {
             return Integer.parseInt( input.trim() );
-        } catch( Exception e ){
+        } catch( Exception e ) {
             return 1;
         }
     }
@@ -249,6 +251,7 @@ public class commander extends MultiModule {
 
         for( int i = 0; i < 8; i++ )
             m_doors[i] = 0;
+
         m_botAction.setDoors(0);
     }
 
@@ -301,18 +304,23 @@ public class commander extends MultiModule {
         case 1:
             pID = m_commander0_ID;
             break;
+
         case 2:
             pID = m_commander1_ID;
             break;
+
         case 3:
             pID = m_leadterr0_ID;
             break;
+
         case 4:
             pID = m_leadterr1_ID;
             break;
+
         case 5:
             pID = m_leadlevi0_ID;
             break;
+
         case 6:
             pID = m_leadlevi1_ID;
             break;
@@ -342,10 +350,12 @@ public class commander extends MultiModule {
                 if( isRunning == true) {
                     m_botAction.spec( p.getPlayerID() );
                     m_botAction.spec( p.getPlayerID() );
+
                     if( isPositionSet( 1 ) ) {
                         m_botAction.setShip( m_commander0_ID, 1 );
                     }
                 }
+
                 m_commander0_ID = p.getPlayerID();
                 m_botAction.sendPrivateMessage( name, "You are a Commander -- the single most important position in the game.  Send !commhelp to the bot for more info." );
                 m_botAction.sendArenaMessage( name + " has been selected to be Commander of " + m_name0 + "." );
@@ -355,10 +365,12 @@ public class commander extends MultiModule {
                 if( isRunning == true) {
                     m_botAction.spec( p.getPlayerID() );
                     m_botAction.spec( p.getPlayerID() );
+
                     if( isPositionSet( 2 ) ) {
                         m_botAction.setShip( m_commander1_ID, 1 );
                     }
                 }
+
                 m_commander1_ID = p.getPlayerID();
                 m_botAction.sendPrivateMessage( name, "You are a Commander -- the single most important position in the game.  Send !commhelp to the bot for more info." );
                 m_botAction.sendArenaMessage( name + " has been selected to be Commander of " + m_name1 + "." );
@@ -368,10 +380,12 @@ public class commander extends MultiModule {
                 if( isRunning == true) {
                     m_botAction.setShip( p.getPlayerID(), 5 );
                     m_botAction.warpTo( p.getPlayerID(), m_start0_x, m_start0_y );
+
                     if( isPositionSet( 3 ) ) {
                         m_botAction.setShip( m_leadterr0_ID, 1 );
                     }
                 }
+
                 m_leadterr0_ID = p.getPlayerID();
                 m_botAction.sendPrivateMessage( name, "You are a Lead Terr -- a very important position.  Send !terrhelp to the bot for more info." );
                 m_botAction.sendArenaMessage( name + " has been selected to be Lead Terr of " + m_name0 + "." );
@@ -381,10 +395,12 @@ public class commander extends MultiModule {
                 if( isRunning == true) {
                     m_botAction.setShip( p.getPlayerID(), 5 );
                     m_botAction.warpTo( p.getPlayerID(), m_start1_x, m_start1_y );
+
                     if( isPositionSet( 4 ) ) {
                         m_botAction.setShip( m_leadterr1_ID, 1 );
                     }
                 }
+
                 m_leadterr1_ID = p.getPlayerID();
                 m_botAction.sendPrivateMessage( name, "You are a Lead Terr -- a very important position!  Send !terrhelp to the bot for more info." );
                 m_botAction.sendArenaMessage( name + " has been selected to be Lead Terr of " + m_name1 + "." );
@@ -394,10 +410,12 @@ public class commander extends MultiModule {
                 if( isRunning == true) {
                     m_botAction.setShip( p.getPlayerID(), 4 );
                     m_botAction.warpTo( p.getPlayerID(), m_start0_x, m_start0_y );
+
                     if( isPositionSet( 4 ) ) {
                         m_botAction.setShip( m_leadlevi0_ID, 1 );
                     }
                 }
+
                 m_leadlevi0_ID = p.getPlayerID();
                 m_botAction.sendPrivateMessage( name, "You are a Lead Levi -- a very important position!  Send !levihelp to the bot for more info." );
                 m_botAction.sendArenaMessage( name + " has been selected to be Lead Levi of " + m_name0 + ".");
@@ -407,10 +425,12 @@ public class commander extends MultiModule {
                 if( isRunning == true) {
                     m_botAction.setShip( p.getPlayerID(), 4 );
                     m_botAction.warpTo( p.getPlayerID(), m_start1_x, m_start1_y );
+
                     if( isPositionSet( 4 ) ) {
                         m_botAction.setShip( m_leadlevi1_ID, 1 );
                     }
                 }
+
                 m_leadlevi1_ID = p.getPlayerID();
                 m_botAction.sendPrivateMessage( name, "You are a Lead Levi -- a very important position!  Send !levihelp to the bot for more info." );
                 m_botAction.sendArenaMessage( name + " has been selected to be Lead Levi of " + m_name1 + "." );
@@ -474,6 +494,7 @@ public class commander extends MultiModule {
     // Displays score to the arena or an individual
     public void showScore( String name ) {
         String score = "CURRENT SCORE:  " + m_name0 + " -  " + m_pts0 + "  to  " + m_pts1 + " -  " + m_name1;
+
         if( name == "all" ) {
             m_botAction.sendArenaMessage( score );
         } else {
@@ -635,6 +656,7 @@ public class commander extends MultiModule {
                     isRunning = true;
 
                     m_botAction.setDoors(0);  // open the doors
+
                     for( int i = 0; i < 8; i++ )  // Reset just in case.
                         m_doors[i] = 0;
 
@@ -663,7 +685,7 @@ public class commander extends MultiModule {
 
 
 
-// *** PLAYER COMMAND HANDLER ***
+    // *** PLAYER COMMAND HANDLER ***
 
     public void handlePlayerCommand( String name, String message ) {
 
@@ -688,13 +710,14 @@ public class commander extends MultiModule {
             } else if( message.startsWith( "!levihelp" )) {
                 m_botAction.privateMessageSpam( name, getLeviHelp() );
 
-// EDIT
+                // EDIT
             } else if ( true ) {
 
                 // ** Commander's command set **
                 if( p.getPlayerID() == m_commander0_ID || p.getPlayerID() == m_commander1_ID ) {
 
                     int commFreq;
+
                     if( p.getPlayerID() == m_commander0_ID )
                         commFreq = 0;
                     else
@@ -713,42 +736,46 @@ public class commander extends MultiModule {
                             else
                                 doorStats[i] = "x";
                         }
+
                         doorsParsed = "DOORS (x=Closed):  " +
-                                             "1[" + doorStats[7] + "] " + 
-                                             "2[" + doorStats[6] + "] " + 
-                                             "3[" + doorStats[5] + "] " + 
-                                             "4[" + doorStats[4] + "] " + 
-                                             "5[" + doorStats[3] + "] " + 
-                                             "6[" + doorStats[2] + "] " + 
-                                             "7[" + doorStats[1] + "] " + 
-                                             "8[" + doorStats[0] + "] ";
+                                      "1[" + doorStats[7] + "] " +
+                                      "2[" + doorStats[6] + "] " +
+                                      "3[" + doorStats[5] + "] " +
+                                      "4[" + doorStats[4] + "] " +
+                                      "5[" + doorStats[3] + "] " +
+                                      "6[" + doorStats[2] + "] " +
+                                      "7[" + doorStats[1] + "] " +
+                                      "8[" + doorStats[0] + "] ";
 
                         fi = m_botAction.getPlayingPlayerIterator();
 
                         int[] shipCnt = new int[9];
+
                         for(int i = 1; i < 9; i++)
                             shipCnt[i] = 0;
 
                         if( fi != null ) {
                             while( fi.hasNext() ) {
                                 target = fi.next();
+
                                 if( target.getFrequency() == commFreq )
                                     shipCnt[ target.getShipType() ]++;
                             }
                         }
 
                         shipsParsed1 = "YOUR ARMY: " +
-                                       "  WBs: " + shipCnt[1] + 
-                                       "  Javs: " + shipCnt[2] + 
+                                       "  WBs: " + shipCnt[1] +
+                                       "  Javs: " + shipCnt[2] +
                                        "  Spids: " + shipCnt[3] +
                                        "  Levis: " + shipCnt[4];
 
                         shipsParsed2 =
-                                       "             Terrs: " + shipCnt[5] + 
-                                       "  Lancs: " + shipCnt[7] + 
-                                       "  Sharks: " + shipCnt[8];
+                            "             Terrs: " + shipCnt[5] +
+                            "  Lancs: " + shipCnt[7] +
+                            "  Sharks: " + shipCnt[8];
 
                         double ltRatio = -1.0;
+
                         if( shipCnt[4] != 0 && shipCnt[5] != 0 ) {
                             ltRatio = shipCnt[4] / shipCnt[5];
                         }
@@ -760,19 +787,22 @@ public class commander extends MultiModule {
                             m_botAction.sendPrivateMessage( name, "Status for " + m_name1 + " -  POINTS AVAILABLE: " + m_pts1);
                             m_botAction.sendPrivateMessage( name, "BotWarps: " + m_botWarps1 + "    BotRepels: " + m_botRepels1 );
                         }
+
                         m_botAction.sendPrivateMessage( name, doorsParsed );
                         m_botAction.sendPrivateMessage( name, shipsParsed1 );
                         m_botAction.sendPrivateMessage( name, shipsParsed2 );
+
                         if( ltRatio != -1.0 ) {
                             m_botAction.sendPrivateMessage( name, "Approximate number of Levis per Terr:  " + ltRatio );
 
                             if( ltRatio > 3.5 )
                                 m_botAction.sendPrivateMessage( name, "ADVISORY:  You should create more Terrs to properly support your army!" );
                         }
+
                         showScore( name );
 
-                    
-                    // Revert any ship but commander, lead terr or lead levi to WB
+
+                        // Revert any ship but commander, lead terr or lead levi to WB
                     } else if( message.startsWith( "!makewb " )) {
                         target = getPlayerFromParam( message, 8 );
 
@@ -796,27 +826,27 @@ public class commander extends MultiModule {
                         } else
                             m_botAction.sendPrivateMessage( name, "Player not found.  Please try again." );
 
-                    // Turn a levi (except lead levi) to a Slowjav
+                        // Turn a levi (except lead levi) to a Slowjav
                     } else if( message.startsWith( "!makejav " )) {
                         doShipUpgrade( name, commFreq, 2, "Elite Javelin Assassin Squadron", -20, message, 9 );
 
-                    // Turn a levi (except lead levi) to a Spider
+                        // Turn a levi (except lead levi) to a Spider
                     } else if( message.startsWith( "!makespid " )) {
                         doShipUpgrade( name, commFreq, 3, "Spider Special Ops Division", -1, message, 10 );
 
-                    // Turn a levi (except lead levi) to a Terrier
+                        // Turn a levi (except lead levi) to a Terrier
                     } else if( message.startsWith( "!maketerr " )) {
                         doShipUpgrade( name, commFreq, 5, "Terrier Transport Corps", -10, message, 10 );
 
-                    // Turn a levi (except lead levi) to a Lancaster
+                        // Turn a levi (except lead levi) to a Lancaster
                     } else if( message.startsWith( "!makelanc " )) {
                         doShipUpgrade( name, commFreq, 7, "Lancaster Guerilla Forces", -1, message, 10 );
 
-                    // Turn a levi (except lead levi) to a Terrier
+                        // Turn a levi (except lead levi) to a Terrier
                     } else if( message.startsWith( "!makeshark " )) {
                         doShipUpgrade( name, commFreq, 8, "Covert Shark Mining Legion", -8, message, 11 );
 
-                    // Add 5 BotWarps to army stockpile
+                        // Add 5 BotWarps to army stockpile
                     } else if( message.startsWith( "!buywarps" )) {
                         if ( botWarps == true ) {
                             if ( modifyPts( commFreq, -8 )) {
@@ -832,7 +862,7 @@ public class commander extends MultiModule {
                             m_botAction.sendPrivateMessage( name, "BotWarps are currently DISABLED." );
                         }
 
-                    // Add 5 BotRepels to army stockpile
+                        // Add 5 BotRepels to army stockpile
                     } else if( message.startsWith( "!buyrepels" )) {
                         if ( modifyPts( commFreq, -5 )) {
                             if( commFreq == 0)
@@ -844,7 +874,7 @@ public class commander extends MultiModule {
                         } else
                             m_botAction.sendPrivateMessage( name, "Not enough points to purchase repels (requires 8)." );
 
-                    // Opens a closed door, or closes an open door
+                        // Opens a closed door, or closes an open door
                     } else if( message.startsWith( "!swapdoor ")) {
                         try {
                             String[] parameters = Tools.stringChopper( message.substring( 10 ), ' ' );
@@ -854,6 +884,7 @@ public class commander extends MultiModule {
                                 if ( modifyPts( commFreq, -2 )) {
 
                                     int doorReturn = flipDoor( doornum );
+
                                     if( doorReturn == 0 )
                                         m_botAction.sendPrivateMessage( name, "Door #" + doornum + " is now open.");
                                     else
@@ -871,7 +902,7 @@ public class commander extends MultiModule {
                     }
 
 
-                // ** Lead Terr's command set **
+                    // ** Lead Terr's command set **
                 } else if( p.getPlayerID() == m_leadterr0_ID || p.getPlayerID() == m_leadterr1_ID ) {
 
                     // Display current amount of BotWarps
@@ -884,22 +915,23 @@ public class commander extends MultiModule {
                         } else
                             m_botAction.sendPrivateMessage( name, "BotWarps are currently DISABLED." );
 
-                    // Place a BotWarp point at current location
+                        // Place a BotWarp point at current location
                     } else if( message.startsWith( "!setwarp" )) {
                         if( botWarps == true ) {
                             if( p.getFrequency() == 0 ) {
-                                 m_warp0_x = p.getXLocation();
-                                 m_warp0_y = p.getYLocation();
+                                m_warp0_x = p.getXLocation();
+                                m_warp0_y = p.getYLocation();
                             } else {
-                                 m_warp1_x = p.getXLocation();
-                                 m_warp1_y = p.getYLocation();
+                                m_warp1_x = p.getXLocation();
+                                m_warp1_y = p.getYLocation();
                             }
+
                             m_botAction.sendPrivateMessage( name, "BotWarp set at present location.  Use !dowarp to warp there." );
 
                         } else
                             m_botAction.sendPrivateMessage( name, "BotWarps are currently DISABLED." );
 
-                    // Warp to last BotWarp point, if there are any in the stockpile
+                        // Warp to last BotWarp point, if there are any in the stockpile
                     } else if( message.startsWith( "!dowarp" )) {
                         if( botWarps == true ) {
                             if( p.getFrequency() == 0 ) {
@@ -930,7 +962,7 @@ public class commander extends MultiModule {
                     }
 
 
-                // ** Levi command set **
+                    // ** Levi command set **
                 } else if( p.getShipType() == 4 ) {
 
                     // Display current amount of BotRepels
@@ -943,7 +975,7 @@ public class commander extends MultiModule {
                         } else
                             m_botAction.sendPrivateMessage( name, "BotRepels are currently DISABLED." );
 
-                    // Prize levi with repel, if there are any in the stockpile
+                        // Prize levi with repel, if there are any in the stockpile
                     } else if( message.startsWith( "!getrepel" )) {
                         if( botRepels == true ) {
                             if( p.getFrequency() == 0 ) {
@@ -979,12 +1011,13 @@ public class commander extends MultiModule {
 
 
 
-// *** MOD COMMAND HANDLER ***
+    // *** MOD COMMAND HANDLER ***
 
-    public void handleCommand( String name, String message ){
+    public void handleCommand( String name, String message ) {
 
         if( message.startsWith( "!setpos " )) {
             String[] parameters = Tools.stringChopper( message.substring( 8 ), ' ' );
+
             try {
                 if( parameters.length == 2) {
                     int position = Integer.parseInt(parameters[0]);
@@ -1001,16 +1034,16 @@ public class commander extends MultiModule {
         } else if ( message.startsWith( "!showpos" )) {
             showPositions();
 
-        } else if( message.startsWith( "!stop" )){
+        } else if( message.startsWith( "!stop" )) {
             if( isRunning == true ) {
-              m_botAction.sendPrivateMessage( modName, "Commander stopped." );
-              resetAll();
-              isRunning = false;
+                m_botAction.sendPrivateMessage( modName, "Commander stopped." );
+                resetAll();
+                isRunning = false;
             } else {
-              m_botAction.sendPrivateMessage( modName, "Commander is not currently running." );
+                m_botAction.sendPrivateMessage( modName, "Commander is not currently running." );
             }
 
-        } else if( message.startsWith( "!start" )){
+        } else if( message.startsWith( "!start" )) {
             if( allPositionsSet() == true) {
                 if( isRunning == false ) {
                     start();
@@ -1025,10 +1058,10 @@ public class commander extends MultiModule {
         } else if( message.startsWith( "!setname0 " )) {
             try {
                 m_name0 = message.substring( 10 );
-                m_botAction.sendPrivateMessage( modName, "Freq 0 Army Name set to: " + m_name0 );               
+                m_botAction.sendPrivateMessage( modName, "Freq 0 Army Name set to: " + m_name0 );
             } catch (Exception e) {
             }
-            
+
         } else if( message.startsWith( "!setname1 " )) {
             try {
                 m_name1 = message.substring( 10 );
@@ -1046,22 +1079,22 @@ public class commander extends MultiModule {
             m_botAction.sendPrivateMessage( name, "You have taken control of Commander from " + modName + ".");
             modName = name;
 
-        } else if( message.startsWith( "!botwarps" )){
+        } else if( message.startsWith( "!botwarps" )) {
             if( botWarps == true ) {
-              m_botAction.sendPrivateMessage( modName, "Bot-based warping has been DISABLED." );
-              botWarps = false;
+                m_botAction.sendPrivateMessage( modName, "Bot-based warping has been DISABLED." );
+                botWarps = false;
             } else {
-              m_botAction.sendPrivateMessage( modName, "Bot-based warping has been ENABLED." );
-              botWarps = true;
+                m_botAction.sendPrivateMessage( modName, "Bot-based warping has been ENABLED." );
+                botWarps = true;
             }
 
-        } else if( message.startsWith( "!botrepels" )){
+        } else if( message.startsWith( "!botrepels" )) {
             if( botRepels == true ) {
-              m_botAction.sendPrivateMessage( modName, "Bot-based repel-buying has been DISABLED." );
-              botRepels = false;
+                m_botAction.sendPrivateMessage( modName, "Bot-based repel-buying has been DISABLED." );
+                botRepels = false;
             } else {
-              m_botAction.sendPrivateMessage( modName, "Bot-based repel-buying has been ENABLED." );
-              botRepels = true;
+                m_botAction.sendPrivateMessage( modName, "Bot-based repel-buying has been ENABLED." );
+                botRepels = true;
             }
 
         } else if( message.startsWith( "!setstart0 ")) {
@@ -1083,8 +1116,8 @@ public class commander extends MultiModule {
 
     // Check various death/point conditions
     // CHECK IF PLAYERS ARE ON TEAM OR NOT!!
-    public void handleEvent( PlayerDeath event ){
-        if( isRunning ){
+    public void handleEvent( PlayerDeath event ) {
+        if( isRunning ) {
             Player killer = m_botAction.getPlayer( event.getKillerID() );
             Player killed = m_botAction.getPlayer( event.getKilleeID() );
 
@@ -1095,15 +1128,15 @@ public class commander extends MultiModule {
                 else
                     m_pts1++;
 
-            // Change WBs to levis if they kill a levi
+                // Change WBs to levis if they kill a levi
             } else if ( killer.getShipType() == 1 ) {
                 if( killed.getShipType() == 4 )
                     m_botAction.setShip( killer.getPlayerID(), 1 );
 
-            // Award 1 pt for every 3 kills by an upgraded support ship
+                // Award 1 pt for every 3 kills by an upgraded support ship
             } else if ( (killer.getShipType() == 3 || killer.getShipType() == 5 ||
                          killer.getShipType() == 7 || killer.getShipType() == 8 )
-                         && killed.getShipType() == 4 ) {
+                        && killed.getShipType() == 4 ) {
                 if( killer.getFrequency() == 0) {
                     m_levictr0++;
 
@@ -1113,6 +1146,7 @@ public class commander extends MultiModule {
                     }
                 } else {
                     m_levictr1++;
+
                     if( m_levictr1 >= 3 ) {
                         m_pts1++;
                         m_levictr1 -= 3;
@@ -1209,7 +1243,7 @@ public class commander extends MultiModule {
     public boolean isUnloadable() {
         return true;
     }
-    
+
     public void cancel() {
     }
 }

@@ -9,18 +9,19 @@ import twcore.core.events.BallPosition;
 import twcore.core.events.SoccerGoal;
 
 /**
- * Allows some aesthetic additions for soccer goals
- * on the ball scorer.
- * 
- * Prize code borrowed from utilprizes.
- * @author Ayano
- *
- */
+    Allows some aesthetic additions for soccer goals
+    on the ball scorer.
+
+    Prize code borrowed from utilprizes.
+    @author Ayano
+
+*/
 
 public class utilgoal extends MultiUtil {
 
     private static final int[] RESTRICTED_PRIZES = { Tools.Prize.RECHARGE, Tools.Prize.ENERGY, Tools.Prize.ROTATION, Tools.Prize.BOUNCING_BULLETS,
-            Tools.Prize.THRUST, Tools.Prize.TOPSPEED, Tools.Prize.PROXIMITY };
+                                                     Tools.Prize.THRUST, Tools.Prize.TOPSPEED, Tools.Prize.PROXIMITY
+                                                   };
 
     private static final int MAX_PRIZE = 28;
     private static final int MIN_PRIZE = 1;
@@ -35,15 +36,15 @@ public class utilgoal extends MultiUtil {
     private boolean goalShipReset = false;
 
     /**
-      * Initializes
-      */
+        Initializes
+    */
 
     public void init() {
     }
 
     /**
-     * Requests events.
-     */
+        Requests events.
+    */
 
     public void requestEvents(ModuleEventRequester modEventReq) {
         modEventReq.request(this, EventRequester.BALL_POSITION);
@@ -51,20 +52,21 @@ public class utilgoal extends MultiUtil {
     }
 
     /**
-     * Handle's all messages.
-     */
+        Handle's all messages.
+    */
 
     public void handleEvent(Message event) {
         String playerName = m_botAction.getPlayerName(event.getPlayerID());
         String message = event.getMessage();
+
         if (event.getMessageType() == Message.PRIVATE_MESSAGE && m_opList.isER(playerName))
             handleCommand(playerName, message.toLowerCase());
     }
 
     /**
-     * Set the current ball carrier as ballcarrier
-     * for future use to use when a goal is scored.
-     */
+        Set the current ball carrier as ballcarrier
+        for future use to use when a goal is scored.
+    */
 
     public void handleEvent(BallPosition event) {
         try {
@@ -74,12 +76,13 @@ public class utilgoal extends MultiUtil {
     }
 
     /**
-     * Upon a goal score, the scorer is given his/her
-     * message, warp, objon and prize if any is set.
-     */
+        Upon a goal score, the scorer is given his/her
+        message, warp, objon and prize if any is set.
+    */
 
     public void handleEvent(SoccerGoal event) {
         String goalscorer;
+
         try {
             goalscorer = m_botAction.getPlayerName(ballcarrier);
         } catch (Exception e) {
@@ -92,45 +95,50 @@ public class utilgoal extends MultiUtil {
             else
                 m_botAction.sendPrivateMessage(goalscorer, goalmessage);
         }
+
         if (goalWarpAll == true) {
             m_botAction.warpAllRandomly();
         }
+
         if (goalwarp != null) {
             if (goalwarp.length > 2)
                 m_botAction.warpTo(goalscorer, goalwarp[0], goalwarp[1], goalwarp[2]);
             else
                 m_botAction.warpTo(goalscorer, goalwarp[0], goalwarp[1]);
         }
+
         if (goalobjon != -1) {
             m_botAction.sendUnfilteredPrivateMessage(goalscorer, "*objon " + goalobjon);
         }
+
         if (goalprize != 0)
             m_botAction.sendUnfilteredPrivateMessage(goalscorer, "*prize #" + goalprize);
-        
+
         if(goalShipReset) {
             m_botAction.shipResetAll();
         }
     }
 
     /**
-      * Checks to see if a given prize number is restricted from use.
-      * @param prizeNum Prize to check
-      * @return True if prize is not allowed
-      */
+        Checks to see if a given prize number is restricted from use.
+        @param prizeNum Prize to check
+        @return True if prize is not allowed
+    */
 
     public boolean isRestricted(int prizeNum) {
         for (int i = 0; i < RESTRICTED_PRIZES.length; i++)
             if (RESTRICTED_PRIZES[i] == prizeNum)
                 return true;
+
         return false;
     }
 
     /**
-     * Sets the message for the goal scorer.
-     * 
-     * @param sender is the user of the bot.
-     * @param argString is the message/argument.
-     */
+        Sets the message for the goal scorer.
+
+        @param sender is the user of the bot.
+        @param argString is the message/argument.
+    */
 
     public void doGoalMessage(String sender, String argString) {
         if (argString.equals("~*")) {
@@ -139,8 +147,10 @@ public class utilgoal extends MultiUtil {
             m_botAction.sendPrivateMessage(sender, "Goal message has been erased.");
         } else {
             String[] parts = argString.split(":");
+
             if (parts.length > 2)
                 throw new IllegalArgumentException("Invalid syntax, use: <message>:<#>");
+
             if (parts.length == 2) {
                 goalsound = Integer.parseInt(parts[1]);
                 goalmessage = parts[0];
@@ -154,11 +164,11 @@ public class utilgoal extends MultiUtil {
     }
 
     /**
-     * Sets the warp coordinates for the goal scorer.
-     * 
-     * @param sender is the user of the bot.
-     * @param argString is the message/argument.
-     */
+        Sets the warp coordinates for the goal scorer.
+
+        @param sender is the user of the bot.
+        @param argString is the message/argument.
+    */
 
     public void doGoalWarp(String sender, String argString) {
         if (argString.equals("~*")) {
@@ -169,41 +179,46 @@ public class utilgoal extends MultiUtil {
 
             if (parts.length < 2 || parts.length > 3)
                 throw new IllegalArgumentException("Invalid syntax, use: <xi>:<yi>");
+
             int coord[] = new int[parts.length];
+
             for (int i = 0; i < parts.length; i++)
                 coord[i] = Integer.parseInt(parts[i]);
+
             //redundant array copy
             goalwarp = new int[coord.length];
+
             for (int i = 0; i < coord.length; i++)
                 goalwarp[i] = coord[i];
+
             m_botAction.sendPrivateMessage(sender, "Goal warp point set");
         }
     }
 
     /**
-     * Toggles all players being warped back to their spawn after a goal.
-     * @param sender Issuer of the command.
-     */
+        Toggles all players being warped back to their spawn after a goal.
+        @param sender Issuer of the command.
+    */
     public void doGoalWarpAll(String sender) {
         goalWarpAll = !goalWarpAll;
-        m_botAction.sendSmartPrivateMessage(sender, "Warp all set to " + (goalWarpAll?"TRUE":"FALSE"));
+        m_botAction.sendSmartPrivateMessage(sender, "Warp all set to " + (goalWarpAll ? "TRUE" : "FALSE"));
     }
 
     /**
-     * Toggles if all players receive a ship reset after a goal.
-     * @param sender Issuer of the command.
-     */
+        Toggles if all players receive a ship reset after a goal.
+        @param sender Issuer of the command.
+    */
     public void doGoalShipReset(String sender) {
         goalShipReset = !goalShipReset;
-        m_botAction.sendSmartPrivateMessage(sender, "Ship reset on goal is " + (goalShipReset?"en":"dis") + "abled.");
+        m_botAction.sendSmartPrivateMessage(sender, "Ship reset on goal is " + (goalShipReset ? "en" : "dis") + "abled.");
     }
-    
+
     /**
-      * Sets the objon for the goal scorer.
-      * 
-      * @param sender is the user of the bot.
-      * @param argString is the message/argument.
-      */
+        Sets the objon for the goal scorer.
+
+        @param sender is the user of the bot.
+        @param argString is the message/argument.
+    */
 
     public void doGoalObjon(String sender, String argString) {
         if (argString.equals("~*")) {
@@ -211,20 +226,22 @@ public class utilgoal extends MultiUtil {
             goalobjon = -1;
         } else {
             goalobjon = Integer.parseInt(argString);
+
             if (goalobjon < 0) {
                 goalobjon = -1;
                 throw new IllegalArgumentException("Objon's can't be negative.");
             }
+
             m_botAction.sendPrivateMessage(sender, "Goal objon is now: \"" + goalobjon + "\"");
         }
     }
 
     /**
-      * Sets the prize for the goal scorer.
-      * 
-      * @param sender is the user of the bot.
-      * @param argString is the message/argument.
-      */
+        Sets the prize for the goal scorer.
+
+        @param sender is the user of the bot.
+        @param argString is the message/argument.
+    */
 
     public void doGoalPrize(String sender, String argString) {
         if (argString.equals("~*")) {
@@ -242,6 +259,7 @@ public class utilgoal extends MultiUtil {
 
             if (Math.abs(prizeNumber) > MAX_PRIZE || Math.abs(prizeNumber) < MIN_PRIZE)
                 throw new IllegalArgumentException("That prize does not exist.");
+
             if (isRestricted(prizeNumber))
                 throw new IllegalArgumentException("That prize is restricted!");
 
@@ -251,27 +269,27 @@ public class utilgoal extends MultiUtil {
     }
 
     /**
-     * Relays all the set information back to the user.
-     * 
-     * @param sender is the user of the bot.
-     */
+        Relays all the set information back to the user.
+
+        @param sender is the user of the bot.
+    */
 
     public void doGoalDetails(String sender) {
         m_botAction.sendPrivateMessage(sender, "Goal message: \"" + goalmessage + "\" " + (goalsound == 0 ? "" : " %" + goalsound));
         m_botAction.sendPrivateMessage(sender, "Goal warp point: "
-                + (goalwarp != null ? goalwarp[0] + ":" + goalwarp[1] + (goalwarp.length == 3 ? " Radius: " + goalwarp[2] : "") : "none"));
+                                       + (goalwarp != null ? goalwarp[0] + ":" + goalwarp[1] + (goalwarp.length == 3 ? " Radius: " + goalwarp[2] : "") : "none"));
         m_botAction.sendPrivateMessage(sender, "Goal objon: " + (goalobjon == -1 ? "none" : goalobjon));
         m_botAction.sendPrivateMessage(sender, "Goal prize: " + (goalprize == 0 ? "none" : goalprize));
-        m_botAction.sendSmartPrivateMessage(sender, "Warp all: " + (goalWarpAll?"en":"dis") + "abled.");
-        m_botAction.sendSmartPrivateMessage(sender, "Ship reset: " + (goalShipReset?"en":"dis") + "abled.");
+        m_botAction.sendSmartPrivateMessage(sender, "Warp all: " + (goalWarpAll ? "en" : "dis") + "abled.");
+        m_botAction.sendSmartPrivateMessage(sender, "Ship reset: " + (goalShipReset ? "en" : "dis") + "abled.");
     }
 
     /**
-     * Handle's the user's commands.
-     * 
-     * @param sender is the user of the bot
-     * @param message is the argument to be computed/stored
-     */
+        Handle's the user's commands.
+
+        @param sender is the user of the bot
+        @param message is the argument to be computed/stored
+    */
 
     public void handleCommand(String sender, String message) {
         try {
@@ -298,17 +316,18 @@ public class utilgoal extends MultiUtil {
     }
 
     /**
-     * Returns help messages
-     */
+        Returns help messages
+    */
 
     public String[] getHelpMessages() {
         String[] helps = { "=GOAL=====================================================GOAL=",
-                "----------This utility sends messages,objons,warps or----------", "-------------prizes to a player who scores a goal -------------",
-                "!goalmessage <message>:<#>            -- Sets the message      ", "!goalwarp    <x>:<y>:<r>   <r>optional-- Sets the warp point   ",
-                "!goalobjon   <objon#>                 -- Sets the objon        ", "!goalprize   <prize#>                 -- Sets the prize        ",
-                "!goaldetails                          -- Shows the details     ", "!goalwarpall                          -- Warp All after goal?  ",
-                "!goalshipreset                        -- Shipreset after goal? ", "++                                                           ++",
-                "Note: sending \" ~* \" rather than the syntax erases the setting", "=GOAL=====================================================GOAL=" };
+                           "----------This utility sends messages,objons,warps or----------", "-------------prizes to a player who scores a goal -------------",
+                           "!goalmessage <message>:<#>            -- Sets the message      ", "!goalwarp    <x>:<y>:<r>   <r>optional-- Sets the warp point   ",
+                           "!goalobjon   <objon#>                 -- Sets the objon        ", "!goalprize   <prize#>                 -- Sets the prize        ",
+                           "!goaldetails                          -- Shows the details     ", "!goalwarpall                          -- Warp All after goal?  ",
+                           "!goalshipreset                        -- Shipreset after goal? ", "++                                                           ++",
+                           "Note: sending \" ~* \" rather than the syntax erases the setting", "=GOAL=====================================================GOAL="
+                         };
         return helps;
     }
 }

@@ -17,16 +17,16 @@ import twcore.core.events.PlayerLeft;
 import twcore.core.game.Player;
 
 /**
- *  Module for the platoon type games SuperDAVE(postal) created.
- *  basically an inverted prodem type game where you want to stay alive,
- *  every time you die you get put down 1 ship until you get to ship 1.
- *  If you die as ship 1, you're out.
- *  
- *  Created on 27/02/2005
- *  
- *  @author - Jacen Solo
- *  @version 1.0
- */
+    Module for the platoon type games SuperDAVE(postal) created.
+    basically an inverted prodem type game where you want to stay alive,
+    every time you die you get put down 1 ship until you get to ship 1.
+    If you die as ship 1, you're out.
+
+    Created on 27/02/2005
+
+    @author - Jacen Solo
+    @version 1.0
+*/
 public class platoon extends MultiModule
 {
     HashSet <Integer>exemptShips = new HashSet<Integer>();
@@ -44,6 +44,7 @@ public class platoon extends MultiModule
     public void handleEvent(Message event)
     {
         String name = event.getMessager() != null ? event.getMessager() : m_botAction.getPlayerName(event.getPlayerID());
+
         if (name == null) return;
 
 
@@ -68,13 +69,15 @@ public class platoon extends MultiModule
             updateExempt(name, message);
         else if(message.toLowerCase().startsWith("!demote") && !isRunning && !notReallyRunning)
         {
-            isRunning = true; notReallyRunning = true;
+            isRunning = true;
+            notReallyRunning = true;
             m_botAction.sendPrivateMessage(name, "Demoting now.");
             m_botAction.sendArenaMessage("Demoting - on");
         }
         else if(message.toLowerCase().startsWith("!stop") && isRunning && notReallyRunning)
         {
-            isRunning = false; notReallyRunning = false;
+            isRunning = false;
+            notReallyRunning = false;
             m_botAction.sendPrivateMessage(name, "No longer demoting.");
             m_botAction.sendArenaMessage("Demoting - off");
         }
@@ -86,7 +89,8 @@ public class platoon extends MultiModule
 
         String pieces[] = message.split(" ", 2);
         String pieces2[] = pieces[1].split(":");
-        for(int k = 0;k < pieces2.length;k++)
+
+        for(int k = 0; k < pieces2.length; k++)
         {
             try {
                 if(Integer.parseInt(pieces2[k]) < 9 && Integer.parseInt(pieces2[k]) > 0)
@@ -96,10 +100,12 @@ public class platoon extends MultiModule
 
         String exemptShipList = "Exempt ships are: ";
         Iterator<Integer> it = exemptShips.iterator();
+
         while(it.hasNext())
         {
             exemptShipList += " " + ((Integer)it.next()).intValue();
         }
+
         m_botAction.sendPrivateMessage(name, exemptShipList);
     }
 
@@ -124,7 +130,10 @@ public class platoon extends MultiModule
                 Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
                 int players = 0;
 
-                while(it.hasNext()) { it.next(); players++; }
+                while(it.hasNext()) {
+                    it.next();
+                    players++;
+                }
 
                 if(players == 1 && !notReallyRunning)
                     gameOver();
@@ -149,10 +158,14 @@ public class platoon extends MultiModule
     {
         if(!isRunning)
             return;
+
         Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         int players = 0;
 
-        while(it.hasNext()) { it.next(); players++; }
+        while(it.hasNext()) {
+            it.next();
+            players++;
+        }
 
         if(players == 1 && !notReallyRunning)
             gameOver();
@@ -162,12 +175,16 @@ public class platoon extends MultiModule
     {
         if(!isRunning)
             return;
+
         if(event.getShipType() == 0)
         {
             Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
             int players = 0;
 
-            while(it.hasNext()) { it.next(); players++; }
+            while(it.hasNext()) {
+                it.next();
+                players++;
+            }
 
             if(players == 1 && !notReallyRunning)
                 gameOver();
@@ -184,6 +201,7 @@ public class platoon extends MultiModule
     {
         Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
         String winner = "";
+
         while(it.hasNext())
         {
             Player p = (Player)it.next();
@@ -253,12 +271,12 @@ public class platoon extends MultiModule
     public String[] getModHelpMessage()
     {
         String helps[] = {
-                "!start a:b:c:etc       -Starts a game with ships a, b, and c exempt from ship changes.",
-                "!start                 -Starts a game with no ships exempt.",
-                "!cancel                -Cancels current game.",
-                "!exempt a:b:c:d:etc    -Changes ships exempt to a, b, c, and d. You can add as many as you want, they just need to be seperated by :'s",
-                "!demote                -Demotes people even when game isn't going.",
-                "!stop                  -Stops demoting people."
+            "!start a:b:c:etc       -Starts a game with ships a, b, and c exempt from ship changes.",
+            "!start                 -Starts a game with no ships exempt.",
+            "!cancel                -Cancels current game.",
+            "!exempt a:b:c:d:etc    -Changes ships exempt to a, b, c, and d. You can add as many as you want, they just need to be seperated by :'s",
+            "!demote                -Demotes people even when game isn't going.",
+            "!stop                  -Stops demoting people."
         };
 
         return helps;

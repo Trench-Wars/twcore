@@ -4,18 +4,18 @@ import java.lang.reflect.Field;
 
 
 /**
- * Represents a Pushbullet push that has been converted from a json response
- * from the Pushbullet servers.
- * 
- * Push implements Java's Comparable interface and sort such that newer 
- * pushes will be at the beginning of a list. This is in keeping with 
- * Pushbullet.com's policy of sending pushes newest first.
- *
- * @author Robert.Harder
- */
+    Represents a Pushbullet push that has been converted from a json response
+    from the Pushbullet servers.
+
+    Push implements Java's Comparable interface and sort such that newer
+    pushes will be at the beginning of a list. This is in keeping with
+    Pushbullet.com's policy of sending pushes newest first.
+
+    @author Robert.Harder
+*/
 public final class Push implements Comparable<Push> {
-    
-    
+
+
     private String iden;
     private String type;
     private boolean active;
@@ -103,15 +103,15 @@ public final class Push implements Comparable<Push> {
     }
 
     /**
-     * Pushes sort such that newer pushes will be at the beginning
-     * of a list. This is in keeping with Pushbullet.com's policy of
-     * sending pushes newest first.
-     * @param o Push to compare
-     * @return comparison value
-     */
+        Pushes sort such that newer pushes will be at the beginning
+        of a list. This is in keeping with Pushbullet.com's policy of
+        sending pushes newest first.
+        @param o Push to compare
+        @return comparison value
+    */
     @Override
     public int compareTo(Push o) {
-        return Double.compare(o.getModified(),this.getModified()); // Newest first
+        return Double.compare(o.getModified(), this.getModified()); // Newest first
         //return Double.compare(this.getModified(),o.getModified()); // Oldest first
     }
 
@@ -128,8 +128,8 @@ public final class Push implements Comparable<Push> {
         if (obj.getClass() != getClass()) {
             return false;
         }
-        
-        if (this.iden == null){
+
+        if (this.iden == null) {
             return false;
         }
 
@@ -143,19 +143,22 @@ public final class Push implements Comparable<Push> {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         StringBuilder s = new StringBuilder();
         s.append( "{").append(this.getClass().getSimpleName());
-        for( Field f : this.getClass().getDeclaredFields() ){
+
+        for( Field f : this.getClass().getDeclaredFields() ) {
             s.append(", ");
             s.append( f.getName() ).append("=");
+
             try {
                 s.append( f.get(this) );
             } catch (Exception ex) {
-            } 
+            }
         }
+
         s.append("}");
         return s.toString();
     }
-    
+
 }   // end class Push

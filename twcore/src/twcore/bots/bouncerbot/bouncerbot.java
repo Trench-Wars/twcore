@@ -17,11 +17,11 @@ import twcore.core.events.PlayerEntered;
 import twcore.core.util.Tools;
 
 /**
- * A bot designed to handle players who enter into a particular arena
- * without being invited -- a personal bouncer.
- *
- * @author  harvey / modified by dugwyler
- */
+    A bot designed to handle players who enter into a particular arena
+    without being invited -- a personal bouncer.
+
+    @author  harvey / modified by dugwyler
+*/
 public class bouncerbot extends SubspaceBot {
     OperatorList m_opList;                    // List of valid operators
     HashSet<String> m_invitedPlayers;         // Players allowed to enter
@@ -38,10 +38,10 @@ public class bouncerbot extends SubspaceBot {
 
 
     /**
-     * Initializes bouncer.
-     * @param botAction
-     */
-    public bouncerbot( BotAction botAction ){
+        Initializes bouncer.
+        @param botAction
+    */
+    public bouncerbot( BotAction botAction ) {
         super( botAction );
         m_invitedPlayers = new HashSet<String>();
         m_bounceMessage = "Sorry, access to this private arena is currently restricted.  You may not enter.";
@@ -52,9 +52,9 @@ public class bouncerbot extends SubspaceBot {
     }
 
     /**
-     * Sends bot to default arena, sets up the chat, and readies the default bounce location: pub of this zone.
-     */
-    public void handleEvent( LoggedOn event ){
+        Sends bot to default arena, sets up the chat, and readies the default bounce location: pub of this zone.
+    */
+    public void handleEvent( LoggedOn event ) {
         m_botAction.joinArena( m_botAction.getGeneralSettings().getString( "Arena" ) );
         m_opList = m_botAction.getOperatorList();
         m_botAction.sendUnfilteredPublicMessage( "?chat=" + m_botAction.getGeneralSettings().getString( "Smod Chat" ) );
@@ -65,26 +65,30 @@ public class bouncerbot extends SubspaceBot {
     }
 
     /**
-     * Runs command handling for SMods.
-     */
+        Runs command handling for SMods.
+    */
     public void handleEvent( Message event ) {
         String message = event.getMessage();
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE ){
+
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
+
             if( name == null )
                 name = event.getMessager();
+
             if( m_opList.isSmod( name ))
                 handleCommand( name, message );
         }
     }
 
     /**
-     * Handles bouncing, and possible exceptions to being bounced.
-     */
-    public void handleEvent( PlayerEntered event ){
+        Handles bouncing, and possible exceptions to being bounced.
+    */
+    public void handleEvent( PlayerEntered event ) {
         // Determine if player is allowed in ...
         if( !m_isBouncing )
             return;
+
         if( m_bounceAll ) {
             if( m_opList.isSysop( event.getPlayerName() ) )
                 return;
@@ -92,18 +96,22 @@ public class bouncerbot extends SubspaceBot {
             if( m_opList.isBot( event.getPlayerName() ) )
                 return;
         }
+
         if( m_invitedPlayers.contains( event.getPlayerName().toLowerCase()))
             return;
 
         // Not?  Bounce.
         if( !m_bounceMessage.equals("none") )
             m_botAction.sendPrivateMessage( event.getPlayerName(), m_bounceMessage );
+
         if( m_bounceDestination.equals(":kill:") ) {
             m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*kill" );
+
             if( m_logInfo )
                 m_botAction.sendPublicMessage( event.getPlayerName() + " bounced (DC'd)" );
         } else {
             m_botAction.sendUnfilteredPrivateMessage( event.getPlayerName(), "*sendto " + m_bounceDestination );
+
             if( m_logInfo )
                 m_botAction.sendPublicMessage( event.getPlayerName() + " bounced (relocated)" );
         }
@@ -116,113 +124,121 @@ public class bouncerbot extends SubspaceBot {
                 m_sentInfoOnce = true;
             }
         }
+
         logEvent( event.getPlayerName() + " bounced." );
     }
 
 
     /**
-     * Send event string to log.
-     * @param event
-     */
-    public void logEvent( String event ){
+        Send event string to log.
+        @param event
+    */
+    public void logEvent( String event ) {
         if( !m_logInfo )
             return;
+
         Calendar c = Calendar.getInstance();
         String timestamp = c.get( Calendar.MONTH ) + "/" + c.get( Calendar.DAY_OF_MONTH )
-        + "/" + c.get( Calendar.YEAR ) + ": " + c.get( Calendar.HOUR ) + ":"
-        + c.get( Calendar.MINUTE ) + ":" + c.get( Calendar.SECOND ) + " - ";
-        try{
-        	FileWriter writer = new FileWriter( "bouncerbot.log" );
+                           + "/" + c.get( Calendar.YEAR ) + ": " + c.get( Calendar.HOUR ) + ":"
+                           + c.get( Calendar.MINUTE ) + ":" + c.get( Calendar.SECOND ) + " - ";
+
+        try {
+            FileWriter writer = new FileWriter( "bouncerbot.log" );
             PrintWriter out = new PrintWriter( writer );
             m_log.add( timestamp + event );
-            for( Iterator<String> i = m_log.iterator(); i.hasNext(); ){
+
+            for( Iterator<String> i = m_log.iterator(); i.hasNext(); ) {
                 out.println( i.next() );
             }
+
             out.close();
             writer.close();
-        }catch(Exception e){
+        } catch(Exception e) {
             Tools.printStackTrace( e );
         }
     }
 
 
     /**
-     * Handle SMod commands.
-     * @param name
-     * @param message
-     */
-    public void handleCommand( String name, String message ){
-        if( message.startsWith( "!invite " )){
-            if( message.length() > 8 ){
+        Handle SMod commands.
+        @param name
+        @param message
+    */
+    public void handleCommand( String name, String message ) {
+        if( message.startsWith( "!invite " )) {
+            if( message.length() > 8 ) {
                 String invitee = message.substring(8);
                 m_invitedPlayers.add( invitee.toLowerCase() );
                 m_botAction.sendRemotePrivateMessage( invitee, "You have been invited to " + m_botAction.getArenaName() + "." );
                 m_botAction.sendPublicMessage( invitee + " has been invited." );
                 logEvent( invitee + " has been invited." );
             }
-        } else if( message.startsWith( "!go " )){
+        } else if( message.startsWith( "!go " )) {
             m_botAction.changeArena( message.substring( 4 ));
         } else if( message.startsWith( "!die" )) {
             m_botAction.die( "!die ordered by " + name );
-        } else if( message.startsWith( "!message " )){
+        } else if( message.startsWith( "!message " )) {
             m_bounceMessage = message.substring( 9 );
+
             if( m_bounceMessage.equals("none") )
                 m_botAction.sendSmartPrivateMessage( name, "No message will be sent before a player is bounced." );
             else
                 m_botAction.sendSmartPrivateMessage( name, "Bounce message set to: " + m_bounceMessage );
-        } else if( message.startsWith( "!action move " )){
+        } else if( message.startsWith( "!action move " )) {
             if( message.length() > 13 ) {
                 String dest = message.substring( 13 );
+
                 if( dest != null && !dest.equals("") ) {
                     m_bounceDestination = m_zoneIP + "," + m_zonePort + "," + dest;
                     m_botAction.sendSmartPrivateMessage( name, "Bounced players will be sent to " + dest + "."  );
                 }
             }
-        } else if( message.startsWith( "!action move" )){
+        } else if( message.startsWith( "!action move" )) {
             m_bounceDestination = m_zoneIP + "," + m_zonePort;
             m_botAction.sendSmartPrivateMessage( name, "Bounced players will be sent to pub." );
-        } else if( message.startsWith( "!action zonemove " )){
+        } else if( message.startsWith( "!action zonemove " )) {
             if( message.length() > 17 ) {
                 String dest = message.substring( 17 );
+
                 if( dest != null && !dest.equals("") ) {
                     m_bounceDestination = dest;
                     m_botAction.sendSmartPrivateMessage( name, "Bounced players will be sent to: " + dest + " (validity of information unverified -- make sure this is correct)"  );
                 }
             }
-        } else if( message.startsWith( "!action kill" )){
+        } else if( message.startsWith( "!action kill" )) {
             m_bounceDestination = ":kill:";
             m_botAction.sendSmartPrivateMessage( name, "Bounced players will be *kill'd off the server." );
-        } else if( message.startsWith( "!bounce" )){
+        } else if( message.startsWith( "!bounce" )) {
             m_isBouncing = !m_isBouncing;
-            m_botAction.sendSmartPrivateMessage( name, "Bouncer " + (m_isBouncing?"ON":"OFF") );
-        } else if( message.startsWith( "!chat" )){
+            m_botAction.sendSmartPrivateMessage( name, "Bouncer " + (m_isBouncing ? "ON" : "OFF") );
+        } else if( message.startsWith( "!chat" )) {
             m_sendToChat = !m_sendToChat;
-            m_botAction.sendSmartPrivateMessage( name, "Sending msgs to SMod chat: " + (m_sendToChat?"ON":"OFF") );
-        } else if( message.startsWith( "!log" )){
+            m_botAction.sendSmartPrivateMessage( name, "Sending msgs to SMod chat: " + (m_sendToChat ? "ON" : "OFF") );
+        } else if( message.startsWith( "!log" )) {
             m_logInfo = !m_logInfo;
-            m_botAction.sendSmartPrivateMessage( name, "Sending info to log: " + (m_logInfo?"ON":"OFF") );
-        } else if( message.startsWith( "!all" )){
+            m_botAction.sendSmartPrivateMessage( name, "Sending info to log: " + (m_logInfo ? "ON" : "OFF") );
+        } else if( message.startsWith( "!all" )) {
             m_bounceAll = !m_bounceAll;
-            m_botAction.sendSmartPrivateMessage( name, "Bouncing all players except sysops: " + (m_bounceAll?"ON":"OFF") );
+            m_botAction.sendSmartPrivateMessage( name, "Bouncing all players except sysops: " + (m_bounceAll ? "ON" : "OFF") );
         } else if( message.startsWith( "!help" )) {
             String[] help = {
-                    "Command           Desc                                       Status",
-                    "!bounce           Toggles whether to bounce players           "+(m_isBouncing?"ON":"OFF"),
-                    "!chat             Toggles sending bounce msgs to SMod chat    "+(m_sendToChat?"ON":"OFF"),
-                    "!log              Toggles logging messages to chat            "+(m_logInfo?"ON":"OFF"),
-                    "!all              Toggles bouncing staff except for sysop+    "+(m_bounceAll?"ON":"OFF"),
-                    "!action <move|zonemove|kill>     Determines bounce action:",
-                    "         move                    Bounces to pub on this zone",
-                    "         move <arena>            Bounces to <arena> on this zone",
-                    "     zonemove <IP,Port>          Bounces to pub of zone @ <IP,Port>",
-                    "     zonemove <IP,Port,Arena>    Bounces to <Arena> of zone @ <IP,Port>",
-                    "         kill                    Sends *kill (not recommended)",
-                    "     [Default action is: move to pub on this zone]",
-                    "!go <arena>       Sends bot to <arena>",
-                    "!invite <name>    Adds <name> to the authorized entry list",
-                    "!message <msg>    Sets message sent to unauthorized players to <msg>",
-                    "!message none     Sets bot to not send a message before bouncing players",
-                    "!die              Kills bot"
+                "Command           Desc                                       Status",
+                "!bounce           Toggles whether to bounce players           " + (m_isBouncing ? "ON" : "OFF"),
+                "!chat             Toggles sending bounce msgs to SMod chat    " + (m_sendToChat ? "ON" : "OFF"),
+                "!log              Toggles logging messages to chat            " + (m_logInfo ? "ON" : "OFF"),
+                "!all              Toggles bouncing staff except for sysop+    " + (m_bounceAll ? "ON" : "OFF"),
+                "!action <move|zonemove|kill>     Determines bounce action:",
+                "         move                    Bounces to pub on this zone",
+                "         move <arena>            Bounces to <arena> on this zone",
+                "     zonemove <IP,Port>          Bounces to pub of zone @ <IP,Port>",
+                "     zonemove <IP,Port,Arena>    Bounces to <Arena> of zone @ <IP,Port>",
+                "         kill                    Sends *kill (not recommended)",
+                "     [Default action is: move to pub on this zone]",
+                "!go <arena>       Sends bot to <arena>",
+                "!invite <name>    Adds <name> to the authorized entry list",
+                "!message <msg>    Sets message sent to unauthorized players to <msg>",
+                "!message none     Sets bot to not send a message before bouncing players",
+                "!die              Kills bot"
             };
             m_botAction.smartPrivateMessageSpam(name, help);
         }

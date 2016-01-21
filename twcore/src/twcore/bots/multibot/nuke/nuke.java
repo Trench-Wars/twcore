@@ -34,17 +34,17 @@ public final class nuke extends MultiModule {
     private static final int SMALL_REGION = 4;
     private static final int FR_REGION = 1;
     private static final int MID_REGION = 0;
-    
+
     private Random rand;
     private MapRegions regions;
     private BotAction ba;
     private int currentBase;
-    
-    
+
+
     @Override
     public void cancel() {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -56,7 +56,7 @@ public final class nuke extends MultiModule {
         reloadRegions();
         ba.getShip().setSpectatorUpdateTime(200);
     }
-    
+
     public void reloadRegions() {
         try {
             regions.clearRegions();
@@ -71,24 +71,28 @@ public final class nuke extends MultiModule {
             Tools.printStackTrace(e);
         }
     }
-    
+
     public void handleEvent(Message event) {
         String name = event.getMessager();
+
         if (name == null)
             name = m_botAction.getPlayerName(event.getPlayerID());
+
         String msg = event.getMessage();
+
         if (msg.startsWith("!nuke")) {
             itemCommandNukeBase(name, "");
         } else if (msg.startsWith("!set "))
             cmd_setBase(name, msg);
     }
-    
+
     private void cmd_setBase(String name, String msg) {
 
         if (msg.length() <= "!set ".length())
             return;
-        
+
         msg = msg.substring(msg.indexOf(" ") + 1).toLowerCase();
+
         if (msg.equals("small"))
             currentBase = SMALL_BASE;
         else if (msg.equals("med"))
@@ -97,42 +101,47 @@ public final class nuke extends MultiModule {
             currentBase = LARGE_BASE;
         else
             return;
-        
+
         ba.sendSmartPrivateMessage(name, "Changing base to " + msg.toUpperCase());
-        
+
         ba.setDoors(currentBase);
+
         switch (currentBase) {
-            case SMALL_BASE:
-                ba.showObject(LEFT_SIDE_DOOR);
-                ba.showObject(RIGHT_SIDE_DOOR);
-                ba.showObject(SMALL_OBJON);
-                ba.hideObject(MED_OBJON);
-                ba.hideObject(LARGE_OBJON);
-                warpForSmall();
-                break;
-            case MED_BASE:
-                ba.showObject(MED_OBJON);
-                ba.hideObject(SMALL_OBJON);
-                ba.hideObject(LARGE_OBJON);
-                ba.hideObject(LEFT_SIDE_DOOR);
-                ba.hideObject(RIGHT_SIDE_DOOR);
-                warpForMedium();
-                break;
-            case LARGE_BASE:
-                ba.showObject(LARGE_OBJON);
-                ba.hideObject(SMALL_OBJON);
-                ba.hideObject(MED_OBJON);
-                ba.hideObject(LEFT_SIDE_DOOR);
-                ba.hideObject(RIGHT_SIDE_DOOR);
-                break;
+        case SMALL_BASE:
+            ba.showObject(LEFT_SIDE_DOOR);
+            ba.showObject(RIGHT_SIDE_DOOR);
+            ba.showObject(SMALL_OBJON);
+            ba.hideObject(MED_OBJON);
+            ba.hideObject(LARGE_OBJON);
+            warpForSmall();
+            break;
+
+        case MED_BASE:
+            ba.showObject(MED_OBJON);
+            ba.hideObject(SMALL_OBJON);
+            ba.hideObject(LARGE_OBJON);
+            ba.hideObject(LEFT_SIDE_DOOR);
+            ba.hideObject(RIGHT_SIDE_DOOR);
+            warpForMedium();
+            break;
+
+        case LARGE_BASE:
+            ba.showObject(LARGE_OBJON);
+            ba.hideObject(SMALL_OBJON);
+            ba.hideObject(MED_OBJON);
+            ba.hideObject(LEFT_SIDE_DOOR);
+            ba.hideObject(RIGHT_SIDE_DOOR);
+            break;
         }
     }
-    
+
     private void warpForMedium() {
         Iterator<Player> i = ba.getPlayingPlayerIterator();
+
         while (i.hasNext()) {
             Player p = i.next();
             int reg = regions.getRegion(p);
+
             if (reg == LARGE_REGION) {
                 Point coord = getRandomPoint(FR_REGION);
                 ba.warpTo(p.getPlayerID(), (int) coord.getX(), (int) coord.getY());
@@ -140,12 +149,14 @@ public final class nuke extends MultiModule {
             }
         }
     }
-    
+
     private void warpForSmall() {
         Iterator<Player> i = ba.getPlayingPlayerIterator();
+
         while (i.hasNext()) {
             Player p = i.next();
             int reg = regions.getRegion(p);
+
             if (reg == LARGE_REGION || reg == MED_REGION) {
                 Point coord = getRandomPoint(FR_REGION);
                 ba.sendPublicMessage("Warped " + p.getPlayerName() + ": " + coord.getX() + " " + coord.getY());
@@ -159,24 +170,28 @@ public final class nuke extends MultiModule {
     }
 
     /**
-     * Generates a random point within the specified region
-     * 
-     * @param region
-     *            the region the point should be in
-     * @return A point object, or null if the first 10000 points generated were not within the desired region.
-     */
+        Generates a random point within the specified region
+
+        @param region
+                  the region the point should be in
+        @return A point object, or null if the first 10000 points generated were not within the desired region.
+    */
     private Point getRandomPoint(int region) {
         Point p = null;
 
         int count = 0;
+
         while (p == null) {
-            int x = rand.nextInt(590-430) + 430;
-            int y = rand.nextInt(340-250) + 250;
+            int x = rand.nextInt(590 - 430) + 430;
+            int y = rand.nextInt(340 - 250) + 250;
 
             p = new Point(x, y);
+
             if (!regions.checkRegion(x, y, region))
                 p = null;
+
             count++;
+
             if (count > 100000)
                 p = new Point(512, 280);
         }
@@ -191,11 +206,13 @@ public final class nuke extends MultiModule {
         final Vector<Shot> shots = getShots();
         final Vector<Warper> warps = new Vector<Warper>();
         Iterator<Integer> i = m_botAction.getFreqIDIterator(freq);
+
         while (i.hasNext()) {
             int id = i.next();
             Player pl = m_botAction.getPlayer(id);
             // 1 2 3 5
             int reg = regions.getRegion(pl);
+
             if (reg == 1 || reg == 2 || reg == 3 || reg == 5)
                 warps.add(new Warper(id, pl.getXTileLocation(), pl.getYTileLocation()));
         }
@@ -205,7 +222,7 @@ public final class nuke extends MultiModule {
         m_botAction.specificPrize(m_botAction.getBotName(), Tools.Prize.SHIELDS);
 
         m_botAction.sendTeamMessage("Incoming nuke! Anyone inside the FLAGROOM will be WARPED for a moment and then returned when safe.");
-        m_botAction.sendArenaMessage(sender + " has sent a nuke in the direction of the flagroom! Impact is imminent!",17);
+        m_botAction.sendArenaMessage(sender + " has sent a nuke in the direction of the flagroom! Impact is imminent!", 17);
         final TimerTask timerFire = new TimerTask() {
             public void run() {
                 while (!shots.isEmpty()) {
@@ -216,7 +233,11 @@ public final class nuke extends MultiModule {
                     m_botAction.getShip().move(s.x, s.y);
                     m_botAction.getShip().sendPositionPacket();
                     m_botAction.getShip().fire(WeaponFired.WEAPON_THOR);
-                    try { Thread.sleep(75); } catch (InterruptedException e) {}
+
+                    try {
+                        Thread.sleep(75);
+                    }
+                    catch (InterruptedException e) {}
                 }
             }
         };
@@ -224,7 +245,7 @@ public final class nuke extends MultiModule {
 
         TimerTask shields = new TimerTask() {
             public void run() {
-                for (Warper w: warps)
+                for (Warper w : warps)
                     w.save();
             }
         };
@@ -233,9 +254,10 @@ public final class nuke extends MultiModule {
         TimerTask timer = new TimerTask() {
             public void run() {
                 m_botAction.specWithoutLock(m_botAction.getBotName());
-                m_botAction.move(512*16, 285*16);
+                m_botAction.move(512 * 16, 285 * 16);
                 m_botAction.setPlayerPositionUpdating(300);
                 m_botAction.getShip().setSpectatorUpdateTime(100);
+
                 //Iterator<Integer> i = m_botAction.getFreqIDIterator(freq);
                 for (Warper w : warps)
                     w.back();
@@ -267,8 +289,8 @@ public final class nuke extends MultiModule {
 
         public Shot(int a, int x, int y) {
             this.a = a;
-            this.x = x*16;
-            this.y = y*16;
+            this.x = x * 16;
+            this.y = y * 16;
         }
     }
 
@@ -300,9 +322,9 @@ public final class nuke extends MultiModule {
 
         String[] nukeHelp = { "!set <small,med,large>               -- Starts a size of base ",
                               "!nuke                                -- Nuke the base!"
-        };
+                            };
         return nukeHelp;
-        
+
     }
 
     @Override

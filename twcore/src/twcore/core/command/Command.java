@@ -1,8 +1,8 @@
 /*
- * Command.java
- *
- * Created on March 17, 2004, 2:00 PM
- */
+    Command.java
+
+    Created on March 17, 2004, 2:00 PM
+*/
 
 package twcore.core.command;
 
@@ -13,9 +13,9 @@ import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
 /**
- *
- * @author  Stefan / Mythrandir
- */
+
+    @author  Stefan / Mythrandir
+*/
 public class Command {
     int m_messageType, m_playerID;
     String m_name, m_message;
@@ -65,9 +65,10 @@ public class Command {
         if (paramstring.equals("")) paramsa = new String[0];
 
         // loop over all params
-        for (int i=0; i<loopTo; i++) {
+        for (int i = 0; i < loopTo; i++) {
             // determine parameter value
-            if (i < paramsa.length) spawnvalue = paramsa[i].trim(); else spawnvalue = null;
+            if (i < paramsa.length) spawnvalue = paramsa[i].trim();
+            else spawnvalue = null;
 
             // determine parameter type
             if (i < m_cDefList.size()) {
@@ -79,7 +80,7 @@ public class Command {
                 // if parameter value was null, see if there's a default value, or if it's allowed at all
                 if (spawnvalue == null) {
                     if (cpd.isRequired())
-                        throw new InvalidCommandException("Incorrect syntax, parameter #" + (i+1) + " should be specified.");
+                        throw new InvalidCommandException("Incorrect syntax, parameter #" + (i + 1) + " should be specified.");
                     else spawnvalue = cpd.getDefaultValue();
                 }
 
@@ -87,8 +88,10 @@ public class Command {
 
             // create the object of class spawntype with value spawnvalue and add it to the parameter list
             if (spawntype.equals("String")) m_params.add(spawnvalue);
+
             try {
                 if (spawntype.equals("Integer")) m_params.add(new Integer(spawnvalue));
+
                 if (spawntype.equals("Double")) m_params.add(new Double(spawnvalue));
             } catch (NumberFormatException nfe) {
                 throw new InvalidCommandException("Incorrect value: " + spawnvalue + ", '" + spawnkey + "' should be numeric.");
@@ -101,10 +104,18 @@ public class Command {
     }
 
 
-    public boolean isInvalid() { return m_isInvalidCommand; }
-    public String getInvalidMessage() { return m_invalidMessage; }
-    public String getName() { return m_name; }
-    public ArrayList<Object> getParameters() { return m_params; }
+    public boolean isInvalid() {
+        return m_isInvalidCommand;
+    }
+    public String getInvalidMessage() {
+        return m_invalidMessage;
+    }
+    public String getName() {
+        return m_name;
+    }
+    public ArrayList<Object> getParameters() {
+        return m_params;
+    }
 
     public Object get(int n) {
         if (n < m_params.size())
@@ -114,9 +125,9 @@ public class Command {
     }
 
     public Object get(String key) {
-        for (int i=0; i<m_cDefList.size(); i++) {
+        for (int i = 0; i < m_cDefList.size(); i++) {
             if (((CommandParameterDefinition)m_cDefList.get(i)).getKey().equalsIgnoreCase(key)) {
-                if (i<m_params.size())
+                if (i < m_params.size())
                     return m_params.get(i);
                 else
                     return null;

@@ -15,11 +15,11 @@ import twcore.core.util.ModuleEventRequester;
 import twcore.core.util.StringBag;
 
 /**
- * A MultiBot module made for ?go sharkball to be used with prize module
- * 
- * @author comrad
- * 
- */
+    A MultiBot module made for ?go sharkball to be used with prize module
+
+    @author comrad
+
+*/
 
 public class sharkball extends MultiModule {
 
@@ -36,34 +36,34 @@ public class sharkball extends MultiModule {
     private StringBag randomBag = new StringBag();
 
     /* Moderator+ Help Menu */
-    public String[] modHelp = { 
-            "-----------------------------------------------------------------------",
-            "ER+ Commands:", 
-            "!start                        -- Starts the game with random shooters.",
-            "!start <FirstLev>:<SecondLev> -- Starts with specified players as lev.",
-            "!goals # (Default is 5)       -- Sets the amount of goals needed to #.",
-            "!stop                         -- Stops/cancels the game.",
-            "!pHelp                        -- Displays the player help commands.",
-            "!spamRules                    -- arena's the rules of sharkball",
-            "NOTE: Be sure to setup the prizes with the prize module before starting",
-            "      as this module doesn't handle prizing (Refer to A1 in sharkball)"
+    public String[] modHelp = {
+        "-----------------------------------------------------------------------",
+        "ER+ Commands:",
+        "!start                        -- Starts the game with random shooters.",
+        "!start <FirstLev>:<SecondLev> -- Starts with specified players as lev.",
+        "!goals # (Default is 5)       -- Sets the amount of goals needed to #.",
+        "!stop                         -- Stops/cancels the game.",
+        "!pHelp                        -- Displays the player help commands.",
+        "!spamRules                    -- arena's the rules of sharkball",
+        "NOTE: Be sure to setup the prizes with the prize module before starting",
+        "      as this module doesn't handle prizing (Refer to A1 in sharkball)"
 
     };
 
-    public String[] playerHelp = { 
-            "Player Commands:",
-            "!help      -- Displays this message.",
-            "!rules     -- Displays the rules of Sharkball."
+    public String[] playerHelp = {
+        "Player Commands:",
+        "!help      -- Displays this message.",
+        "!rules     -- Displays the rules of Sharkball."
 
     };
-    
+
     public String[] rules = {
-            "RULES: There will be two teams of sharks and another of shooters (levs). Every time a shark dies they " +
-            "will be warped into their 'death box'. If a shark scores their team will be freed. Sharks win when" +
-            "they score the required amount of goals or the opposing team is all in their box."
-            
+        "RULES: There will be two teams of sharks and another of shooters (levs). Every time a shark dies they " +
+        "will be warped into their 'death box'. If a shark scores their team will be freed. Sharks win when" +
+        "they score the required amount of goals or the opposing team is all in their box."
+
     };
-    
+
     public void init() {
     }
 
@@ -92,6 +92,7 @@ public class sharkball extends MultiModule {
 
         if (opList.isER(sender) && messageType == Message.PRIVATE_MESSAGE)
             handleERCommands(sender, message);
+
         if (messageType == Message.PRIVATE_MESSAGE)
             handlePlayerCommands(sender, message);
     }
@@ -147,24 +148,29 @@ public class sharkball extends MultiModule {
         if (isRunning) {
             scoreFreq = event.getFrequency();
             m_botAction.sendArenaMessage(lastCarrier + " scored! Freq " + scoreFreq + " has been released.", 2);
+
             if (scoreFreq == 0) {
                 freq0Score++;
             } else if (scoreFreq == 1) {
                 freq1Score++;
             }
+
             if (freq0Score >= goalsNeeded || freq1Score >= goalsNeeded) {
                 m_botAction.sendArenaMessage("Frequency " + scoreFreq + " has scored " + goalsNeeded + "and has won!",
-                        5);
+                                             5);
             }
+
             if (scoreFreq == 0 && !deathBox0.isEmpty()) {
                 for (int i = 0; i < deathBox0.size(); i++) {
                     m_botAction.specificPrize(deathBox0.get(i), 7);
                 }
+
                 deathBox0.clear();
             } else if (scoreFreq == 1 && !deathBox1.isEmpty()) {
                 for (int i = 0; i < deathBox1.size(); i++) {
                     m_botAction.specificPrize(deathBox1.get(i), 7);
                 }
+
                 deathBox1.clear();
             }
         }
@@ -182,6 +188,7 @@ public class sharkball extends MultiModule {
             m_botAction.sendPrivateMessage(name, "The game has already been started. Please use !stop first.");
         } else {
             m_botAction.sendArenaMessage("Get ready. The game is about to begin in 10 seconds!", 2);
+
             try {
                 String[] splitMsg = msg.substring(7).split(":");
                 lev1 = m_botAction.getFuzzyPlayerName(splitMsg[0]);
@@ -189,8 +196,9 @@ public class sharkball extends MultiModule {
             } catch (Exception e) {
                 setRandomLevs();
                 m_botAction.sendPrivateMessage(name, "Two random levs have been allocated (" + lev1 + "and" + lev2
-                        + ")");
+                                               + ")");
             }
+
             m_botAction.createNumberOfTeams(2);
             m_botAction.changeAllShips(8);
             m_botAction.setFreq(lev1, 2);
@@ -228,6 +236,7 @@ public class sharkball extends MultiModule {
             goalsNeeded = 5;
             m_botAction.sendPrivateMessage(name, "Wrong syntax. Please use !goals #. EG: '!goals 5'");
         }
+
         m_botAction.sendPrivateMessage(name, "The amount of goals needed is now set to " + goalsNeeded);
     }
 
@@ -237,6 +246,7 @@ public class sharkball extends MultiModule {
         int i = 0;
         /* Get the number of players on freq 2 (Lev Freq) */
         levFreq = m_botAction.getFreqPlayerIterator(2);
+
         while (levFreq.hasNext()) {
             count++;
             levFreq.next();
@@ -244,6 +254,7 @@ public class sharkball extends MultiModule {
 
         /* Warp half the levs to the bottom box */
         levFreq = m_botAction.getFreqPlayerIterator(2);
+
         while (levFreq.hasNext() && i < count / 2) {
             String levName = levFreq.next().getPlayerName();
             m_botAction.warpTo(levName, 511, 618);
@@ -254,8 +265,10 @@ public class sharkball extends MultiModule {
     /* Make two random levs when no names are specified */
     public void setRandomLevs() {
         players = m_botAction.getPlayingPlayerIterator();
+
         if (players == null)
             return;
+
         while (players.hasNext()) {
             String playerName = players.next().getPlayerName();
             randomBag.add(playerName);

@@ -7,22 +7,22 @@ import twcore.core.util.ByteArray;
 import twcore.core.util.Tools;
 
 /**
- * ArenaSettings is used to track the current arena settings. Currently its main use is for generating checksums,
- * but there might be other applications for this in the future. The only current way of updating the settings is
- * through a packet that the bot receives from the server.
- * <p>
- * The main structure has been copied over from the MervBot and has been ported to Java. Due to Java's limited
- * possibilities in regard to primitive data types, some fields may appear to be off. At some point they will need
- * to be verified and adjusted where needed. Most, if not all of this data can be found in the arena's .cfg files.
- * <p>
- * Due to this being a port, I've tried to give credit where credit is due, by trying to keep most of the original
- * comments in tact. 
- * 
- * @author Trancid
- *
- */
+    ArenaSettings is used to track the current arena settings. Currently its main use is for generating checksums,
+    but there might be other applications for this in the future. The only current way of updating the settings is
+    through a packet that the bot receives from the server.
+    <p>
+    The main structure has been copied over from the MervBot and has been ported to Java. Due to Java's limited
+    possibilities in regard to primitive data types, some fields may appear to be off. At some point they will need
+    to be verified and adjusted where needed. Most, if not all of this data can be found in the arena's .cfg files.
+    <p>
+    Due to this being a port, I've tried to give credit where credit is due, by trying to keep most of the original
+    comments in tact.
+
+    @author Trancid
+
+*/
 public class ArenaSettings {
-    
+
     // The following constants are used to make sure that values that need to be unsigned, are unsigned.
     // To conserve memory, this conversion is done at runtime. Otherwise, the memory usage would be doubled.
     private static final short  MASK_UINT8  = 0xff;         // Conversion mask UINT8  -> short (INT16)
@@ -30,25 +30,25 @@ public class ArenaSettings {
     private static final long   MASK_UINT32 = 0xffffffff;   // Conversion mask UINT32 -> long  (INT64)
 
     private ByteArray rawData;                          // Contains the packet data in raw form. Needed for generating checksums.
-    
+
     /*
-     * All the raw data broken down into its components.
-     */
+        All the raw data broken down into its components.
+    */
     // 1428 bytes wide                                  //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     // Initial template by Snrrrub                      // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     private byte            typeByte;                   // 0000     | VIE       | Type Byte                     |    15 |    15 |         8 | The packet type ID that is used to directly send this. (0x0F)
     private boolean         exactDamage;                // 0001     | Bullet    | ExactDamage                   |     0 |     1 |         1 | If damage is to be random or not (1=exact, 0=random) [Continuum .36]
     private boolean         hideFlags;                  // 0001     | Spectator | HideFlags                     |     0 |     1 |         1 | If flags are to be shown to specs when they are dropped (1=can't see them) [Continuum .36]
     private boolean         noXRadar;                   // 0001     | Spectator | NoXRadar                      |     0 |     1 |         1 | If specs are allowed to have X (0=yes, 1=no) [Continuum .36]
     private byte[]          pack0 = new byte[3];        // 0001     | ?         | ?                             |       |       |        21 | (14)
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                        // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     private ShipSettings[]  shipSettings;               // 0004     | Ship      | Shipsettings                  |       |       |  8 * 1152 | See shipSettings declaration...
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                        // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     private int             bulletDamageLevel;          // 1156     | Bullet    | BulletDamageLevel             |       |       |        32 | Maximum amount of damage that a L1 bullet will cause. Formula; damage = squareroot(rand# * (max damage^2 + 1)) [BulletDamageLevel * 1000]
     private int             bombDamageLevel;            // 1160     | Bomb      | BombDamageLevel               |       |       |        32 | Amount of damage a bomb causes at its center point (for all bomb levels) [BombDamageLevel * 1000]
     private int             bulletAliveTime;            // 1164     | Bullet    | BulletAliveTime               |       |       |        32 | How long bullets live before disappearing (in hundredths of a second)
@@ -69,13 +69,13 @@ public class ArenaSettings {
     private int             wormholeSwitchTime;         // 1224     | Wormhole  | SwitchTime                    |       |       |        32 | How often the wormhole switches its destination.
     private int             activateAppShutdownTime;    // 1228     | Misc      | ActivateAppShutdownTime       |       |       |        32 | Amount of time a ship is shutdown after application is reactivated (ie. when they come back from windows mode)
     private int             shrapnelSpeed;              // 1232     | Shrapnel  | ShrapnelSpeed                 |       |       |        32 | Speed that shrapnel travels
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                        // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     private byte[]          UNKNOWN0 = new byte[16];    // 1236     | ?         | ?                             |       |       |       128 | ?
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                        // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     private short           sendRoutePercent;           // 1252     | Latency   | SendRoutePercent              |   300 |   800 |        16 | Percentage of the ping time that is spent on the ClientToServer portion of the ping. (used in more accurately syncronizing clocks)
     private short           bombExplodeDelay;           // 1254     | Bomb      | BombExplodeDelay              |       |       |        16 | How long after the proximity sensor is triggered before bomb explodes. (note: it explodes immediately if ship moves away from it after triggering it)
     private short           sendPositionDelay;          // 1256     | Misc      | SendPositionDelay             |     0 |    20 |        16 | Amount of time between position packets sent by client.
@@ -129,13 +129,13 @@ public class ArenaSettings {
     private short           flaggerThrustAdjustment;    // 1352     | Flag      | FlaggerThrustAdjustment       |       |       |        16 | Amount of thrust adjustment player carrying flag gets (negative numbers mean less thrust)
     private short           flaggerSpeedAdjustment;     // 1354     | Flag      | FlaggerSpeedAdjustment        |       |       |        16 | Amount of speed adjustment player carrying flag gets (negative numbers mean slower)
     private short           cliSlowPacketSampleSize;    // 1356     | Latency   | ClientSlowPacketSampleSize    |    50 |  1000 |        16 | Number of packets to sample S2C before checking for kickout.
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                        // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     private byte[]          UNKNOWN1 = new byte[10];    // 1358     | ?         | ?                             |       |       |        80 | ?
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                        // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     private boolean         randomShrapnel;             // 1368     | Shrapnel  | Random                        |     0 |     1 |         1 | Whether shrapnel spreads in circular or random patterns 0=circular 1=random
     private boolean         soccerBallBounce;           // 1369     | Soccer    | BallBounce                    |     0 |     1 |         1 | Whether the ball bounces off walls (0=ball go through walls, 1=ball bounces off walls)
     private boolean         soccerAllowBombs;           // 1370     | Soccer    | AllowBombs                    |     0 |     1 |         1 | Whether the ball carrier can fire his bombs (0=no 1=yes)
@@ -160,53 +160,53 @@ public class ArenaSettings {
     private boolean         flaggerBombUpgrade;         // 1389     | Flag      | FlaggerBombUpgrade            |     0 |     1 |         1 | Whether the flaggers get a bomb upgrade 0=no 1=yes
     private boolean         soccerUseFlagger;           // 1390     | Soccer    | UseFlagger                    |     0 |     1 |         1 | If player with soccer ball should use the Flag:Flagger* ship adjustments or not (0=no, 1=yes)
     private boolean         soccerBallLocation;         // 1391     | Soccer    | BallLocation                  |     0 |     1 |         1 | Whether the balls location is displayed at all times or not (0=not, 1=yes)
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                        // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     private byte[]          UNKNOWN2 = new byte[8];     // 1392     | ?         | ?                             |       |       |        64 | ?
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                        // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+    // Offset   | Category  | Name                          | Min.  | Max.  | Bitsize   | Description
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
     private PrizeSettings   prizeSettings;              // 1400     | Prize     | PrizeSettings                 |       |       |       224 | See PrizeSettings declaration...
-                                                        //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
-    
+    //----------+-----------+-------------------------------+-------+-------+-----------+---------------------------------------------------------------
+
     /** ArenaSettings constructor */
     public ArenaSettings(ByteArray rawData) {
         this.rawData = rawData;
-        
-        this.shipSettings = new ShipSettings[8]; 
-        
+
+        this.shipSettings = new ShipSettings[8];
+
         updateVariables(rawData);
     }
-    
+
     /**
-     * Updates the current settings to the new settings.
-     * When nothing has been changed, no changes will be made, and this function will return immediately.
-     * @param newSettings New settings as the raw packet data.
-     */
+        Updates the current settings to the new settings.
+        When nothing has been changed, no changes will be made, and this function will return immediately.
+        @param newSettings New settings as the raw packet data.
+    */
     public void updateSettings(ByteArray newSettings) {
         if(!this.rawData.equals(newSettings)) {
             this.rawData = newSettings;
             updateVariables(newSettings);
         }
     }
-    
+
     /**
-     * Fetches the arena settings raw data.
-     * @return The pure raw data.
-     */
+        Fetches the arena settings raw data.
+        @return The pure raw data.
+    */
     public ByteArray getRawSettings() {
         return rawData;
     }
-    
+
     /**
-     * The actual updating of the fields of this class.
-     * <p>
-     * For the weird data read out and formats, please refer to the comments near the declarations of each variable.
-     * @param data Raw data that contains the information.
-     */
+        The actual updating of the fields of this class.
+        <p>
+        For the weird data read out and formats, please refer to the comments near the declarations of each variable.
+        @param data Raw data that contains the information.
+    */
     public void updateVariables(ByteArray data) {
-        
+
         this.typeByte                   = data.readByte(0);
         this.exactDamage                = (ByteArray.getPartial(data.readByte(1), 0, 0) == 1);
         this.hideFlags                  = (ByteArray.getPartial(data.readByte(1), 1, 1) == 1);
@@ -214,10 +214,10 @@ public class ArenaSettings {
         this.pack0[0]                   = (byte) ByteArray.getPartial(data.readByte(1), 3, 7);
         this.pack0[1]                   = data.readByte(2);
         this.pack0[2]                   = data.readByte(3);
-        
-        for(int i = 0; i < 8; i++) 
+
+        for(int i = 0; i < 8; i++)
             this.shipSettings[i]        = new ShipSettings(data.readByteArray(4 + i * 144, 4 + i * 144 + 143));
-        
+
         this.bulletDamageLevel          = data.readLittleEndianInt(1156);
         this.bombDamageLevel            = data.readLittleEndianInt(1160);
         this.bulletAliveTime            = data.readLittleEndianInt(1164);
@@ -238,10 +238,10 @@ public class ArenaSettings {
         this.wormholeSwitchTime         = data.readLittleEndianInt(1224);
         this.activateAppShutdownTime    = data.readLittleEndianInt(1228);
         this.shrapnelSpeed              = data.readLittleEndianInt(1232);
-        
+
         for(int i = 0; i < 16; i++)
             this.UNKNOWN0[i]            = data.readByte(1236 + i);
-        
+
         this.sendRoutePercent           = data.readLittleEndianShort(1252);
         this.bombExplodeDelay           = data.readLittleEndianShort(1254);
         this.sendPositionDelay          = data.readLittleEndianShort(1256);
@@ -295,10 +295,10 @@ public class ArenaSettings {
         this.flaggerThrustAdjustment    = data.readLittleEndianShort(1352);
         this.flaggerSpeedAdjustment     = data.readLittleEndianShort(1354);
         this.cliSlowPacketSampleSize    = data.readLittleEndianShort(1356);
-        
+
         for(int i = 0; i < 10; i++)
             this.UNKNOWN1[i]            = data.readByte(1358 + i);
-        
+
         this.randomShrapnel             = (data.readByte(1368) == 1);
         this.soccerBallBounce           = (data.readByte(1369) == 1);
         this.soccerAllowBombs           = (data.readByte(1370) == 1);
@@ -324,1086 +324,1088 @@ public class ArenaSettings {
         this.flaggerBombUpgrade         = (data.readByte(1389) == 1);
         this.soccerUseFlagger           = (data.readByte(1390) == 1);
         this.soccerBallLocation         = (data.readByte(1391) == 1);
-        
+
         for(int i = 0; i < 8; i++)
             this.UNKNOWN2[i]            = data.readByte(1392 + i);
-     
+
         this.prizeSettings              = new PrizeSettings(data.readByteArray(1400, 1427));
     }
-    
+
     /*
-     * Automatically generated getters.
-     */
+        Automatically generated getters.
+    */
     /**
-     * Returns the raw data.
-     * @return rawData
-     */
+        Returns the raw data.
+        @return rawData
+    */
     public ByteArray getRawData() {
         return rawData;
     }
 
     /**
-     * [Unknown] Unknown
-     * Version number of arena settings? Seems to be 15 by default.
-     * @return Version number.
-     */
+        [Unknown] Unknown
+        Version number of arena settings? Seems to be 15 by default.
+        @return Version number.
+    */
     public short getPacketTypeByte() {
         return (short) (typeByte & MASK_UINT8);
     }
 
     /**
-     * <b>[Bullet] ExactDamage</b><br>
-     * Whether bullet damage should be exact, instead of the default random.
-     * @return True when the damage is exact, false when it is random.
-     */
+        <b>[Bullet] ExactDamage</b><br>
+        Whether bullet damage should be exact, instead of the default random.
+        @return True when the damage is exact, false when it is random.
+    */
     public boolean isExactDamage() {
         return exactDamage;
     }
 
     /**
-     * <b>[Spectator] HideFlags</b><br>
-     * Whether server should hide dropped flags from spectators. 
-     * This will help keep teams from using spectators to locate enemy bases/flags.
-     * @return True when the dropped flags are hidden, false otherwise.
-     */
+        <b>[Spectator] HideFlags</b><br>
+        Whether server should hide dropped flags from spectators.
+        This will help keep teams from using spectators to locate enemy bases/flags.
+        @return True when the dropped flags are hidden, false otherwise.
+    */
     public boolean isHideFlags() {
         return hideFlags;
     }
 
     /**
-     * <b>[Spectator] NoXRadar</b><br>
-     * Whether server should prevent spectators from having X-Radar. 
-     * Note that a value of yes will cause spectators not to have X-Radar.
-     * @return True when spectators do not have X-radar, false if they do have it.
-     */
+        <b>[Spectator] NoXRadar</b><br>
+        Whether server should prevent spectators from having X-Radar.
+        Note that a value of yes will cause spectators not to have X-Radar.
+        @return True when spectators do not have X-radar, false if they do have it.
+    */
     public boolean isNoXRadar() {
         return noXRadar;
     }
 
     /**
-     * Section of undocumented data.
-     * @return pack0.
-     */
+        Section of undocumented data.
+        @return pack0.
+    */
     public byte[] getPack0() {
         return pack0;
     }
 
     /**
-     * Fetches the ship settings for a specific ship.
-     * @param internalShipType Ship type according to the INTERNAL list in {@link Ship}. 
-     * @return Ship settings for the specific ship, or null when an invalid parameter has been given.
-     */
+        Fetches the ship settings for a specific ship.
+        @param internalShipType Ship type according to the INTERNAL list in {@link Ship}.
+        @return Ship settings for the specific ship, or null when an invalid parameter has been given.
+    */
     public ShipSettings getShipSetting(byte internalShipType) {
-        if(internalShipType < Ship.INTERNAL_WARBIRD || internalShipType > Ship.INTERNAL_SHARK) 
+        if(internalShipType < Ship.INTERNAL_WARBIRD || internalShipType > Ship.INTERNAL_SHARK)
             return null;
-        
+
         return shipSettings[internalShipType];
     }
-    
+
     /**
-     * Fetches all the ship settings.
-     * @return {@link ShipSettings} array of length 8, with each index matching {@link Ship#INTERNAL_WARBIRD} to {@link Ship#INTERNAL_SHARK}.
-     */
+        Fetches all the ship settings.
+        @return {@link ShipSettings} array of length 8, with each index matching {@link Ship#INTERNAL_WARBIRD} to {@link Ship#INTERNAL_SHARK}.
+    */
     public ShipSettings[] getShipSettings() {
         return shipSettings;
     }
 
     /**
-     * <b>[Bullet] BulletDamageLevel</b><br>
-     * Maximum amount of damage that a L1 bullet will cause.<br>
-     * <i>Formula:</i> damage = squareroot(rand# * (max damage^2 + 1)).<br>
-     * <b>NOTE:</b> This damage is * 1000 compared to the actual arena settings. I.e. if the setting is 5, this value will be 5000.
-     * @return Bullet damage level for a L1 bullet in energy units.
-     */
+        <b>[Bullet] BulletDamageLevel</b><br>
+        Maximum amount of damage that a L1 bullet will cause.<br>
+        <i>Formula:</i> damage = squareroot(rand# * (max damage^2 + 1)).<br>
+        <b>NOTE:</b> This damage is * 1000 compared to the actual arena settings. I.e. if the setting is 5, this value will be 5000.
+        @return Bullet damage level for a L1 bullet in energy units.
+    */
     public long getBulletDamageLevel() {
         return (long) (bulletDamageLevel & MASK_UINT32);
     }
 
     /**
-     * <b>[Bomb] BombDamageLevel</b><br>
-     * Amount of damage a bomb causes at its center point (for all bomb levels).<br>
-     * <b>NOTE:</b> This damage is *1000 compared to the actual arena setting. I.e. if the setting is 5, this value will be 5000.
-     * @return Bomb damage level in energy units.
-     */
+        <b>[Bomb] BombDamageLevel</b><br>
+        Amount of damage a bomb causes at its center point (for all bomb levels).<br>
+        <b>NOTE:</b> This damage is *1000 compared to the actual arena setting. I.e. if the setting is 5, this value will be 5000.
+        @return Bomb damage level in energy units.
+    */
     public long getBombDamageLevel() {
         return (long) (bombDamageLevel & MASK_UINT32);
     }
 
     /**
-     * <b>[Bullet] BulletAliveTime</b><br>
-     * How long bullets live before disappearing (in hundredths of a second).
-     * @return Bullet alive time in centiseconds.
-     */
+        <b>[Bullet] BulletAliveTime</b><br>
+        How long bullets live before disappearing (in hundredths of a second).
+        @return Bullet alive time in centiseconds.
+    */
     public long getBulletAliveTime() {
         return (long) (bulletAliveTime & MASK_UINT32);
     }
 
     /**
-     * <b>[Bomb] BombAliveTime</b><br>
-     * Time a bomb can fly before is disappears. This is really a networking setting and not a weapon setting,
-     * so the default should be sufficient. This setting can be used to control the range of bombs and can be
-     * used to restrict line bombing. If your settings allow a lot of bombs to be flying around at once,
-     * lowering the value of this setting can improve frame rates.
-     * @return Bomb alive time in centiseconds.
-     */
+        <b>[Bomb] BombAliveTime</b><br>
+        Time a bomb can fly before is disappears. This is really a networking setting and not a weapon setting,
+        so the default should be sufficient. This setting can be used to control the range of bombs and can be
+        used to restrict line bombing. If your settings allow a lot of bombs to be flying around at once,
+        lowering the value of this setting can improve frame rates.
+        @return Bomb alive time in centiseconds.
+    */
     public long getBombAliveTime() {
         return (long) (bombAliveTime & MASK_UINT32);
     }
 
     /**
-     * <b>[Misc] DecoyAliveTime</b><br>
-     * Time before a decoy disappears. Note that decoy will instantly disappear if owner enters safe zone.
-     * @return Decoy alive time in centiseconds.
-     */
+        <b>[Misc] DecoyAliveTime</b><br>
+        Time before a decoy disappears. Note that decoy will instantly disappear if owner enters safe zone.
+        @return Decoy alive time in centiseconds.
+    */
     public long getDecoyAliveTime() {
         return (long) (decoyAliveTime & MASK_UINT32);
     }
 
     /**
-     * <b>[Misc] SafetyLimit</b><br>
-     * Time a player can spend in the safe zone before getting kicked. Use this to encourage users to spec when AFK. (90000 = 15 mins).
-     * @return Safety limit in centiseconds.
-     */
+        <b>[Misc] SafetyLimit</b><br>
+        Time a player can spend in the safe zone before getting kicked. Use this to encourage users to spec when AFK. (90000 = 15 mins).
+        @return Safety limit in centiseconds.
+    */
     public long getSafetyLimit() {
         return (long) (safetyLimit & MASK_UINT32);
     }
 
     /**
-     * <b>[Misc] FrequencyShift</b><br>
-     * Random frequency shift applied to sounds to make them more realistic.
-     * @return Frequency shift in Hz.
-     */
+        <b>[Misc] FrequencyShift</b><br>
+        Random frequency shift applied to sounds to make them more realistic.
+        @return Frequency shift in Hz.
+    */
     public long getFrequencyShift() {
         return (long) (frequencyShift & MASK_UINT32);
     }
 
     /**
-     * <b>[Team] MaxFrequency</b><br>
-     * Maximum frequency allowed in arena. Note that this is not the number of frequencies. (5 would allow frequencies 0,1,2,3,4)
-     * This does not include spectator frequencies!
-     * @return Maximum allowed playable frequencies.
-     */
+        <b>[Team] MaxFrequency</b><br>
+        Maximum frequency allowed in arena. Note that this is not the number of frequencies. (5 would allow frequencies 0,1,2,3,4)
+        This does not include spectator frequencies!
+        @return Maximum allowed playable frequencies.
+    */
     public long getMaxFrequency() {
         return (long) (maxFrequency & MASK_UINT32);
     }
 
     /**
-     * <b>[Repel] RepelSpeed</b><br>
-     * Speed at which players are repelled.
-     * @return Repel speed in pixels per 10 seconds.
-     */
+        <b>[Repel] RepelSpeed</b><br>
+        Speed at which players are repelled.
+        @return Repel speed in pixels per 10 seconds.
+    */
     public long getRepelSpeed() {
         return (long) (repelSpeed & MASK_UINT32);
     }
 
     /**
-     * <b>[Mine] MineAliveTime</b><br>
-     * Time before mines disappear if no one runs into them (in hundredths of a second).
-     * @return Mine alive time in centiseconds.
-     */
+        <b>[Mine] MineAliveTime</b><br>
+        Time before mines disappear if no one runs into them (in hundredths of a second).
+        @return Mine alive time in centiseconds.
+    */
     public long getMineAliveTime() {
         return (long) (mineAliveTime & MASK_UINT32);
     }
 
     /**
-     * [Burst] BurstDamageLevel
-     * Maximum amount of damage caused by a single burst bullet. Note that since Continuum .36,
-     * this specifies the constant amount of damage, instead of random, if Bullet:ExactDamage is enabled.<br>
-     * <b>NOTE:</b> This damage is * 1000 compared to the actual arena settings. I.e. if the setting is 5, this value will be 5000.
-     * @return Burst damage level in energy units.
-     */
+        [Burst] BurstDamageLevel
+        Maximum amount of damage caused by a single burst bullet. Note that since Continuum .36,
+        this specifies the constant amount of damage, instead of random, if Bullet:ExactDamage is enabled.<br>
+        <b>NOTE:</b> This damage is * 1000 compared to the actual arena settings. I.e. if the setting is 5, this value will be 5000.
+        @return Burst damage level in energy units.
+    */
     public long getBurstDamageLevel() {
         return (long) (burstDamageLevel & MASK_UINT32);
     }
 
     /**
-     * <b>[Bullet] BulletDamageUpgrade</b><br>
-     * Amount of extra damage each bullet level will cause.<br>
-     * <b>NOTE:</b> This damage is * 1000 compared to the actual arena settings. I.e. if the setting is 5, this value will be 5000.
-     * @return Bullet damage upgrade amount in energy units.
-     */
+        <b>[Bullet] BulletDamageUpgrade</b><br>
+        Amount of extra damage each bullet level will cause.<br>
+        <b>NOTE:</b> This damage is * 1000 compared to the actual arena settings. I.e. if the setting is 5, this value will be 5000.
+        @return Bullet damage upgrade amount in energy units.
+    */
     public long getBulletDamageUpgrade() {
         return (long) (bulletDamageUpgrade & MASK_UINT32);
     }
 
     /**
-     * <b>[Flag] FlagDropDelay</b><br>
-     * Time before flag is dropped by carrier. Special value: 0 = no timer.
-     * @return Flag drop delay in centiseconds. When flag is only dropped upon death or warping, then 0.
-     */
+        <b>[Flag] FlagDropDelay</b><br>
+        Time before flag is dropped by carrier. Special value: 0 = no timer.
+        @return Flag drop delay in centiseconds. When flag is only dropped upon death or warping, then 0.
+    */
     public long getFlagDropDelay() {
         return (long) (flagDropDelay & MASK_UINT32);
     }
 
     /**
-     * <b>[Flag] EnterGameFlaggingDelay</b><br>
-     * Delay before an newly-entered player is allowed to see flags.
-     * @return Enter game flagging delay in centiseconds.
-     */
+        <b>[Flag] EnterGameFlaggingDelay</b><br>
+        Delay before an newly-entered player is allowed to see flags.
+        @return Enter game flagging delay in centiseconds.
+    */
     public long getEnterGameFlaggingDelay() {
         return (long) (enterGameFlaggingDelay & MASK_UINT32);
     }
 
     /**
-     * <b>[Rocket] RocketThrust</b><br>
-     * The rocket will update a player's thrust to this value while the rocket is active.
-     * @return Rocket thrust in an unknown unit.
-     */
+        <b>[Rocket] RocketThrust</b><br>
+        The rocket will update a player's thrust to this value while the rocket is active.
+        @return Rocket thrust in an unknown unit.
+    */
     public long getRocketThrust() {
         return (long) (rocketThrust & MASK_UINT32);
     }
 
     /**
-     * <b>[Rocket] RocketSpeed</b><br>
-     * The rocket will update a player's speed to this value while the rocket is active.
-     * @return Rocket speed in pixels per 10 seconds.
-     */
+        <b>[Rocket] RocketSpeed</b><br>
+        The rocket will update a player's speed to this value while the rocket is active.
+        @return Rocket speed in pixels per 10 seconds.
+    */
     public long getRocketSpeed() {
         return (long) (rocketSpeed & MASK_UINT32);
     }
 
     /**
-     * <b>[Shrapnel] InactiveShrapnelDamage</b><br>
-     * Damage shrapnel causes in its first 1/4 second of life. Though it is not suggested in the default files,
-     * this number is only a base. Inactive shrapnel also seems to change based on gun level.
-     * L1 inactive shrapnel does 0 damage. L2 deals this setting worth of damage.
-     * L3 deals twice as much, and L4 inactive shrapnel (only attainable when you have no gun at all) deals triple.
-     * <b>NOTE:</b> This damage is * 1000 compared to the actual arena settings. I.e. if the setting is 5, this value will be 5000.
-     * @return Inactive shrapnel damage in energy units.
-     */
+        <b>[Shrapnel] InactiveShrapnelDamage</b><br>
+        Damage shrapnel causes in its first 1/4 second of life. Though it is not suggested in the default files,
+        this number is only a base. Inactive shrapnel also seems to change based on gun level.
+        L1 inactive shrapnel does 0 damage. L2 deals this setting worth of damage.
+        L3 deals twice as much, and L4 inactive shrapnel (only attainable when you have no gun at all) deals triple.
+        <b>NOTE:</b> This damage is * 1000 compared to the actual arena settings. I.e. if the setting is 5, this value will be 5000.
+        @return Inactive shrapnel damage in energy units.
+    */
     public long getInactiveShrapnelDamage() {
         return (long) (inactiveShrapnelDamage & MASK_UINT32);
     }
 
     /**
-     * <b>[Wormhole] SwitchTime</b><br>
-     * How often the wormhole switches its destination.
-     * @return Wormhole switch time in centiseconds.
-     */
+        <b>[Wormhole] SwitchTime</b><br>
+        How often the wormhole switches its destination.
+        @return Wormhole switch time in centiseconds.
+    */
     public long getWormholeSwitchTime() {
         return (long) (wormholeSwitchTime & MASK_UINT32);
     }
 
     /**
-     * <b>[Misc] ActivateAppShutdownTime</b><br>
-     * Time a ship is shutdown when user reactivates client application (when user comes back from Windows mode).
-     * @return Activate app shutdown time in centiseconds.
-     */
+        <b>[Misc] ActivateAppShutdownTime</b><br>
+        Time a ship is shutdown when user reactivates client application (when user comes back from Windows mode).
+        @return Activate app shutdown time in centiseconds.
+    */
     public long getActivateAppShutdownTime() {
         return (long) (activateAppShutdownTime & MASK_UINT32);
     }
 
     /**
-     * <b>[Shrapnel] ShrapnelSpeed</b><br>
-     * Speed that shrapnel travels.
-     * @return Shrapnel speed in pixels per 10 seconds.
-     */
+        <b>[Shrapnel] ShrapnelSpeed</b><br>
+        Speed that shrapnel travels.
+        @return Shrapnel speed in pixels per 10 seconds.
+    */
     public long getShrapnelSpeed() {
         return (long) (shrapnelSpeed & MASK_UINT32);
     }
 
     /**
-     * Section of undocumented data.
-     * @return UNKNOWN0
-     */
+        Section of undocumented data.
+        @return UNKNOWN0
+    */
     public byte[] getUNKNOWN0() {
         return UNKNOWN0;
     }
 
     /**
-     * <b>[Latency] SendRoutePercent</b><br>
-     * Percentage of the ping time that is spent on the ClientToServer portion of the ping.
-     * (Used in more accurately syncronizing clocks.)
-     * @return Send route percent in promille. (1000 = 100%)
-     */
+        <b>[Latency] SendRoutePercent</b><br>
+        Percentage of the ping time that is spent on the ClientToServer portion of the ping.
+        (Used in more accurately syncronizing clocks.)
+        @return Send route percent in promille. (1000 = 100%)
+    */
     public int getSendRoutePercent() {
         return (int) (sendRoutePercent & MASK_UINT16);
     }
 
     /**
-     * <b>[Bomb] BombExplodeDelay</b><br>
-     * How long after the proximity sensor is triggered before bomb explodes.
-     * (Note: it explodes immediately if ship moves away from it after triggering it.)
-     * @return Bomb explode delay in centiseconds.
-     */
+        <b>[Bomb] BombExplodeDelay</b><br>
+        How long after the proximity sensor is triggered before bomb explodes.
+        (Note: it explodes immediately if ship moves away from it after triggering it.)
+        @return Bomb explode delay in centiseconds.
+    */
     public int getBombExplodeDelay() {
         return (int) (bombExplodeDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Misc] SendPositionDelay</b><br>
-     * Time between position packets sent by clients. Do not modify this setting without a good reason.
-     * @return Send position delay in centiseconds.
-     */
+        <b>[Misc] SendPositionDelay</b><br>
+        Time between position packets sent by clients. Do not modify this setting without a good reason.
+        @return Send position delay in centiseconds.
+    */
     public int getSendPositionDelay() {
         return (int) (sendPositionDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Bomb] BombExplodePixels</b><br>
-     * Initial blast radius for a bomb, then multiplied by bomb level (so L1 gets this, L2 gets double, etc.).
-     * Note that this is purely the damage radius, not affected by prox.
-     * @return Bomb explode pixels in pixels.
-     */
+        <b>[Bomb] BombExplodePixels</b><br>
+        Initial blast radius for a bomb, then multiplied by bomb level (so L1 gets this, L2 gets double, etc.).
+        Note that this is purely the damage radius, not affected by prox.
+        @return Bomb explode pixels in pixels.
+    */
     public int getBombExplodePixels() {
         return (int) (bombExplodePixels & MASK_UINT16);
     }
 
     /**
-     * <b>[Prize] DeathPrizeTime</b><br>
-     * Time the prize exists that appears after killing somebody.
-     * @return Death prize time in centiseconds.
-     */
+        <b>[Prize] DeathPrizeTime</b><br>
+        Time the prize exists that appears after killing somebody.
+        @return Death prize time in centiseconds.
+    */
     public int getDeathPrizeTime() {
         return (int) (deathPrizeTime & MASK_UINT16);
     }
 
     /**
-     * <b>[Bomb] JitterTime</b><br>
-     * How long the screen jitters from a bomb hit.
-     * @return Jitter time in centiseconds.
-     */
+        <b>[Bomb] JitterTime</b><br>
+        How long the screen jitters from a bomb hit.
+        @return Jitter time in centiseconds.
+    */
     public int getJitterTime() {
         return (int) (jitterTime & MASK_UINT16);
     }
 
     /**
-     * <b>[Kill] EnterDelay</b><br>
-     * Delay before a killed player re-enters game (respawns).
-     * <i>Special value:</i> 0 = player respawns at same location after a very short delay.
-     * @return Enter delay in centiseconds.
-     */
+        <b>[Kill] EnterDelay</b><br>
+        Delay before a killed player re-enters game (respawns).
+        <i>Special value:</i> 0 = player respawns at same location after a very short delay.
+        @return Enter delay in centiseconds.
+    */
     public int getEnterDelay() {
         return (int) (enterDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Prize] EngineShutdownTime</b><br>
-     * How long an "Engine Shutdown" prize effects your ship. When you get an engine shutdown 
-     * you cannot accelerate and your rotation speed is decreased significantly.
-     * @return Engine shutdown time in centiseconds.
-     */
+        <b>[Prize] EngineShutdownTime</b><br>
+        How long an "Engine Shutdown" prize effects your ship. When you get an engine shutdown
+        you cannot accelerate and your rotation speed is decreased significantly.
+        @return Engine shutdown time in centiseconds.
+    */
     public int getEngineShutdownTime() {
         return (int) (engineShutdownTime & MASK_UINT16);
     }
 
     /**
-     * <b>[Bomb] ProximityDistance</b><br>
-     * Radius of proximity trigger of an L1 bomb. Each bomb level adds 1 to this amount.
-     * @return Proximity distance in pixels.
-     */
+        <b>[Bomb] ProximityDistance</b><br>
+        Radius of proximity trigger of an L1 bomb. Each bomb level adds 1 to this amount.
+        @return Proximity distance in pixels.
+    */
     public int getProximityDistance() {
         return (int) (proximityDistance & MASK_UINT16);
     }
 
     /**
-     * <b>[Kill] BountyIncreaseForKill</b><br>
-     * Points added to players bounty each time he kills an opponent.
-     * @return Bounty increase for kill in points.
-     */
+        <b>[Kill] BountyIncreaseForKill</b><br>
+        Points added to players bounty each time he kills an opponent.
+        @return Bounty increase for kill in points.
+    */
     public int getBountyIncreaseForKill() {
         return (int) (bountyIncreaseForKill & MASK_UINT16);
     }
 
     /**
-     * <b>[Misc] BounceFactor</b><br>
-     * How bouncy the walls are. <i>Formula:</i> SpeedAfter = SpeedBefore * (16 / BounceFactor).
-     * @return Bounce factor (multiplier).
-     */
+        <b>[Misc] BounceFactor</b><br>
+        How bouncy the walls are. <i>Formula:</i> SpeedAfter = SpeedBefore * (16 / BounceFactor).
+        @return Bounce factor (multiplier).
+    */
     public int getBounceFactor() {
         return (int) (bounceFactor & MASK_UINT16);
     }
 
     /**
-     * <b>[Radar] MapZoomFactor</b><br>
-     * A number representing how far you can see on radar.
-     * @return Map zoom factor.
-     */
+        <b>[Radar] MapZoomFactor</b><br>
+        A number representing how far you can see on radar.
+        @return Map zoom factor.
+    */
     public int getMapZoomFactor() {
         return (int) (mapZoomFactor & MASK_UINT16);
     }
 
     /**
-     * <b>[Kill] MaxBonus</b><br>
-     * This is if you have flags, the maximum amount of points that can be awarded per kill.
-     * @return Max bonus in points.
-     */
+        <b>[Kill] MaxBonus</b><br>
+        This is if you have flags, the maximum amount of points that can be awarded per kill.
+        @return Max bonus in points.
+    */
     public int getMaxBonus() {
         return (int) (maxBonus & MASK_UINT16);
     }
 
     /**
-     * <b>[Kill] MaxPenalty</b><br>
-     * This is if you have flags, the maximum amount of points that can be taken away per a death.
-     * @return Max penalty in points.
-     */
+        <b>[Kill] MaxPenalty</b><br>
+        This is if you have flags, the maximum amount of points that can be taken away per a death.
+        @return Max penalty in points.
+    */
     public int getMaxPenalty() {
         return (int) (maxPenalty & MASK_UINT16);
     }
 
     /**
-     * <b>[Kill] RewardBase</b><br>
-     * This is shown added to a person's bounty, but isn't added from points for a kill.
-     * @return Reward base in points.
-     */
+        <b>[Kill] RewardBase</b><br>
+        This is shown added to a person's bounty, but isn't added from points for a kill.
+        @return Reward base in points.
+    */
     public int getRewardBase() {
         return (int) (rewardBase & MASK_UINT16);
     }
 
     /**
-     * <b>[Repel] RepelTime</b><br>
-     * How long a repel affects players.
-     * @return Repel time in centiseconds.
-     */
+        <b>[Repel] RepelTime</b><br>
+        How long a repel affects players.
+        @return Repel time in centiseconds.
+    */
     public int getRepelTime() {
         return (int) (repelTime & MASK_UINT16);
     }
 
     /**
-     * <b>[Repel] RepelDistance</b><br>
-     * Distance that a repel has an affect on players.
-     * @return Repel distance in pixels.
-     */
+        <b>[Repel] RepelDistance</b><br>
+        Distance that a repel has an affect on players.
+        @return Repel distance in pixels.
+    */
     public int getRepelDistance() {
         return (int) (repelDistance & MASK_UINT16);
     }
 
     /**
-     * <b>[Misc] TickerDelay</b><br>
-     * Time between ticker help messages.
-     * @return Ticker delay in centiseconds.
-     */
+        <b>[Misc] TickerDelay</b><br>
+        Time between ticker help messages.
+        @return Ticker delay in centiseconds.
+    */
     public int getHelpTickerDelay() {
         return (int) (helpTickerDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Flag] FlaggerOnRadar</b><br>
-     * Whether the flaggers appear on radar in red.
-     * @return True when flaggers are marked in red on the radar, otherwise false.
-     */
+        <b>[Flag] FlaggerOnRadar</b><br>
+        Whether the flaggers appear on radar in red.
+        @return True when flaggers are marked in red on the radar, otherwise false.
+    */
     public boolean isFlaggerOnRadar() {
         return flaggerOnRadar;
     }
 
     /**
-     * <b>[Flag] FlaggerKillMultiplier</b><br>
-     * Number of times more points are given to a flagger. <i>Formula:</i> Points = (FlaggerKillMultiplier + 1) * InitialPoints.
-     * @return Flagger kill multiplier.
-     */
+        <b>[Flag] FlaggerKillMultiplier</b><br>
+        Number of times more points are given to a flagger. <i>Formula:</i> Points = (FlaggerKillMultiplier + 1) * InitialPoints.
+        @return Flagger kill multiplier.
+    */
     public int getFlaggerKillMultiplier() {
         return (int) (flaggerKillMultiplier & MASK_UINT16);
     }
 
     /**
-     * <b>[Prize] PrizeFactor</b><br>
-     * Adjusts number of prizes generated per player. <i>Formula:</i> NumPrizes = PrizeFactor * PlayerCount / 1000.
-     * @return Prize factor.
-     */
+        <b>[Prize] PrizeFactor</b><br>
+        Adjusts number of prizes generated per player. <i>Formula:</i> NumPrizes = PrizeFactor * PlayerCount / 1000.
+        @return Prize factor.
+    */
     public int getPrizeFactor() {
         return (int) (prizeFactor & MASK_UINT16);
     }
-    
+
     /**
-     * <b>[Prize] PrizeDelay</b><br>
-     * How often server regenerates prizes.
-     * @return Prize delay in centiseconds.
-     */
+        <b>[Prize] PrizeDelay</b><br>
+        How often server regenerates prizes.
+        @return Prize delay in centiseconds.
+    */
     public int getPrizeDelay() {
         return (int) (prizeDelay & MASK_UINT16);
     }
-    
+
     /**
-     * <b>[Prize] PrizeMinimumVirtual</b><br>
-     * Base distance from center of arena that prizes/flags/soccer-balls will generate.
-     * Setting this below 8 will crash subgame.
-     * @return Prize minimum virtual in tiles.
-     */
+        <b>[Prize] PrizeMinimumVirtual</b><br>
+        Base distance from center of arena that prizes/flags/soccer-balls will generate.
+        Setting this below 8 will crash subgame.
+        @return Prize minimum virtual in tiles.
+    */
     public int getPrizeMinimumVirtual() {
         return (int) (prizeMinimumVirtual & MASK_UINT16);
     }
-    
+
     /**
-     * <b>[Prize] PrizeUpgradeVirtual</b><br>
-     * Additional distance added to MinimumVirtual per player in game.
-     * @return Prize upgrade virtual in tiles.
-     */
+        <b>[Prize] PrizeUpgradeVirtual</b><br>
+        Additional distance added to MinimumVirtual per player in game.
+        @return Prize upgrade virtual in tiles.
+    */
     public int getPrizeUpgradeVirtual() {
         return (int) (prizeUpgradeVirtual & MASK_UINT16);
     }
-    
+
     /**
-     * <b>[Prize] PrizeMaxExist</b><br>
-     * Maximum random time that a hidden prize will remain on screen.
-     * @return Prize max exist in centiseconds.
-     */
+        <b>[Prize] PrizeMaxExist</b><br>
+        Maximum random time that a hidden prize will remain on screen.
+        @return Prize max exist in centiseconds.
+    */
     public int getPrizeMaxExist() {
         return (int) (prizeMaxExist & MASK_UINT16);
     }
-    
+
     /**
-     * <b>[Prize] PrizeMinExist</b><br>
-     * Minimum random time that a hidden prize will remain on screen.
-     * @return Prize min exist in centiseconds.
-     */
+        <b>[Prize] PrizeMinExist</b><br>
+        Minimum random time that a hidden prize will remain on screen.
+        @return Prize min exist in centiseconds.
+    */
     public int getPrizeMinExist() {
         return (int) (prizeMinExist & MASK_UINT16);
     }
-    
+
     /**
-     * <b>[Prize] PrizeNegativeFactor</b><br>
-     * The chance of greening a negative prize, higher values mean less likely, 0 means never. 
-     * <i>Formula:</i> NegativePrizeCount = 1 / PrizeNegativeFactor * TotalPrizeCount.
-     * A negative prize takes an upgrade away from your ship, such as antiwarp.
-     * @return Prize negative factor.
-     */
+        <b>[Prize] PrizeNegativeFactor</b><br>
+        The chance of greening a negative prize, higher values mean less likely, 0 means never.
+        <i>Formula:</i> NegativePrizeCount = 1 / PrizeNegativeFactor * TotalPrizeCount.
+        A negative prize takes an upgrade away from your ship, such as antiwarp.
+        @return Prize negative factor.
+    */
     public int getPrizeNegativeFactor() {
         return (int) (prizeNegativeFactor & MASK_UINT16);
     }
 
     /**
-     * <b>[Door] DoorDelay</b><br>
-     * How often doors attempt to switch their state.
-     * @return Door delay in centiseconds.
-     */
+        <b>[Door] DoorDelay</b><br>
+        How often doors attempt to switch their state.
+        @return Door delay in centiseconds.
+    */
     public int getDoorDelay() {
         return (int) (doorDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Toggle] AntiWarpPixels</b><br>
-     * Distance Anti-Warp affects other players. Note that AntiWarp is still limited by the radar area.
-     * @return Antiwarp pixels in pixels.
-     */
+        <b>[Toggle] AntiWarpPixels</b><br>
+        Distance Anti-Warp affects other players. Note that AntiWarp is still limited by the radar area.
+        @return Antiwarp pixels in pixels.
+    */
     public int getAntiwarpPixels() {
         return (int) (antiwarpPixels & MASK_UINT16);
     }
 
     /**
-     * <b>[Door] DoorMode</b><br>
-     * Each bit of this field determines whether its represented door is open or not. 
-     * The 8 bits, from left to right, represent the 8 door tiles in the tileset, from left to right.<br>
-     * Special values:
-     * <li>-2 = all doors completely random
-     * <li>-1 = weighted random (some doors open more often than others)
-     * <li>0-255 = fixed doors (1 bit of byte for each door specifying whether it is open or not)
-     * @return Door mode as bitfield.
-     */
+        <b>[Door] DoorMode</b><br>
+        Each bit of this field determines whether its represented door is open or not.
+        The 8 bits, from left to right, represent the 8 door tiles in the tileset, from left to right.<br>
+        Special values:
+        <li>-2 = all doors completely random
+        <li>-1 = weighted random (some doors open more often than others)
+        <li>0-255 = fixed doors (1 bit of byte for each door specifying whether it is open or not)
+        @return Door mode as bitfield.
+    */
     public short getDoorMode() {
         return doorMode;
     }
 
     /**
-     * <b>[Flag] FlagBlankDelay</b><br>
-     * Amount of time that a user can get no data from server before the client will hide flags for 10 seconds. 
-     * Lessen this if you have lag-related flagging trouble.
-     * @return Flag blank delay in centiseconds.
-     */
+        <b>[Flag] FlagBlankDelay</b><br>
+        Amount of time that a user can get no data from server before the client will hide flags for 10 seconds.
+        Lessen this if you have lag-related flagging trouble.
+        @return Flag blank delay in centiseconds.
+    */
     public int getFlagBlankDelay() {
         return (int) (flagBlankDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Flag] NoDataFlagDropDelay</b><br>
-     * Amount of time that a user can get no data from server before flags he is carrying are dropped. 
-     * @return No data flag drop delay in centiseconds.
-     */
+        <b>[Flag] NoDataFlagDropDelay</b><br>
+        Amount of time that a user can get no data from server before flags he is carrying are dropped.
+        @return No data flag drop delay in centiseconds.
+    */
     public int getNoDataFlagDropDelay() {
         return (int) (noDataFlagDropDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Prize] MultiPrizeCount</b><br>
-     * Amount of prizes within a multiprize green.
-     * @return Multiprize count.
-     */
+        <b>[Prize] MultiPrizeCount</b><br>
+        Amount of prizes within a multiprize green.
+        @return Multiprize count.
+    */
     public int getMultiPrizeCount() {
         return (int) (multiPrizeCount & MASK_UINT16);
     }
 
     /**
-     * <b>[Brick] BrickTime</b><br>
-     * How long bricks last.
-     * @return Brick time in centiseconds.
-     */
+        <b>[Brick] BrickTime</b><br>
+        How long bricks last.
+        @return Brick time in centiseconds.
+    */
     public int getBrickTime() {
         return (int) (brickTime & MASK_UINT16);
     }
 
     /**
-     * <b>[Misc] WarpRadiusLimit</b><br>
-     * Ships randomly placed on the map can be a maximum of this far from the map's center.
-     * Note that 1024 will cover the entire map.
-     * @return Warp radius limit in tiles.
-     */
+        <b>[Misc] WarpRadiusLimit</b><br>
+        Ships randomly placed on the map can be a maximum of this far from the map's center.
+        Note that 1024 will cover the entire map.
+        @return Warp radius limit in tiles.
+    */
     public int getWarpRadiusLimit() {
         return (int) (warpRadiusLimit & MASK_UINT16);
     }
 
     /**
-     * <b>[Bomb] EBombShutdownTime</b><br>
-     * Maximum time an EMP bomb suspends recharge. When the EMP hits the player indirectly
-     * (through the blast radius), this time is reduced.
-     * @return EMP bomb shutdown time in centiseconds.
-     */
+        <b>[Bomb] EBombShutdownTime</b><br>
+        Maximum time an EMP bomb suspends recharge. When the EMP hits the player indirectly
+        (through the blast radius), this time is reduced.
+        @return EMP bomb shutdown time in centiseconds.
+    */
     public int geteBombShutdownTime() {
         return (int) (eBombShutdownTime & MASK_UINT16);
     }
 
     /**
-     * <b>[Bomb] EBombDamagePercent</b><br>
-     * Percentage of normal damage applied to an EMP bomb.
-     * @return EMP bomb damage percent in promille. (1000 = 100%, 2000 = 200%)
-     */
+        <b>[Bomb] EBombDamagePercent</b><br>
+        Percentage of normal damage applied to an EMP bomb.
+        @return EMP bomb damage percent in promille. (1000 = 100%, 2000 = 200%)
+    */
     public int geteBombDamagePercent() {
         return (int) (eBombDamagePercent & MASK_UINT16);
     }
 
     /**
-     * <b>[Radar] RadarNeutralSize</b><br>
-     * Size of area between blinded radar zones.
-     * @return Radar neutral size in pixels? (0 to 1024)
-     */
+        <b>[Radar] RadarNeutralSize</b><br>
+        Size of area between blinded radar zones.
+        @return Radar neutral size in pixels? (0 to 1024)
+    */
     public int getRadarNeutralSize() {
         return (int) (radarNeutralSize & MASK_UINT16);
     }
 
     /**
-     * <b>[Misc] WarpPointDelay</b><br>
-     * How long a Portal point is active.
-     * @return Warppoint delay in centiseconds.
-     */
+        <b>[Misc] WarpPointDelay</b><br>
+        How long a Portal point is active.
+        @return Warppoint delay in centiseconds.
+    */
     public int getWarpPointDelay() {
         return (int) (warpPointDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Misc] NearDeathLevel</b><br>
-     * Energy that constitutes a near-death experience. The server will reduce the ship's
-     * bounty by 1 when this occurs. (Used for dueling zones.)
-     * @return Near death level in energy.
-     */
+        <b>[Misc] NearDeathLevel</b><br>
+        Energy that constitutes a near-death experience. The server will reduce the ship's
+        bounty by 1 when this occurs. (Used for dueling zones.)
+        @return Near death level in energy.
+    */
     public int getNearDeathLevel() {
         return (int) (nearDeathLevel & MASK_UINT16);
     }
 
     /**
-     * <b>[Bomb] BBombDamagePercent</b><br>
-     * Percentage of normal damage applied to a bouncing bomb. Note that even though a bouncing bomb
-     * loses its bouncing picture after the last bounce, it retains this percentage modifier.
-     * @return Bouncing bomb damage percent in promille. (1000 = 100%, 2000 = 200%)
-     */
+        <b>[Bomb] BBombDamagePercent</b><br>
+        Percentage of normal damage applied to a bouncing bomb. Note that even though a bouncing bomb
+        loses its bouncing picture after the last bounce, it retains this percentage modifier.
+        @return Bouncing bomb damage percent in promille. (1000 = 100%, 2000 = 200%)
+    */
     public int getbBombDamagePercent() {
         return (int) (bBombDamagePercent & MASK_UINT16);
     }
 
     /**
-     * <b>[Shrapnel] ShrapnelDamagePercent</b><br>
-     * Percentage of normal bullet damage applied to shrapnel (relative to same level).
-     * Note that shrapnel does obey Bullet:ExactDamage.
-     * @return Shrapnel damage percent in promille. (1000 = 100%, 2000 = 200%)
-     */
+        <b>[Shrapnel] ShrapnelDamagePercent</b><br>
+        Percentage of normal bullet damage applied to shrapnel (relative to same level).
+        Note that shrapnel does obey Bullet:ExactDamage.
+        @return Shrapnel damage percent in promille. (1000 = 100%, 2000 = 200%)
+    */
     public int getShrapnelDamagePercent() {
         return (int) (shrapnelDamagePercent & MASK_UINT16);
     }
 
     /**
-     * <b>[Latency] ClientSlowPacketTime</b><br>
-     * The client will consider an S2C packet slow if it takes this long or longer to receive.
-     * @return Client slow packet time in centiseconds.
-     */
+        <b>[Latency] ClientSlowPacketTime</b><br>
+        The client will consider an S2C packet slow if it takes this long or longer to receive.
+        @return Client slow packet time in centiseconds.
+    */
     public int getClientSlowPacketTime() {
         return (int) (clientSlowPacketTime & MASK_UINT16);
     }
 
     /**
-     * <b>[Flag] FlagDropResetReward</b><br>
-     * Minimum kill reward that a flagger must get to reset his drop timer. 
-     * See Flag Settings for flag reward customization.
-     * @return Flag drop reset reward in points.
-     */
+        <b>[Flag] FlagDropResetReward</b><br>
+        Minimum kill reward that a flagger must get to reset his drop timer.
+        See Flag Settings for flag reward customization.
+        @return Flag drop reset reward in points.
+    */
     public int getFlagDropResetReward() {
         return (int) (flagDropResetReward & MASK_UINT16);
     }
 
     /**
-     * <b>[Flag] FlaggerFireCostPercent</b><br>
-     * Percentage of normal weapon firing cost for flaggers. Note that 0% will essentially give flaggers superpower.
-     * @return Flagger fire cost percent in promille. (1000 = 100%, 2000 = 200%)
-     */
+        <b>[Flag] FlaggerFireCostPercent</b><br>
+        Percentage of normal weapon firing cost for flaggers. Note that 0% will essentially give flaggers superpower.
+        @return Flagger fire cost percent in promille. (1000 = 100%, 2000 = 200%)
+    */
     public int getFlaggerFireCostPercent() {
         return (int) (flaggerFireCostPercent & MASK_UINT16);
     }
 
     /**
-     * <b>[Flag] FlaggerDamagePercent</b><br>
-     * Percentage of normal damage received by flaggers. Note that 0% will essentially make flaggers invincible.
-     * @return Flagger damage percent in promille. (1000 = 100%, 2000 = 200%)
-     */
+        <b>[Flag] FlaggerDamagePercent</b><br>
+        Percentage of normal damage received by flaggers. Note that 0% will essentially make flaggers invincible.
+        @return Flagger damage percent in promille. (1000 = 100%, 2000 = 200%)
+    */
     public int getFlaggerDamagePercent() {
         return (int) (flaggerDamagePercent & MASK_UINT16);
     }
 
     /**
-     * <b>[Flag] FlaggerBombFireDelay</b><br>
-     * Delay added to standard bomb firing delay for flaggers. Note: Please do not set this number between 1 and 20.
-     * @return Flagger bomb fire delay in centiseconds.
-     */
+        <b>[Flag] FlaggerBombFireDelay</b><br>
+        Delay added to standard bomb firing delay for flaggers. Note: Please do not set this number between 1 and 20.
+        @return Flagger bomb fire delay in centiseconds.
+    */
     public int getFlaggerBombFireDelay() {
         return (int) (flaggerBombFireDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Soccer] PassDelay</b><br>
-     * How long after the ball is fired before anybody can pick it up.
-     * @return Soccer pass delay in centiseconds.
-     */
+        <b>[Soccer] PassDelay</b><br>
+        How long after the ball is fired before anybody can pick it up.
+        @return Soccer pass delay in centiseconds.
+    */
     public int getSoccerPassDelay() {
         return (int) (soccerPassDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Soccer] BallBlankDelay</b><br>
-     * Amount of time a player can receive no data from server and still pick up the soccer ball.
-     * @return Soccer ball blank delay in centiseconds.
-     */
+        <b>[Soccer] BallBlankDelay</b><br>
+        Amount of time a player can receive no data from server and still pick up the soccer ball.
+        @return Soccer ball blank delay in centiseconds.
+    */
     public int getSoccerBallBlankDelay() {
         return (int) (soccerBallBlankDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Latency] S2CNoDataKickoutDelay</b><br>
-     * Time a client can receive no data from server before it automatically disconnects.
-     * This must be higher than the KeepAliveDelay specified in server.ini.
-     * @return S2C no data kickout delay in centiseconds.
-     */
+        <b>[Latency] S2CNoDataKickoutDelay</b><br>
+        Time a client can receive no data from server before it automatically disconnects.
+        This must be higher than the KeepAliveDelay specified in server.ini.
+        @return S2C no data kickout delay in centiseconds.
+    */
     public int getS2CNoDataKickoutDelay() {
         return (int) (s2CNoDataKickoutDelay & MASK_UINT16);
     }
 
     /**
-     * <b>[Flag] FlaggerThrustAdjustment</b><br>
-     * Thrust adjustment for flaggers. Note that negative numbers will reduce their thrust.
-     * @return Flagger thrust adjustment in an unknown unit. (Range: -128 to 128)
-     */
+        <b>[Flag] FlaggerThrustAdjustment</b><br>
+        Thrust adjustment for flaggers. Note that negative numbers will reduce their thrust.
+        @return Flagger thrust adjustment in an unknown unit. (Range: -128 to 128)
+    */
     public short getFlaggerThrustAdjustment() {
         return flaggerThrustAdjustment;
     }
 
     /**
-     * <b>[Flag] FlaggerSpeedAdjustment</b><br>
-     * Speed adjustment for flaggers. Note that negative numbers will slow down flaggers.
-     * @return Flagger speed adjustment in pixels per 10 seconds. (Range: -128 to 128). 
-     */
+        <b>[Flag] FlaggerSpeedAdjustment</b><br>
+        Speed adjustment for flaggers. Note that negative numbers will slow down flaggers.
+        @return Flagger speed adjustment in pixels per 10 seconds. (Range: -128 to 128).
+    */
     public short getFlaggerSpeedAdjustment() {
         return flaggerSpeedAdjustment;
     }
 
     /**
-     * <b>[Latency] ClientSlowPacketSampleSize
-     * Number of packets to sample S2C latency before checking for kickout.
-     * Only in very rare cases will this need to be altered, so just leave it at its default.
-     * @return Client slow packet sample size, unitless.
-     */
+        <b>[Latency] ClientSlowPacketSampleSize
+        Number of packets to sample S2C latency before checking for kickout.
+        Only in very rare cases will this need to be altered, so just leave it at its default.
+        @return Client slow packet sample size, unitless.
+    */
     public int getCliSlowPacketSampleSize() {
         return (int) (cliSlowPacketSampleSize & MASK_UINT16);
     }
 
     /**
-     * Section of undocumented data.
-     * @return UNKNOWN1
-     */
+        Section of undocumented data.
+        @return UNKNOWN1
+    */
     public byte[] getUNKNOWN1() {
         return UNKNOWN1;
     }
 
     /**
-     * <b>[Shrapnel] Random</b><br>
-     * Whether shrapnel spreads randomly instead of in the standard circle pattern.
-     * @return True when spread randomly, false when spread evenly.
-     */
+        <b>[Shrapnel] Random</b><br>
+        Whether shrapnel spreads randomly instead of in the standard circle pattern.
+        @return True when spread randomly, false when spread evenly.
+    */
     public boolean isRandomShrapnel() {
         return randomShrapnel;
     }
 
     /**
-     * <b>[Soccer] BallBounce</b><br>
-     * Whether the ball bounces off walls instead of going through them.
-     * @return True when the ball bounces, otherwise false.
-     */
+        <b>[Soccer] BallBounce</b><br>
+        Whether the ball bounces off walls instead of going through them.
+        @return True when the ball bounces, otherwise false.
+    */
     public boolean isSoccerBallBounce() {
         return soccerBallBounce;
     }
 
     /**
-     * <b>[Soccer] AllowBombs</b><br>
-     * Whether the ball carrier can fire bombs. If a ball carrier tries to fire
-     * a bomb and this settings disabled, the ball will be released before the bomb.
-     * @return True when a carrier can fire a bomb while keeping possession of the ball. False otherwise.
-     */
+        <b>[Soccer] AllowBombs</b><br>
+        Whether the ball carrier can fire bombs. If a ball carrier tries to fire
+        a bomb and this settings disabled, the ball will be released before the bomb.
+        @return True when a carrier can fire a bomb while keeping possession of the ball. False otherwise.
+    */
     public boolean isSoccerAllowBombs() {
         return soccerAllowBombs;
     }
 
     /**
-     * <b>[Soccer] AllowGuns</b><br>
-     * Whether the ball carrier can fire his guns. If the carrier tries, the ball will be released before the bullets fire.
-     * @return True when a carrier can fire his/her gun while keeping possession of the ball. False otherwise.
-     */
+        <b>[Soccer] AllowGuns</b><br>
+        Whether the ball carrier can fire his guns. If the carrier tries, the ball will be released before the bullets fire.
+        @return True when a carrier can fire his/her gun while keeping possession of the ball. False otherwise.
+    */
     public boolean isSoccerAllowGuns() {
         return soccerAllowGuns;
     }
 
     /**
-     * <b>[Soccer] Mode</b><br>
-     * Goal configuration.
-     * <li>0: any goal
-     * <li>1: left-half/right-half
-     * <li>2: top-half/bottom-half
-     * <li>3: quadrants-defend-one-goal
-     * <li>4: quadrants-defend-three-goals
-     * <li>5: sides-defend-one-goal
-     * <li>6: sides-defend-three-goals
-     * @return One of the above options, depending on the mode.
-     */
+        <b>[Soccer] Mode</b><br>
+        Goal configuration.
+        <li>0: any goal
+        <li>1: left-half/right-half
+        <li>2: top-half/bottom-half
+        <li>3: quadrants-defend-one-goal
+        <li>4: quadrants-defend-three-goals
+        <li>5: sides-defend-one-goal
+        <li>6: sides-defend-three-goals
+        @return One of the above options, depending on the mode.
+    */
     public byte getSoccerMode() {
         return soccerMode;
     }
 
     /**
-     * <b>[Team] MaxPerTeam</b><br>
-     * Maximum playercount on a public frequency.
-     * @return Max per team count.
-     */
+        <b>[Team] MaxPerTeam</b><br>
+        Maximum playercount on a public frequency.
+        @return Max per team count.
+    */
     public short getMaxPerTeam() {
         return (short) (maxPerTeam & MASK_UINT8);
     }
 
     /**
-     * <b>[Team] MaxPerPrivateTeam</b><br>
-     * Maximum playercount on a private frequency. Special Value: 0 = same as MaxPerTeam.<br>
-     * <b>Note:</b> This function will automatically return MaxPerTeam if MaxPerPrivateTeam's value is 0.
-     * @return When 0, Max per team count, otherwise Max per private team count.
-     */
+        <b>[Team] MaxPerPrivateTeam</b><br>
+        Maximum playercount on a private frequency. Special Value: 0 = same as MaxPerTeam.<br>
+        <b>Note:</b> This function will automatically return MaxPerTeam if MaxPerPrivateTeam's value is 0.
+        @return When 0, Max per team count, otherwise Max per private team count.
+    */
     public short getMaxPerPrivateTeam() {
         if(maxPerPrivateTeam == 0)
             return getMaxPerTeam();
+
         return (short) (maxPerPrivateTeam & MASK_UINT8);
     }
-    
+
     /**
-     * <b>[Team] MaxPerPrivateTeam</b><br>
-     * Maximum playercount on a private frequency. Special Value: 0 = same as MaxPerTeam.<br>
-     * <b>Note:</b> This function will return the raw data.
-     * @return Max per private team count. Note: 0 indicates it is equal to {@link #getMaxPerTeam()}.
-     */
+        <b>[Team] MaxPerPrivateTeam</b><br>
+        Maximum playercount on a private frequency. Special Value: 0 = same as MaxPerTeam.<br>
+        <b>Note:</b> This function will return the raw data.
+        @return Max per private team count. Note: 0 indicates it is equal to {@link #getMaxPerTeam()}.
+    */
     public short getRawMaxPerPrivateTeam() {
         return (short) (maxPerPrivateTeam & MASK_UINT8);
     }
 
     /**
-     * <b>[Mine] TeamMaxMines</b><br>
-     * Maximum mines allowed per team.
-     * @return Team max mines, up to 32000.
-     */
+        <b>[Mine] TeamMaxMines</b><br>
+        Maximum mines allowed per team.
+        @return Team max mines, up to 32000.
+    */
     public short getTeamMaxMines() {
         return teamMaxMines;
     }
 
     /**
-     * <b>[Wormhole] GravityBombs</b><br>
-     * Whether a wormhole affects bombs.
-     * @return True when bombs are affected by the wormhole's gravitational pull. False otherwise.
-     */
+        <b>[Wormhole] GravityBombs</b><br>
+        Whether a wormhole affects bombs.
+        @return True when bombs are affected by the wormhole's gravitational pull. False otherwise.
+    */
     public boolean isWormholeGravityBombs() {
         return wormholeGravityBombs;
     }
 
     /**
-     * <b>[Bomb] BombSafety</b><br>
-     * Enables a firing safety for proximity bombs. If an enemy ship is within proximity radius,
-     * the firing safety will not let the user fire.
-     * @return True when a player cannot fire while in the proximity trigger range of a bomb.
-     */
+        <b>[Bomb] BombSafety</b><br>
+        Enables a firing safety for proximity bombs. If an enemy ship is within proximity radius,
+        the firing safety will not let the user fire.
+        @return True when a player cannot fire while in the proximity trigger range of a bomb.
+    */
     public boolean isBombSafety() {
         return bombSafety;
     }
 
     /**
-     * <b>[Message] MessageReliable</b><br>
-     * Whether messages are sent reliably, which could increase bandwidth usage.
-     * @return True when messages need to be sent reliably, otherwise false.
-     */
+        <b>[Message] MessageReliable</b><br>
+        Whether messages are sent reliably, which could increase bandwidth usage.
+        @return True when messages need to be sent reliably, otherwise false.
+    */
     public boolean isMessageReliable() {
         return messageReliable;
     }
 
     /**
-     * <b>[Prize] TakePrizeReliable</b><br>
-     * Whether client-to-server prize packets are sent reliably.
-     * This will increase bandwidth usage, but also helps maintain integrity.
-     * @return True when this setting is enabled. False otherwise.
-     */
+        <b>[Prize] TakePrizeReliable</b><br>
+        Whether client-to-server prize packets are sent reliably.
+        This will increase bandwidth usage, but also helps maintain integrity.
+        @return True when this setting is enabled. False otherwise.
+    */
     public boolean isTakePrizeReliable() {
         return takePrizeReliable;
     }
 
     /**
-     * <b>[Message] AllowAudioMessages</b><br>
-     * Whether players can send audio messages.
-     * @return True when players are allowed to send audio messages. False otherwise.
-     */
+        <b>[Message] AllowAudioMessages</b><br>
+        Whether players can send audio messages.
+        @return True when players are allowed to send audio messages. False otherwise.
+    */
     public boolean isAllowAudioMessages() {
         return allowAudioMessages;
     }
 
     /**
-     * <b>[Prize] PrizeHideCount</b><br>
-     * Number of prizes that server regenerates every PrizeDelay.
-     * Note that this is not the total number of prizes (which is determined by PrizeFactor).
-     * @return Prize hide count.
-     */
+        <b>[Prize] PrizeHideCount</b><br>
+        Number of prizes that server regenerates every PrizeDelay.
+        Note that this is not the total number of prizes (which is determined by PrizeFactor).
+        @return Prize hide count.
+    */
     public short getPrizeHideCount() {
         return (short) (prizeHideCount & MASK_UINT8);
     }
 
     /**
-     * <b>[Misc] ExtraPositionData</b><br>
-     * Whether regular players receive sysop data about a ship. Leave this off.
-     * @return True when players receive the data. False otherwise.
-     */
+        <b>[Misc] ExtraPositionData</b><br>
+        Whether regular players receive sysop data about a ship. Leave this off.
+        @return True when players receive the data. False otherwise.
+    */
     public boolean isExtraPositionData() {
         return extraPositionData;
     }
 
     /**
-     * <b>[Misc] SlowFrameCheck</b><br>
-     * Whether to check for slow frames on the client (possible cheat technique).
-     * <b>Warning:</b> flawed on some machines, do not use.
-     * @return True when slow frame checking is enabled. False otherwise.
-     */
+        <b>[Misc] SlowFrameCheck</b><br>
+        Whether to check for slow frames on the client (possible cheat technique).
+        <b>Warning:</b> flawed on some machines, do not use.
+        @return True when slow frame checking is enabled. False otherwise.
+    */
     public boolean isSlowFrameCheck() {
         return slowFrameCheck;
     }
 
     /**
-     * <b>[Flag] CarryFlags</b><br>
-     * <li>0: Flags cannot be picked up.
-     * <li>1: A player can pick up and carry all flags.
-     * <li>2: A player can pick up and carry only one flag at a time.
-     * @return One of the values above.
-     */
+        <b>[Flag] CarryFlags</b><br>
+        <li>0: Flags cannot be picked up.
+        <li>1: A player can pick up and carry all flags.
+        <li>2: A player can pick up and carry only one flag at a time.
+        @return One of the values above.
+    */
     public byte getCarryFlags() {
         return carryFlags;
     }
 
     /**
-     * <b>[Misc] AllowSavedShips</b><br>
-     * Whether ships' stats are saved between arenas and after lagouts.
-     * Do not enable this if subarenas have different ship settings.
-     * @return True when stats are saved, false otherwise.
-     */
+        <b>[Misc] AllowSavedShips</b><br>
+        Whether ships' stats are saved between arenas and after lagouts.
+        Do not enable this if subarenas have different ship settings.
+        @return True when stats are saved, false otherwise.
+    */
     public boolean isAllowSavedShip() {
         return allowSavedShip;
     }
 
     /**
-     * <b>[Radar] RadarMode</b><br>
-     * Radar mode.
-     * <li>0: normal
-     * <li>1: half/half
-     * <li>2: quarters
-     * <li>3: half/half-see team mates
-     * <li>4: quarters-see team mates
-     * @return One of the options above.
-     */
+        <b>[Radar] RadarMode</b><br>
+        Radar mode.
+        <li>0: normal
+        <li>1: half/half
+        <li>2: quarters
+        <li>3: half/half-see team mates
+        <li>4: quarters-see team mates
+        @return One of the options above.
+    */
     public byte getRadarMode() {
         return radarMode;
     }
 
     /**
-     * <b>[Misc] VictoryMusic</b><br>
-     * Whether the zone plays the victory music when a team is winning a flag game.
-     * @return True when this is enabled, false otherwise.
-     */
+        <b>[Misc] VictoryMusic</b><br>
+        Whether the zone plays the victory music when a team is winning a flag game.
+        @return True when this is enabled, false otherwise.
+    */
     public boolean isVictoryMusic() {
         return victoryMusic;
     }
 
     /**
-     * <b>[Flag] FlaggerGunUpgrade</b><br>
-     * Whether the flaggers get a gun upgrade. This is the only way to have L4 guns.
-     * @return True when this feature is enabled, false otherwise.
-     */
+        <b>[Flag] FlaggerGunUpgrade</b><br>
+        Whether the flaggers get a gun upgrade. This is the only way to have L4 guns.
+        @return True when this feature is enabled, false otherwise.
+    */
     public boolean isFlaggerGunUpgrade() {
         return flaggerGunUpgrade;
     }
 
     /**
-     * <b>[Flag] FlaggerBombUpgrade</b><br>
-     * Whether the flaggers get a bomb upgrade. This is the only way to have L4 bombs.
-     * @return True when this feature is enabled, false otherwise.
-     */
+        <b>[Flag] FlaggerBombUpgrade</b><br>
+        Whether the flaggers get a bomb upgrade. This is the only way to have L4 bombs.
+        @return True when this feature is enabled, false otherwise.
+    */
     public boolean isFlaggerBombUpgrade() {
         return flaggerBombUpgrade;
     }
 
     /**
-     * <b>[Soccer] UseFlagger</b><br>
-     * If player with soccer ball should use the Flag:Flagger* ship adjustments or not.
-     * @return True when the Flagger* settings are applied to someone carrying the ball. False if this isn't the case.
-     */
+        <b>[Soccer] UseFlagger</b><br>
+        If player with soccer ball should use the Flag:Flagger* ship adjustments or not.
+        @return True when the Flagger* settings are applied to someone carrying the ball. False if this isn't the case.
+    */
     public boolean isSoccerUseFlagger() {
         return soccerUseFlagger;
     }
 
     /**
-     * <b>[Soccer] BallLocation</b><br>
-     * Whether the balls' locations are displayed at all times or not.
-     * @return True when the ball is always visible, false otherwise.
-     */
+        <b>[Soccer] BallLocation</b><br>
+        Whether the balls' locations are displayed at all times or not.
+        @return True when the ball is always visible, false otherwise.
+    */
     public boolean isSoccerBallLocation() {
         return soccerBallLocation;
     }
 
     /**
-     * Section of undocumented data.
-     * @return UNKNOWN2
-     */
+        Section of undocumented data.
+        @return UNKNOWN2
+    */
     public byte[] getUNKNOWN2() {
         return UNKNOWN2;
     }
 
     /**
-     * Fetches the prize settings.
-     * @return This arena's prize settings.
-     */
+        Fetches the prize settings.
+        @return This arena's prize settings.
+    */
     public PrizeSettings getPrizeSettings() {
         return prizeSettings;
     }
-    
+
     /**
-     * Debug method. Prints out all getter values. 
-     * <p>
-     * This is/was mainly used to verify that every getter is returning
-     * the correct signed/unsigned value. Could prove useful in the future
-     * whenever a discrepancy is found between what the bot thinks is an arena setting
-     * and what actually is the arena setting.
-     * <p>
-     * Note: This skips printing the raw data, and automatically executes the toString's of its child classes.
-     * @return List of getter names and their values.
-     */
+        Debug method. Prints out all getter values.
+        <p>
+        This is/was mainly used to verify that every getter is returning
+        the correct signed/unsigned value. Could prove useful in the future
+        whenever a discrepancy is found between what the bot thinks is an arena setting
+        and what actually is the arena setting.
+        <p>
+        Note: This skips printing the raw data, and automatically executes the toString's of its child classes.
+        @return List of getter names and their values.
+    */
     public String toString() {
         StringBuilder result = new StringBuilder();
         String newLine = System.getProperty("line.separator");
-        
+
         Class<?> objClass = this.getClass();
-        
+
         result.append(objClass.getName() + " {" + newLine);
-        
+
         // Get the public methods associated with this class.
         Method[] methods = objClass.getMethods();
-        for (Method method:methods)
+
+        for (Method method : methods)
         {
             if(method.getName().startsWith("getClass") || method.getName().startsWith("getRawData")
                     || method.getName().startsWith("getRawSettings") || method.getName().startsWith("getShipSettings")) {
@@ -1426,32 +1428,32 @@ public class ArenaSettings {
                     e.printStackTrace();
                 }
             }
-            
+
         }
-        
+
         result.append("}" + newLine);
         return result.toString();
     }
 
     /**
-     * This class logs all the ship related settings per ship type, obtained from the arena settings.
-     * <p>
-     * These settings determine the properties of each of the eight ships. These go in an arena's .cfg file
-     * for subgame and in arena.conf for ASSS. Ship names themselves can be changed with shipinfo.dat.
-     * <p>
-     * The various section tags, [Warbird] [Javelin] [Spider] [Leviathan] [Terrier] [Weasel] [Lancaster] [Shark],
-     * have been condensed into one tag [All], for documentation purposes.
-     * <p>
-     * Due to this being a port, I've tried to give credit where credit is due, by trying to keep most of the original
-     * comments in tact. Full credit goes to the researchers for and creators of the MervBot.
-     * @author Trancid
-     *
-     */
+        This class logs all the ship related settings per ship type, obtained from the arena settings.
+        <p>
+        These settings determine the properties of each of the eight ships. These go in an arena's .cfg file
+        for subgame and in arena.conf for ASSS. Ship names themselves can be changed with shipinfo.dat.
+        <p>
+        The various section tags, [Warbird] [Javelin] [Spider] [Leviathan] [Terrier] [Weasel] [Lancaster] [Shark],
+        have been condensed into one tag [All], for documentation purposes.
+        <p>
+        Due to this being a port, I've tried to give credit where credit is due, by trying to keep most of the original
+        comments in tact. Full credit goes to the researchers for and creators of the MervBot.
+        @author Trancid
+
+    */
     public class ShipSettings {
         // 144 bytes wide, offsets are for warbird
         // Mostly Snrrrub                       //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
         private short   superTime;              // 0004     | All       | SuperTime                 |     1 |       |        16 | How long Super lasts on the ship (in hundredths of a second)
         private short   UNKNOWN0;               // 0006     | (100)     | Salt for actual super time?
         private short   shieldsTime;            // 0008     | All       | ShieldsTime               |     1 |       |        16 | How long Shields lasts on the ship (in hundredths of a second)
@@ -1466,17 +1468,17 @@ public class ArenaSettings {
         private short   mineFireEnergyUpgrade;  // 0026     | All       | LandmineFireEnergyUpgrade |       |       |        16 | Extra amount of energy it takes to place an upgraded landmine.  ie. L2 = LandmineFireEnergy+LandmineFireEnergyUpgrade
         private short   bulletSpeed;            // 0028     | All       | BulletSpeed               |       |       |        16 | How fast bullets travel
         private short   bombSpeed;              // 0030     | All       | BombSpeed                 |       |       |        16 | How fast bombs travel
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
         private byte    seeBombLevel;           // 0032     | All       | SeeBombLevel              |     0 |     4 |         3 | If ship can see bombs on radar (0=Disabled, 1=All, 2=L2 and up, 3=L3 and up, 4=L4 bombs only) [Continuum .36]
         private boolean disableFastBombs;       // 0032     | All       | DisableFastShooting       |     0 |     1 |         1 | If firing bullets, bombs, or thors is disabled after using afterburners (1=enabled) [Continuum .36]
         private byte    radius;                 // 0032     | All       | Radius                    |       |       |         7 | The ship's radius from center to outside, in pixels. Standard value is 14 pixels. [Continuum .37]
         private byte    pack0;                  // 0033     | Unused    | ?                         |       |       |         6 | (fixed/updated to whatever is current by Niadh@columbus.rr.com)
         private short   multiFireAngle;         // 0034     | All       | MultiFireAngle            |       |       |        16 | Angle spread between multi-fire bullets and standard forward firing bullets. (111 = 1 degree, 1000 = 1 ship-rotation-point)
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
         private short   cloakEnergy;            // 0036     | All       | CloakEnergy               |     0 | 32000 |        16 | Amount of energy required to have 'Cloak' activated (thousanths per hundredth of a second)
         private short   stealthEnergy;          // 0038     | All       | StealthEnergy             |     0 | 32000 |        16 | Amount of energy required to have 'Stealth' activated (thousanths per hundredth of a second)
         private short   antiWarpEnergy;         // 0040     | All       | AntiWarpEnergy            |     0 | 32000 |        16 | Amount of energy required to have 'Anti-Warp' activated (thousanths per hundredth of a second)
@@ -1514,9 +1516,9 @@ public class ArenaSettings {
         private short   soccerBallFriction;     // 0104     | All       | SoccerBallFriction        |       |       |        16 | Amount the friction on the soccer ball (how quickly it slows down -- higher numbers mean faster slowdown)
         private short   soccerBallProximity;    // 0106     | All       | SoccerBallProximity       |       |       |        16 | How close the player must be in order to pick up ball (in pixels)
         private short   soccerBallSpeed;        // 0108     | All       | SoccerBallSpeed           |       |       |        16 | Initial speed given to the ball when fired by the carrier.
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
         private byte    turretLimit;            // 0110     | All       | TurretLimit               |       |       |         8 | Number of turrets allowed on a ship.
         private byte    burstShrapnel;          // 0111     | All       | BurstShrapnel             |       |       |         8 | Number of bullets released when a 'Burst' is activated
         private byte    maxMines;               // 0112     | All       | MaxMines                  |       |       |         8 | Maximum number of mines allowed in ships
@@ -1535,45 +1537,45 @@ public class ArenaSettings {
         private byte    initialDecoy;           // 0125     | All       | InitialDecoy              |       |       |         8 | Initial number of Decoys given to ships when they start
         private byte    initialPortal;          // 0126     | All       | InitialPortal             |       |       |         8 | Initial number of Portals given to ships when they start
         private byte    bombBounceCount;        // 0127     | All       | BombBounceCount           |       |       |         8 | Number of times a ship's bombs bounce before they explode on impact
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
         private byte    shrapnelMax;            // 0128     | All       | ShrapnelMax               |     0 |    31 |         5 | Maximum amount of shrapnel released from a ship's bomb
         private byte    shrapnelRate;           // 0128     | All       | ShrapnelRate              |     0 |    31 |         5 | Amount of additional shrapnel gained by a 'Shrapnel Upgrade' prize.
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
         private byte    cloakStatus;            // 0129     | All       | CloakStatus               |     0 |     2 |         2 | Whether ships are allowed to receive 'Cloak' 0=no 1=yes 2=yes/start-with
         private byte    stealthStatus;          // 0129     | All       | StealthStatus             |     0 |     2 |         2 | Whether ships are allowed to receive 'Stealth' 0=no 1=yes 2=yes/start-with
         private byte    xRadarStatus;           // 0129     | All       | XRadarStatus              |     0 |     2 |         2 | Whether ships are allowed to receive 'X-Radar' 0=no 1=yes 2=yes/start-with
         private byte    antiwarpStatus;         // 0130     | All       | AntiWarpStatus            |     0 |     2 |         2 | Whether ships are allowed to receive 'Anti-Warp' 0=no 1=yes 2=yes/start-with
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
         private byte    initialGuns;            // 0130     | All       | InitialGuns               |     0 |     3 |         2 | Initial level a ship's guns fire 0=no guns
         private byte    maxGuns;                // 0130     | All       | MaxGuns                   |     0 |     3 |         2 | Maximum level a ship's guns can fire 0=no guns
         private byte    initialBombs;           // 0130     | All       | InitialBombs              |     0 |     3 |         2 | Initial level a ship's bombs fire 0=no bombs
         private byte    maxBombs;               // 0131     | All       | MaxBombs                  |     0 |     3 |         2 | Maximum level a ship's bombs can fire 0=no bombs
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
         private boolean doubleBarrel;           // 0131     | All       | DoubleBarrel              |     0 |     1 |         1 | Whether ships fire with double barrel bullets 0=no 1=yes
         private boolean empBomb;                // 0131     | All       | EmpBomb                   |     0 |     1 |         1 | Whether ships fire EMP bombs 0=no 1=yes
         private boolean seeMines;               // 0131     | All       | SeeMines                  |     0 |     1 |         1 | Whether ships see mines on radar 0=no 1=yes
         private byte    UNKNOWN2;               // 0131     | ?         | ?                         |       |       |         3 | ?
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category  | Name                      | Min.  | Max.  | Bitsize   | Description
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
         private byte[]  UNKNOWN3 = new byte[16];// 0132     | ?         | ?                         |       |       |       128 | ?
-                                                //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
-        
+        //----------+-----------+---------------------------+-------+-------+-----------+---------------------------------------------------------------
+
         /** ShipSettings constructor */
         public ShipSettings(ByteArray data) {
             if(data.size() != 144) {
                 Tools.printLog("ERROR: Invalid raw data size for ShipSettings.");
                 return;
             }
-            
+
             this.superTime              = data.readLittleEndianShort(0);
             this.UNKNOWN0               = data.readLittleEndianShort(2);
             this.shieldsTime            = data.readLittleEndianShort(4);
@@ -1588,9 +1590,9 @@ public class ArenaSettings {
             this.mineFireEnergyUpgrade  = data.readLittleEndianShort(22);
             this.bulletSpeed            = data.readLittleEndianShort(24);
             this.bombSpeed              = data.readLittleEndianShort(26);
-            
+
             short tmpShort = data.readLittleEndianShort(28);
-            
+
             this.seeBombLevel           = (byte) ByteArray.getPartial(tmpShort, 1, 0);
             this.disableFastBombs       = (ByteArray.getPartial(tmpShort, 2, 2) == 1);
             this.radius                 = (byte) ByteArray.getPartial(tmpShort, 9, 3);
@@ -1634,7 +1636,7 @@ public class ArenaSettings {
             this.soccerBallFriction     = data.readLittleEndianShort(100);
             this.soccerBallProximity    = data.readLittleEndianShort(102);
             this.soccerBallSpeed        = data.readLittleEndianShort(104);
-            
+
             this.turretLimit            = data.readByte(106);
             this.burstShrapnel          = data.readByte(107);
             this.maxMines               = data.readByte(108);
@@ -1653,930 +1655,932 @@ public class ArenaSettings {
             this.initialDecoy           = data.readByte(121);
             this.initialPortal          = data.readByte(122);
             this.bombBounceCount        = data.readByte(123);
-            
+
             int tmpInt = data.readLittleEndianInt(124);
             this.shrapnelMax            = (byte) ByteArray.getPartial(tmpInt, 4, 0);
             this.shrapnelRate           = (byte) ByteArray.getPartial(tmpInt, 9, 5);
-            
+
             this.cloakStatus            = (byte) ByteArray.getPartial(tmpInt, 11, 10);
             this.stealthStatus          = (byte) ByteArray.getPartial(tmpInt, 13, 12);
             this.xRadarStatus           = (byte) ByteArray.getPartial(tmpInt, 15, 14);
             this.antiwarpStatus         = (byte) ByteArray.getPartial(tmpInt, 17, 16);
-            
+
             this.initialGuns            = (byte) ByteArray.getPartial(tmpInt, 19, 18);
             this.maxGuns                = (byte) ByteArray.getPartial(tmpInt, 21, 20);
             this.initialBombs           = (byte) ByteArray.getPartial(tmpInt, 23, 22);
             this.maxBombs               = (byte) ByteArray.getPartial(tmpInt, 25, 24);
-            
+
             this.doubleBarrel           = (ByteArray.getPartial(tmpInt, 26, 26) == 1);
             this.empBomb                = (ByteArray.getPartial(tmpInt, 27, 27) == 1);
             this.seeMines               = (ByteArray.getPartial(tmpInt, 28, 28) == 1);
             this.UNKNOWN2               = (byte) ByteArray.getPartial(tmpInt, 31, 29);
-            
+
             for(int i = 0; i < 16; i++)
                 this.UNKNOWN3[i]        = data.readByte(128 + i);
 
         }
 
         /*
-         * Automatically generated getters.
-         */
+            Automatically generated getters.
+        */
         /**
-         * <b>[All] SuperTime</b><br>
-         * How long Superpower lasts for this ship. The actual time is random up to this value.
-         * @return Super time in centiseconds.
-         */
+            <b>[All] SuperTime</b><br>
+            How long Superpower lasts for this ship. The actual time is random up to this value.
+            @return Super time in centiseconds.
+        */
         public int getSuperTime() {
             return (int) (superTime & MASK_UINT16);
         }
 
         /**
-         * Section of undocumented data, possibly a salt for actual super time.
-         * @return UNKNOWN0
-         */
+            Section of undocumented data, possibly a salt for actual super time.
+            @return UNKNOWN0
+        */
         public int getUNKNOWN0() {
             return (int) (UNKNOWN0 & MASK_UINT16);
         }
 
         /**
-         * <b>[All] ShieldsTime</b><br>
-         * How long Shields last for this ship.
-         * @return Shields time in centiseconds.
-         */
+            <b>[All] ShieldsTime</b><br>
+            How long Shields last for this ship.
+            @return Shields time in centiseconds.
+        */
         public int getShieldsTime() {
             return (int) (shieldsTime & MASK_UINT16);
         }
 
         /**
-         * Section of undocumented data, possibly a salt for actual shieds time.
-         * @return UNKNOWN1
-         */
+            Section of undocumented data, possibly a salt for actual shieds time.
+            @return UNKNOWN1
+        */
         public int getUNKNOWN1() {
             return (int) (UNKNOWN1 & MASK_UINT16);
         }
 
         /**
-         * <b>[All] Gravity</b><br>
-         * Modifies radius over which a wormhole's gravity has an effect.<p>
-         * <i>Formula:</i> EffectRadius = 1.325 * Gravity ^ 0.507.<br>
-         * That is, a wormhole will have an effect over 31 tiles if this is set to 500.<p>
-         * The setting for Warbird also controls how far out bombs/mines are effected by wormholes.
-         * @return Gravity as factor.
-         */
+            <b>[All] Gravity</b><br>
+            Modifies radius over which a wormhole's gravity has an effect.<p>
+            <i>Formula:</i> EffectRadius = 1.325 * Gravity ^ 0.507.<br>
+            That is, a wormhole will have an effect over 31 tiles if this is set to 500.<p>
+            The setting for Warbird also controls how far out bombs/mines are effected by wormholes.
+            @return Gravity as factor.
+        */
         public int getGravity() {
             return (int) (gravity & MASK_UINT16);
         }
 
         /**
-         * <b>[All] GravityTopSpeed</b><br>
-         * How much this ship's maximum speed is increased when under the influence of a wormhole's gravity.
-         * Note that this does not replace the previous speed.
-         * @return Gravity top speed in pixels per 10 seconds.
-         */
+            <b>[All] GravityTopSpeed</b><br>
+            How much this ship's maximum speed is increased when under the influence of a wormhole's gravity.
+            Note that this does not replace the previous speed.
+            @return Gravity top speed in pixels per 10 seconds.
+        */
         public int getGravityTopSpeed() {
             return (int) (gravityTopSpeed & MASK_UINT16);
         }
 
         /**
-         * <b>[All] BulletFireEnergy</b><br>
-         * Base energy it takes a ship to fire a bullet. Formula: EnergyUsed = GunLevel * BulletFireEnergy. 
-         * So this setting is for an L1 bullet, and is doubled for L2, and so on.
-         * @return Bullet fire energy in energy units.
-         */
+            <b>[All] BulletFireEnergy</b><br>
+            Base energy it takes a ship to fire a bullet. Formula: EnergyUsed = GunLevel * BulletFireEnergy.
+            So this setting is for an L1 bullet, and is doubled for L2, and so on.
+            @return Bullet fire energy in energy units.
+        */
         public int getBulletFireEnergy() {
             return (int) (bulletFireEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] MultiFireEnergy</b><br>
-         * Energy it takes a ship to fire a set of multifire bullets.
-         * <i>Formula:</i> EnergyUsed = GunLevel * MultiFireEnergy.
-         * @return Multifire energy in energy units.
-         */
+            <b>[All] MultiFireEnergy</b><br>
+            Energy it takes a ship to fire a set of multifire bullets.
+            <i>Formula:</i> EnergyUsed = GunLevel * MultiFireEnergy.
+            @return Multifire energy in energy units.
+        */
         public int getMultiFireEnergy() {
             return (int) (multiFireEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] BombFireEnergy</b><br>
-         * Amount of energy it takes a ship to fire a bomb.
-         * @return Bomb fire energy in energy units.
-         */
+            <b>[All] BombFireEnergy</b><br>
+            Amount of energy it takes a ship to fire a bomb.
+            @return Bomb fire energy in energy units.
+        */
         public int getBombFireEnergy() {
             return (int) (bombFireEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] BombFireEnergyUpgrade</b><br>
-         * Extra energy it takes a ship to fire an upgraded bomb.
-         * <i>Formula:</i> EnergyUsed = BombFireEnergy + (BombLevel - 1) * BombFireEnergyUpgrade.
-         * @return Bomb fire energy upgrade in energy units.
-         */
+            <b>[All] BombFireEnergyUpgrade</b><br>
+            Extra energy it takes a ship to fire an upgraded bomb.
+            <i>Formula:</i> EnergyUsed = BombFireEnergy + (BombLevel - 1) * BombFireEnergyUpgrade.
+            @return Bomb fire energy upgrade in energy units.
+        */
         public int getBombFireEnergyUpgrade() {
             return (int) (bombFireEnergyUpgrade & MASK_UINT16);
         }
 
         /**
-         * <b>[All] LandmineFireEnergy</b><br>
-         * Energy it takes this ship to place an L1 mine
-         * @return Mine fire energy in energy units.
-         */
+            <b>[All] LandmineFireEnergy</b><br>
+            Energy it takes this ship to place an L1 mine
+            @return Mine fire energy in energy units.
+        */
         public int getMineFireEnergy() {
             return (int) (mineFireEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] LandmineFireEnergyUpgrade</b><br>
-         * Extra energy it takes to place an upgraded landmine.
-         * <i>Formula:</i> EnergyUsed = LandmineFireEnergy + (BombLevel - 1) * LandmineFireEnergyUpgrade.
-         * @return Mine fire energy upgrade in energy units.
-         */
+            <b>[All] LandmineFireEnergyUpgrade</b><br>
+            Extra energy it takes to place an upgraded landmine.
+            <i>Formula:</i> EnergyUsed = LandmineFireEnergy + (BombLevel - 1) * LandmineFireEnergyUpgrade.
+            @return Mine fire energy upgrade in energy units.
+        */
         public int getMineFireEnergyUpgrade() {
             return (int) (mineFireEnergyUpgrade & MASK_UINT16);
         }
 
         /**
-         * <b>[All] BulletSpeed</b><br>
-         * How fast bullets travel. Can be negative, which results in shooting from the rear.
-         * @return Bullet speed in pixels per 10 seconds.
-         */
+            <b>[All] BulletSpeed</b><br>
+            How fast bullets travel. Can be negative, which results in shooting from the rear.
+            @return Bullet speed in pixels per 10 seconds.
+        */
         public short getBulletSpeed() {
             return bulletSpeed;
         }
 
         /**
-         * <b>[All] BombSpeed</b><br>
-         * How fast bombs fired by this ship travel. Can be negative, which results in shooting from the rear.
-         * @return Bomb speed in pixels per 10 seconds.
-         */
+            <b>[All] BombSpeed</b><br>
+            How fast bombs fired by this ship travel. Can be negative, which results in shooting from the rear.
+            @return Bomb speed in pixels per 10 seconds.
+        */
         public short getBombSpeed() {
             return bombSpeed;
         }
 
         /**
-         * <b>[All] SeeBombLevel</b><br>
-         * Lowest level of bombs this ship can see on radar. Special Value: 0 = no bombs on radar. (Continuum .36+)
-         * Note: 4 means a player can only see L4 bombs. 2 means L2, L3 and L4 bombs are visible on radar.
-         * @return See bomb level with a value ranging from 0 to 4.
-         */
+            <b>[All] SeeBombLevel</b><br>
+            Lowest level of bombs this ship can see on radar. Special Value: 0 = no bombs on radar. (Continuum .36+)
+            Note: 4 means a player can only see L4 bombs. 2 means L2, L3 and L4 bombs are visible on radar.
+            @return See bomb level with a value ranging from 0 to 4.
+        */
         public byte getSeeBombLevel() {
             return seeBombLevel;
         }
 
         /**
-         * <b>[All] DisableFastShooting</b><br>
-         * Whether firing bullets, bombs, or thors is disabled after using afterburners. (Continuum .36+)
-         * @return True when fast firing is disabled, false otherwise.
-         */
+            <b>[All] DisableFastShooting</b><br>
+            Whether firing bullets, bombs, or thors is disabled after using afterburners. (Continuum .36+)
+            @return True when fast firing is disabled, false otherwise.
+        */
         public boolean isDisableFastBombs() {
             return disableFastBombs;
         }
 
         /**
-         * <b>[All] Radius</b><br>
-         * The ship's radius from center to outside. Special Value: 0 = 14 pixels. (Continuum .37+)
-         * Note: This function will return the default value if radius is equal to 0.
-         * Use {@link #getRawRadius()} instead if you want it to not do this.
-         * @return Radius in pixels. If the radius is 0, then 14 will be returned instead.
-         */
+            <b>[All] Radius</b><br>
+            The ship's radius from center to outside. Special Value: 0 = 14 pixels. (Continuum .37+)
+            Note: This function will return the default value if radius is equal to 0.
+            Use {@link #getRawRadius()} instead if you want it to not do this.
+            @return Radius in pixels. If the radius is 0, then 14 will be returned instead.
+        */
         public short getRadius() {
             if(radius == 0)
                 return 14;
+
             return (short) (radius & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[All] Radius</b><br>
-         * The ship's radius from center to outside. Special Value: 0 = 14 pixels. (Continuum .37+)
-         * Note: This function will always return the stored radius. If you want the return value to
-         * be converted to the default, when its value is 0, then use {@link #getRadius()} instead.
-         * @return Radius in pixels.
-         */
+            <b>[All] Radius</b><br>
+            The ship's radius from center to outside. Special Value: 0 = 14 pixels. (Continuum .37+)
+            Note: This function will always return the stored radius. If you want the return value to
+            be converted to the default, when its value is 0, then use {@link #getRadius()} instead.
+            @return Radius in pixels.
+        */
         public short getRawRadius() {
             return (short) (radius & MASK_UINT8);
         }
 
         /**
-         * Section of undocumented data. Probably unused.
-         * @return pack0.
-         */
+            Section of undocumented data. Probably unused.
+            @return pack0.
+        */
         public byte getPack0() {
             return pack0;
         }
 
         /**
-         * <b>[All] MultiFireAngle</b><br>
-         * Angle spread between multi-fire bullets and standard forward-firing bullets.
-         * Rotation Points / 1000. (Note: One rotation point equals exactly 9 degrees.)
-         * <p>
-         * Some research might be needed. Initial analysis made it look that you actually
-         * need to divide MultiFireAngle by 1000 to get the Rotation Points. So, 1000 means
-         * a 9 degrees rotation, or one Rotation Point, 40000 is a full 360 degrees or 2PI rad circle (40 Rotation Points).
-         * <p>
-         * The multifire angle is measured from the normal, and mirrored on both sides. Whenever the
-         * speed of a projectile is negative, this is done in regard to the normal sticking out of the backside
-         * of the ship. (I.e. the original mirrored in the relative x-axis.) Also, whether or not a ship has a
-         * double barrel, the amount of multifire angles/shots is still fixed at two.
-         * @return Multifire angle. See above for details.
-         */
+            <b>[All] MultiFireAngle</b><br>
+            Angle spread between multi-fire bullets and standard forward-firing bullets.
+            Rotation Points / 1000. (Note: One rotation point equals exactly 9 degrees.)
+            <p>
+            Some research might be needed. Initial analysis made it look that you actually
+            need to divide MultiFireAngle by 1000 to get the Rotation Points. So, 1000 means
+            a 9 degrees rotation, or one Rotation Point, 40000 is a full 360 degrees or 2PI rad circle (40 Rotation Points).
+            <p>
+            The multifire angle is measured from the normal, and mirrored on both sides. Whenever the
+            speed of a projectile is negative, this is done in regard to the normal sticking out of the backside
+            of the ship. (I.e. the original mirrored in the relative x-axis.) Also, whether or not a ship has a
+            double barrel, the amount of multifire angles/shots is still fixed at two.
+            @return Multifire angle. See above for details.
+        */
         public int getMultiFireAngle() {
             return (int) (multiFireAngle & MASK_UINT16);
         }
 
         /**
-         * <b>[All] CloakEnergy</b><br>
-         * Amount of energy required to have Cloak activated.
-         * @return Cloak energy in energy units per 10 seconds.
-         */
+            <b>[All] CloakEnergy</b><br>
+            Amount of energy required to have Cloak activated.
+            @return Cloak energy in energy units per 10 seconds.
+        */
         public int getCloakEnergy() {
             return (int) (cloakEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] StealthEnergy</b><br>
-         * Amount of energy required to have Stealth activated.
-         * @return Stealth energy in energy units per 10 seconds.
-         */
+            <b>[All] StealthEnergy</b><br>
+            Amount of energy required to have Stealth activated.
+            @return Stealth energy in energy units per 10 seconds.
+        */
         public int getStealthEnergy() {
             return (int) (stealthEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] AntiWarpEnergy</b><br>
-         * Amount of energy required to have Anti-Warp activated.
-         * @return Antiwarp energy in energy units per 10 seconds.
-         */
+            <b>[All] AntiWarpEnergy</b><br>
+            Amount of energy required to have Anti-Warp activated.
+            @return Antiwarp energy in energy units per 10 seconds.
+        */
         public int getAntiWarpEnergy() {
             return (int) (antiWarpEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] XRadarEnergy</b><br>
-         * Amount of energy required to have X-Radar activated.
-         * @return X-radar energy in energy units per 10 seconds.
-         */
+            <b>[All] XRadarEnergy</b><br>
+            Amount of energy required to have X-Radar activated.
+            @return X-radar energy in energy units per 10 seconds.
+        */
         public int getxRadarEnergy() {
             return (int) (xRadarEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] MaximumRotation</b><br>
-         * Maximum (with upgrades) rotation rate of the ship.
-         * <i>Formula:</i> 90 degrees/(seconds / 100) (That is, 400 for a full rotation in 1s).
-         * @return Maximum rotation in Rotation Points per 10 seconds.
-         */
+            <b>[All] MaximumRotation</b><br>
+            Maximum (with upgrades) rotation rate of the ship.
+            <i>Formula:</i> 90 degrees/(seconds / 100) (That is, 400 for a full rotation in 1s).
+            @return Maximum rotation in Rotation Points per 10 seconds.
+        */
         public int getMaximumRotation() {
             return (int) (maximumRotation & MASK_UINT16);
         }
 
         /**
-         * <b>[All] MaximumThrust</b><br>
-         * Maximum (with upgrades) thrust of ship.
-         * @return Maximum thrust in speed per centisecond. This results in a bit more unclear math. For example, take
-         * a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
-         * In other words, if thrust is x, then the speed increase is:
-         * <li>x / 100m pixels per second, per second of thrust;
-         * <li>x / 10m pixels per 10 seconds, per second of thrust;
-         * <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
-         * <li>x pixels per 10 seconds, per centisecond of thrust;
-         * <li>x / 10 pixels per second, per centisecond of thrust;
-         * <li>x / 100 pixels per millisecond, per second of thrust;
-         * <li>x / 10k pixels per millisecond, per centisecond of thrust;
-         * <li>x / 100k pixels per millisecond, per millisecond of thrust.
-         */
+            <b>[All] MaximumThrust</b><br>
+            Maximum (with upgrades) thrust of ship.
+            @return Maximum thrust in speed per centisecond. This results in a bit more unclear math. For example, take
+            a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
+            In other words, if thrust is x, then the speed increase is:
+            <li>x / 100m pixels per second, per second of thrust;
+            <li>x / 10m pixels per 10 seconds, per second of thrust;
+            <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
+            <li>x pixels per 10 seconds, per centisecond of thrust;
+            <li>x / 10 pixels per second, per centisecond of thrust;
+            <li>x / 100 pixels per millisecond, per second of thrust;
+            <li>x / 10k pixels per millisecond, per centisecond of thrust;
+            <li>x / 100k pixels per millisecond, per millisecond of thrust.
+        */
         public int getMaximumThrust() {
             return (int) (maximumThrust & MASK_UINT16);
         }
 
         /**
-         * <b>[All] MaximumSpeed</b><br>
-         * Maximum (with upgrades) speed of ship.
-         * @return Maximum speed in pixels per 10 seconds. (1000 means 100 pixels per second.) 
-         */
+            <b>[All] MaximumSpeed</b><br>
+            Maximum (with upgrades) speed of ship.
+            @return Maximum speed in pixels per 10 seconds. (1000 means 100 pixels per second.)
+        */
         public int getMaximumSpeed() {
             return (int) (maximumSpeed & MASK_UINT16);
         }
 
         /**
-         * <b>[All] MaximumRecharge</b><br>
-         * Maximum (with upgrades) recharge rate, or how quickly this ship recharges its energy.
-         * @return Maximum recharge in energy per 10 seconds. (1000 means 100 energy per second.)
-         */
+            <b>[All] MaximumRecharge</b><br>
+            Maximum (with upgrades) recharge rate, or how quickly this ship recharges its energy.
+            @return Maximum recharge in energy per 10 seconds. (1000 means 100 energy per second.)
+        */
         public int getMaximumRecharge() {
             return (int) (maximumRecharge & MASK_UINT16);
         }
 
         /**
-         * <b>[All] MaximumEnergy</b><br>
-         * Maximum (with upgrades) amount of energy that the ship can have.
-         * @return Maximum energy in energy units.
-         */
+            <b>[All] MaximumEnergy</b><br>
+            Maximum (with upgrades) amount of energy that the ship can have.
+            @return Maximum energy in energy units.
+        */
         public int getMaximumEnergy() {
             return (int) (maximumEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] InitialRotation</b><br>
-         * Initial rotation rate of the ship.
-         * <i>Formula:</i> 90 degrees/(seconds / 100) (That is, 400 for a full rotation in 1s).
-         * @return Initial rotation in Rotation Points per 10 seconds.
-         */
+            <b>[All] InitialRotation</b><br>
+            Initial rotation rate of the ship.
+            <i>Formula:</i> 90 degrees/(seconds / 100) (That is, 400 for a full rotation in 1s).
+            @return Initial rotation in Rotation Points per 10 seconds.
+        */
         public int getInitialRotation() {
             return (int) (initialRotation & MASK_UINT16);
         }
 
         /**
-         * <b>[All] InitialThrust</b><br>
-         * Initial thrust of ship.
-         * @return Initial thrust in speed per centisecond. This results in a bit more unclear math. For example, take
-         * a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
-         * In other words, if thrust is x, then the speed increase is:
-         * <li>x / 100m pixels per second, per second of thrust;
-         * <li>x / 10m pixels per 10 seconds, per second of thrust;
-         * <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
-         * <li>x pixels per 10 seconds, per centisecond of thrust;
-         * <li>x / 10 pixels per second, per centisecond of thrust;
-         * <li>x / 100 pixels per millisecond, per second of thrust;
-         * <li>x / 10k pixels per millisecond, per centisecond of thrust;
-         * <li>x / 100k pixels per millisecond, per millisecond of thrust.
-         */
+            <b>[All] InitialThrust</b><br>
+            Initial thrust of ship.
+            @return Initial thrust in speed per centisecond. This results in a bit more unclear math. For example, take
+            a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
+            In other words, if thrust is x, then the speed increase is:
+            <li>x / 100m pixels per second, per second of thrust;
+            <li>x / 10m pixels per 10 seconds, per second of thrust;
+            <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
+            <li>x pixels per 10 seconds, per centisecond of thrust;
+            <li>x / 10 pixels per second, per centisecond of thrust;
+            <li>x / 100 pixels per millisecond, per second of thrust;
+            <li>x / 10k pixels per millisecond, per centisecond of thrust;
+            <li>x / 100k pixels per millisecond, per millisecond of thrust.
+        */
         public int getInitialThrust() {
             return (int) (initialThrust & MASK_UINT16);
         }
 
         /**
-         * <b>[All] InitialSpeed</b><br>
-         * Initial speed of ship. Note that 0 will prevent the ship from moving without afterburners or a speed upgrade.
-         * @return Initial speed in pixels per 10 seconds. (1000 means 100 pixels per second.) 
-         */
+            <b>[All] InitialSpeed</b><br>
+            Initial speed of ship. Note that 0 will prevent the ship from moving without afterburners or a speed upgrade.
+            @return Initial speed in pixels per 10 seconds. (1000 means 100 pixels per second.)
+        */
         public int getInitialSpeed() {
             return (int) (initialSpeed & MASK_UINT16);
         }
 
         /**
-         * <b>[All] InitialRecharge</b><br>
-         * Initial recharge rate.
-         * @return Initial recharge in energy per 10 seconds. (1000 means 100 energy per second.)
-         */
+            <b>[All] InitialRecharge</b><br>
+            Initial recharge rate.
+            @return Initial recharge in energy per 10 seconds. (1000 means 100 energy per second.)
+        */
         public int getInitialRecharge() {
             return (int) (initialRecharge & MASK_UINT16);
         }
 
         /**
-         * <b>[All] InitialEnergy</b><br>
-         * Initial amount of energy that the ship can have.
-         * @return Initial energy in energy units.
-         */
+            <b>[All] InitialEnergy</b><br>
+            Initial amount of energy that the ship can have.
+            @return Initial energy in energy units.
+        */
         public int getInitialEnergy() {
             return (int) (initialEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] UpgradeRotation</b><br>
-         * Amount added per Rotation Upgrade Prize.
-         * <i>Formula:</i> 90 degrees/(seconds / 100) (That is, 400 for a full rotation in 1s).
-         * @return Upgrade rotation in Rotation Points per 10 seconds.
-         */
+            <b>[All] UpgradeRotation</b><br>
+            Amount added per Rotation Upgrade Prize.
+            <i>Formula:</i> 90 degrees/(seconds / 100) (That is, 400 for a full rotation in 1s).
+            @return Upgrade rotation in Rotation Points per 10 seconds.
+        */
         public int getUpgradeRotation() {
             return (int) (upgradeRotation & MASK_UINT16);
         }
 
         /**
-         * <b>[All] UpgradeThrust</b><br>
-         * Amount added per Thruster Upgrade Prize.
-         * @return Upgrade thrust in speed per centisecond. This results in a bit more unclear math. For example, take
-         * a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
-         * In other words, if thrust is x, then the speed increase is:
-         * <li>x / 100m pixels per second, per second of thrust;
-         * <li>x / 10m pixels per 10 seconds, per second of thrust;
-         * <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
-         * <li>x pixels per 10 seconds, per centisecond of thrust;
-         * <li>x / 10 pixels per second, per centisecond of thrust;
-         * <li>x / 100 pixels per millisecond, per second of thrust;
-         * <li>x / 10k pixels per millisecond, per centisecond of thrust;
-         * <li>x / 100k pixels per millisecond, per millisecond of thrust.
-         */
+            <b>[All] UpgradeThrust</b><br>
+            Amount added per Thruster Upgrade Prize.
+            @return Upgrade thrust in speed per centisecond. This results in a bit more unclear math. For example, take
+            a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
+            In other words, if thrust is x, then the speed increase is:
+            <li>x / 100m pixels per second, per second of thrust;
+            <li>x / 10m pixels per 10 seconds, per second of thrust;
+            <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
+            <li>x pixels per 10 seconds, per centisecond of thrust;
+            <li>x / 10 pixels per second, per centisecond of thrust;
+            <li>x / 100 pixels per millisecond, per second of thrust;
+            <li>x / 10k pixels per millisecond, per centisecond of thrust;
+            <li>x / 100k pixels per millisecond, per millisecond of thrust.
+        */
         public int getUpgradeThrust() {
             return (int) (upgradeThrust & MASK_UINT16);
         }
 
         /**
-         * <b>[All] UpgradeSpeed</b><br>
-         * Amount added per Speed Upgrade Prize.
-         * @return Upgrade speed in pixels per 10 seconds. (1000 means 100 pixels per second.) 
-         */
+            <b>[All] UpgradeSpeed</b><br>
+            Amount added per Speed Upgrade Prize.
+            @return Upgrade speed in pixels per 10 seconds. (1000 means 100 pixels per second.)
+        */
         public int getUpgradeSpeed() {
             return (int) (upgradeSpeed & MASK_UINT16);
         }
 
         /**
-         * <b>[All] UpgradeRecharge</b><br>
-         * Amount added per Recharge Upgrade Prize.
-         * @return Upgrade recharge in energy per 10 seconds. (1000 means 100 energy per second.)
-         */
+            <b>[All] UpgradeRecharge</b><br>
+            Amount added per Recharge Upgrade Prize.
+            @return Upgrade recharge in energy per 10 seconds. (1000 means 100 energy per second.)
+        */
         public int getUpgradeRecharge() {
             return (int) (upgradeRecharge & MASK_UINT16);
         }
 
         /**
-         * <b>[All] UpgradeEnergy</b><br>
-         * Amount added per Energy Upgrade Prize.
-         * @return Upgrade energy in energy units.
-         */
+            <b>[All] UpgradeEnergy</b><br>
+            Amount added per Energy Upgrade Prize.
+            @return Upgrade energy in energy units.
+        */
         public int getUpgradeEnergy() {
             return (int) (upgradeEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] AfterburnerEnergy</b><br>
-         * Energy required to have 'Afterburners' activated.
-         * @return Afterburner energy in energy units. (Might be energy units per 10 seconds.)
-         */
+            <b>[All] AfterburnerEnergy</b><br>
+            Energy required to have 'Afterburners' activated.
+            @return Afterburner energy in energy units. (Might be energy units per 10 seconds.)
+        */
         public int getAfterburnerEnergy() {
             return (int) (afterburnerEnergy & MASK_UINT16);
         }
 
         /**
-         * <b>[All] BombThrust</b><br>
-         * Amount of back-thrust (recoil) this ship receives when firing a bomb.
-         * @return Bomb thrust in an unknown unit. (Possibly in pixels / (10s)^2)
-         */
+            <b>[All] BombThrust</b><br>
+            Amount of back-thrust (recoil) this ship receives when firing a bomb.
+            @return Bomb thrust in an unknown unit. (Possibly in pixels / (10s)^2)
+        */
         public int getBombThrust() {
             return (int) (bombThrust & MASK_UINT16);
         }
 
         /**
-         * <b>[All] BurstSpeed</b><br>
-         * How fast the burst "shrapnel" move for this ship.
-         * @return Burst speed in pixels per 10 seconds.
-         */
+            <b>[All] BurstSpeed</b><br>
+            How fast the burst "shrapnel" move for this ship.
+            @return Burst speed in pixels per 10 seconds.
+        */
         public int getBurstSpeed() {
             return (int) (burstSpeed & MASK_UINT16);
         }
 
         /**
-         * <b>[All] TurretThrustPenalty</b><br>
-         * This ship's thrust is decreased this much when a turret it riding.
-         * @return Turret thrust penalty in an unknown unit. (Possibly in pixels / (10s)^2)
-         */
+            <b>[All] TurretThrustPenalty</b><br>
+            This ship's thrust is decreased this much when a turret it riding.
+            @return Turret thrust penalty in an unknown unit. (Possibly in pixels / (10s)^2)
+        */
         public int getTurretThrustPenalty() {
             return (int) (turretThrustPenalty & MASK_UINT16);
         }
 
         /**
-         * <b>[All] TurretSpeedPenalty</b><br>
-         * This ship's speed is decreased this much when a turret it riding.
-         * @return Turret speed penalty in pixels per 10 seconds.
-         */
+            <b>[All] TurretSpeedPenalty</b><br>
+            This ship's speed is decreased this much when a turret it riding.
+            @return Turret speed penalty in pixels per 10 seconds.
+        */
         public int getTurretSpeedPenalty() {
             return (int) (turretSpeedPenalty & MASK_UINT16);
         }
 
         /**
-         * <b>[All] BulletFireDelay</b><br>
-         * Delay before a ship can fire another weapon after it fires a bullet.
-         * @return Bullet fire delay in centiseconds.
-         */
+            <b>[All] BulletFireDelay</b><br>
+            Delay before a ship can fire another weapon after it fires a bullet.
+            @return Bullet fire delay in centiseconds.
+        */
         public int getBulletFireDelay() {
             return (int) (bulletFireDelay & MASK_UINT16);
         }
 
         /**
-         * <b>[All] MultiFireDelay</b><br>
-         * Delay before a ship can fire another weapon after it fires a set of multifire bullets.
-         * @return Multifire delay in centiseconds.
-         */
+            <b>[All] MultiFireDelay</b><br>
+            Delay before a ship can fire another weapon after it fires a set of multifire bullets.
+            @return Multifire delay in centiseconds.
+        */
         public int getMultiFireDelay() {
             return (int) (multiFireDelay & MASK_UINT16);
         }
 
         /**
-         * <b>[All] BombFireDelay</b><br>
-         * Delay before this ship can fire another weapon after it fires a bomb.
-         * @return Bomb fire delay in centiseconds.
-         */
+            <b>[All] BombFireDelay</b><br>
+            Delay before this ship can fire another weapon after it fires a bomb.
+            @return Bomb fire delay in centiseconds.
+        */
         public int getBombFireDelay() {
             return (int) (bombFireDelay & MASK_UINT16);
         }
 
         /**
-         * <b>[All] LandmineFireDelay</b><br>
-         * Delay before a ship can fire another weapon after it drops a landmine.
-         * @return Landmine fire delay in centiseconds.
-         */
+            <b>[All] LandmineFireDelay</b><br>
+            Delay before a ship can fire another weapon after it drops a landmine.
+            @return Landmine fire delay in centiseconds.
+        */
         public int getLandmineFireDelay() {
             return (int) (landmineFireDelay & MASK_UINT16);
         }
 
         /**
-         * <b>[All] RocketTime</b><br>
-         * How long a Rocket lasts.
-         * @return Rocket time in centiseconds.
-         */
+            <b>[All] RocketTime</b><br>
+            How long a Rocket lasts.
+            @return Rocket time in centiseconds.
+        */
         public int getRocketTime() {
             return (int) (rocketTime & MASK_UINT16);
         }
 
         /**
-         * <b>[All] InitialBounty</b><br>
-         * Number of prizes given to this ship when it spawns.
-         * @return Initial bounty.
-         */
+            <b>[All] InitialBounty</b><br>
+            Number of prizes given to this ship when it spawns.
+            @return Initial bounty.
+        */
         public int getInitialBounty() {
             return (int) (initialBounty & MASK_UINT16);
         }
 
         /**
-         * <b>[All] DamageFactor</b><br>
-         * How likely a the ship is to lose a prize when damaged.
-         * (1 is extremely likely, 5000 is almost never.) Special Value: 0 = never.
-         * @return Damage factor between 1 and 5000. Special case: 0, meaning it will never lose a bounty point.
-         */
+            <b>[All] DamageFactor</b><br>
+            How likely a the ship is to lose a prize when damaged.
+            (1 is extremely likely, 5000 is almost never.) Special Value: 0 = never.
+            @return Damage factor between 1 and 5000. Special case: 0, meaning it will never lose a bounty point.
+        */
         public int getDamageFactor() {
             return (int) (damageFactor & MASK_UINT16);
         }
 
         /**
-         * <b>[All] PrizeShareLimit</b><br>
-         * Maximum bounty that this ship can receive by Team Prizes.
-         * @return Prize share limit in points.
-         */
+            <b>[All] PrizeShareLimit</b><br>
+            Maximum bounty that this ship can receive by Team Prizes.
+            @return Prize share limit in points.
+        */
         public int getPrizeShareLimit() {
             return (int) (prizeShareLimit & MASK_UINT16);
         }
 
         /**
-         * <b>[All] AttachBounty</b><br>
-         * Bounty required by ships to attach to another ship to form a turret.
-         * @return Attach bounty in points.
-         */
+            <b>[All] AttachBounty</b><br>
+            Bounty required by ships to attach to another ship to form a turret.
+            @return Attach bounty in points.
+        */
         public int getAttachBounty() {
             return (int) (attachBounty & MASK_UINT16);
         }
 
         /**
-         * <b>[All] SoccerThrowTime</b><br>
-         * Time player has to carry soccer ball before it automatically fires (out the back of the ship).
-         * If this is 0 or 32768 or greater then carry time is unlimited and no timer is shown on the players screen.
-         * @return Soccer throw time in centiseconds.
-         */
+            <b>[All] SoccerThrowTime</b><br>
+            Time player has to carry soccer ball before it automatically fires (out the back of the ship).
+            If this is 0 or 32768 or greater then carry time is unlimited and no timer is shown on the players screen.
+            @return Soccer throw time in centiseconds.
+        */
         public int getSoccerThrowTime() {
             return (int) (soccerThrowTime & MASK_UINT16);
         }
 
         /**
-         * <b>[All] SoccerBallFriction</b><br>
-         * Amount of friction on the soccer ball when it is not carried by a ship.
-         * @return Soccer ball friction in an unknown unit. Could possibly be a deceleration instead of force, i.e. pixels / (10s)^2.
-         */
+            <b>[All] SoccerBallFriction</b><br>
+            Amount of friction on the soccer ball when it is not carried by a ship.
+            @return Soccer ball friction in an unknown unit. Could possibly be a deceleration instead of force, i.e. pixels / (10s)^2.
+        */
         public int getSoccerBallFriction() {
             return (int) (soccerBallFriction & MASK_UINT16);
         }
 
         /**
-         * <b>[All] SoccerBallProximity</b><br>
-         * How close the ship must be in order to pick up a ball. Set this to 0 to disallow the ship from picking up a ball.
-         * @return Soccer ball proximity in pixels.
-         */
+            <b>[All] SoccerBallProximity</b><br>
+            How close the ship must be in order to pick up a ball. Set this to 0 to disallow the ship from picking up a ball.
+            @return Soccer ball proximity in pixels.
+        */
         public int getSoccerBallProximity() {
             return (int) (soccerBallProximity & MASK_UINT16);
         }
 
         /**
-         * <b>[All] SoccerBallSpeed</b><br>
-         * Initial speed given to the ball when fired by this ship.
-         * @return Soccer ball speed in pixels per 10 seconds.
-         */
+            <b>[All] SoccerBallSpeed</b><br>
+            Initial speed given to the ball when fired by this ship.
+            @return Soccer ball speed in pixels per 10 seconds.
+        */
         public int getSoccerBallSpeed() {
             return (int) (soccerBallSpeed & MASK_UINT16);
         }
 
         /**
-         * <b>[All] TurretLimit</b><br>
-         * Number of turrets allowed on this ship. If you don't want ships to attach, set TurretLimit to 0.
-         * @return Turret limit.
-         */
+            <b>[All] TurretLimit</b><br>
+            Number of turrets allowed on this ship. If you don't want ships to attach, set TurretLimit to 0.
+            @return Turret limit.
+        */
         public short getTurretLimit() {
             return (short) (turretLimit & MASK_UINT8);
         }
 
         /**
-         * <b>[All] BurstShrapnel</b><br>
-         * Burst shrapnel released when this ship fires a Burst.
-         * @return Burst shrapnel amount.
-         */
+            <b>[All] BurstShrapnel</b><br>
+            Burst shrapnel released when this ship fires a Burst.
+            @return Burst shrapnel amount.
+        */
         public short getBurstShrapnel() {
             return (short) (burstShrapnel & MASK_UINT8);
         }
 
         /**
-         * <b>[All] MaxMines</b><br>
-         * Maximum number of mines this ship can place.
-         * @return Max mines.
-         */
+            <b>[All] MaxMines</b><br>
+            Maximum number of mines this ship can place.
+            @return Max mines.
+        */
         public short getMaxMines() {
             return (short) (maxMines & MASK_UINT8);
         }
 
         /**
-         * <b>[All] RepelMax</b><br>
-         * Maximum Repels a ship can store. Any Repel prizes after this will be ignored.
-         * @return Repel max amount.
-         */
+            <b>[All] RepelMax</b><br>
+            Maximum Repels a ship can store. Any Repel prizes after this will be ignored.
+            @return Repel max amount.
+        */
         public short getRepelMax() {
             return (short) (repelMax & MASK_UINT8);
         }
 
         /**
-         * <b>[All] BurstMax</b><br>
-         * Maximum Bursts a ship can store. Any Repel prizes after this will be ignored.
-         * @return Burst max amount.
-         */
+            <b>[All] BurstMax</b><br>
+            Maximum Bursts a ship can store. Any Repel prizes after this will be ignored.
+            @return Burst max amount.
+        */
         public short getBurstMax() {
             return (short) (burstMax & MASK_UINT8);
         }
 
         /**
-         * <b>[All] DecoyMax</b><br>
-         * Maximum Decoys a ship can store. Any Repel prizes after this will be ignored.
-         * @return Decoy max amount.
-         */
+            <b>[All] DecoyMax</b><br>
+            Maximum Decoys a ship can store. Any Repel prizes after this will be ignored.
+            @return Decoy max amount.
+        */
         public short getDecoyMax() {
             return (short) (decoyMax & MASK_UINT8);
         }
 
         /**
-         * <b>[All] ThorMax</b><br>
-         * Maximum Thor's Hammers a ship can store. Any Repel prizes after this will be ignored.
-         * @return Thor max amount.
-         */
+            <b>[All] ThorMax</b><br>
+            Maximum Thor's Hammers a ship can store. Any Repel prizes after this will be ignored.
+            @return Thor max amount.
+        */
         public short getThorMax() {
             return (short) (thorMax & MASK_UINT8);
         }
 
         /**
-         * <b>[All] BrickMax</b><br>
-         * Maximum Bricks a ship can store. Any Repel prizes after this will be ignored.
-         * @return Brick max amount.
-         */
+            <b>[All] BrickMax</b><br>
+            Maximum Bricks a ship can store. Any Repel prizes after this will be ignored.
+            @return Brick max amount.
+        */
         public short getBrickMax() {
             return (short) (brickMax & MASK_UINT8);
         }
 
         /**
-         * <b>[All] RocketMax</b><br>
-         * Maximum Rockets a ship can store. Any Repel prizes after this will be ignored.
-         * @return Rocket max amount.
-         */
+            <b>[All] RocketMax</b><br>
+            Maximum Rockets a ship can store. Any Repel prizes after this will be ignored.
+            @return Rocket max amount.
+        */
         public short getRocketMax() {
             return (short) (rocketMax & MASK_UINT8);
         }
 
         /**
-         * <b>[All] PortalMax</b><br>
-         * Maximum Portals a ship can store. Any Repel prizes after this will be ignored.
-         * @return Portal max amount.
-         */
+            <b>[All] PortalMax</b><br>
+            Maximum Portals a ship can store. Any Repel prizes after this will be ignored.
+            @return Portal max amount.
+        */
         public short getPortalMax() {
             return (short) (portalMax & MASK_UINT8);
         }
 
         /**
-         * <b>[All] InitialRepel</b><br>
-         * Repels given to ships when they spawn.
-         * @return Initial repel amount.
-         */
+            <b>[All] InitialRepel</b><br>
+            Repels given to ships when they spawn.
+            @return Initial repel amount.
+        */
         public short getInitialRepel() {
             return (short) (initialRepel & MASK_UINT8);
         }
 
         /**
-         * <b>[All] InitialBurst</b><br>
-         * Bursts given to ships when they spawn.
-         * @return Initial burst amount.
-         */
+            <b>[All] InitialBurst</b><br>
+            Bursts given to ships when they spawn.
+            @return Initial burst amount.
+        */
         public short getInitialBurst() {
             return (short) (initialBurst & MASK_UINT8);
         }
 
         /**
-         * <b>[All] InitialBrick</b><br>
-         * Bricks given to ships when they spawn.
-         * @return Initial brick amount.
-         */
+            <b>[All] InitialBrick</b><br>
+            Bricks given to ships when they spawn.
+            @return Initial brick amount.
+        */
         public short getInitialBrick() {
             return (short) (initialBrick & MASK_UINT8);
         }
 
         /**
-         * <b>[All] InitialRocket</b><br>
-         * Rockets given to ships when they spawn.
-         * @return Initial rocket amount.
-         */
+            <b>[All] InitialRocket</b><br>
+            Rockets given to ships when they spawn.
+            @return Initial rocket amount.
+        */
         public short getInitialRocket() {
             return (short) (initialRocket & MASK_UINT8);
         }
 
         /**
-         * <b>[All] InitialThor</b><br>
-         * Thor's Hammers given to ships when they spawn.
-         * @return Initial thor amount.
-         */
+            <b>[All] InitialThor</b><br>
+            Thor's Hammers given to ships when they spawn.
+            @return Initial thor amount.
+        */
         public short getInitialThor() {
             return (short) (initialThor & MASK_UINT8);
         }
 
         /**
-         * <b>[All] InitialDecoy</b><br>
-         * Decoys given to ships when they spawn.
-         * @return Initial decoy amount.
-         */
+            <b>[All] InitialDecoy</b><br>
+            Decoys given to ships when they spawn.
+            @return Initial decoy amount.
+        */
         public short getInitialDecoy() {
             return (short) (initialDecoy & MASK_UINT8);
         }
 
         /**
-         * <b>[All] InitialPortal</b><br>
-         * Portals given to ships when they spawn.
-         * @return Initial portal amount.
-         */
+            <b>[All] InitialPortal</b><br>
+            Portals given to ships when they spawn.
+            @return Initial portal amount.
+        */
         public short getInitialPortal() {
             return (short) (initialPortal & MASK_UINT8);
         }
 
         /**
-         * <b>[All] BombBounceCount</b><br>
-         * Times a bomb fired by this ship can bounce before it explodes on impact
-         * @return Bomb bounce count amount.
-         */
+            <b>[All] BombBounceCount</b><br>
+            Times a bomb fired by this ship can bounce before it explodes on impact
+            @return Bomb bounce count amount.
+        */
         public short getBombBounceCount() {
             return (short) (bombBounceCount & MASK_UINT8);
         }
 
         /**
-         * <b>[All] ShrapnelMax</b><br>
-         * Maximum shrapnel pieces released from this ship's bombs.
-         * @return Shrapnel max amount.
-         */
+            <b>[All] ShrapnelMax</b><br>
+            Maximum shrapnel pieces released from this ship's bombs.
+            @return Shrapnel max amount.
+        */
         public byte getShrapnelMax() {
             return shrapnelMax;
         }
 
         /**
-         * <b>[All] ShrapnelRate</b><br>
-         * Additional shrapnel pieces gained by a 'Shrapnel Upgrade' prize.
-         * @return Shrapnel rate amount.
-         */
+            <b>[All] ShrapnelRate</b><br>
+            Additional shrapnel pieces gained by a 'Shrapnel Upgrade' prize.
+            @return Shrapnel rate amount.
+        */
         public byte getShrapnelRate() {
             return shrapnelRate;
         }
 
         /**
-         * <b>[All] CloakStatus</b><br>
-         * Whether ships can to receive Cloak.
-         * <li>0: no
-         * <li>1: yes
-         * <li>2: yes & starts with prize
-         * @return One of the above values.
-         */
+            <b>[All] CloakStatus</b><br>
+            Whether ships can to receive Cloak.
+            <li>0: no
+            <li>1: yes
+            <li>2: yes & starts with prize
+            @return One of the above values.
+        */
         public byte getCloakStatus() {
             return cloakStatus;
         }
 
         /**
-         * <b>[All] StealthStatus</b><br>
-         * Whether ships can to receive Stealth.
-         * <li>0: no
-         * <li>1: yes
-         * <li>2: yes & starts with prize
-         * @return One of the above values.
-         */
+            <b>[All] StealthStatus</b><br>
+            Whether ships can to receive Stealth.
+            <li>0: no
+            <li>1: yes
+            <li>2: yes & starts with prize
+            @return One of the above values.
+        */
         public byte getStealthStatus() {
             return stealthStatus;
         }
 
         /**
-         * <b>[All] XRadarStatus</b><br>
-         * Whether ships can to receive Stealth.
-         * <li>0: no
-         * <li>1: yes
-         * <li>2: yes & starts with prize
-         * @return One of the above values.
-         */
+            <b>[All] XRadarStatus</b><br>
+            Whether ships can to receive Stealth.
+            <li>0: no
+            <li>1: yes
+            <li>2: yes & starts with prize
+            @return One of the above values.
+        */
         public byte getxRadarStatus() {
             return xRadarStatus;
         }
 
         /**
-         * <b>[All] AntiWarpStatus</b><br>
-         * Whether ships can receive AntiWarp.
-         * <li>0: no
-         * <li>1: yes
-         * <li>2: yes & starts with prize
-         * @return One of the above values.
-         */
+            <b>[All] AntiWarpStatus</b><br>
+            Whether ships can receive AntiWarp.
+            <li>0: no
+            <li>1: yes
+            <li>2: yes & starts with prize
+            @return One of the above values.
+        */
         public byte getAntiwarpStatus() {
             return antiwarpStatus;
         }
 
         /**
-         * <b>[All] InitialGuns</b><br>
-         * Gun level given to ships at respawn. Note that a ship cannot start with L4 guns.
-         * @return Initial guns level, 0 being none.
-         */
+            <b>[All] InitialGuns</b><br>
+            Gun level given to ships at respawn. Note that a ship cannot start with L4 guns.
+            @return Initial guns level, 0 being none.
+        */
         public byte getInitialGuns() {
             return initialGuns;
         }
 
         /**
-         * <b>[All] MaxGuns</b><br>
-         * Maximum gun level a ship can have. Note that a ship cannot have L4 guns without a flag upgrade.
-         * @return Max guns level, 0 being none.
-         */
+            <b>[All] MaxGuns</b><br>
+            Maximum gun level a ship can have. Note that a ship cannot have L4 guns without a flag upgrade.
+            @return Max guns level, 0 being none.
+        */
         public byte getMaxGuns() {
             return maxGuns;
         }
 
         /**
-         * <b>[All] InitialBombs</b><br>
-         * Bomb level given to ships at respawn. Note that a ship cannot start with L4 bombs.
-         * @return Initial bombs level, 0 being none.
-         */
+            <b>[All] InitialBombs</b><br>
+            Bomb level given to ships at respawn. Note that a ship cannot start with L4 bombs.
+            @return Initial bombs level, 0 being none.
+        */
         public byte getInitialBombs() {
             return initialBombs;
         }
 
         /**
-         * <b>[All] MaxBombs</b><br>
-         * Maximum bomb level a ship can have. Note that a ship cannot have L4 bombs without a flag upgrade.
-         * @return Max bombs level, 0 being none.
-         */
+            <b>[All] MaxBombs</b><br>
+            Maximum bomb level a ship can have. Note that a ship cannot have L4 bombs without a flag upgrade.
+            @return Max bombs level, 0 being none.
+        */
         public byte getMaxBombs() {
             return maxBombs;
         }
 
         /**
-         * <b>[All] DoubleBarrel</b><br>
-         * Whether ships fire double-barrel bullets.
-         * @return True if the ship fires two bullets, false if only one. (Not taking multifire into account.)
-         */
+            <b>[All] DoubleBarrel</b><br>
+            Whether ships fire double-barrel bullets.
+            @return True if the ship fires two bullets, false if only one. (Not taking multifire into account.)
+        */
         public boolean isDoubleBarrel() {
             return doubleBarrel;
         }
 
         /**
-         * <b>[All] EmpBomb</b><br>
-         * Whether this ship fires EMP bombs.
-         * @return True if this ship fires EMP bombs, false otherwise.
-         */
+            <b>[All] EmpBomb</b><br>
+            Whether this ship fires EMP bombs.
+            @return True if this ship fires EMP bombs, false otherwise.
+        */
         public boolean isEmpBomb() {
             return empBomb;
         }
 
         /**
-         * <b>[All] SeeMines</b><br>
-         * Whether ships see mines on radar.
-         * @return True if the ship is allowed to see mines on the radar, false otherwise.
-         */
+            <b>[All] SeeMines</b><br>
+            Whether ships see mines on radar.
+            @return True if the ship is allowed to see mines on the radar, false otherwise.
+        */
         public boolean isSeeMines() {
             return seeMines;
         }
 
         /**
-         * Section of undocumented data.
-         * @return UNKNOWN2
-         */
+            Section of undocumented data.
+            @return UNKNOWN2
+        */
         public byte getUNKNOWN2() {
             return UNKNOWN2;
         }
 
         /**
-         * Section of undocumented data.
-         * @return UNKNOWN3
-         */
+            Section of undocumented data.
+            @return UNKNOWN3
+        */
         public byte[] getUNKNOWN3() {
             return UNKNOWN3;
         }
-        
+
         /**
-         * Debug method. Prints out all getter values. 
-         * <p>
-         * This is/was mainly used to verify that every getter is returning
-         * the correct signed/unsigned value. Could prove useful in the future
-         * whenever a discrepancy is found between what the bot thinks is an arena setting
-         * and what actually is the arena setting.
-         * @return List of getter names and their values.
-         */
+            Debug method. Prints out all getter values.
+            <p>
+            This is/was mainly used to verify that every getter is returning
+            the correct signed/unsigned value. Could prove useful in the future
+            whenever a discrepancy is found between what the bot thinks is an arena setting
+            and what actually is the arena setting.
+            @return List of getter names and their values.
+        */
         public String toString() {
             StringBuilder result = new StringBuilder();
             String newLine = System.getProperty("line.separator");
-            
+
             Class<?> objClass = this.getClass();
 
             result.append(objClass.getName() + " {" + newLine);
             // Get the public methods associated with this class.
             Method[] methods = objClass.getMethods();
-            for (Method method:methods)
+
+            for (Method method : methods)
             {
                 if(method.getName().startsWith("getClass")) {
                     continue;
@@ -2591,32 +2595,32 @@ public class ArenaSettings {
                         e.printStackTrace();
                     }
                 }
-                
+
             }
-            
+
             result.append("}" + newLine);
-            
+
             return result.toString();
         }
     }
-    
+
     /**
-     * This class logs all the prize related settings, obtained from the arena settings.
-     * <p>
-     * These settings determine the random green prize weighting. A higher number means a greater 
-     * chance of a green containing the prize, a lower a lesser chance. Warning: If you set these 
-     * all to 0, subgame will crash when it tries to generate a prize.
-     * <p>
-     * Due to this being a port, I've tried to give credit where credit is due, by trying to keep most of the original
-     * comments in tact. Full credit goes to the researchers for and creators of the MervBot.
-     * @author Trancid
-     *
-     */
+        This class logs all the prize related settings, obtained from the arena settings.
+        <p>
+        These settings determine the random green prize weighting. A higher number means a greater
+        chance of a green containing the prize, a lower a lesser chance. Warning: If you set these
+        all to 0, subgame will crash when it tries to generate a prize.
+        <p>
+        Due to this being a port, I've tried to give credit where credit is due, by trying to keep most of the original
+        comments in tact. Full credit goes to the researchers for and creators of the MervBot.
+        @author Trancid
+
+    */
     public class PrizeSettings {
         // 28 bytes wide
-                                                //----------+---------------+-------------------+-------+-------+-----------+---------------------------------------------------------------
-                                                // Offset   | Category      | Name              | Min.  | Max.  | Bitsize   | Description
-                                                //----------+---------------+-------------------+-------+-------+-----------+---------------------------------------------------------------
+        //----------+---------------+-------------------+-------+-------+-----------+---------------------------------------------------------------
+        // Offset   | Category      | Name              | Min.  | Max.  | Bitsize   | Description
+        //----------+---------------+-------------------+-------+-------+-----------+---------------------------------------------------------------
         private byte    recharge;               // 1400     | PrizeWeight   | QuickCharge       |       |       |         8 | Likelyhood of 'Recharge' prize appearing
         private byte    energy;                 // 1401     | PrizeWeight   | Energy            |       |       |         8 | Likelyhood of 'Energy Upgrade' prize appearing
         private byte    rotation;               // 1402     | PrizeWeight   | Rotation          |       |       |         8 | Likelyhood of 'Rotation' prize appearing
@@ -2645,14 +2649,15 @@ public class ArenaSettings {
         private byte    brick;                  // 1425     | PrizeWeight   | Brick             |       |       |         8 | Likelyhood of 'Brick' prize appearing
         private byte    rocket;                 // 1426     | PrizeWeight   | Rocket            |       |       |         8 | Likelyhood of 'Rocket' prize appearing
         private byte    portal;                 // 1427     | PrizeWeight   | Portal            |       |       |         8 | Likelyhood of 'Portal' prize appearing
-                                                //----------+---------------+-------------------+-------+-------+-----------+---------------------------------------------------------------
-        
+        //----------+---------------+-------------------+-------+-------+-----------+---------------------------------------------------------------
+
         /** PrizeSettings constructor */
         public PrizeSettings(ByteArray data) {
             if(data.size() != 28) {
                 Tools.printLog("ERROR: Invalid raw data size for PrizeSettings.");
                 return;
             }
+
             this.recharge           = data.readByte(0);
             this.energy             = data.readByte(1);
             this.rotation           = data.readByte(2);
@@ -2682,281 +2687,282 @@ public class ArenaSettings {
             this.rocket             = data.readByte(26);
             this.portal             = data.readByte(27);
         }
-        
+
         /*
-         * Automatically generated getters.
-         */
+            Automatically generated getters.
+        */
         /**
-         * <b>[PrizeWeight] Recharge</b><br>
-         * Full Charge prize. (Full charge, not recharge.)
-         * @return Recharge weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Recharge</b><br>
+            Full Charge prize. (Full charge, not recharge.)
+            @return Recharge weight. (0 to 255)
+        */
         public short getRecharge() {
             return (short) (recharge & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Energy</b><br>
-         * Energy Upgrade prize.
-         * @return weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Energy</b><br>
+            Energy Upgrade prize.
+            @return weight. (0 to 255)
+        */
         public short getEnergy() {
             return (short) (energy & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Rotation</b><br>
-         * Rotation prize.
-         * @return Rotation weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Rotation</b><br>
+            Rotation prize.
+            @return Rotation weight. (0 to 255)
+        */
         public short getRotation() {
             return (short) (rotation & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Stealth</b><br>
-         * Stealth prize.
-         * @return Stealth weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Stealth</b><br>
+            Stealth prize.
+            @return Stealth weight. (0 to 255)
+        */
         public short getStealth() {
             return (short) (stealth & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Cloak</b><br>
-         * Cloak prize.
-         * @return Cloak weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Cloak</b><br>
+            Cloak prize.
+            @return Cloak weight. (0 to 255)
+        */
         public short getCloak() {
             return (short) (cloak & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] XRadar</b><br>
-         * XRadar prize.
-         * @return XRadar weight. (0 to 255)
-         */
+            <b>[PrizeWeight] XRadar</b><br>
+            XRadar prize.
+            @return XRadar weight. (0 to 255)
+        */
         public short getxRadar() {
             return (short) (xRadar & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Warp</b><br>
-         * Warp prize.
-         * @return Warp weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Warp</b><br>
+            Warp prize.
+            @return Warp weight. (0 to 255)
+        */
         public short getWarp() {
             return (short) (warp & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Gun</b><br>
-         * Gun Upgrade prize.
-         * @return Gun weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Gun</b><br>
+            Gun Upgrade prize.
+            @return Gun weight. (0 to 255)
+        */
         public short getGun() {
             return (short) (gun & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Bomb</b><br>
-         * Bomb Upgrade prize.
-         * @return Bomb weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Bomb</b><br>
+            Bomb Upgrade prize.
+            @return Bomb weight. (0 to 255)
+        */
         public short getBomb() {
             return (short) (bomb & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] BouncingBullets</b><br>
-         * Bouncing Bullets prize.
-         * @return Bouncing bullets weight. (0 to 255)
-         */
+            <b>[PrizeWeight] BouncingBullets</b><br>
+            Bouncing Bullets prize.
+            @return Bouncing bullets weight. (0 to 255)
+        */
         public short getBouncingBullets() {
             return (short) (bouncingBullets & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Thruster</b><br>
-         * Thruster prize.
-         * @return Thruster weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Thruster</b><br>
+            Thruster prize.
+            @return Thruster weight. (0 to 255)
+        */
         public short getThruster() {
             return (short) (thruster & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] TopSpeed</b><br>
-         * Speed prize.
-         * @return Top speed weight. (0 to 255)
-         */
+            <b>[PrizeWeight] TopSpeed</b><br>
+            Speed prize.
+            @return Top speed weight. (0 to 255)
+        */
         public short getTopSpeed() {
             return (short) (topSpeed & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] QuickCharge</b><br>
-         * Recharge prize.
-         * @return Quick charge weight. (0 to 255)
-         */
+            <b>[PrizeWeight] QuickCharge</b><br>
+            Recharge prize.
+            @return Quick charge weight. (0 to 255)
+        */
         public short getQuickCharge() {
             return (short) (quickCharge & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Glue</b><br>
-         * Engine Shutdown prize.
-         * @return Glue weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Glue</b><br>
+            Engine Shutdown prize.
+            @return Glue weight. (0 to 255)
+        */
         public short getGlue() {
             return (short) (glue & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] MultiFire</b><br>
-         * MultiFire prize.
-         * @return Multifire weight. (0 to 255)
-         */
+            <b>[PrizeWeight] MultiFire</b><br>
+            MultiFire prize.
+            @return Multifire weight. (0 to 255)
+        */
         public short getMultiFire() {
             return (short) (multiFire & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Proximity</b><br>
-         * Proximity Bomb prize.
-         * @return Proximity weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Proximity</b><br>
+            Proximity Bomb prize.
+            @return Proximity weight. (0 to 255)
+        */
         public short getProximity() {
             return (short) (proximity & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] AllWeapons</b><br>
-         * Super! prize.
-         * @return All weapons weight. (0 to 255)
-         */
+            <b>[PrizeWeight] AllWeapons</b><br>
+            Super! prize.
+            @return All weapons weight. (0 to 255)
+        */
         public short getAllWeapons() {
             return (short) (allWeapons & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Shields</b><br>
-         * Shields prize.
-         * @return Shields weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Shields</b><br>
+            Shields prize.
+            @return Shields weight. (0 to 255)
+        */
         public short getShields() {
             return (short) (shields & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Shrapnel</b><br>
-         * Shrapnel Upgrade prize.
-         * @return Shrapnel weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Shrapnel</b><br>
+            Shrapnel Upgrade prize.
+            @return Shrapnel weight. (0 to 255)
+        */
         public short getShrapnel() {
             return (short) (shrapnel & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] AntiWarp</b><br>
-         * AntiWarp prize.
-         * @return Antiwarp weight. (0 to 255)
-         */
+            <b>[PrizeWeight] AntiWarp</b><br>
+            AntiWarp prize.
+            @return Antiwarp weight. (0 to 255)
+        */
         public short getAntiWarp() {
             return (short) (antiWarp & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Repel</b><br>
-         * Repel prize.
-         * @return Repel weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Repel</b><br>
+            Repel prize.
+            @return Repel weight. (0 to 255)
+        */
         public short getRepel() {
             return (short) (repel & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Burst</b><br>
-         * Burst prize.
-         * @return Burst weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Burst</b><br>
+            Burst prize.
+            @return Burst weight. (0 to 255)
+        */
         public short getBurst() {
             return (short) (burst & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Decoy</b><br>
-         * Decoy prize.
-         * @return Decoy weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Decoy</b><br>
+            Decoy prize.
+            @return Decoy weight. (0 to 255)
+        */
         public short getDecoy() {
             return (short) (decoy & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Thor</b><br>
-         * Thor prize.
-         * @return Thor weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Thor</b><br>
+            Thor prize.
+            @return Thor weight. (0 to 255)
+        */
         public short getThor() {
             return (short) (thor & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] MultiPrize</b><br>
-         * Multi-prize.
-         * @return Multi-prize weight. (0 to 255)
-         */
+            <b>[PrizeWeight] MultiPrize</b><br>
+            Multi-prize.
+            @return Multi-prize weight. (0 to 255)
+        */
         public short getMultiPrize() {
             return (short) (multiPrize & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Brick</b><br>
-         * Brick prize.
-         * @return Brick weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Brick</b><br>
+            Brick prize.
+            @return Brick weight. (0 to 255)
+        */
         public short getBrick() {
             return (short) (brick & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Rocket</b><br>
-         * Rocket prize.
-         * @return Rocket weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Rocket</b><br>
+            Rocket prize.
+            @return Rocket weight. (0 to 255)
+        */
         public short getRocket() {
             return (short) (rocket & MASK_UINT8);
         }
-        
+
         /**
-         * <b>[PrizeWeight] Portal</b><br>
-         * Portal prize.
-         * @return Portal weight. (0 to 255)
-         */
+            <b>[PrizeWeight] Portal</b><br>
+            Portal prize.
+            @return Portal weight. (0 to 255)
+        */
         public short getPortal() {
             return (short) (portal & MASK_UINT8);
         }
-        
+
         /**
-         * Debug method. Prints out all getter values. 
-         * <p>
-         * This is/was mainly used to verify that every getter is returning
-         * the correct signed/unsigned value. Could prove useful in the future
-         * whenever a discrepancy is found between what the bot thinks is an arena setting
-         * and what actually is the arena setting.
-         * @return List of getter names and their values.
-         */
+            Debug method. Prints out all getter values.
+            <p>
+            This is/was mainly used to verify that every getter is returning
+            the correct signed/unsigned value. Could prove useful in the future
+            whenever a discrepancy is found between what the bot thinks is an arena setting
+            and what actually is the arena setting.
+            @return List of getter names and their values.
+        */
         public String toString() {
             StringBuilder result = new StringBuilder();
             String newLine = System.getProperty("line.separator");
-            
+
             Class<?> objClass = this.getClass();
 
             result.append(objClass.getName() + " {" + newLine);
             // Get the public methods associated with this class.
             Method[] methods = objClass.getMethods();
-            for (Method method:methods)
+
+            for (Method method : methods)
             {
                 if(method.getName().startsWith("getClass")) {
                     continue;
@@ -2971,11 +2977,11 @@ public class ArenaSettings {
                         e.printStackTrace();
                     }
                 }
-                
+
             }
-            
+
             result.append("}" + newLine);
-            
+
             return result.toString();
         }
     }

@@ -14,20 +14,20 @@ import twcore.core.events.*;
 import twcore.core.util.Tools;
 
 /**
- * This bot is used to regulate the league games of TWDT (Draft Tournament). Modeled after MatchBots,
- * the bot makes use of several classes that represent different pieces of a league game. This main 
- * class passes on events and also loads match information from the database using a given ID number.
- * A new DraftGame is created for the loaded match ID. A DraftRound is created inside DraftGame when 
- * the hosting staff member does !start. DraftRound controls most of the routine match states and procedures.
- * DraftRound creates two DraftTeams to represent the opposing teams. DraftTeam maintains a collection of 
- * DraftPlayers and keeps track of relevant team information and acts as a communication mediator in some cases.
- * DraftPlayer bridges game events with player stats and states. DraftRound uses LagHandler to check the lag of
- * a player from each team every 5 seconds. 
- *
- * @author WingZero
- */
+    This bot is used to regulate the league games of TWDT (Draft Tournament). Modeled after MatchBots,
+    the bot makes use of several classes that represent different pieces of a league game. This main
+    class passes on events and also loads match information from the database using a given ID number.
+    A new DraftGame is created for the loaded match ID. A DraftRound is created inside DraftGame when
+    the hosting staff member does !start. DraftRound controls most of the routine match states and procedures.
+    DraftRound creates two DraftTeams to represent the opposing teams. DraftTeam maintains a collection of
+    DraftPlayers and keeps track of relevant team information and acts as a communication mediator in some cases.
+    DraftPlayer bridges game events with player stats and states. DraftRound uses LagHandler to check the lag of
+    a player from each team every 5 seconds.
+
+    @author WingZero
+*/
 public class twdt extends SubspaceBot {
-    
+
     public BotAction ba;
     public OperatorList oplist;
     public BotSettings rules;
@@ -36,7 +36,7 @@ public class twdt extends SubspaceBot {
     public static final Integer dtSeason = 10;
     public GameType type;
     public DraftGame game;
-    
+
     public twdt(BotAction botAction) {
         super(botAction);
         ba = botAction;
@@ -45,7 +45,7 @@ public class twdt extends SubspaceBot {
         game = null;
         type = null;
     }
-    
+
     /** EVENT HANDLERS */
     public void handleEvent(ArenaJoined event) {
         ba.toggleLocked();
@@ -80,7 +80,7 @@ public class twdt extends SubspaceBot {
         if (game != null)
             game.handleEvent(event);
     }
-    
+
     public void handleEvent(TurretEvent event) {
         if (game != null)
             game.handleEvent(event);
@@ -103,14 +103,18 @@ public class twdt extends SubspaceBot {
 
     public void handleEvent(Message event) {
         String msg = event.getMessage();
+
         if (msg.equals("Arena UNLOCKED"))
             ba.toggleLocked();
+
         if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
             String name = ba.getPlayerName(event.getPlayerID());
+
             if (name == null)
                 name = event.getMessager();
+
             if (name == null) return;
-            
+
             if (oplist.isER(name)) {
                 if (msg.startsWith("!load "))
                     cmd_load(name, msg);
@@ -121,43 +125,55 @@ public class twdt extends SubspaceBot {
                 else if (msg.equals("!help"))
                     cmd_help(name);
             }
-            
+
             if (oplist.isModerator(name)) {
                 if (msg.equals("!reset"))
                     cmd_reset(name);
                 else if (msg.equals("!killgame") && game != null)  {
-                        m_botAction.sendArenaMessage("The game has been brutally killed by " + name);
-                        game.cancel();
-                        game = null;
-                        try { Thread.sleep(100); } catch (Exception e) {};
-                            command_unlock(name);                        
-                    } else if (msg.equals("!unload") && game != null)  {
-                        game.cancel();
-                        game = null;
-                        try { Thread.sleep(100); } catch (Exception e) {};
-                            command_unlock(name);
+                    m_botAction.sendArenaMessage("The game has been brutally killed by " + name);
+                    game.cancel();
+                    game = null;
+
+                    try {
+                        Thread.sleep(100);
                     }
+                    catch (Exception e) {};
+
+                    command_unlock(name);
+                } else if (msg.equals("!unload") && game != null)  {
+                    game.cancel();
+                    game = null;
+
+                    try {
+                        Thread.sleep(100);
+                    }
+                    catch (Exception e) {};
+
+                    command_unlock(name);
+                }
             }
         }
+
         if (game != null)
             game.handleEvent(event);
     }
-    
+
     /** Handles the help command */
     public void cmd_help(String name) {
         String[] msg = {
-                " !go <arena>, !die, !help",
-                " !load <id>                    - Loads a preset game with the game/match ID of <id>",
-                " !start                        - Allows the team captains to start adding players if a game is loaded",
-                " !addtime                      - During lineup selection will add 2 minute extension",
-                " !zone                         - Sends a zone message for the current game",
+            " !go <arena>, !die, !help",
+            " !load <id>                    - Loads a preset game with the game/match ID of <id>",
+            " !start                        - Allows the team captains to start adding players if a game is loaded",
+            " !addtime                      - During lineup selection will add 2 minute extension",
+            " !zone                         - Sends a zone message for the current game",
         };
         ba.smartPrivateMessageSpam(name, msg);
+
         if (oplist.isModerator(name)) {
             ba.sendSmartPrivateMessage(name, " !reset                        - Resets player and team star counts");
         }
     }
-    
+
     public void cmd_reset(String name) {
         try {
             String query = "UPDATE tblDraft__Team SET fnUsedStars = 0 WHERE fnSeason = " + dtSeason;
@@ -170,7 +186,7 @@ public class twdt extends SubspaceBot {
             Tools.printStackTrace(e);
         }
     }
-    
+
     /** Handles the load command which retrieves the associated match information from the database */
     public void cmd_load(String name, String cmd) {
         if (game != null) {
@@ -178,6 +194,7 @@ public class twdt extends SubspaceBot {
             return;
         } else if (cmd.contains(":")) {
             String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(":");
+
             if (args.length == 3) {
                 cmd_load(name, args);
                 return;
@@ -186,34 +203,44 @@ public class twdt extends SubspaceBot {
                 return;
             }
         }
+
         int gameID = -1;
+
         try {
             gameID = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
         } catch (NumberFormatException e) {
             ba.sendSmartPrivateMessage(name, "Error, please use !load <gameID>");
             return;
         }
+
         if (gameID < 1) return;
-        
+
         String query = "SELECT * FROM tblDraft__Match WHERE fnMatchID = " + gameID + " LIMIT 1";
+
         try {
             ResultSet rs = ba.SQLQuery(db, query);
+
             if (rs.next()) {
                 type = GameType.getType(rs.getInt("fnType"));
+
                 switch (type) {
-                    case WARBIRD: 
-                        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTD.txt");
-                        break;
-                    case JAVELIN:
-                        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTJ.txt");
-                        break;
-                    case BASING:
-                        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTB.txt");
-                        break;
-                    case NA:
-                    default:
-                        break;
+                case WARBIRD:
+                    rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTD.txt");
+                    break;
+
+                case JAVELIN:
+                    rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTJ.txt");
+                    break;
+
+                case BASING:
+                    rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTB.txt");
+                    break;
+
+                case NA:
+                default:
+                    break;
                 }
+
                 int team1, team2;
                 String name1, name2;
                 team1 = rs.getInt("fnTeam1");
@@ -225,22 +252,28 @@ public class twdt extends SubspaceBot {
             } else {
                 ba.sendSmartPrivateMessage(name, "No pre-existing match information found for: " + gameID + ". Attempting to load match fixture...");
                 ResultSet rs2 = ba.SQLQuery(db, "SELECT * FROM tblDraft_Fixtures WHERE fnSeason = " + dtSeason + " AND fnFixtureID = " + gameID + " LIMIT 1");
+
                 if (rs2.next()) {
                     type = GameType.getType(rs2.getInt("fnSubLeague"));
+
                     switch (type) {
-                        case WARBIRD: 
-                            rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTD.txt");
-                            break;
-                        case JAVELIN:
-                            rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTJ.txt");
-                            break;
-                        case BASING:
-                            rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTB.txt");
-                            break;
-                        case NA:
-                        default:
-                            break;
+                    case WARBIRD:
+                        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTD.txt");
+                        break;
+
+                    case JAVELIN:
+                        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTJ.txt");
+                        break;
+
+                    case BASING:
+                        rules = new BotSettings(ba.getGeneralSettings().getString("Core Location") + "/data/Rules/" + "TWDTB.txt");
+                        break;
+
+                    case NA:
+                    default:
+                        break;
                     }
+
                     int team1, team2;
                     String name1, name2;
                     team1 = rs2.getInt("fnTeamID1");
@@ -258,38 +291,47 @@ public class twdt extends SubspaceBot {
                     ba.sendSmartPrivateMessage(name, "Failure! You suck!");
                 }
             }
+
             ba.SQLClose(rs);
         } catch (SQLException e) {
             Tools.printStackTrace(e);
-        }        
+        }
     }
-    
+
     /** Loads a new game by creating game information from team names and a game type */
     public void cmd_load(String name, String[] args) {
         int ship = -1;
+
         try {
             ship = Integer.valueOf(args[2]);
+
             if (ship < 1 || ship > 3)
                 throw new NumberFormatException();
         } catch (NumberFormatException e) {
             ba.sendSmartPrivateMessage(name, "Error, invalid game type number. Exiting...");
             return;
         }
+
         try {
             ResultSet rs = ba.SQLQuery(db, "SELECT * FROM tblDraft__Team WHERE fnSeason = " + dtSeason + " AND (fcName = '" + Tools.addSlashesToString(args[0]) + "' OR fcName = '" + Tools.addSlashesToString(args[1]) + "')");
+
             if (rs.next()) {
                 String team1name = rs.getString("fcName");
                 int team1 = rs.getInt("fnTeamID");
+
                 if (rs.next()) {
                     String team2name = rs.getString("fcName");
                     int team2 = rs.getInt("fnTeamID");
+
                     if (team1 != team2) {
-                        ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnSeason, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2) VALUES(" + dtSeason + ", " + ship + ", " + team1 + ", " + team2 + ", '" + Tools.addSlashesToString(team1name) + "', '" + Tools.addSlashesToString(team2name) +"')");
+                        ba.SQLQueryAndClose(db, "INSERT INTO tblDraft__Match (fnSeason, fnType, fnTeam1, fnTeam2, fcTeam1, fcTeam2) VALUES(" + dtSeason + ", " + ship + ", " + team1 + ", " + team2 + ", '" + Tools.addSlashesToString(team1name) + "', '" + Tools.addSlashesToString(team2name) + "')");
                         ResultSet id = ba.SQLQuery(db, "SELECT LAST_INSERT_ID()");
+
                         if (id.next())
                             cmd_load(name, "!load " + id.getInt(1));
                         else
                             ba.sendSmartPrivateMessage(name, "SQL Error!");
+
                         ba.SQLClose(id);
                     } else
                         ba.sendSmartPrivateMessage(name, "A team cannot play itself.");
@@ -297,36 +339,38 @@ public class twdt extends SubspaceBot {
                     ba.sendSmartPrivateMessage(name, "Error, a team could not be found in the database.");
             } else
                 ba.sendSmartPrivateMessage(name, "Error, a team could not be found in the database.");
+
             ba.SQLClose(rs);
         } catch (SQLException e) {
             ba.sendSmartPrivateMessage(name, "SQL Error!");
             Tools.printStackTrace(e);
         }
     }
-    
+
     /** Moves bot to a different arena */
     public void cmd_go(String name, String cmd) {
         if (game != null) {
             ba.sendSmartPrivateMessage(name, "Cannot leave with a game still in progress. Please !unlock to unload the current game");
             return;
         } else {
-        if (cmd.length() < 5) return;
-        ba.changeArena(cmd.substring(cmd.indexOf(" ") + 1));
+            if (cmd.length() < 5) return;
+
+            ba.changeArena(cmd.substring(cmd.indexOf(" ") + 1));
         }
     }
-    
+
     /** Kills bot */
     public void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Killing myself...");
         ba.cancelTasks();
         ba.scheduleTask(new Die(), 2000);
     }
-    
+
     public void command_unlock(String name) {
         m_botAction.sendPrivateMessage(name, "Unlocked, going to ?go twl");
         m_botAction.changeArena("twdt");
     }
-    
+
     /** Helper requests the required events */
     private void requestEvents() {
         EventRequester er = ba.getEventRequester();
@@ -343,9 +387,9 @@ public class twdt extends SubspaceBot {
         er.request(EventRequester.WEAPON_FIRED);
         er.request(EventRequester.TURRET_EVENT);
     }
-    
+
     public class Die extends TimerTask {
-        
+
         @Override
         public void run() {
             ba.die("Scheduled die");

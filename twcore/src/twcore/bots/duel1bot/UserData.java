@@ -6,8 +6,8 @@ import twcore.core.BotAction;
 import twcore.core.util.Tools;
 
 /**
- * Simplified DBPlayerData class takes care of tblUser data.
- */
+    Simplified DBPlayerData class takes care of tblUser data.
+*/
 public class UserData {
 
     BotAction ba;
@@ -44,16 +44,17 @@ public class UserData {
         ba = conn;
         fcUserName = fcPlayerName;
         this.connName = connName;
+
         if (!getPlayerData() && createIfNotExists) createPlayerData();
     }
 
     public boolean getPlayerSquadData() {
         try {
             ResultSet qryPlayerSquadInfo = ba
-                    .SQLQuery(connName,
-                            "SELECT TU.fdJoined, TU.fnTeamUserID, T.fnTeamID, T.fcTeamName FROM tblTeam T, tblTeamUser TU "
-                                    + "WHERE TU.fnTeamID = T.fnTeamID AND TU.fnCurrentTeam = 1 AND TU.fnUserID = "
-                                    + getUserID());
+                                           .SQLQuery(connName,
+                                                   "SELECT TU.fdJoined, TU.fnTeamUserID, T.fnTeamID, T.fcTeamName FROM tblTeam T, tblTeamUser TU "
+                                                   + "WHERE TU.fnTeamID = T.fnTeamID AND TU.fnCurrentTeam = 1 AND TU.fnUserID = "
+                                                   + getUserID());
             lastQuery = System.currentTimeMillis();
 
             if (qryPlayerSquadInfo.next()) {
@@ -74,9 +75,10 @@ public class UserData {
     public boolean getPlayerData() {
         try {
             ResultSet qryPlayerInfo = ba.SQLQuery(connName,
-                            "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"
-                                    + Tools.addSlashesToString(fcUserName) + "'");
+                                                  "SELECT U.fnUserID, U.fcUserName, U.fdSignedUp FROM tblUser U WHERE U.fcUserName = '"
+                                                  + Tools.addSlashesToString(fcUserName) + "'");
             lastQuery = System.currentTimeMillis();
+
             if (qryPlayerInfo.next()) {
                 playerLoaded = true;
                 fcUserName = qryPlayerInfo.getString("fcUserName");
@@ -98,10 +100,11 @@ public class UserData {
     public boolean createPlayerData() {
         try {
             ba.SQLQueryAndClose(connName,
-                    "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"
-                            + Tools.addSlashesToString(fcUserName)
-                            + "', NOW())");
+                                "INSERT INTO tblUser (fcUserName, fdSignedUp) VALUES ('"
+                                + Tools.addSlashesToString(fcUserName)
+                                + "', NOW())");
             lastQuery = System.currentTimeMillis();
+
             if (getPlayerData())
                 return true;
             else
@@ -116,9 +119,9 @@ public class UserData {
         if (fnUserID != 0)
             try {
                 ba.SQLQueryAndClose(connName,
-                        "UPDATE tblUserAccount SET fcPassword = PASSWORD('"
-                                + Tools.addSlashesToString(fcPassword)
-                                + "') WHERE fnUserID = " + fnUserID);
+                                    "UPDATE tblUserAccount SET fcPassword = PASSWORD('"
+                                    + Tools.addSlashesToString(fcPassword)
+                                    + "') WHERE fnUserID = " + fnUserID);
                 lastQuery = System.currentTimeMillis();
                 this.fcPassword = fcPassword;
                 return true;
@@ -134,8 +137,9 @@ public class UserData {
         if (fnUserID != 0) {
             try {
                 ResultSet qryPlayerAccountInfo = ba.SQLQuery(connName,
-                        "SELECT fcPassword FROM tblUserAccount WHERE fnUserID=" + fnUserID);
+                                                 "SELECT fcPassword FROM tblUserAccount WHERE fnUserID=" + fnUserID);
                 lastQuery = System.currentTimeMillis();
+
                 if (qryPlayerAccountInfo.next()) {
                     fcPassword = qryPlayerAccountInfo.getString("fcPassword");
                     ba.SQLClose(qryPlayerAccountInfo);
@@ -147,6 +151,7 @@ public class UserData {
             } catch (Exception e) {
             }
         }
+
         return false;
     }
 
@@ -155,27 +160,31 @@ public class UserData {
             try {
                 boolean hasRank = false;
                 ResultSet qryHasPlayerRank = ba.SQLQuery(connName,
-                        "SELECT fnUserID FROM tblUserRank WHERE fnUserID = "
-                                + fnUserID + " AND fnRankID =" + rankNr);
+                                             "SELECT fnUserID FROM tblUserRank WHERE fnUserID = "
+                                             + fnUserID + " AND fnRankID =" + rankNr);
                 lastQuery = System.currentTimeMillis();
+
                 if (qryHasPlayerRank.next()) hasRank = true;
+
                 ba.SQLClose(qryHasPlayerRank);
                 return hasRank;
             } catch (Exception e) {
             }
         }
+
         return false;
     }
 
     public boolean giveRank(int rankNr) {
         if (fnUserID != 0) try {
-            ba.SQLQuery(connName,
-                    "INSERT tblUserRank (fnUserID, fnRankID) VALUES ("
+                ba.SQLQuery(connName,
+                            "INSERT tblUserRank (fnUserID, fnRankID) VALUES ("
                             + fnUserID + ", " + rankNr + ")");
-            lastQuery = System.currentTimeMillis();
-            return true;
-        } catch (Exception e) {
-        }
+                lastQuery = System.currentTimeMillis();
+                return true;
+            } catch (Exception e) {
+            }
+
         return false;
     }
 

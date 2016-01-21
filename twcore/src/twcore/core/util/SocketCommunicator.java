@@ -19,330 +19,349 @@ import twcore.core.events.SocketMessageEvent;
 
 
 /**
- * Main class of the Socket Communication protocol of TWCore, handling routing
- * of messages from a socket along specific channels.  Also handles channel subscriptions,
- * creation/deletion of channels, and firing of SocketMessageEvent.
- *
- * @author Arobas+ (most of the code from IPC)
- */
+    Main class of the Socket Communication protocol of TWCore, handling routing
+    of messages from a socket along specific channels.  Also handles channel subscriptions,
+    creation/deletion of channels, and firing of SocketMessageEvent.
+
+    @author Arobas+ (most of the code from IPC)
+*/
 public class SocketCommunicator extends Thread {
 
 
-	private Map<String, SocketChannel> channels;
+    private Map<String, SocketChannel> channels;
 
-	private ServerSocket servsock;
-	private boolean running = true;
+    private ServerSocket servsock;
+    private boolean running = true;
 
-	private int port = 6969;
-	private int timeout = 100; // 100 ms
-	private boolean debug = false;
+    private int port = 6969;
+    private int timeout = 100; // 100 ms
+    private boolean debug = false;
 
-	/** Creates a new instance of RadioStatusServer */
-	public SocketCommunicator(int port) {
+    /** Creates a new instance of RadioStatusServer */
+    public SocketCommunicator(int port) {
 
-		this.port = port;
-		channels = new HashMap<String, SocketChannel>();
-		
-		try {
-			servsock = new ServerSocket();
-			servsock.bind(new InetSocketAddress("127.0.0.1", this.port));
-			servsock.setSoTimeout(timeout);
-			
-		} catch (IOException ioe) {
-			Tools.printLog("SocketPort already opened (" + this.port + ")");
-			Tools.printLog("This core is probably already started. Exiting..");
-			System.exit(1);
-		}
+        this.port = port;
+        channels = new HashMap<String, SocketChannel>();
 
-		if (debug)
-			System.out.println("SocketCommunicator server started on port " + port);
-		start();
-	}
+        try {
+            servsock = new ServerSocket();
+            servsock.bind(new InetSocketAddress("127.0.0.1", this.port));
+            servsock.setSoTimeout(timeout);
 
-	public void run() {
+        } catch (IOException ioe) {
+            Tools.printLog("SocketPort already opened (" + this.port + ")");
+            Tools.printLog("This core is probably already started. Exiting..");
+            System.exit(1);
+        }
 
-		while (running) {
+        if (debug)
+            System.out.println("SocketCommunicator server started on port " + port);
 
-			try {
-				Socket socket = servsock.accept();
-				socket.setSoTimeout(timeout);
-				DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				String response = "";
+        start();
+    }
 
-				if (debug) {
-					System.out.println("SocketServer: Client connected ("
-									+ socket.getInetAddress()
-									+ ":"
-									+ socket.getPort() + ")");
-				}
+    public void run() {
 
-				String command = in.readLine();
+        while (running) {
 
-				if (command != null)
-					command = command.trim();
+            try {
+                Socket socket = servsock.accept();
+                socket.setSoTimeout(timeout);
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String response = "";
 
-				if (debug) {
-					System.out.println("SocketServer: -> " + command);
-				}
-				
-				// Protocol: <name>:<channel>:<command>
-				// Example: Arobas+:HUB:LIST_BOTS 
+                if (debug) {
+                    System.out.println("SocketServer: Client connected ("
+                                       + socket.getInetAddress()
+                                       + ":"
+                                       + socket.getPort() + ")");
+                }
 
-				if (command != null && command.split(":").length > 2) {
+                String command = in.readLine();
 
-					String sender = command.substring(0, command.indexOf(":"));
-					String channel = command.substring(command.indexOf(":")+1, command.indexOf(":", command.indexOf(":")+1));
-					command = command.substring(sender.length()+channel.length()+2);
+                if (command != null)
+                    command = command.trim();
 
-					if (debug)
-						System.out.println("command recognized, responding...");
+                if (debug) {
+                    System.out.println("SocketServer: -> " + command);
+                }
 
-					SocketMessageEvent event = new SocketMessageEvent(sender, channel, command);
-					
-					Thread eventThread = new Thread(event); 
-					eventThread.start();
-					
-					broadcast(channel, event);
-					
-					try {
-						synchronized (eventThread) {
-							eventThread.wait();
-						}
-					} catch (InterruptedException e) { }
-	
-					response = event.getResponse();
+                // Protocol: <name>:<channel>:<command>
+                // Example: Arobas+:HUB:LIST_BOTS
 
-				}
+                if (command != null && command.split(":").length > 2) {
 
-				if (response != null) {
-					out.writeUTF(response +"\n");
-				}
+                    String sender = command.substring(0, command.indexOf(":"));
+                    String channel = command.substring(command.indexOf(":") + 1, command.indexOf(":", command.indexOf(":") + 1));
+                    command = command.substring(sender.length() + channel.length() + 2);
 
-				socket.close();
+                    if (debug)
+                        System.out.println("command recognized, responding...");
 
-				if (debug) {
-					System.out.println("SocketServer: Client disconnected");
-				}
+                    SocketMessageEvent event = new SocketMessageEvent(sender, channel, command);
 
-			} catch (SocketTimeoutException e) {
-				//Tools.printLog("Exception timeout..");
-			} catch (IOException e) {
-				Tools.printLog("SocketServer Communication Error: " + e.getMessage());
-			}
-		}
-	}
+                    Thread eventThread = new Thread(event);
+                    eventThread.start();
 
-	public void die() {
+                    broadcast(channel, event);
 
-		System.out.println("SocketServer: Attempting to kill all connections...");
-		running = false;
-		try {
-			servsock.close();
-		} catch (IOException ioe) {
-			Tools.printLog("SocketServer: Closed the block accept thread.");
-		}
-	}
+                    try {
+                        synchronized (eventThread) {
+                            eventThread.wait();
+                        }
+                    } catch (InterruptedException e) { }
+
+                    response = event.getResponse();
+
+                }
+
+                if (response != null) {
+                    out.writeUTF(response + "\n");
+                }
+
+                socket.close();
+
+                if (debug) {
+                    System.out.println("SocketServer: Client disconnected");
+                }
+
+            } catch (SocketTimeoutException e) {
+                //Tools.printLog("Exception timeout..");
+            } catch (IOException e) {
+                Tools.printLog("SocketServer Communication Error: " + e.getMessage());
+            }
+        }
+    }
+
+    public void die() {
+
+        System.out.println("SocketServer: Attempting to kill all connections...");
+        running = false;
+
+        try {
+            servsock.close();
+        } catch (IOException ioe) {
+            Tools.printLog("SocketServer: Closed the block accept thread.");
+        }
+    }
 
 
 
-	/**
-	 * Check if a channel exists.
-	 * 
-	 * @param channelName
-	 *            Name of channel
-	 * @return True if channel exists
-	 */
-	public synchronized boolean channelExists(String channelName) {
-		return channels.containsKey(channelName);
-	}
+    /**
+        Check if a channel exists.
 
-	/**
-	 * Broadcast a message to a specific IPC channel.
-	 * 
-	 * @param channelName
-	 *            Name of the channel to broadcast to
-	 * @param event The original SocketMessageEvent that needs to be forwarded.
-	 */
-	public synchronized void broadcast(String channelName, SocketMessageEvent event) {
+        @param channelName
+                  Name of channel
+        @return True if channel exists
+    */
 
-		if (channels.containsKey(channelName)) {
-			SocketChannel channel = channels.get(channelName);
-			channel.broadcast(event);
-		}
-		else {
-			event.setResponse("NO LISTENER");
-		}
-	}
+    public synchronized boolean channelExists(String channelName) {
+        return channels.containsKey(channelName);
+    }
 
-	/**
-	 * Given a SubspaceBot, return bot's subscribed channels.
-	 * 
-	 * @param bot
-	 *            SubspaceBot in question
-	 * @return String[] containing all subscribed channels
-	 */
-	public synchronized String[] getSubscribedChannels(SubspaceBot bot) {
-		synchronized (channels) {
-			Iterator<SocketChannel> i = channels.values().iterator();
-			ArrayList<String> list = new ArrayList<String>();
-			while (i.hasNext()) {
-				SocketChannel ipc = (SocketChannel) i.next();
-				if (ipc.isSubscribed(bot)) {
-					list.add(ipc.getName());
-				}
-			}
-			return list.toArray(new String[list.size()]);
-		}
-	}
+    /**
+        Broadcast a message to a specific IPC channel.
 
-	/**
-	 * Subscribe a bot to a given channel. If the channel does not exist, it is
-	 * created.
-	 * 
-	 * @param channel
-	 *            String containing channel to join
-	 * @param bot
-	 *            SubspaceBot to subscribe
-	 */
-	public synchronized void subscribe(String channel, SubspaceBot bot) {
-		if (bot == null) {
-			Tools
-					.printLog("IPC Subscribe failed.  Please subscribe your bot "
-							+ "to IPC in the LoggedOn handler, not in the constructor.");
-			return;
-		}
-		if (!channelExists(channel)) {
-			channels.put(channel, new SocketChannel(channel));
-		}
-		SocketChannel ipcChan = channels.get(channel);
-		if (!ipcChan.isSubscribed(bot)) {
-			ipcChan.subscribe(bot);
-		}
-	}
+        @param channelName
+                  Name of the channel to broadcast to
+        @param event The original SocketMessageEvent that needs to be forwarded.
+    */
 
-	/**
-	 * Unsubscribe a bot from a given channel.
-	 * 
-	 * @param channel
-	 *            String containing channel to unsubscribe from
-	 * @param bot
-	 *            SubspaceBot to unsubscribe
-	 */
-	public synchronized void unSubscribe(String channel, SubspaceBot bot) {
-		if (!channelExists(channel))
-			return;
-		channels.get(channel).unsubscribe(bot);
-	}
+    public synchronized void broadcast(String channelName, SocketMessageEvent event) {
 
-	/**
-	 * Kill a given channel.
-	 * 
-	 * @param channel
-	 *            String containing channel to kill.
-	 */
-	public synchronized void destroy(String channel) {
-		channels.remove(channel);
-	}
+        if (channels.containsKey(channelName)) {
+            SocketChannel channel = channels.get(channelName);
+            channel.broadcast(event);
+        }
+        else {
+            event.setResponse("NO LISTENER");
+        }
+    }
 
-	/**
-	 * Remove bot from all channels.
-	 * 
-	 * @param bot
-	 *            SubspaceBot to unsubscribe.
-	 */
-	public synchronized void removeFromAll(SubspaceBot bot) {
-		synchronized (channels) {
-			Iterator<SocketChannel> i = channels.values().iterator();
-			while (i.hasNext()) {
-				SocketChannel channel = (SocketChannel) i.next();
-				channel.unsubscribe(bot);
-				if (channel.isEmpty()) {
-					i.remove();
-				}
-			}
-		}
-	}
+    /**
+        Given a SubspaceBot, return bot's subscribed channels.
 
-	/**
-	 * Internal class of InterProcessCommunicator, IPCChannel
-	 * 
-	 * Representation of an IPC communications channel in the IPC message
-	 * protocol.
-	 */
-	class SocketChannel {
-		
-		private List<SubspaceBot> bots;
-		private String channel;
+        @param bot
+                  SubspaceBot in question
+        @return String[] containing all subscribed channels
+    */
 
-		public SocketChannel(String channelName) {
-			
-			bots = Collections.synchronizedList(new ArrayList<SubspaceBot>());
-			channel = channelName;
-		}
+    public synchronized String[] getSubscribedChannels(SubspaceBot bot) {
+        synchronized (channels) {
+            Iterator<SocketChannel> i = channels.values().iterator();
+            ArrayList<String> list = new ArrayList<String>();
 
-		/**
-		 * Checks subscription status of a bot on this channel.
-		 * 
-		 * @param bot
-		 *            SubspaceBot to check
-		 * @return True if bot is subscribed to this channel
-		 */
-		public boolean isSubscribed(SubspaceBot bot) {
-			return bots.contains(bot);
-		}
+            while (i.hasNext()) {
+                SocketChannel ipc = (SocketChannel) i.next();
 
-		/**
-		 * @return name of channel
-		 */
-		public String getName() {
-			return channel;
-		}
+                if (ipc.isSubscribed(bot)) {
+                    list.add(ipc.getName());
+                }
+            }
 
-		/**
-		 * Broadcast an SocketMessageEvent containing a message over this
-		 * channel.
-		 * 
-		 * @param e
-		 *            InterProcessEvent to broadcast
-		 */
-		public void broadcast(SocketMessageEvent e) {
-			synchronized (bots) {
-				Iterator<SubspaceBot> i = bots.iterator();
-				while (i.hasNext()) {
-					(i.next()).handleEvent(e);
-				}
-			}
-		}
+            return list.toArray(new String[list.size()]);
+        }
+    }
 
-		/**
-		 * Subscribe a bot to this channel.
-		 * 
-		 * @param bot
-		 *            SubspaceBot to subscribe
-		 */
-		public void subscribe(SubspaceBot bot) {
-			if (!bots.contains(bot)) {
-				bots.add(bot);
-			}
-		}
+    /**
+        Subscribe a bot to a given channel. If the channel does not exist, it is
+        created.
 
-		/**
-		 * Unsubscribe a bot from this channel.
-		 * 
-		 * @param bot
-		 *            SubspaceBot to unsubscribe
-		 */
-		public void unsubscribe(SubspaceBot bot) {
-			bots.remove(bot);
-		}
+        @param channel
+                  String containing channel to join
+        @param bot
+                  SubspaceBot to subscribe
+    */
 
-		/**
-		 * @return True if no bots are subscribed to this channel
-		 */
-		public boolean isEmpty() {
-			return bots.size() == 0;
-		}
+    public synchronized void subscribe(String channel, SubspaceBot bot) {
+        if (bot == null) {
+            Tools
+            .printLog("IPC Subscribe failed.  Please subscribe your bot "
+                      + "to IPC in the LoggedOn handler, not in the constructor.");
+            return;
+        }
+
+        if (!channelExists(channel)) {
+            channels.put(channel, new SocketChannel(channel));
+        }
+
+        SocketChannel ipcChan = channels.get(channel);
+
+        if (!ipcChan.isSubscribed(bot)) {
+            ipcChan.subscribe(bot);
+        }
+    }
+
+    /**
+        Unsubscribe a bot from a given channel.
+
+        @param channel
+                  String containing channel to unsubscribe from
+        @param bot
+                  SubspaceBot to unsubscribe
+    */
+
+    public synchronized void unSubscribe(String channel, SubspaceBot bot) {
+        if (!channelExists(channel))
+            return;
+
+        channels.get(channel).unsubscribe(bot);
+    }
+
+    /**
+        Kill a given channel.
+
+        @param channel
+                  String containing channel to kill.
+    */
+
+    public synchronized void destroy(String channel) {
+        channels.remove(channel);
+    }
+
+    /**
+        Remove bot from all channels.
+
+        @param bot
+                  SubspaceBot to unsubscribe.
+    */
+
+    public synchronized void removeFromAll(SubspaceBot bot) {
+        synchronized (channels) {
+            Iterator<SocketChannel> i = channels.values().iterator();
+
+            while (i.hasNext()) {
+                SocketChannel channel = (SocketChannel) i.next();
+                channel.unsubscribe(bot);
+
+                if (channel.isEmpty()) {
+                    i.remove();
+                }
+            }
+        }
+    }
+
+    /**
+        Internal class of InterProcessCommunicator, IPCChannel
+
+        Representation of an IPC communications channel in the IPC message
+        protocol.
+    */
+    class SocketChannel {
+
+        private List<SubspaceBot> bots;
+        private String channel;
+
+        public SocketChannel(String channelName) {
+
+            bots = Collections.synchronizedList(new ArrayList<SubspaceBot>());
+            channel = channelName;
+        }
+
+        /**
+            Checks subscription status of a bot on this channel.
+
+            @param bot
+                      SubspaceBot to check
+            @return True if bot is subscribed to this channel
+        */
+        public boolean isSubscribed(SubspaceBot bot) {
+            return bots.contains(bot);
+        }
+
+        /**
+            @return name of channel
+        */
+        public String getName() {
+            return channel;
+        }
+
+        /**
+            Broadcast an SocketMessageEvent containing a message over this
+            channel.
+
+            @param e
+                      InterProcessEvent to broadcast
+        */
+        public void broadcast(SocketMessageEvent e) {
+            synchronized (bots) {
+                Iterator<SubspaceBot> i = bots.iterator();
+
+                while (i.hasNext()) {
+                    (i.next()).handleEvent(e);
+                }
+            }
+        }
+
+        /**
+            Subscribe a bot to this channel.
+
+            @param bot
+                      SubspaceBot to subscribe
+        */
+        public void subscribe(SubspaceBot bot) {
+            if (!bots.contains(bot)) {
+                bots.add(bot);
+            }
+        }
+
+        /**
+            Unsubscribe a bot from this channel.
+
+            @param bot
+                      SubspaceBot to unsubscribe
+        */
+        public void unsubscribe(SubspaceBot bot) {
+            bots.remove(bot);
+        }
+
+        /**
+            @return True if no bots are subscribed to this channel
+        */
+        public boolean isEmpty() {
+            return bots.size() == 0;
+        }
 
     }
 

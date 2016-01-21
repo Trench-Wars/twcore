@@ -42,8 +42,8 @@ public abstract class Module
     }
 
     /**
-     * This method initializes the module to default values.
-     */
+        This method initializes the module to default values.
+    */
 
     public void initializeModule(BotAction botAction)
     {
@@ -54,10 +54,10 @@ public abstract class Module
     }
 
     /**
-     * This method distributes the events to the appropriate event handlers.
-     *
-     * @param event is the event to distribute.
-     */
+        This method distributes the events to the appropriate event handlers.
+
+        @param event is the event to distribute.
+    */
 
     public void handleEvent(SubspaceEvent event)
     {
@@ -118,62 +118,62 @@ public abstract class Module
     }
 
     /**
-     * All of these stub functions handle the various events.
-     */
+        All of these stub functions handle the various events.
+    */
 
-    public void handleEvent(Message event){}
-    
-    public void handleEvent(SQLResultEvent event){}
+    public void handleEvent(Message event) {}
 
-    public void handleEvent(PlayerEntered event){}
+    public void handleEvent(SQLResultEvent event) {}
 
-    public void handleEvent(ArenaList event){}
+    public void handleEvent(PlayerEntered event) {}
 
-    public void handleEvent(PlayerPosition event){}
+    public void handleEvent(ArenaList event) {}
 
-    public void handleEvent(PlayerLeft event){}
+    public void handleEvent(PlayerPosition event) {}
 
-    public void handleEvent(PlayerDeath event){}
+    public void handleEvent(PlayerLeft event) {}
 
-    public void handleEvent(Prize event){}
+    public void handleEvent(PlayerDeath event) {}
 
-    public void handleEvent(ScoreUpdate event){}
+    public void handleEvent(Prize event) {}
 
-    public void handleEvent(WeaponFired event){}
+    public void handleEvent(ScoreUpdate event) {}
 
-    public void handleEvent(FrequencyChange event){}
+    public void handleEvent(WeaponFired event) {}
 
-    public void handleEvent(FrequencyShipChange event){}
+    public void handleEvent(FrequencyChange event) {}
 
-    public void handleEvent(LoggedOn event){}
+    public void handleEvent(FrequencyShipChange event) {}
 
-    public void handleEvent(FileArrived event){}
+    public void handleEvent(LoggedOn event) {}
 
-    public void handleEvent(ArenaJoined event){}
+    public void handleEvent(FileArrived event) {}
 
-    public void handleEvent(FlagVictory event){}
+    public void handleEvent(ArenaJoined event) {}
 
-    public void handleEvent(FlagReward event){}
+    public void handleEvent(FlagVictory event) {}
 
-    public void handleEvent(ScoreReset event){}
+    public void handleEvent(FlagReward event) {}
 
-    public void handleEvent(WatchDamage event){}
+    public void handleEvent(ScoreReset event) {}
 
-    public void handleEvent(SoccerGoal event){}
+    public void handleEvent(WatchDamage event) {}
 
-    public void handleEvent(BallPosition event){}
+    public void handleEvent(SoccerGoal event) {}
 
-    public void handleEvent(FlagPosition event){}
+    public void handleEvent(BallPosition event) {}
 
-    public void handleEvent(FlagDropped event){}
+    public void handleEvent(FlagPosition event) {}
 
-    public void handleEvent(FlagClaimed event){}
-    
-    public void handleEvent(PlayerBanner event){}
+    public void handleEvent(FlagDropped event) {}
 
-    public void handleEvent(InterProcessEvent event){}
-    
-    public void handleEvent(SocketMessageEvent event){}
+    public void handleEvent(FlagClaimed event) {}
+
+    public void handleEvent(PlayerBanner event) {}
+
+    public void handleEvent(InterProcessEvent event) {}
+
+    public void handleEvent(SocketMessageEvent event) {}
 
     public abstract void initializeModule();
 

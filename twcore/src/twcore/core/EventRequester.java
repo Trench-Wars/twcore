@@ -1,33 +1,33 @@
 package twcore.core;
 
 /**
- * Used to request which events will be sent to a bot.  EventRequester is defined
- * as part of Session, and can be retrieved from it using BotAction's
- * getEventRequester() method.  Only those events which are specifically
- * requested are sent; all others are ignored.
- * <p>
- * NOTE: See code of this class for a brief description of what each event does,
- * and the name of the file associated with it.
- * <p>
- * If interested in handling an event that isn't covered here, see the instructions
- * in the javadoc for GamePacketInterpreter's translateNormalPacket method.
- * @author harvey
- */
+    Used to request which events will be sent to a bot.  EventRequester is defined
+    as part of Session, and can be retrieved from it using BotAction's
+    getEventRequester() method.  Only those events which are specifically
+    requested are sent; all others are ignored.
+    <p>
+    NOTE: See code of this class for a brief description of what each event does,
+    and the name of the file associated with it.
+    <p>
+    If interested in handling an event that isn't covered here, see the instructions
+    in the javadoc for GamePacketInterpreter's translateNormalPacket method.
+    @author harvey
+*/
 public class EventRequester {
-    
-    /* 
-     * Changes to the following list can have a detrimental effect.  Please be
-     * careful, as some classes depend on these records and will not work well with
-     * inserted indeces, etc.  (i.e., only change if you know what you're doing.)
-     * Adding new packets requires the total number to be changed as well.
-     */
-    
+
+    /*
+        Changes to the following list can have a detrimental effect.  Please be
+        careful, as some classes depend on these records and will not work well with
+        inserted indeces, etc.  (i.e., only change if you know what you're doing.)
+        Adding new packets requires the total number to be changed as well.
+    */
+
     // Total number of events that can possibly be handled
     public static final int TOTAL_NUMBER = 27;
-    
+
     // Fired on message sent to the bot, including arenas/errors/alerts (Message.java)
     public static final int MESSAGE = 0;
-    // Fired when a player enters an arena, and also when the bot does (PlayerEntered.java)  
+    // Fired when a player enters an arena, and also when the bot does (PlayerEntered.java)
     public static final int PLAYER_ENTERED = 1;
     // Fired when the bot receives the arena list; data used for ?arena (Arena.java)
     public static final int ARENA_LIST = 2;
@@ -57,13 +57,13 @@ public class EventRequester {
     public static final int FREQUENCY_SHIP_CHANGE = 10;
     // Fired when the bot logs on (LoggedOn.java)
     public static final int LOGGED_ON = 11;
-    // Fired whenever a requested file successfully arrives (FileArrived.java) 
+    // Fired whenever a requested file successfully arrives (FileArrived.java)
     public static final int FILE_ARRIVED = 12;
     // Fired whenever the bot joins a new arena (ArenaJoined.java)
     public static final int ARENA_JOINED = 13;
     // Fired when a flag game has finished (FlagVictory.java)
     public static final int FLAG_VICTORY = 14;
-    // Fired whenever the flag reward is given out (FlagReward.java) 
+    // Fired whenever the flag reward is given out (FlagReward.java)
     public static final int FLAG_REWARD = 15;
     // Fired whenever a player's score is reset (ScoreReset.java)
     public static final int SCORE_RESET = 16;
@@ -90,67 +90,67 @@ public class EventRequester {
     public static final int PLAYER_BANNER = 25;
     // Fired whenever the bot receives notice that King of the Hill game is reset
     public static final int KOTH_RESET = 26;
-   
+
     private boolean[] array;
-    
+
     /**
-     * Creates a new instance of EventRequester, initializing it with an array
-     * to store which events are being requested, and declining all by default.
-     */
-    public EventRequester(){
+        Creates a new instance of EventRequester, initializing it with an array
+        to store which events are being requested, and declining all by default.
+    */
+    public EventRequester() {
         array = new boolean[TOTAL_NUMBER];
         declineAll();
     }
-    
+
     /**
-     * Enable event requesting for the event type specified.
-     * @param packetType Event type (use static declarations defined in EventRequester)
-     */
-    public void request( int packetType ){
+        Enable event requesting for the event type specified.
+        @param packetType Event type (use static declarations defined in EventRequester)
+    */
+    public void request( int packetType ) {
         array[packetType] = true;
     }
-    
+
     /**
-     * Disable event requesting for the event type specified.
-     * @param packetType Event type (use static declarations defined in EventRequester)
-     */
-    public void decline( int packetType ){
+        Disable event requesting for the event type specified.
+        @param packetType Event type (use static declarations defined in EventRequester)
+    */
+    public void decline( int packetType ) {
         array[packetType] = false;
     }
-    
+
     /**
-     * Enable event requesting for all event types.
-     */
-    public void requestAll(){
-        for( int i = 0; i < array.length; i++ ){
+        Enable event requesting for all event types.
+    */
+    public void requestAll() {
+        for( int i = 0; i < array.length; i++ ) {
             array[i] = true;
-        }  
+        }
     }
-    
+
     /**
-     * Disable event requesting for all event types.
-     */
-    public void declineAll(){
-        for( int i = 0; i < array.length; i++ ){
+        Disable event requesting for all event types.
+    */
+    public void declineAll() {
+        for( int i = 0; i < array.length; i++ ) {
             array[i] = false;
-        }        
+        }
     }
-     
+
     /**
-     * Check if a specific event type is being requested.
-     * @param packetType Event type (use static declarations defined in EventRequester)
-     * @return True if the event is being requested
-     */
-    public boolean check( int packetType ){
+        Check if a specific event type is being requested.
+        @param packetType Event type (use static declarations defined in EventRequester)
+        @return True if the event is being requested
+    */
+    public boolean check( int packetType ) {
         return array[packetType];
     }
-    
+
     /**
-     * Set event requesting for a particular event type. 
-     * @param packetType Event type (use static declarations defined in EventRequester)
-     * @param value True to request; false to decline
-     */
-    public void set( int packetType, boolean value ){
+        Set event requesting for a particular event type.
+        @param packetType Event type (use static declarations defined in EventRequester)
+        @param value True to request; false to decline
+    */
+    public void set( int packetType, boolean value ) {
         array[packetType] = value;
     }
 }

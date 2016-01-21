@@ -50,9 +50,10 @@ public class DuelChallenge extends TimerTask {
     public void run() {
         // expire challenge
         DuelChallenge chall = bot.challs.remove("" + freq1 + " " + freq2 + "");
+
         if (chall != null)
             ba.sendOpposingTeamMessageByFrequency(chall.freq1(), "Your " + bot.getDivision(div)
-                    + " challenge to " + name1 + " and " + name2 + " has expired.", 26);
+                                                  + " challenge to " + name1 + " and " + name2 + " has expired.", 26);
     }
 
 }

@@ -12,7 +12,7 @@ public abstract class Call {
     int callType;
     boolean claimed;
     String claimer;
-    
+
     public Call() {
         this.id = -1;
         this.dataID = -1;
@@ -26,11 +26,11 @@ public abstract class Call {
     public String getMessage() {
         return this.message;
     }
-    
+
     public boolean isExpired(long now, int expire) {
         return ((now - getTime()) > expire);
     }
-    
+
     public abstract void claim(String name);
 
     public String getPlayername() {
@@ -60,11 +60,11 @@ public abstract class Call {
     public void setTaker(String name) {
         claimer = name;
     }
-    
+
     public int getClaimType() {
         return claimType;
     }
-    
+
     public void setClaimType(int type) {
         this.claimType = type;
     }

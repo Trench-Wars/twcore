@@ -7,11 +7,11 @@ import twcore.core.events.Message;
 import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 
-/** 
- * Bounty Hunter module
- *
- * Built by: Jacen Solo
- */
+/**
+    Bounty Hunter module
+
+    Built by: Jacen Solo
+*/
 public class bountyhunter extends MultiModule
 {
     boolean isRunning = false;
@@ -29,9 +29,11 @@ public class bountyhunter extends MultiModule
     public void handleEvent(Message event)
     {
         String message = event.getMessage();
+
         if(event.getMessageType() == Message.PRIVATE_MESSAGE)
         {
             String name = m_botAction.getPlayerName(event.getPlayerID());
+
             if(opList.isER(name))
                 handleCommand(name, message);
         }
@@ -45,6 +47,7 @@ public class bountyhunter extends MultiModule
         Player killee = m_botAction.getPlayer(event.getKilleeID());
         int killerBounty = killer.getBounty();
         int killeeBounty = killee.getBounty();
+
         if(killerBounty >= bounty && killeeBounty < bounty) {
             m_botAction.sendUnfilteredPrivateMessage(killee.getPlayerName(), "*spec");
             m_botAction.sendUnfilteredPrivateMessage(killee.getPlayerName(), "*spec");
@@ -62,11 +65,13 @@ public class bountyhunter extends MultiModule
 
     public void handleStart(String name, String message) {
         String pieces[] = message.split(" ", 2);
+
         if(pieces.length == 2) {
             try {
                 bounty = Integer.parseInt(pieces[1]);
             } catch(Exception e) {}
         }
+
         m_botAction.sendArenaMessage("Bounty Hunter mode enabled, bounty required: " + bounty, 2);
         isRunning = true;
     }
@@ -79,8 +84,8 @@ public class bountyhunter extends MultiModule
     public String[] getModHelpMessage()
     {
         String[] help = {
-                "!start <#>                     - Starts bounty hunter mode",
-                "!stop                          - Stops bounty hunter mode"
+            "!start <#>                     - Starts bounty hunter mode",
+            "!stop                          - Stops bounty hunter mode"
         };
         return help;
     }

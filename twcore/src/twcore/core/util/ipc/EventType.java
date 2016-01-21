@@ -1,11 +1,11 @@
 package twcore.core.util.ipc;
 
 /**
- *
- * @author WingZero
- */
+
+    @author WingZero
+*/
 public enum EventType {
 
     COMMAND, CHECKIN, NEW, END, STATE, STARTING, CHALLENGE, TOPCHALLENGE, ALLCHALLENGE;
-    
+
 }

@@ -18,28 +18,28 @@ import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
 
 /**
- * <p>
- * Title:
- * </p>
- * Zonerbot
- * <p>
- * Description:
- * </p>
- * This bot handles zoning for lower staff.
- * 
- * To Do: - Add requesting - Create a arena / event list - Add event - Add Arena
- * - Add detailed scorekeeping - Add IPC interface - Add Banning
- * <p>
- * Copyright: Copyright (c) 2004
- * </p>
- * <p>
- * Company:
- * </p>
- * For SSCU Trench Wars
- * 
- * @author Cpt.Guano!
- * @version 1.0
- */
+    <p>
+    Title:
+    </p>
+    Zonerbot
+    <p>
+    Description:
+    </p>
+    This bot handles zoning for lower staff.
+
+    To Do: - Add requesting - Create a arena / event list - Add event - Add Arena
+    - Add detailed scorekeeping - Add IPC interface - Add Banning
+    <p>
+    Copyright: Copyright (c) 2004
+    </p>
+    <p>
+    Company:
+    </p>
+    For SSCU Trench Wars
+
+    @author Cpt.Guano!
+    @version 1.0
+*/
 public class zbot extends SubspaceBot {
 
     public static final String ZONE_CHANNEL = "Zone Channel";
@@ -65,11 +65,11 @@ public class zbot extends SubspaceBot {
     private boolean isEnabled;
 
     /**
-     * This method initializes the zonerbot.
-     * 
-     * @param botAction
-     *            is the BotAction instance of the bot.
-     */
+        This method initializes the zonerbot.
+
+        @param botAction
+                  is the BotAction instance of the bot.
+    */
     public zbot(BotAction botAction) {
         super(botAction);
         requestEvents();
@@ -99,22 +99,28 @@ public class zbot extends SubspaceBot {
                 if (opList.isOwner(sender)) {
                     handleOwnerCommands(sender, message, messageType);
                 }
+
                 if (opList.isSmod(sender)) {
                     handleSmodCommands(sender, message, messageType);
                 }
+
                 if (hops.containsKey(sender.toLowerCase())) {
                     handleHopsCommands(sender, message, messageType);
                 }
+
                 if (opList.isSmod(sender) || zhops.containsKey(sender.toLowerCase())) {
                     handleOpCommands(sender, message, messageType);
                 }
+
                 if (opList.isER(sender) || advertQueue.containsKey(sender.toLowerCase())) {
                     handleERCommands(sender, message, messageType, alertCommandType);
                 }
+
                 if (opList.isZH(sender)) {
                     handleZHCommands(sender, message, messageType);
                 }
             }
+
             if (messageType == Message.ARENA_MESSAGE) {
                 handleArenaMessage(message);
             }
@@ -131,12 +137,15 @@ public class zbot extends SubspaceBot {
             if (command.startsWith("!request ")) {
                 doRequestCmd(sender, message.substring(9).trim());
             }
+
             if (command.equals("!requested")) {
                 doRequestedCmd(sender);
             }
+
             if (command.startsWith("!delrequest ")) {
                 doDelRequestCmd(sender, message.substring(12).trim());
             }
+
             if (command.equals("!help")) {
                 doZHHelpCmd(sender);
             }
@@ -158,6 +167,7 @@ public class zbot extends SubspaceBot {
         if (!requestList.containsKey(requester)) {
             throw new IllegalArgumentException("No request was made by " + argString + ".");
         }
+
         requestList.remove(requester);
         m_botAction.sendSmartPrivateMessage(sender, "Request made by " + argString + " was removed.");
 
@@ -186,6 +196,7 @@ public class zbot extends SubspaceBot {
         if (argTokens.countTokens() != 2) {
             throw new IllegalArgumentException("Please use the following format: !Request <Requester>:<Event>");
         }
+
         requester = argTokens.nextToken();
         request = argTokens.nextToken();
 
@@ -196,6 +207,7 @@ public class zbot extends SubspaceBot {
         } else {
             m_botAction.sendSmartPrivateMessage(sender, "Request added.");
         }
+
         requestList.put(requester.toLowerCase(), requestRecord);
 
     }
@@ -206,19 +218,19 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This private method handles all of the ER commands.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param message
-     *            is the message that was sent.
-     * @param messageType
-     *            is the type of message that was sent.
-     * @param alertCommandType
-     *            is the message's alert command type (i.e. ?advert).
-     */
+        This private method handles all of the ER commands.
+
+        @param sender
+                  is the sender of the command.
+        @param message
+                  is the message that was sent.
+        @param messageType
+                  is the type of message that was sent.
+        @param alertCommandType
+                  is the message's alert command type (i.e. ?advert).
+    */
     private void handleERCommands(String sender, String message,
-            int messageType, String alertCommandType) {
+                                  int messageType, String alertCommandType) {
         String command = message.toLowerCase();
 
         if (isEnabled) {
@@ -226,46 +238,60 @@ public class zbot extends SubspaceBot {
                 if (command.equals("!adv") || command.equals("!advert")) {
                     doAdvertCmd(sender);
                 }
+
                 if (command.startsWith("!adv ")) {
                     doOldAdvertCmd(sender, message.substring(5).trim());
                 }
+
                 if (command.startsWith("!advert ")) {
                     doOldAdvertCmd(sender, message.substring(8).trim());
                 }
+
                 if (command.startsWith("!readvert ")) {
                     doFinalAdvertCmd(sender, message.substring(10).trim(), command.substring(10).trim(), messageType);
                 }
+
                 if (command.startsWith("!setadvert ")) {
                     doSetAdvertCmd(sender, message.substring(11).trim());
                 }
+
                 if (command.startsWith("!setsound ")) {
                     doSetSoundCmd(sender, message.substring(10).trim());
                 }
+
                 if (command.equals("!viewadvert")) {
                     doViewAdvertCmd(sender);
                 }
+
                 if (command.equals("!random")) {
                     throw new RuntimeException("Function not implemented yet.");
                 }
+
                 if (command.startsWith("!random ")) {
                     throw new RuntimeException("Function not implemented yet.");
                 }
+
                 if (command.equals("!clearadvert")) {
                     doClearAdvertCmd(sender);
                 }
+
                 if (command.equals("!claim")) {
                     doClaimCmd(sender, false);
                 }
+
                 if (command.equals("!free")) {
                     doFreeCmd(sender);
                 }
+
                 if (command.equals("!status")) {
                     doStatusCmd(sender);
                 }
+
                 if (command.equals("!help")) {
                     doERHelpCmd(sender);
                 }
             }
+
             if (messageType == Message.ALERT_MESSAGE && alertCommandType.equals("advert")) {
                 if (command.indexOf("free") != -1) {
                     doFreeCmd(sender);
@@ -293,15 +319,19 @@ public class zbot extends SubspaceBot {
             if (hey != advertQueue.firstValue()) {
                 throw new RuntimeException("Someone else holds the key to your advert :(.");
             }
+
             if (event.contains(" ")) {
                 throw new RuntimeException("Please do NOT add spaces or words after your arena/event name.");
             }
+
             if (hey == null) {
                 throw new RuntimeException("Nice try! Please claim an advert first.");
             }
+
             if (!hey.readvert()) {
                 throw new RuntimeException("You must have already zoned your first advert to readvert.");
             }
+
             int die = rand.nextInt(Zoners.length);
             m_botAction.sendZoneMessage(Zoners[die], 1);
             m_botAction.sendSmartPrivateMessage(hi, "Well, That's all I can do for you now. Please get SMod+ authority to !advert again.");
@@ -327,15 +357,19 @@ public class zbot extends SubspaceBot {
         if (hey != advertQueue.firstValue()) {
             throw new RuntimeException("Someone else holds the key to your advert :(.");
         }
+
         if (hey == null) {
             throw new RuntimeException("Nice try! Please claim an advert first.");
         }
+
         if (hey.getStage() == Advert.INITIAL) {
             throw new RuntimeException("You must have already zoned your first advert to readvert.");
         }
+
         if (hey.getStage() == Advert.DONE) {
             throw new RuntimeException("You have used all available zoners.");
         }
+
         int die = rand.nextInt(Zoners.length);
         m_botAction.sendZoneMessage(Zoners[die], 1);
         m_botAction.sendSmartPrivateMessage(hi, "Well, That's all I can do for you now. Please get SMod+ authority to !advert again.");
@@ -348,11 +382,11 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method performs the !advert command.
-     * 
-     * @param sender
-     *            is the person sending the command.
-     */
+        This method performs the !advert command.
+
+        @param sender
+                  is the person sending the command.
+    */
     private void doAdvertCmd(String sender) {
         String lowerSender = sender.toLowerCase();
         Advert advert = advertQueue.get(lowerSender);
@@ -360,31 +394,37 @@ public class zbot extends SubspaceBot {
         if (advert == null) {
             throw new RuntimeException("You must claim an advert first.");
         }
+
         if (advert != advertQueue.firstValue()) {
             throw new RuntimeException("It is not your turn to advert.");
         }
+
         if (!advert.canZone()) {
             throw new RuntimeException("Your advert has not been approved yet.  Please get a moderator to approve your advert.");
         }
+
         if (advert.getAdvert().length() == 0) {
             throw new RuntimeException("You must enter a message to advert.");
         }
+
         if (!advertTimer.isExpired()) {
             throw new RuntimeException("The advert is not available: " + advertTimer.toString() + " remaining.");
         }
+
         if (StringTools.indexOfIgnoreCase(advert.getAdvert(), GO_STRING) == -1) {
             throw new RuntimeException("You did not specify what arena to ?go to.");
         }
+
         zoneAdvert(advert);
     }
 
     /**
-     * This method zones the advert, sets the advert timer, cancels the idle
-     * timer, and informs RoboHelp that the zoner has been sent.
-     * 
-     * @param advert
-     *            is the advert to send.
-     */
+        This method zones the advert, sets the advert timer, cancels the idle
+        timer, and informs RoboHelp that the zoner has been sent.
+
+        @param advert
+                  is the advert to send.
+    */
     private void zoneAdvert(Advert advert) {
         String adverter = advert.getAdverter().toLowerCase();
         String advertText = advert.toString();
@@ -394,6 +434,7 @@ public class zbot extends SubspaceBot {
         } else {
             zoneMessageSpam(StringTools.wrapString(advertText, LINE_LENGTH), advert.getSound());
         }
+
         setAdvertTimer(advertTime * 60 * 1000);
         recentAdvertList.add(adverter, recentAdvertTime * 60 * 1000);
         // removeFromQueue(0);
@@ -404,29 +445,30 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method sends out a String array as zone messages.
-     * 
-     * @param message
-     *            is the message to send.
-     * @param sound
-     *            is the sound to associate with the message.
-     */
+        This method sends out a String array as zone messages.
+
+        @param message
+                  is the message to send.
+        @param sound
+                  is the sound to associate with the message.
+    */
     private void zoneMessageSpam(String message[], int sound) {
         m_botAction.sendZoneMessage(message[0], sound);
+
         for (int index = 1; index < message.length; index++) {
             m_botAction.sendZoneMessage(message[index]);
         }
     }
 
     /**
-     * This method performs the old advert command with the format: !Advert
-     * &lt;advert text&gt;.
-     * 
-     * @param sender
-     *            is the person issuing the command.
-     * @param argString
-     *            is the message to advert.
-     */
+        This method performs the old advert command with the format: !Advert
+        &lt;advert text&gt;.
+
+        @param sender
+                  is the person issuing the command.
+        @param argString
+                  is the message to advert.
+    */
     private void doOldAdvertCmd(String sender, String argString) {
         String lowerSender = sender.toLowerCase();
         Advert advert = advertQueue.get(lowerSender);
@@ -434,17 +476,21 @@ public class zbot extends SubspaceBot {
         if (advert == null) {
             throw new RuntimeException("You must claim an advert first.");
         }
+
         if (advert != advertQueue.firstValue()) {
             throw new RuntimeException("It is not your turn to advert.");
         }
+
         if (argString.length() == 0) {
             throw new RuntimeException("You must enter a message to advert.");
         }
+
         if (!advertTimer.isExpired()) {
             throw new RuntimeException("The advert is not available: " + advertTimer.toString() + " remaining.");
         }
 
         advert.setAdvert(argString);
+
         if (!advert.canZone()) {
             throw new RuntimeException("Your advert needs to be approved.  Please get a moderator to approve your advert.");
         }
@@ -457,6 +503,7 @@ public class zbot extends SubspaceBot {
                 removeFromQueue(0);
             }
         };
+
         try {
             m_botAction.scheduleTask(wait10mins, 10 * Tools.TimeInMillis.MINUTE);
 
@@ -465,40 +512,43 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method does the setAdvert command. The sender must have claimed an
-     * ad already.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            are the arguments of the command.
-     */
+        This method does the setAdvert command. The sender must have claimed an
+        ad already.
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  are the arguments of the command.
+    */
     private void doSetAdvertCmd(String sender, String argString) {
         Advert advert = advertQueue.get(sender.toLowerCase());
 
         if (advert == null) {
             throw new RuntimeException("You must claim an advert first.");
         }
+
         if (argString.length() == 0) {
             throw new IllegalArgumentException("You must enter a message to add to your advert.");
         }
+
         if (!advert.isApproved()) {
             m_botAction.sendSmartPrivateMessage(sender, "Message part added.  Type !ViewAdvert to view your current advert.");
         } else {
             advert.unapproveAdvert();
             m_botAction.sendSmartPrivateMessage(sender, "Message part added.  Type !ViewAdvert to view your current advert.  Your advert must be approved again.");
         }
+
         advert.setAdvert(argString);
     }
 
     /**
-     * This method sets the sound of the advert.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the new sound.
-     */
+        This method sets the sound of the advert.
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  is the new sound.
+    */
     private void doSetSoundCmd(String sender, String argString) {
         try {
             Advert advert = advertQueue.get(sender.toLowerCase());
@@ -507,12 +557,14 @@ public class zbot extends SubspaceBot {
             if (advert == null) {
                 throw new RuntimeException("You must claim an advert first.");
             }
+
             if (!advert.isApproved()) {
                 m_botAction.sendSmartPrivateMessage(sender, "Advert sound changed.");
             } else {
                 advert.unapproveAdvert();
                 m_botAction.sendSmartPrivateMessage(sender, "Advert sound changed.  Your advert must be approved again.");
             }
+
             advert.setSound(sound);
         } catch (NumberFormatException e) {
             throw new NumberFormatException("Invalid sound value.  Must be between 1 and 255.");
@@ -520,13 +572,13 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method displays a person's current advert.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            are the arguments of the command.
-     */
+        This method displays a person's current advert.
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  are the arguments of the command.
+    */
     private void doViewAdvertCmd(String sender, String argString) {
         OperatorList opList = m_botAction.getOperatorList();
         Advert advert = advertQueue.get(argString.toLowerCase());
@@ -535,13 +587,17 @@ public class zbot extends SubspaceBot {
         if (!opList.isZH(argString)) {
             throw new RuntimeException("You are not authorized to view that advert.");
         }
+
         if (advert == null) {
             throw new RuntimeException(argString + " has not yet claimed the advert.");
         }
+
         if (advert.getAdvert().length() == 0) {
             throw new RuntimeException(argString + " has not yet entered an advert.");
         }
+
         advertText = advert.toString();
+
         if (advertText.length() <= NATURAL_LINE_LENGTH) {
             m_botAction.sendSmartPrivateMessage(sender, advertText);
         } else {
@@ -551,11 +607,11 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method displays the advert of the sender.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
+        This method displays the advert of the sender.
+
+        @param sender
+                  is the sender of the command.
+    */
     private void doViewAdvertCmd(String sender) {
         Advert advert = advertQueue.get(sender.toLowerCase());
         String advertText;
@@ -563,10 +619,13 @@ public class zbot extends SubspaceBot {
         if (advert == null) {
             throw new RuntimeException("You must claim an advert first.");
         }
+
         if (advert.getAdvert().length() == 0) {
             throw new RuntimeException("You have not yet entered an advert.");
         }
+
         advertText = advert.toString();
+
         if (advertText.length() <= NATURAL_LINE_LENGTH) {
             m_botAction.sendSmartPrivateMessage(sender, advertText);
         } else {
@@ -576,31 +635,32 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method does the clearAdvert command. It clears the sender's current
-     * advert.
-     * 
-     * @param sender
-     *            is the person that sent the command.
-     */
+        This method does the clearAdvert command. It clears the sender's current
+        advert.
+
+        @param sender
+                  is the person that sent the command.
+    */
     private void doClearAdvertCmd(String sender) {
         Advert advert = advertQueue.get(sender.toLowerCase());
 
         if (advert == null) {
             throw new RuntimeException("You must claim an advert first.");
         }
+
         advert.clearAdvert();
         m_botAction.sendSmartPrivateMessage(sender, "Your advert has been cleared.");
     }
 
     /**
-     * This method performs the claim command. It claims an advert for the
-     * person.
-     * 
-     * @param sender
-     *            is the person who issued the command.
-     * @param isGrant
-     *            is true if the claim was granted.
-     */
+        This method performs the claim command. It claims an advert for the
+        person.
+
+        @param sender
+                  is the person who issued the command.
+        @param isGrant
+                  is true if the claim was granted.
+    */
     private void doClaimCmd(String sender, boolean isGrant) {
         Advert advert;
         String lowerSender = sender.toLowerCase();
@@ -608,15 +668,19 @@ public class zbot extends SubspaceBot {
         if (advertQueue.containsKey(lowerSender) && !isGrant) {
             throw new RuntimeException("You have already claimed an advert.");
         }
+
         if (advertQueue.containsKey(lowerSender) && isGrant) {
             throw new RuntimeException(sender + " has already claimed an advert.");
         }
+
         if (advertQueue.size() > maxQueueLength) {
             throw new RuntimeException("Advert queue full.  Max queue size: " + maxQueueLength + ".");
         }
+
         if (recentAdvertList.contains(lowerSender) && !isGrant) {
             throw new RuntimeException("Not enough time has passed since your last advert.  You must wait " + recentAdvertList.getTimeRemainingString(lowerSender) + ".");
         }
+
         if (recentAdvertList.contains(lowerSender) && isGrant) {
             throw new RuntimeException("Not enough time has passed since " + sender + "'s last advert.  You must wait " + recentAdvertList.getTimeRemainingString(lowerSender) + ".");
         }
@@ -628,15 +692,15 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method notifies a player of their position in the advert queue. If
-     * it is currently their turn to advert, and the timer is expired, the time
-     * until the advert expires is displayed. If the timer has not expired, then
-     * the time till the next advert is displayed. If the player is in the
-     * advert queue then the position is returned.
-     * 
-     * @param playerName
-     *            is the name of the player to notify.
-     */
+        This method notifies a player of their position in the advert queue. If
+        it is currently their turn to advert, and the timer is expired, the time
+        until the advert expires is displayed. If the timer has not expired, then
+        the time till the next advert is displayed. If the player is in the
+        advert queue then the position is returned.
+
+        @param playerName
+                  is the name of the player to notify.
+    */
     private void notifyQueuePosition(String playerName) {
         int queuePosition = advertQueue.indexOfKey(playerName.toLowerCase());
 
@@ -657,12 +721,12 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method performs the free command. It removes a player from the
-     * advert queue.
-     * 
-     * @param playerName
-     *            is the name of the player to remove.
-     */
+        This method performs the free command. It removes a player from the
+        advert queue.
+
+        @param playerName
+                  is the name of the player to remove.
+    */
     private void doFreeCmd(String playerName) {
         String lowerName = playerName.toLowerCase();
         int removeIndex = advertQueue.indexOfKey(lowerName);
@@ -670,35 +734,38 @@ public class zbot extends SubspaceBot {
         if (removeIndex == -1) {
             throw new RuntimeException("You must claim an advert first.");
         }
+
         removeFromQueue(removeIndex);
         m_botAction.sendSmartPrivateMessage(playerName, "Your advert has been freed.");
     }
 
     /**
-     * This method frees an advert at removeIndex and notifies all affected
-     * people of their new position in the queue.
-     * 
-     * @param removeIndex
-     *            is the index to remove.
-     */
+        This method frees an advert at removeIndex and notifies all affected
+        people of their new position in the queue.
+
+        @param removeIndex
+                  is the index to remove.
+    */
     private void removeFromQueue(int removeIndex) {
         if (removeIndex < 0 || removeIndex > advertQueue.size()) {
             throw new IllegalArgumentException("Invalid remove index.");
         }
 
         advertQueue.remove(removeIndex);
+
         if (removeIndex == 0) {
             removeCurrentAdverter();
         }
+
         for (int notifyIndex = removeIndex; notifyIndex < advertQueue.size(); notifyIndex++) {
             notifyQueuePosition(advertQueue.getKey(notifyIndex));
         }
     }
 
     /**
-     * This method removes the current adverter from the queue. It resets the
-     * idleTimer and notifies all of the affected people.
-     */
+        This method removes the current adverter from the queue. It resets the
+        idleTimer and notifies all of the affected people.
+    */
     private void removeCurrentAdverter() {
         if (advertQueue.size() > 0 && advertTimer.isExpired()) {
             setIdleTimer(idleTime * 60 * 1000);
@@ -708,59 +775,66 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method performs the status command. It displays who owns the current
-     * advert and shows hte people in the advert queue.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
+        This method performs the status command. It displays who owns the current
+        advert and shows hte people in the advert queue.
+
+        @param sender
+                  is the sender of the command.
+    */
     private void doStatusCmd(String sender) {
         if (advertQueue.size() > 0) {
             m_botAction.sendSmartPrivateMessage(sender, "Current advert belongs to: " + advertQueue.firstKey() + ".");
         }
+
         if (advertQueue.size() > 1) {
             m_botAction.sendSmartPrivateMessage(sender, "People in queue:");
+
             for (int index = 1; index < advertQueue.size(); index++) {
                 m_botAction.sendSmartPrivateMessage(sender, index + ". " + advertQueue.getKey(index));
             }
         }
+
         notifyQueuePosition(sender);
     }
 
     /**
-     * This method processes an ER !help command. It sends the help message to
-     * the sender.
-     * 
-     * @param sender
-     *            is the player that sent the message.
-     */
+        This method processes an ER !help command. It sends the help message to
+        the sender.
+
+        @param sender
+                  is the player that sent the message.
+    */
     private void doERHelpCmd(String sender) {
         String message[] = {"=========================================== ER Commands ============================================", "!Advert                            -- Zones your advert.", "!SetAdvert <Advert Part>           -- Appends <Advert Part> on the end of the current advert.", "!SetSound <Sound>                  -- Sets the sound of the advert.", "!ViewAdvert                        -- Views your current advert.", "!ClearAdvert                       -- Clears your current advert.", "!Random <Arena Name>               -- Sets your advert to a random one from the database for", "                                      <Arena Name>.  If no arena name is specified then a generic", "                                      advert is produced.", "!Claim                             -- Claim the advert for use.", "!Free                              -- Frees up your claim on an advert.", "!Status                            -- Displays the person that has currently claimed the advert, the", "                                      time left till the next advert and the advert queue.", "!ReAdvert <Arena Name>             -- Will *zone a PRESET advert with the <Arena Name>."};
         m_botAction.smartPrivateMessageSpam(sender, message);
     }
 
     /**
-     * This method handles mod commands.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param message
-     *            is the message to handle.
-     * @param messageType
-     *            is the message type.
-     */
+        This method handles mod commands.
+
+        @param sender
+                  is the sender of the command.
+        @param message
+                  is the message to handle.
+        @param messageType
+                  is the message type.
+    */
     private void handleOpCommands(String sender, String message, int messageType) {
         String command = message.toLowerCase();
+
         if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
             if (command.startsWith("!grant ")) {
                 doGrantCmd(sender, message.substring(7).trim());
             }
+
             if (command.startsWith("!viewadvert ")) {
                 doViewAdvertCmd(sender, message.substring(12).trim());
             }
+
             if (command.startsWith("!approve ")) {
                 doApproveCmd(sender, message.substring(9).trim());
             }
+
             if (command.equals("!help")) {
                 doOpHelpCmd(sender);
             }
@@ -768,14 +842,14 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method grants an advert to a staff member by allowing them to claim
-     * an advert.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the argString.
-     */
+        This method grants an advert to a staff member by allowing them to claim
+        an advert.
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  is the argString.
+    */
     private void doGrantCmd(String sender, String argString) {
 
         OperatorList opList = m_botAction.getOperatorList();
@@ -783,97 +857,114 @@ public class zbot extends SubspaceBot {
         if (!opList.isZH(argString) || opList.isER(argString)) {
             throw new IllegalArgumentException("The player that you are granting the advert to must be a ZH.");
         }
+
         doClaimCmd(argString, true);
         m_botAction.sendSmartPrivateMessage(sender, argString + " granted an advert.");
     }
 
     /**
-     * This method approves an advert that was granted to a zh.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is a string containing the arguments of the command.
-     */
+        This method approves an advert that was granted to a zh.
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  is a string containing the arguments of the command.
+    */
     private void doApproveCmd(String sender, String argString) {
         Advert advert = advertQueue.get(argString.toLowerCase());
 
         if (advert == null) {
             throw new RuntimeException(argString + " has not claimed an advert yet.");
         }
+
         advert.approveAdvert(sender);
         m_botAction.sendSmartPrivateMessage(sender, "Advert approved.");
         m_botAction.sendSmartPrivateMessage(argString, "Advert approved by " + sender + ".  Type !Advert to zone your advert.");
     }
 
     /**
-     * This method processes a Mod !help command. It sends the help message to
-     * the sender.
-     * 
-     * @param sender
-     *            is the player that sent the message.
-     */
+        This method processes a Mod !help command. It sends the help message to
+        the sender.
+
+        @param sender
+                  is the player that sent the message.
+    */
     private void doOpHelpCmd(String sender) {
         String message[] = {"========================================== ZH-Op Commands ============================================", "!Grant <Player>                    -- Grants an advert to <Player>.", "!ViewAdvert <Player>               -- Views the advert of <Player>.", "!Approve <Player>                  -- Approves the advert of <Player>."};
         m_botAction.smartPrivateMessageSpam(sender, message);
     }
 
     /**
-     * This method handles smod commands.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param message
-     *            is the message to handle.
-     * @param messageType
-     *            is the message type.
-     */
+        This method handles smod commands.
+
+        @param sender
+                  is the sender of the command.
+        @param message
+                  is the message to handle.
+        @param messageType
+                  is the message type.
+    */
     private void handleSmodCommands(String sender, String message,
-            int messageType) {
+                                    int messageType) {
         String command = message.toLowerCase();
+
         if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
             if (command.startsWith("!periodic ")) {
                 doPeriodicZoner(sender, message.substring(10).trim());
             }
+
             if (command.startsWith("!listperiodic")) {
                 doListPeriodicZoner(sender);
             }
+
             if (command.startsWith("!removeperiodic ")) {
                 doRemovePeriodicZoner(sender, message.substring(16).trim());
             }
+
             if (command.startsWith("!setadvertdelay ")) {
                 doSetAdvertDelayCmd(sender, message.substring(16).trim());
             }
+
             if (command.startsWith("!setidletime ")) {
                 doSetIdleTimeCmd(sender, message.substring(13).trim());
             }
+
             if (command.startsWith("!setreadverttime ")) {
                 doSetReAdvertTimeCmd(sender, message.substring(17).trim());
             }
+
             if (command.startsWith("!setqueuelength ")) {
                 doSetQueueLengthCmd(sender, message.substring(16).trim());
             }
+
             if (command.equals("!enable")) {
                 doEnableCmd(sender);
             }
+
             if (command.equals("!disable")) {
                 doDisableCmd(sender);
             }
+
             if (command.startsWith("!add ")) {
                 addZHOp(sender, message.substring(5).trim());
             }
+
             if (command.startsWith("!remove ")) {
                 removeZHOp(sender, message.substring(8).trim());
             }
+
             if (command.startsWith("!listops")) {
                 listZHOp(sender);
             }
+
             if (command.startsWith("!reload")) {
                 load_zhops();
             }
+
             if (command.equals("!die")) {
                 doDieCmd(sender);
             }
+
             if (command.equals("!help")) {
                 doSmodHelpCmd(sender);
             }
@@ -890,21 +981,26 @@ public class zbot extends SubspaceBot {
     }
 
     private void handleHopsCommands(String sender, String message,
-            int messageType) {
+                                    int messageType) {
         String command = message.toLowerCase();
+
         if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
             if (command.startsWith("!add ")) {
                 addZHOp(sender, message.substring(5).trim());
             }
+
             if (command.startsWith("!remove ")) {
                 removeZHOp(sender, message.substring(8).trim());
             }
+
             if (command.startsWith("!listops")) {
                 listZHOp(sender);
             }
+
             if (command.startsWith("!reload")) {
                 load_zhops();
             }
+
             if (command.equals("!help")) {
                 doHopsHelpCmd(sender);
             }
@@ -934,6 +1030,7 @@ public class zbot extends SubspaceBot {
         String ops = m_botSettings.getString("ZHOperators");
 
         int spot = ops.indexOf(message);
+
         if (spot == 0 && ops.length() == message.length()) {
             ops = "";
             m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " successful");
@@ -950,6 +1047,7 @@ public class zbot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Remove Op: " + message + " failed, operator doesn't exist");
             return;
         }
+
         m_botSettings.put("ZHOperators", ops);
         m_botSettings.save();
         load_zhops();
@@ -965,14 +1063,16 @@ public class zbot extends SubspaceBot {
         } else {
             m_botSettings.put("ZHOperators", ops + "," + substring);
         }
+
         m_botAction.sendSmartPrivateMessage(name, "Add Op: " + substring + " successful");
         m_botSettings.save();
         load_zhops();
     }
 
     private void handleOwnerCommands(String sender, String message,
-            int messageType) {
+                                     int messageType) {
         String command = message.toLowerCase();
+
         if (messageType == Message.PRIVATE_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE) {
             if (command.startsWith("!staffadv ")) {
                 m_botAction.sendZoneMessage(message.substring(10).trim(), 2);
@@ -981,17 +1081,18 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method allows the sender to setup a periodic message to be zoned
-     * with a delay for an interval. Syntax <delay>:<interval>:<message>
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
+        This method allows the sender to setup a periodic message to be zoned
+        with a delay for an interval. Syntax <delay>:<interval>:<message>
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  is the arg string.
+    */
     private void doPeriodicZoner(String sender, String argString) {
         int delay, life;
         String message;
+
         try {
             String[] parts = argString.split(";");
             delay = Integer.parseInt(parts[0]);
@@ -999,6 +1100,7 @@ public class zbot extends SubspaceBot {
             message = parts[2];
 
             int pos = PeriodicMsgs.size() + 1;
+
             for (int i = 0; i < PeriodicMsgs.size(); i++) {
                 if (!PeriodicMsgs.containsKey(new Integer(i + 1))) {
                     pos = i + 1;
@@ -1020,16 +1122,17 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * Lists all the periodic zone messages if any to the sender.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
+        Lists all the periodic zone messages if any to the sender.
+
+        @param sender
+                  is the sender of the command.
+    */
     private void doListPeriodicZoner(String sender) {
         if (PeriodicMsgs.isEmpty()) {
             m_botAction.sendSmartPrivateMessage(sender, "There are currently no periodic zoners.");
             return;
         }
+
         Iterator<Integer> idx = PeriodicMsgs.keySet().iterator();
         Iterator<PeriodicZone> zoner = PeriodicMsgs.values().iterator();
 
@@ -1039,20 +1142,23 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method removes a periodic using it's index. Syntax <index>
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
+        This method removes a periodic using it's index. Syntax <index>
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  is the arg string.
+    */
     private void doRemovePeriodicZoner(String sender, String argString) {
         Integer idx;
+
         try {
             idx = new Integer(Integer.parseInt(argString));
+
             if (!PeriodicMsgs.containsKey(idx)) {
                 throw new IllegalArgumentException("No such index.");
             }
+
             PeriodicMsgs.get(idx).cancel();
             m_botAction.sendSmartPrivateMessage(sender, "Periodic zoner: \"" + PeriodicMsgs.remove(idx).getMsg() + "\" has been removed");
         } catch (NumberFormatException nfe) {
@@ -1065,22 +1171,24 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method allows the sender to change the time between adverts. The
-     * change is saved in the configuration file.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
+        This method allows the sender to change the time between adverts. The
+        change is saved in the configuration file.
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  is the arg string.
+    */
     private void doSetAdvertDelayCmd(String sender, String argString) {
         try {
             // BotSettings botSettings = m_botAction.getBotSettings();
 
             int newAdvertTime = Integer.parseInt(argString);
+
             if (newAdvertTime < 0) {
                 throw new IllegalArgumentException("Advert delay must be greater than 0.");
             }
+
             // botSettings.put("adverttime", newAdvertTime);
             m_botAction.sendSmartPrivateMessage(sender, "Advert delay changed.");
         } catch (NumberFormatException e) {
@@ -1089,22 +1197,24 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method allows the sender to change the time before an unused advert
-     * expires. The change is saved in the configuration file.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
+        This method allows the sender to change the time before an unused advert
+        expires. The change is saved in the configuration file.
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  is the arg string.
+    */
     private void doSetIdleTimeCmd(String sender, String argString) {
         try {
             // BotSettings botSettings = m_botAction.getBotSettings();
 
             int newIdleTime = Integer.parseInt(argString);
+
             if (newIdleTime < 1) {
                 throw new IllegalArgumentException("Idle time must be greater than 1.");
             }
+
             // botSettings.put("idletime", newIdleTime);
             m_botAction.sendSmartPrivateMessage(sender, "Idle time changed.");
         } catch (NumberFormatException e) {
@@ -1113,22 +1223,24 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method allows the sender to change the time before an unused advert
-     * expires. The change is saved in the configuration file.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
+        This method allows the sender to change the time before an unused advert
+        expires. The change is saved in the configuration file.
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  is the arg string.
+    */
     private void doSetReAdvertTimeCmd(String sender, String argString) {
         try {
             // BotSettings botSettings = m_botAction.getBotSettings();
 
             int newReAdvertTime = Integer.parseInt(argString);
+
             if (newReAdvertTime < 1) {
                 throw new IllegalArgumentException("Re-advert time must be greater than 1.");
             }
+
             // botSettings.put("readverttime", newReAdvertTime);
             m_botAction.sendSmartPrivateMessage(sender, "Re-advert time changed.");
         } catch (NumberFormatException e) {
@@ -1137,22 +1249,24 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method allows the sender to change the time before an unused advert
-     * expires. The change is saved in the configuration file.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     * @param argString
-     *            is the arg string.
-     */
+        This method allows the sender to change the time before an unused advert
+        expires. The change is saved in the configuration file.
+
+        @param sender
+                  is the sender of the command.
+        @param argString
+                  is the arg string.
+    */
     private void doSetQueueLengthCmd(String sender, String argString) {
         try {
             // BotSettings botSettings = m_botAction.getBotSettings();
 
             int newQueueLength = Integer.parseInt(argString);
+
             if (newQueueLength < 0) {
                 throw new IllegalArgumentException("Queue length must be greater than 0.");
             }
+
             // botSettings.put("queuelength", newQueueLength);
             m_botAction.sendSmartPrivateMessage(sender, "Queue length changed.");
         } catch (NumberFormatException e) {
@@ -1161,36 +1275,38 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method enables advertizing.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
+        This method enables advertizing.
+
+        @param sender
+                  is the sender of the command.
+    */
     private void doEnableCmd(String sender) {
         if (isEnabled) {
             throw new RuntimeException("Advertizing is already enabled.");
         }
+
         isEnabled = true;
         m_botAction.sendSmartPrivateMessage(sender, "Advertizing enabled.");
     }
 
     /**
-     * This method disables advertizing.
-     * 
-     * @param sender
-     *            is the sender of the command.
-     */
+        This method disables advertizing.
+
+        @param sender
+                  is the sender of the command.
+    */
     private void doDisableCmd(String sender) {
         if (!isEnabled) {
             throw new RuntimeException("Advertizing is already disabled.");
         }
+
         isEnabled = false;
         m_botAction.sendSmartPrivateMessage(sender, "Advertizing disabled.");
     }
 
     /**
-     * This method logs the bot off.
-     */
+        This method logs the bot off.
+    */
     private void doDieCmd(String sender) {
         m_botAction.sendChatMessage(m_botAction.getBotName() + " logging off.");
         DieTask d = new DieTask();
@@ -1205,11 +1321,11 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method handles an arena message.
-     * 
-     * @param message
-     *            is the arena message to process.
-     */
+        This method handles an arena message.
+
+        @param message
+                  is the arena message to process.
+    */
     private void handleArenaMessage(String message) {
         if (message.startsWith("Not online, last seen")) {
             removeFromQueue(0);
@@ -1217,11 +1333,11 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method handles the logged on event.
-     * 
-     * @param event
-     *            is the event to handle.
-     */
+        This method handles the logged on event.
+
+        @param event
+                  is the event to handle.
+    */
     public void handleEvent(LoggedOn event) {
         BotSettings botSettings = m_botAction.getBotSettings();
         String initialArena = botSettings.getString("initialarena");
@@ -1229,11 +1345,11 @@ public class zbot extends SubspaceBot {
         // should not be sent from inside any bot.
         // m_botAction.sendUnfilteredPublicMessage("?obscene");
         /*
-         * advertTime = botSettings.getInt("adverttime"); idleTime =
-         * botSettings.getInt("idletime"); recentAdvertTime =
-         * botSettings.getInt("readverttime"); maxQueueLength =
-         * botSettings.getInt("queuelength");
-         */
+            advertTime = botSettings.getInt("adverttime"); idleTime =
+            botSettings.getInt("idletime"); recentAdvertTime =
+            botSettings.getInt("readverttime"); maxQueueLength =
+            botSettings.getInt("queuelength");
+        */
 
         m_botAction.ipcSubscribe(ZONE_CHANNEL);
         m_botAction.scheduleTask(new ClearRequestsTask(), CLEAR_REQUESTS_DELAY);
@@ -1250,11 +1366,13 @@ public class zbot extends SubspaceBot {
             hops.clear();
             //
             String ops[] = m_botSettings.getString("ZHOperators").split(",");
+
             for (int i = 0; i < ops.length; i++) {
                 zhops.put(ops[i].toLowerCase(), ops[i]);
             }
 
             String hopsd[] = m_botSettings.getString("Head Ops").split(",");
+
             for (int j = 0; j < hopsd.length; j++) {
                 hops.put(hopsd[j].toLowerCase(), hopsd[j]);
             }
@@ -1266,8 +1384,8 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This private method requests the events that the bot will use.
-     */
+        This private method requests the events that the bot will use.
+    */
     private void requestEvents() {
         EventRequester eventRequester = m_botAction.getEventRequester();
 
@@ -1275,11 +1393,11 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * This method sets the advert timer to a certain length.
-     * 
-     * @param milliseconds
-     *            is the length of the advert timer.
-     */
+        This method sets the advert timer to a certain length.
+
+        @param milliseconds
+                  is the length of the advert timer.
+    */
     private void setAdvertTimer(long milliseconds) {
         advertTimer = new AdvertTimer(milliseconds);
         m_botAction.scheduleTask(advertTimer, milliseconds);
@@ -1289,6 +1407,7 @@ public class zbot extends SubspaceBot {
         if (idleTimer != null) {
             m_botAction.cancelTask(idleTimer);
         }
+
         idleTimer = new IdleTimer(milliseconds);
         m_botAction.scheduleTask(idleTimer, milliseconds);
     }
@@ -1299,23 +1418,25 @@ public class zbot extends SubspaceBot {
 
         for (;;) {
             requestRecord = (RequestRecord) requestList.get(index);
+
             if (requestRecord == null || System.currentTimeMillis() - requestRecord.getTimeRequested() > REQUEST_LIFE_TIME) {
                 break;
             }
+
             requestList.remove(requestRecord.getRequester());
             index++;
         }
     }
 
     /**
-     * This private method gets the name of the sender of a message regardless
-     * of the message type. If there was no sender then null is returned.
-     * 
-     * @param message
-     *            is the message that was sent.
-     * @return the sender of the message is returned. If there was no sender
-     *         then null is returned.
-     */
+        This private method gets the name of the sender of a message regardless
+        of the message type. If there was no sender then null is returned.
+
+        @param message
+                  is the message that was sent.
+        @return the sender of the message is returned. If there was no sender
+               then null is returned.
+    */
     private String getSender(Message message) {
         int messageType = message.getMessageType();
         int senderID;
@@ -1323,6 +1444,7 @@ public class zbot extends SubspaceBot {
         if (messageType == Message.CHAT_MESSAGE || messageType == Message.REMOTE_PRIVATE_MESSAGE || messageType == Message.ALERT_MESSAGE) {
             return message.getMessager();
         }
+
         senderID = message.getPlayerID();
         return m_botAction.getPlayerName(senderID);
     }
@@ -1334,7 +1456,7 @@ public class zbot extends SubspaceBot {
         private String m_sender, m_message;
 
         public PeriodicZone(int delay, int life, int index, String sender,
-                String message) {
+                            String message) {
             m_delay = delay;
             m_life = life;
             m_message = message;
@@ -1353,10 +1475,12 @@ public class zbot extends SubspaceBot {
         public void run() {
             m_time += m_delay;
             int soundpos;
+
             if (m_time / 60 > m_life) {
                 PeriodicMsgs.remove(new Integer(m_index));
                 this.cancel();
             }
+
             try {
                 if ((soundpos = m_message.indexOf('%')) != -1) {
                     m_botAction.sendZoneMessage(m_message.substring(0, soundpos), Integer.parseInt(m_message.substring(soundpos + 1)));
@@ -1386,17 +1510,17 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * <p>Title:</p>
-     * AdvertTimer
-     * <p>Description:</p>
-     * This class keeps track of how long is left till the next advert.
-     * <p>Copyright: Copyright (c) 2004</p>
-     * <p> Company:</p>
-     * For SSCU Trench Wars
-     * 
-     * @author Cpt.Guano!
-     * @version 1.0
-     */
+        <p>Title:</p>
+        AdvertTimer
+        <p>Description:</p>
+        This class keeps track of how long is left till the next advert.
+        <p>Copyright: Copyright (c) 2004</p>
+        <p> Company:</p>
+        For SSCU Trench Wars
+
+        @author Cpt.Guano!
+        @version 1.0
+    */
     private class AdvertTimer extends DetailedTimerTask {
 
         public AdvertTimer(long advertTime) {
@@ -1404,8 +1528,8 @@ public class zbot extends SubspaceBot {
         }
 
         /**
-         * This method is executed when the advert timer expires.
-         */
+            This method is executed when the advert timer expires.
+        */
         public void run() {
             String currentAdverter = advertQueue.firstKey();
 
@@ -1418,22 +1542,22 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * <p>
-     * Title: RequestRecord
-     * </p>
-     * <p>
-     * Description: This class keeps track of host requests.
-     * </p>
-     * <p>
-     * Copyright: Copyright (c) 2004
-     * </p>
-     * <p>
-     * Company: For SSCU Trench Wars
-     * </p>
-     * 
-     * @author Cpt.Guano!
-     * @version 1.0
-     */
+        <p>
+        Title: RequestRecord
+        </p>
+        <p>
+        Description: This class keeps track of host requests.
+        </p>
+        <p>
+        Copyright: Copyright (c) 2004
+        </p>
+        <p>
+        Company: For SSCU Trench Wars
+        </p>
+
+        @author Cpt.Guano!
+        @version 1.0
+    */
     private class RequestRecord {
 
         private String requester;
@@ -1441,13 +1565,13 @@ public class zbot extends SubspaceBot {
         private long timeRequested;
 
         /**
-         * This method creates a new request record.
-         * 
-         * @param requester
-         *            is the person that requested the event.
-         * @param request
-         *            is the request made by the person.
-         */
+            This method creates a new request record.
+
+            @param requester
+                      is the person that requested the event.
+            @param request
+                      is the request made by the person.
+        */
         public RequestRecord(String requester, String request) {
             this.requester = requester;
             this.request = request;
@@ -1459,32 +1583,32 @@ public class zbot extends SubspaceBot {
         }
 
         /**
-         * This method gets the time that the request was made.
-         * 
-         * @return the time that the request was made is returned.
-         */
+            This method gets the time that the request was made.
+
+            @return the time that the request was made is returned.
+        */
         public long getTimeRequested() {
             return timeRequested;
         }
 
         /**
-         * This method returns a String representation of the request record.
-         * 
-         * @return a string containing all of the request information is
-         *         returned.
-         */
+            This method returns a String representation of the request record.
+
+            @return a string containing all of the request information is
+                   returned.
+        */
         public String toString() {
             return "\"" + request + "\" Requested by: " + requester + " " + getElapsedTime() + " ago.";
         }
 
         /**
-         * This method gets a string in the form: "HH hours and MM mins"
-         * representing the time that has elapsed since the record has been
-         * requested.
-         * 
-         * @return a string of the form "HH hours and MM mins" representing the
-         *         time that has elapsed is returned.
-         */
+            This method gets a string in the form: "HH hours and MM mins"
+            representing the time that has elapsed since the record has been
+            requested.
+
+            @return a string of the form "HH hours and MM mins" representing the
+                   time that has elapsed is returned.
+        */
         private String getElapsedTime() {
             long elapsedTime = (System.currentTimeMillis() - timeRequested) / (60 * 1000);
             int mins = (int) (elapsedTime % 60);
@@ -1502,23 +1626,23 @@ public class zbot extends SubspaceBot {
     }
 
     /**
-     * <p>
-     * Title: Advert
-     * </p>
-     * <p>
-     * Description: This class is an advert. It keeps track of the sound, advert
-     * and the person that placed the advert.
-     * </p>
-     * <p>
-     * Copyright: Copyright (c) 2004
-     * </p>
-     * <p>
-     * Company: For SSCU Trench Wars
-     * </p>
-     * 
-     * @author Cpt.Guano!
-     * @version 1.0
-     */
+        <p>
+        Title: Advert
+        </p>
+        <p>
+        Description: This class is an advert. It keeps track of the sound, advert
+        and the person that placed the advert.
+        </p>
+        <p>
+        Copyright: Copyright (c) 2004
+        </p>
+        <p>
+        Company: For SSCU Trench Wars
+        </p>
+
+        @author Cpt.Guano!
+        @version 1.0
+    */
     private class Advert {
 
         public static final int MAX_ADVERT_LENGTH = 400;
@@ -1544,14 +1668,14 @@ public class zbot extends SubspaceBot {
         private boolean readvert;
 
         /**
-         * This method initializes a blank advert to a person with a default
-         * sound.
-         * 
-         * @param adverter
-         *            is the person that owns the advert.
-         * @param isGrant
-         *            is true if the advert is granted.
-         */
+            This method initializes a blank advert to a person with a default
+            sound.
+
+            @param adverter
+                      is the person that owns the advert.
+            @param isGrant
+                      is true if the advert is granted.
+        */
         public Advert(String adverter, boolean isGrant) {
             this.adverter = adverter;
             advertText = new String();
@@ -1568,183 +1692,196 @@ public class zbot extends SubspaceBot {
         }
 
         /**
-         * This method gets the person that owns the advert.
-         * 
-         * @return the person that owns the advert is returned.
-         */
+            This method gets the person that owns the advert.
+
+            @return the person that owns the advert is returned.
+        */
         public String getAdverter() {
             return adverter;
         }
 
         /**
-         * This method gets the advert text.
-         * 
-         * @return the advert text is returned.
-         */
+            This method gets the advert text.
+
+            @return the advert text is returned.
+        */
         public String getAdvert() {
             return advertText;
         }
 
         /**
-         * This method gets the sound of the advert.
-         * 
-         * @return the sound of the advert is returned.
-         */
+            This method gets the sound of the advert.
+
+            @return the sound of the advert is returned.
+        */
         public int getSound() {
             return sound;
         }
 
         /**
-         * This method checks to see if an advert can be zoned or not.
-         * 
-         * @return true is returned if the advert can be zoned.
-         */
+            This method checks to see if an advert can be zoned or not.
+
+            @return true is returned if the advert can be zoned.
+        */
         public boolean canZone() {
             return advertStatus == PRE_APPROVED_STATUS || isApproved();
         }
 
         /**
-         * This method checks to see if the advert is approved.
-         * 
-         * @return true is returned if the advert is the approved.
-         */
+            This method checks to see if the advert is approved.
+
+            @return true is returned if the advert is the approved.
+        */
         public boolean isApproved() {
             return advertStatus == APPROVED_STATUS;
         }
 
         /**
-         * This method returns what stage the advert is on
-         * 
-         * @return initial, readvert, or done 
-         */
+            This method returns what stage the advert is on
+
+            @return initial, readvert, or done
+        */
         public int getStage() {
             return stage;
         }
 
         /**
-         * This method returns whether or not a readvert can be used
-         * 
-         * @return true if initial zoner was sent
-         */
+            This method returns whether or not a readvert can be used
+
+            @return true if initial zoner was sent
+        */
         public boolean readvert() {
             return readvert;
         }
 
         /**
-         * This method sets the current advert stage
-         * 
-         * @param s
-         *          intial, final, or done (no more)
-         */
+            This method sets the current advert stage
+
+            @param s
+                    intial, final, or done (no more)
+        */
         public void next() {
             stage++;
             readvert = true;
         }
 
         /**
-         * This method appends an advertPart onto the end of the current advert.
-         * 
-         * @param advertPart
-         *            is the part to add.
-         */
+            This method appends an advertPart onto the end of the current advert.
+
+            @param advertPart
+                      is the part to add.
+        */
         public void setAdvert(String advertPart) {
             StringBuffer result = new StringBuffer(advertText);
+
             if (advertStatus == APPROVED_STATUS) {
                 throw new IllegalArgumentException("Advert has already been approved.  You may no longer change it.");
             }
+
             if (advertText.length() + advertPart.length() + 1 > MAX_ADVERT_LENGTH) {
                 throw new IllegalArgumentException("The advert is too long.  Must be less than " + MAX_ADVERT_LENGTH + " characters long.");
             }
+
             if (advertPart.length() == 0) {
                 throw new IllegalArgumentException("You must enter a message to add.");
             }
+
             if (advertText.length() > 0) {
                 result.append(' ');
             }
+
             result.append(advertPart);
             advertText = result.toString();
         }
 
         /**
-         * This method approves an advert. If the advert has already been
-         * approved, or if the advert does not need to be approved then an
-         * exception is thrown.
-         * 
-         * @param approver
-         *            is the person that is approving the advert.
-         */
+            This method approves an advert. If the advert has already been
+            approved, or if the advert does not need to be approved then an
+            exception is thrown.
+
+            @param approver
+                      is the person that is approving the advert.
+        */
         public void approveAdvert(String approver) {
             if (advertStatus == PRE_APPROVED_STATUS) {
                 throw new IllegalArgumentException("Advert does not need to be approved.");
             }
+
             if (advertStatus == APPROVED_STATUS) {
                 throw new IllegalArgumentException("Advert has already been approved.");
             }
+
             advertStatus = APPROVED_STATUS;
         }
 
         /**
-         * This method unapproves the advert. If the advert is already
-         * unapproved, or if the advert is preapproved, then an exception is
-         * thrown.
-         */
+            This method unapproves the advert. If the advert is already
+            unapproved, or if the advert is preapproved, then an exception is
+            thrown.
+        */
         public void unapproveAdvert() {
             if (advertStatus == PRE_APPROVED_STATUS) {
                 throw new IllegalArgumentException("Advert does not need to be approved.");
             }
+
             if (advertStatus == NOT_APPROVED_STATUS) {
                 throw new IllegalArgumentException("Advert has not yet been approved.");
             }
+
             advertStatus = NOT_APPROVED_STATUS;
         }
 
         /**
-         * This method clears the advert that the user has entered so far.
-         */
+            This method clears the advert that the user has entered so far.
+        */
         public void clearAdvert() {
             if (advertStatus == APPROVED_STATUS) {
                 throw new IllegalArgumentException("Advert has already been approved.  You may no longer change it.");
             }
+
             advertText = new String();
         }
 
         /**
-         * This method sets the sound of the advert.
-         * 
-         * @param sound
-         *            is the new sound of the advert.
-         */
+            This method sets the sound of the advert.
+
+            @param sound
+                      is the new sound of the advert.
+        */
         public void setSound(int sound) {
             if (advertStatus == APPROVED_STATUS) {
                 throw new IllegalArgumentException("Advert has already been approved.  You may no longer change it.");
             }
+
             if (sound < MIN_SOUND || sound > MAX_SOUND) {
                 throw new IllegalArgumentException("Invalid sound.  Must be between " + MIN_SOUND + " and " + MAX_SOUND + ".");
             }
+
             if (isBannedSound(sound)) {
                 throw new IllegalArgumentException("You are not permitted to use that sound.");
             }
+
             this.sound = sound;
         }
 
         /**
-         * This method appends the adverter's name onto the end of the advert
-         * resulting in the full advert string.
-         * 
-         * @return The full advert string is returned.
-         */
+            This method appends the adverter's name onto the end of the advert
+            resulting in the full advert string.
+
+            @return The full advert string is returned.
+        */
         public String toString() {
             return advertText + " -" + adverter;
         }
 
         /**
-         * This method gets the arena name from the advert text. If no arena
-         * name is present then null is returned. Modded by milosh - 2.4.08
-         * 
-         * @param advertText
-         *            is the advert to parse.
-         * @return the name of the arena is returned.
-         */
+            This method gets the arena name from the advert text. If no arena
+            name is present then null is returned. Modded by milosh - 2.4.08
+
+            @param advertText
+                      is the advert to parse.
+            @return the name of the arena is returned.
+        */
         private String getArenaName(String advertText) {
             String lowerAdvert = advertText.toLowerCase();
             int beginIndex = lowerAdvert.lastIndexOf(GO_STRING) + GO_STRING.length();
@@ -1754,6 +1891,7 @@ public class zbot extends SubspaceBot {
             if (beginIndex == -1 || endIndex == -1) {
                 return null;
             }
+
             return advertTail.substring(0, endIndex);
         }
 
@@ -1764,11 +1902,11 @@ public class zbot extends SubspaceBot {
 
     private class DieTask extends TimerTask {
         String name = "Unknown";
-        
+
         public void setName( String name ) {
             this.name = name;
         }
-                
+
         public void run() {
             m_botAction.die("Initiated via !die by " + name);
         }

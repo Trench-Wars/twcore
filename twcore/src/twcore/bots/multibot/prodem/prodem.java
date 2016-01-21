@@ -17,31 +17,32 @@ import twcore.core.stats.PlayerProfile;
 import twcore.core.util.Tools;
 
 /**
- * Prodem: promotion-demotion.
- *
- * @author 2dragons 11.05.02
- */
+    Prodem: promotion-demotion.
+
+    @author 2dragons 11.05.02
+*/
 public final class prodem extends MultiModule {
 
-	private static final int UNLOCKED = 0;
-	private static final int LOCKED = 1;	
-	public int lockState = 0;
-	
-    TimerTask		timerUpdate;
-    TimerTask		startGame;
+    private static final int UNLOCKED = 0;
+    private static final int LOCKED = 1;
+    public int lockState = 0;
 
-    int				curTime = 0,lastMessage = 0;
-    int				gameProgress = -1;
+    TimerTask       timerUpdate;
+    TimerTask       startGame;
+
+    int             curTime = 0, lastMessage = 0;
+    int             gameProgress = -1;
     private Hashtable<String, PlayerProfile> playerMap;
-    final String[]	ranks = { "",
-    "General",
-    "Lt. General",
-    "Colonel",
-    "Lt. Colonel",
-    "Major",
-    "Captain",
-    "1st Lieutenant",
-    "2nd Lieutenant" };
+    final String[]  ranks = { "",
+                              "General",
+                              "Lt. General",
+                              "Colonel",
+                              "Lt. Colonel",
+                              "Major",
+                              "Captain",
+                              "1st Lieutenant",
+                              "2nd Lieutenant"
+                            };
     //Data values:
     //0 - kills on lower level
     //1 - kills on same level
@@ -59,16 +60,17 @@ public final class prodem extends MultiModule {
     }
 
     public void requestEvents(ModuleEventRequester events) {
-		events.request(this, EventRequester.PLAYER_DEATH);
-		events.request(this, EventRequester.PLAYER_ENTERED);
+        events.request(this, EventRequester.PLAYER_DEATH);
+        events.request(this, EventRequester.PLAYER_ENTERED);
         events.request(this, EventRequester.FREQUENCY_SHIP_CHANGE);
-	}
+    }
 
-    public void setupTimerTasks(){
+    public void setupTimerTasks() {
         //Timer setup.
         timerUpdate = new TimerTask() {
             public void run() {
                 if(gameProgress == 1) lastMessage += 30;
+
                 if(lastMessage >= 60) {
                     m_botAction.sendTeamMessage("Lagout or want in? PM me with !prolag -" + m_botAction.getBotName() );
                     lastMessage = 0;
@@ -88,8 +90,10 @@ public final class prodem extends MultiModule {
     ///*** Incomming Messages ///***
     public void handleEvent( Message event ) {
         String message = event.getMessage();
+
         if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
+
             if( opList.isER( name ) ) {
                 handleCommand( name, message );
             }
@@ -98,17 +102,18 @@ public final class prodem extends MultiModule {
             }
         }
         else if( event.getMessageType() == Message.ARENA_MESSAGE  && gameProgress != -1) {
-        	if((message.equals("Arena LOCKED") && lockState == UNLOCKED) || (message.equals("Arena UNLOCKED") && lockState ==  LOCKED)){
-        		m_botAction.toggleLocked();
-        	}
+            if((message.equals("Arena LOCKED") && lockState == UNLOCKED) || (message.equals("Arena UNLOCKED") && lockState ==  LOCKED)) {
+                m_botAction.toggleLocked();
+            }
         }
     }
 
     ///*** Starts the game. ///***
     public void botStart() {
-        if( timerUpdate == null ){
+        if( timerUpdate == null ) {
             setupTimerTasks();
         }
+
         gameProgress = 0;
         lastMessage = 30;
 
@@ -117,8 +122,8 @@ public final class prodem extends MultiModule {
         m_botAction.toggleLocked();
         m_botAction.scoreResetAll();
         m_botAction.changeAllShips(8);
-        
-        
+
+
 
         records[0] = 0;
         records[1] = 0;
@@ -131,19 +136,25 @@ public final class prodem extends MultiModule {
         //Modded by milosh - 2.7.08 - Allows for better late entry alternatives
         int freq = 0;
         Iterator<Player> it = m_botAction.getPlayingPlayerIterator();
+
         if( it == null ) botStop(m_botAction.getBotName());
-        while( it.hasNext() ){
-        	Player p = it.next();
-        	m_botAction.setFreq(p.getPlayerID(), freq);
-        	freq++;
+
+        while( it.hasNext() ) {
+            Player p = it.next();
+            m_botAction.setFreq(p.getPlayerID(), freq);
+            freq++;
         }
+
         m_lateFreq = freq;
-        
+
         //Stores players information.
         Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+
         if( i == null ) botStop(m_botAction.getBotName());
-        while( i.hasNext() ){
+
+        while( i.hasNext() ) {
             Player tempP = (Player)i.next();
+
             if (tempP != null && tempP.getShipType() != 0 ) {
                 String name = tempP.getPlayerName();
                 playerMap.put( name, new PlayerProfile( name, 8, tempP.getFrequency() ) );
@@ -174,8 +185,10 @@ public final class prodem extends MultiModule {
         if( gameProgress != -1 ) {
             gameProgress = -1;
             playerMap.clear();
-            for(int h=0;h>7;h++)
+
+            for(int h = 0; h > 7; h++)
                 records[h] = 0;
+
             records[4] = 10000;
             lockState = UNLOCKED;
             m_botAction.toggleLocked();
@@ -186,7 +199,8 @@ public final class prodem extends MultiModule {
     }
 
     public synchronized void botPlayerIn( String name, String message) {
-    	int id = m_botAction.getPlayerID(name);
+        int id = m_botAction.getPlayerID(name);
+
         if(gameProgress == 1 && id >= 0) {
             if(!playerMap.containsKey( name ) ) {
                 m_botAction.setShip( id, 8 );
@@ -195,16 +209,19 @@ public final class prodem extends MultiModule {
                 m_lateFreq++;
             }
             else {
-            	Player player = m_botAction.getPlayer(id);
-            	if(player != null && player.getShipType() == Tools.Ship.SPECTATOR) {
-	                PlayerProfile tempP;
-	                tempP = playerMap.get( name );
-	                if(tempP.getShip() < Tools.Ship.SHARK) {
-	                	tempP.setShip(tempP.getShip() + 1);
-	                }
-	                m_botAction.setShip( id, tempP.getShip() );
-	                m_botAction.setFreq( id, tempP.getFreq() );
-            	}
+                Player player = m_botAction.getPlayer(id);
+
+                if(player != null && player.getShipType() == Tools.Ship.SPECTATOR) {
+                    PlayerProfile tempP;
+                    tempP = playerMap.get( name );
+
+                    if(tempP.getShip() < Tools.Ship.SHARK) {
+                        tempP.setShip(tempP.getShip() + 1);
+                    }
+
+                    m_botAction.setShip( id, tempP.getShip() );
+                    m_botAction.setFreq( id, tempP.getFreq() );
+                }
             }
         }
     }
@@ -214,10 +231,13 @@ public final class prodem extends MultiModule {
         if( gameProgress == 1 ) {
             Player theKiller  = m_botAction.getPlayer( event.getKillerID() );
             Player theKillee  = m_botAction.getPlayer( event.getKilleeID() );
+
             if( theKiller == null || theKillee == null )
                 return;
-            String killer 	  = theKiller.getPlayerName();
-            String killee 	  = theKillee.getPlayerName();
+
+            String killer     = theKiller.getPlayerName();
+            String killee     = theKillee.getPlayerName();
+
             if(playerMap.containsKey(killer)) {
                 if(playerMap.containsKey(killee)) {
                     manageKill(killer, killee);
@@ -227,17 +247,23 @@ public final class prodem extends MultiModule {
     }
 
     ///*** Handles a kill ///***
+
     public synchronized void manageKill( String killer, String killee ) {
         PlayerProfile tempWin, tempLose;
         tempWin  = playerMap.get(killer);
         tempLose = playerMap.get(killee);
         tempWin.addKill();
+
         if( tempWin.getKills() > records[5] ) records[5] = tempWin.getKills();
+
         tempLose.addDeath();
+
         if( tempLose.getDeaths() > records[6] ) records[6] = tempLose.getDeaths();
+
         if( tempWin.getShip() == tempLose.getShip() ) {
             //Stores data.
             tempWin.incData(1);
+
             if( tempWin.getData(1) > records[1] )
                 records[1] = tempWin.getData(1);
 
@@ -248,8 +274,9 @@ public final class prodem extends MultiModule {
 
                 m_botAction.setShip( killer, tempWin.getShip() );
                 m_botAction.sendSmartPrivateMessage( killer, "You have been promoted to " + ranks[tempWin.getShip()]  );
+
                 if( tempWin.getShip() < 3 )
-            	m_botAction.sendArenaMessage( killer + " has just been promoted to " + ranks[tempWin.getShip()] );
+                    m_botAction.sendArenaMessage( killer + " has just been promoted to " + ranks[tempWin.getShip()] );
 
             }
         }
@@ -259,6 +286,7 @@ public final class prodem extends MultiModule {
 
             //Stores data.
             tempWin.incData(2);
+
             if( tempWin.getData(2) > records[2] )
                 records[2] = tempWin.getData(2);
 
@@ -269,10 +297,10 @@ public final class prodem extends MultiModule {
             final String finalKillee = killee;
             final int    finalShip = tempLose.getShip();
             final String test = new String( "You have been demoted to "
-                + ranks[tempLose.getShip()] + ".  " + killer + " promoted to "
-                + ranks[tempWin.getShip()] );
+                                            + ranks[tempLose.getShip()] + ".  " + killer + " promoted to "
+                                            + ranks[tempWin.getShip()] );
 
-            task = new TimerTask(){
+            task = new TimerTask() {
 
                 public void run() {
                     m_botAction.setShip( finalKillee, finalShip );
@@ -283,16 +311,19 @@ public final class prodem extends MultiModule {
             m_botAction.scheduleTask( task, 5000 );
 
             m_botAction.sendSmartPrivateMessage( killer, "You have been promoted to "
-            + ranks[tempWin.getShip()] + ".  " + killee + " demoted to "
-            + ranks[tempLose.getShip()]);
+                                                 + ranks[tempWin.getShip()] + ".  " + killee + " demoted to "
+                                                 + ranks[tempLose.getShip()]);
+
             if( tempWin.getShip() < 3 )
-            m_botAction.sendArenaMessage( killer + " has just been promoted to " + ranks[tempWin.getShip()] );
+                m_botAction.sendArenaMessage( killer + " has just been promoted to " + ranks[tempWin.getShip()] );
+
             if( tempLose.getShip() < 4 )
-            m_botAction.sendArenaMessage( killee + " has just been demoted to " + ranks[tempLose.getShip()] );
+                m_botAction.sendArenaMessage( killee + " has just been demoted to " + ranks[tempLose.getShip()] );
 
         }
         else {
             tempWin.incData(0);
+
             if( tempWin.getData(0) > records[0] )
                 records[0] = tempWin.getData(0);
         }
@@ -303,6 +334,7 @@ public final class prodem extends MultiModule {
         //Sets the score for players.
         Set<String> set = playerMap.keySet();
         Iterator<String> i = set.iterator();
+
         while (i.hasNext()) {
             String curPlayer = (String) i.next();
             PlayerProfile tempPlayer;
@@ -310,10 +342,14 @@ public final class prodem extends MultiModule {
             //Formula for calculating scores:
             //(kh * 2) + (ks) - (kl) - (d) + ((8-cs)*2)
             int sc = (tempPlayer.getData(2) * 2) + tempPlayer.getData(1) - tempPlayer.getData(0) + ((8 - tempPlayer.getShip()) * 2);
+
             if( sc > records[3] ) records[3] = sc;
+
             if( sc < records[4] ) records[4] = sc;
+
             tempPlayer.setData(3, sc);
         }
+
         m_botAction.sendArenaMessage( winner + " has won the game!", 5);
         m_botAction.sendArenaMessage( "Best ProDem Player       :" + getHolder(3, records[3]) + "  (" + records[3] + " pts)");
         m_botAction.sendArenaMessage( "Worst ProDem Player      :" + getHolder(3, records[4]) + "  (" + records[4] + " pts)");
@@ -324,8 +360,10 @@ public final class prodem extends MultiModule {
         m_botAction.sendArenaMessage( "Worst Dodger             :" + getHolder("Deaths", records[6]) + "  (" + records[6] + " deaths)");
         gameProgress = -1;
         playerMap.clear();
-        for(int h=0;h>7;h++)
+
+        for(int h = 0; h > 7; h++)
             records[h] = 0;
+
         records[4] = 10000;
         lockState = UNLOCKED;
         m_botAction.toggleLocked();
@@ -335,13 +373,16 @@ public final class prodem extends MultiModule {
         Set<String> set = playerMap.keySet();
         Iterator<String> i = set.iterator();
         String recordH = "";
+
         while (i.hasNext()) {
             String curPlayer = (String) i.next();
             PlayerProfile tempPlayer;
             tempPlayer = playerMap.get(curPlayer);
+
             if( tempPlayer.getData(location) == score )
                 recordH += "  " + curPlayer;
         }
+
         return trimFill( recordH );
     }
 
@@ -349,25 +390,30 @@ public final class prodem extends MultiModule {
         Set<String> set = playerMap.keySet();
         Iterator<String> i = set.iterator();
         String recordH = "";
+
         while (i.hasNext()) {
             String curPlayer = (String) i.next();
             PlayerProfile tempPlayer;
             tempPlayer = playerMap.get(curPlayer);
             int curScore;
+
             if(location.equals("Kills")) curScore = tempPlayer.getKills();
             else if(location.equals("Deaths")) curScore = tempPlayer.getDeaths();
             else curScore = 0;
+
             if( curScore == score )
                 recordH += "  " + curPlayer;
         }
+
         return trimFill( recordH );
     }
 
     public String trimFill( String line ) {
         if(line.length() < 38) {
-            for(int i=line.length();i<38;i++)
+            for(int i = line.length(); i < 38; i++)
                 line += " ";
         }
+
         return line;
     }
 
@@ -377,11 +423,11 @@ public final class prodem extends MultiModule {
     }
 
     /**
-     * Check for players dropping to spec and 
-     */
+        Check for players dropping to spec and
+    */
     public void handleEvent( FrequencyShipChange event ) {
         if (event.getShipType() == 0 && gameProgress == 1)
-            m_botAction.sendPrivateMessage( event.getPlayerID(), "Lagout or want in? Just PM me with !prolag");                
+            m_botAction.sendPrivateMessage( event.getPlayerID(), "Lagout or want in? Just PM me with !prolag");
     }
 
     ///*** Help Messages ///***
@@ -397,11 +443,11 @@ public final class prodem extends MultiModule {
     }
 
     public void cancel() {
-    	m_botAction.cancelTasks();
+        m_botAction.cancelTasks();
     }
 
-    public boolean isUnloadable()	{
-		return true;
-	}
+    public boolean isUnloadable()   {
+        return true;
+    }
 
 }

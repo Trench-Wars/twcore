@@ -1,8 +1,8 @@
 /*
- * CommandDefinition.java
- *
- * Created on March 17, 2004, 1:08 PM
- */
+    CommandDefinition.java
+
+    Created on March 17, 2004, 1:08 PM
+*/
 
 package twcore.core.command;
 
@@ -12,21 +12,21 @@ import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
 /**
- *
- * @author  Stefan / Mythrandir
- *
- * commandString example:
- * game String 'Game name' required:Integer 'Time limit' '30':String 'Team 1 name' 'freq 1':String 'Team 2 name' 'freq 2'
- *
- * each commandstring contains the key name and then a list of parameters separated by a ':', following this structure
- *
- * - parameter type (Integer / Double / String). Capitalization of the first letter is obligatory
- * - parameter name enclosed by single quotes (')
- * and then either 'required' specifying that this is a required parameters or another value enclosed by single quotes
- * defining the default value if it's not specified with.
- *
- * currently supported objects: Integer Double String (make sure to use capital letters correctly)
- */
+
+    @author  Stefan / Mythrandir
+
+    commandString example:
+    game String 'Game name' required:Integer 'Time limit' '30':String 'Team 1 name' 'freq 1':String 'Team 2 name' 'freq 2'
+
+    each commandstring contains the key name and then a list of parameters separated by a ':', following this structure
+
+    - parameter type (Integer / Double / String). Capitalization of the first letter is obligatory
+    - parameter name enclosed by single quotes (')
+    and then either 'required' specifying that this is a required parameters or another value enclosed by single quotes
+    defining the default value if it's not specified with.
+
+    currently supported objects: Integer Double String (make sure to use capital letters correctly)
+*/
 public class CommandDefinition {
 
     char m_delimiter = ':';
@@ -64,6 +64,7 @@ public class CommandDefinition {
 
     public void dismantleCommandString() {
         int trigends = m_commandString.indexOf(' ');
+
         if (trigends == -1)
             m_trigger = m_commandString.toLowerCase();
         else {
@@ -71,28 +72,49 @@ public class CommandDefinition {
             String paramstring = m_commandString.substring(trigends).trim();
             String[] paramTypesS = Tools.cleanStringChopper(paramstring, ':');
 
-            for (int i=0; i<paramTypesS.length; i++) m_paramTypes.add(new CommandParameterDefinition(paramTypesS[i]));
+            for (int i = 0; i < paramTypesS.length; i++) m_paramTypes.add(new CommandParameterDefinition(paramTypesS[i]));
         }
     }
 
 
-    public void enable() { m_enabled = true; }
-    public void disable() { m_enabled = false; }
+    public void enable() {
+        m_enabled = true;
+    }
+    public void disable() {
+        m_enabled = false;
+    }
 
-    public Object getMethodClass() { return m_methodClass; }
-    public String getMethodName() { return m_methodName; }
-    public String getTrigger() { return m_trigger; }
-    public int getMessageTypes() { return m_messageTypes; }
-    public char getDelimiter() { return m_delimiter; }
-    public boolean isEnabled() { return m_enabled; }
-    public ArrayList<CommandParameterDefinition> getCommandParameterDefinitions() { return m_paramTypes; }
+    public Object getMethodClass() {
+        return m_methodClass;
+    }
+    public String getMethodName() {
+        return m_methodName;
+    }
+    public String getTrigger() {
+        return m_trigger;
+    }
+    public int getMessageTypes() {
+        return m_messageTypes;
+    }
+    public char getDelimiter() {
+        return m_delimiter;
+    }
+    public boolean isEnabled() {
+        return m_enabled;
+    }
+    public ArrayList<CommandParameterDefinition> getCommandParameterDefinitions() {
+        return m_paramTypes;
+    }
 
     public String getFriendlySyntax() {
         String s = m_trigger + " ";
-        for (int i=0; i<m_paramTypes.size(); i++) {
+
+        for (int i = 0; i < m_paramTypes.size(); i++) {
             s = s + m_paramTypes.get(i).getKey();
+
             if (i < m_paramTypes.size() - 1) s = s + m_delimiter;
         }
+
         return s;
     }
 

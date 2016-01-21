@@ -32,10 +32,10 @@ import twcore.core.util.Tools;
 import twcore.core.net.MobilePusher;
 
 /**
- * New bot to manage elim jav and wb
- * 
- * @author WingZero
- */
+    New bot to manage elim jav and wb
+
+    @author WingZero
+*/
 public class elim extends SubspaceBot {
 
     /** TimerTask used to guarantee the MVP has had enough time to be determined */
@@ -102,12 +102,12 @@ public class elim extends SubspaceBot {
     String[] updateFields;
     boolean shrap;
     boolean arenaLock;
-    
+
     int currentSeason; //current season for elim
-    
+
     int minDeaths[];
     int maxDeaths[];
-    
+
     private ArrayList<String> elimOps;
 
     boolean hiderCheck;
@@ -115,12 +115,12 @@ public class elim extends SubspaceBot {
     private Spy spy;
 
     private PreparedStatement updateStats, storeGame, showLadder;
-    
+
     // Splash screen related stuff
     private ElimLeaderBoard m_leaderBoard;
     private ArrayList<String> m_noSplash;
     private boolean m_showOnEntry = false;
-    
+
     // Push to mobile data
     MobilePusher mobilePusher;
     long lastGamePlayed;
@@ -195,8 +195,10 @@ public class elim extends SubspaceBot {
             ba.sendSmartPrivateMessage(name, "You are not set as the debugger.");
             return;
         }
+
         if (cmd.contains(" ") && cmd.length() > 6) {
             String p = cmd.substring(cmd.indexOf(" ") + 1);
+
             if (debugStatPlayers.remove(p.toLowerCase()))
                 ba.sendSmartPrivateMessage(name, p + " has been removed from the debug list.");
             else {
@@ -215,20 +217,22 @@ public class elim extends SubspaceBot {
                 ba.die("!die initiated");
             }
         };
+
         try {
             ba.scheduleTask(die, 2500);
         } catch( IllegalStateException e) {
             ba.die("IllegalStateException encountered while running !die, actioned by " + name);
         }
     }
-    
+
     /**
-     * Toggles whether or not the top 10 splash screen is shown to this player.
-     * @param name Player who issued the command.
-     */
+        Toggles whether or not the top 10 splash screen is shown to this player.
+        @param name Player who issued the command.
+    */
     public void cmd_disable(String name) {
         int newValue;
         name = name.toLowerCase();
+
         if(m_noSplash.contains(name)) {
             newValue = 1;
             m_noSplash.remove(name);
@@ -240,9 +244,9 @@ public class elim extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "The ranking splash screen will no longer be shown when you enter the arena.");
             debug("Disabling splash on entry for: " + name);
         }
-        
-        String query = "UPDATE tblPlayerStats SET fnElimSplash = " + newValue 
-                + " WHERE fcName = '" + Tools.addSlashes(name) + "'";
+
+        String query = "UPDATE tblPlayerStats SET fnElimSplash = " + newValue
+                       + " WHERE fcName = '" + Tools.addSlashes(name) + "'";
         ba.SQLBackgroundQuery(pub, null, query);
     }
 
@@ -251,15 +255,20 @@ public class elim extends SubspaceBot {
         state = State.OFF;
         ba.cancelTasks();
         game = null;
+
         if (!cmd.contains(";") || cmd.length() < 10)
             return;
+
         String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(";");
+
         if (args.length != 3)
             return;
+
         try {
             int ship = Integer.valueOf(args[0]);
             int deaths = Integer.valueOf(args[1]);
             int shrap = Integer.valueOf(args[2]);
+
             if (ship < 1 || ship > 8)
                 ba.sendPrivateMessage(name, "Invalid ship: " + ship);
             else if (deaths < 1 || deaths > 15)
@@ -267,10 +276,12 @@ public class elim extends SubspaceBot {
             else {
                 shipType = ShipType.type(ship);
                 this.goal = deaths;
+
                 if (shrap == 1)
                     this.shrap = true;
                 else
                     this.shrap = false;
+
                 ba.sendArenaMessage("Game of " + shipType.toString() + " elim to " + deaths + " forcefully created by " + name + "!");
                 state = State.STARTING;
                 handleState();
@@ -285,6 +296,7 @@ public class elim extends SubspaceBot {
     public void cmd_greet(String name, String cmd) {
         if (cmd.length() < 8)
             return;
+
         ba.sendUnfilteredPublicMessage("?set misc:greetmessage:" + cmd.substring(cmd.indexOf(" ") + 1));
         ba.sendSmartPrivateMessage(name, "Greeting set to: " + cmd.substring(cmd.indexOf(" ") + 1));
     }
@@ -292,54 +304,60 @@ public class elim extends SubspaceBot {
     /** Handles the !help command */
     public void cmd_help(String name) {
         String[] msg = new String[] { "+-- Robo Ref Commands --------------------------------------------------------------------.",
-                "| !ladder <ship>    - (!lad) Prints the top 5 ranking players for <ship>                  |",
-                "| !lad <ship>:<#>   - Prints the 3 players surrounding rank <#> in <ship>                 |",
-                "| !votes            - Warbird and Javelin vote analysis                                   |",
-                "| !status           - Displays current game status                                        |",
-                "| !rank <#>         - Shows your current rank in ship <#>                                 |",
-                "| !rank <name>:<#>  - Shows the rank of <name> in ship <#>                                |",
-                "| !rec <#>          - Gets your own record in ship <#>                                    |",
-                "| !rec <name>:<#>   - Gets the record of <name> in ship <#>                               |",
-                "|                      NOTE: Use -1 as <#> for all ships                                  |",
-                "| !who              - Lists the remaining players and their records                       |",
-                "| !stats <#>        - Spams all of your ship <#> statistics if available                  |",
-                "| !stats <name>:<#> - Spams all statistic information for <name> in ship <#> if available |",
-                "|                      NOTE: Use -1 as <#> for all ships                                  |",
-                "| !streak           - Displays your current streak information                            |",
-                "| !streak <name>    - Displays streak information for <name>                              |",
-                "| !mvp              - Lists current game best/worst player record information             |",
-                "| !deaths           - Lists current game most/least player death information              |",
-                "| !scorereset <#>   - Resets all scores and statistics for the ship <#> specified (!sr)   |", 
-                "| !lagout           - Return to game after lagging out                                    |",
-                "| !lag <name>       - Checks the lag of player <name>                                     |",
-                "| !alert            - Toggles new game private message alerts on or off                   |",
-                "| !splash           - Shows the top 10 of Warbirds and Javelins                           |",
-                "| !disable          - Disables showing the splash screen on entry                         |",
-                };
+                                      "| !ladder <ship>    - (!lad) Prints the top 5 ranking players for <ship>                  |",
+                                      "| !lad <ship>:<#>   - Prints the 3 players surrounding rank <#> in <ship>                 |",
+                                      "| !votes            - Warbird and Javelin vote analysis                                   |",
+                                      "| !status           - Displays current game status                                        |",
+                                      "| !rank <#>         - Shows your current rank in ship <#>                                 |",
+                                      "| !rank <name>:<#>  - Shows the rank of <name> in ship <#>                                |",
+                                      "| !rec <#>          - Gets your own record in ship <#>                                    |",
+                                      "| !rec <name>:<#>   - Gets the record of <name> in ship <#>                               |",
+                                      "|                      NOTE: Use -1 as <#> for all ships                                  |",
+                                      "| !who              - Lists the remaining players and their records                       |",
+                                      "| !stats <#>        - Spams all of your ship <#> statistics if available                  |",
+                                      "| !stats <name>:<#> - Spams all statistic information for <name> in ship <#> if available |",
+                                      "|                      NOTE: Use -1 as <#> for all ships                                  |",
+                                      "| !streak           - Displays your current streak information                            |",
+                                      "| !streak <name>    - Displays streak information for <name>                              |",
+                                      "| !mvp              - Lists current game best/worst player record information             |",
+                                      "| !deaths           - Lists current game most/least player death information              |",
+                                      "| !scorereset <#>   - Resets all scores and statistics for the ship <#> specified (!sr)   |",
+                                      "| !lagout           - Return to game after lagging out                                    |",
+                                      "| !lag <name>       - Checks the lag of player <name>                                     |",
+                                      "| !alert            - Toggles new game private message alerts on or off                   |",
+                                      "| !splash           - Shows the top 10 of Warbirds and Javelins                           |",
+                                      "| !disable          - Disables showing the splash screen on entry                         |",
+                                    };
         ba.privateMessageSpam(name, msg);
+
         if (oplist.isZH(name)) {
             msg = new String[] { "+-- Staff Commands -----------------------------------------------------------------------+",
-                    "| !die              - Forces the bot to shutdown and log off                              |",
-                    "| !stop             - Kills current game and prevents any future games (!off)             |",
-                    "| !start            - Begins game and enables games to continue running (!on)             |",
-                    "| !zone             - Forces the bot to send a default zone message                       |",
-                    "| !remove <name>    - Removes <name> from the current game (!rm or !rem)                  |",
-                    "| !killrace         - Enables and disables killrace availability                          |", };
+                                 "| !die              - Forces the bot to shutdown and log off                              |",
+                                 "| !stop             - Kills current game and prevents any future games (!off)             |",
+                                 "| !start            - Begins game and enables games to continue running (!on)             |",
+                                 "| !zone             - Forces the bot to send a default zone message                       |",
+                                 "| !remove <name>    - Removes <name> from the current game (!rm or !rem)                  |",
+                                 "| !killrace         - Enables and disables killrace availability                          |",
+                               };
             ba.privateMessageSpam(name, msg);
         }
+
         if (oplist.isSmod(name)) {
             msg = new String[] { "+-- Smod Commands ------------------------------------------------------------------------+",
-                    "| !hider            - Disables the hiding player checker/reporter (only during games)     |",
-                    "| !debug            - Toggles the debugger which sends debug messages to you when enabled |",
-                    "| !greet <msg>      - Changes the greeting message for the arena                          |", };
+                                 "| !hider            - Disables the hiding player checker/reporter (only during games)     |",
+                                 "| !debug            - Toggles the debugger which sends debug messages to you when enabled |",
+                                 "| !greet <msg>      - Changes the greeting message for the arena                          |",
+                               };
             ba.privateMessageSpam(name, msg);
         }
+
         ba.sendPrivateMessage(name, "`-----------------------------------------------------------------------------------------'");
     }
 
     /** Handles the !hider command which will start or stop the hiding player task in the current game */
     public void cmd_hiderFinder(String name) {
         hiderCheck = !hiderCheck;
+
         if (game != null && state == State.PLAYING)
             game.do_hiderFinder(name);
         else {
@@ -352,6 +370,7 @@ public class elim extends SubspaceBot {
 
     public void cmd_killrace(String name) {
         allowRace = !allowRace;
+
         if (!allowRace)
             ba.sendSmartPrivateMessage(name, "KillRaces: DISABLED");
         else
@@ -362,10 +381,13 @@ public class elim extends SubspaceBot {
     public void cmd_ladder(String name, String cmd) {
         if (!cmd.contains(" "))
             return;
+
         if (!cmd.contains(":")) {
             int ship = 1;
+
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+
                 if (ship < 1 || ship > 8) {
                     ba.sendSmartPrivateMessage(name, "Invalid ship number.");
                     return;
@@ -374,6 +396,7 @@ public class elim extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !lad <ship#>");
                 return;
             }
+
             try {
                 showLadder.clearParameters();
                 showLadder.setInt(1, ship);
@@ -382,8 +405,10 @@ public class elim extends SubspaceBot {
                 showLadder.setInt(4, 5);
                 ResultSet rs = showLadder.executeQuery();
                 ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
+
                 while (rs.next())
                     ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName") + " - " + rs.getInt("fnAdjRating"));
+
                 rs.close();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
@@ -391,13 +416,17 @@ public class elim extends SubspaceBot {
         } else {
             int ship = 1;
             int rank = 2;
+
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":")));
+
                 if (ship < 1 || ship > 8) {
                     ba.sendSmartPrivateMessage(name, "Invalid ship number.");
                     return;
                 }
+
                 rank = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
+
                 if (rank < 2) {
                     ba.sendSmartPrivateMessage(name, "Rank must be greater than 1.");
                     return;
@@ -406,6 +435,7 @@ public class elim extends SubspaceBot {
                 ba.sendSmartPrivateMessage(name, "Invalid syntax, please use !lad <ship#>:<rank#>");
                 return;
             }
+
             try {
                 showLadder.clearParameters();
                 showLadder.setInt(1, ship);
@@ -414,8 +444,10 @@ public class elim extends SubspaceBot {
                 showLadder.setInt(4, 3);
                 ResultSet rs = showLadder.executeQuery();
                 ba.sendSmartPrivateMessage(name, "" + ShipType.type(ship).toString() + " Ladder:");
+
                 while (rs.next())
                     ba.sendSmartPrivateMessage(name, " " + rs.getInt("fnRank") + ") " + rs.getString("fcName") + " - " + rs.getInt("fnAdjRating"));
+
                 rs.close();
             } catch (SQLException e) {
                 Tools.printStackTrace(e);
@@ -426,11 +458,14 @@ public class elim extends SubspaceBot {
     public void cmd_lag(String name, String cmd) {
         if (cmd.indexOf(" ") + 1 == cmd.length())
             return;
+
         if (game != null && state == State.PLAYING) {
             String lagger = cmd.substring(cmd.indexOf(" ") + 1);
             String temp = ba.getFuzzyPlayerName(lagger);
+
             if (temp != null)
                 lagger = temp;
+
             game.do_lag(name, lagger);
         } else
             ba.sendPrivateMessage(name, "Lag handler not available at this time.");
@@ -440,6 +475,7 @@ public class elim extends SubspaceBot {
     public void cmd_lagout(String name) {
         if (game != null) {
             ElimPlayer ep = game.getPlayer(name);
+
             if (ep != null) {
                 if (ep.getStatus() == Status.LAGGED)
                     game.do_lagout(name);
@@ -450,20 +486,21 @@ public class elim extends SubspaceBot {
         } else
             ba.sendPrivateMessage(name, "There is not a game being played.");
     }
-    
+
     /**
-     * Handles the !late command, which lets a player enter late
-     */
+        Handles the !late command, which lets a player enter late
+    */
     public void cmd_late(String name) {
         if (game != null) {
             ElimPlayer ep = game.getPlayer(name);
+
             if (ep != null) {
                 ba.sendPrivateMessage(name, "You're already in this game.");
             } else {
                 if (game.getState() == GameState.PLAYING) {
                     // do late
                 } else {
-                    ba.sendPrivateMessage(name, "There is no game being played. Simply enter into a ship.");                    
+                    ba.sendPrivateMessage(name, "There is no game being played. Simply enter into a ship.");
                 }
             }
         } else
@@ -482,11 +519,14 @@ public class elim extends SubspaceBot {
     public void cmd_rank(String name, String cmd) {
         if (cmd.length() < 7)
             return;
+
         int ship = 1;
         String target = name;
+
         if (!cmd.contains(":")) {
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+
                 if (ship < 1 || ship > 8) {
                     ba.sendPrivateMessage(name, "Invalid ship: " + ship);
                     return;
@@ -497,12 +537,14 @@ public class elim extends SubspaceBot {
             }
         } else if (cmd.indexOf(":") < cmd.length()) {
             target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
+
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
             } catch (NumberFormatException e) {
                 ba.sendPrivateMessage(name, "Error parsing ship number!");
                 return;
             }
+
             if (ship < 1 || ship > 8) {
                 ba.sendPrivateMessage(name, "Invalid ship: " + ship);
                 return;
@@ -511,6 +553,7 @@ public class elim extends SubspaceBot {
             ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !rank <name>:<#> or !rank <#>");
             return;
         }
+
         String query = "SELECT fcName as n, fnRank as r, fnShip as s FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target) + "' AND fnSeason = " + currentSeason + " LIMIT 1";
         ba.SQLBackgroundQuery(db, "rank:" + name + ":" + target + ":" + ship, query);
     }
@@ -519,11 +562,14 @@ public class elim extends SubspaceBot {
     public void cmd_rec(String name, String cmd) {
         if (cmd.length() < 5)
             return;
+
         int ship = -1;
         String target = name;
+
         if (!cmd.contains(":")) {
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+
                 if (ship != -1 && (ship < 1 || ship > 8)) {
                     ba.sendPrivateMessage(name, "Invalid ship: " + ship);
                     return;
@@ -534,12 +580,14 @@ public class elim extends SubspaceBot {
             }
         } else if (cmd.indexOf(":") < cmd.length()) {
             target = cmd.substring(cmd.indexOf(" ") + 1, cmd.indexOf(":"));
+
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(":") + 1));
             } catch (NumberFormatException e) {
                 ba.sendPrivateMessage(name, "Error parsing ship number!");
                 return;
             }
+
             if (ship != -1 && (ship < 1 || ship > 8)) {
                 ba.sendPrivateMessage(name, "Invalid ship: " + ship);
                 return;
@@ -548,9 +596,10 @@ public class elim extends SubspaceBot {
             ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !rec <name>:<#> or !rec <#>");
             return;
         }
+
         if (ship != -1)
             ba.SQLBackgroundQuery(db, "rec:" + name + ":" + ship, "SELECT fnKills as k, fnDeaths as d, fcName as n FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '"
-                    + Tools.addSlashesToString(target) + "' AND fnSeason = " + currentSeason + " LIMIT 1");
+                                  + Tools.addSlashesToString(target) + "' AND fnSeason = " + currentSeason + " LIMIT 1");
         else
             ba.SQLBackgroundQuery(db, "rec:" + name, "SELECT SUM(fnKills) as k, SUM(fnDeaths) as d, fcName as n FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' AND fnSeason = " + currentSeason + " LIMIT 8");
     }
@@ -559,6 +608,7 @@ public class elim extends SubspaceBot {
     public void cmd_remove(String name, String cmd) {
         if (cmd.indexOf(" ") + 1 == cmd.length())
             return;
+
         if (game != null && (state == State.STARTING || state == State.PLAYING))
             game.do_remove(name, cmd.substring(cmd.indexOf(" ") + 1));
         else
@@ -567,17 +617,20 @@ public class elim extends SubspaceBot {
 
     /** Handles the !scorereset (sr) command which resets the stats for the specified ship */
     public void cmd_scorereset(String name, String cmd) {
-    	if(!isElimOp(name)) {
-    		ba.sendPrivateMessage(name, "Resetting scores is currently disabled.");
-        	return;
-    	}
-        
-    	String[] params = cmd.split(":");
-    	if(params.length != 2) return;
+        if(!isElimOp(name)) {
+            ba.sendPrivateMessage(name, "Resetting scores is currently disabled.");
+            return;
+        }
+
+        String[] params = cmd.split(":");
+
+        if(params.length != 2) return;
 
         int ship = -1;
+
         try {
             ship = Integer.valueOf(params[1]);
+
             if (ship < 1 || ship > 8) {
                 ba.sendPrivateMessage(name, "Invalid ship number, " + ship + "!");
                 return;
@@ -586,44 +639,51 @@ public class elim extends SubspaceBot {
             ba.sendPrivateMessage(name, "Invalid syntax, please use !scorerreset <name>:<ship #>");
             return;
         }
+
         ElimPlayer ep = null;
+
         if (game != null) {
             ep = game.getPlayer(params[0]);
+
             if (ep != null) {
-                /* 
-                 * This piece of code is causing problems at the moment.
-                 * For now, I'm disabling scoreresets when a player is in a game.
-                if (shipType.getNum() == ship && ep.isPlaying() && ep.getStatus() != Status.LAGGED) {
+                /*
+                    This piece of code is causing problems at the moment.
+                    For now, I'm disabling scoreresets when a player is in a game.
+                    if (shipType.getNum() == ship && ep.isPlaying() && ep.getStatus() != Status.LAGGED) {
                     ba.sendPrivateMessage(name, "You cannot do a scorereset while playing a game with the ship you want to reset.");
                     return;
-                } else
+                    } else
                     game.do_scorereset(ep, ship);
-                 */
+                */
                 ba.sendPrivateMessage(name, "You cannot do a scorereset while player is playing a game.");
                 return;
             }
         }
+
         try {
             ba.SQLQueryAndClose(db, "DELETE FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(params[0]) + "' AND fnSeason = " + currentSeason);
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
+
         /*
-         * See the above comment on the disabled code.
-        if (shipType != null && ship == shipType.getNum() && ep != null && state == State.STARTING)
+            See the above comment on the disabled code.
+            if (shipType != null && ship == shipType.getNum() && ep != null && state == State.STARTING)
             ba.SQLBackgroundQuery(db, "load:" + name, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(name) + "' LIMIT 1");
-         */
-        ba.sendPrivateMessage(params[0], "Your " + ShipType.type(ship) + " scores have been reset.");    
-        ba.sendPrivateMessage(name, params[0] + "'s " + ShipType.type(ship) + " scores have been reset.");    
-    
+        */
+        ba.sendPrivateMessage(params[0], "Your " + ShipType.type(ship) + " scores have been reset.");
+        ba.sendPrivateMessage(name, params[0] + "'s " + ShipType.type(ship) + " scores have been reset.");
+
     }
 
     public void cmd_setStats(String name, String cmd) {
         String[] args = cmd.substring(cmd.indexOf(" ") + 1).split(",");
+
         if (args.length == 8) {
             try {
                 for (int i = 0; i < voteStats.length; i++)
                     voteStats[i] = Integer.valueOf(args[i]);
+
                 ba.sendSmartPrivateMessage(name, "Done!");
             } catch (NumberFormatException e) {
                 ba.sendSmartPrivateMessage(name, "Error!");
@@ -631,18 +691,19 @@ public class elim extends SubspaceBot {
         } else
             ba.sendSmartPrivateMessage(name, "Error! Bad length.");
     }
-    
+
     /**
-     * Handles the splash command.
-     * @param name Issuer of the command.
-     * @param cmd Unusued, originally allowed choosing between different backgrounds.
-     */
+        Handles the splash command.
+        @param name Issuer of the command.
+        @param cmd Unusued, originally allowed choosing between different backgrounds.
+    */
     public void cmd_splash(String name, String cmd) {
         int mode = 0;
         short pID = (short) ba.getPlayerID(name);
-        /* Disabled for now, due to the final product just having one background.
-         * Need to decide whether to clean up the code, or leave it in for future possibilities.
-        if(cmd.length() > 8) {
+
+        /*  Disabled for now, due to the final product just having one background.
+            Need to decide whether to clean up the code, or leave it in for future possibilities.
+            if(cmd.length() > 8) {
             try {
                 mode = Integer.parseInt(cmd.substring(8));
                 if(mode > 1)
@@ -650,13 +711,13 @@ public class elim extends SubspaceBot {
             } catch (NumberFormatException nfe) {
                 ba.sendSmartPrivateMessage(name, "Error! Bad mode, reverting to default.");
             }
-        }
+            }
         */
         if(pID < 0)
             return;
-        
+
         m_leaderBoard.showSplash(pID, mode);
-        
+
     }
 
     /** Handles the !start command which restarts the bot after being stopped */
@@ -669,9 +730,11 @@ public class elim extends SubspaceBot {
     public void cmd_stats(String name, String cmd) {
         int ship = -1;
         String target = name;
+
         if (!cmd.contains(":")) {
             try {
                 ship = Integer.valueOf(cmd.substring(cmd.indexOf(" ") + 1));
+
                 if (ship != -1 && (ship < 1 || ship > 8)) {
                     ba.sendPrivateMessage(name, "Invalid ship: " + ship);
                     return;
@@ -688,6 +751,7 @@ public class elim extends SubspaceBot {
                 ba.sendPrivateMessage(name, "Error parsing command!");
                 return;
             }
+
             if (ship != -1 && (ship < 1 || ship > 8)) {
                 ba.sendPrivateMessage(name, "Invalid ship: " + ship);
                 return;
@@ -696,9 +760,10 @@ public class elim extends SubspaceBot {
             ba.sendPrivateMessage(name, "Error, invalid syntax! Please use !stats <name>:<#> or !stats <#>");
             return;
         }
+
         if (ship != -1)
             ba.SQLBackgroundQuery(db, "stats:" + name + ":" + target + ":" + ship, "SELECT * FROM tblElim__Player WHERE fnShip = " + ship + " AND fcName = '" + Tools.addSlashesToString(target)
-                    + "' AND fnSeason = " + currentSeason + " LIMIT 1");
+                                  + "' AND fnSeason = " + currentSeason + " LIMIT 1");
         else
             ba.SQLBackgroundQuery(db, "allstats:" + name + ":" + target, "SELECT * FROM tblElim__Player WHERE fcName = '" + Tools.addSlashesToString(target) + "' AND fnSeason = " + currentSeason + " LIMIT 8");
     }
@@ -721,6 +786,7 @@ public class elim extends SubspaceBot {
     public void cmd_stop(String name) {
         state = State.OFF;
         ba.cancelTasks();
+
         if (game != null) {
             game = null;
             ba.sendArenaMessage("Bot disabled and current game aborted.", Tools.Sound.NOT_DEALING_WITH_ATT);
@@ -739,8 +805,9 @@ public class elim extends SubspaceBot {
     public void cmd_votes(String name) {
         // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
         String[] msg = { "Games     WB: " + padNum("" + voteStats[0], 3) + " | Jav: " + padNum("" + voteStats[1], 3),
-                "Outvoted  WB: " + padNum("" + voteStats[2], 3) + " | Jav: " + padNum("" + voteStats[3], 3),
-                "Unanimous WB: " + padNum("" + voteStats[4], 3) + " | Jav: " + padNum("" + voteStats[5], 3), "Total votes: " + voteStats[7], "Ties: " + voteStats[6], };
+                         "Outvoted  WB: " + padNum("" + voteStats[2], 3) + " | Jav: " + padNum("" + voteStats[3], 3),
+                         "Unanimous WB: " + padNum("" + voteStats[4], 3) + " | Jav: " + padNum("" + voteStats[5], 3), "Total votes: " + voteStats[7], "Ties: " + voteStats[6],
+                       };
         ba.smartPrivateMessageSpam(name, msg);
     }
 
@@ -768,12 +835,15 @@ public class elim extends SubspaceBot {
     private void countVotes() {
         if (voteType == VoteType.SHIP) {
             int[] count = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+
             for (Integer i : votes.values())
                 count[i - 1]++;
+
             TreeSet<Integer> wins = new TreeSet<Integer>();
             int high = count[0];
             int ship = 1;
             wins.add(ship);
+
             for (int i = 1; i < 8; i++) {
                 if (count[i] > high) {
                     wins.clear();
@@ -783,8 +853,10 @@ public class elim extends SubspaceBot {
                 } else if (count[i] == high)
                     wins.add(i + 1);
             }
+
             if (wins.size() > 1) {
                 voteStats[6]++;
+
                 if (high > 0) {
                     int num = random.nextInt(wins.size());
                     ship = wins.toArray(new Integer[wins.size()])[num];
@@ -795,14 +867,16 @@ public class elim extends SubspaceBot {
                     else if (shipType == ShipType.WARBIRD)
                         ship = 2;
                     else
-                        ship = random.nextInt(2) + 1;  
+                        ship = random.nextInt(2) + 1;
                 }
             } else
                 ship = wins.first();
+
             // ( # wb games, # jav games, # voted wb but got jav, # voted jav but got wb, # unanimous wb/jav, ties )
             if (ship == 1) {
                 voteStats[0]++;
                 voteStats[7] += count[0] + count[1];
+
                 if (count[1] > 0)
                     voteStats[3] += count[1];
                 else
@@ -810,23 +884,29 @@ public class elim extends SubspaceBot {
             } else if (ship == 2) {
                 voteStats[1]++;
                 voteStats[7] += count[0] + count[1];
+
                 if (count[0] > 0)
                     voteStats[2] += count[0];
                 else
                     voteStats[5]++;
             }
+
             shipType = ShipType.type(ship);
             votes.clear();
         } else if (voteType == VoteType.DEATHS) {
             int[] count = new int[maxDeaths[shipType.getNum() - 1] + 20];
+
             for (int i = 0; i < count.length; i++)
                 count[i] = 0;
+
             for (Integer i : votes.values())
                 count[i - 1]++;
+
             HashSet<Integer> wins = new HashSet<Integer>();
             int high = count[0];
             int val = 1;
             wins.add(val);
+
             for (int i = 0; i < (maxDeaths[shipType.getNum() - 1] + 20); i++) {
                 if (count[i] > high) {
                     wins.clear();
@@ -836,26 +916,29 @@ public class elim extends SubspaceBot {
                 } else if (count[i] == high)
                     wins.add(i + 1);
             }
+
             if (wins.size() > 1) {
                 if (high > 0) {
                     int num = random.nextInt(wins.size());
                     this.goal = wins.toArray(new Integer[wins.size()])[num];
                 } else {
-                    /* going to default to 5 deaths instead of randomizing it
-                    int r = random.nextInt(3);
-                    if (r > 1)
+                    /*  going to default to 5 deaths instead of randomizing it
+                        int r = random.nextInt(3);
+                        if (r > 1)
                         this.goal = random.nextInt(rules.getInt("MaxDeaths") + 20) + 1;
-                    else
+                        else
                         this.goal = random.nextInt(rules.getInt("MaxDeaths")) + 1;
 
-                    if (this.goal > 10 && this.goal < 16)
+                        if (this.goal > 10 && this.goal < 16)
                         this.goal += 5;
                     */
                     this.goal = 5;
                 }
             } else
                 this.goal = wins.iterator().next();
+
             votes.clear();
+
             if (this.goal > 10) {
                 this.goal -= 10;
                 gameType = KILLRACE;
@@ -863,16 +946,20 @@ public class elim extends SubspaceBot {
                 gameType = ELIM;
         } else if (voteType == VoteType.SHRAP) {
             int[] count = new int[] { 0, 0 };
+
             for (Integer i : votes.values())
                 count[i]++;
+
             if (count[0] > count[1])
                 shrap = false;
             else if (count[1] > count[0])
                 shrap = true;
             else
                 shrap = false;
+
             votes.clear();
         }
+
         handleState();
     }
 
@@ -920,6 +1007,7 @@ public class elim extends SubspaceBot {
             public void run() {
                 if (ba.getNumPlaying() < 2)
                     ba.sendArenaMessage("A new game will begin when there are at least two (2) people playing.");
+
                 state = State.WAITING;
                 handleState();
             }
@@ -932,10 +1020,12 @@ public class elim extends SubspaceBot {
         if (winner != null && game != null && game.mvp != null) {
             ba.sendArenaMessage("Game over. Winner: " + winner.name + "! ", Tools.Sound.HALLELUJAH);
             final String mvp = game.mvp;
+
             if (gameType == ELIM)
                 ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " elim.");
             else
                 ba.sendChatMessage(2, "" + winner.name + " has won " + shipType.toString() + " KillRace.");
+
             TimerTask t = new TimerTask() {
                 @Override
                 public void run() {
@@ -944,10 +1034,12 @@ public class elim extends SubspaceBot {
             };
             ba.scheduleTask(t, 3000);
             updatePlayer(winner);
+
             if (lastWinner != null && lastWinner.name.equalsIgnoreCase(winner.name))
                 winStreak++;
             else
                 winStreak = 1;
+
             lastWinner = winner;
             winner = null;
         }
@@ -959,6 +1051,7 @@ public class elim extends SubspaceBot {
 
         if( lastGamePlayed + timeBetweenPushes < System.currentTimeMillis() ) {
             String msg;
+
             if (gameType == ELIM)
                 msg = Tools.shipNameSlang(shipType.getNum()) + "s to " + goal;
             else
@@ -970,9 +1063,10 @@ public class elim extends SubspaceBot {
                 else
                     msg += ", no shrap";
             }
+
             mobilePusher.push(msg);
         }
-        
+
         ba.sendArenaMessage("Enter to play. Arena will be locked in 30 seconds!", 9);
         timer = new TimerTask() {
             @Override
@@ -982,12 +1076,15 @@ public class elim extends SubspaceBot {
                     abort();
                 } else {
                     String erules = "RULES: One player per freq and NO TEAMING! ";
+
                     if (gameType == ELIM)
                         erules += "Die " + goal + " times and you're out. ";
                     else
                         erules += "First to " + goal + " kills wins. ";
+
                     if (shipType == ShipType.WEASEL)
                         erules += "Warping is illegal and will be penalized by a death.";
+
                     ba.sendArenaMessage(erules);
                     arenaLock = true;
                     ba.toggleLocked();
@@ -1002,20 +1099,24 @@ public class elim extends SubspaceBot {
     private void doVoting() {
         if (state != State.VOTING)
             return;
+
         if (voteType == VoteType.NA) {
             voteType = VoteType.SHIP;
             ba.sendArenaMessage("VOTE: 1-Warbird, 2-Javelin, 3-Spider, 5-Terrier, 7-Lancaster, 8-Shark", Tools.Sound.BEEP3);
         } else if (voteType == VoteType.SHIP) {
             voteType = VoteType.DEATHS;
+
             if (allowRace)
-                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + ") (or 15-30 for a KillRace of 5-20)");
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (" + minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + ") (or 15-30 for a KillRace of 5-20)");
             else
-                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? ("+ minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + ")");
+                ba.sendArenaMessage("This will be " + Tools.shipName(shipType.getNum()) + " elim. VOTE: How many deaths? (" + minDeaths[shipType.getNum() - 1] + "-" + maxDeaths[shipType.getNum() - 1] + ")");
+
             ba.sendChatMessage(2, Tools.shipName(shipType.getNum()) + " elim is beginning now.");
             ba.sendChatMessage(3, "ELIM: " + Tools.shipName(shipType.getNum()) + " elim now beginning.");
         } else if (voteType == VoteType.DEATHS) {
             if (shipType.hasShrap()) {
                 voteType = VoteType.SHRAP;
+
                 if (gameType == ELIM)
                     ba.sendArenaMessage("" + Tools.shipName(shipType.getNum()) + " ELIM to " + goal + ". VOTE: Shrap on or off? 0-OFF, 1-ON");
                 else
@@ -1024,11 +1125,13 @@ public class elim extends SubspaceBot {
                 shrap = false;
                 state = State.STARTING;
                 String msg;
+
                 if (gameType == ELIM) {
                     msg = "" + Tools.shipName(shipType.getNum()) + " ELIM to " + goal + ". ";
                 } else {
                     msg = "" + Tools.shipName(shipType.getNum()) + " KILLRACE to " + goal + ". ";
                 }
+
                 ba.sendArenaMessage(msg);
                 handleState();
                 return;
@@ -1036,20 +1139,24 @@ public class elim extends SubspaceBot {
         } else {
             state = State.STARTING;
             String msg;
+
             if (gameType == ELIM)
                 msg = "" + Tools.shipName(shipType.getNum()) + " ELIM to " + goal + ". ";
             else
                 msg = "" + Tools.shipName(shipType.getNum()) + " KILLRACE to " + goal + ". ";
+
             if (shipType.hasShrap()) {
                 if (shrap)
                     msg += "Shrap: [ON]";
                 else
                     msg += "Shrap: [OFF]";
             }
+
             ba.sendArenaMessage(msg);
             handleState();
             return;
         }
+
         //final long time = System.currentTimeMillis();
 
         TimerTask task = new TimerTask() {
@@ -1064,6 +1171,7 @@ public class elim extends SubspaceBot {
     /** Waiting state stalls until there are enough players to continue */
     private void doWaiting() {
         sendZoner();
+
         if (ba.getNumPlaying() > 0) {
             sendAlerts();
             state = State.VOTING;
@@ -1076,6 +1184,7 @@ public class elim extends SubspaceBot {
     public void handleDisconnect() {
         if(m_leaderBoard != null)
             m_leaderBoard.die();
+
         ba.closePreparedStatement(db, connectionID, this.updateStats);
         ba.closePreparedStatement(db, connectionID, this.storeGame);
         ba.closePreparedStatement(db, connectionID, this.showLadder);
@@ -1112,6 +1221,7 @@ public class elim extends SubspaceBot {
             if (game != null)
                 game.handleEvent(event);
         }
+
         if (state == State.WAITING)
             handleState();
     }
@@ -1123,10 +1233,12 @@ public class elim extends SubspaceBot {
         oplist = ba.getOperatorList();
         rules = ba.getBotSettings();
         arena = rules.getString("Arena1");
+
         if (rules.getInt("Zoners") == 1)
             lastZoner = System.currentTimeMillis();
         else
             lastZoner = -1;
+
         lastAlert = 0;
         spy = new Spy(ba);
         DEBUG = true;
@@ -1144,28 +1256,32 @@ public class elim extends SubspaceBot {
         connectionID = connectionID.concat(Integer.toString(random.nextInt(1000)));
         currentSeason = rules.getInt("CurrentSeason");
         lateEntrySeconds = rules.getInt("LateEntrySeconds");
-        
+
         minDeaths = rules.getIntArray("MinDeaths", ",");
         maxDeaths = rules.getIntArray("MaxDeaths", ",");
-        
+
         prepareStatements();
-        
+
         // Splash screen related settings and preparation.
         m_noSplash = new ArrayList<String>();
-        
+
         if (rules.getInt("DisplayEnable") == 1) {
             m_showOnEntry = true;
             PreparedStatement showSplash = ba.createPreparedStatement(pub, "elimplayersettings", "SELECT fcName FROM tblPlayerStats WHERE fnElimSplash = 0");
+
             if(showSplash != null) {
                 try {
                     ResultSet rs = showSplash.executeQuery();
+
                     while(rs.next()) {
                         m_noSplash.add(rs.getString(1).toLowerCase());
                     }
+
                     rs.close();
                 } catch (SQLException sqle) {
                     Tools.printStackTrace(sqle);
                 }
+
                 ba.closePreparedStatement(pub, "elimplayersettings", showSplash);
             } else {
                 debug("Failed to load player splash preferences.");
@@ -1173,12 +1289,13 @@ public class elim extends SubspaceBot {
         } else {
             m_showOnEntry = false;
         }
+
         m_leaderBoard = new ElimLeaderBoard(ba, db, connectionID);
-        
+
         String pushAuth = ba.getGeneralSettings().getString("PushAuth");
         String pushChannel = rules.getString("PushChannel");
         mobilePusher = new MobilePusher(pushAuth, pushChannel, Tools.TimeInMillis.MINUTE * 15);
-               
+
         ba.joinArena(arena);
     }
 
@@ -1188,6 +1305,7 @@ public class elim extends SubspaceBot {
         int type = event.getMessageType();
         String msg = event.getMessage();
         String name = ba.getPlayerName(event.getPlayerID());
+
         if (name == null)
             name = event.getMessager();
 
@@ -1266,6 +1384,7 @@ public class elim extends SubspaceBot {
                 else if (cmd.startsWith("!remove ") || cmd.startsWith("!rem ") || cmd.startsWith("!rm "))
                     cmd_remove(name, msg);
             }
+
             if (oplist.isSmod(name)) {
                 if (cmd.startsWith("!debug"))
                     cmd_debug(name);
@@ -1278,6 +1397,7 @@ public class elim extends SubspaceBot {
                 else if (cmd.startsWith("!game "))
                     cmd_game(name, msg);
             }
+
             if (oplist.isOwner(name)) {
                 if (cmd.startsWith("!svi ")) {
                     cmd_setStats(name, msg);
@@ -1287,6 +1407,7 @@ public class elim extends SubspaceBot {
                 }
             }
         }
+
         spy.handleEvent(event);
     }
 
@@ -1295,6 +1416,7 @@ public class elim extends SubspaceBot {
     public void handleEvent(PlayerDeath event) {
         if (state != State.PLAYING || game == null)
             return;
+
         game.handleEvent(event);
     }
 
@@ -1303,11 +1425,14 @@ public class elim extends SubspaceBot {
     public void handleEvent(PlayerEntered event) {
         if (state == State.OFF)
             return;
+
         String name = event.getPlayerName();
+
         if (name == null || name.length() < 1)
             name = ba.getPlayerName(event.getPlayerID());
+
         cmd_status(name);
-        
+
         if(m_showOnEntry && !m_noSplash.contains(name.toLowerCase())) {
             m_leaderBoard.showSplash(event.getPlayerID(), 0);
         }
@@ -1318,6 +1443,7 @@ public class elim extends SubspaceBot {
     public void handleEvent(PlayerLeft event) {
         if (state == State.OFF || game == null)
             return;
+
         game.handleEvent(event);
     }
 
@@ -1333,12 +1459,14 @@ public class elim extends SubspaceBot {
     public void handleEvent(SQLResultEvent event) {
         String id = event.getIdentifier();
         ResultSet rs = event.getResultSet();
+
         try {
             if (state == State.OFF) {
                 ba.SQLClose(rs);
                 return;
             } else if (game != null && id.startsWith("load:")) {
                 String name = id.substring(id.indexOf(":") + 1).toLowerCase();
+
                 if (rs.next() && rs.getInt("fnShip") == shipType.getNum()) {
                     game.handleStats(name, rs);
                 } else {
@@ -1347,8 +1475,10 @@ public class elim extends SubspaceBot {
                 }
             } else if (id.startsWith("stats:")) {
                 String[] args = id.split(":");
+
                 if (args.length == 4) {
                     ElimStats stats = new ElimStats(Integer.valueOf(args[3]));
+
                     if (rs.next()) {
                         stats.loadStats(rs);
                         ba.privateMessageSpam(args[1], stats.getStats(args[2]));
@@ -1357,8 +1487,10 @@ public class elim extends SubspaceBot {
                 }
             } else if (id.startsWith("allstats:")) {
                 String[] args = id.split(":");
+
                 if (args.length == 3) {
                     ElimStats stats = new ElimStats(1);
+
                     if (rs.next()) {
                         stats.loadAllShips(rs);
                         ba.privateMessageSpam(args[1], stats.getAll(args[2]));
@@ -1367,10 +1499,12 @@ public class elim extends SubspaceBot {
                 }
             } else if (id.startsWith("rec:")) {
                 String[] args = id.split(":");
+
                 if (rs.next()) {
                     int k = rs.getInt("k");
                     int d = rs.getInt("d");
                     String target = rs.getString("n");
+
                     if (args.length == 3)
                         ba.sendPrivateMessage(args[1], "" + target + "[" + args[2] + "]: (" + k + "-" + d + ")");
                     else if (args.length == 2)
@@ -1379,10 +1513,12 @@ public class elim extends SubspaceBot {
                     ba.sendPrivateMessage(args[1], "Error processing record request for: " + args[2]);
             } else if (id.startsWith("rank:")) {
                 String[] args = id.split(":");
+
                 if (rs.next()) {
                     String target = rs.getString("n");
                     int r = rs.getInt("r");
                     int s = rs.getInt("s");
+
                     if (r != 0)
                         ba.sendPrivateMessage(args[1], target + " rank in " + ShipType.type(s).toString() + ": " + r);
                     else
@@ -1393,6 +1529,7 @@ public class elim extends SubspaceBot {
         } catch (SQLException e) {
             Tools.printStackTrace(e);
         }
+
         ba.SQLClose(rs);
     }
 
@@ -1401,51 +1538,60 @@ public class elim extends SubspaceBot {
     public void handleEvent(WeaponFired event) {
         if (state != State.PLAYING || game == null)
             return;
+
         game.handleEvent(event);
     }
 
     /** Handles game state by calling the appropriate state methods */
     public void handleState() {
         switch (state) {
-            case IDLE:
-                doIdle();
-                break;
-            case WAITING:
-                doWaiting();
-                break;
-            case VOTING:
-                doVoting();
-                break;
-            case STARTING:
-                doStarting();
-                break;
-            case PLAYING:
-                doPlaying();
-                break;
-            case ENDING:
-                doEnding();
-                break;
-            default:
-                doIdle();
+        case IDLE:
+            doIdle();
+            break;
+
+        case WAITING:
+            doWaiting();
+            break;
+
+        case VOTING:
+            doVoting();
+            break;
+
+        case STARTING:
+            doStarting();
+            break;
+
+        case PLAYING:
+            doPlaying();
+            break;
+
+        case ENDING:
+            doEnding();
+            break;
+
+        default:
+            doIdle();
         }
     }
 
     /** Handles potential votes read from public chat during a voting period */
     public void handleVote(String name, String cmd) {
-        /* testing this without
-        if (p != null && p.getShipType() == 0) {
+        /*  testing this without
+            if (p != null && p.getShipType() == 0) {
             Player p = ba.getPlayer(name);
             ba.sendPrivateMessage(name, "You must be in a ship in order to vote.");
             return;
-        }
+            }
         */
         name = name.toLowerCase();
         int vote = -1;
+
         try {
             vote = Integer.valueOf(cmd);
         } catch (NumberFormatException e) {
             return;
         }
+
         if (voteType == VoteType.SHIP) {
             if (vote > 0 && vote < 9 && vote != 6 && vote != 4) {
                 votes.put(name, vote);
@@ -1463,8 +1609,10 @@ public class elim extends SubspaceBot {
             if (vote > -1 && vote < 2) {
                 votes.put(name, vote);
                 String shrap = "ON";
+
                 if (vote == 0)
                     shrap = "OFF";
+
                 ba.sendPrivateMessage(name, "Vote counted for: " + shrap);
             }
         }
@@ -1473,6 +1621,7 @@ public class elim extends SubspaceBot {
     private String padNum(String str, int len) {
         while (str.length() < len)
             str = " " + str;
+
         return str;
     }
 
@@ -1486,7 +1635,7 @@ public class elim extends SubspaceBot {
         updateStats = ba.createPreparedStatement(db, connectionID, "UPDATE tblElim__Player SET fnKills = ?, fnDeaths = ?, fnMultiKills = ?, fnKillStreak = ?, fnDeathStreak = ?, fnWinStreak = ?, fnShots = ?, fnKillJoys = ?, fnKnockOuts = ?, fnTopMultiKill = ?, fnTopKillStreak = ?, fnTopDeathStreak = ?, fnTopWinStreak = ?, fnAve = ?, fnRating = ?, fnAdjRating = ?, fnAim = ?, fnWins = ?, fnGames = ?, ftUpdated = NOW() WHERE fnShip = ? AND fcName = ? AND fnSeason = ?");
         storeGame = ba.createPreparedStatement(db, connectionID, "INSERT INTO tblElim__Game (fnShip, fcWinner, fnSpecAt, fnKills, fnDeaths, fnPlayers, fnRating, fnSeason) VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
         showLadder = ba.createPreparedStatement(db, connectionID, "SELECT fnRank, fcName, fnAdjRating FROM tblElim__Player WHERE fnShip = ? AND fnRank >= ? AND fnSeason = ? ORDER BY fnRank ASC LIMIT ?");
-        
+
         if (!checkStatements(false)) {
             debug("Update was null.");
             // Closing of statements is done in the disconnect function, which is called in the bot's Session disconnect() method
@@ -1496,6 +1645,7 @@ public class elim extends SubspaceBot {
                     ba.die("Prepared statements unable to initialize");
                 }
             };
+
             try {
                 ba.scheduleTask(die, 2500);
             } catch( IllegalStateException e) {
@@ -1503,27 +1653,27 @@ public class elim extends SubspaceBot {
             }
         }
     }
-    
+
     /**
-     * Checks whether all Prepared Statements are ready to go.
-     * @param extensive Whether or not an extensive check needs to be done.
-     *  When true, it will check if the statements exist and if they are not closed.
-     *  When false, it will only check if the statements exist.
-     * @return True when everything checks out to be okay, false upon any error, nulled statements or, when
-     *  an extensive check is done, when the statements are closed.
-     */
+        Checks whether all Prepared Statements are ready to go.
+        @param extensive Whether or not an extensive check needs to be done.
+        When true, it will check if the statements exist and if they are not closed.
+        When false, it will only check if the statements exist.
+        @return True when everything checks out to be okay, false upon any error, nulled statements or, when
+        an extensive check is done, when the statements are closed.
+    */
     public boolean checkStatements(boolean extensive) {
         // Check if they all exist.
         if(updateStats == null
                 || storeGame == null
                 || showLadder == null)
             return false;
-        
+
         // If extensive check is needed, check if they are closed or not
         try {
             if(extensive && (updateStats.isClosed()
-                    || storeGame.isClosed()
-                    || showLadder.isClosed()))
+                             || storeGame.isClosed()
+                             || showLadder.isClosed()))
                 return false;
         } catch (SQLException sqle) {
             // DB error happened. Statements are not ready.
@@ -1531,7 +1681,7 @@ public class elim extends SubspaceBot {
             debug("Exception was thrown on statement null check.");
             return false;
         }
-        
+
         // No problems.
         return true;
     }
@@ -1553,10 +1703,13 @@ public class elim extends SubspaceBot {
     /** Checks to make sure it didn't already send a recent alert and then sends pms */
     private void sendAlerts() {
         long now = System.currentTimeMillis();
+
         if ((now - lastAlert) < ALERT_DELAY * Tools.TimeInMillis.MINUTE)
             return;
+
         for (String p : alerts)
             ba.sendSmartPrivateMessage(p, "The next game of elim is about to begin in ?go " + arena + " (reply with !alert to disable this message)");
+
         lastAlert = now;
     }
 
@@ -1573,42 +1726,49 @@ public class elim extends SubspaceBot {
             m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
         } else if (winStreak == 1) {
             ba.sendZoneMessage("Next elim is starting. Last round's winner was " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ")! Type ?go " + arena
-                    + " to play -" + ba.getBotName());
+                               + " to play -" + ba.getBotName());
             lastWinStreak = winStreak;
             lastWinnerZoned = lastWinner.name;
         } else if (winStreak > 1) {
             switch (winStreak) {
-                case 2:
-                    ba.sendZoneMessage("Next elim is starting. " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") has won 2 back to back! Type ?go " + arena
-                            + " to play -" + ba.getBotName());
-                    break;
-                case 3:
-                    ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on fire with a triple win! Type ?go " + arena
-                            + " to end the win streak! -" + ba.getBotName(), Tools.Sound.CROWD_OOO);
-                    break;
-                case 4:
-                    ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 wins in a row! Type ?go "
-                            + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
-                    break;
-                case 5:
-                    ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths()
-                            + ") is dominating with a 5 game winning streak! Type ?go " + arena + " to end this madness! -" + ba.getBotName(), Tools.Sound.SCREAM);
-                    break;
-                default:
-                    ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is bringing the zone to shame with " + winStreak
-                            + " consecutive wins! Type ?go " + arena + " to redeem yourselves! -" + ba.getBotName(), Tools.Sound.INCONCEIVABLE);
-                    break;
+            case 2:
+                ba.sendZoneMessage("Next elim is starting. " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") has won 2 back to back! Type ?go " + arena
+                                   + " to play -" + ba.getBotName());
+                break;
+
+            case 3:
+                ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on fire with a triple win! Type ?go " + arena
+                                   + " to end the win streak! -" + ba.getBotName(), Tools.Sound.CROWD_OOO);
+                break;
+
+            case 4:
+                ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is on a rampage! 4 wins in a row! Type ?go "
+                                   + arena + " to put a stop to the carnage! -" + ba.getBotName(), Tools.Sound.CROWD_GEE);
+                break;
+
+            case 5:
+                ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths()
+                                   + ") is dominating with a 5 game winning streak! Type ?go " + arena + " to end this madness! -" + ba.getBotName(), Tools.Sound.SCREAM);
+                break;
+
+            default:
+                ba.sendZoneMessage(shipType.getType() + ": " + lastWinner.name + " (" + lastWinner.getKills() + ":" + lastWinner.getDeaths() + ") is bringing the zone to shame with " + winStreak
+                                   + " consecutive wins! Type ?go " + arena + " to redeem yourselves! -" + ba.getBotName(), Tools.Sound.INCONCEIVABLE);
+                break;
             }
+
             lastWinStreak = winStreak;
             lastWinnerZoned = lastWinner.name;
         } else
             m_botAction.sendZoneMessage("Next elim is starting. Type ?go " + arena + " to play -" + ba.getBotName());
+
         lastZoner = System.currentTimeMillis();
     }
 
     /** Sets the winner of the last elim event prompting end game routines and stores the finished game information to the database */
     public void storeGame(ElimPlayer winner, int aveRating, int players) {
         this.winner = winner;
+
         try {
             storeGame.clearParameters();
             storeGame.setInt(1, shipType.getNum());
@@ -1638,16 +1798,19 @@ public class elim extends SubspaceBot {
     }
 
     /**
-     * Saves a particular player's stats to the database using a prepared statement. It then reports the player updated to determine if updates are
-     * complete.
-     */
+        Saves a particular player's stats to the database using a prepared statement. It then reports the player updated to determine if updates are
+        complete.
+    */
     public void updatePlayer(ElimPlayer name) {
         ElimStats stats = name.getStats();
+
         try {
             updateStats.clearParameters();
             String debugs = "";
+
             for (int i = 0; i < updateFields.length; i++) {
                 String col = updateFields[i];
+
                 if (col.equals("fcName")) {
                     updateStats.setString(i + 1, Tools.addSlashesToString(name.name));
                     debugs += "Name(" + name.name + ") ";
@@ -1656,6 +1819,7 @@ public class elim extends SubspaceBot {
                     debugs += col + "(" + stats.getShip() + ") ";
                 } else {
                     StatType stat = StatType.sql(col);
+
                     if (stat.isInt()) {
                         updateStats.setInt(i + 1, stats.getDB(stat));
                         debugs += col + "(" + stats.getDB(stat) + ") ";
@@ -1668,10 +1832,13 @@ public class elim extends SubspaceBot {
                     }
                 }
             }
+
             updateStats.setInt(22, currentSeason);
             updateStats.execute();
+
             if (debugStatPlayers.contains(name.name.toLowerCase()))
                 debug(debugs);
+
             if (game != null && game.gotUpdate(name.name)) {
                 state = State.ENDING;
                 handleState();
@@ -1685,7 +1852,7 @@ public class elim extends SubspaceBot {
     private void updateRanks() {
         try {
             ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE (fnKills + fnDeaths) > " + kdNeededToLadder + " AND fnShip = " + shipType.getNum()
-                    + " AND fnSeason = "+ currentSeason + " ORDER BY fnAdjRating DESC");
+                                       + " AND fnSeason = " + currentSeason + " ORDER BY fnAdjRating DESC");
             ba.SQLClose(rs);
         } catch (SQLException e) {
             Tools.printStackTrace(e);
@@ -1693,12 +1860,13 @@ public class elim extends SubspaceBot {
     }
 
     private boolean isElimOp(String name) {
-    	return elimOps.contains(name.toLowerCase());
+        return elimOps.contains(name.toLowerCase());
     }
-    
+
     private void loadOps() {
-    	String[] eOps = ba.getBotSettings().getString("ElimOps").split(",");
-    	for(String op:eOps)
-    		elimOps.add(op);
+        String[] eOps = ba.getBotSettings().getString("ElimOps").split(",");
+
+        for(String op : eOps)
+            elimOps.add(op);
     }
 }

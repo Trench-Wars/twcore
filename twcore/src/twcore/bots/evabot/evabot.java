@@ -8,30 +8,30 @@ import twcore.core.game.*;
 
 public class evabot extends SubspaceBot {
 
-    OperatorList oplist=null;
+    OperatorList oplist = null;
 
-    private final int earthx=512, earthy=511, radius=35;
+    private final int earthx = 512, earthy = 511, radius = 35;
 
     public String[] infections = {
-            " dun goofed",
-            " got dismembered",
-            " became the monster",
-            " has no limbs!",
-            " ran out of cool deaths to say",
-            " went 7 rounds with an alien, he lost",
-            " thought aliens were cool",
-            " got infected",
-            " got high, on alien!!!",
-            " though it had a costume",
-            " went to the wrong event",
-            " thought we were playing catch",
-            " just well, died"
+        " dun goofed",
+        " got dismembered",
+        " became the monster",
+        " has no limbs!",
+        " ran out of cool deaths to say",
+        " went 7 rounds with an alien, he lost",
+        " thought aliens were cool",
+        " got infected",
+        " got high, on alien!!!",
+        " though it had a costume",
+        " went to the wrong event",
+        " thought we were playing catch",
+        " just well, died"
     };
 
     public evabot(BotAction botAction) {
         super(botAction);
         oplist = ba.getOperatorList();
-        ba=botAction;
+        ba = botAction;
         requestEvents();
 
     }
@@ -43,33 +43,35 @@ public class evabot extends SubspaceBot {
         req.request(EventRequester.LOGGED_ON);
     }
 
-    public void handleEvent(LoggedOn event){
+    public void handleEvent(LoggedOn event) {
         BotSettings config = m_botAction.getBotSettings();
         String initial = config.getString("Arena");
         m_botAction.joinArena(initial);
     }
 
-    public void handleEvent(Message message){
+    public void handleEvent(Message message) {
 
-        String msg=message.getMessage();
+        String msg = message.getMessage();
 
-        int PID=message.getPlayerID();
+        int PID = message.getPlayerID();
         Player p = ba.getPlayer(PID);
 
-        if(p!=null){
+        if(p != null) {
 
-            if(oplist.isER(p.getPlayerName())&&msg.contains("!start")&&message.getMessageType()==Message.PRIVATE_MESSAGE){
+            if(oplist.isER(p.getPlayerName()) && msg.contains("!start") && message.getMessageType() == Message.PRIVATE_MESSAGE) {
                 List<Player> players = ba.getPlayingPlayers();
-                if(players==null)
+
+                if(players == null)
                     return;
-                ba.sendArenaMessage("GO GO GO GO",104);
 
-                for(double i=0;i<players.size();i++){
-                    Player player=players.get((int) i);
-                    double prgs = (i/(players.size()))*360D;
-                    setShip(player.getPlayerID(),1,4);
+                ba.sendArenaMessage("GO GO GO GO", 104);
 
-                    ba.warpTo(player.getPlayerID(),(int) (earthx+Math.sin(Math.toRadians(prgs))*radius),(int)(earthy+Math.cos(Math.toRadians(prgs))*radius));
+                for(double i = 0; i < players.size(); i++) {
+                    Player player = players.get((int) i);
+                    double prgs = (i / (players.size())) * 360D;
+                    setShip(player.getPlayerID(), 1, 4);
+
+                    ba.warpTo(player.getPlayerID(), (int) (earthx + Math.sin(Math.toRadians(prgs)) * radius), (int)(earthy + Math.cos(Math.toRadians(prgs)) * radius));
 
                 }
 
@@ -80,31 +82,35 @@ public class evabot extends SubspaceBot {
         }
     }
 
-    public void setShip(int PID,int rs,int re){
+    public void setShip(int PID, int rs, int re) {
         Random r = new Random();
-        int ship = rs+r.nextInt(re-rs)+1;
-        ba.setShip(PID,ship);
-        if(ship>=1 && ship<=4){
+        int ship = rs + r.nextInt(re - rs) + 1;
+        ba.setShip(PID, ship);
+
+        if(ship >= 1 && ship <= 4) {
             ba.setFreq(PID, 0);
-        }else if(ship>=5 && ship<=8){
+        } else if(ship >= 5 && ship <= 8) {
             ba.setFreq(PID, 1);
         }
     }
 
-    public void handleEvent(PlayerDeath event){
+    public void handleEvent(PlayerDeath event) {
         setShip(event.getKilleeID(), 5, 8);
         Player p = ba.getPlayer(event.getKilleeID());
-        if(p.getFrequency()==0){
+
+        if(p.getFrequency() == 0) {
             Random r  = new Random();
-            ba.sendArenaMessage(p.getPlayerName()+infections[r.nextInt(infections.length)]);
+            ba.sendArenaMessage(p.getPlayerName() + infections[r.nextInt(infections.length)]);
         }
 
-        if(ba.getPlayingFrequencySize(0)==2 && p.getFrequency()==0){
+        if(ba.getPlayingFrequencySize(0) == 2 && p.getFrequency() == 0) {
             List<Player> ps = ba.getPlayingPlayers();
-            for(int i=0;i<ps.size();i++){
-                Player sp =ps.get(i);
-                if(sp.getFrequency()==0 && sp.getPlayerName()!=p.getPlayerName()){
-                    ba.sendArenaMessage(sp.getPlayerName()+" is the last human!");
+
+            for(int i = 0; i < ps.size(); i++) {
+                Player sp = ps.get(i);
+
+                if(sp.getFrequency() == 0 && sp.getPlayerName() != p.getPlayerName()) {
+                    ba.sendArenaMessage(sp.getPlayerName() + " is the last human!");
                 }
             }
 

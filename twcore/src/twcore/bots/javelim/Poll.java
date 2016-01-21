@@ -1,9 +1,9 @@
 /**
- * @(#)Poll.java
- * Modified version of Harvey Yau's Poll class found in MultiBot
- * for polling spectators on who will win final round
- *
- */
+    @(#)Poll.java
+    Modified version of Harvey Yau's Poll class found in MultiBot
+    for polling spectators on who will win final round
+
+*/
 package twcore.bots.javelim;
 
 import twcore.core.BotAction;
@@ -29,13 +29,16 @@ final class Poll {
         m_votes = new HashMap<String, Integer>();
 
         int i = 0;
+
         for(KimTeam team : teams) {
             if(team != null) {
                 i++;
             }
         }
+
         m_teams = new KimTeam[i];
         i = 0;
+
         for(KimTeam team : teams) {
             if(team != null) {
                 m_teams[i++] = team;
@@ -44,9 +47,11 @@ final class Poll {
 
         m_lastIndex = i;
         m_botAction.sendTeamMessage("Poll: " + m_question);
+
         for(i = 0; i < m_teams.length; i++) {
-                m_botAction.sendTeamMessage((i + 1) + ": " + m_teams[i].toString(false));
+            m_botAction.sendTeamMessage((i + 1) + ": " + m_teams[i].toString(false));
         }
+
         m_botAction.sendTeamMessage("Private message your answers to me.", 21);
         m_isClosed = false;
 
@@ -62,13 +67,15 @@ final class Poll {
         if(m_isClosed) {
             return;
         }
+
         int vote;
+
         try {
             vote = Integer.parseInt(message);
         } catch(NumberFormatException e) {
             m_botAction.sendPrivateMessage(id, "Invalid vote. "
-            + "Your vote must be a number corresponding to the choices "
-            + "in the poll.");
+                                           + "Your vote must be a number corresponding to the choices "
+                                           + "in the poll.");
             return;
         }
 
@@ -115,12 +122,12 @@ final class Poll {
             m_botAction.sendArenaMessage("Voted for winner: " + names.toString());
 
             if(connectionName != null) {
-                try{
-                m_botAction.SQLQueryAndClose(connectionName
-                    , "INSERT INTO tblJavelim (fcName,fnPredictions) "
-                    + "VALUES " + Tools.addSlashes(namesForSQL.toString()) + " "
-                    + "ON DUPLICATE KEY UPDATE fnPredictions=fnPredictions+1");
-                }catch(SQLException e){
+                try {
+                    m_botAction.SQLQueryAndClose(connectionName
+                                                 , "INSERT INTO tblJavelim (fcName,fnPredictions) "
+                                                 + "VALUES " + Tools.addSlashes(namesForSQL.toString()) + " "
+                                                 + "ON DUPLICATE KEY UPDATE fnPredictions=fnPredictions+1");
+                } catch(SQLException e) {
                     Tools.printStackTrace(e);
                 }
             }

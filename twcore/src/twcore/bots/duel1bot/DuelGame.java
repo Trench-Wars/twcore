@@ -26,7 +26,7 @@ public class DuelGame {
 
     duel1bot            bot;
     DuelBox             box;
-    
+
     DuelPlayer          player1;
     DuelPlayer          player2;
 
@@ -42,7 +42,7 @@ public class DuelGame {
     static final int    SETUP       = 0;
     static final int    IN_PROGRESS = 1;
     static final int    ENDING      = 3;
-    
+
     TimerTask           go;
 
     public DuelGame(DuelBox box, DuelChallenge chall, BotAction botaction, duel1bot bot) {
@@ -62,6 +62,7 @@ public class DuelGame {
         ranked = chall.ranked;
         id = bot.getID(ranked);
         mixed = false;
+
         if (div == 5) {
             ship = -1;
             mixed = true;
@@ -69,21 +70,26 @@ public class DuelGame {
             ship = 7;
         else
             ship = div;
+
         // Ax1,Ay1,safeAx1,safeAy1,Ax2,Ay2,safeAx2,safeAy2
         int[] coords1 = new int[] { box.getAX(), box.getAY(), box.getSafeAX(), box.getSafeAY() };
         int[] coords2 = new int[] { box.getBX(), box.getBY(), box.getSafeBX(), box.getSafeBY() };
 
         player1 = bot.getPlayer(chall.name1);
         player2 = bot.getPlayer(chall.name2);
+
         if (player1 == null)
             player1 = new DuelPlayer(ba.getPlayer(chall.name1), bot);
+
         if (player2 == null)
             player2 = new DuelPlayer(ba.getPlayer(chall.name2), bot);
+
         if (ranked) {
             d_noCount = player1.d_noCount;
             d_deathWarp = player1.d_deathWarp;
             d_toWin = player1.d_toWin;
         }
+
         player1.setDuel(this, chall.freq1, coords1);
         player2.setDuel(this, chall.freq2, coords2);
         bot.games.put(id, this);
@@ -101,7 +107,7 @@ public class DuelGame {
         if (player1.isOut() || player2.isOut())
             endGame(t1, t2);
     }
-    
+
     public DuelPlayer[] getPlayers(String name) {
         if (name.equalsIgnoreCase(player1.name))
             return new DuelPlayer[] { player1, player2 };
@@ -134,9 +140,10 @@ public class DuelGame {
         else
             return "Unknown";
     }
-    
+
     public String[] getStats() {
         ArrayList<String> statArray = new ArrayList<String>();
+
         if (ranked) {
             statArray.add(",------------------------+----+----+----------+--------.");
             statArray.add("|                      K |  D | LO | PlayTime | Rating |");
@@ -153,19 +160,20 @@ public class DuelGame {
             statArray.add("+-----------------'-,----+----+----+----------+");
             statArray.add("| " + padString(player2.name, 17) + "/ " + padNum(player2.getKills(), 3) + " |" + padNum(player2.getDeaths(), 3) + " |" + padNum(player2.getLagouts(), 3) + " |" + padNum(player2.getTime(), 9) + " |");
             statArray.add("`-----------------'------+----+----+----------'");
-            
+
         }
+
         return statArray.toArray(new String[statArray.size()]);
     }
-    
+
     public boolean getNoCount() {
         return d_noCount == 1;
     }
-    
+
     public boolean getDeathWarp() {
         return d_deathWarp == 1;
     }
-    
+
     public int getSpecAt() {
         return d_toWin;
     }
@@ -181,8 +189,10 @@ public class DuelGame {
         score = new int[] { 0, 0 };
 
         int divis = div;
+
         if (!ranked)
             divis = -1;
+
         player1.starting(divis, ship);
         player2.starting(divis, ship);
         go = new TimerTask() {
@@ -194,6 +204,7 @@ public class DuelGame {
             }
         };
         String r = ranked ? "[RANKED] " : "[CASUAL] ";
+
         if (mixed) {
             ba.sendPrivateMessage(player1.name, r + "Duel Begins in 30 Seconds Against '" + player2.name + "'", 29);
             ba.sendPrivateMessage(player1.name, "You may change your ship until that time! No ship changes will be allowed after the duel starts.");
@@ -205,18 +216,19 @@ public class DuelGame {
             ba.sendPrivateMessage(player2.name, r + "Duel Begins in 15 Seconds Against '" + player1.name + "'", 27);
             ba.scheduleTask(go, 15000);
         }
+
         ba.sendTeamMessage("A " + (ranked ? "RANKED " : "CASUAL ") + getDivision() + " duel is starting: '" + player1.name + "' VS '" + player2.name + "'");
     }
 
     /**
-     * Ends the duel by sending announcements and initiating post-game
-     * cleanup and database updating.
-     *
-     * @param t1
-     *      the final score for team 1
-     * @param t2
-     *      the final score for team 2
-     */
+        Ends the duel by sending announcements and initiating post-game
+        cleanup and database updating.
+
+        @param t1
+            the final score for team 1
+        @param t2
+            the final score for team 2
+    */
     public void endGame(int t1, int t2) {
         state = ENDING;
         score[0] = t1;
@@ -225,6 +237,7 @@ public class DuelGame {
         DuelPlayer win = null;
         DuelPlayer loss = null;
         int winnerScore, loserScore;
+
         if (t1 > t2) {
             winner = player1.name;
             loser = player2.name;
@@ -240,6 +253,7 @@ public class DuelGame {
             winnerScore = t2;
             loserScore = t1;
         }
+
         win.endTimePlayed();
         loss.endTimePlayed();
 
@@ -250,8 +264,8 @@ public class DuelGame {
         int ratingDifference = loserRatingBefore - winnerRatingBefore;
         double p1 = 1.0 / ( 1 + Math.pow( 10.0, -ratingDifference / 400.0 ) );
         double p2 = 1.0 - p1;
-        int loserRatingAfter = (int)(loserRatingBefore + d_toWin*5.0*(0.0 - p1 ));
-        int winnerRatingAfter = (int)(winnerRatingBefore + d_toWin*5.0*(1.0 - p2 ));
+        int loserRatingAfter = (int)(loserRatingBefore + d_toWin * 5.0 * (0.0 - p1 ));
+        int winnerRatingAfter = (int)(winnerRatingBefore + d_toWin * 5.0 * (1.0 - p2 ));
 
         ba.sendPrivateMessage(winner, "You have defeated '" + loser + "' score: (" + winnerScore + "-" + loserScore + ")");
         ba.sendPrivateMessage(loser, "You have been defeated by '" + winner + "' score: (" + loserScore + "-" + winnerScore + ")");
@@ -260,10 +274,10 @@ public class DuelGame {
         String[] stats = getStats();
         ba.privateMessageSpam(player1.name, stats);
         ba.privateMessageSpam(player2.name, stats);
-        
+
         if (ranked)
             sql_storeGame(win, loss, winnerRatingBefore, winnerRatingAfter, loserRatingBefore, loserRatingAfter);
-        
+
         player1.endGame();
         player2.endGame();
 
@@ -272,7 +286,7 @@ public class DuelGame {
 
         bot.playing.remove(player1.name.toLowerCase());
         bot.playing.remove(player2.name.toLowerCase());
-        
+
         box.toggleUse();
     }
 
@@ -282,7 +296,7 @@ public class DuelGame {
 
         ba.sendSmartPrivateMessage(player1.name, msg);
         ba.sendSmartPrivateMessage(player2.name, msg);
-        
+
         String[] stats = getStats();
         ba.privateMessageSpam(player1.name, stats);
         ba.privateMessageSpam(player2.name, stats);
@@ -298,6 +312,7 @@ public class DuelGame {
 
         if (name != null)
             ba.sendPrivateMessage(name, "Duel cancelled.");
+
         box.toggleUse();
     }
 
@@ -307,59 +322,64 @@ public class DuelGame {
     public void playerOut(DuelPlayer player) {
         bot.laggers.remove(player.getName().toLowerCase());
         int why = player.getReason();
+
         if (why == DuelPlayer.NORMAL) {
             ba.sendOpposingTeamMessageByFrequency(player1.duelFreq, "'" + player.getName()
-                    + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
+                                                  + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
             ba.sendOpposingTeamMessageByFrequency(player2.duelFreq, "'" + player.getName()
-                    + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
+                                                  + "' is out with " + player.getKills() + ":" + player.getDeaths(), 26);
         } else if (why == DuelPlayer.WARPS) {
             ba.sendOpposingTeamMessageByFrequency(player1.duelFreq, "'" + player.getName()
-                    + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
             ba.sendOpposingTeamMessageByFrequency(player2.duelFreq, "'" + player.getName()
-                    + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to warp abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         } else if (why == DuelPlayer.LAGOUTS) {
             ba.sendOpposingTeamMessageByFrequency(player1.duelFreq, "'" + player.getName()
-                    + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
             ba.sendOpposingTeamMessageByFrequency(player2.duelFreq, "'" + player.getName()
-                    + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to lagouts (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         } else if (why == DuelPlayer.SPAWNS) {
             ba.sendOpposingTeamMessageByFrequency(player1.duelFreq, "'" + player.getName()
-                    + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
             ba.sendOpposingTeamMessageByFrequency(player2.duelFreq, "'" + player.getName()
-                    + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
+                                                  + "' is out due to spawn kill abuse (" + player.getKills() + ":" + player.getDeaths() + ")", 26);
         }
+
         updateScore();
     }
-    
+
     /**
-     * Helper method adds spaces in front of a number to fit a certain length
-     * @param n
-     * @param length
-     * @return String of length with spaces preceeding a number
-     */
+        Helper method adds spaces in front of a number to fit a certain length
+        @param n
+        @param length
+        @return String of length with spaces preceeding a number
+    */
     public String padNum(int n, int length) {
         String str = "";
         String x = "" + n;
+
         for (int i = 0; i + x.length() < length; i++)
             str += " ";
+
         return str + x;
     }
-    
+
     /** Helper method adds spaces to a string to meet a certain length **/
     private String padString(String str, int length) {
         for (int i = str.length(); i < length; i++)
             str += " ";
+
         return str.substring(0, length);
     }
-    
+
     /** Records the duel results in the database */
     public void sql_storeGame(DuelPlayer win, DuelPlayer loss, int winBefore, int winAfter, int lossBefore, int lossAfter) {
         //TODO:
         String query = "INSERT INTO tblDuel1__match (fnSeason, fnDivision, fcWiner, fcLoser, fnWinnerID, fnLoserID, fnWinnerScore, fnLoserScore, fnWinnerRatingBefore, fnWinnerRatingAfter, fnLoserRatingBefore, fnLoserRatingAfter) " +
-        		"VALUES(" + d_season + ", " + div + ", " + Tools.addSlashesToString(win.name) + ", " + Tools.addSlashesToString(loss.name) + ", " +
-                "" + win.userID + ", " + loss.userID + ", " + loss.getDeaths() + ", " + win.getDeaths() + ", " + 
-        		"" + winBefore + ", " + winAfter + ", " + lossBefore + ", " + lossAfter + ")"; 
-        		
+                       "VALUES(" + d_season + ", " + div + ", " + Tools.addSlashesToString(win.name) + ", " + Tools.addSlashesToString(loss.name) + ", " +
+                       "" + win.userID + ", " + loss.userID + ", " + loss.getDeaths() + ", " + win.getDeaths() + ", " +
+                       "" + winBefore + ", " + winAfter + ", " + lossBefore + ", " + lossAfter + ")";
+
         win.sql_updateDivision(div, true, loss.getKills() == 0);
         loss.sql_updateDivision(div, false, loss.getKills() == 0);
 

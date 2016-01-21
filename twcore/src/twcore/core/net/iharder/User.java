@@ -6,19 +6,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Represents a user as decoded from the json data from Pushbullet.
- * It is created by introspection and thus doesn't have any full
- * constructors. It is immutable and so has no setter methods.
- * 
- * 
- * 
- * @author rob
- */
-public final class User implements Comparable<User>{
-	
+    Represents a user as decoded from the json data from Pushbullet.
+    It is created by introspection and thus doesn't have any full
+    constructors. It is immutable and so has no setter methods.
+
+
+
+    @author rob
+*/
+public final class User implements Comparable<User> {
+
     private String iden;
     private double created;
-    private double modified;    
+    private double modified;
     private String email;
     private String email_normalized;
     private String name;
@@ -39,7 +39,7 @@ public final class User implements Comparable<User>{
     public double getCreated() {
         return created;
     }
-  
+
     public double getModified() {
         return modified;
     }
@@ -61,20 +61,20 @@ public final class User implements Comparable<User>{
     }
 
     /**
-     * Sorts according to <tt>name</tt> field.
-     */
+        Sorts according to <tt>name</tt> field.
+    */
     @Override
     public int compareTo(User o) {
         return this.name == null ? -1 : this.name.compareTo(o.name);
     }
 
     /**
-     * Two users will be considered equal if their <tt>iden</tt>
-     * fields are equal.
-     *
-     * @param obj The other user to compare
-     * @return true if the two users have the same <tt>iden</tt>
-     */
+        Two users will be considered equal if their <tt>iden</tt>
+        fields are equal.
+
+        @param obj The other user to compare
+        @return true if the two users have the same <tt>iden</tt>
+    */
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -89,10 +89,10 @@ public final class User implements Comparable<User>{
             return false;
         }
 
-        if( this.iden == null ){
+        if( this.iden == null ) {
             return false;
         }
-        
+
         User rhs = (User) obj;
         return this.iden.equals(rhs.iden);
     }
@@ -101,23 +101,26 @@ public final class User implements Comparable<User>{
     public int hashCode() {
         return this.iden == null ? super.hashCode() : this.iden.hashCode();
     }
-    
+
     @Override
-    public String toString(){
+    public String toString() {
         StringBuilder s = new StringBuilder();
         s.append( "{").append(this.getClass().getSimpleName());
-        for( Field f : this.getClass().getDeclaredFields() ){
+
+        for( Field f : this.getClass().getDeclaredFields() ) {
             s.append(", ");
             s.append( f.getName() ).append("=");
+
             try {
                 s.append( f.get(this) );
             } catch (Exception ex) {
-            } 
+            }
         }
+
         s.append("}");
         return s.toString();
     }
-    
-    
-    
+
+
+
 }

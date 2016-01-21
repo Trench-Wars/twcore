@@ -1,6 +1,6 @@
 /**
- * 
- */
+
+*/
 package twcore.bots.loginspawn;
 
 import twcore.core.BotAction;
@@ -9,9 +9,9 @@ import twcore.core.SubspaceBot;
 import twcore.core.events.*;
 
 /**
- * @author WingZero
- *
- */
+    @author WingZero
+
+*/
 public class loginspawn extends SubspaceBot {
 
     BotAction ba;
@@ -23,21 +23,22 @@ public class loginspawn extends SubspaceBot {
         er.request(EventRequester.LOGGED_ON);
         er.request(EventRequester.ARENA_JOINED);
     }
-    
-    
-    public void handleEvent(Message event) {        
+
+
+    public void handleEvent(Message event) {
         String msg = event.getMessage();
+
         if (event.getMessageType() == Message.PRIVATE_MESSAGE || event.getMessageType() == Message.REMOTE_PRIVATE_MESSAGE) {
             if (msg.equals("!die")) {
                 ba.die("!die received");
             }
         }
     }
-    
+
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena("#robopark");
     }
-    
+
     public void handleEvent(ArenaJoined event) {
         ba.die("Arena joined successfully.");
     }

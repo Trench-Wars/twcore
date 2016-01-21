@@ -4,12 +4,12 @@ import java.lang.reflect.Field;
 
 
 /**
- * Represents a Pushbullet device that has been converted from a json response
- * from the Pushbullet servers.
- * @author Robert.Harder
- */
+    Represents a Pushbullet device that has been converted from a json response
+    from the Pushbullet servers.
+    @author Robert.Harder
+*/
 public final class Device implements Comparable<Device> {
-	
+
     private Number id;
     private String iden;
     private String nickname;
@@ -23,8 +23,8 @@ public final class Device implements Comparable<Device> {
     private String model;
     private boolean active;
     private boolean pushable;
-    
-    
+
+
     public double getModified() {
         return modified;
     }
@@ -45,12 +45,12 @@ public final class Device implements Comparable<Device> {
         return nickname;
     }
 
-    public Number getId(){
-            return this.id;
+    public Number getId() {
+        return this.id;
     }
 
-    public String getIden(){
-            return this.iden;
+    public String getIden() {
+        return this.iden;
     }
 
     public String getApp_version() {
@@ -96,10 +96,10 @@ public final class Device implements Comparable<Device> {
             return false;
         }
 
-        if( this.iden == null ){
+        if( this.iden == null ) {
             return false;
         }
-        
+
         Device rhs = (Device) obj;
         return this.iden.equals(rhs.iden);
     }
@@ -110,19 +110,22 @@ public final class Device implements Comparable<Device> {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         StringBuilder s = new StringBuilder();
         s.append( "{").append(this.getClass().getSimpleName());
-        for( Field f : this.getClass().getDeclaredFields() ){
+
+        for( Field f : this.getClass().getDeclaredFields() ) {
             s.append(", ");
             s.append( f.getName() ).append("=");
+
             try {
                 s.append( f.get(this) );
             } catch (Exception ex) {
-            } 
+            }
         }
+
         s.append("}");
         return s.toString();
     }
-    
+
 }   // end class Device

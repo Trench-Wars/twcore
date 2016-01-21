@@ -56,8 +56,10 @@ public class DuelBox {
         d_areaYmin = Integer.parseInt(area[1]);
         d_areaXmax = Integer.parseInt(area[2]);
         d_areaYmax = Integer.parseInt(area[3]);
+
         for (int i = 0; i < randomPt.length; i += 2)
             randomWarpPoints.add(new WarpPoint(randomPt[i], randomPt[i + 1]));
+
         generator = new Random();
     }
 
@@ -65,12 +67,16 @@ public class DuelBox {
 
         if (d_type == 1 && gameType == 3)
             return true;
+
         if (d_type == 1 && gameType == 4)
             return true;
+
         if (d_type == 1 && gameType == 5)
             return true;
+
         if (d_type == 1 && gameType == 7)
             return true;
+
         if (d_type == gameType)
             return true;
         else
@@ -80,8 +86,10 @@ public class DuelBox {
     public WarpPoint getRandomWarpPoint() {
 
         WarpPoint p = randomWarpPoints.elementAt(generator.nextInt(randomWarpPoints.size()));
+
         if (p == last)
             return getRandomWarpPoint();
+
         last = p;
         return p;
     }

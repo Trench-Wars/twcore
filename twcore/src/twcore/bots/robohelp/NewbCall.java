@@ -5,8 +5,8 @@ public class NewbCall extends Call {
     static final int FREE = 0;
     static final int TAKEN = 1;
     static final int FALSE = 2;
-    
-    
+
+
     public NewbCall(String player) {
         super();
         this.playerName = player;
@@ -14,18 +14,18 @@ public class NewbCall extends Call {
         this.claimer = "";
         this.claimType = FREE;
     }
-    
+
     public void claim(String name) {
         claimer = name;
         claimType = TAKEN;
         claimed = true;
         timeClaim = System.currentTimeMillis();
     }
-    
+
     public String getName() {
         return playerName;
     }
-    
+
     public void setID(int id) {
         this.id = id;
     }

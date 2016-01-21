@@ -35,16 +35,16 @@ import twcore.core.util.Tools;
 import twcore.core.util.ipc.IPCMessage;
 
 /**
- * WelcomeBot is a player tracking bot designed specifically for identifying and monitoring
- * players new to the game. Stores tracking data in the database each time an identified new player
- * logs on creating a new record for each login. Upon detection of a new player an alert is issued
- * to staff which allows them to handle the call accordingly. Prepared statements are used for most
- * queries for ease of use and efficiency. Identification of new players relies on information
- * previously recorded by the stats module of guardhub. The last function of welcome bot is regulating
- * the new player tutorial objons for automatic use upon detection and staff. 
- *
- * @author WingZero
- */
+    WelcomeBot is a player tracking bot designed specifically for identifying and monitoring
+    players new to the game. Stores tracking data in the database each time an identified new player
+    logs on creating a new record for each login. Upon detection of a new player an alert is issued
+    to staff which allows them to handle the call accordingly. Prepared statements are used for most
+    queries for ease of use and efficiency. Identification of new players relies on information
+    previously recorded by the stats module of guardhub. The last function of welcome bot is regulating
+    the new player tutorial objons for automatic use upon detection and staff.
+
+    @author WingZero
+*/
 public class welcomebot extends SubspaceBot {
 
     private static final int MAX_STRING = 220;
@@ -133,6 +133,7 @@ public class welcomebot extends SubspaceBot {
             ba.die("null prepared statement");
             return;
         }
+
         loadTrusted();
     }
 
@@ -148,8 +149,8 @@ public class welcomebot extends SubspaceBot {
         psGetCountryCode = ba.createPreparedStatement(db, db, "SELECT country_code3 FROM tblCountryIPs WHERE INET_ATON(?) >= ip_from AND INET_ATON(?) <= ip_to");
         psUpdateSession = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayerSession (fcName, ffSessionUsage, fnKills, fnDeaths, fcResolution) VALUES(?,?,?,?,?)");
         psUpdatePlayer = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayer "
-                + "(fcName, fcSquad, ffTotalUsage, fcIP, fnMID, fcCountryCode, fdNameCreated, fcResolution) "
-                + "VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE fcSquad=VALUES(fcSquad), ffTotalUsage=VALUES(ffTotalUsage), fcIP=VALUES(fcIP), fnMID=VALUES(fnMID), fcCountryCode=VALUES(fcCountryCode), fcResolution=VALUES(fcResolution)");
+                         + "(fcName, fcSquad, ffTotalUsage, fcIP, fnMID, fcCountryCode, fdNameCreated, fcResolution) "
+                         + "VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE fcSquad=VALUES(fcSquad), ffTotalUsage=VALUES(ffTotalUsage), fcIP=VALUES(fcIP), fnMID=VALUES(fnMID), fcCountryCode=VALUES(fcCountryCode), fcResolution=VALUES(fcResolution)");
 
         psGetReferral = ba.createPreparedStatement(db, db, "SELECT fnReferralid FROM tblReferral WHERE fcReferralName = ?");
         psAddReferral = ba.createPreparedStatement(db, db, "INSERT INTO tblReferral (fcReferralName) VALUES (?)");
@@ -175,21 +176,29 @@ public class welcomebot extends SubspaceBot {
         trusted.clear();
         grantedOps.clear();
         String[] gops = cfg.getString("GrantedOps").trim().split(",");
+
         for (String op : gops)
             grantedOps.add(op);
+
         try {
             ResultSet rs = psGetTrusted.executeQuery();
+
             while (rs != null && rs.next())
                 trusted.put(rs.getString(1), rs.getBoolean(2));
+
             if (DEBUG) {
                 String msg = "Trusted(" + trusted.size() + "): ";
+
                 for (String n : trusted.keySet())
                     msg += n + ", ";
+
                 msg = msg.substring(0, msg.length() - 2);
                 debug(msg);
                 msg = "GrantedOps(" + grantedOps.size() + "): ";
+
                 for (String n : grantedOps)
                     msg += n + ", ";
+
                 msg = msg.substring(0, msg.length() - 2);
                 debug(msg);
             }
@@ -213,14 +222,16 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Takes entering players and checks for new player call record. If there is no
-     * found record then new player detection commences. Otherwise, if the alert was genuine
-     * then player tracking is started.
-     */
+        Takes entering players and checks for new player call record. If there is no
+        found record then new player detection commences. Otherwise, if the alert was genuine
+        then player tracking is started.
+    */
     public void handleEvent(PlayerEntered event) {
         if (!ready)
             return;
+
         String name = ba.getPlayerName(event.getPlayerID());
+
         if (trainers.remove(name))
             ba.sendAlertMessage("newplayer", name);
         else if (name == null || vets.contains(name) || ops.isBotExact(name))
@@ -228,26 +239,32 @@ public class welcomebot extends SubspaceBot {
         else {
             try {
                 int taken = -1;
+
                 if (psCheckAlerts.isClosed()) { // For some reason, this PS was getting closed, causing exceptions.
                     Tools.printLog("PreparedStatement attempting to be accessed in PlayerEntered event that is already closed. ?message WingZero or qan");
                     return;
                 }
+
                 psCheckAlerts.clearParameters();
                 psCheckAlerts.setString(1, name);
                 ResultSet rs = psCheckAlerts.executeQuery();
+
                 if (rs != null && rs.next())
                     taken = rs.getInt("fnTaken");
+
                 // 0 is missed, 1 is taken
                 if (taken < 0) {
                     // no record so move on to detection
                     infoer.add(name);
                 } else if (taken < 3) {
                     debug("Taken for " + name + ": " + taken);
+
                     if (taken == 0) {
                         ba.SQLBackgroundQuery(web, null, "UPDATE tblCallNewb SET ftUpdated = NOW() WHERE fnAlertID = " + rs.getInt("fnAlertID"));
                         debug("Sending newplayer alert: " + name);
                         ba.sendAlertMessage("newplayer", name);
                     }
+
                     if (!sessions.containsKey(name))
                         sessions.put(name, new Session(ba.getPlayer(name)));
                 } else {
@@ -261,57 +278,72 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Session is ended if the player tracked leaves the arena.
-     */
+        Session is ended if the player tracked leaves the arena.
+    */
     public void handleEvent(PlayerLeft event) {
         if (!ready)
             return;
+
         String name = ba.getPlayerName(event.getPlayerID());
+
         if (sessions.containsKey(name))
             sessions.get(name).endSession();
+
         tutorials.remove(name);
     }
 
     public void handleEvent(PlayerDeath event) {
         if (!ready)
             return;
+
         String killer = ba.getPlayerName(event.getKillerID());
+
         if (killer != null && sessions.containsKey(killer))
             sessions.get(killer).addKill();
+
         String killed = ba.getPlayerName(event.getKilleeID());
+
         if (killed != null && sessions.containsKey(killed))
             sessions.get(killed).addDeath();
     }
 
     /**
-     * IPC messages are exchanged with RoboHelp for falsed/un-falsed newb calls
-     * and trainer alert triggers.
-     */
+        IPC messages are exchanged with RoboHelp for falsed/un-falsed newb calls
+        and trainer alert triggers.
+    */
     public void handleEvent(InterProcessEvent event) {
         if (!ready)
             return;
+
         if (event.getChannel().equals(IPC_CHANNEL) && event.getObject() instanceof IPCMessage) {
             IPCMessage ipc = (IPCMessage) event.getObject();
             debug("IPCMessage: " + ipc.getMessage());
+
             if (ipc.getSender().equalsIgnoreCase("RoboHelp")) {
                 String msg = ((IPCMessage) event.getObject()).getMessage();
+
                 if (msg.startsWith("false:")) {
                     String name = msg.substring(msg.indexOf(" ") + 1);
+
                     if (sessions.containsKey(name))
                         sessions.get(name).falseSession();
+
                     vets.add(name);
                 } else if (msg.startsWith("undo:")) {
                     String name = msg.substring(msg.indexOf(" ") + 1);
                     vets.remove(name);
                     Player p = ba.getPlayer(name);
+
                     if (p != null)
                         sessions.put(name, new Session(p));
                 } else if (msg.startsWith("newb:")) {
                     String[] args = msg.substring(5).split(",");
+
                     if (trainers.contains(args[1]))
                         ba.ipcSendMessage(IPC_CHANNEL, args[0] + ":" + args[1] + " was already set as a trainer newb alert alias.", "RoboHelp", ba.getBotName());
                     else
                         ba.ipcSendMessage(IPC_CHANNEL, args[0] + ":" + args[1] + " will trigger a newb alert upon next visit." + ":" + args[1], "RoboHelp", ba.getBotName());
+
                     trainers.add(args[1]);
                 }
             }
@@ -319,11 +351,12 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * SQL events are used for alias checking functions done using background
-     * queries in order to keep down load size.
-     */
+        SQL events are used for alias checking functions done using background
+        queries in order to keep down load size.
+    */
     public void handleEvent(SQLResultEvent event) {
         ResultSet resultSet = event.getResultSet();
+
         if (resultSet == null)
             return;
 
@@ -331,15 +364,19 @@ public class welcomebot extends SubspaceBot {
 
             String name = event.getIdentifier().substring(event.getIdentifier().lastIndexOf(":") + 1);
             AliasCheck alias = aliases.get(name);
+
             if (alias == null)
                 return;
 
             debug("SQL: " + event.getIdentifier());
+
             // GET IP + MID
             if (event.getIdentifier().startsWith("alias:ip:")) {
                 StringBuffer buffer = new StringBuffer();
+
                 try {
                     resultSet.beforeFirst();
+
                     while (resultSet.next()) {
                         buffer.append(", ");
                         buffer.append(resultSet.getString("fnIP"));
@@ -353,26 +390,31 @@ public class welcomebot extends SubspaceBot {
                 else {
                     final String aliasIP = alias.getName();
                     Integer count = 0;
+
                     if (loopCatcher.containsKey(aliasIP)) {
                         Integer[] tasks = loopCatcher.get(aliasIP);
+
                         if (tasks == null)
                             tasks = new Integer[] { 1, 0 };
                         else {
                             tasks[0]++;
                             count = tasks[0];
                         }
+
                         loopCatcher.put(aliasIP, tasks);
                     }
+
                     if (count > 5)
                         alias.setIpResults("");
+
                     if (alias.getIpResults() == null && web != null) {
                         TimerTask delayIP = new TimerTask() {
                             @Override
                             public void run() {
                                 System.out.println("[ALIAS] Blank IP: " + aliasIP + " Task Scheduled.");
                                 ba.SQLBackgroundQuery(web, "alias:ip:" + aliasIP, "SELECT DISTINCT(fnIP) "
-                                        + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID "
-                                        + "WHERE fcUserName = '" + Tools.addSlashes(aliasIP) + "'");
+                                                      + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID "
+                                                      + "WHERE fcUserName = '" + Tools.addSlashes(aliasIP) + "'");
                             }
                         };
                         ba.scheduleTask(delayIP, 10000);
@@ -380,8 +422,10 @@ public class welcomebot extends SubspaceBot {
                 }
             } else if (event.getIdentifier().startsWith("alias:mid:")) {
                 StringBuffer buffer = new StringBuffer();
+
                 try {
                     resultSet.beforeFirst();
+
                     while (resultSet.next()) {
                         buffer.append(", ");
                         buffer.append(resultSet.getString("fnMachineID"));
@@ -395,26 +439,31 @@ public class welcomebot extends SubspaceBot {
                 else {
                     final String aliasMID = alias.getName();
                     Integer count = 0;
+
                     if (loopCatcher.containsKey(aliasMID)) {
                         Integer[] tasks = loopCatcher.get(aliasMID);
+
                         if (tasks == null)
                             tasks = new Integer[] { 0, 1 };
                         else {
                             tasks[1]++;
                             count = tasks[1];
                         }
+
                         loopCatcher.put(aliasMID, tasks);
                     }
+
                     if (count > 5)
                         alias.setMidResults("");
+
                     if (alias.getMidResults() == null && web != null) {
                         TimerTask delayMID = new TimerTask() {
                             @Override
                             public void run() {
                                 System.out.println("[ALIAS] Blank MID: " + aliasMID + " Task Scheduled.");
                                 ba.SQLBackgroundQuery(web, "alias:mid:" + aliasMID, "SELECT DISTINCT(fnMachineID) "
-                                        + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID "
-                                        + "WHERE fcUserName = '" + Tools.addSlashes(aliasMID) + "'");
+                                                      + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID "
+                                                      + "WHERE fcUserName = '" + Tools.addSlashes(aliasMID) + "'");
                             }
                         };
                         ba.scheduleTask(delayMID, 13000);
@@ -422,6 +471,7 @@ public class welcomebot extends SubspaceBot {
                 }
 
             }
+
             // Retrieve the final query using IP+MID
             if (event.getIdentifier().startsWith("alias:final:")) {
                 HashSet<String> prevResults = new HashSet<String>();
@@ -430,6 +480,7 @@ public class welcomebot extends SubspaceBot {
                 try {
                     while (resultSet.next()) {
                         String username = resultSet.getString("fcUserName");
+
                         if (!prevResults.contains(username)) {
                             prevResults.add(username);
                             numResults++;
@@ -446,16 +497,19 @@ public class welcomebot extends SubspaceBot {
                 if (alias.getIpResults().equals("") || alias.getMidResults().equals("")) {
                     alias.setAliasCount(0);
                     String reason = alias.getIpResults().equals("") ? "ip" : "mid";
+
                     if (alias.getIpResults().equals("") && alias.getMidResults().equals(""))
                         reason = "ip&mid";
+
                     System.out.println("[ALIAS] " + alias.getName() + " (empty:" + reason + ")");
                     alias.checkAndSend();
                 } else {
                     ba.SQLBackgroundQuery(web, "alias:final:" + name, "SELECT * "
-                            + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID " + "WHERE fnIP IN "
-                            + alias.getIpResults() + " " + "AND fnMachineID IN " + alias.getMidResults() + " ORDER BY fdUpdated DESC");
+                                          + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID " + "WHERE fnIP IN "
+                                          + alias.getIpResults() + " " + "AND fnMachineID IN " + alias.getMidResults() + " ORDER BY fdUpdated DESC");
                 }
             }
+
             ba.SQLClose(event.getResultSet());
         }
     }
@@ -463,14 +517,17 @@ public class welcomebot extends SubspaceBot {
     public void handleEvent(Message event) {
         String name = event.getMessager();
         ;
+
         if (name == null)
             name = ba.getPlayerName(event.getPlayerID());
+
         String msg = event.getMessage();
         String cmd = msg.toLowerCase();
         int type = event.getMessageType();
 
         if (type == Message.ARENA_MESSAGE)
             handleArenaMessage(msg);
+
         if (type == Message.PUBLIC_MESSAGE) {
             // Player Commands
             if (cmd.startsWith("!help") && cmd.contains("tutorial"))
@@ -484,6 +541,7 @@ public class welcomebot extends SubspaceBot {
             else if (cmd.equals("!quickhelp"))
                 cmd_quickHelp(name);
         }
+
         if (type == Message.REMOTE_PRIVATE_MESSAGE || type == Message.PRIVATE_MESSAGE) {
             // Player Commands
             if (cmd.equals("!help"))
@@ -516,6 +574,7 @@ public class welcomebot extends SubspaceBot {
                 else if (cmd.equals("!list"))
                     cmd_list(name);
             }
+
             // Staff Commands
             if (ops.isZH(name)) {
                 if (cmd.startsWith("!where "))
@@ -538,6 +597,7 @@ public class welcomebot extends SubspaceBot {
                 else if (cmd.startsWith("!listo"))
                     cmd_listOps(name);
             }
+
             if (ops.isSmod(name) || grantedOps.contains(name)) {
                 if (cmd.equals("!debug"))
                     cmd_debug(name);
@@ -559,15 +619,16 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Breaks down the lines of text received after a command has been sent.
-     * Lines are identified and then distributed accordingly.
-     * 
-     * @param message
-     */
+        Breaks down the lines of text received after a command has been sent.
+        Lines are identified and then distributed accordingly.
+
+        @param message
+    */
     private void handleArenaMessage(String message) {
         if (message.contains("TypedName:")) {
             infoee = message.substring(message.indexOf("TypedName:") + 10);
             infoee = infoee.substring(0, infoee.indexOf("Demo:")).trim();
+
             if (sessions.containsKey(infoee))
                 sessions.get(infoee).setInfo(message);
         } else if (message.startsWith("TIME: Session:")) {
@@ -579,15 +640,18 @@ public class welcomebot extends SubspaceBot {
                 String time = message.substring(message.indexOf("Total:") + 6);
                 time = time.substring(0, time.indexOf("Created")).trim();
                 String[] pieces = time.split(":");
+
                 if (pieces.length == 3) {
                     int hour = Integer.valueOf(pieces[0]);
                     int min = Integer.valueOf(pieces[1]);
+
                     if (pieces[0].equals("0")) { // if usage less than 1 hour
                         if (aliases.containsKey(infoee)) {
                             AliasCheck alias = aliases.get(infoee);
                             alias.setUsage(hour * 60 + min);
                             //System.out.println("[ALIAS] " + alias.getName() + " in array already.");
                             debug("[ALIAS] " + alias.getName() + " in array already.");
+
                             if (alias.getTime() > 900000) {
                                 alias.resetTime();
                                 doAliasCheck(alias);
@@ -610,6 +674,7 @@ public class welcomebot extends SubspaceBot {
     private void cmd_alert(String name) {
         if (!trusted.containsKey(name))
             return;
+
         boolean b = !trusted.get(name);
         trusted.put(name, b);
         ba.sendSmartPrivateMessage(name, "New player alerts: " + (b ? "ENABLED" : "DISABLED"));
@@ -626,8 +691,10 @@ public class welcomebot extends SubspaceBot {
     private void cmd_where(String name, String msg) {
         if (msg.length() < 8)
             return;
+
         msg = msg.substring(msg.indexOf(" ") + 1);
         Player p = ba.getPlayer(msg);
+
         if (p == null)
             p = ba.getFuzzyPlayer(msg);
 
@@ -637,8 +704,10 @@ public class welcomebot extends SubspaceBot {
             long y = (long) (Math.floor(((double) p.getYTileLocation()) / 51.2)) + 1; // Don't forget to carry the 0!
             char xchar = (char) (65 + x);
             String str = msg + " @ " + xchar + y + " (" + p.getXTileLocation() + "," + p.getYTileLocation() + ")";
+
             if (s != null)
                 str += "   [YOU: (" + s.getXTileLocation() + "," + s.getYTileLocation() + ")]";
+
             ba.sendPrivateMessage(name, str);
         } else
             ba.sendPrivateMessage(name, msg + ": NOT FOUND");
@@ -650,12 +719,16 @@ public class welcomebot extends SubspaceBot {
         msgs.add("+-- Welcome Bot Commands --------------------------------------------------------.");
         msgs.add("| !createRefID          -- Create a referral ID.                                 |");
         msgs.add("| !link                 -- Displays your referral link.                          |");
+
         if (trusted.containsKey(name))
             msgs.add("| !alert                -- Toggles new player alert messages.                    |");
+
         if (trusted.containsKey(name) || ops.isZH(name))
             msgs.add("| !newplayer <name>     -- Sends new player helper objon to <name>.              |");
+
         msgs.add("| !next <name>          -- Sends the next helper objon to <name>.                |");
         msgs.add("| !list                 -- Lists currently active sessions (new players).        |");
+
         if (ops.isZH(name)) {
             msgs.add("|  ~ZH~                                                                         -+");
             msgs.add("| !where <name>         -- Gives the current coordinates for <name> if possible. |");
@@ -682,6 +755,7 @@ public class welcomebot extends SubspaceBot {
             msgs.add("| !trusted <name>       -- Checks to see if <name> is on the trusted list.       |");
             msgs.add("| !period <seconds>     -- Sets the delay between *info commands to <seconds>.   |");
         }
+
         msgs.add("`--------------------------------------------------------------------------------'");
         ba.smartPrivateMessageSpam(name, msgs.toArray(new String[msgs.size()]));
     }
@@ -689,9 +763,12 @@ public class welcomebot extends SubspaceBot {
     private void cmd_setPeriod(String name, String msg) {
         if (msg.length() < 9)
             return;
+
         msg = msg.substring(msg.indexOf(" ") + 1);
+
         try {
             int p = Integer.valueOf(msg);
+
             if (p > 0 && p < 120) {
                 infoer.setPeriod(p);
                 ba.sendSmartPrivateMessage(name, "Set delay between info commands to: " + p + " sec");
@@ -704,8 +781,10 @@ public class welcomebot extends SubspaceBot {
 
     private void cmd_listOps(String name) {
         String go = "";
+
         for (String n : grantedOps)
             go += n + ",";
+
         go = go.substring(0, go.lastIndexOf(","));
         ba.sendSmartPrivateMessage(name, go);
 
@@ -714,12 +793,16 @@ public class welcomebot extends SubspaceBot {
     private void cmd_addOp(String name, String msg) {
         if (msg.length() < 8)
             return;
+
         msg = msg.substring(msg.indexOf(" ") + 1);
+
         if (grantedOps.add(msg)) {
             ba.sendSmartPrivateMessage(name, "Added to granted operators list: " + msg);
             String go = "";
+
             for (String n : grantedOps)
                 go += n + ",";
+
             go = go.substring(0, go.lastIndexOf(","));
             cfg.put("GrantedOps", go);
             cfg.save();
@@ -730,12 +813,16 @@ public class welcomebot extends SubspaceBot {
     private void cmd_remOp(String name, String msg) {
         if (msg.length() < 8)
             return;
+
         msg = msg.substring(msg.indexOf(" ") + 1);
+
         if (grantedOps.remove(msg)) {
             ba.sendSmartPrivateMessage(name, "Removed from granted operators list: " + msg);
             String go = "";
+
             for (String n : grantedOps)
                 go += n + ",";
+
             go = go.substring(0, go.lastIndexOf(","));
             cfg.put("GrantedOps", go);
             cfg.save();
@@ -745,8 +832,10 @@ public class welcomebot extends SubspaceBot {
 
     private void cmd_list(String name) {
         String msgs = "Sessions: ";
+
         for (String n : sessions.keySet())
             msgs += n + ", ";
+
         msgs = msgs.substring(0, msgs.length() - 2);
         ba.sendSmartPrivateMessage(name, msgs);
     }
@@ -760,6 +849,7 @@ public class welcomebot extends SubspaceBot {
 
     private void cmd_doMe(String name) {
         Player p = ba.getPlayer(name);
+
         if (p != null) {
             ba.sendSmartPrivateMessage(name, "Creating a new session for you!");
             sessions.put(name, new Session(p));
@@ -769,8 +859,10 @@ public class welcomebot extends SubspaceBot {
 
     private void cmd_trusted(String name) {
         String msg = "Trusted(" + trusted.size() + "): ";
+
         for (String n : trusted.keySet())
             msg += n + ", ";
+
         msg = msg.substring(0, msg.length() - 2);
         ba.smartPrivateMessageSpam(name, splitString(msg));
     }
@@ -778,7 +870,9 @@ public class welcomebot extends SubspaceBot {
     private void cmd_trusted(String name, String msg) {
         if (msg.length() < 10)
             return;
+
         msg = msg.substring(msg.indexOf(" ") + 1);
+
         if (trusted.containsKey(msg))
             ba.sendSmartPrivateMessage(name, msg + " is a trusted player.");
         else
@@ -788,12 +882,15 @@ public class welcomebot extends SubspaceBot {
     private void cmd_addTrusted(String name, String msg) {
         if (msg.length() < 8)
             return;
+
         String p = msg.substring(msg.indexOf(" ") + 1);
+
         if (trusted.containsKey(p))
             ba.sendSmartPrivateMessage(name, "Player already trusted.");
         else {
             ba.sendSmartPrivateMessage(name, "Trusted player added: " + p);
             trusted.put(p, true);
+
             try {
                 psAddTrusted.setString(1, p);
                 psAddTrusted.setString(2, name);
@@ -807,12 +904,15 @@ public class welcomebot extends SubspaceBot {
     private void cmd_remTrusted(String name, String msg) {
         if (msg.length() < 10)
             return;
+
         String p = msg.substring(msg.indexOf(" ") + 1);
+
         if (!trusted.containsKey(p))
             ba.sendSmartPrivateMessage(name, "Player not found in trusted list.");
         else {
             ba.sendSmartPrivateMessage(name, "Trusted player removed: " + p);
             trusted.remove(p);
+
             try {
                 psRemTrusted.setString(1, p);
                 psRemTrusted.execute();
@@ -841,8 +941,9 @@ public class welcomebot extends SubspaceBot {
                 ba.setShip(player, 1);
             } else {
                 ba.setShip(player, 2);
-                ba.setShip(player, 1);                
+                ba.setShip(player, 1);
             }
+
             ba.sendUnfilteredPrivateMessage(player, "*objon 2011");
             ba.sendUnfilteredPrivateMessage(player, "*objoff 2010");
             ba.sendUnfilteredPrivateMessage(player, "*objoff 2020");
@@ -865,13 +966,18 @@ public class welcomebot extends SubspaceBot {
             String[] objs = objects.pop();
             ba.sendUnfilteredPrivateMessage(player, objs[0]);
             ba.sendUnfilteredPrivateMessage(player, objs[1]);
+
             if (objs.length > 2)
                 ba.sendUnfilteredPrivateMessage(player, objs[2]);
+
             if (objs.length > 3)
                 ba.sendPrivateMessage(player, objs[3]);
+
             if (pub && !objs[0].equals("*objoff 2017"))
                 ba.sendPrivateMessage(player, "" + player + ", to continue the tutorial, please type ::!next");
+
             tutorials.put(player, objects);
+
             if (objects.empty())
                 tutorials.remove(player);
         } else
@@ -903,19 +1009,21 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Command initiates the new player objon for the specified player.
-     * 
-     * @param mod
-     *          Staff member
-     * @param name
-     *          Player
-     */
+        Command initiates the new player objon for the specified player.
+
+        @param mod
+                Staff member
+        @param name
+                Player
+    */
     private void cmd_newplayer(String mod, String name) {
         if (name.length() <= "!newplayer ".length())
             return;
         else
             name = name.substring(name.indexOf(" ") + 1);
+
         name = ba.getFuzzyPlayerName(name);
+
         if (name != null) {
             ba.sendUnfilteredPrivateMessage(name, "*objon 2025");
             ba.sendSmartPrivateMessage(mod, "New player objon sent to: " + name);
@@ -925,19 +1033,21 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Command triggers the next new player objon for the specified player.
-     * 
-     * @param mod
-     *          Staff member
-     * @param name
-     *          Player
-     */
+        Command triggers the next new player objon for the specified player.
+
+        @param mod
+                Staff member
+        @param name
+                Player
+    */
     private void cmd_next(String mod, String name) {
         if (name.length() <= "!next ".length())
             return;
         else
             name = name.substring(name.indexOf(" ") + 1);
+
         name = ba.getFuzzyPlayerName(name);
+
         if (name != null) {
             ba.sendUnfilteredPrivateMessage(name, "*objoff 2025");
             ba.sendUnfilteredPrivateMessage(name, "*objon 2026");
@@ -948,19 +1058,21 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Command ends the tutorial objons for the specified player.
-     * 
-     * @param mod
-     *          Staff member
-     * @param name
-     *          Player
-     */
+        Command ends the tutorial objons for the specified player.
+
+        @param mod
+                Staff member
+        @param name
+                Player
+    */
     private void cmd_end(String mod, String name) {
         if (name.length() <= "!end ".length())
             return;
         else
             name = name.substring(name.indexOf(" ") + 1);
+
         name = ba.getFuzzyPlayerName(name);
+
         if (name != null) {
             ba.sendUnfilteredPrivateMessage(name, "*objoff 2025");
             ba.sendUnfilteredPrivateMessage(name, "*objoff 2026");
@@ -972,15 +1084,15 @@ public class welcomebot extends SubspaceBot {
     }
 
     /*
-     * Marketing referral commands.
-     */
+        Marketing referral commands.
+    */
     /**
-     * !createRefID [<name>]<br>
-     * Creates a referral ID.
-     * Name optional for SMod+
-     * @param name Issuer of command.
-     * @param command Command and optional parameters.
-     */
+        !createRefID [<name>]<br>
+        Creates a referral ID.
+        Name optional for SMod+
+        @param name Issuer of command.
+        @param command Command and optional parameters.
+    */
     private void cmd_createReferral(String name, String command) {
         String referralName = name;
         boolean forSelf = true;
@@ -1021,8 +1133,10 @@ public class welcomebot extends SubspaceBot {
                 psAddReferral.execute();
 
                 ResultSet rs2 = psGetReferral.executeQuery();
+
                 if (rs2 != null && rs2.next()) {
                     int refID = rs2.getInt(1);
+
                     if (forSelf) {
                         ba.sendSmartPrivateMessage(name, "Your referral ID is: " + refID);
                     } else {
@@ -1042,10 +1156,10 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * !link<br>
-     * Displays referral link.
-     * @param name Who to look up the link for.
-     */
+        !link<br>
+        Displays referral link.
+        @param name Who to look up the link for.
+    */
     private void cmd_displayLink(String name) {
         try {
             psGetReferral.clearParameters();
@@ -1065,10 +1179,10 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Creates the referral ID
-     * @param name Who to send the message to.
-     * @param refID The referral ID.
-     */
+        Creates the referral ID
+        @param name Who to send the message to.
+        @param refID The referral ID.
+    */
     private void displayLink(String name, int refID) {
         String link = cfg.getString("ReferralLink");
 
@@ -1100,22 +1214,25 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * The die and kill commands disconnect the bot with or without first saving
-     * all the currently active sessions.
-     * 
-     * @param name
-     * @param save
-     */
+        The die and kill commands disconnect the bot with or without first saving
+        all the currently active sessions.
+
+        @param name
+        @param save
+    */
     private void cmd_die(String name, boolean save) {
         if (save) {
             ba.sendSmartPrivateMessage(name, "Saving sessions and disconnecting...");
             ba.sendChatMessage("Disconnect with save request: " + name);
             // its weird but avoids concurrent modifications
             Set<String> names = new TreeSet<String>();
+
             for (String n : sessions.keySet())
                 names.add(n);
+
             for (String ses : names)
                 sessions.get(ses).endSession();
+
             infoer.stop();
             ba.scheduleTask(new TimerTask() {
                 public void run() {
@@ -1135,16 +1252,18 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Sends notifications to all appropriate players regarding new player logins.
-     * 
-     * @param session
-     */
+        Sends notifications to all appropriate players regarding new player logins.
+
+        @param session
+    */
     private void sendTrustedAlerts(Session session) {
         int c = session.getSessionCount();
+
         for (Entry<String, Boolean> e : trusted.entrySet())
             if (e.getValue())
                 ba.sendSmartPrivateMessage(e.getKey(), "New player '" + session.getName() + "' has logged in now " + c + " times. Usage: "
-                        + session.getUsage() + " hours");
+                                           + session.getUsage() + " hours");
+
         ba.sendChatMessage("New player '" + session.getName() + "' has logged in now " + c + " times. Usage: " + session.getUsage() + " hours");
         ba.sendChatMessage(4, "New player '" + session.getName() + "' has logged in now " + c + " times. Usage: " + session.getUsage() + " hours");
     }
@@ -1156,26 +1275,28 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Alias check using background queries.
-     * 
-     * @param alias
-     */
+        Alias check using background queries.
+
+        @param alias
+    */
     private void doAliasCheck(AliasCheck alias) {
         debug("AliasCheck begun for " + alias.getName());
         aliases.put(alias.getName(), alias);
         loopCatcher.put(alias.getName(), new Integer[] { 0, 0 });
         ba.SQLBackgroundQuery(web, "alias:ip:" + alias.getName(), "SELECT DISTINCT(fnIP) "
-                + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID " + "WHERE fcUserName = '"
-                + Tools.addSlashes(alias.getName()) + "'");
+                              + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID " + "WHERE fcUserName = '"
+                              + Tools.addSlashes(alias.getName()) + "'");
         ba.SQLBackgroundQuery(web, "alias:mid:" + alias.getName(), "SELECT DISTINCT(fnMachineID) "
-                + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID " + "WHERE fcUserName = '"
-                + Tools.addSlashes(alias.getName()) + "'");
+                              + "FROM `tblAlias` INNER JOIN `tblUser` ON `tblAlias`.fnUserID = `tblUser`.fnUserID " + "WHERE fcUserName = '"
+                              + Tools.addSlashes(alias.getName()) + "'");
     }
 
     String[] splitString(String str) {
         ArrayList<String> l = new ArrayList<String>();
+
         while (!str.isEmpty()) {
             String s = "";
+
             if (str.length() > MAX_STRING) {
                 s = str.substring(0, MAX_STRING);
                 str = str.substring(MAX_STRING);
@@ -1183,8 +1304,10 @@ public class welcomebot extends SubspaceBot {
                 s = str;
                 str = "";
             }
+
             l.add(s);
         }
+
         return l.toArray(new String[l.size()]);
     }
 
@@ -1208,6 +1331,7 @@ public class welcomebot extends SubspaceBot {
 
         public void run() {
             String name = queue.pop();
+
             if (name != null) {
                 ba.sendUnfilteredPrivateMessage(name, "*info");
             } else if (newPeriod > 0) {
@@ -1231,11 +1355,11 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * Session holds all the information required for tracking and updates database.
-     * Takes message lines from *info commands that extract usage and player information.
-     *
-     * @author WingZero
-     */
+        Session holds all the information required for tracking and updates database.
+        Takes message lines from *info commands that extract usage and player information.
+
+        @author WingZero
+    */
     private class Session {
 
         DateFormat fromInfo = new SimpleDateFormat("M-d-yyyy HH:mm:ss");
@@ -1262,10 +1386,12 @@ public class welcomebot extends SubspaceBot {
             sessionUsage = 0;
             totalUsage = 0;
             sessionCount = 0;
+
             try {
                 psGetSessionCount.clearParameters();
                 psGetSessionCount.setString(1, name);
                 ResultSet rs = psGetSessionCount.executeQuery();
+
                 if (rs != null && rs.next())
                     sessionCount = rs.getInt(1) + 1;
             } catch (SQLException e) {
@@ -1273,6 +1399,7 @@ public class welcomebot extends SubspaceBot {
                 psGetSessionCount = ba.createPreparedStatement(db, db, "SELECT COUNT(*) FROM tblNewPlayerSession WHERE fcName = ?");
                 Tools.printStackTrace("Recreating session count PS in Session class constructor...", e);
             }
+
             infoer.add(name);
         }
 
@@ -1293,29 +1420,35 @@ public class welcomebot extends SubspaceBot {
             sessionUsage = Math.round((Double.valueOf(split[0]) + (Double.valueOf(split[1]) / 60)) * 100) / 100.0;
             split = args[1].split(":");
             totalUsage = Math.round((Double.valueOf(split[0]) + (Double.valueOf(split[1]) / 60)) * 100) / 100.0;
+
             if (totalUsage < 20)
                 sendTrustedAlerts(this);
+
             try {
                 java.util.Date temp = fromInfo.parse(args[2]);
                 created = new Timestamp(temp.getTime());
             } catch (ParseException e) {
                 Tools.printStackTrace(e);
             }
+
             debug("Usage setting for " + name + ": Total:" + totalUsage + " Session:" + sessionUsage + " Created: " + created.toString());
         }
 
         public void checkPing(String message) {
             if (sessionCount != 1 || totalUsage > 1)
                 return;
+
             debug("Ping check for " + name + ": " + message);
             String pingString = "";
             int currentPing = -1;
+
             if (message.startsWith("Ping:")) {
                 pingString = message.substring(message.indexOf(':') + 1, message.indexOf('m'));
                 currentPing = Integer.valueOf(pingString);
 
                 ba.sendUnfilteredPrivateMessage(name, "*objon 2010");
                 ba.sendPrivateMessage(name, "Welcome to Trench Wars! If you'd like to see a brief tutorial, please type !tutorial");
+
                 if (currentPing == 0) {
                     ObjonTimer lagCheck = new ObjonTimer(name);
                     ba.scheduleTask(lagCheck, 45000, 15000);
@@ -1323,6 +1456,7 @@ public class welcomebot extends SubspaceBot {
                 }
             } else if (objonTimers.containsKey(name) && message.startsWith("PING Current")) {
                 int pingCheck = Integer.valueOf(message.substring(message.indexOf(':') + 1, message.indexOf(" m")));
+
                 if (pingCheck > 0) {
                     ba.sendUnfilteredPrivateMessage(name, "*objon 2010");
                     ba.cancelTask(objonTimers.remove(name));
@@ -1341,10 +1475,12 @@ public class welcomebot extends SubspaceBot {
                 psUpdatePlayer.setString(1, name);
                 psUpdatePlayer.setString(2, squad);
                 psUpdatePlayer.setDouble(3, totalUsage);
+
                 if (ip == null || ip.equals(""))
                     psUpdatePlayer.setString(4, "?.?.?.?");
                 else
                     psUpdatePlayer.setString(4, ip);
+
                 psUpdatePlayer.setInt(5, mid);
                 psUpdatePlayer.setString(6, countryCode);
                 psUpdatePlayer.setTimestamp(7, created);
@@ -1353,8 +1489,8 @@ public class welcomebot extends SubspaceBot {
             } catch (SQLException e) {
                 ba.closePreparedStatement(db, db, psUpdatePlayer);
                 psUpdatePlayer = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayer "
-                        + "(fcName, fcSquad, ffTotalUsage, fcIP, fnMID, fcCountryCode, fdNameCreated, fcResolution) "
-                        + "VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE fcSquad=VALUES(fcSquad), ffTotalUsage=VALUES(ffTotalUsage), fcIP=VALUES(fcIP), fnMID=VALUES(fnMID), fcCountryCode=VALUES(fcCountryCode), fcResolution=VALUES(fcResolution)");
+                                 + "(fcName, fcSquad, ffTotalUsage, fcIP, fnMID, fcCountryCode, fdNameCreated, fcResolution) "
+                                 + "VALUES(?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE fcSquad=VALUES(fcSquad), ffTotalUsage=VALUES(ffTotalUsage), fcIP=VALUES(fcIP), fnMID=VALUES(fnMID), fcCountryCode=VALUES(fcCountryCode), fcResolution=VALUES(fcResolution)");
                 Tools.printStackTrace("Recreating session update PS in doUpdatePlayer...", e);
                 // Ignoring this particular result (not calling recursively, for example)...
                 // let's simply try not to die.
@@ -1364,11 +1500,13 @@ public class welcomebot extends SubspaceBot {
         public void setInfo(String msg) {
             ip = msg.substring(3, msg.indexOf(" "));
             mid = Integer.valueOf(msg.substring(msg.lastIndexOf(":") + 1));
+
             try {
                 psGetCountryCode.clearParameters();
                 psGetCountryCode.setString(1, ip);
                 psGetCountryCode.setString(2, ip);
                 ResultSet rs = psGetCountryCode.executeQuery();
+
                 if (rs != null && rs.next())
                     countryCode = rs.getString(1);
             } catch (SQLException e) {
@@ -1376,6 +1514,7 @@ public class welcomebot extends SubspaceBot {
                 psGetCountryCode = ba.createPreparedStatement(db, db, "SELECT country_code3 FROM tblCountryIPs WHERE INET_ATON(?) >= ip_from AND INET_ATON(?) <= ip_to");
                 Tools.printStackTrace("Recreating country code select PS in setInfo...", e);
             }
+
             debug("Info setting for " + name + ": IP:" + ip + " MID:" + mid + " CC: " + countryCode);
         }
 
@@ -1394,6 +1533,7 @@ public class welcomebot extends SubspaceBot {
             int hours = (int) (mins / 60);
             mins -= hours * 60;
             sessionUsage = Math.round((hours + mins / 60.0) * 100) / 100.0 + sessionUsage;
+
             try {
                 psUpdateSession.clearParameters();
                 psUpdateSession.setString(1, name);
@@ -1407,6 +1547,7 @@ public class welcomebot extends SubspaceBot {
                 psUpdateSession = ba.createPreparedStatement(db, db, "INSERT INTO tblNewPlayerSession (fcName, ffSessionUsage, fnKills, fnDeaths, fcResolution) VALUES(?,?,?,?,?)");
                 Tools.printStackTrace("Recreating session update PS in endSession...", e);
             }
+
             sessions.remove(name);
             debug("Session ending for " + name + ": SessionUsage:" + sessionUsage + " Kills:" + kills + " Deaths:" + deaths);
         }
@@ -1472,6 +1613,7 @@ public class welcomebot extends SubspaceBot {
 
         public void checkAndSend() {
             System.out.print("[ALIAS] " + name + ":" + usage + ":" + aliasCount);
+
             if (usage < 15 && aliasCount < 2 && aliasCount >= 0) {
                 try {
                     psInsertNewb.setString(1, name);
@@ -1480,6 +1622,7 @@ public class welcomebot extends SubspaceBot {
                     ba.sendAlertMessage("newplayer", name);
                     System.out.println(":YES");
                     Player p = ba.getPlayer(name);
+
                     if (p != null && !sessions.containsKey(name))
                         sessions.put(name, new Session(p));
                 } catch (SQLException e) {
@@ -1493,9 +1636,9 @@ public class welcomebot extends SubspaceBot {
     }
 
     /**
-     * This class is used for checking the lag status of newbs in order
-     * to determine whether or not they will be able to see an objon
-     */
+        This class is used for checking the lag status of newbs in order
+        to determine whether or not they will be able to see an objon
+    */
     class ObjonTimer extends TimerTask {
 
         String name;

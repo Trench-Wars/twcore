@@ -3,19 +3,19 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
- * (S2C 0x2A) Event fired when a compressed map file is received. <code><pre>
- * +-----------------------------------------------------+
- * | Offset  Length  Description                         |
- * +-----------------------------------------------------+
- * | 0       1       Type Byte                           |
- * | 1       16      Map name                            |
- * | 17      ...     Compressed map                      |
- * +-----------------------------------------------------+</code></pre>
- *
- * Original field research is credited to the folks from MervBot.
- * Implementation idea is taken from the MervBot.
- * @author Trancid
- */
+    (S2C 0x2A) Event fired when a compressed map file is received. <code><pre>
+    +-----------------------------------------------------+
+    | Offset  Length  Description                         |
+    +-----------------------------------------------------+
+    | 0       1       Type Byte                           |
+    | 1       16      Map name                            |
+    | 17      ...     Compressed map                      |
+    +-----------------------------------------------------+</code></pre>
+
+    Original field research is credited to the folks from MervBot.
+    Implementation idea is taken from the MervBot.
+    @author Trancid
+*/
 public class CompressedMapFile {
     private String m_mapName;                   // Map name.
     private ByteArray m_compressedMapData;      // The raw compressed data.
@@ -29,8 +29,8 @@ public class CompressedMapFile {
     }
 
     /*
-     * Getters
-     */
+        Getters
+    */
     public String getMapName() {
         return m_mapName;
     }
@@ -42,5 +42,5 @@ public class CompressedMapFile {
     public int getMapSize() {
         return m_mapSize;
     }
-    
+
 }

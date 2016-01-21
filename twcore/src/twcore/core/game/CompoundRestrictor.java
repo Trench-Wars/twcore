@@ -8,250 +8,255 @@ import java.util.ArrayList;
 import twcore.core.BotAction;
 
 /**
- * A more flexible implementation of the ShipRestrictor interface, allows you
- * to define ship groups and assign a maximum value to each group.
- *
- * @author D1st0rt
- * @version 07.01.10
- */
+    A more flexible implementation of the ShipRestrictor interface, allows you
+    to define ship groups and assign a maximum value to each group.
+
+    @author D1st0rt
+    @version 07.01.10
+*/
 public class CompoundRestrictor implements ShipRestrictor
 {
-	/** The fallback ship */
-	private byte fallback;
+    /** The fallback ship */
+    private byte fallback;
 
-	/** A list containing all of the defined groupings of ship types */
-	private ArrayList<ShipGroup> groups;
+    /** A list containing all of the defined groupings of ship types */
+    private ArrayList<ShipGroup> groups;
 
-	/** The BotAction object to send messages with */
-	@SuppressWarnings("unused")
+    /** The BotAction object to send messages with */
+    @SuppressWarnings("unused")
     private BotAction m_botAction;
 
-	/** Classes signed up for denied ship change notifications */
-	private ArrayList<InvalidShipListener> listeners;
+    /** Classes signed up for denied ship change notifications */
+    private ArrayList<InvalidShipListener> listeners;
 
-	/**
-	 * Creates a new instance of CompoundRestrictor
-	 */
-	public CompoundRestrictor()
-	{
-		groups = new ArrayList<ShipGroup>();
-		fallback = INTERNAL_SPECTATOR;
-		m_botAction = BotAction.getBotAction();
-		listeners = new ArrayList<InvalidShipListener>();
-	}
+    /**
+        Creates a new instance of CompoundRestrictor
+    */
+    public CompoundRestrictor()
+    {
+        groups = new ArrayList<ShipGroup>();
+        fallback = INTERNAL_SPECTATOR;
+        m_botAction = BotAction.getBotAction();
+        listeners = new ArrayList<InvalidShipListener>();
+    }
 
-	/**
-	 * Adds a new group to the restriction set, replaces group already in the
-	 * list if one with the same contained ships exists
-	 * @param ships a list of ships in the group
-	 * @param max the limit of players allowed in ships this group contains
-	 */
-	public void addGroup(byte[] ships, int max)
-	{
-		ShipGroup group = new ShipGroup(ships, max);
-		int index = groups.indexOf(group);
-		if(index != -1)
-		{
-			groups.set(index, group);
-		}
-		else
-		{
-			groups.add(group);
-		}
-	}
+    /**
+        Adds a new group to the restriction set, replaces group already in the
+        list if one with the same contained ships exists
+        @param ships a list of ships in the group
+        @param max the limit of players allowed in ships this group contains
+    */
+    public void addGroup(byte[] ships, int max)
+    {
+        ShipGroup group = new ShipGroup(ships, max);
+        int index = groups.indexOf(group);
 
-	/**
-	 * Removes a group from the restriction set
-	 * @param ships a list of ships in the group to remove
-	 */
-	public void removeGroup(byte[] ships)
-	{
-		int mask = 0;
-		ShipGroup group = null;
+        if(index != -1)
+        {
+            groups.set(index, group);
+        }
+        else
+        {
+            groups.add(group);
+        }
+    }
 
-		for(byte b : ships)
-		{
-			if(b >= INTERNAL_WARBIRD && b <= INTERNAL_SPECTATOR)
-			{
-				mask |= 1 << b;
-			}
-		}
+    /**
+        Removes a group from the restriction set
+        @param ships a list of ships in the group to remove
+    */
+    public void removeGroup(byte[] ships)
+    {
+        int mask = 0;
+        ShipGroup group = null;
 
-		for(ShipGroup g : groups)
-		{
-			if(g.getMask() == mask)
-			{
-				group = g;
-				break;
-			}
-		}
+        for(byte b : ships)
+        {
+            if(b >= INTERNAL_WARBIRD && b <= INTERNAL_SPECTATOR)
+            {
+                mask |= 1 << b;
+            }
+        }
 
-		groups.remove(group);
-	}
+        for(ShipGroup g : groups)
+        {
+            if(g.getMask() == mask)
+            {
+                group = g;
+                break;
+            }
+        }
 
-	/**
-	 * Determines whether a player can switch to a particular ship or not
-	 * @param p the player in question
-	 * @param ship the ship the player wishes to switch to
-	 * @param team the player's team
-	 * @return true if the player is allowed to switch, false otherwise
-	 */
-	public boolean canSwitch(Player p, byte ship, Team team)
-	{
-		boolean allowed = true;
+        groups.remove(group);
+    }
 
-		for(ShipGroup group : groups)
-		{
-			int pMask = 1 << ship;
-			if((group.getMask() & pMask) != 0)
-			{
-				short total = 0;
-				for(byte i = INTERNAL_WARBIRD; i < INTERNAL_SPECTATOR; i++)
-				{
-					int mask = 1 << i;
-					if((group.getMask() & mask) != 0)
-					{
-						total += team.getShipCount(i);
-					}
-				}
+    /**
+        Determines whether a player can switch to a particular ship or not
+        @param p the player in question
+        @param ship the ship the player wishes to switch to
+        @param team the player's team
+        @return true if the player is allowed to switch, false otherwise
+    */
+    public boolean canSwitch(Player p, byte ship, Team team)
+    {
+        boolean allowed = true;
 
-				if(total >= group.getMax())
-				{
-					allowed = false;
-					break;
-				}
-			}
-		}
+        for(ShipGroup group : groups)
+        {
+            int pMask = 1 << ship;
 
-		if(!allowed)
-		{
-			for(InvalidShipListener l : listeners)
-			{
-				l.changeDenied(p, ship, team);
-			}
-		}
-		return allowed;
-	}
+            if((group.getMask() & pMask) != 0)
+            {
+                short total = 0;
 
-	public boolean canSwap(Player p1, Player p2, Team team)
-	{
-		boolean allowed = true;
+                for(byte i = INTERNAL_WARBIRD; i < INTERNAL_SPECTATOR; i++)
+                {
+                    int mask = 1 << i;
 
-		return allowed;
-	}
+                    if((group.getMask() & mask) != 0)
+                    {
+                        total += team.getShipCount(i);
+                    }
+                }
 
-	/**
-	 * Sets the fallback ship for when a player fails a canSwitch check
-	 * @param ship the new ship type to set players to
-	 */
-	public void setFallback(byte ship)
-	{
-		if(ship >= Ship.INTERNAL_WARBIRD && ship <= Ship.INTERNAL_SPECTATOR)
-		{
-			fallback = ship;
-		}
-	}
+                if(total >= group.getMax())
+                {
+                    allowed = false;
+                    break;
+                }
+            }
+        }
 
-	/**
-	 * Gets the ship to set the player in when they are not allowed to switch
-	 * @return a ship value from 0-7, or 8 for spectator
-	 */
-	public byte fallbackShip()
-	{
-		return fallback;
-	}
+        if(!allowed)
+        {
+            for(InvalidShipListener l : listeners)
+            {
+                l.changeDenied(p, ship, team);
+            }
+        }
 
-	/**
-	 * Adds the specified InvalidShipListener to the event queue. It will now
-	 * receive notification of denied ship change attempts.
-	 * @param l the listener to add
-	 */
-	public void addListener(InvalidShipListener l)
-	{
-		if(l != null && !listeners.contains(l))
-		{
-			listeners.add(l);
-		}
-	}
+        return allowed;
+    }
 
-	/**
-	 * Adds the specified InvalidShipListener to the event queue. It will no
-	 * longer recieve notification of denied ship change attempts.
-	 * @param l the listener to remove
-	 */
-	public void removeListener(InvalidShipListener l)
-	{
-		if(l != null && listeners.contains(l))
-		{
-			listeners.remove(l);
-		}
-	}
+    public boolean canSwap(Player p1, Player p2, Team team)
+    {
+        boolean allowed = true;
 
-	/**
-	 * Represents a grouping of ships and an associated limit.
-	 *
-	 * @author D1st0rt
-	 * @version 06/12/27
-	 */
-	private class ShipGroup
-	{
-		/** The ships this group contains */
-		private int mask;
+        return allowed;
+    }
 
-		/** The maximum number of players allowed in this group */
-		private int max;
+    /**
+        Sets the fallback ship for when a player fails a canSwitch check
+        @param ship the new ship type to set players to
+    */
+    public void setFallback(byte ship)
+    {
+        if(ship >= Ship.INTERNAL_WARBIRD && ship <= Ship.INTERNAL_SPECTATOR)
+        {
+            fallback = ship;
+        }
+    }
 
-		/**
-		 * Creates a new instance of ShipGroup
-		 * @param ships the ships in this group
-		 * @param max the maximum number of players allowed in this group
-		 */
-		ShipGroup(byte[] ships, int max)
-		{
-			for(byte b : ships)
-			{
-				if(b >= INTERNAL_WARBIRD && b < INTERNAL_SPECTATOR)
-				{
-					mask |= 1 << b;
-				}
-			}
+    /**
+        Gets the ship to set the player in when they are not allowed to switch
+        @return a ship value from 0-7, or 8 for spectator
+    */
+    public byte fallbackShip()
+    {
+        return fallback;
+    }
 
-			this.max = max;
-		}
+    /**
+        Adds the specified InvalidShipListener to the event queue. It will now
+        receive notification of denied ship change attempts.
+        @param l the listener to add
+    */
+    public void addListener(InvalidShipListener l)
+    {
+        if(l != null && !listeners.contains(l))
+        {
+            listeners.add(l);
+        }
+    }
 
-		/**
-		 * Gets the contained ship mask for this group
-		 * @return an integer mask where the first 8 bits represent a ship
-		 */
-		int getMask()
-		{
-			return mask;
-		}
+    /**
+        Adds the specified InvalidShipListener to the event queue. It will no
+        longer recieve notification of denied ship change attempts.
+        @param l the listener to remove
+    */
+    public void removeListener(InvalidShipListener l)
+    {
+        if(l != null && listeners.contains(l))
+        {
+            listeners.remove(l);
+        }
+    }
 
-		/**
-		 * Gets the maximum player count for this group
-		 * @return the maximum number of players allowed in this group
-		 */
-		int getMax()
-		{
-			return max;
-		}
+    /**
+        Represents a grouping of ships and an associated limit.
 
-		/**
-		 * Compares two ShipGroup objects for equality
-		 * @return true if the two objects have the same mask, false otherwise
-		 */
-		public boolean equals(Object obj)
-		{
-			if(obj instanceof ShipGroup)
-			{
-				ShipGroup g = (ShipGroup)obj;
-				return mask == g.getMask();
-			}
-			else
-			{
-				return false;
-			}
-		}
-	}
+        @author D1st0rt
+        @version 06/12/27
+    */
+    private class ShipGroup
+    {
+        /** The ships this group contains */
+        private int mask;
+
+        /** The maximum number of players allowed in this group */
+        private int max;
+
+        /**
+            Creates a new instance of ShipGroup
+            @param ships the ships in this group
+            @param max the maximum number of players allowed in this group
+        */
+        ShipGroup(byte[] ships, int max)
+        {
+            for(byte b : ships)
+            {
+                if(b >= INTERNAL_WARBIRD && b < INTERNAL_SPECTATOR)
+                {
+                    mask |= 1 << b;
+                }
+            }
+
+            this.max = max;
+        }
+
+        /**
+            Gets the contained ship mask for this group
+            @return an integer mask where the first 8 bits represent a ship
+        */
+        int getMask()
+        {
+            return mask;
+        }
+
+        /**
+            Gets the maximum player count for this group
+            @return the maximum number of players allowed in this group
+        */
+        int getMax()
+        {
+            return max;
+        }
+
+        /**
+            Compares two ShipGroup objects for equality
+            @return true if the two objects have the same mask, false otherwise
+        */
+        public boolean equals(Object obj)
+        {
+            if(obj instanceof ShipGroup)
+            {
+                ShipGroup g = (ShipGroup)obj;
+                return mask == g.getMask();
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
 }

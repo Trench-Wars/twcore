@@ -14,13 +14,13 @@ import twcore.core.game.Player;
 import twcore.core.util.ModuleEventRequester;
 
 /**
- * xdodgeball.java Created: 12/2012
- * 
- * @author Fusha
- * 
- *         Simple module for ?go xdodgeball. Opens team's safe when goal is scored, then closes it again.
- * 
- */
+    xdodgeball.java Created: 12/2012
+
+    @author Fusha
+
+           Simple module for ?go xdodgeball. Opens team's safe when goal is scored, then closes it again.
+
+*/
 
 public class xdodgeball extends MultiModule {
 
@@ -52,8 +52,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * This method requests the events used by this module.
-     */
+        This method requests the events used by this module.
+    */
 
     public void requestEvents(ModuleEventRequester eventRequester) {
 
@@ -64,8 +64,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Handles messages
-     */
+        Handles messages
+    */
 
     public void handleEvent(Message event) {
 
@@ -74,14 +74,15 @@ public class xdodgeball extends MultiModule {
 
         if (type == Message.PRIVATE_MESSAGE) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
+
             if (name != null)
                 handleCommand(name, message);
         }
     }
 
     /**
-     * Handles goals.
-     */
+        Handles goals.
+    */
 
     public void handleEvent(SoccerGoal event) {
 
@@ -98,8 +99,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Registers players in safes and warps them if their freqs have scored.
-     */
+        Registers players in safes and warps them if their freqs have scored.
+    */
 
     public void handleEvent(PlayerPosition event) {
 
@@ -150,20 +151,23 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Removes player from lists if they leave
-     */
+        Removes player from lists if they leave
+    */
 
     public void handleEvent(PlayerLeft event) {
         if (isRunning) {
             String p = m_botAction.getPlayerName(event.getPlayerID());
+
             if (p == null) {
                 return;
             }
+
             if (freq0Safe.size() > 0) {
                 if (freq0Safe.contains(p)) {
                     freq0Safe.remove(p);
                 }
             }
+
             if (freq1Safe.size() > 0) {
                 if (freq1Safe.contains(p)) {
                     freq1Safe.remove(p);
@@ -173,21 +177,24 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Same if a player specs
-     */
+        Same if a player specs
+    */
 
     public void handleEvent(FrequencyShipChange event) {
         if (isRunning) {
             if (event.getShipType() == 0) {
                 String p = m_botAction.getPlayerName(event.getPlayerID());
+
                 if (p == null) {
                     return;
                 }
+
                 if (freq0Safe.size() > 0) {
                     if (freq0Safe.contains(p)) {
                         freq0Safe.remove(p);
                     }
                 }
+
                 if (freq1Safe.size() > 0) {
                     if (freq1Safe.contains(p)) {
                         freq1Safe.remove(p);
@@ -198,8 +205,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Sees if a message is a command and handles it
-     */
+        Sees if a message is a command and handles it
+    */
 
     private void handleCommand(String name, String command) {
 
@@ -238,12 +245,15 @@ public class xdodgeball extends MultiModule {
                 if (!isStarted) {
                     if (cmd.length() > 5) {
                         String stringWins = cmd.substring(6);
+
                         try {
                             wins = Integer.parseInt(stringWins);
+
                             if (wins < 1 || wins > 50) {
                                 m_botAction.sendPrivateMessage(name, "Please choose a more reasonable amount!");
                                 wins = 3;
                             }
+
                             m_botAction.sendPrivateMessage(name, "Game will be played to " + wins + " wins.");
                         } catch (Exception e) {
                             m_botAction.sendPrivateMessage(name, "Formatting error, try again.");
@@ -272,12 +282,15 @@ public class xdodgeball extends MultiModule {
             } else if (cmd.startsWith("!timer ")) {
                 if (cmd.length() > 6) {
                     String stringDoorTimer = cmd.substring(7);
+
                     try {
                         doorTimer = Integer.parseInt(stringDoorTimer);
+
                         if (doorTimer < 0 || doorTimer > 50) {
                             m_botAction.sendPrivateMessage(name, "Please choose a more reasonable amount!");
                             doorTimer = 10;
                         }
+
                         if (isStarted) {
                             m_botAction.sendArenaMessage("Safe timer set to " + doorTimer + " seconds.", 1);
                         } else {
@@ -296,8 +309,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Spams the rules
-     */
+        Spams the rules
+    */
 
     private void doSpamRules() {
         m_botAction.sendArenaMessage("------------------------------DESE R ROOLZ PLZ READ OK-----------------------------");
@@ -310,8 +323,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Starts game, does the warning and warping
-     */
+        Starts game, does the warning and warping
+    */
 
     private void startGame() {
 
@@ -324,6 +337,7 @@ public class xdodgeball extends MultiModule {
         m_botAction.warpFreqToLocation(1, 551, 539);
         m_botAction.setDoors(255);
         m_botAction.shipResetAll();
+
         if (!turbo) {
             m_botAction.sendArenaMessage("Round is about to begin! We're playing to " + wins + " wins! The safe timer is set to " + doorTimer + " seconds!", 2);
         } else {
@@ -343,6 +357,7 @@ public class xdodgeball extends MultiModule {
                 m_botAction.warpFreqToLocation(1, 550, 532);
                 isRunning = true;
                 startCheckWinner();
+
                 if (!turbo) {
                     m_botAction.sendArenaMessage("GO GO GO !!!", 104);
                 } else { //this part makes a random number from 1 to 29 :O
@@ -364,8 +379,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Checks if there's a free spot and if so invites dudes in spec to join game ever 30 seconds
-     */
+        Checks if there's a free spot and if so invites dudes in spec to join game ever 30 seconds
+    */
 
     private void doInvites() {
 
@@ -376,6 +391,7 @@ public class xdodgeball extends MultiModule {
                 if (!shutup) {
                     int freqSize = 0;
                     freqSize = m_botAction.getFrequencySize(0) + m_botAction.getFrequencySize(1);
+
                     if (freqSize < 12) {
                         m_botAction.sendTeamMessage("There are free spots! Hop in to play!!!");
                     }
@@ -388,8 +404,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Timers until the bot stops warping players.
-     */
+        Timers until the bot stops warping players.
+    */
 
     private void startFreq0Timer() {
 
@@ -422,8 +438,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Checks winner ever 7 seconds
-     */
+        Checks winner ever 7 seconds
+    */
 
     public void startCheckWinner() {
 
@@ -449,6 +465,7 @@ public class xdodgeball extends MultiModule {
                         m_botAction.cancelTasks();
                         freq0Safe.clear();
                         freq1Safe.clear();
+
                         if (!turbo) {
                             pauseAndGo();
                         } else {
@@ -467,8 +484,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * These next two handle what happens when a freq has won a round and keep track of the score.
-     */
+        These next two handle what happens when a freq has won a round and keep track of the score.
+    */
 
     private void doFreq0Won() {
 
@@ -478,6 +495,7 @@ public class xdodgeball extends MultiModule {
         m_botAction.cancelTasks();
         freq0Safe.clear();
         freq1Safe.clear();
+
         if (!turbo) {
             if (freq0Score == wins) {
                 announceWinner(0);
@@ -500,6 +518,7 @@ public class xdodgeball extends MultiModule {
         freq0Safe.clear();
         freq1Safe.clear();
         isRunning = false;
+
         if (!turbo) {
             if (freq1Score == wins) {
                 announceWinner(1);
@@ -515,8 +534,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Announces the winner and stops the game.
-     */
+        Announces the winner and stops the game.
+    */
 
     private void announceWinner(int freq) {
 
@@ -533,8 +552,8 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Just some small pauses between rounds
-     */
+        Just some small pauses between rounds
+    */
 
     private void pauseAndGo() {
 
@@ -563,11 +582,12 @@ public class xdodgeball extends MultiModule {
     }
 
     /**
-     * Stops game and clears all the records.
-     */
+        Stops game and clears all the records.
+    */
 
     private void stopGame(boolean clearScore) {
         cancel();
+
         if (clearScore) {
             freq0Score = 0;
             freq1Score = 0;
@@ -585,18 +605,19 @@ public class xdodgeball extends MultiModule {
 
     public String[] getModHelpMessage() { //The help message for mods
 
-        String[] JBHelp = { 
-        		"------------------------------------------------------------------------------", 
-        		"|!start     -   Starts the exciting game of XDODGEBALL!                      |",
-                "|!stop      -   Cancels the game                                             |", 
-                "|!wins #    -   Sets how many round wins we're playing to (Default is 3)     |",
-                "|!timer #   -   Adjusts the safe timer                                       |", 
-                "|                              (How long the safe is open (Default 10)       |",
-                "|!turbo     -   Enables UNLIMITED TURBO MODE                                 |", 
-                "|!specall   -   Spectates everyone (for team shuffling)                      |",
-                "|!spamrules -   I forgot what this does, sorry. :(                           |", 
-                "|!shutup    -   Stops the bot from spamming the spec frequency.              |",
-                "------------------------------------------------------------------------------" };
+        String[] JBHelp = {
+            "------------------------------------------------------------------------------",
+            "|!start     -   Starts the exciting game of XDODGEBALL!                      |",
+            "|!stop      -   Cancels the game                                             |",
+            "|!wins #    -   Sets how many round wins we're playing to (Default is 3)     |",
+            "|!timer #   -   Adjusts the safe timer                                       |",
+            "|                              (How long the safe is open (Default 10)       |",
+            "|!turbo     -   Enables UNLIMITED TURBO MODE                                 |",
+            "|!specall   -   Spectates everyone (for team shuffling)                      |",
+            "|!spamrules -   I forgot what this does, sorry. :(                           |",
+            "|!shutup    -   Stops the bot from spamming the spec frequency.              |",
+            "------------------------------------------------------------------------------"
+        };
         return JBHelp;
     }
 

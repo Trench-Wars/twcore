@@ -17,10 +17,10 @@ import twcore.core.util.StringBag;
 import twcore.core.util.Tools;
 
 /**
- * The old Zombies module, with features for new times.
- * 
- * @author harvey yau; modded by dugwyler and others
- */
+    The old Zombies module, with features for new times.
+
+    @author harvey yau; modded by dugwyler and others
+*/
 public class zombies extends MultiModule {
 
     public void init() {
@@ -28,10 +28,10 @@ public class zombies extends MultiModule {
         killmsgs.add( "dies a miserable horrible death at the hands of a Zombie!" );
     }
 
-    public void requestEvents(ModuleEventRequester events)	{
-		events.request(this, EventRequester.PLAYER_DEATH);
-		events.request(this, EventRequester.PLAYER_POSITION);
-	}
+    public void requestEvents(ModuleEventRequester events)  {
+        events.request(this, EventRequester.PLAYER_DEATH);
+        events.request(this, EventRequester.PLAYER_POSITION);
+    }
 
     HashSet <Integer>m_srcship = new HashSet<Integer>();
     HashSet <Integer>m_rbkship = new HashSet<Integer>();
@@ -48,43 +48,45 @@ public class zombies extends MultiModule {
     boolean killerShipSet = false;
     boolean rebK = false;
     boolean evaEnabled = false;
-    
+
     Point evaRespawn = new Point(400 * 16, 600 * 16);
     HashMap<Short, Point> evaSpawnLocation;
-    
 
-    public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives, int rebirthkills ){
+
+    public void setMode( int srcfreq, int srcship, int destfreq, int destship, int lives, int rebirthkills ) {
         m_humanfreq = srcfreq;
         m_srcship.add(new Integer(srcship));
         m_zombiefreq = destfreq;
         m_zombieship = destship;
         m_lives = lives;
         m_rebirthkills = rebirthkills;
+
         if(m_rebirthkills > 0)
-        	rebK = true;
+            rebK = true;
         else
-        	rebK = false;
+            rebK = false;
+
         modeSet = true;
     }
 
     public void addShip(int srcship, String name)
     {
-    	if(!(m_srcship.contains(new Integer(srcship))))
-    	{
-    		m_botAction.sendPrivateMessage(name, "Ship added.");
-   			m_srcship.add(new Integer(srcship));
-   		}
+        if(!(m_srcship.contains(new Integer(srcship))))
+        {
+            m_botAction.sendPrivateMessage(name, "Ship added.");
+            m_srcship.add(new Integer(srcship));
+        }
     }
 
     public void delShip(int srcship, String name)
     {
-    	if(m_srcship.contains(new Integer(srcship)))
-    	{
-    		m_botAction.sendPrivateMessage(name, "Ship removed.");
-    		m_srcship.remove(new Integer(srcship));
-    	}
+        if(m_srcship.contains(new Integer(srcship)))
+        {
+            m_botAction.sendPrivateMessage(name, "Ship removed.");
+            m_srcship.remove(new Integer(srcship));
+        }
     }
-    
+
     public void addRebirth(int rbkship, String name) {
         if (m_srcship.contains(rbkship)) {
             m_rbkship.add(new Integer(rbkship));
@@ -100,12 +102,12 @@ public class zombies extends MultiModule {
             m_botAction.sendPrivateMessage(name, "Rebirth Ship removed.");
         }
     }
-    
-    public void deleteKillMessage( String name, int index ){
+
+    public void deleteKillMessage( String name, int index ) {
 
         ArrayList<String> list = killmsgs.getList();
 
-        if( !( 1 <= index && index <= list.size() )){
+        if( !( 1 <= index && index <= list.size() )) {
             m_botAction.sendPrivateMessage( name, "Error: Can't find the index" );
             return;
         }
@@ -119,11 +121,12 @@ public class zombies extends MultiModule {
         }
     }
 
-    public void listKillMessages( String name ){
+    public void listKillMessages( String name ) {
         m_botAction.sendPrivateMessage( name, "The following messages are in my posession: " );
         ArrayList<String> list = killmsgs.getList();
-        for( int i = 0; i < list.size(); i++ ){
-            if( ((String)list.get( i )).startsWith( "'" )){
+
+        for( int i = 0; i < list.size(); i++ ) {
+            if( ((String)list.get( i )).startsWith( "'" )) {
                 m_botAction.sendPrivateMessage( name, i + 1 + ". " + "<name>" + (String)list.get( i ));
             } else {
                 m_botAction.sendPrivateMessage( name, i + 1 + ". " + "<name> " + (String)list.get( i ));
@@ -131,26 +134,28 @@ public class zombies extends MultiModule {
         }
     }
 
-    public void handleEvent( Message event ){
+    public void handleEvent( Message event ) {
 
         String message = event.getMessage();
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
+
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
+
             if( opList.isER( name )) handleCommand( name, message );
         }
     }
 
-    public int getInteger( String input ){
-        try{
+    public int getInteger( String input ) {
+        try {
             return Integer.parseInt( input.trim() );
-        } catch( Exception e ){
+        } catch( Exception e ) {
             return 1;
         }
     }
 
-    public void start( String name, String[] params ){
-        try{
-            if( params.length == 6 ){
+    public void start( String name, String[] params ) {
+        try {
+            if( params.length == 6 ) {
                 int srcfreq = Integer.parseInt(params[0]);
                 int srcship = Integer.parseInt(params[1]);
                 int destfreq = Integer.parseInt(params[2]);
@@ -159,8 +164,8 @@ public class zombies extends MultiModule {
                 int rebirthkills = Integer.parseInt(params[5]);
                 setMode( srcfreq, srcship, destfreq, destship, lives, rebirthkills );
                 isRunning = true;
-                modeSet = true;                
-            } else if( params.length == 5 ){
+                modeSet = true;
+            } else if( params.length == 5 ) {
                 int srcfreq = Integer.parseInt(params[0]);
                 int srcship = Integer.parseInt(params[1]);
                 int destfreq = Integer.parseInt(params[2]);
@@ -169,42 +174,42 @@ public class zombies extends MultiModule {
                 setMode( srcfreq, srcship, destfreq, destship, lives, 0 );
                 isRunning = true;
                 modeSet = true;
-            } else if( params.length == 1 ){
+            } else if( params.length == 1 ) {
                 int lives = Integer.parseInt(params[0]);
                 setMode( 0, 1, 2, 3, lives, 0 );
                 isRunning = true;
                 modeSet = true;
             }
-        }catch( Exception e ){
+        } catch( Exception e ) {
             m_botAction.sendPrivateMessage( name, "Sorry, you made a mistake; please try again." );
             isRunning = false;
             modeSet = false;
         }
     }
-    
+
     /**
-     * Special on start warp routine for the map eva and #eva. (Earth vs. Aliens)
-     */
+        Special on start warp routine for the map eva and #eva. (Earth vs. Aliens)
+    */
     public void evaWarp() {
         if( !m_botAction.getArenaName().equalsIgnoreCase("eva") && !m_botAction.getArenaName().equalsIgnoreCase("#eva")) {
             evaEnabled = false;
             return;
         }
-        
+
         evaEnabled = true;
         evaSpawnLocation = new HashMap<Short, Point>();
-                
+
         int sizeHumans = m_botAction.getPlayingFrequencySize(m_humanfreq);
         int humansWarped = 0;
         List<Player> players = m_botAction.getPlayingPlayers();
-        
+
         for(Player p : players) {
             if(p.getFrequency() == m_humanfreq) {
                 short pID = p.getPlayerID();
-                evaSpawnLocation.put(pID, 
-                        new Point((int) (54 * Math.cos(2 * Math.PI * humansWarped / sizeHumans) + 512), 
-                                (int) (54 * Math.sin(2 * Math.PI * humansWarped / sizeHumans) + 512)));
-                m_botAction.warpTo(pID, evaSpawnLocation.get(pID)); 
+                evaSpawnLocation.put(pID,
+                                     new Point((int) (54 * Math.cos(2 * Math.PI * humansWarped / sizeHumans) + 512),
+                                               (int) (54 * Math.sin(2 * Math.PI * humansWarped / sizeHumans) + 512)));
+                m_botAction.warpTo(pID, evaSpawnLocation.get(pID));
                 humansWarped++;
             } else if(p.getFrequency() == m_zombiefreq) {
                 m_botAction.warpTo(p.getPlayerID(), 511, 255);
@@ -212,22 +217,22 @@ public class zombies extends MultiModule {
         }
     }
 
-    public void handleCommand( String name, String message ){
-        if( message.startsWith( "!list" )){
+    public void handleCommand( String name, String message ) {
+        if( message.startsWith( "!list" )) {
             listKillMessages( name );
-        } else if( message.startsWith( "!add " )){
+        } else if( message.startsWith( "!add " )) {
             addKillMessage( name, message.substring( 5 ));
-        } else if( message.startsWith( "!stop" )){
+        } else if( message.startsWith( "!stop" )) {
             m_botAction.sendPrivateMessage( name, "Zombies mode stopped" );
             isRunning = false;
             evaEnabled = false;
-        } else if( message.startsWith( "!start " )){
+        } else if( message.startsWith( "!start " )) {
             String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
             start( name, parameters );
             evaWarp();
             m_botAction.scoreResetAll();
             m_botAction.sendPrivateMessage( name, "Zombies mode started" );
-        } else if( message.startsWith( "!start" )){
+        } else if( message.startsWith( "!start" )) {
             setMode( 0, 1, 2, 3, 1, 0 );
             isRunning = true;
             modeSet = true;
@@ -236,128 +241,153 @@ public class zombies extends MultiModule {
             m_botAction.sendPrivateMessage( name, "Zombies mode started" );
         } else if( message.startsWith( "!del " ))
             deleteKillMessage( name, getInteger( message.substring( 5 )));
-          else if(message.startsWith("!addship "))
-          {
-          	String pieces[] = message.split(" ");
-          	int ship = 1;
-             try {
-             	ship = Integer.parseInt(pieces[1]);
-             } catch(Exception e) {}
-             if(ship > 8 || ship < 1)
-             	ship = 1;
-             addShip(ship, name);
-          }
-          else if(message.startsWith("!delship "))
-          {
-          	String pieces[] = message.split(" ");
-          	int ship = 1;
-          	try {
-          		ship = Integer.parseInt(pieces[1]);
-          	} catch(Exception e) {}
-          	if(ship > 8 || ship < 1)
-          		ship = 1;
-          	delShip(ship, name);
-          }
-          else if (message.startsWith("!addrebirth"))
-          {
-              String pieces[] = message.split(" ");
-              int ship = 1;
-              try {
-                  ship = Integer.parseInt(pieces[1]);
-              } catch(Exception e) {}
-              if(ship > 8 || ship < 1)
-                  return;
-              addRebirth(ship, name);              
-          }
-          else if (message.startsWith("!delrebirth"))
-          {
-              String pieces[] = message.split(" ");
-              int ship = 1;
-              try {
-                  ship = Integer.parseInt(pieces[1]);
-              } catch(Exception e) {}
-              if(ship > 8 || ship < 1)
-                  return;
-              delRebirth(ship, name);              
-          }
-          else if(message.startsWith("!killership "))
-          {
-          	String pieces[] = message.split(" ");
-          	int ship = 1;
-          	try {
-          		ship = Integer.parseInt(pieces[1]);
-          	} catch(Exception e) {}
-          	if(ship > 8 || ship < 1)
-          		ship = 1;
-          	m_killerShip = ship;
-          	killerShipSet = true;
-          	m_botAction.sendPrivateMessage(name, "Ship " + m_killerShip + " will now be given to anyone who kills a zombie.");
-          }
+        else if(message.startsWith("!addship "))
+        {
+            String pieces[] = message.split(" ");
+            int ship = 1;
 
-/*        } else if( message.startsWith( "!setupwarp2" )){
-            m_botAction.warpFreqToLocation( 0, 800, 240 );
-            m_botAction.warpFreqToLocation( 2, 270, 840 );
-        } else if( message.startsWith( "!setupwarp" )){
-            m_botAction.warpFreqToLocation( 0, 870, 450 );
-            m_botAction.warpFreqToLocation( 2, 900, 900 );*/
+            try {
+                ship = Integer.parseInt(pieces[1]);
+            } catch(Exception e) {}
+
+            if(ship > 8 || ship < 1)
+                ship = 1;
+
+            addShip(ship, name);
+        }
+        else if(message.startsWith("!delship "))
+        {
+            String pieces[] = message.split(" ");
+            int ship = 1;
+
+            try {
+                ship = Integer.parseInt(pieces[1]);
+            } catch(Exception e) {}
+
+            if(ship > 8 || ship < 1)
+                ship = 1;
+
+            delShip(ship, name);
+        }
+        else if (message.startsWith("!addrebirth"))
+        {
+            String pieces[] = message.split(" ");
+            int ship = 1;
+
+            try {
+                ship = Integer.parseInt(pieces[1]);
+            } catch(Exception e) {}
+
+            if(ship > 8 || ship < 1)
+                return;
+
+            addRebirth(ship, name);
+        }
+        else if (message.startsWith("!delrebirth"))
+        {
+            String pieces[] = message.split(" ");
+            int ship = 1;
+
+            try {
+                ship = Integer.parseInt(pieces[1]);
+            } catch(Exception e) {}
+
+            if(ship > 8 || ship < 1)
+                return;
+
+            delRebirth(ship, name);
+        }
+        else if(message.startsWith("!killership "))
+        {
+            String pieces[] = message.split(" ");
+            int ship = 1;
+
+            try {
+                ship = Integer.parseInt(pieces[1]);
+            } catch(Exception e) {}
+
+            if(ship > 8 || ship < 1)
+                ship = 1;
+
+            m_killerShip = ship;
+            killerShipSet = true;
+            m_botAction.sendPrivateMessage(name, "Ship " + m_killerShip + " will now be given to anyone who kills a zombie.");
+        }
+
+        /*        } else if( message.startsWith( "!setupwarp2" )){
+                    m_botAction.warpFreqToLocation( 0, 800, 240 );
+                    m_botAction.warpFreqToLocation( 2, 270, 840 );
+                } else if( message.startsWith( "!setupwarp" )){
+                    m_botAction.warpFreqToLocation( 0, 870, 450 );
+                    m_botAction.warpFreqToLocation( 2, 900, 900 );*/
     }
 
 
-    public void addKillMessage( String name, String killMessage ){
+    public void addKillMessage( String name, String killMessage ) {
         killmsgs.add( killMessage );
         m_botAction.sendPrivateMessage( name, "<name> " + killMessage + " Added" );
     }
 
-    public void handleEvent( PlayerDeath event ){
-        if( modeSet && isRunning ){
+    public void handleEvent( PlayerDeath event ) {
+        if( modeSet && isRunning ) {
             Player p = m_botAction.getPlayer( event.getKilleeID() );
             Player p2 = m_botAction.getPlayer( event.getKillerID() );
+
             if( p == null || p2 == null )
                 return;
+
             try {
-                if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq && p2.getFrequency() != m_humanfreq){
+                if( p.getLosses() >= m_lives && m_srcship.contains(new Integer(p.getShipType())) && p.getFrequency() == m_humanfreq && p2.getFrequency() != m_humanfreq) {
                     m_botAction.setShip( event.getKilleeID(), m_zombieship );
                     m_botAction.setFreq( event.getKilleeID(), m_zombiefreq );
+
                     if(rebK)
-                    	m_botAction.scoreReset( event.getKilleeID() );
+                        m_botAction.scoreReset( event.getKilleeID() );
+
                     String killmsg = killmsgs.toString();
                     int soundPos = killmsg.indexOf('%');
                     int soundCode = 0;
 
-                    if( soundPos != -1){
-                        try{
+                    if( soundPos != -1) {
+                        try {
                             soundCode = Integer.parseInt(killmsg.substring(soundPos + 1));
-                        } catch( Exception e ){
+                        } catch( Exception e ) {
                             soundCode = 0;
                         }
-                        if(soundCode == 12) {soundCode = 1;} //no naughty sounds
+
+                        if(soundCode == 12) {
+                            soundCode = 1;   //no naughty sounds
+                        }
                     }
 
-                    if( killmsg.startsWith( "'" ) == false){
+                    if( killmsg.startsWith( "'" ) == false) {
                         killmsg = " " + killmsg;
                     }
 
-                    if( soundCode > 0 ){
+                    if( soundCode > 0 ) {
                         killmsg = killmsg.substring(0, soundPos + 1);
                         m_botAction.sendArenaMessage( p.getPlayerName() + killmsg + " (" + p.getWins() + ")", soundCode );
                     } else {
                         m_botAction.sendArenaMessage( p.getPlayerName() + killmsg + " (" + p.getWins() + ")");
                     }
                 }
+
                 // Check ship upgrade for a zombie killer
                 if(killerShipSet && m_srcship.contains(new Integer(p2.getShipType())) && p2.getShipType() != m_zombieship)
                 {
                     if(p2.getShipType() != m_killerShip)
                         m_botAction.setShip(event.getKillerID(), m_killerShip);
                 }
+
                 // Rebirth kill check
                 if( m_rebirthkills > 0 && m_zombieship == p2.getShipType() && (p2.getWins()) >= m_rebirthkills ) {
                     int shipNum;
+
                     if (m_rbkship.isEmpty())
                         shipNum = m_srcship.iterator().next().intValue(); // Get any ship available, as there's no preference
-                    else 
+                    else
                         shipNum = m_rbkship.iterator().next().intValue();
-                    
+
                     m_botAction.setFreq(event.getKillerID(), m_humanfreq);
                     m_botAction.setShip(event.getKillerID(), shipNum);
                     m_botAction.scoreReset( p2.getPlayerName() );
@@ -367,19 +397,19 @@ public class zombies extends MultiModule {
             }
         }
     }
-    
+
     public void handleEvent(PlayerPosition event) {
         short pID = event.getPlayerID();
 
         if(!evaEnabled)
             return;
-        
+
         if(m_botAction.getPlayer(pID).getFrequency() != m_humanfreq)
             return;
-        
+
         if(event.getXLocation() > evaRespawn.x || event.getYLocation() < evaRespawn.y)
             return;
-        
+
         m_botAction.warpTo(pID, evaSpawnLocation.get(pID));
     }
 
@@ -387,8 +417,8 @@ public class zombies extends MultiModule {
         String[] ZombiesHelp = {
             "!list               - Lists the currently loaded kill messages",
             "!add <Kill Message> - Adds a kill message. Use %%<num> at the end to add a sound.",
-//            "!setupwarp          - Warps everyone to their proper start locations in a standard zombies game",
-//            "!setupwarp2         - Warps everyone to their proper start locations in a zombies2 game",
+            //            "!setupwarp          - Warps everyone to their proper start locations in a standard zombies game",
+            //            "!setupwarp2         - Warps everyone to their proper start locations in a zombies2 game",
             "!del <index>        - Deletes a kill message.  The number for the index is taken from !list",
             "!stop               - Shuts down zombies mode",
             "!start              - Starts a standard zombies mode",
@@ -405,7 +435,7 @@ public class zombies extends MultiModule {
     public void cancel() {
     }
 
-    public boolean isUnloadable()	{
-		return true;
-	}
+    public boolean isUnloadable()   {
+        return true;
+    }
 }

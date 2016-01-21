@@ -9,15 +9,15 @@ import twcore.core.game.ArenaSettings;
 import twcore.core.util.ByteArray;
 
 /**
- * This static class handles all the checksum related calculations. Due to the complexity of most
- * of this class' functions, one should not alter it unless he/she really knows what he/she is doing.
- * It is best to just regard this as a black box.
- * <p>
- * Most of the routines in here have been ported from the in C++ written MervBot. All original research
- * should be credited to them.
- * @author Trancid
- *
- */
+    This static class handles all the checksum related calculations. Due to the complexity of most
+    of this class' functions, one should not alter it unless he/she really knows what he/she is doing.
+    It is best to just regard this as a black box.
+    <p>
+    Most of the routines in here have been ported from the in C++ written MervBot. All original research
+    should be credited to them.
+    @author Trancid
+
+*/
 public final class ChecksumGenerator {
 
     private static final int G4_MODIFIER   =    0x77073096;     // I am pretty sure these "constants"
@@ -25,20 +25,20 @@ public final class ChecksumGenerator {
     private static final int G64_MODIFIER  =    0x1db71064;     // say, maybe they are dependant on
     private static final int G256_MODIFIER =    0x76dc4190;     // the key provided to the algorithm.
     private static final long UINT32_MASK  =    4294967295L;    // Max value of an uint32. Java doesn't support uint32 through normal means...
-    
+
     /** Hidden constructor */
     private ChecksumGenerator() {
-        
+
     }
-    
+
     /**
-     * This checksum generator is one of two possibilities to be used by the large send position packet.
-     * <p>
-     * Credit: Assembly rips by Coconut Emulator. Main code: MervBot.
-     * @param buffer The entire packet data.
-     * @param len Length of the packet data.
-     * @return The generated checksum
-     */
+        This checksum generator is one of two possibilities to be used by the large send position packet.
+        <p>
+        Credit: Assembly rips by Coconut Emulator. Main code: MervBot.
+        @param buffer The entire packet data.
+        @param len Length of the packet data.
+        @return The generated checksum
+    */
     public static byte simpleChecksum(byte[] buffer, int len) {
         byte chksum = 0;
 
@@ -48,13 +48,13 @@ public final class ChecksumGenerator {
 
         return chksum;
     }
-    
+
     /**
-     * This checksum generator is one of the two possibilities to be used by the large send position packet.
-     * @param buffer Packet data that will be check summed.
-     * @param len Length of the data.
-     * @return The generated checksum
-     */
+        This checksum generator is one of the two possibilities to be used by the large send position packet.
+        @param buffer Packet data that will be check summed.
+        @param len Length of the data.
+        @return The generated checksum
+    */
     public static byte simpleChecksum(ByteArray buffer, int len) {
         byte chksum = 0;
 
@@ -66,39 +66,40 @@ public final class ChecksumGenerator {
     }
 
     /**
-     * Checksum generator for files. This checksum is to be used on verifying that local files
-     * match the files that the server has, like maps and the news.txt, through the provided checksum
-     * by the server. This function should generally not be called directly, but through {@link #getFileChecksum(String, long[])}.
-     * <p>
-     * Credits: Original research by Snrrrub and original code from MervBot
-     * @param buffer Data that the checksum will be generated for.
-     * @param dictionary The encoding dictionary. See: {@link #generateDictionary()}
-     * @param len Length of the buffer.
-     * @return A long key that mimics an unsigned 32 bit integer.
-     */
+        Checksum generator for files. This checksum is to be used on verifying that local files
+        match the files that the server has, like maps and the news.txt, through the provided checksum
+        by the server. This function should generally not be called directly, but through {@link #getFileChecksum(String, long[])}.
+        <p>
+        Credits: Original research by Snrrrub and original code from MervBot
+        @param buffer Data that the checksum will be generated for.
+        @param dictionary The encoding dictionary. See: {@link #generateDictionary()}
+        @param len Length of the buffer.
+        @return A long key that mimics an unsigned 32 bit integer.
+    */
     public static long getFileChecksum(byte[] buffer, long[] dictionary, int len) {
         // These variables need to be long to ensure the will behave like unsigned integers.
         long index = 0;
         long key   = UINT32_MASK;
-    
+
         for (int i = 0; i < len; ++i) {
             // The weirdness has to do with signed/unsigned values and the length of the dictionary.
             index   = dictionary[(int) ((key & 255) ^ (((int)buffer[i]) & 255))];
             key     = (key >> 8) ^ index;
         }
-    
+
         return ((~key) & UINT32_MASK);
     }
-    
+
     /**
-     * Shell function for the file checksum generator. Call upon this instead of {@link #getFileChecksum(byte[], long[], int)}
-     * to have the file automatically read from disk and generate the checksum for it.
-     * @param fileName Filename including path and extension.
-     * @param dictionary The encoding dictionary. See: {@link #generateDictionary()}
-     * @return Generated checksum when successful. Otherwise a long containing the signed integer value -1, f.e. when the file is not present.
-     */
+        Shell function for the file checksum generator. Call upon this instead of {@link #getFileChecksum(byte[], long[], int)}
+        to have the file automatically read from disk and generate the checksum for it.
+        @param fileName Filename including path and extension.
+        @param dictionary The encoding dictionary. See: {@link #generateDictionary()}
+        @return Generated checksum when successful. Otherwise a long containing the signed integer value -1, f.e. when the file is not present.
+    */
     public static long getFileChecksum(String fileName, long[] dictionary) {
         long chksum = 0xffffffff;
+
         try {
             File file = new File(fileName);
             int length = (int) file.length();
@@ -106,9 +107,9 @@ public final class ChecksumGenerator {
             FileInputStream fis = new FileInputStream(file);
             fis.read(byteBuffer);
             fis.close();
-            
+
             chksum = getFileChecksum(byteBuffer, dictionary, length);
-        // These are handled by the unaltered chksum value in the return below.
+            // These are handled by the unaltered chksum value in the return below.
         } catch (FileNotFoundException e) {
             // File not found.
         } catch (NullPointerException e) {
@@ -118,34 +119,34 @@ public final class ChecksumGenerator {
         } catch (SecurityException e) {
             // Insufficient rights to read file.
         }
-    
+
         return chksum;
     }
-    
+
     /**
-     * Used in {@link #generateDictionary()} to generate a chunk of 4 long[]s of the dictionary.
-     * @param dictionary Original dictionary
-     * @param offset Offset.
-     * @param key Encoding key.
-     * @return The dictionary generated up to this point.
-     */
+        Used in {@link #generateDictionary()} to generate a chunk of 4 long[]s of the dictionary.
+        @param dictionary Original dictionary
+        @param offset Offset.
+        @param key Encoding key.
+        @return The dictionary generated up to this point.
+    */
     private static long[] generate4(long[] dictionary, int offset, long key) {
         dictionary[offset] = key;
         dictionary[offset + 1] = key ^ G4_MODIFIER;
         key = (key ^ (G4_MODIFIER << 1)) & UINT32_MASK;
         dictionary[offset + 2] = key;
         dictionary[offset + 3] = key ^ G4_MODIFIER;
-        
+
         return dictionary;
     }
-    
+
     /**
-     * Used in {@link #generateDictionary()} to generate a chunk of 16 long[]s of the dictionary.
-     * @param dictionary Original dictionary
-     * @param offset Offset.
-     * @param key Encoding key.
-     * @return The dictionary generated up to this point.
-     */
+        Used in {@link #generateDictionary()} to generate a chunk of 16 long[]s of the dictionary.
+        @param dictionary Original dictionary
+        @param offset Offset.
+        @param key Encoding key.
+        @return The dictionary generated up to this point.
+    */
     private static long[] generate16(long[] dictionary, int offset, long key) {
         dictionary = generate4(dictionary, offset, key);
         dictionary = generate4(dictionary, offset + 4, key  ^ G16_MODIFIER);
@@ -154,14 +155,14 @@ public final class ChecksumGenerator {
         dictionary = generate4(dictionary, offset + 12, key ^ G16_MODIFIER);
         return dictionary;
     }
-    
+
     /**
-     * Used in {@link #generateDictionary()} to generate a chunk of 64 long[]s of the dictionary.
-     * @param dictionary Original dictionary
-     * @param offset Offset.
-     * @param key Encoding key.
-     * @return The dictionary generated up to this point.
-     */
+        Used in {@link #generateDictionary()} to generate a chunk of 64 long[]s of the dictionary.
+        @param dictionary Original dictionary
+        @param offset Offset.
+        @param key Encoding key.
+        @return The dictionary generated up to this point.
+    */
     private static long[] generate64(long[] dictionary, int offset, long key) {
         dictionary = generate16(dictionary, offset, key);
         dictionary = generate16(dictionary, offset + 16, key ^ G64_MODIFIER);
@@ -170,23 +171,23 @@ public final class ChecksumGenerator {
         dictionary = generate16(dictionary, offset + 48, key ^ G64_MODIFIER);
         return dictionary;
     }
-    
+
     /**
-     * Generates a dictionary used in the file checksum generation, {@link #getFileChecksum(String, long[])}.
-     * <p>
-     * Due to the way Java works, the size of the dictionary is actually twice as big as preferred. The main cause for this
-     * is that all the values need to be unsigned 32 bit integers. This is not easily supported by Java though.
-     * That being said, this shouldn't be touched, unless you really know what you are doing.
-     * <p>
-     * Credits: The original routine that this was based on is from MervBot
-     * @return Generated dictionary.
-     */
+        Generates a dictionary used in the file checksum generation, {@link #getFileChecksum(String, long[])}.
+        <p>
+        Due to the way Java works, the size of the dictionary is actually twice as big as preferred. The main cause for this
+        is that all the values need to be unsigned 32 bit integers. This is not easily supported by Java though.
+        That being said, this shouldn't be touched, unless you really know what you are doing.
+        <p>
+        Credits: The original routine that this was based on is from MervBot
+        @return Generated dictionary.
+    */
     public static long[] generateDictionary() {
         long key = 0;
         long[] dictionary = new long[256];
         dictionary = generate64(dictionary, 0, key);
         dictionary = generate64(dictionary, 64, key  ^ G256_MODIFIER);
-        key = (key ^ (G256_MODIFIER << 1)) & UINT32_MASK; 
+        key = (key ^ (G256_MODIFIER << 1)) & UINT32_MASK;
         dictionary = generate64(dictionary, 128, key);
         dictionary = generate64(dictionary, 192, key ^ G256_MODIFIER);
 
@@ -194,30 +195,30 @@ public final class ChecksumGenerator {
     }
 
     /**
-     * Used to generate a checksum based on the contents of the map the bot is currently in. This checksum
-     * is mainly used in the security synchronization packet.
-     * <p>
-     * Credits: Coconot Emulator and Snrrrub for the assembly rips, MervBot for the original code.
-     * <p>
-     * This code was originally a pure assembly rip modified to work in C++. The variable names are therefore not original,
-     * they were register type names like EAX, EDX etc. In an attempt to make more clear what their role is, they have been
-     * renamed to what has been estimated to be their role.
-     * @param key The encoding key.
-     * @param mapData The map data for which the checksum is to be generated.
-     * @return The checksum
-     */
-    public static int generateLevelChecksum(int key, ByteArray mapData) {   
+        Used to generate a checksum based on the contents of the map the bot is currently in. This checksum
+        is mainly used in the security synchronization packet.
+        <p>
+        Credits: Coconot Emulator and Snrrrub for the assembly rips, MervBot for the original code.
+        <p>
+        This code was originally a pure assembly rip modified to work in C++. The variable names are therefore not original,
+        they were register type names like EAX, EDX etc. In an attempt to make more clear what their role is, they have been
+        renamed to what has been estimated to be their role.
+        @param key The encoding key.
+        @param mapData The map data for which the checksum is to be generated.
+        @return The checksum
+    */
+    public static int generateLevelChecksum(int key, ByteArray mapData) {
         int startIndex, signedKey, offset, unsignedKey;
         int cnt;
 
-        if (key < 0) {   
+        if (key < 0) {
             // key is negative
             signedKey = -((-key) & 0x1F); // Make the key positive, filter the last 5 bits, and make it negative again.
 
             if (signedKey >= 1024) // Don't think this can actually happen.
                 return key;
 
-        } else {   
+        } else {
             // key is positive
             signedKey = key & 0x1F; // The signed key will have a value between 0 and 31 (5 bit)
         }
@@ -258,33 +259,33 @@ public final class ChecksumGenerator {
 
         return key;
     }
-    
+
     /**
-     * Generates the parameter checksum based on the raw arena settings.
-     * <p>
-     * Credits: Coconot Emulator and Snrrrub for the assembly rips, MervBot for the original code.
-     * @param key Key used for the checksum generation.
-     * @param settings The raw arena settings data.
-     * @return The generated checksum
-     * @see ArenaSettings
-     */
+        Generates the parameter checksum based on the raw arena settings.
+        <p>
+        Credits: Coconot Emulator and Snrrrub for the assembly rips, MervBot for the original code.
+        @param key Key used for the checksum generation.
+        @param settings The raw arena settings data.
+        @return The generated checksum
+        @see ArenaSettings
+    */
     public static int generateParameterChecksum(int key, ByteArray settings) {
         int chksum = 0;
-        
+
         for (int i = 0; i < 357; ++i) {
-           chksum += (settings.readLittleEndianInt(i * 4) ^ key);
+            chksum += (settings.readLittleEndianInt(i * 4) ^ key);
         }
-        
+
         return chksum;
     }
 
     /**
-     * Generates a hard coded checksum. 
-     * <p>
-     * Credits: Coconot Emulator and Snrrrub for the assembly rips, MervBot for the original code.
-     * @param key Key that is to be used.
-     * @return Generated checksum
-     */
+        Generates a hard coded checksum.
+        <p>
+        Credits: Coconot Emulator and Snrrrub for the assembly rips, MervBot for the original code.
+        @param key Key that is to be used.
+        @return Generated checksum
+    */
     public static int generateEXEChecksum( int key ) {
         int part, checksum = 0;
 

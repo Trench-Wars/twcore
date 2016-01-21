@@ -1,10 +1,10 @@
 /**
- * @(#)LvzObjects.java
- *
- *
- * @author flibb
- * @version 1.00 2007/7/21
- */
+    @(#)LvzObjects.java
+
+
+    @author flibb
+    @version 1.00 2007/7/21
+*/
 package twcore.bots.javelim;
 
 import twcore.core.BotAction;
@@ -31,6 +31,7 @@ public final class LvzObjects {
         if(m_size >= m_objectIDs.length) {
             return;
         }
+
         m_objectIDs[m_size++] = objectID;
         m_needToBuild = true;
     }
@@ -50,6 +51,7 @@ public final class LvzObjects {
         if(m_needToBuild) {
             buildStrings();
         }
+
         for(int i = 0; i < m_onSize; i++) {
             m_botAction.sendUnfilteredPublicMessage(m_onStrings[i]);
         }
@@ -59,6 +61,7 @@ public final class LvzObjects {
         if(m_needToBuild) {
             buildStrings();
         }
+
         for(int i = 0; i < m_onSize; i++) {
             m_botAction.sendUnfilteredPrivateMessage(playerID, m_onStrings[i]);
         }
@@ -85,6 +88,7 @@ public final class LvzObjects {
         if(!m_needToBuild) {
             return;
         }
+
         m_onSize = m_offSize = 0;
         StringBuilder onsb = new StringBuilder(256);
         StringBuilder offsb = new StringBuilder(256);
@@ -96,6 +100,7 @@ public final class LvzObjects {
             if(onsb.length() > MSG_LENGTH_THRESHOLD) {
                 m_onStrings[m_onSize++] = onsb.toString();
                 onsb.setLength(8);
+
                 if(m_onSize == m_onStrings.length) {
                     m_onStrings = growStringArray(m_onStrings);
                 }
@@ -104,13 +109,16 @@ public final class LvzObjects {
             if(offsb.length() > MSG_LENGTH_THRESHOLD) {
                 m_offStrings[m_offSize++] = offsb.toString();
                 offsb.setLength(8);
+
                 if(m_offSize == m_offStrings.length) {
                     m_offStrings = growStringArray(m_offStrings);
                 }
             }
+
             onsb.append(m_objectIDs[i]).append(',');
             offsb.append('-').append(m_objectIDs[i]).append(',');
         }
+
         m_onStrings[m_onSize++] = onsb.toString();
         m_offStrings[m_offSize++] = offsb.toString();
         m_needToBuild = false;
@@ -118,9 +126,11 @@ public final class LvzObjects {
 
     private String[] growStringArray(String[] arr) {
         String[] newArr = new String[arr.length + 1];
+
         for(int i = 0; i < arr.length; i++) {
             newArr[i] = arr[i];
         }
+
         return newArr;
     }
 

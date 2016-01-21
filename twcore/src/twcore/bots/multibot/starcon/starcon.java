@@ -1,4 +1,4 @@
- package twcore.bots.multibot.starcon;
+package twcore.bots.multibot.starcon;
 
 import java.util.TimerTask;
 
@@ -25,7 +25,7 @@ public class starcon extends MultiModule {
     CommandInterpreter  m_commandInterpreter;
     TimerTask           m_scanForCapitalShips;
 
-    public void init(){
+    public void init() {
 
         m_state = STOPPED_STATE;
 
@@ -33,39 +33,39 @@ public class starcon extends MultiModule {
 
         setupTimerTasks();
         registerCommands();
-//        m_botAction.sendUnfilteredPublicMessage( "?chat=robodev" );
+        //        m_botAction.sendUnfilteredPublicMessage( "?chat=robodev" );
     }
 
     public void cancel()
     {
-      m_botAction.cancelTasks();
+        m_botAction.cancelTasks();
     }
 
     public void requestEvents(ModuleEventRequester events)
     {
-      events.request( this, EventRequester.PLAYER_ENTERED );
-      events.request( this, EventRequester.PLAYER_DEATH );
+        events.request( this, EventRequester.PLAYER_ENTERED );
+        events.request( this, EventRequester.PLAYER_DEATH );
     }
 
     public boolean isUnloadable()
     {
-      return m_state == STOPPED_STATE;
+        return m_state == STOPPED_STATE;
     }
 
     public String[] getModHelpMessage()
     {
-      String[] message =
-      {
-        "!Start                        -- Starts the game.",
-        "!Stop                         -- Stops the game."
-      };
+        String[] message =
+        {
+            "!Start                        -- Starts the game.",
+            "!Stop                         -- Stops the game."
+        };
 
-      return message;
+        return message;
     }
 
 
 
-    void registerCommands(){
+    void registerCommands() {
         int         acceptedMessages;
 
         acceptedMessages = Message.PRIVATE_MESSAGE;
@@ -79,7 +79,7 @@ public class starcon extends MultiModule {
         m_commandInterpreter.registerDefaultCommand( Message.PRIVATE_MESSAGE, this, "registerShip" );
     }
 
-    void setupTimerTasks(){
+    void setupTimerTasks() {
 
         final StringBag   bag = new StringBag();
         final StringBag   teamBag = new StringBag();
@@ -94,62 +94,64 @@ public class starcon extends MultiModule {
         bag.add( "Private message the bot with a ship type (as a number) for ship changes." );
         bag.add( "If you want to enter the game, type :" + m_botAction.getBotName() + ":<ship type>.  The <ship type> must be a number between 1 and 8, but not 4." );
 
-        m_scanForCapitalShips = new TimerTask(){
-            public void run(){
-                if( !m_botAction.freqContainsShip( 0, 4 )){
+        m_scanForCapitalShips = new TimerTask() {
+            public void run() {
+                if( !m_botAction.freqContainsShip( 0, 4 )) {
                     m_botAction.sendArenaMessage( "Freq 0 is without a capital ship!  The first person to message " + m_botAction.getBotName() + " with !capital will be the new capital ship." );
                 }
-                if( !m_botAction.freqContainsShip( 1, 4 )){
+
+                if( !m_botAction.freqContainsShip( 1, 4 )) {
                     m_botAction.sendArenaMessage( "Freq 1 is without a capital ship!  The first person to message " + m_botAction.getBotName() + " with !capital will be the new capital ship." );
                 }
             }
         };
 
-        m_announcements = new TimerTask(){
-            public void run(){
+        m_announcements = new TimerTask() {
+            public void run() {
                 m_botAction.sendArenaMessage( bag.toString() );
             }
         };
 
-        m_specannounce = new TimerTask(){
-            public void run(){
+        m_specannounce = new TimerTask() {
+            public void run() {
                 m_botAction.sendTeamMessage( teamBag.toString() );
             }
         };
     }
 
-    public void handleEvent( PlayerDeath event ){
+    public void handleEvent( PlayerDeath event ) {
         Player killee = m_botAction.getPlayer( event.getKilleeID() );
-        if( killee.getShipType() == 4 ){
+
+        if( killee.getShipType() == 4 ) {
             final int pid = event.getKilleeID();
-            m_botAction.scheduleTask( new TimerTask(){
-                public void run(){
+            m_botAction.scheduleTask( new TimerTask() {
+                public void run() {
                     m_botAction.giveBounty( pid, 1000 );
                 }
             }, 8000 );
         }
     }
 
-    public void handleEvent( PlayerEntered event ){
-        if( m_state == RUNNING_STATE ){
+    public void handleEvent( PlayerEntered event ) {
+        if( m_state == RUNNING_STATE ) {
             m_botAction.sendPrivateMessage( event.getPlayerID(), "Welcome to " +
-            "Starcon!  The game is in progress.  To begin, private message " +
-            "me the number of the ship you want to be on.");
+                                            "Starcon!  The game is in progress.  To begin, private message " +
+                                            "me the number of the ship you want to be on.");
         }
     }
 
-    public void handleEvent( Message event ){
-      m_commandInterpreter.handleEvent( event );
+    public void handleEvent( Message event ) {
+        m_commandInterpreter.handleEvent( event );
     }
 
-    public void handlePing( String name, String message ){
+    public void handlePing( String name, String message ) {
 
         m_botAction.sendRemotePrivateMessage( name, "Pong!" );
     }
 
-    public void handleStart( String name, String message ){
+    public void handleStart( String name, String message ) {
 
-        if( opList.isER( name ) == true ){
+        if( opList.isER( name ) == true ) {
             m_state = RUNNING_STATE;
 
             m_botAction.sendArenaMessage( "Starcon bot activated by " + name );
@@ -166,62 +168,65 @@ public class starcon extends MultiModule {
     }
 
     //Not for capital ships...
-    public void registerShip( String name, String message ){
+    public void registerShip( String name, String message ) {
         int shipType = 0;
 
-        if( m_state == RUNNING_STATE ){
-            try{
+        if( m_state == RUNNING_STATE ) {
+            try {
                 shipType = Integer.parseInt( message );
-            } catch( NumberFormatException e ){
+            } catch( NumberFormatException e ) {
                 m_botAction.sendPrivateMessage( name, "If you would like to change ships, message me with the ship number." );
                 return;
             }
 
-            if( shipType < 1 || shipType > 8 ){
+            if( shipType < 1 || shipType > 8 ) {
                 m_botAction.sendPrivateMessage( name, "Valid ship types are from 1 to 8." );
                 return;
             }
 
-            if( m_botAction.getPlayer( name ).getShipType() == 0 ){
-                if( shipType != 4 ){
+            if( m_botAction.getPlayer( name ).getShipType() == 0 ) {
+                if( shipType != 4 ) {
                     m_botAction.sendPrivateMessage( name, "Okay, putting you in as " + shipType );
                     m_botAction.setShip( name, shipType );
                 } else {
                     m_botAction.sendPrivateMessage( name, "I'm sorry, but you must "
-                    + "choose a non-capital ship.");
+                                                    + "choose a non-capital ship.");
                 }
-            } else if( m_botAction.getPlayer( name ).getShipType() != 4 && shipType != 4 ){
+            } else if( m_botAction.getPlayer( name ).getShipType() != 4 && shipType != 4 ) {
                 m_botAction.sendPrivateMessage( name, "Okay, changing your ship.");
                 m_botAction.setShip( name, shipType );
-            } else if( shipType == 4 ){ //requested ship type is 4
+            } else if( shipType == 4 ) { //requested ship type is 4
                 m_botAction.sendPrivateMessage( name, "Sorry, you cannot change to "
-                + "the capital ship, the player in the capital ship must nominate "
-                + "you.  If there is no current capital ship, please use !capital" );
+                                                + "the capital ship, the player in the capital ship must nominate "
+                                                + "you.  If there is no current capital ship, please use !capital" );
             } else { //actual ship type is 4, capital ship
                 m_botAction.sendPrivateMessage( name, "You are the capital ship! "
-                + "In order to leave, you must die, or get full energy and spec." );
+                                                + "In order to leave, you must die, or get full energy and spec." );
             }
         }
     }
 
-    public void handleTrade( String name, String message ){
+    public void handleTrade( String name, String message ) {
         String      otherName;
 
-        if( m_state == RUNNING_STATE ){
+        if( m_state == RUNNING_STATE ) {
             otherName = message.toLowerCase().trim();
 
-            if( name.toLowerCase().equals( otherName.toLowerCase() )){
+            if( name.toLowerCase().equals( otherName.toLowerCase() )) {
                 m_botAction.sendPrivateMessage( name, "Sorry, you cannot trade with yourself!" );
                 return;
             }
+
             Player p = m_botAction.getPlayer( name );
             Player otherP = m_botAction.getPlayer( otherName );
-            if( otherP == null ){
+
+            if( otherP == null ) {
                 m_botAction.sendPrivateMessage( name, "Sorry, " + otherName + " is not a recognized name" );
                 return;
             }
-            if( p.getShipType() == 4 ){
-                if( p.getFrequency() == otherP.getFrequency() ){
+
+            if( p.getShipType() == 4 ) {
+                if( p.getFrequency() == otherP.getFrequency() ) {
                     m_botAction.setShip( name, otherP.getShipType() );
                     m_botAction.setShip( otherName, 4 );
                     m_botAction.giveBounty( otherP.getPlayerID(), 1000 );
@@ -235,9 +240,9 @@ public class starcon extends MultiModule {
         }
     }
 
-    public void handleStop( String name, String message ){
-        if( opList.isER( name ) == true ){
-            if( m_state == RUNNING_STATE ){
+    public void handleStop( String name, String message ) {
+        if( opList.isER( name ) == true ) {
+            if( m_state == RUNNING_STATE ) {
                 m_state = STOPPED_STATE;
                 m_botAction.sendArenaMessage( "Starcon Bot Disabled by " + name );
                 m_botAction.toggleLocked();
@@ -251,17 +256,17 @@ public class starcon extends MultiModule {
         }
     }
 
-    public void handleCapital( String name, String message ){
+    public void handleCapital( String name, String message ) {
         Player          p;
         int             frequency;
 
-        if( m_state == RUNNING_STATE ){
+        if( m_state == RUNNING_STATE ) {
             p = m_botAction.getPlayer( name );
             frequency = p.getFrequency();
 
-            if( p.getShipType() == 0 ){
+            if( p.getShipType() == 0 ) {
                 m_botAction.sendPrivateMessage( name, "You need to be in the game before you can be a capital ship" );
-            } else if( !m_botAction.freqContainsShip( frequency, 4 ) ){
+            } else if( !m_botAction.freqContainsShip( frequency, 4 ) ) {
                 m_botAction.sendArenaMessage( p.getPlayerName() + " is now the capital ship for Freq " + frequency );
                 m_botAction.setShip( p.getPlayerID(), 4 );
                 m_botAction.giveBounty( p.getPlayerID(), 1000 );

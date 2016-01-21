@@ -15,7 +15,7 @@ import java.util.Iterator;
 import java.util.TimerTask;
 
 public class baseduel extends SubspaceBot
-{   
+{
     //Requests all of the events from the core
     private EventRequester events;
     //Handles all commands sent to bot by players
@@ -85,14 +85,15 @@ public class baseduel extends SubspaceBot
 
         //Get the name of player that just entered
         String name = event.getPlayerName();
+
         //Greet them
         if (game == true)
         {
-            m_botAction.sendPrivateMessage(name,"Welcome to baseduel arena we are playing baseduel Freq 0 vs Freq 1 Scores: "+currentscore+"!");
+            m_botAction.sendPrivateMessage(name, "Welcome to baseduel arena we are playing baseduel Freq 0 vs Freq 1 Scores: " + currentscore + "!");
         }
         else
         {
-            m_botAction.sendPrivateMessage(name,"Welcome to baseduel arena ::!help to check baseduel commands!");
+            m_botAction.sendPrivateMessage(name, "Welcome to baseduel arena ::!help to check baseduel commands!");
         }
     }
     public void handleEvent(PlayerDeath event) {
@@ -100,6 +101,7 @@ public class baseduel extends SubspaceBot
         {
             String killer = m_botAction.getPlayerName(event.getKillerID());
             String killee = m_botAction.getPlayerName(event.getKilleeID());
+
             if (killer != null && killee != null) {
                 addstats(killer, 1, 0);
                 addstats(killee, 0, 1);
@@ -107,35 +109,35 @@ public class baseduel extends SubspaceBot
         }
     }
     /*  public void handleEvent(PlayerPosition event) {
-    	        boolean isSafe = false;
-    	        int freq = -1;
-    	        int xLoc = -1;
-    	        int yLoc = -1;
+                boolean isSafe = false;
+                int freq = -1;
+                int xLoc = -1;
+                int yLoc = -1;
 
-    		        Player p;
-    	        String playerName;
+                    Player p;
+                String playerName;
 
-    	        isSafe = event.isInSafe();
-    	        xLoc = event.getXLocation() / 16; //theses thing return coords in pixels. map is 16*1024 pixels.
-    		        yLoc = event.getYLocation() / 16; //so divide by 16 to get regular coords!
+                isSafe = event.isInSafe();
+                xLoc = event.getXLocation() / 16; //theses thing return coords in pixels. map is 16*1024 pixels.
+                    yLoc = event.getYLocation() / 16; //so divide by 16 to get regular coords!
 
-    	        p = m_botAction.getPlayer(event.getPlayerID());
+                p = m_botAction.getPlayer(event.getPlayerID());
 
-    	        if (p == null)
-    	           return;
+                if (p == null)
+                   return;
 
-    	        freq = p.getFrequency();
-    		        playerName = m_botAction.getPlayerName(p.getPlayerID());
-    	        if (playerName == null)
-    		            return;
+                freq = p.getFrequency();
+                    playerName = m_botAction.getPlayerName(p.getPlayerID());
+                if (playerName == null)
+                        return;
 
-    	        if (game) {
-    	               if (isSafe && xLoc > 512 && xLoc < 215 && yLoc > 530 && yLoc < 250) {
-    	                  m_botAction.sendPrivateMessage(playerName, "*warpto 512 512");
-    	                }
+                if (game) {
+                       if (isSafe && xLoc > 512 && xLoc < 215 && yLoc > 530 && yLoc < 250) {
+                          m_botAction.sendPrivateMessage(playerName, "*warpto 512 512");
+                        }
 
-    		        }
-    		    }*/
+                    }
+                }*/
     //What to do when somebody says something
     public void handleEvent(Message event)
     {
@@ -149,14 +151,14 @@ public class baseduel extends SubspaceBot
         //Allowed message types for commands
         int ok = Message.PRIVATE_MESSAGE | Message.PUBLIC_MESSAGE;
         //Add any commands as you see fit
-        cmds.registerCommand("!help",ok,this,"help");
-        cmds.registerCommand("!die",ok,this,"die");
-        cmds.registerCommand("!go",ok,this,"go");
-        cmds.registerCommand("!score",ok,this,"score");
-        cmds.registerCommand("!ssc",ok,this,"ssc");
-        cmds.registerCommand("!start",ok,this,"start");
-        cmds.registerCommand("!stats",ok,this,"stats");
-        cmds.registerCommand("!stop",ok,this,"stop");
+        cmds.registerCommand("!help", ok, this, "help");
+        cmds.registerCommand("!die", ok, this, "die");
+        cmds.registerCommand("!go", ok, this, "go");
+        cmds.registerCommand("!score", ok, this, "score");
+        cmds.registerCommand("!ssc", ok, this, "ssc");
+        cmds.registerCommand("!start", ok, this, "start");
+        cmds.registerCommand("!stats", ok, this, "stats");
+        cmds.registerCommand("!stop", ok, this, "stop");
     }
     //Got command: !help
     public int getCoordsX(Player p) {
@@ -186,7 +188,7 @@ public class baseduel extends SubspaceBot
 
                 countdown = new Countdown(seconds);
                 m_botAction.scheduleTaskAtFixedRate(countdown, 1000, 1000);
-                m_botAction.sendArenaMessage("Starting baseduel in 10 seconds -"+name, 2);
+                m_botAction.sendArenaMessage("Starting baseduel in 10 seconds -" + name, 2);
             }
         }
     }
@@ -204,7 +206,7 @@ public class baseduel extends SubspaceBot
         score[1] = 0;
         currentscore = "0 - 0 Tied!";
         countdown.cancel();
-        m_botAction.sendArenaMessage("Stopped Game -"+name, 1);
+        m_botAction.sendArenaMessage("Stopped Game -" + name, 1);
         m_botAction.warpAllToLocation(512, 272);
     }
     public void ssc(String name, String msg)
@@ -212,6 +214,7 @@ public class baseduel extends SubspaceBot
         String[] val = msg.split(",");
         score[0] = Integer.valueOf(val[0]);
         score[1] = Integer.valueOf(val[1]);
+
         if (score[0] > score[1])
         {
             currentscore = score[0] + " - " + score[1] + " Lead Team 0";
@@ -224,7 +227,8 @@ public class baseduel extends SubspaceBot
         {
             currentscore = score[1] + " - " + score[0] + " Tied!";
         }
-        m_botAction.sendArenaMessage("Set Scores to "+currentscore+" -"+name, 2);
+
+        m_botAction.sendArenaMessage("Set Scores to " + currentscore + " -" + name, 2);
     }
     public void score(String name, String msg)
     {
@@ -245,23 +249,27 @@ public class baseduel extends SubspaceBot
     {
         //Help Message
         String[] help =
-            {"+--------------------------------------------------------------+",
-                "|                     B A S E D U E L           Auther:Ahmad~  |",
-                "|  Player Commands:                                            |",
-                "|  !stats          - Check Your stats or player stats          |",
-            "|  !score          - Current Scores                            |"};
+        {   "+--------------------------------------------------------------+",
+            "|                     B A S E D U E L           Auther:Ahmad~  |",
+            "|  Player Commands:                                            |",
+            "|  !stats          - Check Your stats or player stats          |",
+            "|  !score          - Current Scores                            |"
+        };
         String[] Ophelp = {"|  Staffs Commands:                                            |",
-                "|  !start          - Start a game                              |",
-                "|  !stop           - Stop/Reset Game                           |",
-                "|  !ssc F0#,F1#    - Set Scores for freq 0, Freq 1: !ssc 3,1   |",
-                "|  !die            - Kill Bot!                                 |",
-        "|  !go             - Send Bot to any arena                     |"};
+                           "|  !start          - Start a game                              |",
+                           "|  !stop           - Stop/Reset Game                           |",
+                           "|  !ssc F0#,F1#    - Set Scores for freq 0, Freq 1: !ssc 3,1   |",
+                           "|  !die            - Kill Bot!                                 |",
+                           "|  !go             - Send Bot to any arena                     |"
+                          };
         String[] lastline = {"+--------------------------------------------------------------+"};
         m_botAction.privateMessageSpam(name, help);
+
         if(oplist.isER(name))
         {
             m_botAction.privateMessageSpam(name, Ophelp);
         }
+
         m_botAction.privateMessageSpam(name, lastline);
     }
 
@@ -277,7 +285,7 @@ public class baseduel extends SubspaceBot
     {
         BotSettings config = m_botAction.getBotSettings();
         //Get the initial arena from config and enter it
-        String kills2 = config.getString(name +"-kills");
+        String kills2 = config.getString(name + "-kills");
         //Get the initial arena from config and enter it
         String losses2 = config.getString(name + "-losses");
         int addl = Integer.valueOf(losses2) + losses;
@@ -298,10 +306,11 @@ public class baseduel extends SubspaceBot
     {
         BotSettings config = m_botAction.getBotSettings();
         //Get the initial arena from config and enter it
-        String kills = config.getString(name +"-kills");
+        String kills = config.getString(name + "-kills");
         //Get the initial arena from config and enter it
         String losses = config.getString(name + "-losses");
-        String stats = "Player name:"+name+" Kills: "+kills+" Losses: "+losses;
+        String stats = "Player name:" + name + " Kills: " + kills + " Losses: " + losses;
+
         if (kills == null)
         {
             if (losses == null)
@@ -309,8 +318,10 @@ public class baseduel extends SubspaceBot
                 stats = "This player don't have any stats in baseduel";
                 losses = "0";
             }
+
             kills = "0";
         }
+
         if (losses == null)
         {
             if (kills == null)
@@ -318,19 +329,24 @@ public class baseduel extends SubspaceBot
                 stats = "This player don't have any stats in baseduel";
                 kills = "0";
             }
+
             losses = "0";
         }
+
         return stats;
     }
     public boolean closeto(Player p, int x, int y, int tolerance)
     {
         boolean check = false;
+
         for (int i = 0; i < tolerance; ++i)
         {
             int x2 = x + i;
+
             for (int l = 0; l < tolerance; ++l)
             {
                 int y2 = y + l;
+
                 if (x2 == getCoordsX(p))
                 {
                     if (y2 == getCoordsY(p))
@@ -340,6 +356,7 @@ public class baseduel extends SubspaceBot
                 }
             }
         }
+
         return check;
     }
     public void cancel()
@@ -353,20 +370,20 @@ public class baseduel extends SubspaceBot
         private int secondsLeft;
 
         /**
-         * Creates a new instance of the Countdown task
-         * @param seconds the number of seconds to count down
-         */
+            Creates a new instance of the Countdown task
+            @param seconds the number of seconds to count down
+        */
         public Countdown(int seconds)
         {
             secondsLeft = seconds;
         }
 
         /**
-         * Execute this task: Count down to 0
-         */
+            Execute this task: Count down to 0
+        */
         public void run()
         {
-            if (game == false){
+            if (game == false) {
                 if (secondsLeft == 0)
                 {
                     game = true;
@@ -387,24 +404,28 @@ public class baseduel extends SubspaceBot
                 //{
 
                 Iterator<Player> i = m_botAction.getPlayerIterator();
+
                 while (i.hasNext()) {
 
                     Player pl = i.next();
+
                     if (!pl.getPlayerName().equals(m_botAction.getBotName())) {
                         player = pl;
-                        m_botAction.sendArenaMessage("Playername: "+m_botAction.getPlayer(player.getPlayerID()).getPlayerName()+" X:"+getCoordsX(player)+" Y:"+getCoordsY(player));
+                        m_botAction.sendArenaMessage("Playername: " + m_botAction.getPlayer(player.getPlayerID()).getPlayerName() + " X:" + getCoordsX(player) + " Y:" + getCoordsY(player));
+
                         if (closeto(player, 512, 272, 10))
                         {
 
                             if (player.getFrequency() == 1)
                             {
-                                m_botAction.sendPrivateMessage(player.getPlayerName(), "*warpto "+currentx[1]+" "+currenty[1]);
+                                m_botAction.sendPrivateMessage(player.getPlayerName(), "*warpto " + currentx[1] + " " + currenty[1]);
                             }
                             else if (player.getFrequency() == 0)
                             {
-                                m_botAction.sendPrivateMessage(player.getPlayerName(), "*warpto "+currentx[0]+" "+currenty[0]);
+                                m_botAction.sendPrivateMessage(player.getPlayerName(), "*warpto " + currentx[0] + " " + currenty[0]);
                             }
                         }
+
                         if (player.isInSafe())
                         {
                             if (closeto(player, currentx[1], currenty[1], 6))
@@ -416,6 +437,7 @@ public class baseduel extends SubspaceBot
 
                                     game = false;
                                     m_botAction.sendArenaMessage(player.getPlayerName() + " Touch Safe Freq 1");
+
                                     if (score[0] > score[1])
                                     {
                                         currentscore = score[0] + " - " + score[1] + " Lead Team 0";
@@ -428,7 +450,9 @@ public class baseduel extends SubspaceBot
                                     {
                                         currentscore = score[1] + " - " + score[0] + " Tied!";
                                     }
-                                    m_botAction.sendArenaMessage("Scores: "+currentscore, 103);
+
+                                    m_botAction.sendArenaMessage("Scores: " + currentscore, 103);
+
                                     if (score[0] != score[2])
                                     {
                                         int seconds = 10;
@@ -440,6 +464,7 @@ public class baseduel extends SubspaceBot
                                         m_botAction.scheduleTaskAtFixedRate(countdown, 1000, 1000);
                                         m_botAction.sendArenaMessage("Starting next round in 10 seconds", 5);
                                     }
+
                                     if (score[0] == score[2])
                                     {
                                         m_botAction.sendArenaMessage("Game Over! Team 0 Wins!", 5);
@@ -457,6 +482,7 @@ public class baseduel extends SubspaceBot
 
                                     game = false;
                                     m_botAction.sendArenaMessage(player.getPlayerName() + " Touch Safe Freq 0");
+
                                     if (score[0] > score[1])
                                     {
                                         currentscore = score[0] + " - " + score[1] + " Lead Team 0";
@@ -469,7 +495,9 @@ public class baseduel extends SubspaceBot
                                     {
                                         currentscore = score[1] + " - " + score[0] + " Tied!";
                                     }
-                                    m_botAction.sendArenaMessage("Scores: "+currentscore, 103);
+
+                                    m_botAction.sendArenaMessage("Scores: " + currentscore, 103);
+
                                     if (score[1] != score[2])
                                     {
                                         int seconds = 10;
@@ -492,8 +520,10 @@ public class baseduel extends SubspaceBot
                         }
                     }
                 }
+
                 //}
             }
+
             secondsLeft--;
         }
     }

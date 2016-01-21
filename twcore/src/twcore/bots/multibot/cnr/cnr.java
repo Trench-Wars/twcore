@@ -13,46 +13,46 @@ import twcore.core.util.Tools;
 
 
 /**
- * MultiBot Module for use in ?go cnr.
- * 
- * Cops have a limited amount of lives, robbers do not.  Robbers are jailed on death.
- * A cop can close the jail by touching the flag, and a robber can open it the same
- * way.  Cops win by jailing all robbers, and robbers win by jailing all cops.
- *
- *
- * DEFAULT LAYOUT
- *
- *   - Robbers on freq 0 as default ship 3 with infinite lives.
- *   - Cops on freq 1 as default ship 1 with default 2 lives.
- *     (note: changing the default freqs means you must set up spawn points in cfg
- *      a bit differently)
- *
- *
- * DEFAULT POSITIONS
- *
- *   - Robbers start game at 512 600
- *   - Cops start game at 512 290
- *   - Robbers respawn at 512 202 -- SET IN MAP'S CFG
- *   - Cops respawn near 512 500 -- SET IN MAP'S CFG
- *
- *     IMPORTANT NOTE - Cops should not spawn near the flag!  This makes it too
- *                      easy for the swine.
- *
- *
- * DOORS
- *
- *   - Before start: set doors to 0 (all open)
- *   - After start: set doors to 1 (all open except prison)
- *   - If robbers get flag, set doors to 0 (open)
- *   - If cops get flag, set doors to 1 (closed)
- *
- * Created 5/27/2004 - Last modified 7/24/04.
- * @version 1.8
- * @author qan
- * 
+    MultiBot Module for use in ?go cnr.
 
- *
- */
+    Cops have a limited amount of lives, robbers do not.  Robbers are jailed on death.
+    A cop can close the jail by touching the flag, and a robber can open it the same
+    way.  Cops win by jailing all robbers, and robbers win by jailing all cops.
+
+
+    DEFAULT LAYOUT
+
+     - Robbers on freq 0 as default ship 3 with infinite lives.
+     - Cops on freq 1 as default ship 1 with default 2 lives.
+       (note: changing the default freqs means you must set up spawn points in cfg
+        a bit differently)
+
+
+    DEFAULT POSITIONS
+
+     - Robbers start game at 512 600
+     - Cops start game at 512 290
+     - Robbers respawn at 512 202 -- SET IN MAP'S CFG
+     - Cops respawn near 512 500 -- SET IN MAP'S CFG
+
+       IMPORTANT NOTE - Cops should not spawn near the flag!  This makes it too
+                        easy for the swine.
+
+
+    DOORS
+
+     - Before start: set doors to 0 (all open)
+     - After start: set doors to 1 (all open except prison)
+     - If robbers get flag, set doors to 0 (open)
+     - If cops get flag, set doors to 1 (closed)
+
+    Created 5/27/2004 - Last modified 7/24/04.
+    @version 1.8
+    @author qan
+
+
+
+*/
 
 
 public class cnr extends MultiModule {
@@ -61,9 +61,9 @@ public class cnr extends MultiModule {
     }
 
     public void requestEvents(ModuleEventRequester events) {
-		events.request(this, EventRequester.PLAYER_DEATH);
-		events.request(this, EventRequester.FLAG_CLAIMED);
-	}
+        events.request(this, EventRequester.PLAYER_DEATH);
+        events.request(this, EventRequester.FLAG_CLAIMED);
+    }
 
 
     // Bot stats
@@ -106,15 +106,17 @@ public class cnr extends MultiModule {
 
 
     /** Handles event received message, and if from an ER or above,
-     * tries to parse it as an event mod command.  Otherwise, parses
-     * as a general command.
-     * @param event Passed event.
-     */
-    public void handleEvent( Message event ){
+        tries to parse it as an event mod command.  Otherwise, parses
+        as a general command.
+        @param event Passed event.
+    */
+    public void handleEvent( Message event ) {
 
         String message = event.getMessage();
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
+
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
+
             if( opList.isER( name ))
                 handleCommand( name, message );
             else
@@ -125,11 +127,11 @@ public class cnr extends MultiModule {
 
 
     /** Initializes ships and number of cop lives
-      * @param robberfreq Robber ship
-      * @param robberfreq Cop ship
-      * @param robberfreq Cop lives before spec
-      */
-    public void setMode( int robbership, int copship, int lives ){
+        @param robberfreq Robber ship
+        @param robberfreq Cop ship
+        @param robberfreq Cop lives before spec
+    */
+    public void setMode( int robbership, int copship, int lives ) {
         m_robberfreq = f_defrobfreq;
         m_copfreq = f_defcopfreq;
         m_robbership = robbership;
@@ -140,14 +142,14 @@ public class cnr extends MultiModule {
 
 
     /** Set start locations for arenas other than standard CNR.
-      * @param name Name of mod executing command (for reporting out of range errors)
-      * @param team Team number.  0 robbers, 1 cops.
-      * @param x X location to start at.
-      * @param y Y location to start at.
-      */
+        @param name Name of mod executing command (for reporting out of range errors)
+        @param team Team number.  0 robbers, 1 cops.
+        @param x X location to start at.
+        @param y Y location to start at.
+    */
     public void setStart( String name, int team, int x, int y ) {
         if ( x >= f_minmapcoord && x <= f_maxmapcoord &&
-             y >= f_minmapcoord && y <= f_maxmapcoord) {
+                y >= f_minmapcoord && y <= f_maxmapcoord) {
             if (team == 0) {
                 m_robstart_x = x;
                 m_robstart_y = y;
@@ -163,8 +165,8 @@ public class cnr extends MultiModule {
 
 
     /** Initializes number of lives, doors, & correct ships, gives rules, then a 10
-     * second warning and starts game.
-     */
+        second warning and starts game.
+    */
     public void doInit() {
         if( !manual ) {
 
@@ -222,14 +224,14 @@ public class cnr extends MultiModule {
 
 
     /** Intermediary method that passes information from handleCommand to doInit
-     * based on the parameters of the !start command.
-     * @param name Name of mod executing !start command (for reporting purposes)
-     * @param params String array containing each parameter
-     */
-    public void start( String name, String[] params ){
-        try{
+        based on the parameters of the !start command.
+        @param name Name of mod executing !start command (for reporting purposes)
+        @param params String array containing each parameter
+    */
+    public void start( String name, String[] params ) {
+        try {
 
-            switch( params.length){
+            switch( params.length) {
             // All default
             case 0:
                 setMode( f_defrobship, f_defcopship, f_deflives );
@@ -261,7 +263,7 @@ public class cnr extends MultiModule {
                 break;
             }
 
-        }catch( Exception e ){
+        } catch( Exception e ) {
             m_botAction.sendPrivateMessage( name, "Invalid argument type, or invalid number of arguments.  Please try again." );
             isRunning = false;
         }
@@ -270,21 +272,21 @@ public class cnr extends MultiModule {
 
 
     /** Handles all event mod commands given to the bot.
-     * @param name Name of ER or above who sent the command.
-     * @param message Message sent
-     */
-    public void handleCommand( String name, String message ){
+        @param name Name of ER or above who sent the command.
+        @param message Message sent
+    */
+    public void handleCommand( String name, String message ) {
 
-        if( message.startsWith( "!stop" )){
+        if( message.startsWith( "!stop" )) {
             if(isRunning == true) {
-              m_botAction.sendPrivateMessage( name, "Cops and Robbers stopped." );
-              m_botAction.setDoors( f_alldoorsopen );
-              isRunning = false;
+                m_botAction.sendPrivateMessage( name, "Cops and Robbers stopped." );
+                m_botAction.setDoors( f_alldoorsopen );
+                isRunning = false;
             } else {
-              m_botAction.sendPrivateMessage( name, "I can't do that, Dave.  Cops and Robbers is not currently running." );
+                m_botAction.sendPrivateMessage( name, "I can't do that, Dave.  Cops and Robbers is not currently running." );
             }
 
-        } else if( message.startsWith( "!start " )){
+        } else if( message.startsWith( "!start " )) {
             if(isRunning == false) {
                 String[] parameters = Tools.stringChopper( message.substring( 7 ), ' ' );
                 start( name, parameters );
@@ -292,7 +294,7 @@ public class cnr extends MultiModule {
                 m_botAction.sendPrivateMessage( name, "Cops and Robbers already running." );
             }
 
-        } else if( message.startsWith( "!start" )){
+        } else if( message.startsWith( "!start" )) {
             if(isRunning == false) {
                 setMode( f_defrobship, f_defcopship, f_deflives );
                 doInit();
@@ -306,6 +308,7 @@ public class cnr extends MultiModule {
 
         } else if( message.startsWith( "!setrobstart ")) {
             String[] parameters = Tools.stringChopper( message.substring( 12 ), ' ' );
+
             try {
                 if( parameters.length == 2) {
                     int x = Integer.parseInt(parameters[0]);
@@ -320,6 +323,7 @@ public class cnr extends MultiModule {
 
         } else if( message.startsWith( "!setcopstart ")) {
             String[] parameters = Tools.stringChopper( message.substring( 12 ), ' ' );
+
             try {
 
                 if( parameters.length == 2) {
@@ -357,9 +361,9 @@ public class cnr extends MultiModule {
 
 
     /** Handles all general commands given to the bot.
-     * @param name Name of player who sent the command.
-     * @param message Message sent
-     */
+        @param name Name of player who sent the command.
+        @param message Message sent
+    */
     public void handleGeneralCommand( String name, String message ) {
         // Prevent double !help spam (don't be TOO helpful)
         if( message.startsWith( "!bothelp" ) )
@@ -379,10 +383,10 @@ public class cnr extends MultiModule {
 
 
     /** Handles player death events.  Spec cops at appropriate number of deaths.
-     * @param event Contains event information on player who died.
-     */
-    public void handleEvent( PlayerDeath event ){
-        if( isRunning ){
+        @param event Contains event information on player who died.
+    */
+    public void handleEvent( PlayerDeath event ) {
+        if( isRunning ) {
             Player p = m_botAction.getPlayer( event.getKilleeID() );
 
             if( p.getShipType() == m_copship && p.getFrequency() == m_copfreq) {
@@ -404,11 +408,11 @@ public class cnr extends MultiModule {
 
 
     /** Handles flag claiming events.  Opens and closes the prison door based on
-     * who touches it.
-     * @param event Contains event information on player who claimed the flag.
-     */
+        who touches it.
+        @param event Contains event information on player who claimed the flag.
+    */
     public void handleEvent( FlagClaimed event ) {
-        if( isRunning ){
+        if( isRunning ) {
 
             //Flag f = m_botAction.getFlag( event.getFlagID() );
             Player p = m_botAction.getPlayer( event.getPlayerID() );
@@ -421,8 +425,8 @@ public class cnr extends MultiModule {
             } else if ( p.getShipType() == m_robbership && p.getFrequency() == m_robberfreq) {
                 m_botAction.setDoors( f_alldoorsopen ); // open all doors
                 m_botAction.sendArenaMessage(playerName + " has broken open the jail!  The robbers are free!");
-                /*final int warpx = f.getXLocation();
-                final int warpy = f.getYLocation();*/
+                /*  final int warpx = f.getXLocation();
+                    final int warpy = f.getYLocation();*/
 
             }
         }
@@ -438,9 +442,10 @@ public class cnr extends MultiModule {
     // methods below.  Makes a module much more user-friendly.
 
     /** Displays the rules of the event module in readable form.
-     */
+    */
     public void displayRules() {
         String[] rules = getRules();
+
         for( int i = 0; i < rules.length; i++ )
             m_botAction.sendArenaMessage( rules[i] );
     }
@@ -448,8 +453,8 @@ public class cnr extends MultiModule {
 
 
     /** Sends rules privately to a player.
-     * @param name Player to send msg to.
-     */
+        @param name Player to send msg to.
+    */
     public void sendRules( String name ) {
         m_botAction.privateMessageSpam( name, getRules() );
     }
@@ -457,8 +462,8 @@ public class cnr extends MultiModule {
 
 
     /** Sends about message to a player.
-     * @param name Player to send msg to.
-     */
+        @param name Player to send msg to.
+    */
     public void sendAbout( String name ) {
         String about = "Cops and Robbers module, v" + f_version + ".  Created by qan.  Last modified " + f_modified;
         m_botAction.sendPrivateMessage( name, about );
@@ -467,8 +472,8 @@ public class cnr extends MultiModule {
 
 
     /** Sends general help to a player.
-     * @param name Player to send msg to.
-     */
+        @param name Player to send msg to.
+    */
     public void sendHelp( String name ) {
         String[] help = {
             "General Help for Cops and Robbers Module",
@@ -482,11 +487,11 @@ public class cnr extends MultiModule {
 
 
     /** Returns a copy of the rules.
-     * @return A string array containing the rules for this module.
-     */
+        @return A string array containing the rules for this module.
+    */
     public String[] getRules() {
         String[] rules = {
-          // | Max line length for rules to display correctly on 800x600.....................|
+            // | Max line length for rules to display correctly on 800x600.....................|
             ".....               - RULES of COPS AND ROBBERS -               .....",
             "...    Every time a Robber dies, he goes to jail.  The jail can   ...",
             "..     be opened/closed by touching the flag in base.              ..",
@@ -501,8 +506,8 @@ public class cnr extends MultiModule {
 
 
     /** Returns help message.
-     * @return A string array containing help msgs for this bot.
-     */
+        @return A string array containing help msgs for this bot.
+    */
     public String[] getModHelpMessage() {
         String[] cnrHelp = {
             "!start              - Starts Cops and Robbers with default mediocre settings. TRY OTHERS! :)",
@@ -524,11 +529,11 @@ public class cnr extends MultiModule {
 
 
     /** (blank method)
-     */
+    */
     public void cancel() {
     }
 
-    public boolean isUnloadable()	{
-		return true;
-	}
+    public boolean isUnloadable()   {
+        return true;
+    }
 }

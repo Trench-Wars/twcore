@@ -21,13 +21,13 @@ import twcore.core.events.Message;
 import twcore.core.util.Tools;
 
 /**
- * ForumBot is a bot that can !activate a forum account. 
- * If a player has the same nickname as his forum account, he can activate it using a simple !activate. 
- * If he's on a different nickname, he can specify the name and password to activate his forum account.
- * Furthermore it's possible to retrieve information on a specific forum account, even by Forum Administrators (after logging in).
- * 
- * @author Maverick
- */
+    ForumBot is a bot that can !activate a forum account.
+    If a player has the same nickname as his forum account, he can activate it using a simple !activate.
+    If he's on a different nickname, he can specify the name and password to activate his forum account.
+    Furthermore it's possible to retrieve information on a specific forum account, even by Forum Administrators (after logging in).
+
+    @author Maverick
+*/
 public class forumbot extends SubspaceBot {
     private BotSettings m_botSettings;
     private BotAction m_botAction;
@@ -122,30 +122,34 @@ public class forumbot extends SubspaceBot {
     }
 
     /*****************************************************************************
-     *                          COMMAND HANDLERS
+                                COMMAND HANDLERS
      *****************************************************************************/
     private void cmdHelp(String name, String message) {
         // Public commands
         String[] startCommands = { "+-------------------------------------------------------------------------------+",
-                "|                                 FORUMBOT                                      |",
-                "|                                                                               |",
-                "| I'm a bot that can activate your forum account at http://forums.trenchwars.org|",
-                "| Please look below for the available commands.                                 |" };
+                                   "|                                 FORUMBOT                                      |",
+                                   "|                                                                               |",
+                                   "| I'm a bot that can activate your forum account at http://forums.trenchwars.org|",
+                                   "| Please look below for the available commands.                                 |"
+                                 };
         String[] publicCommands = { "|                                                                               |",
-                "| !activate                   - Activates your registered name that matches     |",
-                "|                               your current nickname on the forum.             |",
-                "| !activate <name>:<password> - Activates <name>. <password> is only used for   |",
-                "|                               verification that you registered the <name>.    |",
-                "| !login <name>:<password>    - Login for forum administrators only             |" };
+                                    "| !activate                   - Activates your registered name that matches     |",
+                                    "|                               your current nickname on the forum.             |",
+                                    "| !activate <name>:<password> - Activates <name>. <password> is only used for   |",
+                                    "|                               verification that you registered the <name>.    |",
+                                    "| !login <name>:<password>    - Login for forum administrators only             |"
+                                  };
         String[] modCommands = { "|-----------------------   MOD+ / Forum Administrator   ------------------------|",
-                "| !forceactivate <name>       - Activates the given <name>. This command should |",
-                "|                               be used with caution and only in rare situations|",
-                "| !ipuser xx.xx.xx.x          - Checks IP to see if a player is known in game.  |",
-                "| (^ Admin Only)                                                                |",
-                "| !info <name>                - Displays information about forum user           |", };
+                                 "| !forceactivate <name>       - Activates the given <name>. This command should |",
+                                 "|                               be used with caution and only in rare situations|",
+                                 "| !ipuser xx.xx.xx.x          - Checks IP to see if a player is known in game.  |",
+                                 "| (^ Admin Only)                                                                |",
+                                 "| !info <name>                - Displays information about forum user           |",
+                               };
         String[] smodCommands = { "|-------------------------------   SMOD+   -------------------------------------|",
-                "| !go <arena>                 - Moves ForumBot to <arena>                       |",
-                "| !die                        - Removes ForumBot from the zone                  |" };
+                                  "| !go <arena>                 - Moves ForumBot to <arena>                       |",
+                                  "| !die                        - Removes ForumBot from the zone                  |"
+                                };
         String[] endCommands = { "\\-------------------------------------------------------------------------------/" };
 
         m_botAction.smartPrivateMessageSpam(name, startCommands);
@@ -209,7 +213,7 @@ public class forumbot extends SubspaceBot {
 
                 // message user
                 m_botAction.sendSmartPrivateMessage(name, "Invalid username / password combination. Please try again. (attempt "
-                        + loginAttempts.get(name).split(":")[0] + " of " + MAX_LOGIN_ATTEMPTS + ")");
+                                                    + loginAttempts.get(name).split(":")[0] + " of " + MAX_LOGIN_ATTEMPTS + ")");
                 m_botAction.sendSmartPrivateMessage(name, "Have you forgotten your username or password? Visit http://forums.trenchwars.org/login.php?do=lostpw .");
 
             } else {
@@ -259,7 +263,7 @@ public class forumbot extends SubspaceBot {
 
             // message user
             m_botAction.sendSmartPrivateMessage(name, "Invalid username / password combination. Please try again. (attempt "
-                    + loginAttempts.get(name).split(":")[0] + " of " + MAX_LOGIN_ATTEMPTS + ")");
+                                                + loginAttempts.get(name).split(":")[0] + " of " + MAX_LOGIN_ATTEMPTS + ")");
             m_botAction.sendSmartPrivateMessage(name, "Have you forgotten your username or password? Visit http://forums.trenchwars.org/login.php?do=lostpw .");
 
         } else {
@@ -267,9 +271,11 @@ public class forumbot extends SubspaceBot {
 
             // Check if the user is in the correct user group
             int usergroupid = 0;
+
             try {
                 psUserGroupID.setString(1, user);
                 ResultSet rsUserGroupID = psUserGroupID.executeQuery();
+
                 if (rsUserGroupID.next()) {
                     usergroupid = rsUserGroupID.getInt(1);
                 } else {
@@ -296,6 +302,7 @@ public class forumbot extends SubspaceBot {
     private void cmdIP(String name, String ip) {
         try {
             ResultSet rs = m_botAction.SQLQuery("pubstats", "SELECT fcName FROM tblPlayer WHERE fcIP LIKE '" + Tools.addSlashesToString(ip) + "'");
+
             if (rs.next()) {
                 m_botAction.sendSmartPrivateMessage(name, "POSITIVE: That IP is assosiated with a player in game.");
                 m_botAction.SQLClose(rs);
@@ -317,7 +324,7 @@ public class forumbot extends SubspaceBot {
         }
 
         m_botAction.sendSmartPrivateMessage(name, "Attempting to activate forum account '" + user
-                + "'... All messages directed to 'you' are meant for the forum account owner.");
+                                            + "'... All messages directed to 'you' are meant for the forum account owner.");
         activateForumAccount(user, name);
     }
 
@@ -335,26 +342,27 @@ public class forumbot extends SubspaceBot {
         boolean isForumAdmin = forumAdmins.contains(name);
 
         try {
-            // SELECT u.userid, ug.title, u.username, u.email, u.posts, u.birthday, u.ipaddress 
-            // FROM user u, usergroup ug 
+            // SELECT u.userid, ug.title, u.username, u.email, u.posts, u.birthday, u.ipaddress
+            // FROM user u, usergroup ug
             // WHERE u.usergroupid = ug.usergroupid AND u.username = ?
             psInfoUser.setString(1, user);
             ResultSet rsInfoUser = psInfoUser.executeQuery();
+
             if (rsInfoUser.next()) {
                 m_botAction.sendSmartPrivateMessage(name, "  Username [id]:    " + rsInfoUser.getString("username") + " ["
-                        + rsInfoUser.getInt("userid") + "]");
+                                                    + rsInfoUser.getInt("userid") + "]");
                 m_botAction.sendSmartPrivateMessage(name, "  Usergroup [id]:   " + rsInfoUser.getString("title") + " ["
-                        + rsInfoUser.getInt("usergroupid") + "]");
+                                                    + rsInfoUser.getInt("usergroupid") + "]");
                 // smod + forum admin
                 m_botAction.sendSmartPrivateMessage(name, "  E-mail:           "
-                        + ((isSModerator || isForumAdmin) ? rsInfoUser.getString("email") : "[hidden]"));
+                                                    + ((isSModerator || isForumAdmin) ? rsInfoUser.getString("email") : "[hidden]"));
                 m_botAction.sendSmartPrivateMessage(name, "  Nr. of posts:     " + rsInfoUser.getInt("posts"));
                 // mod + forum admin
                 m_botAction.sendSmartPrivateMessage(name, "  Birthdate:        "
-                        + ((isModerator || isForumAdmin) ? rsInfoUser.getString("birthday") : "[hidden]"));
+                                                    + ((isModerator || isForumAdmin) ? rsInfoUser.getString("birthday") : "[hidden]"));
                 // smod + forum admin
                 m_botAction.sendSmartPrivateMessage(name, "  IP:               "
-                        + ((isSModerator || isForumAdmin) ? rsInfoUser.getString("ipaddress") : "[hidden]"));
+                                                    + ((isSModerator || isForumAdmin) ? rsInfoUser.getString("ipaddress") : "[hidden]"));
             } else {
                 m_botAction.sendSmartPrivateMessage(name, "The specified forum name was not found.");
             }
@@ -373,10 +381,12 @@ public class forumbot extends SubspaceBot {
             m_botAction.sendSmartPrivateMessage(name, "Syntax error. Please specify an arena name;  ::!go <arena>");
             return;
         }
+
         if (Tools.isAllDigits(arena)) {
             m_botAction.sendSmartPrivateMessage(name, "Syntax error. Please specify a non-numeric arena name (sending the bot to public arenas is not allowed).   ::!go <arena>");
             return;
         }
+
         m_botAction.changeArena(arena);
         m_botAction.sendSmartPrivateMessage(name, m_botAction.getBotName() + " moving to '" + arena + "'...");
     }
@@ -400,6 +410,7 @@ public class forumbot extends SubspaceBot {
         try {
             psValidateUser.setString(1, name);
             ResultSet rsValidateUser = psValidateUser.executeQuery();
+
             if (rsValidateUser.next()) {
                 String hashedPassword = rsValidateUser.getString("password");
                 String salt = rsValidateUser.getString("salt");
@@ -424,10 +435,10 @@ public class forumbot extends SubspaceBot {
     }
 
     /**
-     * Activates the forum account (attempts to)
-     * 
-     * @param name
-     */
+        Activates the forum account (attempts to)
+
+        @param name
+    */
     private void activateForumAccount(String name, String messager) {
         int usergroupID = 0;
 
@@ -459,6 +470,7 @@ public class forumbot extends SubspaceBot {
                 // Start the check if the usergroup ID has the expected value after the change (activation)
                 psUserGroupID.setString(1, name);
                 ResultSet rsCheckUserGroupID = psUserGroupID.executeQuery();
+
                 if (rsCheckUserGroupID.next()) {
 
                     if (rsCheckUserGroupID.getInt(1) == USERGROUP_REGISTERED) {
@@ -488,9 +500,9 @@ public class forumbot extends SubspaceBot {
     }
 
     /**
-     * @param str
-     * @return a MD5 hashed string
-     */
+        @param str
+        @return a MD5 hashed string
+    */
     private String md5(String str) {
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
@@ -512,9 +524,9 @@ public class forumbot extends SubspaceBot {
     }
 
     /**
-     * This TimerTask checks if there are loginAttempts registered that  
-     * @author Maverick
-     */
+        This TimerTask checks if there are loginAttempts registered that
+        @author Maverick
+    */
     class CleanLoginAttempts extends TimerTask {
         public void run() {
             Iterator<String> iter = loginAttempts.values().iterator();
@@ -532,9 +544,9 @@ public class forumbot extends SubspaceBot {
     }
 
     /**
-     * This TimerTask executes psKeepAlive which just sends a query to the database to keep the connection alive  
-     * @author Maverick
-     */
+        This TimerTask executes psKeepAlive which just sends a query to the database to keep the connection alive
+        @author Maverick
+    */
     class KeepAliveConnection extends TimerTask {
         public void run() {
             try {

@@ -6,211 +6,217 @@ import twcore.core.events.Message;
 import twcore.core.util.ModuleEventRequester;
 
 /**
- * Utility set designed to manage, and modify components of arenas that
- * otherwise need manual editing by a System Operator.
- * 
- * @author JabJabJab
- * 
- */
+    Utility set designed to manage, and modify components of arenas that
+    otherwise need manual editing by a System Operator.
+
+    @author JabJabJab
+
+*/
 public class utildev extends MultiUtil {
 
-	/**
-	 * List of arenas to be blacklisted from modification for control purposes.
-	 */
-	public String[] arenaBlackList = new String[] { "elim", "baseelim", "duel",
-			"tourny", "wbduel", "javduel", "spidduel", "base" };
+    /**
+        List of arenas to be blacklisted from modification for control purposes.
+    */
+    public String[] arenaBlackList = new String[] { "elim", "baseelim", "duel",
+            "tourny", "wbduel", "javduel", "spidduel", "base"
+                                                  };
 
-	@Override
-	public void init() {
-	}
+    @Override
+    public void init() {
+    }
 
-	@Override
-	public String[] getHelpMessages() {
-		String help[] = {
-				"==Dev Utilities==",
-				"!setResolution <x> <y> (sets the resolution cap)",
-				"!setResolution <preset> (Presets: twd, twl, clear)"
-		};
-		return help;
-	}
+    @Override
+    public String[] getHelpMessages() {
+        String help[] = {
+            "==Dev Utilities==",
+            "!setResolution <x> <y> (sets the resolution cap)",
+            "!setResolution <preset> (Presets: twd, twl, clear)"
+        };
+        return help;
+    }
 
-	@Override
-	public void requestEvents(ModuleEventRequester modEventReq) {
+    @Override
+    public void requestEvents(ModuleEventRequester modEventReq) {
 
-	}
+    }
 
-	public void handleEvent(Message event) {
-		String message = event.getMessage();
-		if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
-			String name = m_botAction.getPlayerName(event.getPlayerID());
-			handleCommand(name, message);
-		}
-	}
+    public void handleEvent(Message event) {
+        String message = event.getMessage();
 
-	public void handleCommand(String player, String message) {
-		BotAction botAction;
+        if (event.getMessageType() == Message.PRIVATE_MESSAGE) {
+            String name = m_botAction.getPlayerName(event.getPlayerID());
+            handleCommand(name, message);
+        }
+    }
 
-		String[] parameters;
+    public void handleCommand(String player, String message) {
+        BotAction botAction;
 
-		String arenaName;
+        String[] parameters;
 
-		String command;
+        String arenaName;
 
-		boolean validArenaForResolutionModifications;
+        String command;
 
-		botAction = getBotAction();
+        boolean validArenaForResolutionModifications;
 
-		botAction.sendPublicMessage("test");
+        botAction = getBotAction();
 
-		arenaName = botAction.getArenaName();
+        botAction.sendPublicMessage("test");
 
-		command = message.toLowerCase();
+        arenaName = botAction.getArenaName();
 
-		validArenaForResolutionModifications = isValidArenaForResolutionModification(arenaName);
+        command = message.toLowerCase();
 
-		parameters = getParameters(command);
+        validArenaForResolutionModifications = isValidArenaForResolutionModification(arenaName);
 
-		if (m_opList.isSmod(player)) {
-			if (command.startsWith("!setresolution")) {
-				if (validArenaForResolutionModifications) {
-					handleResolutionChange(player, parameters);
-				} else {
-					botAction.sendPrivateMessage(player,
-							"Invalid arena for command. (BlackListed)");
-				}
-			}
-		}
+        parameters = getParameters(command);
 
-	}
+        if (m_opList.isSmod(player)) {
+            if (command.startsWith("!setresolution")) {
+                if (validArenaForResolutionModifications) {
+                    handleResolutionChange(player, parameters);
+                } else {
+                    botAction.sendPrivateMessage(player,
+                                                 "Invalid arena for command. (BlackListed)");
+                }
+            }
+        }
 
-	public boolean isValidArenaForResolutionModification(String arenaName) {
-		String arena = arenaName.toLowerCase();
-		if (arena.contains("public")) {
-			return false;
-		}
+    }
 
-		if (arena.contains("twdd") || arena.contains("twld")
-				|| arena.contains("twbd") || arena.contains("twsd")) {
-			return false;
-		}
+    public boolean isValidArenaForResolutionModification(String arenaName) {
+        String arena = arenaName.toLowerCase();
 
-		for (String string : arenaBlackList) {
-			if (string.toLowerCase().equals(arena)) {
-				return false;
-			}
-		}
+        if (arena.contains("public")) {
+            return false;
+        }
 
-		return true;
-	}
+        if (arena.contains("twdd") || arena.contains("twld")
+                || arena.contains("twbd") || arena.contains("twsd")) {
+            return false;
+        }
 
-	// TWD : 1440 1024
-	// TWL : 1440 900
-	private void handleResolutionChange(String player, String[] parameters) {
+        for (String string : arenaBlackList) {
+            if (string.toLowerCase().equals(arena)) {
+                return false;
+            }
+        }
 
-		BotAction botAction = getBotAction();
+        return true;
+    }
 
-		int resolutionX = 0;
-		int resolutionY = 0;
+    // TWD : 1440 1024
+    // TWL : 1440 900
+    private void handleResolutionChange(String player, String[] parameters) {
 
-		boolean clear = false;
+        BotAction botAction = getBotAction();
 
-		if (parameters.length >= 1) {
-			if (parameters[0] == null) {
-				botAction.sendPrivateMessage(player,
-						"Invalid parameters. !setResolution x y");
-				return;
-			}
-			if (parameters[0].equals("twd")) {
-				resolutionX = 1440;
-				resolutionY = 1024;
-			} else if (parameters[0].equals("twl")) {
-				resolutionX = 1440;
-				resolutionY = 900;
-			} else if (parameters[0].equals("empty")
-					|| parameters[0].equals("none")
-					|| parameters[0].equals("off")) {
-				clear = true;
-			} else {
-				// If the parameters are at least 2 (ignoring anything else
-				// sent)
-				if (parameters.length >= 2) {
-					try {
-						// Grab our value parameters.
-						resolutionX = Integer.parseInt(parameters[0]);
-						resolutionY = Integer.parseInt(parameters[1]);
+        int resolutionX = 0;
+        int resolutionY = 0;
 
-						if (resolutionX < 1024 || resolutionY < 768) {
-							// Check if numbers are positive.
-							if (resolutionX < 1 || resolutionY < 1) {
-								botAction
-										.sendPrivateMessage(
-												player,
-												"Invalid parameters. Values must be positive, and greater than or equal to 800 600.");
-								return;
-							}
+        boolean clear = false;
 
-							botAction
-									.sendPrivateMessage(player,
-											"Invalid parameters. Values must be at least 800 600");
-							return;
-						}
-					} catch (NumberFormatException e) {
-						botAction.sendPrivateMessage(player,
-								"Invalid parameters. !setResolution x y");
-						return;
-					}
-				}
-			}
+        if (parameters.length >= 1) {
+            if (parameters[0] == null) {
+                botAction.sendPrivateMessage(player,
+                                             "Invalid parameters. !setResolution x y");
+                return;
+            }
 
-			if (clear) {
-				botAction.sendUnfilteredPublicMessage("?set Misc:MaxXRes= ");
-				botAction.sendUnfilteredPublicMessage("?set Misc:MaxYRes= ");
-				botAction.sendPrivateMessage(player, "Resolution cleared.");
+            if (parameters[0].equals("twd")) {
+                resolutionX = 1440;
+                resolutionY = 1024;
+            } else if (parameters[0].equals("twl")) {
+                resolutionX = 1440;
+                resolutionY = 900;
+            } else if (parameters[0].equals("empty")
+                       || parameters[0].equals("none")
+                       || parameters[0].equals("off")) {
+                clear = true;
+            } else {
+                // If the parameters are at least 2 (ignoring anything else
+                // sent)
+                if (parameters.length >= 2) {
+                    try {
+                        // Grab our value parameters.
+                        resolutionX = Integer.parseInt(parameters[0]);
+                        resolutionY = Integer.parseInt(parameters[1]);
 
-			} else {
-				botAction.sendUnfilteredPublicMessage("?set Misc:MaxXRes="
-						+ resolutionX);
-				botAction.sendUnfilteredPublicMessage("?set Misc:MaxYRes="
-						+ resolutionY);
-				botAction.sendPrivateMessage(player, "Resolution set.");
-			}
+                        if (resolutionX < 1024 || resolutionY < 768) {
+                            // Check if numbers are positive.
+                            if (resolutionX < 1 || resolutionY < 1) {
+                                botAction
+                                .sendPrivateMessage(
+                                    player,
+                                    "Invalid parameters. Values must be positive, and greater than or equal to 800 600.");
+                                return;
+                            }
 
-		} else {
-			botAction.sendPrivateMessage(player,
-					"E.G: !setResolution 1280 1024 ; !setResolution twd");
-		}
-	}
+                            botAction
+                            .sendPrivateMessage(player,
+                                                "Invalid parameters. Values must be at least 800 600");
+                            return;
+                        }
+                    } catch (NumberFormatException e) {
+                        botAction.sendPrivateMessage(player,
+                                                     "Invalid parameters. !setResolution x y");
+                        return;
+                    }
+                }
+            }
 
-	private String[] getParameters(String command) {
-		String[] split;
-		String[] parameters;
-		int validCount = 0;
-		int count = 0;
+            if (clear) {
+                botAction.sendUnfilteredPublicMessage("?set Misc:MaxXRes= ");
+                botAction.sendUnfilteredPublicMessage("?set Misc:MaxYRes= ");
+                botAction.sendPrivateMessage(player, "Resolution cleared.");
 
-		split = command.split(" ");
+            } else {
+                botAction.sendUnfilteredPublicMessage("?set Misc:MaxXRes="
+                                                      + resolutionX);
+                botAction.sendUnfilteredPublicMessage("?set Misc:MaxYRes="
+                                                      + resolutionY);
+                botAction.sendPrivateMessage(player, "Resolution set.");
+            }
 
-		for (int index = 0; index < split.length; index++) {
-			String splitString = split[index];
-			if (splitString != null && !splitString.isEmpty()) {
-				validCount++;
-			} else {
-				split[index] = null;
-			}
-		}
+        } else {
+            botAction.sendPrivateMessage(player,
+                                         "E.G: !setResolution 1280 1024 ; !setResolution twd");
+        }
+    }
 
-		parameters = new String[validCount];
+    private String[] getParameters(String command) {
+        String[] split;
+        String[] parameters;
+        int validCount = 0;
+        int count = 0;
 
-		for (int index = 1; index < split.length; index++) {
-			String parameter = split[index];
-			if (parameter != null) {
-				parameters[count++] = split[index];
-			}
-		}
+        split = command.split(" ");
 
-		return parameters;
-	}
+        for (int index = 0; index < split.length; index++) {
+            String splitString = split[index];
 
-	public BotAction getBotAction() {
-		return this.m_botAction;
-	}
+            if (splitString != null && !splitString.isEmpty()) {
+                validCount++;
+            } else {
+                split[index] = null;
+            }
+        }
+
+        parameters = new String[validCount];
+
+        for (int index = 1; index < split.length; index++) {
+            String parameter = split[index];
+
+            if (parameter != null) {
+                parameters[count++] = split[index];
+            }
+        }
+
+        return parameters;
+    }
+
+    public BotAction getBotAction() {
+        return this.m_botAction;
+    }
 }

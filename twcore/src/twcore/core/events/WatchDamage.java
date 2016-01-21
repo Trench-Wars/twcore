@@ -3,28 +3,28 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
- * (S2C 0x38) Event called when a ship is damaged and has *watchdamage on.<code><pre>
- * +--------------------------------+
- * | Offset  Length  Description    |
- * +--------------------------------+
- * |  0      1       Type Byte      |
- * |  1      1       Victim ID      |
- * |  2      5       ?              |
- * |  7      1       Attacker ID    |
- * |  8      1       ?              |
- * |  9      2       Weapons info   |
- * | 11      2       Old energy     |
- * | 13      2       Energy lost    |
- * | 15      1       ?              |
- * +--------------------------------+</code></pre>
- *
- * To fire this event, send *watchdamage to players on which you wish to watch damage.
- * Preferably this should be done when PlayerEntered is fired.  Remember that you must
- * also *watchdamage players upon exit.
- *
- * TODO: A way to have *watchdamage automatically sent when players enter and leave,
- * based on either requesting this event, or requesting this event and setting a flag.
- */
+    (S2C 0x38) Event called when a ship is damaged and has *watchdamage on.<code><pre>
+    +--------------------------------+
+    | Offset  Length  Description    |
+    +--------------------------------+
+    |  0      1       Type Byte      |
+    |  1      1       Victim ID      |
+    |  2      5       ?              |
+    |  7      1       Attacker ID    |
+    |  8      1       ?              |
+    |  9      2       Weapons info   |
+    | 11      2       Old energy     |
+    | 13      2       Energy lost    |
+    | 15      1       ?              |
+    +--------------------------------+</code></pre>
+
+    To fire this event, send *watchdamage to players on which you wish to watch damage.
+    Preferably this should be done when PlayerEntered is fired.  Remember that you must
+    also *watchdamage players upon exit.
+
+    TODO: A way to have *watchdamage automatically sent when players enter and leave,
+    based on either requesting this event, or requesting this event and setting a flag.
+*/
 public class WatchDamage extends SubspaceEvent {
 
     public static int WEAPON_BULLET = 1;
@@ -55,7 +55,7 @@ public class WatchDamage extends SubspaceEvent {
     private boolean     m_weaponAlternative;
     private boolean     m_weaponBouncyShrap;
 
-    public WatchDamage( ByteArray array ){
+    public WatchDamage( ByteArray array ) {
 
         m_victim = array.readLittleEndianShort( 1 );
         m_attacker = array.readLittleEndianShort( 7 );
@@ -63,11 +63,11 @@ public class WatchDamage extends SubspaceEvent {
         m_oldEnergy = array.readLittleEndianShort( 11 );
         m_energyLost = array.readLittleEndianShort( 13 );
 
-        if( m_energyLost < 0 ){
+        if( m_energyLost < 0 ) {
             m_energyLost += 65535;
         }
 
-        if( m_oldEnergy < 0 ){
+        if( m_oldEnergy < 0 ) {
             m_oldEnergy += 65535;
         }
 
@@ -80,74 +80,75 @@ public class WatchDamage extends SubspaceEvent {
     }
 
     /** Gets the PlayerID of the Victim
-     * @return Victim PlayerID
-     */
-    public short getVictim(){
+        @return Victim PlayerID
+    */
+    public short getVictim() {
         return m_victim;
     }
 
     /** Gets the PlayerID of the Attacker
-     * @return Attacker PlayerID
-     */
-    public short getAttacker(){
+        @return Attacker PlayerID
+    */
+    public short getAttacker() {
         return m_attacker;
     }
 
     /** Gets the energy the player had before.
-     * @return Old Energy Level
-     */
-    public short getOldEnergy(){
+        @return Old Energy Level
+    */
+    public short getOldEnergy() {
         return m_oldEnergy;
     }
 
     /** Gets the energy the player lost.
-     * @return Lost energy
-     */
-    public short getEnergyLost(){
+        @return Lost energy
+    */
+    public short getEnergyLost() {
         return m_energyLost;
     }
 
-    public int getWeaponType(){
+    public int getWeaponType() {
         return m_weaponType;
     }
 
-    public int getWeaponLevel(){
+    public int getWeaponLevel() {
         return m_weaponLevel;
     }
 
-    public boolean isWeaponBouncyShrap(){
+    public boolean isWeaponBouncyShrap() {
         return m_weaponBouncyShrap;
     }
 
-    public int getWeaponShrapLevel(){
+    public int getWeaponShrapLevel() {
         return m_weaponShrapLevel;
     }
 
-    public int getWeaponShrapCount(){
+    public int getWeaponShrapCount() {
         return m_weaponShrapCount;
     }
 
-    public boolean isType( int type ){
-        if( m_weaponType == type ){
+    public boolean isType( int type ) {
+        if( m_weaponType == type ) {
             return true;
-        } else if( m_weaponType == WEAPON_EMP_BOMB && type == WEAPON_BOMB ){
+        } else if( m_weaponType == WEAPON_EMP_BOMB && type == WEAPON_BOMB ) {
             return true;
-        } else if( m_weaponType == WEAPON_BULLET_BOUNCING && type == WEAPON_BULLET ){
+        } else if( m_weaponType == WEAPON_BULLET_BOUNCING && type == WEAPON_BULLET ) {
             return true;
         }
+
         return false;
     }
 
-    public boolean isMultifire(){
-        if( m_weaponType != WEAPON_BULLET && m_weaponType != WEAPON_BULLET_BOUNCING ){
+    public boolean isMultifire() {
+        if( m_weaponType != WEAPON_BULLET && m_weaponType != WEAPON_BULLET_BOUNCING ) {
             return false;
         } else {
             return m_weaponAlternative;
         }
     }
 
-    public boolean isMine(){
-        if( m_weaponType != WEAPON_BOMB && m_weaponType != WEAPON_EMP_BOMB ){
+    public boolean isMine() {
+        if( m_weaponType != WEAPON_BOMB && m_weaponType != WEAPON_EMP_BOMB ) {
             return false;
         } else {
             return m_weaponAlternative;

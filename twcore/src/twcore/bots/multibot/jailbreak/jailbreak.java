@@ -19,11 +19,11 @@ import twcore.core.util.Tools;
 import twcore.core.util.Tools.Ship;
 
 /**
- * jailbreak.java Created: 12/2012
- * 
- * @author Fusha
- * @author K A N E (Ian)
- */
+    jailbreak.java Created: 12/2012
+
+    @author Fusha
+    @author K A N E (Ian)
+*/
 public class jailbreak extends MultiModule {
 
     // Toggles for game status and balancing teams.
@@ -52,8 +52,8 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * This method requests the events used by this module.
-     */
+        This method requests the events used by this module.
+    */
     public void requestEvents(ModuleEventRequester eventRequester) {
 
         eventRequester.request(this, EventRequester.PLAYER_DEATH);
@@ -66,19 +66,22 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Counts arena leaves as DCs to be safe.
-     * 
-     * @param event
-     *            Contains event information on player.
-     */
+        Counts arena leaves as DCs to be safe.
+
+        @param event
+                  Contains event information on player.
+    */
     public void handleEvent(PlayerLeft event) {
         if (isRunning) {
             String p = m_botAction.getPlayerName(event.getPlayerID());
+
             if (p != null) {
                 PlayerInfo player = m_players.get(p);
+
                 if (player != null && player.isPlaying()) {
                     player.lagger();
                     checkWinner();
+
                     if (freq0Safe.size() > 0) {
                         if (freq0Safe.contains(p))
                             freq0Safe.remove(p);
@@ -92,11 +95,11 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Handles the soccer goal event.
-     * 
-     * @param event
-     *            Contains information on a freq change.
-     */
+        Handles the soccer goal event.
+
+        @param event
+                  Contains information on a freq change.
+    */
     public void handleEvent(SoccerGoal event) {
         if (isRunning) {
             if (event.getFrequency() == 0) {
@@ -110,19 +113,21 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Using the frequencyChange event to look out for possible lagouts to the spec frequency.
-     * 
-     * @param event
-     *            Contains information on a freq change.
-     */
+        Using the frequencyChange event to look out for possible lagouts to the spec frequency.
+
+        @param event
+                  Contains information on a freq change.
+    */
     public void handleEvent(FrequencyShipChange event) {
         if (isRunning) {
             if (event.getShipType() == Ship.SPECTATOR) {
                 String name = m_botAction.getPlayerName(event.getPlayerID());
                 PlayerInfo player = m_players.get(name);
+
                 if (player != null) {
                     player.lagger();
                     checkWinner();
+
                     if (freq0Safe.size() > 0) {
                         if (freq0Safe.contains(name))
                             freq0Safe.remove(name);
@@ -136,11 +141,11 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Everyone that joins the arena while the game is in progress will receive a message to !lagout or !enter.
-     * 
-     * @param event
-     *            - contains the variable information for the event.
-     */
+        Everyone that joins the arena while the game is in progress will receive a message to !lagout or !enter.
+
+        @param event
+                  - contains the variable information for the event.
+    */
     public void handleEvent(PlayerEntered event) {
         if (isRunning) {
             if (m_players.containsKey(event.getPlayerName())) {
@@ -152,11 +157,12 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Handles ball timestamp (for dropping them at go)
-     */
+        Handles ball timestamp (for dropping them at go)
+    */
 
     public void handleEvent(BallPosition event) {
         int id = event.getBallID();
+
         if (id == 0) {
             lastBallTimestamp0 = event.getTimeStamp();
         } else if (id == 1) {
@@ -167,9 +173,9 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Checks if a player is in safe and warps them out if their freq has scored, or adds/removes them to/from the warping waiting list.
-     * 
-     */
+        Checks if a player is in safe and warps them out if their freq has scored, or adds/removes them to/from the warping waiting list.
+
+    */
     public void handleEvent(PlayerPosition event) {
         boolean isSafe = false;
         int freq = -1;
@@ -207,13 +213,14 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * This handleEvent accepts msgs from players as well as mods.
-     * 
-     * @event The Message event in question.
-     */
+        This handleEvent accepts msgs from players as well as mods.
+
+        @event The Message event in question.
+    */
     public void handleEvent(Message event) {
         int type = event.getMessageType();
         String message = event.getMessage();
+
         if (type == Message.PRIVATE_MESSAGE) {
             String name = m_botAction.getPlayerName(event.getPlayerID());
             handleCommand(name, message);
@@ -226,11 +233,11 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Handles the Handevent app.
-     * 
-     * @param name
-     * @param command
-     */
+        Handles the Handevent app.
+
+        @param name
+        @param command
+    */
     private void handleCommand(String name, String command) {
         String cmd = command.toLowerCase();
 
@@ -250,13 +257,14 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Handles the !lagout command
-     * 
-     * @param name
-     */
+        Handles the !lagout command
+
+        @param name
+    */
     private void cmd_lagout(String name) {
         if (isRunning) {
             PlayerInfo player = m_players.get(name);
+
             if (player != null) {
                 if (player.isLagged()) {
                     returnedFromLagout(name);
@@ -272,13 +280,14 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Handles the !enter command
-     * 
-     * @param name
-     */
+        Handles the !enter command
+
+        @param name
+    */
     private void cmd_enter(String name) {
         if (isRunning) {
             PlayerInfo p = m_players.get(name);
+
             if (p == null) {
                 if (teamToggle) {
                     m_botAction.setShip(name, Ship.WARBIRD);
@@ -303,10 +312,10 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Start the current game
-     * 
-     * @param name
-     */
+        Start the current game
+
+        @param name
+    */
     private void cmd_start(String name) {
         if (!isStarted) {
             startGame();
@@ -316,10 +325,10 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Stop the current game
-     * 
-     * @param name
-     */
+        Stop the current game
+
+        @param name
+    */
     private void cmd_stop(String name) {
         if (isStarted) {
             cancel();
@@ -329,28 +338,30 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * A method that puts a returning player from lagout into the ship and freq that they left the game as
-     * 
-     * @param name
-     *            name of the player is needed.
-     */
+        A method that puts a returning player from lagout into the ship and freq that they left the game as
+
+        @param name
+                  name of the player is needed.
+    */
     private void returnedFromLagout(String name) {
         PlayerInfo p = m_players.get(name);
         m_botAction.setShip(name, Ship.WARBIRD);
         m_botAction.setFreq(name, p.getFreq());
+
         if (p.getFreq() == 0) {
             freq0Safe.add(name);
         } else if (p.getFreq() == 1) {
             freq1Safe.add(name);
         }
+
         m_botAction.sendPrivateMessage(name, "Welcome back!");
         p.isNotLagged();
     }
 
     /**
-     * Starts the timer for the heartbeat *
-     * 
-     */
+        Starts the timer for the heartbeat
+
+    */
     private void startCheckTimer() {
         if (checkTimer != null)
             m_botAction.cancelTask(checkTimer);
@@ -360,9 +371,9 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Creates a record for each of the players in the game at the start
-     * 
-     */
+        Creates a record for each of the players in the game at the start
+
+    */
     private void createPlayerRecords() {
         m_players = new TreeMap<String, PlayerInfo>(String.CASE_INSENSITIVE_ORDER);
 
@@ -371,9 +382,9 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Clears all player records, and cancels all timer tasks.
-     * 
-     */
+        Clears all player records, and cancels all timer tasks.
+
+    */
     private void clearRecords() {
         m_botAction.cancelTask(checkTimer);
 
@@ -382,22 +393,25 @@ public class jailbreak extends MultiModule {
 
         if (m_players == null)
             return;
+
         if (m_players.values() == null)
             return;
+
         m_players.clear();
     }
 
     /**
-     * Initializes game.
-     * 
-     * @param timeLimit
-     */
+        Initializes game.
+
+        @param timeLimit
+    */
     private void startGame() {
         arenaLock = true;
         isStarted = true;
         m_botAction.toggleLocked();
         m_botAction.sendArenaMessage("Jailbreak started.");
         startCheckTimer();
+
         if (m_botAction.getNumPlayers() < 2) {
             m_botAction.sendArenaMessage("Game does not have enough people to start. Need at least one player per team.");
             cancel();
@@ -405,8 +419,8 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * This method checks to see if there is a winner
-     */
+        This method checks to see if there is a winner
+    */
     private void checkWinner() {
         if (isRunning) {
             if (m_botAction.getFrequencySize(0) == freq0Safe.size() && !freq0Score) {
@@ -422,9 +436,9 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Checks the records and makes any adjustments if needed
-     * 
-     */
+        Checks the records and makes any adjustments if needed
+
+    */
     private class CheckTimer extends TimerTask {
         int timerInSeconds;
 
@@ -448,6 +462,7 @@ public class jailbreak extends MultiModule {
 
             if (freq0Score)
                 doFreqOneScore();
+
             if (freq1Score)
                 doFreqTwoScore();
 
@@ -456,8 +471,8 @@ public class jailbreak extends MultiModule {
         }
 
         /**
-         * The rules that are displayed at the beginning of each game.
-         */
+            The rules that are displayed at the beginning of each game.
+        */
         private void doRules() {
             m_botAction.sendArenaMessage("------------------------------ Jailbreak RULES ------------------------------");
             m_botAction.sendArenaMessage("| Jailbreak is a two teams game. Bring your team to victory by killing and  |");
@@ -468,17 +483,17 @@ public class jailbreak extends MultiModule {
         }
 
         /**
-         * The 10 second warning before go.
-         */
+            The 10 second warning before go.
+        */
         private void doWarning() {
             m_botAction.sendArenaMessage("Jailbreak is about to begin in about 10 seconds!", 1);
             m_botAction.createNumberOfTeams(2);
         }
 
         /**
-         * The go and start commands.
-         * 
-         */
+            The go and start commands.
+
+        */
         private void doGo() {
             m_botAction.changeAllShips(Ship.WARBIRD);
             m_botAction.scoreResetAll();
@@ -495,8 +510,8 @@ public class jailbreak extends MultiModule {
         }
 
         /**
-         * Drops both balls right in the middle (All ball-related stuff stolen from Joyrider's balldrop util)
-         */
+            Drops both balls right in the middle (All ball-related stuff stolen from Joyrider's balldrop util)
+        */
 
         private void doBallDrop() {
             m_botAction.getShip().setShip(0);
@@ -518,9 +533,9 @@ public class jailbreak extends MultiModule {
         }
 
         /**
-         * Starts and stops the timers after a goal is scored and warps the players.
-         * 
-         */
+            Starts and stops the timers after a goal is scored and warps the players.
+
+        */
 
         private void doFreqOneScore() {
             for (Player p : m_botAction.getPlayingPlayers()) {
@@ -568,9 +583,9 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Creates a temporary record for each player to track basic information such as name, shiptype, lagged out or not, scores, kills, saves, and tks.
-     * information is cleared after each game is completed.
-     */
+        Creates a temporary record for each player to track basic information such as name, shiptype, lagged out or not, scores, kills, saves, and tks.
+        information is cleared after each game is completed.
+    */
     private class PlayerInfo {
 
         private String name;
@@ -611,8 +626,8 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Cleanup.
-     */
+        Cleanup.
+    */
     public void cancel() {
         isRunning = false;
         isStarted = false;
@@ -623,19 +638,19 @@ public class jailbreak extends MultiModule {
     }
 
     /**
-     * Your typical manual that comes with every robot to make our everyday life a little easier.
-     */
+        Your typical manual that comes with every robot to make our everyday life a little easier.
+    */
     public String[] getModHelpMessage() {
 
         String[] JBHelp = { "!start         -- Starts the exciting game of JAILBREAK!", "!stop          -- Cancels the game.                     "
 
-        };
+                          };
         return JBHelp;
     }
 
     /**
-     * Checkout.
-     */
+        Checkout.
+    */
     public boolean isUnloadable() {
         clearRecords();
         isRunning = false;

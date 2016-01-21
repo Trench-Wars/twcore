@@ -3,7 +3,7 @@ package twcore.bots.robohelp;
 import java.util.LinkedList;
 
 public class HelpCall extends Call {
-    
+
     public static final int LINE_SIZE = 100;
 
     static final int FREE = 0;
@@ -15,7 +15,7 @@ public class HelpCall extends Call {
     boolean allowSummons;
     String[] responses;
     int nextResponse;
-    
+
     public HelpCall(String playerName, String question, String[] responses, int type) {
         super();
         this.playerName = playerName;
@@ -128,17 +128,22 @@ public class HelpCall extends Call {
         for (int index = fromIndex; index < string.length(); index++)
             if (string.charAt(index) != target)
                 return index;
+
         return -1;
     }
 
     private int getBreakIndex(String string, int fromIndex) {
         if (fromIndex + LINE_SIZE > string.length())
             return string.length();
+
         int breakIndex = string.lastIndexOf(' ', fromIndex + LINE_SIZE);
+
         if ("?".equals(string.substring(breakIndex + 1, breakIndex + 2)) || "*".equals(string.substring(breakIndex + 1, breakIndex + 2)))
             breakIndex = string.lastIndexOf(' ', fromIndex + LINE_SIZE - 3);
+
         if (breakIndex == -1)
             return fromIndex + LINE_SIZE;
+
         return breakIndex;
     }
 
@@ -152,6 +157,7 @@ public class HelpCall extends Call {
             startIndex = indexNotOf(response, ' ', breakIndex);
             breakIndex = getBreakIndex(response, startIndex);
         }
+
         return formattedResp.toArray(new String[formattedResp.size()]);
     }
 

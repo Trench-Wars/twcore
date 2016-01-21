@@ -19,25 +19,25 @@ import twcore.core.events.PlayerDeath;
 import twcore.core.game.Player;
 
 /**
- * Hosts "Tugawar" or "Boomball" events.
- *
- * Austin Barton - 12.15.02
- */
+    Hosts "Tugawar" or "Boomball" events.
+
+    Austin Barton - 12.15.02
+*/
 public class tugawar extends MultiModule {
 
-    boolean 	event = false, tugAWar = false, boomBall = false;
+    boolean     event = false, tugAWar = false, boomBall = false;
     TimerTask   startEvent;
     /* Used for respawn timers */
     // A HashMap set up to do the task that a List can handle ... yikes, 2d :P  -dugwyler
-    HashMap     <String,String>players = new HashMap<String,String>();
+    HashMap     <String, String>players = new HashMap<String, String>();
     /* Tugawar variables */
-    String		capZero, capOne;
-    int			capZeroD = 0, capOneD = 0;
+    String      capZero, capOne;
+    int         capZeroD = 0, capOneD = 0;
     final int   tug_TimeDelay = 10000;
-    int			deathLimit = 1;
+    int         deathLimit = 1;
     /* Boomball variables */
-    int[] 		areas = { 0, 0, 0, 0, 0, 0 };
-    
+    int[]       areas = { 0, 0, 0, 0, 0, 0 };
+
     String database = "website";
 
     public void init() {
@@ -54,8 +54,10 @@ public class tugawar extends MultiModule {
             if( message.toLowerCase().startsWith( "!start tugawar " ) ) {
                 String[] pieces = message.split( " " );
                 int deaths = Integer.parseInt( pieces[2] );
+
                 if( deaths > 0 && deaths < 11 )
                     deathLimit = deaths;
+
                 startTugAWar( name, message );
             } else if( message.toLowerCase().startsWith( "!start tugawar" ) ) {
                 startTugAWar( name, message );
@@ -76,13 +78,17 @@ public class tugawar extends MultiModule {
                 startEvent = new TimerTask() {
                     public void run() {
                         Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+
                         if( i == null ) return;
+
                         Vector <String>zeroTeam = new Vector<String>();
                         Vector <String>oneTeam = new Vector<String>();
-                        while( i.hasNext() ){
+
+                        while( i.hasNext() ) {
                             Player player = (Player)i.next();
                             String curName   = player.getPlayerName();
-                            int    freq	  = player.getFrequency();
+                            int    freq   = player.getFrequency();
+
                             if( freq == 0 ) {
                                 m_botAction.warpTo( curName, 419, 422 );
                                 zeroTeam.addElement( curName );
@@ -91,6 +97,7 @@ public class tugawar extends MultiModule {
                                 oneTeam.addElement( curName );
                             }
                         }
+
                         Random generator = new Random();
                         int randZero = generator.nextInt(zeroTeam.size());
                         int randOne  = generator.nextInt(oneTeam.size());
@@ -133,13 +140,16 @@ public class tugawar extends MultiModule {
             MiscTask thisCheck = new MiscTask( "Check__Players", -1 );
             m_botAction.scheduleTaskAtFixedRate( thisCheck, 0, 1000 );
             Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
-            while( i.hasNext() ){
+
+            while( i.hasNext() ) {
                 Player player = (Player)i.next();
                 String curName   = player.getPlayerName();
-                int    freq	  = player.getFrequency();
+                int    freq   = player.getFrequency();
+
                 if( freq == 0 ) m_botAction.warpTo( curName, 511, 549 );
                 else m_botAction.warpTo( curName, 511, 474 );
             }
+
             m_botAction.sendArenaMessage( "Boomball begins shortly! Get to your positions, when the ball appears the game beings!", 5 );
             m_botAction.sendUnfilteredPublicMessage( "*restart" );
             event = true;
@@ -157,10 +167,12 @@ public class tugawar extends MultiModule {
         } else m_botAction.sendPrivateMessage( name, "Boomball is not in progress." );
     }
 
-    public void handleEvent( Message event ){
+    public void handleEvent( Message event ) {
         String message = event.getMessage();
-        if( event.getMessageType() == Message.PRIVATE_MESSAGE ){
+
+        if( event.getMessageType() == Message.PRIVATE_MESSAGE ) {
             String name = m_botAction.getPlayerName( event.getPlayerID() );
+
             if( opList.isER( name ))
                 handleCommand( name, message );
         }
@@ -169,9 +181,12 @@ public class tugawar extends MultiModule {
     public void handleEvent( FrequencyChange event ) {
         if( boomBall ) {
             Player theKilled = m_botAction.getPlayer( event.getPlayerID() );
+
             if( theKilled == null ) return;
+
             String killed    = theKilled.getPlayerName();
             int    freq      = theKilled.getFrequency();
+
             if( !players.containsKey( killed ) ) {
                 MiscTask thisDeath = new MiscTask( killed, freq );
                 m_botAction.scheduleTask( thisDeath, 1500 );
@@ -182,9 +197,12 @@ public class tugawar extends MultiModule {
 
     public void handleEvent( FrequencyShipChange event ) {
         Player theKilled = m_botAction.getPlayer( event.getPlayerID() );
+
         if( theKilled == null ) return;
+
         String killed    = theKilled.getPlayerName();
         int    freq      = theKilled.getFrequency();
+
         if( tugAWar && !players.containsKey( killed ) ) {
             MiscTask thisDeath = new MiscTask( killed, freq );
             m_botAction.scheduleTask( thisDeath, tug_TimeDelay / 5 );
@@ -201,11 +219,13 @@ public class tugawar extends MultiModule {
 
     public void handleEvent( PlayerDeath event ) {
         Player theKilled  = m_botAction.getPlayer( event.getKilleeID() );
-        String killed 	  = theKilled.getPlayerName();
-        int    freq 	  = theKilled.getFrequency();
+        String killed     = theKilled.getPlayerName();
+        int    freq       = theKilled.getFrequency();
+
         if( tugAWar ) {
             if( killed.equals( capZero ) ) {
                 capZeroD++;
+
                 if( capZeroD >= deathLimit ) {
                     m_botAction.sendArenaMessage( capZero + " the cap of freq 0 has died! Congrats to " + capOne + " and his team!", 5 );
                     stopTugAWar( "-  -", "-  -" );
@@ -215,6 +235,7 @@ public class tugawar extends MultiModule {
                 }
             } else if( killed.equals( capOne ) ) {
                 capOneD++;
+
                 if( capOneD >= deathLimit ) {
                     m_botAction.sendArenaMessage( capOne + " the cap of freq 1 has died! Congrats to " + capZero + " and his team!", 5 );
                     stopTugAWar( "-  -", "-  -" );
@@ -230,10 +251,11 @@ public class tugawar extends MultiModule {
                 m_botAction.scheduleTask( thisDeath, 1500 );
                 players.put( killed, killed );
             }
+
             //if( !players.containsKey( "Check__Players" ) ) {
-            //	MiscTask thisCheck = new MiscTask( "Check__Players", -1 );
-            //	m_botAction.scheduleTask( thisCheck, 5000 );
-            //	players.put( "Check__Players", "checking" );
+            //  MiscTask thisCheck = new MiscTask( "Check__Players", -1 );
+            //  m_botAction.scheduleTask( thisCheck, 5000 );
+            //  players.put( "Check__Players", "checking" );
             //}
         }
     }
@@ -248,12 +270,12 @@ public class tugawar extends MultiModule {
 
     public String[] getModHelpMessage() {
         String[] helps = {
-                "------ Commands for the misc module -------",
-                "!start tugawar    - Starts game for ?go tugawar",
-                "!start tugawar <deaths>",
-                "!stop tugawar     - Stops game for ?go tugawar",
-                "!start boomball   - Starts game for ?go boomball",
-                "!stop boomball    - Stops game for ?go boomball"
+            "------ Commands for the misc module -------",
+            "!start tugawar    - Starts game for ?go tugawar",
+            "!start tugawar <deaths>",
+            "!stop tugawar     - Stops game for ?go tugawar",
+            "!start boomball   - Starts game for ?go boomball",
+            "!stop boomball    - Stops game for ?go boomball"
         };
         return helps;
     }
@@ -270,7 +292,7 @@ public class tugawar extends MultiModule {
     public class MiscTask extends TimerTask {
 
         String thisName;
-        int	   thisFreq;
+        int    thisFreq;
 
         public MiscTask( String name, int freq ) {
             thisName = name;
@@ -284,19 +306,25 @@ public class tugawar extends MultiModule {
                 else {
                     m_botAction.warpTo( thisName, 603, 422 );
                 }
+
                 players.remove( thisName );
             } else if( boomBall ) {
                 if( thisFreq == -1 ) {
                     int doormode = 0;
-                    for( int i=0; i < 6; i++ )
+
+                    for( int i = 0; i < 6; i++ )
                         areas[i] = 0;
+
                     //Checks player positions to toggle doors
                     Iterator<Player> i = m_botAction.getPlayingPlayerIterator();
+
                     if( i == null ) return;
-                    while( i.hasNext() ){
+
+                    while( i.hasNext() ) {
                         Player player = (Player)i.next();
-                        int    xpos	  = player.getXLocation();
+                        int    xpos   = player.getXLocation();
                         int    ypos   = player.getYLocation();
+
                         //m_botAction.sendArenaMessage( curName + "   " + xpos + "," + ypos );
                         if( xpos > 6960 && xpos < 9392 && ypos < 8712 && ypos > 7690 ) {
                             if( xpos > 8824 ) areas[0]++;
@@ -305,22 +333,32 @@ public class tugawar extends MultiModule {
                             else if( xpos > 7864 ) areas[3]++;
                             else if( xpos > 7544 ) areas[4]++;
                             else areas[5]++;
+
                             //m_botAction.sendArenaMessage( "Test: " + areas[0]+areas[1]+areas[2]+areas[3]+areas[4]+areas[5] );
                         }
                     }
+
                     if( areas[0] > 2 ) doormode += 128;
+
                     if( areas[1] > 2 ) doormode += 64;
+
                     if( areas[2] > 2 ) doormode += 32;
+
                     if( areas[3] > 2 ) doormode += 16;
+
                     if( areas[4] > 2 ) doormode += 8;
+
                     if( areas[5] > 2 ) doormode += 4;
+
                     m_botAction.setDoors( doormode );
                 }
+
                 if( thisFreq == 0 )
                     m_botAction.warpTo( thisName, 511, 549 );
                 else {
                     m_botAction.warpTo( thisName, 511, 474 );
                 }
+
                 players.remove( thisName );
             }
         }

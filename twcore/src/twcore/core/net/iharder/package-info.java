@@ -1,33 +1,33 @@
-/* Not sure how to make javadoc accept this. Will conquer this one another time. -RH
-   <style type="text/css">
-<!--
-#apisupporttable {  margin: 1em auto 1em auto; border-collapse: collapse; border-top: 2px solid black; border-bottom: 2px solid black; }
-#apisupporttable th { cell-spacing: 1em; padding: 0.05em 1em 0.05em 1em; border-bottom: 1px solid black; }
-#apisupporttable tr.supported:hover { background-color: #CEC; }
-#apisupporttable tr.notsupported td{ color: #AAA; }
-#apisupporttable tr.notsupported:hover{ background-color: #ECC; }
-#apisupporttable td { cell-spacing: 1em; padding: 0.05em 1em 0.05em 1em; }
-#apisupporttable th { text-align: center; }
-#apisupporttable tr td:first-child + td { text-align: center; }
-.depslist { font-size: smaller; margin-left: 4em; }
-.depslist li {  margin: 0.2em}
--->
-</style>   
+/*  Not sure how to make javadoc accept this. Will conquer this one another time. -RH
+    <style type="text/css">
+    <!--
+    #apisupporttable {  margin: 1em auto 1em auto; border-collapse: collapse; border-top: 2px solid black; border-bottom: 2px solid black; }
+    #apisupporttable th { cell-spacing: 1em; padding: 0.05em 1em 0.05em 1em; border-bottom: 1px solid black; }
+    #apisupporttable tr.supported:hover { background-color: #CEC; }
+    #apisupporttable tr.notsupported td{ color: #AAA; }
+    #apisupporttable tr.notsupported:hover{ background-color: #ECC; }
+    #apisupporttable td { cell-spacing: 1em; padding: 0.05em 1em 0.05em 1em; }
+    #apisupporttable th { text-align: center; }
+    #apisupporttable tr td:first-child + td { text-align: center; }
+    .depslist { font-size: smaller; margin-left: 4em; }
+    .depslist li {  margin: 0.2em}
+    -->
+    </style>
 */
 
 /**
 
         <p>
-          This is a <strong>Public Domain</strong> Java library for 
+          This is a <strong>Public Domain</strong> Java library for
           interacting with the <a href="http://www.pushbullet.com">Pushbullet</a>
-          service. It supports both sending and receiving notifications. 
+          service. It supports both sending and receiving notifications.
           Thanks to <a href="https://github.com/shakethat/jpushbullet">shakethat at github</a>
           for the insights from his library, which was made for an earlier set of Pushbullet APIs.
         </p>
-        
 
 
-        <p>The <a href="https://docs.pushbullet.com/http/">Pushbullet HTTP API</a> identifies 
+
+        <p>The <a href="https://docs.pushbullet.com/http/">Pushbullet HTTP API</a> identifies
         seven capabilities, of which jPushbullet2 supports five:</p>
 
 
@@ -43,19 +43,19 @@
              <tr class="supported"><td><a href="https://docs.pushbullet.com/stream">websocket</a></td><td>Yes</td><td></td></tr>
          </tbody>
          </table>
-        
+
     <p>Begin exploring with the {@link net.iharder.jpushbullet2.PushbulletClient} class.</p>
- *
- * <p>Change Log</p>
-  <ul>
-   <li>v0.2 - Adding paging capability. Changed Push sorting to be newest first
+
+    <p>Change Log</p>
+    <ul>
+    <li>v0.2 - Adding paging capability. Changed Push sorting to be newest first
      in keeping with Pushbullet.com practice.</li>
-   <li>v0.1 - Initial Release
-  </ul>
- * 
- * 
- * @author Robert Harder
- * @author rob@iharder.net
- * @version 0.2
- */
+    <li>v0.1 - Initial Release
+    </ul>
+
+
+    @author Robert Harder
+    @author rob@iharder.net
+    @version 0.2
+*/
 package twcore.core.net.iharder;

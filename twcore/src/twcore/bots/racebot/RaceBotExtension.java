@@ -35,32 +35,32 @@ public abstract class RaceBotExtension {
     BotAction m_botAction;
     OperatorList m_opList;
     String m_sqlHost;
-	racebot m_bot;
-	HashMap<String, RaceBotExtension> modules;
+    racebot m_bot;
+    HashMap<String, RaceBotExtension> modules;
 
     public RaceBotExtension() {
     }
 
     public void set( BotAction action, String sql, racebot bot) {
-    	m_botAction = action;
-    	m_sqlHost = sql;
-    	m_bot = bot;
-    	modules = m_bot.modules;
+        m_botAction = action;
+        m_sqlHost = sql;
+        m_bot = bot;
+        modules = m_bot.modules;
     }
-//    public final void set( BotAction action, OperatorList opList, twbot twBot ){
-//        m_botAction = action;
-//        m_opList = opList;
-//        m_twBot = twBot;
- //   }
+    //    public final void set( BotAction action, OperatorList opList, twbot twBot ){
+    //        m_botAction = action;
+    //        m_opList = opList;
+    //        m_twBot = twBot;
+    //   }
 
     //public abstract String[] getHelpMessages();
     //public abstract void cancel();
 
- //   private final void sendBotCommand( String name, String message ){
- //       m_twBot.handleCommand( name, message );
- //   }
+    //   private final void sendBotCommand( String name, String message ){
+    //       m_twBot.handleCommand( name, message );
+    //   }
 
-    public final void handleEvent( SubspaceEvent event ){
+    public final void handleEvent( SubspaceEvent event ) {
         if( event instanceof ScoreReset )
             handleEvent( (ScoreReset)event );
         else if( event instanceof PlayerEntered )
@@ -110,28 +110,28 @@ public abstract class RaceBotExtension {
         else if( event instanceof SQLResultEvent )
             handleEvent( (SQLResultEvent)event );
     }
-    public void handleEvent( ScoreReset event ){}
-    public void handleEvent( PlayerEntered event ){}
-    public void handleEvent( Message event ){}
-    public void handleEvent( PlayerLeft event ){}
-    public void handleEvent( PlayerPosition event ){}
-    public void handleEvent( PlayerDeath event ){}
-    public void handleEvent( ScoreUpdate event ){}
-    public void handleEvent( WeaponFired event ){}
-    public void handleEvent( FrequencyChange event ){}
-    public void handleEvent( FrequencyShipChange event ){}
-    public void handleEvent( ArenaJoined event ){}
-    public void handleEvent( FileArrived event ){}
-    public void handleEvent( FlagReward event ){}
-    public void handleEvent( FlagVictory event ){}
-    public void handleEvent( LoggedOn event ){}
-    public void handleEvent( WatchDamage event ){}
-    public void handleEvent( SoccerGoal event ){}
-    public void handleEvent( Prize event ){}
-    public void handleEvent( BallPosition event ){}
-    public void handleEvent( FlagPosition event ){}
-    public void handleEvent( FlagDropped event ){}
-    public void handleEvent( FlagClaimed event ){}
-    public void handleEvent( TurfFlagUpdate event ){}
-    public void handleEvent( SQLResultEvent event ){}
+    public void handleEvent( ScoreReset event ) {}
+    public void handleEvent( PlayerEntered event ) {}
+    public void handleEvent( Message event ) {}
+    public void handleEvent( PlayerLeft event ) {}
+    public void handleEvent( PlayerPosition event ) {}
+    public void handleEvent( PlayerDeath event ) {}
+    public void handleEvent( ScoreUpdate event ) {}
+    public void handleEvent( WeaponFired event ) {}
+    public void handleEvent( FrequencyChange event ) {}
+    public void handleEvent( FrequencyShipChange event ) {}
+    public void handleEvent( ArenaJoined event ) {}
+    public void handleEvent( FileArrived event ) {}
+    public void handleEvent( FlagReward event ) {}
+    public void handleEvent( FlagVictory event ) {}
+    public void handleEvent( LoggedOn event ) {}
+    public void handleEvent( WatchDamage event ) {}
+    public void handleEvent( SoccerGoal event ) {}
+    public void handleEvent( Prize event ) {}
+    public void handleEvent( BallPosition event ) {}
+    public void handleEvent( FlagPosition event ) {}
+    public void handleEvent( FlagDropped event ) {}
+    public void handleEvent( FlagClaimed event ) {}
+    public void handleEvent( TurfFlagUpdate event ) {}
+    public void handleEvent( SQLResultEvent event ) {}
 }
