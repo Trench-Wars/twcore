@@ -2,40 +2,24 @@
 
 <project name="twcore" default="all" basedir=".">
 
-	<target name="all" depends="clean,core,bots" description="Builds the entire TWCore distribution">
-	</target>
-
 	<path id="classpath">
 		<fileset dir="bin" includes="*.jar"/>
 		<fileset dir="lib" includes="*.jar"/>
 	</path>
 
-	<target name="core" description="Builds the TWCore core" depends="configCopy">
-		<echo>Creating Temporary Directory</echo>
-		<mkdir dir="temp"></mkdir>
-		<echo>Compiling Core (this may take a moment)</echo>
-		<javac classpathref="classpath" srcdir="src/twcore/core" destdir="temp" includeantruntime="false" />
-		<javac classpathref="classpath" srcdir="src/twcore/bots" destdir="temp" debug="on" debuglevel="lines,vars,source" includeantruntime="false">
-			<include name="**.java" />
-		</javac>
-		<echo>Creating Jar File</echo>
-		<manifestclasspath property="jar.classpath" jarfile="bin/twcore.jar">
-			<classpath refid="classpath" />
-		</manifestclasspath>
-		<jar destfile="bin/twcore.jar">
-			<fileset dir="temp"></fileset>
-			<manifest>
-				<attribute name="Main-Class" value="twcore.core.Start"/>
-				<attribute name="Class-Path" value="${jar.classpath}"/>
-			</manifest>
-		</jar>
-		<echo>Deleting Temporary Directory</echo>
-		<delete dir="temp"/>
+	<property name="debug" value="off"/>
+
+	<target name="all" depends="clean,core,bots" description="Builds the entire TWCore distribution">
+	</target>
+
+	<target name="botdir" description="Builds a specific directory under twcore/bots. (e.g. ant botdir -Dbotdir=multibot)" depends="configCopy">
+		<echo>Compiling bot directory ${botdir}</echo>
+		<javac classpathref="classpath" srcdir="src/twcore/bots/${botdir}" destdir="bin" debug="${debug}" debuglevel="lines,vars,source" includeantruntime="false" />
 	</target>
 
 	<target name="bots" description="Builds the TWCore bots" depends="configCopy">
 		<echo>Compiling Bots (this may take a moment)</echo>
-		<javac classpathref="classpath" srcdir="src/twcore/bots" destdir="bin" debug="on" debuglevel="lines,vars,source" includeantruntime="false" />
+		<javac classpathref="classpath" srcdir="src/twcore/bots" destdir="bin" debug="${debug}" debuglevel="lines,vars,source" includeantruntime="false" />
 	</target>
 
 	<target name="clean" description="Deletes the jar and all class files">
@@ -50,11 +34,6 @@
 		</delete>
 	</target>
 
-	<target name="botdir" description="Builds a specific directory under twcore/bots. Specify the directory name on the environment variable 'botdir' (with -D on command line)" depends="configCopy">
-		<echo>Compiling bot directory ${botdir}</echo>
-		<javac classpathref="classpath" srcdir="src/twcore/bots/${botdir}" destdir="bin" debug="on" debuglevel="lines,vars,source" includeantruntime="false" />
-	</target>
-
 	<target name="configCopy" description="Copies all the .cfg files from the src directory to the bin directory if file doesn't exist">
 		<echo>Copying Bot configuration files</echo>
 		<copy todir="bin" overwrite="no">
@@ -62,10 +41,31 @@
 			<include name="**/**.example.cfg"/>
 				<include name="**/**.xml"/>
 			</fileset>
+			<globmapper from="*.example.cfg" to="*.cfg"/>
 		</copy>
 	</target>
 
+	<target name="core" description="Builds the TWCore core" depends="configCopy">
+		<echo>Compiling Core (this may take a moment)</echo>
+		<javac classpathref="classpath" srcdir="src/twcore/core" destdir="bin" includeantruntime="false" />
+		<javac classpathref="classpath" srcdir="src/twcore/bots" destdir="bin" debug="${debug}" debuglevel="lines,vars,source" includeantruntime="false">
+			<include name="**.java" />
+		</javac>
+		<echo>Creating Jar File</echo>
+		<manifestclasspath property="jar.classpath" jarfile="bin/twcore.jar">
+			<classpath refid="classpath" />
+		</manifestclasspath>
+		<jar destfile="bin/twcore.jar">
+			<fileset dir="bin"></fileset>
+			<manifest>
+				<attribute name="Main-Class" value="twcore.core.Start"/>
+				<attribute name="Class-Path" value="${jar.classpath}"/>
+			</manifest>
+		</jar>
+	</target>
+
 	<target name="javadoc" description="Creates Java API Documentation">
+		<mkdir dir="javadoc"></mkdir>
 		<javadoc
 			access="package"
 			author="true"
@@ -77,11 +77,21 @@
 			noindex="false"
 			nonavbar="false"
 			notree="false"
-			source="1.5"
 			sourcepath="src"
 			splitindex="true"
 			use="true"
 			version="true"/>
+	</target>
+
+	<target name="run" description="Runs TWCore">
+		<java jar="bin/twcore.jar" fork="true">
+			<arg value="bin/setup.cfg"/>
+		</java>
+	</target>
+
+	<target name="path" description="Prints TWCores classpath">
+		<pathconvert property="path" refid="classpath"/>
+		<echo message="${path}"/>
 	</target>
 
 </project>
