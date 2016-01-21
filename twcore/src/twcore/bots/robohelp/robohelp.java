@@ -651,7 +651,7 @@ public class robohelp extends SubspaceBot {
             msg += "Call #" + newb.getID();
         } else if( ellipsisAfterCalls ) {
             msg = "...";
-        }            
+        }
         if (msg.length() > 0)
             m_botAction.sendChatMessage(msg);
         lastAlert = now;

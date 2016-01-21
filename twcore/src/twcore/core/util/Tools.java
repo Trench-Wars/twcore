@@ -9,6 +9,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import twcore.core.OperatorList;
 
@@ -396,6 +398,17 @@ public final class Tools {
         } catch ( Exception e ) {
             return false;
         }
+    }
+
+    /**
+     * Returns true if a String is a valid email address using regex
+     * @param s String to determine if valid email address
+     * @return True if String is a valid email address. Else false.
+     */
+    public static boolean isValidEmail( String s ){
+        Pattern regex = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = regex.matcher(s);
+        return matcher.find();
     }
 
     /**
