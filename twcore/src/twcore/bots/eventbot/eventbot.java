@@ -565,7 +565,7 @@ public class eventbot extends SubspaceBot {
     }
 
     /**
-     * ER+ command via PM
+        ER+ command via PM
         !ban [name]
 
         @param name String
@@ -672,7 +672,7 @@ public class eventbot extends SubspaceBot {
     }
 
     /**
-     * Moderator+ command via PM
+        Moderator+ command via PM
         !liftban [name]
 
         @param name String

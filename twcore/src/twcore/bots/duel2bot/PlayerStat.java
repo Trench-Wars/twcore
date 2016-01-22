@@ -37,7 +37,7 @@ public class PlayerStat {
     }
 
     /** Adds value to the current stat value. NOTE: Only works for integer types
-     * @param value int
+        @param value int
      * */
 
     public synchronized void add(int value) {
@@ -45,7 +45,7 @@ public class PlayerStat {
     }
 
     /** Set the integer value stat to value specified
-     * @param value int
+        @param value int
      * */
 
     public synchronized void setValue(int value) {
@@ -53,7 +53,7 @@ public class PlayerStat {
     }
 
     /** Set the double value stat to value specified
-     * @param value double
+        @param value double
      * */
 
     public synchronized void setValue(double value) {
@@ -61,7 +61,7 @@ public class PlayerStat {
     }
 
     /** Set the float value stat to value specified
-     * @param value float
+        @param value float
      * */
 
     public synchronized void setValue(float value) {
@@ -69,7 +69,7 @@ public class PlayerStat {
     }
 
     /** Returns the StatType for this stat
-     * @return StatType
+        @return StatType
      * */
     public StatType getStat() {
         return stat;
@@ -85,7 +85,7 @@ public class PlayerStat {
     }
 
     /** Returns the integer stat value
-     * @return int
+        @return int
      * */
     public int getInt() {
         if (stat.isInt())
@@ -97,7 +97,7 @@ public class PlayerStat {
     }
 
     /** Returns the double stat value
-     * @return double
+        @return double
      * */
     public double getDouble() {
         if (stat.isDouble())
@@ -109,7 +109,7 @@ public class PlayerStat {
     }
 
     /** Returns the float stat value
-     * @return float
+        @return float
      * */
     public float getFloat() {
         if (stat.isFloat())

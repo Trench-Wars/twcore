@@ -149,7 +149,7 @@ public class DuelPlayer {
     }
 
     /** Handles position events
-     * @param event PlayerPosition
+        @param event PlayerPosition
      * */
     public void handlePosition(PlayerPosition event) {
         if (status == WARPING || status == LAGGED || status == OUT || status == REOUT
@@ -455,7 +455,7 @@ public class DuelPlayer {
     }
 
     /** Handles a staffer force !signup command
-     * @param staff String
+        @param staff String
      * */
     public void doSignup(String staff) {
         if (registered)
@@ -469,7 +469,7 @@ public class DuelPlayer {
     }
 
     /** Handles a player !disable command
-     * @param staff String
+        @param staff String
      * */
     public void doDisable(String staff) {
         if (staff != null && staffer != null) {
@@ -489,7 +489,7 @@ public class DuelPlayer {
     }
 
     /** Handles a player !enable command
-     * @param staff String
+        @param staff String
      * */
     public void doEnable(String staff) {
         if (staff != null && staffer != null) {
@@ -607,7 +607,7 @@ public class DuelPlayer {
     }
 
     /** Determines if a player is eligible for league play
-     * @return true if can play
+        @return true if can play
      * */
     public boolean canPlay() {
         return registered && enabled && !banned;
@@ -634,14 +634,14 @@ public class DuelPlayer {
     }
 
     /** Returns the number of milliseconds since the last death
-     * @return long time from last death in ms
+        @return long time from last death in ms
      * */
     public long getTimeFromLastDeath() {
         return System.currentTimeMillis() - lastDeath;
     }
 
     /** Returns the name of the last player to kill this player
-     * @return String last killer
+        @return String last killer
      * */
     public String getLastKiller() {
         return lastKiller;
@@ -700,14 +700,14 @@ public class DuelPlayer {
     }
 
     /** Returns kills
-     * @return int kills
+        @return int kills
      * */
     public int getKills() {
         return stats.getStat(StatType.KILLS);
     }
 
     /** Returns deaths
-     * @return in deaths
+        @return in deaths
      * */
     public int getDeaths() {
         return stats.getStat(StatType.DEATHS);
@@ -718,15 +718,15 @@ public class DuelPlayer {
     }
 
     /** Returns player status
-     * @return int status
-     SPEC = -1;
-     IN = 0;
-     PLAYING = 1;
-     WARPING = 2;
-     LAGGED = 3;
-     OUT = 4;
-     REOUT = 5;
-     RETURN = 6;
+        @return int status
+        SPEC = -1;
+        IN = 0;
+        PLAYING = 1;
+        WARPING = 2;
+        LAGGED = 3;
+        OUT = 4;
+        REOUT = 5;
+        RETURN = 6;
      * */
     public int getStatus() {
         return status;
@@ -745,11 +745,11 @@ public class DuelPlayer {
     }
 
     /** Returns the ID of the removal reason
-     * @return int removal reason
-       NORMAL = 0;
-       WARPS = 1;
-       LAGOUTS = 2;
-       SPAWNS = 3;
+        @return int removal reason
+        NORMAL = 0;
+        WARPS = 1;
+        LAGOUTS = 2;
+        SPAWNS = 3;
      * */
     public int getReason() {
         return out;
@@ -760,15 +760,15 @@ public class DuelPlayer {
     }
 
     /** Sets the player status
-     * @param s int status
-     SPEC = -1;
-     IN = 0;
-     PLAYING = 1;
-     WARPING = 2;
-     LAGGED = 3;
-     OUT = 4;
-     REOUT = 5;
-     RETURN = 6;
+        @param s int status
+        SPEC = -1;
+        IN = 0;
+        PLAYING = 1;
+        WARPING = 2;
+        LAGGED = 3;
+        OUT = 4;
+        REOUT = 5;
+        RETURN = 6;
      * */
     public void setStatus(int s) {
         status = s;
@@ -778,10 +778,10 @@ public class DuelPlayer {
         Removes the player from the duel and reports the reason for it.
 
         @param reason int reason for removal
-       NORMAL = 0;
-       WARPS = 1;
-       LAGOUTS = 2;
-       SPAWNS = 3;
+        NORMAL = 0;
+        WARPS = 1;
+        LAGOUTS = 2;
+        SPAWNS = 3;
     */
     public void remove(int reason) {
         ba.specWithoutLock(name);
@@ -814,8 +814,8 @@ public class DuelPlayer {
     }
 
     /** Warps the player to the specified coordinates (in tiles)
-     * @param x int
-     * @param y int
+        @param x int
+        @param y int
      * */
     public void warp(int x, int y) {
         setStatus(WARPING);
@@ -831,8 +831,8 @@ public class DuelPlayer {
     }
 
     /** Warps the player after the player just warped
-     * @param x int
-     * @param y int
+        @param x int
+        @param y int
      * */
     public void warpWarper(int x, int y) {
         setStatus(WARPING);
@@ -843,8 +843,8 @@ public class DuelPlayer {
     }
 
     /** Prepares the player for a duel in the given ship and coordinates.
-     * @param div int
-     * @param shipNum int
+        @param div int
+        @param shipNum int
      * */
     public void starting(int div, int shipNum) {
         if (status == LAGGED) return;
@@ -867,7 +867,7 @@ public class DuelPlayer {
     }
 
     /** Cancels the duel
-     * @param name String
+        @param name String
      * */
     public void cancelGame(String name) {
         if (game == null) {

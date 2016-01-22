@@ -114,15 +114,15 @@ public class DuelGame {
             endGame(t1, t2);
     }
 
-    /** Returns game state 
-     * @return int
+    /** Returns game state
+        @return int
      * */
     public int getState() {
         return state;
     }
 
     /** Returns a String describing the score of the duel
-     * @return String
+        @return String
      * */
     public String getScore() {
         String[] t1 = team1.getNames();
@@ -132,7 +132,7 @@ public class DuelGame {
     }
 
     /** Converts the division ID into a String
-     * @return String
+        @return String
      * */
     public String getDivision() {
         if (div == 1)
@@ -333,7 +333,7 @@ public class DuelGame {
     }
 
     /** Cancels the duel and notifies the name given
-     * @param name String
+        @param name String
      * */
     public void cancelDuel(String name) {
         String msg = "Duel canceled " + (name != null ? "by " + name : "") + " and is declared void.";
@@ -369,7 +369,7 @@ public class DuelGame {
     }
 
     /** Reports the lagout of a player to the opposing team
-     * @param id int
+        @param id int
      * */
     public void lagout(int id) {
         if (team1.getTeamID() == id)
@@ -379,7 +379,7 @@ public class DuelGame {
     }
 
     /** Reports the return of a lagger to the opposing team
-     * @param id int
+        @param id int
      * */
     public void returned(int id) {
         if (team1.getTeamID() == id)
@@ -391,7 +391,7 @@ public class DuelGame {
     // handle player position
     // call Player to warp
     /** Reports a player removal and then updates scores
-     * @param player DuelPlayer
+        @param player DuelPlayer
      * */
     public void playerOut(DuelPlayer player) {
         bot.laggers.remove(player.getName().toLowerCase());

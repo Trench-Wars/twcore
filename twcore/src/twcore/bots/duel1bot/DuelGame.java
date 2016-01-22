@@ -116,21 +116,21 @@ public class DuelGame {
     }
 
     /** Returns game state
-       @return int state
-     */
+        @return int state
+    */
     public int getState() {
         return state;
     }
 
     /** Returns a String describing the score of the duel
-     * @return String score
+        @return String score
      * */
     public String getScore() {
         return "" + score[0] + "-" + score[1] + " : " + player1.name + " vs " + player2.name;
     }
 
     /** Converts the division ID into a String
-     * @return String division
+        @return String division
      * */
     public String getDivision() {
         if (div == 1)
@@ -297,7 +297,7 @@ public class DuelGame {
     }
 
     /** Cancels the duel and notifies the name given
-     * @param name String
+        @param name String
      * */
     public void cancelDuel(String name) {
         String msg = "Duel canceled " + (name != null ? "by " + name : "") + " and is declared void.";
@@ -327,7 +327,7 @@ public class DuelGame {
     // handle player position
     // call Player to warp
     /** Reports a player removal and then updates scores
-     * @param player DuelPlayer
+        @param player DuelPlayer
      * */
     public void playerOut(DuelPlayer player) {
         bot.laggers.remove(player.getName().toLowerCase());
@@ -383,12 +383,12 @@ public class DuelGame {
     }
 
     /** Records the duel results in the database
-     * @param win DuelPlayer
-     * @param loss DuelPlayer
-     * @param winBefore int
-     * @param winAfter int
-     * @param lossBefore int
-     * @param lossAfter int
+        @param win DuelPlayer
+        @param loss DuelPlayer
+        @param winBefore int
+        @param winAfter int
+        @param lossBefore int
+        @param lossAfter int
      * */
     public void sql_storeGame(DuelPlayer win, DuelPlayer loss, int winBefore, int winAfter, int lossBefore, int lossAfter) {
         //TODO:

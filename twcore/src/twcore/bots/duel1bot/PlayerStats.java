@@ -46,14 +46,14 @@ public class PlayerStats {
     }
 
     /** Returns the current ship number these stats represent
-     * @return int
+        @return int
      * */
     public int getShip() {
         return ship;
     }
 
     /** Increments the stat of type StatType as long as it is an integer data stat
-     * @param stat StatType
+        @param stat StatType
      * */
     public void incrementStat(StatType stat) {
         stats.get(stat).increment();
@@ -63,8 +63,8 @@ public class PlayerStats {
     }
 
     /** Computes, sets and returns the aim stat for the current game or all games
-     * @param total boolean
-     * @return double
+        @param total boolean
+        @return double
      * */
     public double crunchAim(boolean total) {
         double aim;
@@ -97,7 +97,7 @@ public class PlayerStats {
     }
 
     /** Computes and sets the ave stat given the rating of the player killed
-     * @param rating int
+        @param rating int
      * */
     public void crunchAve(int rating) {
         setStat(StatType.AVE, (Float) (((getAve(StatType.AVE)) * (float) getTotal(StatType.KILLS)) + (float) rating) / ((float) getTotal(StatType.KILLS) + 1f));
@@ -110,15 +110,15 @@ public class PlayerStats {
     }
 
     /** Decrements the stat of type StatType as long as it is an integer data stat
-     * @param stat StatType
+        @param stat StatType
      * */
     public void decrementStat(StatType stat) {
         stats.get(stat).decrement();
     }
 
     /** Sets the stat to the value specified as integer double or float
-     * @param stat StatType
-     * @param value Object
+        @param stat StatType
+        @param value Object
      * */
     public void setStat(StatType stat, Object value) {
         if (value instanceof Integer)
@@ -130,8 +130,8 @@ public class PlayerStats {
     }
 
     /** Loads the stat from the database into the total stats array
-     * @param stat StatType
-     * @param value Object
+        @param stat StatType
+        @param value Object
      * */
     public void loadStat(StatType stat, Object value) {
         if (value instanceof Integer)
@@ -146,8 +146,8 @@ public class PlayerStats {
     }
 
     /** Returns the total of stat by adding current game stat with database stat
-     * @param stat StatType
-     * @return int
+        @param stat StatType
+        @return int
      * */
     public int getTotal(StatType stat) {
         if (stat.isInt())
@@ -156,8 +156,8 @@ public class PlayerStats {
     }
 
     /** Returns the integer value of stat
-     * @param stat StatType
-     * @return int
+        @param stat StatType
+        @return int
      * */
     public int getStat(StatType stat) {
         return stats.get(stat).getInt();
@@ -168,47 +168,47 @@ public class PlayerStats {
     }
 
     /** Returns the double value of stat
-     * @param stat StatType
-     * @return double
+        @param stat StatType
+        @return double
      * */
     public double getAim(StatType stat) {
         return stats.get(stat).getDouble();
     }
 
     /** Returns the float value of stat
-     * @param stat StatType
-     * @return float
+        @param stat StatType
+        @return float
      * */
     public float getAve(StatType stat) {
         return stats.get(stat).getFloat();
     }
 
     /** Returns the integer stat value found in the database stats
-     * @param stat StatType
-     * @return int
+        @param stat StatType
+        @return int
      * */
     public int getDB(StatType stat) {
         return total.get(stat).getInt();
     }
 
     /** Returns the aim double stat from the database stats
-     * @param stat StatType
-     * @return double
+        @param stat StatType
+        @return double
      * */
     public double getAimDB(StatType stat) {
         return total.get(stat).getDouble();
     }
 
     /** Returns the ave stat from the database stats
-     * @param stat StatType
-     * @return float
+        @param stat StatType
+        @return float
      * */
     public float getAveDB(StatType stat) {
         return total.get(stat).getFloat();
     }
 
     /** Checks to see if database stats have been loaded
-     * @return boolent
+        @return boolent
      * */
     public boolean isLoaded() {
         return loaded;
@@ -383,8 +383,8 @@ public class PlayerStats {
     }
 
     /** Loads stats from the database into the total stat array
-     * @param rs ResultSet
-     * @throws SQLException SQLException
+        @param rs ResultSet
+        @throws SQLException SQLException
      * */
     public void loadStats(ResultSet rs) throws SQLException {
         loadStat(StatType.KILLS, rs.getInt("fnKills"));

@@ -162,7 +162,7 @@ public class DuelPlayer {
 
 
     /** Handles position events
-     * @param event PlayerPosition
+        @param event PlayerPosition
      * */
     public void handlePosition(PlayerPosition event) {
         if (status == WARPING || status == LAGGED || status == OUT || status == REOUT
@@ -499,7 +499,7 @@ public class DuelPlayer {
     }
 
     /** Handles a staffer force !signup command
-     * @param staff String
+        @param staff String
      * */
     public void doSignup(String staff) {
         if (registered)
@@ -513,7 +513,7 @@ public class DuelPlayer {
     }
 
     /** Handles a player !disable command
-     * @param staff String
+        @param staff String
      * */
     public void doDisable(String staff) {
         if (staff != null && staffer != null) {
@@ -533,7 +533,7 @@ public class DuelPlayer {
     }
 
     /** Handles a player !enable command
-     * @param staff String
+        @param staff String
      * */
     public void doEnable(String staff) {
         if (staff != null && staffer != null) {
@@ -602,7 +602,7 @@ public class DuelPlayer {
     }
 
     /** Determines if a player is eligible for league play
-     * @return boolean
+        @return boolean
      * */
     public boolean canPlay() {
         return registered && enabled && !banned;
@@ -625,9 +625,9 @@ public class DuelPlayer {
     }
 
     /**
-     * Unused.
-     * @param p DuelPlayer
-     * @deprecated
+        Unused.
+        @param p DuelPlayer
+        @deprecated
      * */
     public void warpDelay(DuelPlayer p) {
         setStatus(WARPING);
@@ -646,14 +646,14 @@ public class DuelPlayer {
     }
 
     /** Returns the number of milliseconds since the last death
-     * @return long
+        @return long
      * */
     public long getTimeFromLastDeath() {
         return System.currentTimeMillis() - lastDeath;
     }
 
     /** Returns the name of the last player to kill this player
-     * @return String
+        @return String
      * */
     public String getLastKiller() {
         return lastKiller;
@@ -714,14 +714,14 @@ public class DuelPlayer {
     }
 
     /** Returns kills
-     * @return int
+        @return int
      * */
     public int getKills() {
         return stats.getStat(StatType.KILLS);
     }
 
     /** Returns deaths
-     * @return int
+        @return int
      * */
     public int getDeaths() {
         return stats.getStat(StatType.DEATHS);
@@ -732,7 +732,7 @@ public class DuelPlayer {
     }
 
     /** Returns player status
-     * @return int
+        @return int
      * */
     public int getStatus() {
         return status;
@@ -747,7 +747,7 @@ public class DuelPlayer {
     }
 
     /** Sets the player status
-     * @param s int
+        @param s int
      * */
     public void setStatus(int s) {
         status = s;
@@ -796,8 +796,8 @@ public class DuelPlayer {
     }
 
     /** Warps the player to the specified coordinates (in tiles)
-     * @param x int
-     * @param y int
+        @param x int
+        @param y int
      * */
     public void warp(int x, int y) {
         setStatus(WARPING);
@@ -814,9 +814,9 @@ public class DuelPlayer {
     }
 
     /** Warps the player after the player just warped
-     * @param x int
-     * @param y int
-     */
+        @param x int
+        @param y int
+    */
     public void warpWarper(int x, int y) {
         setStatus(WARPING);
         Player p1 = ba.getPlayer(name);
@@ -826,10 +826,10 @@ public class DuelPlayer {
     }
 
     /** Prepares the player for a duel in the given ship and coordinates.
-     * @param div int
-     * @param shipNum int
-     * @param x int
-     * @param y int
+        @param div int
+        @param shipNum int
+        @param x int
+        @param y int
      * */
     public void starting(int div, int shipNum, int x, int y) {
         if (status == LAGGED) return;
@@ -853,14 +853,14 @@ public class DuelPlayer {
     }
 
     /** Returns the ID of the removal reason
-     * @return int
+        @return int
      * */
     public int getReason() {
         return out;
     }
 
     /** Cancels the duel
-     * @param name String
+        @param name String
      * */
     public void cancelGame(String name) {
         if (team == null || team.game == null) {

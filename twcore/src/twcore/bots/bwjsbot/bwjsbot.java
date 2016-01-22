@@ -87,7 +87,7 @@ public class bwjsbot extends SubspaceBot {
 
     /** Class constructor
         @param botAction BotAction
-     */
+    */
     public bwjsbot(BotAction botAction) {
         super(botAction);
         initializeVariables();  //Initialize variables

@@ -19,7 +19,7 @@ public class chatrelaybot extends SubspaceBot {
 
     /** Creates a new instance of ultrabot
         @param botAction BotAction
-     */
+    */
     public chatrelaybot(BotAction botAction) {
         super(botAction);
         requestEvents();

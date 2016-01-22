@@ -155,7 +155,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !alert command which enables or disables new game alert pms
-     * @param name String
+        @param name String
      * */
     public void cmd_alert(String name) {
         if (alerts.remove(name.toLowerCase()))
@@ -167,7 +167,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !deaths command which lists the players with most deaths and least deaths
-     * @param name String
+        @param name String
      * */
     public void cmd_deaths(String name) {
         if (game != null && state == State.PLAYING)
@@ -177,7 +177,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !debug command which enables or disables debug mode
-     * @param name String
+        @param name String
      * */
     public void cmd_debug(String name) {
         if (!DEBUG) {
@@ -215,7 +215,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Kills the bot
-     * @param name String
+        @param name String
      * */
     public void cmd_die(String name) {
         ba.sendSmartPrivateMessage(name, "Disconnecting...");
@@ -301,8 +301,8 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !greet command which is used to change the arena greeting message
-     * @param name String
-     * @param cmd String
+        @param name String
+        @param cmd String
      * */
     public void cmd_greet(String name, String cmd) {
         if (cmd.length() < 8)
@@ -313,7 +313,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !help command
-     * @param name String
+        @param name String
      * */
     public void cmd_help(String name) {
         String[] msg = new String[] { "+-- Robo Ref Commands --------------------------------------------------------------------.",
@@ -368,7 +368,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !hider command which will start or stop the hiding player task in the current game
-     * @param name String
+        @param name String
      * */
     public void cmd_hiderFinder(String name) {
         hiderCheck = !hiderCheck;
@@ -393,8 +393,8 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the ladder command which displays the top 5 players or the 3 players surrounding a particular rank
-     * @param name String
-     * @param cmd String
+        @param name String
+        @param cmd String
      * */
     public void cmd_ladder(String name, String cmd) {
         if (!cmd.contains(" "))
@@ -490,7 +490,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !lagout command which returns a lagged out player to the game
-     * @param name String
+        @param name String
      * */
     public void cmd_lagout(String name) {
         if (game != null) {
@@ -529,7 +529,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !mvp command which lists the top 3 best and worst players
-     * @param name String
+        @param name String
      * */
     public void cmd_mvp(String name) {
         if (game != null && state == State.PLAYING)
@@ -539,8 +539,8 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !rank command which returns a players rank according to ship
-     * @param name String
-     * @param cmd String
+        @param name String
+        @param cmd String
      * */
     public void cmd_rank(String name, String cmd) {
         if (cmd.length() < 7)
@@ -585,8 +585,8 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !rec command which displays a player's current overall record
-     * @param name String
-     * @param cmd String
+        @param name String
+        @param cmd String
      * */
     public void cmd_rec(String name, String cmd) {
         if (cmd.length() < 5)
@@ -634,8 +634,8 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !remove player command which will spec the player and erase stats
-     * @param name String
-     * @param cmd String
+        @param name String
+        @param cmd String
      * */
     public void cmd_remove(String name, String cmd) {
         if (cmd.indexOf(" ") + 1 == cmd.length())
@@ -648,8 +648,8 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !scorereset (sr) command which resets the stats for the specified ship
-     * @param name String
-     * @param cmd String
+        @param name String
+        @param cmd String
      * */
     public void cmd_scorereset(String name, String cmd) {
         if(!isElimOp(name)) {
@@ -756,7 +756,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !start command which restarts the bot after being stopped
-     * @param name String
+        @param name String
      * */
     public void cmd_start(String name) {
         state = State.IDLE;
@@ -764,8 +764,8 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !stats command which displays stats for a given ship if possible
-     * @param name String
-     * @param cmd String
+        @param name String
+        @param cmd String
      * */
     public void cmd_stats(String name, String cmd) {
         int ship = -1;
@@ -809,7 +809,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !status command which displays current bot or game state
-     * @param name String
+        @param name String
      * */
     public void cmd_status(String name) {
         if (state == State.WAITING)
@@ -825,7 +825,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !stop command which turns the bot off and prevents games from running
-     * @param name String
+        @param name String
      * */
     public void cmd_stop(String name) {
         state = State.OFF;
@@ -839,8 +839,8 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !streak command which will show current streak stats if a game is being played
-     * @param name String
-     * @param cmd String
+        @param name String
+        @param cmd String
      * */
     public void cmd_streak(String name, String cmd) {
         if (game != null && state == State.PLAYING)
@@ -859,7 +859,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles the !who command which displays the remaining players and their records
-     * @param name String
+        @param name String
      * */
     public void cmd_who(String name) {
         if (game != null && state == State.PLAYING)
@@ -869,7 +869,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Forces a zone message to be sent regardless of how long ago the last zoner was
-     * @param name String*/
+        @param name String*/
     public void cmd_zone(String name) {
         if ((System.currentTimeMillis() - lastZoner) < (MIN_ZONER * Tools.TimeInMillis.MINUTE)) {
             long dt = (MIN_ZONER * Tools.TimeInMillis.MINUTE) - (System.currentTimeMillis() - lastZoner);
@@ -1020,7 +1020,7 @@ public class elim extends SubspaceBot {
     }
 
     /** Debug message handler
-     * @param msg String*/
+        @param msg String*/
     public void debug(String msg) {
         if (DEBUG)
             ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
@@ -1626,8 +1626,8 @@ public class elim extends SubspaceBot {
     }
 
     /** Handles potential votes read from public chat during a voting period
-     * @param name String
-     * @param cmd String
+        @param name String
+        @param cmd String
      * */
     public void handleVote(String name, String cmd) {
         /*  testing this without
@@ -1820,9 +1820,9 @@ public class elim extends SubspaceBot {
     }
 
     /** Sets the winner of the last elim event prompting end game routines and stores the finished game information to the database
-     * @param winner ElimPlayer
-     * @param aveRating int
-     * @param players int
+        @param winner ElimPlayer
+        @param aveRating int
+        @param players int
      * */
     public void storeGame(ElimPlayer winner, int aveRating, int players) {
         this.winner = winner;

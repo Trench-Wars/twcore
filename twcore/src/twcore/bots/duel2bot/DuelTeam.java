@@ -209,7 +209,7 @@ public class DuelTeam {
     }
 
     /** Sends a message to partner about partner lagout
-     * @param name String
+        @param name String
      * */
     public void partnerLagout(String name) {
         ba.sendPrivateMessage(getPartner(name),
@@ -227,7 +227,7 @@ public class DuelTeam {
     }
 
     /** Reports a partner return from lagout and calls game
-     * @param name String
+        @param name String
      * */
     public void partnerReturned(String name) {
         ba.sendPrivateMessage(getPartner(name), "Your partner has returned from being lagged out.");
@@ -345,8 +345,8 @@ public class DuelTeam {
     }
 
     /** Creates a new team in the database and returns the insert row (team id)
-     * @param won boolean
-     * @return int
+        @param won boolean
+        @return int
      * */
     public int sql_storeTeam(boolean won) {
         String query1 = "SELECT * FROM tblDuel2__team WHERE fnDivision = " + div + " AND  (fnUser1 = " + userID[0] + " AND fnUser2 = " + userID[1] + ") OR (fnUser1 = " + userID[1] + " AND fnUser2 = " + userID[0] + ") LIMIT 1";
