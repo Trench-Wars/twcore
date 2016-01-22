@@ -88,7 +88,7 @@ public class ModuleHandler
         This method checks to see if a module is loaded.
 
         @param moduleName is the name of the module to load.
-        @param true is returned if the module is loaded.
+        @return true is returned if the module is loaded.
     */
 
     public boolean isLoaded(String moduleName)
@@ -122,6 +122,7 @@ public class ModuleHandler
         This method gets a loaded Module instance from the module list.
 
         @param moduleName is the name of the module to get.
+        @return the module
     */
 
     public Module getModule(String moduleName)

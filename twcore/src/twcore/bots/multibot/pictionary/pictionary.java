@@ -250,7 +250,7 @@ public class pictionary extends MultiModule {
     }
 
     /**
-        Added a feature to allow players to change ships by using !ship <shipnumber>.
+        Added a feature to allow players to change ships by using !ship [shipnumber].
         @param name
         @param ShipType
     */

@@ -758,7 +758,7 @@ public final class Tools {
         <code>  2 days, 1 hour, 31 minutes and 45 seconds.</code><p>
         If abbrev is set to true, then the String is much less verbose:<p>
         <code>  3d:14h:30m:21s</code>
-        @param dateInMillis A date given in milliseconds, can be either in future or past
+        @param time A date given in milliseconds, can be either in future or past
         @param abbrev Whether or not to abbreviate the time string.
         @return Textual representation of the difference between the given time and zero.
     */

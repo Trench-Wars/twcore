@@ -136,7 +136,9 @@ public class ElimGame {
         }
     }
 
-    /** Digest and diffuse player death event and related info */
+    /** Digest and diffuse player death event and related info
+     * @param event PlayerDeath
+     * */
     public void handleEvent(PlayerDeath event) {
         String killer = ba.getPlayerName(event.getKillerID());
         String killee = ba.getPlayerName(event.getKilleeID());
@@ -172,7 +174,9 @@ public class ElimGame {
         }
     }
 
-    /** Catch potential lagouts and/or update player game status */
+    /** Catch potential lagouts and/or update player game status
+     * @param event FrequencyShipChange
+     * */
     public void handleEvent(FrequencyShipChange event) {
         String name = ba.getPlayerName(event.getPlayerID());
 
@@ -220,7 +224,9 @@ public class ElimGame {
         }
     }
 
-    /** Passed a PlayerPosition event used to check out of bounds */
+    /** Passed a PlayerPosition event used to check out of bounds
+     * @param event PlayerPosition
+     * */
     public void handleEvent(PlayerPosition event) {
         if (!ship.inBase()) return;
 
@@ -250,7 +256,9 @@ public class ElimGame {
         }
     }
 
-    /** Handle left event for potential lagouts */
+    /** Handle left event for potential lagouts
+     * @param event PlayerLeft
+     * */
     public void handleEvent(PlayerLeft event) {
         String name = ba.getPlayerName(event.getPlayerID());
 
@@ -296,7 +304,9 @@ public class ElimGame {
         }
     }
 
-    /** Handles a lag report received from the lag handler */
+    /** Handles a lag report received from the lag handler
+     * @param report LagReport
+     * */
     public void handleLagReport(LagReport report) {
         if (!report.isBotRequest())
             ba.privateMessageSpam(report.getRequester(), report.getLagStats());
@@ -319,7 +329,10 @@ public class ElimGame {
         }
     }
 
-    /** Handles spawning related tasks like warping and prizing */
+    /** Handles spawning related tasks like warping and prizing
+     * @param ep ElimPlayer
+     * @param instant boolean
+     * */
     public void handleSpawn(ElimPlayer ep, boolean instant) {
         final String name = ep.name;
 
@@ -348,7 +361,9 @@ public class ElimGame {
             sendPrizes(name);
     }
 
-    /** Handles a lagged out player */
+    /** Handles a lagged out player
+     * @param name String
+     * */
     public void handleLagout(String name) {
         winners.remove(low(name));
         lagChecks.remove(low(name));
@@ -365,7 +380,10 @@ public class ElimGame {
             checkWinner();
     }
 
-    /** Passes a ResultSet to a player for stat loading */
+    /** Passes a ResultSet to a player for stat loading
+     * @param name String
+     * @param rs ResultSet
+     * */
     public void handleStats(String name, ResultSet rs) {
         ElimPlayer ep = getPlayer(name);
 
@@ -384,7 +402,9 @@ public class ElimGame {
             checkStats();
     }
 
-    /** Receives the result of the *where command used for hider coordinates */
+    /** Receives the result of the *where command used for hider coordinates
+     * @param msg String
+     * */
     public void handleHider(String msg) {
         if (hiderFinder != null && msg.contains(":") && msg.length() - msg.indexOf(":") <= 5)
             hiderFinder.revealHider(msg);
@@ -479,7 +499,9 @@ public class ElimGame {
         setShipFreqs();
     }
 
-    /** Handles the !late entrance command */
+    /** Handles the !late entrance command
+     * @param name String
+     * */
     public void do_late(String name) {
         String low = name.toLowerCase();
         ElimPlayer ep = new ElimPlayer(ba, this, name, ship.getNum(), goal);
@@ -501,7 +523,9 @@ public class ElimGame {
         */
     }
 
-    /** Handles late entrance after stats are loaded */
+    /** Handles late entrance after stats are loaded
+     * @param name String
+     * */
     public void addLatePlayer(String name) {
         String low = name.toLowerCase();
         ElimPlayer ep = getPlayer(name);
@@ -548,7 +572,9 @@ public class ElimGame {
         ratingCount += ep.getRating();
     }
 
-    /** Handles the !lagout player return command */
+    /** Handles the !lagout player return command
+     * @param name String
+     * */
     public void do_lagout(String name) {
         if (laggers.containsKey(low(name))) {
             laggers.get(low(name)).lagin();
@@ -560,7 +586,9 @@ public class ElimGame {
         lagHandler.requestLag(name, req);
     }
 
-    /** Handles the grunt work for the !deaths command */
+    /** Handles the grunt work for the !deaths command
+     * @param name String
+     * */
     public void do_deaths(String name) {
         List<ElimPlayer> list = getPlayed();
 
@@ -598,7 +626,9 @@ public class ElimGame {
             ba.sendSmartPrivateMessage(name, "No death stats available.");
     }
 
-    /** Handles the grunt work called for by the !mvp command */
+    /** Handles the grunt work called for by the !mvp command
+     * @param name String
+     * */
     public void do_mvp(String name) {
         List<ElimPlayer> list = getPlayed();
         ElimPlayer[] best = new ElimPlayer[3];
@@ -634,7 +664,9 @@ public class ElimGame {
             ba.sendSmartPrivateMessage(name, "No MVP stats available.");
     }
 
-    /** Handles the grunt work called for by the !who command */
+    /** Handles the grunt work called for by the !who command
+     * @param name String
+     * */
     public void do_who(String name) {
         String msg = "" + winners.size() + " players remaining (* prefix == lagged out):";
         ba.sendPrivateMessage(name, msg);
@@ -660,7 +692,10 @@ public class ElimGame {
         ba.sendSmartPrivateMessage(name, msg);
     }
 
-    /** Handles grunt work for the !streak command which shows current streak stats */
+    /** Handles grunt work for the !streak command which shows current streak stats
+     * @param name String
+     * @param cmd String
+     * */
     public void do_streak(String name, String cmd) {
         String p = name;
 
@@ -675,7 +710,9 @@ public class ElimGame {
             ba.sendPrivateMessage(name, "Error, player not found.");
     }
 
-    /** Does the grunt work of the !hider command which toggles the HiderFinder task */
+    /** Does the grunt work of the !hider command which toggles the HiderFinder task
+     * @param name String
+     * */
     public void do_hiderFinder(String name) {
         if (hiderFinder != null) {
             hiderFinder.stop();
@@ -686,7 +723,10 @@ public class ElimGame {
         }
     }
 
-    /** Handles the grunt work for the !remove player command */
+    /** Handles the grunt work for the !remove player command
+     * @param name String
+     * @param player String
+     * */
     public void do_remove(String name, String player) {
         String temp = ba.getFuzzyPlayerName(player);
 
@@ -740,17 +780,24 @@ public class ElimGame {
         laggers.clear();
     }
 
-    /** Returns a List of ElimPlayers built from an ElimPlayer array (used for sorting) */
+    /** Returns a List of ElimPlayers built from an ElimPlayer array (used for sorting)
+     * @return List of ElimPlayer
+     * */
     public List<ElimPlayer> getPlayed() {
         return Arrays.asList(played.values().toArray(new ElimPlayer[played.size()]));
     }
 
-    /** Returns the number of players currently in-game */
+    /** Returns the number of players currently in-game
+     * @return int
+     * */
     public int getPlaying() {
         return winners.size();
     }
 
-    /** Get ElimPlayer for the given player name */
+    /** Get ElimPlayer for the given player name
+     * @param name String
+     * @return ElimPlayer
+     * */
     public ElimPlayer getPlayer(String name) {
         return players.get(name.toLowerCase());
     }
@@ -759,7 +806,10 @@ public class ElimGame {
         return state;
     }
 
-    /** Confirm player stats updated and return if all players have been updated */
+    /** Confirm player stats updated and return if all players have been updated
+     * @param name String
+     * @return boolean
+     * */
     public boolean gotUpdate(String name) {
         losers.remove(name.toLowerCase());
         winners.remove(name.toLowerCase());
@@ -770,7 +820,9 @@ public class ElimGame {
         else return false;
     }
 
-    /** Remove player from the game player list into the loser list and flush stats */
+    /** Remove player from the game player list into the loser list and flush stats
+     * @param loser ElimPlayer
+     * */
     public void removePlayer(ElimPlayer loser) {
         winners.remove(low(loser.name));
         lagChecks.remove(low(loser.name));
@@ -1067,7 +1119,9 @@ public class ElimGame {
         }
     }
 
-    /** Comparator used to determine the MVP of a game. Player with highest kills -> least deaths -> best aim -> random */
+    /** Comparator used to determine the MVP of a game.
+     * Ordered by highest kills, least deaths, best aim, and then at random
+     * */
     public class CompareAll implements Comparator<ElimPlayer> {
         @Override
         public int compare(ElimPlayer p1, ElimPlayer p2) {

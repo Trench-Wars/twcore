@@ -444,7 +444,7 @@ public class utiletc extends MultiUtil {
         larger than MAX_COORD, then an exception is thrown.
 
         @param string is the String to parse.
-        @returns the coordinate is returned.
+        @return the coordinate is returned.
     */
     public int parseCoord(String string)
     {

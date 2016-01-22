@@ -508,7 +508,7 @@ public final class Ship extends Thread {
         @param isEMP True if weapon causes EMP damage
         @param isBomb True if weapon is a bomb
         @param shrap Amount of shrap (0-31)
-        @param alternate Bombs -> Mines, Bullets -> Multifire
+        @param alternate Bombs -&gt; Mines, Bullets -&gt; Multifire
         @return An int bitvector representing the weapon specified
         @deprecated Seems the fields were invalid. On top of that, it is a rather over-elaborate implementation.
         Use {@link #getWeaponNumber(byte, byte, boolean, byte, byte, boolean)} instead.
@@ -629,7 +629,7 @@ public final class Ship extends Thread {
         <li>3: L4;
         </ul>
         @param shrapAmount Amount of shrap (0-31)
-        @param alternate Bombs -> Mines, Bullets -> Multifire
+        @param alternate Bombs -&gt; Mines, Bullets -&gt; Multifire
         @return An int bitvector representing the weapon specified
     */
     public int getWeaponNumber(byte weaponType, byte weaponLevel, boolean shrapBouncing, byte shrapLevel, byte shrapAmount, boolean alternate)

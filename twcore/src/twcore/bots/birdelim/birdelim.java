@@ -211,7 +211,9 @@ public final class birdelim extends SubspaceBot implements LagoutMan.ExpiredLago
 
 
 
-    /** Creates a new instance of kimbot **/
+    /** Creates a new instance of kimbot
+        @param botAction BotAction
+     */
     public birdelim(BotAction botAction) {
         super(botAction);
         m_botAction = botAction;

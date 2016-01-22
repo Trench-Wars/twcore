@@ -43,7 +43,7 @@ import twcore.core.util.Tools;
     head of the queue.  Combines the versatility of a background queue with the
     foreground's ability to return the result set almost instantly.
     <p>
-    <b><u>IMPORTANT NOTE</b></u>
+    <b><u>IMPORTANT NOTE</u></b>
     For every query you MUST run BotAction's SQLClose(), or manually run the close()
     method on both the ResultSet and the Statement that created it.  If you do not,
     memory leaks may occur!

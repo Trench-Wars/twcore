@@ -230,7 +230,7 @@ public class Projectile {
 
         @param    bX is bot's x location
         @param    bY is bot's y location
-        @return   the distance between projectile & bot is returned
+        @return   the distance between projectile and bot is returned
     */
 
     public double getDistance(int bX, int bY) {

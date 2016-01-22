@@ -43,6 +43,7 @@ public abstract class Module
 
     /**
         This method initializes the module to default values.
+        @param botAction BotAction object
     */
 
     public void initializeModule(BotAction botAction)
@@ -119,6 +120,7 @@ public abstract class Module
 
     /**
         All of these stub functions handle the various events.
+        @param event the event object
     */
 
     public void handleEvent(Message event) {}

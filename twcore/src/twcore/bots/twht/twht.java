@@ -237,8 +237,8 @@ public class twht extends SubspaceBot {
     /**
         Catches unlocking of arena and re-locks.
 
-        @param name
-        @param message
+        @param name String
+        @param msg String
     */
     public void handleArenaMessage(String name, String msg) {
         if (msg.equals("Arena UNLOCKED") && lockArena)

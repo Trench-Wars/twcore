@@ -31,7 +31,7 @@ import twcore.core.util.ModuleEventRequester;
     The syntax for adding or modifying a task (terms in brackets are optional):
 
     !Spec [deaths=...] [ship=...] [freq=...] [player=...]
-    !SpecEdit <Task Number> [deaths=...] [ship=...] [freq=...] [player=...]
+    !SpecEdit [Task Number] [deaths=...] [ship=...] [freq=...] [player=...]
 
     You are allowed to add multiple spec tasks to the bot, but duplicate tasks
     will automatically be removed. If there are multiple tasks that apply

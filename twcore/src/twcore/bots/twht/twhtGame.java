@@ -560,8 +560,8 @@ public class twhtGame {
     /**
         This method will get the votes of the different players.
 
-        @param name
-        @param msg
+        @param name String
+        @param vote String
     */
     public void getVote(String name, String vote) {
         if (m_curRound != null) {
@@ -1628,10 +1628,9 @@ public class twhtGame {
     /**
         This is the method where the bot puts in a request to assign a penalty.
 
-        @param teamName
-        @param penalty
-        @param penLength
-        @param playerName
+        @param penalty String
+        @param penLength int
+        @param playerName String
     */
     public void reqPenalty(String penalty, int penLength, String playerName) {
         twhtTeam t = null;

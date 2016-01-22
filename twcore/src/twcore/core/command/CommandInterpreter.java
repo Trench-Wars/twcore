@@ -24,11 +24,11 @@ import twcore.core.util.Tools;
     register the commands using the registerCommand method; send all Message events
     received by your bot to the CommandInterpreter for handling.
     <p>
-    Some examples of how to use various methods:<p><code><pre>
+    Some examples of how to use various methods:<p><code>
     registerCommand( "!help", Message.PRIVATE_MESSAGE, this, "cmdHelp" );
     registerCommand( "!die", Message.PUBLIC_MESSAGE, this, "cmdDie", "!die - Kills bot" );
     registerCommand( "8th", Message.CHAT_MESSAGE, this, "cmdSell", "8th - sell", OperatorList.HIGHMOD_LEVEL );
-    </pre></code>
+    </code>
     <p>
     Here is how the CommandInterpreter algorithm goes:<p>
     1. A Message event is fired within a class that is running this CommandInterpreter.<br>
@@ -249,7 +249,7 @@ public class CommandInterpreter {
         called every time the bot received a Message event.
 
         The method checks the message text against its list of triggers, and if
-        message types & required access levels match, executes the command's
+        message types and required access levels match, executes the command's
         registered method.
         @param event Message event
         @return true if it succeeded and false if it didn't

@@ -63,7 +63,7 @@ public class utilfreqc extends MultiUtil {
 
     /**
         Sets the number of freqs in the pseudo-lock'd game.
-        Syntax <#>
+        Syntax [#]
 
         @param sender is the user of the bot.
         @param argString is the argument to be computed.

@@ -17,7 +17,7 @@ import twcore.core.util.json.parser.ParseException;
 
 
 /**
-    @author FangYidong<fangyidong@yahoo.com.cn>
+    @author <a href="mailto:fangyidong@yahoo.com.cn">FangYidong</a>
 */
 @SuppressWarnings("rawtypes")
 public class JSONValue {
@@ -25,8 +25,8 @@ public class JSONValue {
         Parse JSON text into java object from the input source.
         Please use parseWithException() if you don't want to ignore the exception.
 
-        @see org.json.simple.parser.JSONParser#parse(Reader)
-        @see #parseWithException(Reader)
+        see org.json.simple.parser.JSONParser#parse(Reader)
+        see #parseWithException(Reader)
 
         @param in
         @return Instance of the following:
@@ -56,7 +56,7 @@ public class JSONValue {
     /**
         Parse JSON text into java object from the input source.
 
-        @see org.json.simple.parser.JSONParser
+        see org.json.simple.parser.JSONParser
 
         @param in
         @return Instance of the following:
@@ -88,11 +88,11 @@ public class JSONValue {
         DO NOT call this method from writeJSONString(Writer) of a class that implements both JSONStreamAware and (Map or List) with
         "this" as the first parameter, use JSONObject.writeJSONString(Map, Writer) or JSONArray.writeJSONString(List, Writer) instead.
 
-        @see org.json.simple.JSONObject#writeJSONString(Map, Writer)
-        @see org.json.simple.JSONArray#writeJSONString(List, Writer)
+        see org.json.simple.JSONObject#writeJSONString(Map, Writer)
+        see org.json.simple.JSONArray#writeJSONString(List, Writer)
 
-        @param value
-        @param writer
+        @param value Object
+        @param out Writer
     */
     public static void writeJSONString(Object value, Writer out) throws IOException {
         if(value == null) {
@@ -166,8 +166,8 @@ public class JSONValue {
         DO NOT call this method from toJSONString() of a class that implements both JSONAware and Map or List with
         "this" as the parameter, use JSONObject.toJSONString(Map) or JSONArray.toJSONString(List) instead.
 
-        @see org.json.simple.JSONObject#toJSONString(Map)
-        @see org.json.simple.JSONArray#toJSONString(List)
+        see org.json.simple.JSONObject#toJSONString(Map)
+        see org.json.simple.JSONArray#toJSONString(List)
 
         @param value
         @return JSON text, or "null" if value is null or it's an NaN or an INF number.

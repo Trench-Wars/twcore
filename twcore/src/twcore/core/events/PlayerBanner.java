@@ -3,14 +3,14 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x1F) Event fired when a player changes their banner. <code><pre>
+    (S2C 0x1F) Event fired when a player changes their banner. <code>
     +------------------------------+
     | Offset  Length  Description  |
     +------------------------------+
     | 0       1       Type Byte    |
     | 1       2       Player ID    |
     | 2       96      Banner Data  |
-    +------------------------------+</code></pre>
+    +------------------------------+</code>
 
     Banner is sent as a 12x8 bitmap with no palette. Data arranged in left to
     right rows, but bottom row is the first in the read order

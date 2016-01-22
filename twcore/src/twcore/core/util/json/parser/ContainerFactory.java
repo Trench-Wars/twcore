@@ -6,9 +6,9 @@ import java.util.Map;
 /**
     Container factory for creating containers for JSON object and JSON array.
 
-    @see org.json.simple.parser.JSONParser#parse(java.io.Reader, ContainerFactory)
+    see org.json.simple.parser.JSONParser#parse(java.io.Reader, ContainerFactory)
 
-    @author FangYidong<fangyidong@yahoo.com.cn>
+    @author <a href="mailto:fangyidong@yahoo.com.cn">FangYidong</a>
 */
 @SuppressWarnings("rawtypes")
 public interface ContainerFactory {

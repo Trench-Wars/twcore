@@ -3,14 +3,14 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x23) Event called when a team gets periodic flag points from holding them. <code><pre>
+    (S2C 0x23) Event called when a team gets periodic flag points from holding them. <code>
     +--------------------------------+
     | Offset  Length  Description    |
     +--------------------------------+
     | 0       1       Type Byte      |
     | 1       2       Freq           |
     | 3       2       Points Awarded |
-    +--------------------------------+</code></pre>
+    +--------------------------------+</code>
 
     It is important to note that the actual packet can contain more information
     by repeating the last two fields until all awards have been announced.

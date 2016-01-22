@@ -18,7 +18,7 @@ import twcore.core.OperatorList;
 
 /**
     @author milosh
-    @update PoisonIvy - fixed typo #891
+    update by PoisonIvy - fixed typo #891
 */
 public class timers extends MultiUtil {
 

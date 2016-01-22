@@ -17,7 +17,9 @@ public class chatrelaybot extends SubspaceBot {
     private String requester;
     private BotSettings m_botSettings;
 
-    /** Creates a new instance of ultrabot */
+    /** Creates a new instance of ultrabot
+        @param botAction BotAction
+     */
     public chatrelaybot(BotAction botAction) {
         super(botAction);
         requestEvents();

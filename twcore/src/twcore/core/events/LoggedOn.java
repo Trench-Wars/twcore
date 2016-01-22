@@ -3,12 +3,12 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x31) Event fired when the login sequence completes. <code><pre>
+    (S2C 0x31) Event fired when the login sequence completes. <code>
     +------------------------------+
     | Offset  Length  Description  |
     +------------------------------+
     | 0       1       Type Byte    |
-    +------------------------------+</code></pre>
+    +------------------------------+</code>
     As far as I (D1st0rt) can tell, this packet is no longer used outside of the VIE protocol.
     ASSS and Continuum don't use it and so twcore no longer listens for it.
 */

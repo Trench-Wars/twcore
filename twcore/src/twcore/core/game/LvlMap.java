@@ -14,12 +14,12 @@ import twcore.core.util.ByteArray;
 import twcore.core.util.Point;
 
 /**
-    This class stores all the information of a map, tile wise.<code><pre>
+    This class stores all the information of a map, tile wise.<code>
     VIE map format
 
-    X    = WORD((N >> 12) & 0xFFF);  // This puts actual map dimensions at 4095x4095 possible tiles.
-    Y    = WORD(N & 0xFFF);
-    TILE = BYTE(v >> 24);
+    X    = WORD((N &gt;&gt; 12) &amp; 0xFFF);  // This puts actual map dimensions at 4095x4095 possible tiles.
+    Y    = WORD(N &amp; 0xFFF);
+    TILE = BYTE(v &gt;&gt; 24);
 
     0        = No tile
     1-19     = Normal tiles
@@ -33,7 +33,7 @@ import twcore.core.util.Point;
     173-175  = Fly over tiles
     176-191  = Fly under tiles
 
-    Warning: Deviating from this format may invalidate the security checksum.</pre></code>
+    Warning: Deviating from this format may invalidate the security checksum.</code>
     Original field research is credited to the folks from MervBot.
     Implementation idea is taken from the MervBot.
     @author Trancid

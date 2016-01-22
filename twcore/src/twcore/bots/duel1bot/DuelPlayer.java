@@ -148,7 +148,9 @@ public class DuelPlayer {
         d_maxLagouts = bot.d_maxLagouts;
     }
 
-    /** Handles position events  */
+    /** Handles position events
+     * @param event PlayerPosition
+     * */
     public void handlePosition(PlayerPosition event) {
         if (status == WARPING || status == LAGGED || status == OUT || status == REOUT
                 || status == RETURN) return;
@@ -355,6 +357,7 @@ public class DuelPlayer {
 
     /**
         Handles the event of a player warping.
+        @param pos boolean
     */
     public void handleWarp(boolean pos) {
         if (status == WARPING || status == RETURN) return;
@@ -451,7 +454,9 @@ public class DuelPlayer {
         }
     }
 
-    /** Handles a staffer force !signup command */
+    /** Handles a staffer force !signup command
+     * @param staff String
+     * */
     public void doSignup(String staff) {
         if (registered)
             ba.sendSmartPrivateMessage(staff, name + " is already registered to play.");
@@ -463,7 +468,9 @@ public class DuelPlayer {
         }
     }
 
-    /** Handles a player !disable command */
+    /** Handles a player !disable command
+     * @param staff String
+     * */
     public void doDisable(String staff) {
         if (staff != null && staffer != null) {
             ba.sendSmartPrivateMessage(staff, "A separate command is currently in process, try again later.");
@@ -481,7 +488,9 @@ public class DuelPlayer {
         }
     }
 
-    /** Handles a player !enable command */
+    /** Handles a player !enable command
+     * @param staff String
+     * */
     public void doEnable(String staff) {
         if (staff != null && staffer != null) {
             ba.sendSmartPrivateMessage(staff, "A separate command is currently in process, try again later.");
@@ -597,7 +606,9 @@ public class DuelPlayer {
         return name;
     }
 
-    /** Determines if a player is eligible for league play */
+    /** Determines if a player is eligible for league play
+     * @return true if can play
+     * */
     public boolean canPlay() {
         return registered && enabled && !banned;
     }
@@ -622,12 +633,16 @@ public class DuelPlayer {
         return out > -1;
     }
 
-    /** Returns the number of milliseconds since the last death */
+    /** Returns the number of milliseconds since the last death
+     * @return long time from last death in ms
+     * */
     public long getTimeFromLastDeath() {
         return System.currentTimeMillis() - lastDeath;
     }
 
-    /** Returns the name of the last player to kill this player */
+    /** Returns the name of the last player to kill this player
+     * @return String last killer
+     * */
     public String getLastKiller() {
         return lastKiller;
     }
@@ -684,12 +699,16 @@ public class DuelPlayer {
         stats.handleKill();
     }
 
-    /** Returns kills */
+    /** Returns kills
+     * @return int kills
+     * */
     public int getKills() {
         return stats.getStat(StatType.KILLS);
     }
 
-    /** Returns deaths */
+    /** Returns deaths
+     * @return in deaths
+     * */
     public int getDeaths() {
         return stats.getStat(StatType.DEATHS);
     }
@@ -698,7 +717,17 @@ public class DuelPlayer {
         return stats.getStat(StatType.LAGOUTS);
     }
 
-    /** Returns player status */
+    /** Returns player status
+     * @return int status
+     SPEC = -1;
+     IN = 0;
+     PLAYING = 1;
+     WARPING = 2;
+     LAGGED = 3;
+     OUT = 4;
+     REOUT = 5;
+     RETURN = 6;
+     * */
     public int getStatus() {
         return status;
     }
@@ -715,7 +744,13 @@ public class DuelPlayer {
         return duelFreq;
     }
 
-    /** Returns the ID of the removal reason */
+    /** Returns the ID of the removal reason
+     * @return int removal reason
+       NORMAL = 0;
+       WARPS = 1;
+       LAGOUTS = 2;
+       SPAWNS = 3;
+     * */
     public int getReason() {
         return out;
     }
@@ -724,7 +759,17 @@ public class DuelPlayer {
         return cancel;
     }
 
-    /** Sets the player status */
+    /** Sets the player status
+     * @param s int status
+     SPEC = -1;
+     IN = 0;
+     PLAYING = 1;
+     WARPING = 2;
+     LAGGED = 3;
+     OUT = 4;
+     REOUT = 5;
+     RETURN = 6;
+     * */
     public void setStatus(int s) {
         status = s;
     }
@@ -732,7 +777,11 @@ public class DuelPlayer {
     /**
         Removes the player from the duel and reports the reason for it.
 
-        @param reason
+        @param reason int reason for removal
+       NORMAL = 0;
+       WARPS = 1;
+       LAGOUTS = 2;
+       SPAWNS = 3;
     */
     public void remove(int reason) {
         ba.specWithoutLock(name);
@@ -764,7 +813,10 @@ public class DuelPlayer {
         }
     }
 
-    /** Warps the player to the specified coordinates (in tiles) */
+    /** Warps the player to the specified coordinates (in tiles)
+     * @param x int
+     * @param y int
+     * */
     public void warp(int x, int y) {
         setStatus(WARPING);
         Player p1 = ba.getPlayer(name);
@@ -778,7 +830,10 @@ public class DuelPlayer {
         setStatus(PLAYING);
     }
 
-    /** Warps the player after the player just warped */
+    /** Warps the player after the player just warped
+     * @param x int
+     * @param y int
+     * */
     public void warpWarper(int x, int y) {
         setStatus(WARPING);
         Player p1 = ba.getPlayer(name);
@@ -787,7 +842,10 @@ public class DuelPlayer {
         setStatus(PLAYING);
     }
 
-    /** Prepares the player for a duel in the given ship and coordinates. */
+    /** Prepares the player for a duel in the given ship and coordinates.
+     * @param div int
+     * @param shipNum int
+     * */
     public void starting(int div, int shipNum) {
         if (status == LAGGED) return;
 
@@ -808,7 +866,9 @@ public class DuelPlayer {
         warpToSafe();
     }
 
-    /** Cancels the duel */
+    /** Cancels the duel
+     * @param name String
+     * */
     public void cancelGame(String name) {
         if (game == null) {
             ba.sendPrivateMessage(name, "No game found.");

@@ -82,7 +82,7 @@ public class untouchable extends MultiModule {
 
 
 
-    /** Initializes number of lives & starting Untouchable, gives rules, 10
+    /** Initializes number of lives and starting Untouchable, gives rules, 10
         second warning, and starts game.
         @param lives Number of lives to spec players at.
         @param UTName Name of player to be the starting Untouchable.  If

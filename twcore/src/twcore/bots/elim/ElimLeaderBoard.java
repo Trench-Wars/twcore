@@ -19,8 +19,8 @@ import twcore.core.util.Tools;
 
 /**
     Simple class that keeps a cache of the leader board for a specific ship type.
-    <p>
-    <ul><b>Main features:</b>
+    <p><b>Main features:</b>
+    <ul>
     <li>Loads only the info that is needed from the SQL database;
     <li>Formats one or multiple ranking lists;
     <li>Uses object modifications to dynamically create a LVZ splash image;
@@ -29,14 +29,16 @@ import twcore.core.util.Tools;
     </ul>
     This class is written with the intent of being general purpose. If you wish to adapt this to
     work in another system, the main things you will need to be aware of are the following:
-    <ul><b>Initial setup</b>
+    <b>Initial setup</b>
+    <ul>
     <li>Modify the initial private static final variables at the start of this class;
     <li>Create a new or modify the current elim.lvz to get the background you want;
     <li>Ensure there are enough objects in the elim.lvz for the amount of data you want to display. Spare objects is recommended;
     <li>If you create a complete new LVZ, this module assumes that the image IDs of the letters are mapped on an ASCII base;
     <li>Copy over the splash settings in elim.cfg and adjust where needed.
     </ul>
-    <ul><b>Using this class</b>
+    <b>Using this class</b>
+    <ul>
     <li>Create and initialize this class only once, through its constructor {@link #ElimLeaderBoard(BotAction, String, String)};
     <li>If you ignore the above, make sure you do a {@link #die()} on this object first, to ensure the {@link PreparedStatement}s are closed and freed properly;
     <li>To reload the configuration, call upon {@link #reloadConfig()}, this will repopulate the ranking tables as well;

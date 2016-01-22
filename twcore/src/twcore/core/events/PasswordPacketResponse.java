@@ -3,23 +3,23 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x0A) Event fired when response to password packet is received. <code><pre>
+    (S2C 0x0A) Event fired when response to password packet is received. <code>
     +-----------------------------------------------------+
     | Offset  Length  Description                         |
     +-----------------------------------------------------+
     | 0       1       Type Byte                           |
     | 1       1       Login Response                      |
     | 2       4       Server Version                      |
-    | 6       4       <unused>                            |
+    | 6       4       &lt;unused&gt;                            |
     | 10      4       Subspace.exe Checksum               |
-    | 14      4       <unused>                            |
-    | 18      1       <unused>                            |
+    | 14      4       &lt;unused&gt;                            |
+    | 18      1       &lt;unused&gt;                            |
     | 19      1       Registration Form Request (Boolean) |
     | 20      4       SSEXE cksum with seed of zero (1)   |
     | 24      4       News.txt checksum (0 = no news file)|
-    | 28      8       <unused>                            |
-    | 32      4       <unused>                            |
-    +-----------------------------------------------------+</code></pre>
+    | 28      8       &lt;unused&gt;                            |
+    | 32      4       &lt;unused&gt;                            |
+    +-----------------------------------------------------+</code>
 
     (1) if this and EXE checksum are -1, bestows supervisor privs to the client
 

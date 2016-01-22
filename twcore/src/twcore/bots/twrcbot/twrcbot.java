@@ -359,7 +359,6 @@ public class twrcbot extends SubspaceBot {
     /**
         Returns the rank the specified player.
         @param name - Name of the player to get rank of.
-        @return Player's rank.
     */
     public void doRank(String name, String parameters) throws SQLException {
         int count = 5;

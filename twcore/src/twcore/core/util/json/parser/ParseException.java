@@ -3,7 +3,7 @@ package twcore.core.util.json.parser;
 /**
     ParseException explains why and where the error occurs in source JSON text.
 
-    @author FangYidong<fangyidong@yahoo.com.cn>
+    @author <a href="mailto:fangyidong@yahoo.com.cn">FangYidong</a>
 
 */
 public class ParseException extends Exception {
@@ -40,7 +40,7 @@ public class ParseException extends Exception {
     }
 
     /**
-        @see org.json.simple.parser.JSONParser#getPosition()
+        see org.json.simple.parser.JSONParser#getPosition()
 
         @return The character position (starting with 0) of the input where the error occurs.
     */
@@ -53,7 +53,7 @@ public class ParseException extends Exception {
     }
 
     /**
-        @see org.json.simple.parser.Yytoken
+        see org.json.simple.parser.Yytoken
 
         @return One of the following base on the value of errorType:
                 ERROR_UNEXPECTED_CHAR       java.lang.Character

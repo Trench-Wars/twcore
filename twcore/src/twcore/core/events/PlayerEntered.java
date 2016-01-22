@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x03) Event fired when a player (or the bot if non-empty) enters the arena. <code><pre>
+    (S2C 0x03) Event fired when a player (or the bot if non-empty) enters the arena. <code>
     +------------------------------+
     | Offset  Length  Description  |
     +--------------------------------+
@@ -21,7 +21,7 @@ import twcore.core.util.ByteArray;
     | 59      2       Attachee ID    |
     | 61      2       Flags Held     |
     | 63      1       Has KOTH Timer |
-    +--------------------------------+</code></pre>
+    +--------------------------------+</code>
 
     Upon entering an arena (or possibly some other instances) several
     of these packets (including the Type Byte) are stacked on top

@@ -21,7 +21,7 @@ import twcore.core.util.Tools.Ship;
 
     Assists in hosting of president type games.
 
-    @see http://twcore.org/ticket/739
+    @see <a href="http://twcore.org/ticket/739">#739</a>
     @author SpookedOne
 */
 public class prez extends MultiModule {

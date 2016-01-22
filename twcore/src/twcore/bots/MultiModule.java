@@ -20,9 +20,9 @@ public abstract class MultiModule
         This method initializes the bot module.  This must be called before the
         module may be used.
 
-        @param moduleName is the name of the module.
-        @param botAction is the botAction of the bot that the module is loaded
-        into.
+        @param botAction is the botAction of the bot that the module is loaded into.
+        @param moduleSettings BotSettings object, this holds the .cfg info of the bot
+        @param modEventReq the event requester object ModuleEventRequester
     */
     public void initialize(BotAction botAction, BotSettings moduleSettings, ModuleEventRequester modEventReq)
     {
@@ -122,7 +122,7 @@ public abstract class MultiModule
     /**
         This method lets the module know whether to automatically start or wait for
         more commands. It defaults as false.
-        @param custom
+        @param auto
         true - automatically start, false - await commands
     */
     public void autoStart(boolean auto) {

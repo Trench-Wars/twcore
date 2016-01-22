@@ -29,7 +29,7 @@ import twcore.core.util.Tools;
     TODO:
     - Track bans using database
     - when lifting bans, don't remove the ban
-    - 1:Tres <ER>> You could set it to go to ?go events after it spawns, and pm anyone who enters with instructions about requesting events
+    - Tres) You could set it to go to ?go events after it spawns, and pm anyone who enters with instructions about requesting events
 */
 public class eventbot extends SubspaceBot {
 
@@ -517,10 +517,11 @@ public class eventbot extends SubspaceBot {
     }
 
     /**
-        [PM] !removerequest <name> [ER+]
+        ER+ command by private message
+        !removerequest [name]
 
-        @param name
-        @param message
+        @param name String
+        @param message String
     */
     public void cmdRemoveRequest(String name, String message) {
         String requester = message.trim().toLowerCase();
@@ -536,10 +537,11 @@ public class eventbot extends SubspaceBot {
     }
 
     /**
-        [PM] !fillrequest <event> [ER+]
+        ER+ command by private message
+        !fillrequest [name]
 
-        @param name
-        @param message
+        @param name String
+        @param message String
     */
     public void cmdFillRequest(String name, String message) {
         String event = message.trim();
@@ -563,10 +565,11 @@ public class eventbot extends SubspaceBot {
     }
 
     /**
-        [PM] !ban <name> [ER+]
+     * ER+ command via PM
+        !ban [name]
 
-        @param name
-        @param message
+        @param name String
+        @param message String
     */
     public void cmdBan(String name, String message) {
         String playername = message.trim().toLowerCase();
@@ -669,10 +672,11 @@ public class eventbot extends SubspaceBot {
     }
 
     /**
-        [PM] !liftban <name> [MOD+]
+     * Moderator+ command via PM
+        !liftban [name]
 
-        @param name
-        @param message
+        @param name String
+        @param message String
     */
     public void cmdLiftban(String name, String message) {
         String playername = message.trim().toLowerCase();
@@ -690,8 +694,8 @@ public class eventbot extends SubspaceBot {
     /**
         [PM] !die [SMOD+]
 
-        @param name
-        @param message
+        @param name String
+        @param message String
     */
     public void cmdDie(String name, String message) {
         requests = null;

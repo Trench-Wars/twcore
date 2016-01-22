@@ -250,7 +250,7 @@ public class stepelim extends MultiModule {
     /**
         This method checks to see if the module can be unloaded or not.
 
-        @param true is returned if the module is allowed to be unloaded.
+        @return true is returned if the module is allowed to be unloaded.
     */
     public boolean isUnloadable() {
         boolean isUnloadable;

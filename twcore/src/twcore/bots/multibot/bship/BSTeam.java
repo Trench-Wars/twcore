@@ -73,7 +73,7 @@ public class BSTeam
 
     /**
         Gets all players on this in a specific ship
-        @param the desired ship, can also be ALL or PLAYING
+        @param ship the desired ship, can also be ALL or PLAYING
         @return an array of all BSPlayers currently in that ship
     */
     public BSPlayer[] getPlayers(byte ship)
@@ -265,7 +265,7 @@ public class BSTeam
 
     /**
         Gets the number of players on this team in a particular ship
-        @param the desired ship, can also be ALL or PLAYING
+        @param ship the desired ship, can also be ALL or PLAYING
     */
     public int getShipCount(byte ship)
     {

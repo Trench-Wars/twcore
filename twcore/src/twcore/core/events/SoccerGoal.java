@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x0B) Event fired when a Soccer Goal is made.<code><pre>
+    (S2C 0x0B) Event fired when a Soccer Goal is made.<code>
 
     +-----------------------------+
     |Offset Length Description    |
@@ -11,7 +11,7 @@ import twcore.core.util.ByteArray;
     |0        1    Type Byte      |
     |1        2    Score Frequency|
     |3        4    Team Points    |
-    +-----------------------------+</code></pre>
+    +-----------------------------+</code>
 */
 public class SoccerGoal extends SubspaceEvent {
     private short m_frequency; // Frequency of the team who scored a goal

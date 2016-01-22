@@ -28,7 +28,7 @@ import twcore.core.util.Tools;
     gathered.
     <p>
     Access levels
-    <p><code><pre>
+    <p><code>
     #   Title            Description                                      Read from
 
     0 - Normal player    no special privileges
@@ -43,7 +43,7 @@ import twcore.core.util.Tools;
     9 - Super Moderator  nearly all privileges                            [smod.txt    ]
     10 - Sysop            nearly all privileges (used to test if a bot)    [sysop.txt   ]
     11 - Owner            all privileges                                   [owner.cfg   ]
-    </pre></code>
+    </code>
 */
 public class OperatorList {
 

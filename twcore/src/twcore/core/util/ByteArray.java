@@ -614,7 +614,7 @@ public class ByteArray {
         The indices are being read from right to left.
         @param extractFrom The byte to extract from
         @param leftIndex The inclusive leftbound index: 7654 3210
-        @param rightIndex The inclusive rightbound index: 7654 3210 and <= leftIndex
+        @param rightIndex The inclusive rightbound index: 7654 3210 and &lt;= leftIndex
         @return The int extracted from the requested bits
     */
     public static int getPartial(byte extractFrom, int leftIndex, int rightIndex)
@@ -630,7 +630,7 @@ public class ByteArray {
         The indices are being read from right to left.
         @param extractFrom The char to extract from
         @param leftIndex The inclusive leftbound index: <p>15..8   7..0</p>
-        @param rightIndex The inclusive rightbound index: <p>15..8  7..0</p> and <= leftIndex
+        @param rightIndex The inclusive rightbound index: <p>15..8  7..0</p> and &lt;= leftIndex
         @return The int extracted from the requested bits
     */
     public static int getPartial(char extractFrom, int leftIndex, int rightIndex)
@@ -646,7 +646,7 @@ public class ByteArray {
         The indices are being read from right to left.
         @param extractFrom The short to extract from.
         @param leftIndex The inclusive leftbound index: 15..8  7..0
-        @param rightIndex The inclusive rightbound index: 15..8  7..0 <= leftIndex
+        @param rightIndex The inclusive rightbound index: 15..8  7..0 &lt;= leftIndex
         @return The int extracted from the requested bits.
     */
     public static int getPartial(short extractFrom, int leftIndex, int rightIndex) {
@@ -661,7 +661,7 @@ public class ByteArray {
         The indices are being read from right to left.
         @param extractFrom The int to extract from.
         @param leftIndex The inclusive leftbound index: 31..16  15..0
-        @param rightIndex The inclusive rightbound index: 31..16  15..0 and <= leftIndex
+        @param rightIndex The inclusive rightbound index: 31..16  15..0 and &lt;= leftIndex
         @return The int extracted from the requested bits.
     */
     public static int getPartial(int extractFrom, int leftIndex, int rightIndex) {
@@ -676,7 +676,7 @@ public class ByteArray {
         The indices are being read from right to left.
         @param extractFrom The long to extract from.
         @param leftIndex The inclusive leftbound index: 63..32  31..0
-        @param rightIndex The inclusive rightbound index: 63..32  31..0 and <= leftIndex
+        @param rightIndex The inclusive rightbound index: 63..32  31..0 and &lt;= leftIndex
         @return The long extracted from the requested bits.
     */
     public static long getPartial(long extractFrom, int leftIndex, int rightIndex) {

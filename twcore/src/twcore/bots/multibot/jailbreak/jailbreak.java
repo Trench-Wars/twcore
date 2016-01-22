@@ -215,7 +215,7 @@ public class jailbreak extends MultiModule {
     /**
         This handleEvent accepts msgs from players as well as mods.
 
-        @event The Message event in question.
+        @param event The Message event in question.
     */
     public void handleEvent(Message event) {
         int type = event.getMessageType();

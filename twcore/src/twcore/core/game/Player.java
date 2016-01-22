@@ -18,15 +18,15 @@ import twcore.core.util.Tools.Weapon;
     The essential class holding information on a single Subspace player.  It contains
     information gathered from various events/packets, with all that is considered
     relevant or useful being stored here.
-    <p>
-    A <b>VERY IMPORTANT<b> consideration is that a player's X & Y location, X & Y velocities, rotation
+
+    A <b>VERY IMPORTANT</b> consideration is that a player's X and Y location, X and Y velocities, rotation
     amount, weapons and accessories data (XRadar, shields, etc) may not be accurate / updated.
     Use BotAction's setPlayerPositionUpdating() to make this information more reliable.
-    <p>
+
     Also note that <b>using the player's name is not a reliable method of identification</b>.
     Only 19 of a possible 23 characters are stored; two players whose first 19 characters
     of the name are identical can not be separated by the bot except by their player ID.
-    This brings the <i>additional<i> problem of player ID being represented in a single byte,
+    This brings the <i>additional</i> problem of player ID being represented in a single byte,
     or 256 possible values, with ID re-use being possible -- this means that ID is also not
     a reliable method of identification; it is useless if the player is not in the arena, and
     it is not static in any sense.
@@ -210,7 +210,7 @@ public class Player {
             // This particular operation (adding bounty of the killed to score) is questionable;
             // we should be using settings to properly adjust the score.  We should also update
             // bounty as appropriate.
-            // TODO: When arena settings storage class is implemented, use to properly update score & bounty.
+            // TODO: When arena settings storage class is implemented, use to properly update score and bounty.
             m_bounty += 6;//For now we'll go with standard settings.
             m_killPoints += message.getKilledPlayerBounty();
         } else if( message.getKilleeID() == m_playerID ) {
@@ -526,7 +526,7 @@ public class Player {
     /**
         Gets the player's <b>most recently updated</b> X location, in pixels (0...16384)
         <p>
-        A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
+        A VERY IMPORTANT consideration is that a player's X and Y location and X and Y velocities
         may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
         this information more reliable.
         @return X coordinate of player's location in pixels (0...16384)
@@ -538,7 +538,7 @@ public class Player {
     /**
         Gets the player's <b>most recently updated</b> X location, in tiles (0...1024)
         <p>
-        A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
+        A VERY IMPORTANT consideration is that a player's X and Y location and X and Y velocities
         may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
         this information more reliable.
         @return X coordinate of player's location in tiles (0...1024)
@@ -550,7 +550,7 @@ public class Player {
     /**
         Gets the player's <b>most recently updated</b> Y location, in pixels (0...16384)
         <p>
-        A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
+        A VERY IMPORTANT consideration is that a player's X and Y location and X and Y velocities
         may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
         this information more reliable.
         @return Y coordinate of player's location in pixels (0...16384)
@@ -563,7 +563,7 @@ public class Player {
     /**
         Gets the player's <b>most recently updated</b> Y location, in tiles (0...1024)
         <p>
-        A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
+        A VERY IMPORTANT consideration is that a player's X and Y location and X and Y velocities
         may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
         this information more reliable.
         @return Y coordinate of player's location in tiles (0...1024)
@@ -587,7 +587,7 @@ public class Player {
         Returns how quickly a player is moving along the x plane.  Velocity is
         measured by number of pixels travelled every 10 seconds.
         <p>
-        A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
+        A VERY IMPORTANT consideration is that a player's X and Y location and X and Y velocities
         may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
         this information more reliable.
         @return Rate at which ship is moving on x plane
@@ -601,7 +601,7 @@ public class Player {
         Returns how quickly a player is moving along the y plane.  Velocity is
         measured by number of pixels travelled every 10 seconds.
         <p>
-        A VERY IMPORTANT consideration is that a player's X & Y location and X & Y velocities
+        A VERY IMPORTANT consideration is that a player's X and Y location and X and Y velocities
         may not be accurate / updated.  Use BotAction's setPlayerPositionUpdating() to make
         this information more reliable.
         @return Rate at which ship is moving on y plane

@@ -11,14 +11,14 @@ import twcore.core.util.Tools;
     Reference object for all important data shared between bots.
     <p>
     Information stored in CoreData:
-    <code><pre>
+    <code>
      InterProcessCommunicator - For the synchronization of message passing
                                 between bots.
      SQLManager               - For handling all SQL queries and connection pools.
      OperatorList             - For setting and verifying access levels.
      BotSettings              - For storing and accessing the general settings
                                 (core location, login info, exception log, etc.)
-    </pre></code>
+    </code>
 */
 public class CoreData {
 

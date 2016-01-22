@@ -39,7 +39,7 @@ public class bouncerbot extends SubspaceBot {
 
     /**
         Initializes bouncer.
-        @param botAction
+        @param botAction BotAction
     */
     public bouncerbot( BotAction botAction ) {
         super( botAction );
@@ -131,7 +131,7 @@ public class bouncerbot extends SubspaceBot {
 
     /**
         Send event string to log.
-        @param event
+        @param event String
     */
     public void logEvent( String event ) {
         if( !m_logInfo )
@@ -161,8 +161,8 @@ public class bouncerbot extends SubspaceBot {
 
     /**
         Handle SMod commands.
-        @param name
-        @param message
+        @param name String
+        @param message String
     */
     public void handleCommand( String name, String message ) {
         if( message.startsWith( "!invite " )) {

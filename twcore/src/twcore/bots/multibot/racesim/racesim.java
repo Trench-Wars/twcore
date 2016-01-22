@@ -35,7 +35,8 @@ import twcore.core.util.Tools;
     <p>
     At this moment in time, the module has barely undergone proper testing and is therefore marked
     to be in beta state. The order in which this module is to be used is as follows:
-    <ul><b>Recording</b>
+    <b>Recording</b>
+    <ul>
     <li>Load the database with either !loadindex or !listraces;
     <li>Set a trigger line with !trigger;
     <li>Set a player to follow with !follow;
@@ -46,7 +47,8 @@ import twcore.core.util.Tools;
     <li>Update the index one more time, to prevent accidental overwriting with !loadindex;
     <li>Store the recording with !storedata.
     </ul>
-    <ul><b>Replaying</b>
+    <b>Replaying</b>
+    <ul>
     <li>Load the database with either !loadindex or !listraces;
     <li>Choose the race you want to replay with !loadrace;
     <li>Put the bot in a ship with !ship;

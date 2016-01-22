@@ -49,7 +49,7 @@ public class utilattach extends MultiUtil {
 
     /**
         Adds an ship to the limited attach list.
-        Syntax <Anchor>:<ship1>,<ship2>,<ship3>, ...
+        Syntax [Anchor]:[ship1],[ship2],[ship3], ...
 
         @param sender is the user of the bot.
         @param argString is the argument string to be spliced.
@@ -105,7 +105,7 @@ public class utilattach extends MultiUtil {
     /**
         Adds a turret limit allowing only a certain number of ships
         of specific type to be turrets on specific ship type.
-        Syntax <Anchor>:<Turret>:<number>
+        Syntax [Anchor]:[Turret]:[number]
 
         @param sender is the user of the bot.
         @param argString is the argument string to be spliced.

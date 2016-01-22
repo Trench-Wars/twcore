@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x0D) Event fired when a player changes frequencies.<code><pre>
+    (S2C 0x0D) Event fired when a player changes frequencies.<code>
 
     +-------------------------+
     |Field Length Description |
@@ -12,7 +12,7 @@ import twcore.core.util.ByteArray;
     |1       2    Player ident|
     |3       2    Team        |
     |5       1    ?           |
-    +-------------------------+</code></pre>
+    +-------------------------+</code>
 */
 public class FrequencyChange extends SubspaceEvent {
     short             m_playerID;  // ID of player who changed freqs

@@ -683,10 +683,8 @@ public class multibot extends SubspaceBot {
     /**
         Unload a specific utility.
 
-        @param name
-                  Name of requestor
-        @param key
-                  Module or utility to unload
+        @param name Name of requestor
+        @param module Module or utility to unload
     */
     public void doUnloadCmd(String name, String module) throws IllegalArgumentException {
         if( module.equals("") ) {

@@ -52,17 +52,17 @@ import twcore.core.util.ModuleEventRequester;
 
     Here is the help menu:
     !Lagon                                    -- Enables the lagout handler.
-    !Lagon <Lagouts>                          -- Enables the lagout handler with <Lagouts> Lagouts.
-    !Lagon <Lagouts> <Time>                   -- Enables the lagout handler with <Lagouts> Lagouts and <Time> Seconds.
-    !EnterMsg <On / Off>                      -- Toggles the enter messages sent by the bot.
-    !Remove <Player>                          -- Specs and removes a player from the game.
+    !Lagon [Lagouts]                          -- Enables the lagout handler with [Lagouts] Lagouts.
+    !Lagon [Lagouts] [Time]                   -- Enables the lagout handler with [Lagouts] Lagouts and [Time] Seconds.
+    !EnterMsg [On / Off]                      -- Toggles the enter messages sent by the bot.
+    !Remove [Player]                          -- Specs and removes a player from the game.
     !LagOff                                   -- Disables the lagout handler.
     !Notify                                   -- Notifies the host if someone lags out.
-    !NotifyFreq <Freq>                        -- Notifies the host if someone from freq <Freq> lags out.
-    !NotifyShip <Ship>                        -- Notifies the host if someone in ship <Ship> lags out.
-    !NotifyPlayer <Player>                    -- Notifies the host if player <Player> lags out.
+    !NotifyFreq [Freq]                        -- Notifies the host if someone from freq [Freq] lags out.
+    !NotifyShip [Ship]                        -- Notifies the host if someone in ship [Ship] lags out.
+    !NotifyPlayer [Player]                    -- Notifies the host if player [Player] lags out.
     !NotifyList                               -- Displays a list of notify tasks.
-    !NotifyDel <Notify Number>                -- Removes a notify task.
+    !NotifyDel [Notify Number]                -- Removes a notify task.
     !NotifyOff                                -- Clears all notify tasks.
 
     Due to the fact that this help menu is SUPER long, some of the messages might
@@ -393,7 +393,6 @@ public class utillagout extends MultiUtil
         This method removes all notify tasks.
 
         @param sender is the person using the bot.
-        @param argString are the arguments for the command.
     */
     public void doNotifyOffCmd(String sender)
     {
@@ -408,7 +407,7 @@ public class utillagout extends MultiUtil
         This method handles the mod commands.
 
         @param sender is the person using the bot.
-        @param argString are the arguments for the command.
+        @param command is the command
     */
     public void handleModCommand(String sender, String command)
     {

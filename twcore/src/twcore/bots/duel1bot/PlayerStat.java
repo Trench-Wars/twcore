@@ -10,7 +10,6 @@ public class PlayerStat {
     /**
         Construct generic ElimStat with no value
         @param name StatType of stat
-        @param data StatData type
     */
     public PlayerStat(StatType name) {
         stat = name;
@@ -37,31 +36,41 @@ public class PlayerStat {
             iValue--;
     }
 
-    /** Adds value to the current stat value. NOTE: Only works for integer types */
+    /** Adds value to the current stat value. NOTE: Only works for integer types
+     * @param value int
+     * */
 
     public synchronized void add(int value) {
         iValue += value;
     }
 
-    /** Set the integer value stat to value specified */
+    /** Set the integer value stat to value specified
+     * @param value int
+     * */
 
     public synchronized void setValue(int value) {
         iValue = value;
     }
 
-    /** Set the double value stat to value specified */
+    /** Set the double value stat to value specified
+     * @param value double
+     * */
 
     public synchronized void setValue(double value) {
         dValue = value;
     }
 
-    /** Set the float value stat to value specified */
+    /** Set the float value stat to value specified
+     * @param value float
+     * */
 
     public synchronized void setValue(float value) {
         fValue = value;
     }
 
-    /** Returns the StatType for this stat */
+    /** Returns the StatType for this stat
+     * @return StatType
+     * */
     public StatType getStat() {
         return stat;
     }
@@ -75,7 +84,9 @@ public class PlayerStat {
             return getFloat();
     }
 
-    /** Returns the integer stat value */
+    /** Returns the integer stat value
+     * @return int
+     * */
     public int getInt() {
         if (stat.isInt())
             return iValue;
@@ -85,7 +96,9 @@ public class PlayerStat {
             return (int) fValue;
     }
 
-    /** Returns the double stat value */
+    /** Returns the double stat value
+     * @return double
+     * */
     public double getDouble() {
         if (stat.isDouble())
             return dValue;
@@ -95,7 +108,9 @@ public class PlayerStat {
             return (double) fValue;
     }
 
-    /** Returns the float stat value */
+    /** Returns the float stat value
+     * @return float
+     * */
     public float getFloat() {
         if (stat.isFloat())
             return fValue;

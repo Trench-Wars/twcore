@@ -20,7 +20,7 @@ public abstract class DetailedTimerTask extends TimerTask
         This method initializes the AdvertTimer to a certain length of time (in
         milliseconds).
 
-        @param timerLength is the time till the next advert.
+        @param lifetime is the time till the next advert.
     */
     public DetailedTimerTask(long lifetime)
     {

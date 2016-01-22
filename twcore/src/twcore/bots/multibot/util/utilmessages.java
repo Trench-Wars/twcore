@@ -31,12 +31,12 @@ import twcore.core.util.ModuleEventRequester;
     optional, so to add a message with no sound just leave that part out.
 
     Here is the help menu,
-    !AddMsg <Msg>,<Sound>,<Interval>          -- Arenas the message <Msg> every <Interval> seconds.",
-    !AddSpecMsg <Msg>,<Sound>,<Interval>      -- Displays the message <Msg> every <Interval> seconds in spec chat.",
-    !AddGreetMsg <Msg>,<Sound>                -- Greets a player with <Msg> when they enter the arena.",
+    !AddMsg [Msg],[Sound],[Interval]          -- Arenas the message [Msg] every [Interval] seconds.",
+    !AddSpecMsg [Msg],[Sound],[Interval]      -- Displays the message [Msg] every [Interval] seconds in spec chat.",
+    !AddGreetMsg [Msg],[Sound]                -- Greets a player with [Msg] when they enter the arena.",
     !MsgList                                  -- Displays all of the current message tasks.",
-    !MsgDel <Msg Number>                      -- Removes message number <Msg Number>",
-    !MsgTarget <Person>,<Msg>                 -- Adds <Msg> to be PM'd when <Person> is killed.",
+    !MsgDel [Msg Number]                      -- Removes message number [Msg Number]",
+    !MsgTarget [Person],[Msg]                 -- Adds [Msg] to be PM'd when [Person] is killed.",
     !ClearTargets                             -- Clears all message target data.",
     !MsgsOff                                  -- Turns all of the messages off."
 

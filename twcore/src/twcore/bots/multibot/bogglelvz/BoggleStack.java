@@ -2,7 +2,7 @@ package twcore.bots.multibot.bogglelvz;
 
 /**
     This object is used to search a 4x4 Boggle board for given words.
-    @see boggle.java at method isOnBoard(String, char[][])
+    @see twcore.bots.multibot.boggle.boggle#isOnBoard(String, char[][])
 */
 public class BoggleStack {
     public char[][] board;

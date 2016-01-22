@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x07) Event fired when a chat message is received. <code><pre>
+    (S2C 0x07) Event fired when a chat message is received. <code>
     +------------------------------+
     | Offset  Length  Description  |
     +------------------------------+
@@ -12,7 +12,7 @@ import twcore.core.util.ByteArray;
     | 2       1       Sound Byte   |
     | 3       2       Sender ID    |
     | 5       *       Chat Message |
-    +------------------------------+</code></pre>
+    +------------------------------+</code>
 
     Chat message is null-terminated ('\0')
 */

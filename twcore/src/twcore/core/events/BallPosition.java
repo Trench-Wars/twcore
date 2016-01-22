@@ -4,7 +4,7 @@ import twcore.core.util.ByteArray;
 
 /**
     (S2C 0x2E) Event fired when a player picks up a ball and periodically as
-    the ball moves/changes position.<code><pre>
+    the ball moves/changes position.<code>
 
     +-------------------------+
     |Offset Length Description|
@@ -17,7 +17,7 @@ import twcore.core.util.ByteArray;
     |8        2    Y Velocity |
     |10       2    Player ID  |
     |12       4    Timestamp  |
-    +-------------------------+</code></pre>
+    +-------------------------+</code>
 */
 public class BallPosition extends SubspaceEvent {
 

@@ -884,9 +884,11 @@ public class ArenaSettings {
         Each bit of this field determines whether its represented door is open or not.
         The 8 bits, from left to right, represent the 8 door tiles in the tileset, from left to right.<br>
         Special values:
+        <ul>
         <li>-2 = all doors completely random
         <li>-1 = weighted random (some doors open more often than others)
         <li>0-255 = fixed doors (1 bit of byte for each door specifying whether it is open or not)
+        </ul>
         @return Door mode as bitfield.
     */
     public short getDoorMode() {
@@ -1100,7 +1102,7 @@ public class ArenaSettings {
     }
 
     /**
-        <b>[Latency] ClientSlowPacketSampleSize
+        <b>[Latency] ClientSlowPacketSampleSize</b>
         Number of packets to sample S2C latency before checking for kickout.
         Only in very rare cases will this need to be altered, so just leave it at its default.
         @return Client slow packet sample size, unitless.
@@ -1157,6 +1159,7 @@ public class ArenaSettings {
     /**
         <b>[Soccer] Mode</b><br>
         Goal configuration.
+        <ul>
         <li>0: any goal
         <li>1: left-half/right-half
         <li>2: top-half/bottom-half
@@ -1164,6 +1167,7 @@ public class ArenaSettings {
         <li>4: quadrants-defend-three-goals
         <li>5: sides-defend-one-goal
         <li>6: sides-defend-three-goals
+        </ul>
         @return One of the above options, depending on the mode.
     */
     public byte getSoccerMode() {
@@ -1289,9 +1293,11 @@ public class ArenaSettings {
 
     /**
         <b>[Flag] CarryFlags</b><br>
+        <ul>
         <li>0: Flags cannot be picked up.
         <li>1: A player can pick up and carry all flags.
         <li>2: A player can pick up and carry only one flag at a time.
+        </ul>
         @return One of the values above.
     */
     public byte getCarryFlags() {
@@ -1311,11 +1317,13 @@ public class ArenaSettings {
     /**
         <b>[Radar] RadarMode</b><br>
         Radar mode.
+        <ul>
         <li>0: normal
         <li>1: half/half
         <li>2: quarters
         <li>3: half/half-see team mates
         <li>4: quarters-see team mates
+        </ul>
         @return One of the options above.
     */
     public byte getRadarMode() {
@@ -1938,6 +1946,7 @@ public class ArenaSettings {
             @return Maximum thrust in speed per centisecond. This results in a bit more unclear math. For example, take
             a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
             In other words, if thrust is x, then the speed increase is:
+            <ul>
             <li>x / 100m pixels per second, per second of thrust;
             <li>x / 10m pixels per 10 seconds, per second of thrust;
             <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
@@ -1946,6 +1955,7 @@ public class ArenaSettings {
             <li>x / 100 pixels per millisecond, per second of thrust;
             <li>x / 10k pixels per millisecond, per centisecond of thrust;
             <li>x / 100k pixels per millisecond, per millisecond of thrust.
+            </ul>
         */
         public int getMaximumThrust() {
             return (int) (maximumThrust & MASK_UINT16);
@@ -1994,6 +2004,7 @@ public class ArenaSettings {
             @return Initial thrust in speed per centisecond. This results in a bit more unclear math. For example, take
             a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
             In other words, if thrust is x, then the speed increase is:
+            <ul>
             <li>x / 100m pixels per second, per second of thrust;
             <li>x / 10m pixels per 10 seconds, per second of thrust;
             <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
@@ -2002,6 +2013,7 @@ public class ArenaSettings {
             <li>x / 100 pixels per millisecond, per second of thrust;
             <li>x / 10k pixels per millisecond, per centisecond of thrust;
             <li>x / 100k pixels per millisecond, per millisecond of thrust.
+            </ul>
         */
         public int getInitialThrust() {
             return (int) (initialThrust & MASK_UINT16);
@@ -2050,6 +2062,7 @@ public class ArenaSettings {
             @return Upgrade thrust in speed per centisecond. This results in a bit more unclear math. For example, take
             a thrust of 10, applied for 1 second. This increases the speed in continuum units by 1000. (So, 1000 pixels / 10 seconds)<br>
             In other words, if thrust is x, then the speed increase is:
+            <ul>
             <li>x / 100m pixels per second, per second of thrust;
             <li>x / 10m pixels per 10 seconds, per second of thrust;
             <li>x / 1m ( = x * 1000) pixels per 10 seconds, for 10 seconds of thrust;
@@ -2058,6 +2071,7 @@ public class ArenaSettings {
             <li>x / 100 pixels per millisecond, per second of thrust;
             <li>x / 10k pixels per millisecond, per centisecond of thrust;
             <li>x / 100k pixels per millisecond, per millisecond of thrust.
+            </ul>
         */
         public int getUpgradeThrust() {
             return (int) (upgradeThrust & MASK_UINT16);
@@ -2437,9 +2451,11 @@ public class ArenaSettings {
         /**
             <b>[All] CloakStatus</b><br>
             Whether ships can to receive Cloak.
+            <ul>
             <li>0: no
             <li>1: yes
-            <li>2: yes & starts with prize
+            <li>2: yes and starts with prize
+            </ul>
             @return One of the above values.
         */
         public byte getCloakStatus() {
@@ -2449,9 +2465,11 @@ public class ArenaSettings {
         /**
             <b>[All] StealthStatus</b><br>
             Whether ships can to receive Stealth.
+            <ul>
             <li>0: no
             <li>1: yes
-            <li>2: yes & starts with prize
+            <li>2: yes and starts with prize
+            </ul>
             @return One of the above values.
         */
         public byte getStealthStatus() {
@@ -2461,9 +2479,11 @@ public class ArenaSettings {
         /**
             <b>[All] XRadarStatus</b><br>
             Whether ships can to receive Stealth.
+            <ul>
             <li>0: no
             <li>1: yes
-            <li>2: yes & starts with prize
+            <li>2: yes and starts with prize
+            </ul>
             @return One of the above values.
         */
         public byte getxRadarStatus() {
@@ -2473,9 +2493,11 @@ public class ArenaSettings {
         /**
             <b>[All] AntiWarpStatus</b><br>
             Whether ships can receive AntiWarp.
+            <ul>
             <li>0: no
             <li>1: yes
-            <li>2: yes & starts with prize
+            <li>2: yes and starts with prize
+            </ul>
             @return One of the above values.
         */
         public byte getAntiwarpStatus() {

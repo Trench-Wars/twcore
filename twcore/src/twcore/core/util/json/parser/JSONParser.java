@@ -19,7 +19,7 @@ import twcore.core.util.json.JSONObject;
 /**
     Parser for JSON text. Please note that JSONParser is NOT thread-safe.
 
-    @author FangYidong<fangyidong@yahoo.com.cn>
+    @author <a href="mailto:fangyidong@yahoo.com.cn">FangYidong</a>
 */
 @SuppressWarnings("rawtypes")
 public class JSONParser {
@@ -59,8 +59,8 @@ public class JSONParser {
         Reset the parser to the initial state with a new character reader.
 
         @param in - The new character reader.
-        @throws IOException
-        @throws ParseException
+            throws IOException
+            throws ParseException
     */
     public void reset(Reader in) {
         lexer.yyreset(in);

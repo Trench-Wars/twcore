@@ -25,7 +25,7 @@ public abstract class MultiUtil {
         Gives the util references to BotAction and ModuleEventRequester, runs
         its init method, and requests appropriate events using ModuleEventRequester.
         @param action BotAction in use
-        @param opList OperatorList in use
+        @param modEventReq ModuleEventRequester object
     */
     public final void initialize( BotAction action, ModuleEventRequester modEventReq ) {
         m_botAction = action;
@@ -42,7 +42,7 @@ public abstract class MultiUtil {
 
     /**
         This method must be overriden to return the help message for the utility
-        when !help <utilname> is used.
+        when !help [utilname] is used.
 
         @return a string array containing the help message for the util
     */
@@ -65,7 +65,9 @@ public abstract class MultiUtil {
     {
     }
 
-    /** This method must be overridden by TWScript utilities */
+    /** This method must be overridden by TWScript utilities
+     * @param tws TWScript object
+     * */
     public void initializeTWScript(TWScript tws) {}
 
     public final void handleEvent( SubspaceEvent event ) {

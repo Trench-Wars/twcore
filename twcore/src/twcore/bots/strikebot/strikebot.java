@@ -438,7 +438,7 @@ public class strikebot extends SubspaceBot {
 
     /**
         Handles a disconnect
-        <li>cancel all tasks
+        cancel all tasks
     */
     @Override
     public void handleDisconnect() {

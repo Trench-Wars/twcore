@@ -5,7 +5,7 @@ import twcore.core.util.ByteArray;
 
 /**
     (S2C 0x0E) Event called when a player attaches or detaches from another.
-    <code><pre>
+    <code>
     +------------------------------------------------+
     | Offset  Length  Description                    |
     +------------------------------------------------+
@@ -13,7 +13,7 @@ import twcore.core.util.ByteArray;
     | 1       2       Turret Requester Player ID     |
     | 3       2       Turret Destination Player ID * |
     +------------------------------------------------+
-    </code></pre>
+    </code>
  *   * Destination player ID will be set to -1 if this is a detach; otherwise
     it will be considered an attach.  As a result of this, some special
     handling must be done in order to properly tell a Player object that

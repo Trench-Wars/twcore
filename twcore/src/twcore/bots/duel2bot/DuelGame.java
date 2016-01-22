@@ -114,12 +114,16 @@ public class DuelGame {
             endGame(t1, t2);
     }
 
-    /** Returns game state */
+    /** Returns game state 
+     * @return int
+     * */
     public int getState() {
         return state;
     }
 
-    /** Returns a String describing the score of the duel */
+    /** Returns a String describing the score of the duel
+     * @return String
+     * */
     public String getScore() {
         String[] t1 = team1.getNames();
         String[] t2 = team2.getNames();
@@ -127,7 +131,9 @@ public class DuelGame {
                + " and " + t2[1];
     }
 
-    /** Converts the division ID into a String */
+    /** Converts the division ID into a String
+     * @return String
+     * */
     public String getDivision() {
         if (div == 1)
             return "Warbird";
@@ -326,7 +332,9 @@ public class DuelGame {
         box.toggleUse();
     }
 
-    /** Cancels the duel and notifies the name given */
+    /** Cancels the duel and notifies the name given
+     * @param name String
+     * */
     public void cancelDuel(String name) {
         String msg = "Duel canceled " + (name != null ? "by " + name : "") + " and is declared void.";
         String[] names;
@@ -360,7 +368,9 @@ public class DuelGame {
         box.toggleUse();
     }
 
-    /** Reports the lagout of a player to the opposing team */
+    /** Reports the lagout of a player to the opposing team
+     * @param id int
+     * */
     public void lagout(int id) {
         if (team1.getTeamID() == id)
             team2.opponentLagout();
@@ -368,7 +378,9 @@ public class DuelGame {
             team1.opponentLagout();
     }
 
-    /** Reports the return of a lagger to the opposing team */
+    /** Reports the return of a lagger to the opposing team
+     * @param id int
+     * */
     public void returned(int id) {
         if (team1.getTeamID() == id)
             team2.opponentReturned();
@@ -378,7 +390,9 @@ public class DuelGame {
 
     // handle player position
     // call Player to warp
-    /** Reports a player removal and then updates scores */
+    /** Reports a player removal and then updates scores
+     * @param player DuelPlayer
+     * */
     public void playerOut(DuelPlayer player) {
         bot.laggers.remove(player.getName().toLowerCase());
         int why = player.getReason();
@@ -410,8 +424,8 @@ public class DuelGame {
 
     /**
         Helper method adds spaces in front of a number to fit a certain length
-        @param n
-        @param length
+        @param n int
+        @param length int
         @return String of length with spaces preceeding a number
     */
     public String padNum(int n, int length) {

@@ -3,14 +3,14 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x04) Event is fired when a player leaves an arena. <code><pre>.
+    (S2C 0x04) Event is fired when a player leaves an arena. <code>
 
     +--------------------------+
     |Field Length Description  |
     +--------------------------+
     |0        1    Type byte   |
     |1        2    Player ident|
-    +--------------------------+>/code></pre>
+    +--------------------------+</code>
 */
 public class PlayerLeft extends SubspaceEvent {
     short             m_playerID; // ID of the player who left an arena

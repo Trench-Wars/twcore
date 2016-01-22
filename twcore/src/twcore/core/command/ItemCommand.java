@@ -206,8 +206,8 @@ public class ItemCommand<T> implements List<T>
         This is used for when you want to restrict a Player setting within a
         certain range of frequencies (inclusive)
         @param name The name of the setting to restrict
-        @param min The minimum frequency >= 0 to allow
-        @param max The maximum frequency <= 9999 to allow
+        @param min The minimum frequency &gt;= 0 to allow
+        @param max The maximum frequency &lt;= 9999 to allow
     */
     public void restrictPlayerSettingFreq(String name, int min, int max)
     {

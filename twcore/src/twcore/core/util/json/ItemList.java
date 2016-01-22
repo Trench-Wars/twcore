@@ -9,10 +9,12 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 /**
-    |a:b:c| => |a|,|b|,|c|
-    |:| => ||,||
-    |a:| => |a|,||
-    @author FangYidong<fangyidong@yahoo.com.cn>
+    <code>
+    |a:b:c| =&gt; |a|,|b|,|c|
+    |:| =&gt; ||,||
+    |a:| =&gt; |a|,||
+    </code>
+    @author <a href="mailto:fangyidong@yahoo.com.cn">FangYidong</a>
 */
 @SuppressWarnings( { "rawtypes", "unchecked" } )
 public class ItemList {

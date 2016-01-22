@@ -157,8 +157,8 @@ public class DuelTeam {
     /**
         Returns the DuelPlayer object for the specified name if name is on team.
 
-        @param name
-        @return
+        @param name String
+        @return DuelPlayer
     */
     public DuelPlayer getPlayer(String name) {
         if (name.equalsIgnoreCase(pname[0]))
@@ -208,7 +208,9 @@ public class DuelTeam {
         return out;
     }
 
-    /** Sends a message to partner about partner lagout */
+    /** Sends a message to partner about partner lagout
+     * @param name String
+     * */
     public void partnerLagout(String name) {
         ba.sendPrivateMessage(getPartner(name),
                               "Your partner has lagged out or specced, and has 1 minute to return or will forefeit.");
@@ -224,7 +226,9 @@ public class DuelTeam {
                               "Your opponent has lagged out or specced, and has 1 minute to return or will forfeit.");
     }
 
-    /** Reports a partner return from lagout and calls game */
+    /** Reports a partner return from lagout and calls game
+     * @param name String
+     * */
     public void partnerReturned(String name) {
         ba.sendPrivateMessage(getPartner(name), "Your partner has returned from being lagged out.");
         // BACKTRACK
@@ -340,7 +344,10 @@ public class DuelTeam {
         player[1].warp(safe2[0], safe2[1]);
     }
 
-    /** Creates a new team in the database and returns the insert row (team id) */
+    /** Creates a new team in the database and returns the insert row (team id)
+     * @param won boolean
+     * @return int
+     * */
     public int sql_storeTeam(boolean won) {
         String query1 = "SELECT * FROM tblDuel2__team WHERE fnDivision = " + div + " AND  (fnUser1 = " + userID[0] + " AND fnUser2 = " + userID[1] + ") OR (fnUser1 = " + userID[1] + " AND fnUser2 = " + userID[0] + ") LIMIT 1";
         String query2 = "INSERT INTO tblDuel2__team (fnDivision, fnUser1, fnUser2, " + (won ? "fnWins" : "fnLosses") + ") VALUES(" + div + ", " + userID[0] + ", " + userID[1] + ", 1)";

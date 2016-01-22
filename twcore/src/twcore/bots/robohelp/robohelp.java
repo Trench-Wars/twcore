@@ -2218,10 +2218,10 @@ public class robohelp extends SubspaceBot {
     }
 
     /**
-        Returns the call statistics of the <name> staffer.
+        Returns the call statistics of the staffer.
 
-        @param name
-        @param message
+        @param name String
+        @param message String
     */
     public void handleMystats(String name, String message) {
         // 1. Check the level of the staff member - Mod / ER / ZH

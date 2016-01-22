@@ -44,7 +44,7 @@ import twcore.core.util.Tools;
 
     Check http://d1st0rt.sscentral.com for latest releases
 
-    @Author D1st0rt
+    @author D1st0rt
     @version 07.01.14
 */
 public class bship extends MultiModule implements TSChangeListener
@@ -387,8 +387,8 @@ public class bship extends MultiModule implements TSChangeListener
 
     /**
         Command: !say
-        Parameters: <text>
-        Makes the bot say <text>
+        @param name String
+        @param message String
     */
     public void c_Say(String name, String message)
     {
@@ -400,6 +400,8 @@ public class bship extends MultiModule implements TSChangeListener
         Command: !rules
         Parameters:
         Displays the rules for the current game mode
+        @param name String
+        @param message String
     */
     public void c_Rules(String name, String message)
     {
@@ -573,8 +575,9 @@ public class bship extends MultiModule implements TSChangeListener
 
     /**
         Command: !night
-        Parameters: <on/off>
         Turns night mode on or off
+        @param name String
+        @param message String
     */
     public void c_Night(String name, String message)
     {
@@ -624,8 +627,9 @@ public class bship extends MultiModule implements TSChangeListener
 
     /**
         Command: !myfreq
-        Parameters: <#>
         Allows a player to rejoin a team they have been on earlier in a game.
+        @param name String
+        @param message String
     */
     public void c_MyFreq(String name, String message)
     {

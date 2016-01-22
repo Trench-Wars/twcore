@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x09) Event fired whenever a player's score is changed. <code><pre>
+    (S2C 0x09) Event fired whenever a player's score is changed. <code>
 
     +-------------------------+
     |Field Length Description |
@@ -14,7 +14,7 @@ import twcore.core.util.ByteArray;
     |3       4    Flag points |
     |11      2    Wins        |
     |13      2    Losses      |
-    +-------------------------+</code></pre>
+    +-------------------------+</code>
 */
 public class ScoreUpdate extends SubspaceEvent {
     short m_playerID;   // ID of player whose score changed

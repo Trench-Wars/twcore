@@ -36,7 +36,7 @@ class Cannon {
 
         @param   tX is player's x location
         @param   tY is player's y location
-        @return  true is returned if distance between cannon & player is less than 32
+        @return  true is returned if distance between cannon and player is less than 32
     */
 
     public boolean isInArea(int tX, int tY) {

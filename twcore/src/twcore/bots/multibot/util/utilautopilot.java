@@ -165,7 +165,6 @@ public class utilautopilot extends MultiUtil
     /**
         Lists all commands.
         @param name Name of op
-        @param msg Command parameters
     */
     public void cmdList( String name ) {
         if( tasks.size() == 0 ) {
@@ -185,7 +184,6 @@ public class utilautopilot extends MultiUtil
     /**
         Displays list of commands available to players.
         @param name Name of player
-        @param msg Command parameters
     */
     public void cmdInfo( String name ) {
         if( !isEnabled ) {
@@ -267,7 +265,6 @@ public class utilautopilot extends MultiUtil
     /**
         Turns on Autopilot.
         @param name Name of op
-        @param msg Command parameters
     */
     public void cmdOn( String name ) {
         isEnabled = true;

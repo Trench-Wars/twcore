@@ -16,7 +16,6 @@ public class ElimStat {
     /**
         Construct generic ElimStat with no value
         @param name StatType of stat
-        @param data StatData type
     */
     public ElimStat(StatType name) {
         stat = name;

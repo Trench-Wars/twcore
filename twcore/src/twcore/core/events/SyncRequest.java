@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x18) Event fired when a synchronization request is received. <code><pre>
+    (S2C 0x18) Event fired when a synchronization request is received. <code>
     +-----------------------------------------------------+
     | Offset  Length  Description                         |
     +-----------------------------------------------------+
@@ -12,7 +12,7 @@ import twcore.core.util.ByteArray;
     | 5       4       Door Seed                           |
     | 9       4       Timestamp                           |
     | 13      4       Checksum Generator Key              |
-    +-----------------------------------------------------+</code></pre>
+    +-----------------------------------------------------+</code>
 
     Original field research is credited to Kavar!.
     Implementation idea is taken from the MervBot.

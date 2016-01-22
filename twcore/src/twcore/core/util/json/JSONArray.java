@@ -14,7 +14,7 @@ import java.util.List;
 /**
     A JSON array. JSONObject supports java.util.List interface.
 
-    @author FangYidong<fangyidong@yahoo.com.cn>
+    @author <a href="mailto:fangyidong@yahoo.com.cn">FangYidong</a>
 */
 @SuppressWarnings("rawtypes")
 public class JSONArray extends ArrayList implements List, JSONAware, JSONStreamAware {
@@ -24,10 +24,8 @@ public class JSONArray extends ArrayList implements List, JSONAware, JSONStreamA
         Encode a list into JSON text and write it to out.
         If this list is also a JSONStreamAware or a JSONAware, JSONStreamAware and JSONAware specific behaviours will be ignored at this top level.
 
-        @see org.json.simple.JSONValue#writeJSONString(Object, Writer)
-
-        @param list
-        @param out
+        @param list List
+        @param out Writer
     */
     public static void writeJSONString(List list, Writer out) throws IOException {
         if(list == null) {
@@ -67,9 +65,7 @@ public class JSONArray extends ArrayList implements List, JSONAware, JSONStreamA
         Convert a list to JSON text. The result is a JSON array.
         If this list is also a JSONAware, JSONAware specific behaviours will be omitted at this top level.
 
-        @see org.json.simple.JSONValue#toJSONString(Object)
-
-        @param list
+        @param list List
         @return JSON text, or "null" if list is null.
     */
     public static String toJSONString(List list) {

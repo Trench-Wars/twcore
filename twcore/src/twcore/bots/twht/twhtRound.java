@@ -232,7 +232,7 @@ public class twhtRound {
         }
     }
     /**
-        Changes the round time. Accepts parameters in <minutes>:<seconds> form
+        Changes the round time. Accepts parameters in m:s form
 
         @param name
         @param time

@@ -59,7 +59,7 @@ public class TWScript extends MultiUtil {
 
     /**
         Gets a help message of all replacement keys
-        @see twcore.core.util.CodeCompiler.replaceKeys()
+        @see twcore.bots.multibot.twscript.CodeCompiler#replaceKeys
         @return - A help message displaying key types.
     */
     public static String[] getPrivateKeysMessage() {
@@ -174,6 +174,8 @@ public class TWScript extends MultiUtil {
 
     /**
         Handles commands.
+        @param name name of sender
+        @param cmd command sent
     */
     public void handleCommand(String name, String cmd) {
         if (cmd.equalsIgnoreCase("!setup"))
@@ -237,6 +239,8 @@ public class TWScript extends MultiUtil {
 
     /**
         Handles arena setups by querying the database and having the bot PM itself with the commands.
+        @param name name of sender
+        @param message message sent
     */
     public void doArenaSetup(String name, String message) {
         try {
@@ -265,6 +269,8 @@ public class TWScript extends MultiUtil {
     /**
         Handles arena setups from a .txt file. The message displays a location which
         may need forward or back slashes depending on the operating system.
+        @param name name of sender
+        @param message message sent
     */
     public void doFromFile(String name, String message) {
         try {
@@ -344,6 +350,8 @@ public class TWScript extends MultiUtil {
 
     /**
         Adds a variable.
+        @param name name of sender
+        @param message message sent
     */
     public void doAddVar(String name, String message) {
         String[] msgs = message.split(":");
@@ -364,6 +372,8 @@ public class TWScript extends MultiUtil {
 
     /**
         Sets a variable to a certain value.
+        @param name name of sender
+        @param message message sent
     */
     public void doSetVar(String name, String message) {
         String[] msgs = message.split(":");
@@ -385,6 +395,8 @@ public class TWScript extends MultiUtil {
 
     /**
         Removes a variable.
+        @param name name of sender
+        @param message message sent
     */
     public void doRemoveVar(String name, String message) {
         if(!this.variables.containsKey(message)) {
@@ -398,6 +410,7 @@ public class TWScript extends MultiUtil {
 
     /**
         Lists the current variables.
+        @param name name of sender
     */
     public void doListVar(String name) {
         if(this.variables.isEmpty()) {
@@ -417,6 +430,7 @@ public class TWScript extends MultiUtil {
 
     /**
         Toggles Sysop override.
+        @param name name of sender
     */
     public void doSysopOverride(String name) {
         if(opList.isSysop(name) && !name.contains("Bot")) {
@@ -433,6 +447,7 @@ public class TWScript extends MultiUtil {
 
     /**
         Toggles Smod override.
+        @param name name of sender
     */
     public void doSmodOverride(String name) {
         if(opList.isSmod(name) && !name.contains("Bot")) {

@@ -24,6 +24,7 @@ public class basicbot extends SubspaceBot {
 
     /**
         Creates a new instance of your bot.
+        @param botAction BotAction
     */
     public basicbot(BotAction botAction) {
         super(botAction);

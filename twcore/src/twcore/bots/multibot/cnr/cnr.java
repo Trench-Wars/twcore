@@ -127,9 +127,9 @@ public class cnr extends MultiModule {
 
 
     /** Initializes ships and number of cop lives
-        @param robberfreq Robber ship
-        @param robberfreq Cop ship
-        @param robberfreq Cop lives before spec
+        @param robbership Robber ship
+        @param copship Cop ship
+        @param lives Cop lives before spec
     */
     public void setMode( int robbership, int copship, int lives ) {
         m_robberfreq = f_defrobfreq;
@@ -164,7 +164,7 @@ public class cnr extends MultiModule {
 
 
 
-    /** Initializes number of lives, doors, & correct ships, gives rules, then a 10
+    /** Initializes number of lives, doors, and correct ships, gives rules, then a 10
         second warning and starts game.
     */
     public void doInit() {

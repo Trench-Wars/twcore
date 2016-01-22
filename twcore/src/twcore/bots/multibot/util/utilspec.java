@@ -107,8 +107,8 @@ public class utilspec extends MultiUtil
     /**
         This method handles all of the commands sent to the bot.
 
-        @sender is the person that messaged the bot.
-        @command is the command string.
+        @param sender is the person that messaged the bot.
+        @param command is the command string.
     */
     public void handleCommand(String sender, String command)
     {
@@ -264,7 +264,7 @@ public class utilspec extends MultiUtil
 
     /**
         This method specs all players at a certain number of deaths.  The syntax is
-        as follows: !SpecAll <Deaths> where <Deaths> is the number of deaths to spec
+        as follows: !SpecAll [Deaths] where [Deaths] is the number of deaths to spec
         at.
 
         @param sender is the person operating the bot.
@@ -293,8 +293,8 @@ public class utilspec extends MultiUtil
 
     /**
         This method specs players on a certain freq at a certain number of deaths.
-        The syntax is as follows: !SpecFreq <Freq>:<Deaths> where <Freq> is the
-        freq to monitor and <Deaths> is the number of deaths to spec at.
+        The syntax is as follows: !SpecFreq [Freq]:[Deaths] where [Freq] is the
+        freq to monitor and [Deaths] is the number of deaths to spec at.
 
         @param sender is the person operating the bot.
         @param argString is the string of the arguments.
@@ -323,8 +323,8 @@ public class utilspec extends MultiUtil
 
     /**
         This method specs players of a certain ship at a certain number of deaths.
-        The syntax is as follows: !SpecShip <Ship>:<Deaths> where <Ship> is the
-        ship to monitor and <Deaths> is the number of deaths to spec at.
+        The syntax is as follows: !SpecShip [Ship]:[Deaths] where [Ship] is the
+        ship to monitor and [Deaths] is the number of deaths to spec at.
 
         @param sender is the person operating the bot.
         @param argString is the string of the arguments.
@@ -353,8 +353,8 @@ public class utilspec extends MultiUtil
 
     /**
         This method specs players of a certain player at a certain number of
-        deaths.  The syntax is as follows: !SpecPlayer <Player>:<Deaths> where
-        <Player> is the player to monitor and <Deaths> is the number of deaths to
+        deaths.  The syntax is as follows: !SpecPlayer [Player]:[Deaths] where
+        [Player] is the player to monitor and [Deaths] is the number of deaths to
         spec at.
 
         @param sender is the person operating the bot.
@@ -424,7 +424,7 @@ public class utilspec extends MultiUtil
 
     /**
         This method specs a freq when a certain number of COMBINED deaths is reached.
-        The syntax is as follows: !SpecShared <Deaths> where <Deaths> is the number of
+        The syntax is as follows: !SpecShared [Deaths] where [Deaths] is the number of
         combined deaths to spec at.  For example, if this number was 30, and there were
         3 people on a freq, one with 3 deaths, one with 7 deaths, and one with 19, the
         next time any player died, the 30 death limit would be reached and the entire

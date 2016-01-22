@@ -3,13 +3,13 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x16) Event called when a player drops a flag they are carrying. <code><pre>
+    (S2C 0x16) Event called when a player drops a flag they are carrying. <code>
     +-----------------------------+
     | Offset  Length  Description |
     +-----------------------------+
     | 0       1       Type Byte   |
     | 1       2       Player ID   |
-    +-----------------------------+</code></pre>
+    +-----------------------------+</code>
 
     This event occurs for warzone flags, but players aren't updated as not carrying
     any warzone flags automatically in the core.

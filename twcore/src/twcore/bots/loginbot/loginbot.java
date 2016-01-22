@@ -16,12 +16,12 @@ import twcore.core.SubspaceBot;
 import twcore.core.events.*;
 
 /**
-    @description This bot can be used to automatically login each name in a list as read from a text file.
-                It essentially spawns a dummy bot with each login name taken from the list using a master password
-                which is defined in the cfg. If a single password differs from the master a temporary password
-                can be set to be used in the next login attempt. The bot can determine login success and failure.
-                Upon failure it will try a few more times before moving on. The bot can also be used for a quick
-                one time login using the name and password you give it.
+    This bot can be used to automatically login each name in a list as read from a text file.
+    It essentially spawns a dummy bot with each login name taken from the list using a master password
+    which is defined in the cfg. If a single password differs from the master a temporary password
+    can be set to be used in the next login attempt. The bot can determine login success and failure.
+    Upon failure it will try a few more times before moving on. The bot can also be used for a quick
+    one time login using the name and password you give it.
     @author      WingZero
 */
 public class loginbot extends SubspaceBot {

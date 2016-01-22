@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x12) Event called when a flag is dropped, reset, or otherwise put somewhere else on the map. <code><pre>
+    (S2C 0x12) Event called when a flag is dropped, reset, or otherwise put somewhere else on the map. <code>
     +-----------------------------+
     | Offset  Length  Description |
     +-----------------------------+
@@ -12,7 +12,7 @@ import twcore.core.util.ByteArray;
     | 3       2       X Location  |
     | 5       2       Y Location  |
     | 7       2       Owning Freq |
-    +-----------------------------+</code></pre>
+    +-----------------------------+</code>
 
     The Owning Frequency is -1 if unowned.
 */

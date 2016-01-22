@@ -274,7 +274,7 @@ public class logbot extends SubspaceBot {
         key string on the first occurrence from file.
 
         @param target is the key string.
-        @param arena is the arena file.
+        @param file is the arena file.
         @return the desired line following the key string.
     */
 
@@ -1045,7 +1045,7 @@ public class logbot extends SubspaceBot {
     /**
         Sends a kill bot to the arena.
 
-        @param arena is the arena to visit;
+        @param violators String
     */
 
     public void sendKillBot (String violators)  {
@@ -1409,7 +1409,7 @@ public class logbot extends SubspaceBot {
     /**
         Handles op commands.
 
-        @param name is an operator+
+        @param sender is an operator+
         @param message is the command.
     */
 
@@ -1477,7 +1477,6 @@ public class logbot extends SubspaceBot {
 
     /**
         Lists all help messages.
-        @return returns the help message.
     */
 
     public void getHelpMessages(String sender)

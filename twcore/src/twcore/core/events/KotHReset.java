@@ -5,7 +5,6 @@ import twcore.core.util.ByteArray;
 /**
     (S2C 0x2C) Event fired when the King of the Hill game resets
 
-    <p>
     This packet is send by the server when;
     <ul>
     <li> the King of the Hill game (re)starts (player id=-1, timer value=?,timer=on)</li>
@@ -13,9 +12,8 @@ import twcore.core.util.ByteArray;
     <li> a player dies and looses his crown   (player id=killed player, timer value=0, timer=off)</li>
     <li> a player depletes his timer          (player id=player, timer value=0, timer=off)</li>
     </ul>
-    </p>
 
-    <code><pre>
+    <code>
     +-------------------------------+
     |Offset   Length Description    |
     +-------------------------------+
@@ -23,7 +21,7 @@ import twcore.core.util.ByteArray;
     |1        1    KotH enabled     |
     |2        4    KotH Timer Value |
     |6        2    Player ID        |
-    +-------------------------------+</code></pre>
+    +-------------------------------+</code>
 */
 public class KotHReset extends SubspaceEvent {
 

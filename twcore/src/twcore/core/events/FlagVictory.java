@@ -3,14 +3,14 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x14) Event called when a team wins a flag jackpot. <code><pre>
+    (S2C 0x14) Event called when a team wins a flag jackpot. <code>
     +------------------------------+
     | Offset  Length  Description  |
     +------------------------------+
     | 0       1       Type Byte    |
     | 2       2       Frequency    |
     | 3       4       Jackpot size |
-    +------------------------------+</code></pre>
+    +------------------------------+</code>
 
     This event also resets ships of the winning frequency and warzone flag locations
 */

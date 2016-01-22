@@ -129,7 +129,7 @@ public final class utilwatchtk extends MultiUtil {
 
     /**
         Handles all actions when a player enters the arena.
-        @param name Name of player who entered the arena.
+        @param event PlayerEntered
     */
     public void handleEvent(PlayerEntered event) {
         if(tkwatching) {
@@ -141,8 +141,7 @@ public final class utilwatchtk extends MultiUtil {
 
     /**
         Handles all actions when someone kills another person .
-        @param killer Person who did the killing.
-        @param killee Person who got killed.
+        @param event PlayerDeath
     */
     public void handleEvent(PlayerDeath event) {
         if(tkwatching) {
@@ -182,8 +181,7 @@ public final class utilwatchtk extends MultiUtil {
 
     /**
         Handles all actions when a player tryd to enter the game.
-        @param getPlayerID Id of Person who tries to enter.
-        @param getPlayerName Name of person who tries to enter.
+        @param event FrequencyShipChange
     */
     public void handleEvent(FrequencyShipChange event) {
         if(event.getShipType() == 0) {
@@ -207,8 +205,6 @@ public final class utilwatchtk extends MultiUtil {
 
     /**
         Ends the time of a player who was specced for teamkill.
-        @param player Persons name whos spec is lifted.
-        @param name Persons name whos spec is lifted.
     */
     class EndItTask extends TimerTask {
         String player;
@@ -225,8 +221,6 @@ public final class utilwatchtk extends MultiUtil {
 
     /**
         Removes one teamkill after the decay time.
-        @param player Persons name whos teamkill needs to be decayed.
-        @param name Persons name whos teamkill needs to be decayed.
     */
     class DecayTask extends TimerTask {
         String player;

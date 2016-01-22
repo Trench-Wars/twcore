@@ -41,8 +41,8 @@ public class DBPlayerData {
     }
 
     /**
-        Creates a new instance of DBPlayerData<br/>
-        <br/>
+        Creates a new instance of DBPlayerData
+
         WARNING: The 3rd parameter can take any length playername. If you specify a 23 long playername (from *info f.ex)
                 it will be saved as a 23 long playername. If you try to lookup the name by using the name from the playerlist
                 through m_botAction.getPlayerName() then this name will be max 19 characters long and thus not equal.
@@ -123,8 +123,8 @@ public class DBPlayerData {
     }
 
     /**
-        Checks if the player exists in the database<br/>
-        <br/>
+        Checks if the player exists in the database
+
         WARNING: If the playername in the database is 23 characters long (the name from alias *info can be that long)
                 and you are looking for a playername with 19 characters (the name from the playerlist (m_botAction.getPlayerName())
                 then this method will return false while the player IS saved, but under a different name

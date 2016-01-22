@@ -25,7 +25,7 @@ import twcore.core.util.Tools.Ship;
            This module is for doing a racing event in ?go surfbalance When a player completes part 1, they get assigned to part 2, etc. First player
            to get to the end wins.
 
-           THE CODING IS EXTREMELY "GHETTO"(TM) BUT KEEP IN MIND THIS IS MY FIRST BOT OK <3
+           THE CODING IS EXTREMELY "GHETTO"(TM) BUT KEEP IN MIND THIS IS MY FIRST BOT OK &lt;3
 */
 public class surfbalance extends MultiModule {
 

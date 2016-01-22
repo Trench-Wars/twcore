@@ -21,7 +21,7 @@ class Projectile {
     /**
         Constructor
 
-        @param   t0 is the owner of the projectile
+        @param   tO is the owner of the projectile
         @param   tX is the x location where the projectile was fired
         @param   tY is the y location where the projectile was fired
         @param  tVX is the x velocity of the projectile
@@ -70,7 +70,7 @@ class Projectile {
 
         @param    bX is bot's x location
         @param    bY is bot's y location
-        @return   the distance between projectile & bot is returned
+        @return   the distance between projectile and bot is returned
     */
 
     public double getDistance(int bX, int bY) {

@@ -295,7 +295,9 @@ public class duel1bot extends SubspaceBot {
             players.get(name.toLowerCase()).handleFSC(event);
     }
 
-    /** Handles a lag report received from the lag handler */
+    /** Handles a lag report received from the lag handler
+        @param report LagReport
+     */
     public void handleLagReport(LagReport report) {
         if (!report.isBotRequest())
             ba.privateMessageSpam(report.getRequester(), report.getLagStats());
@@ -1021,9 +1023,9 @@ public class duel1bot extends SubspaceBot {
     }
 
     /** Removes all challenges involving two specific freqs
-
-        @param freq1
-        @param freq2 */
+        @param freq1 int
+        @param freq2 int
+     */
     public void removeChalls(int freq1, int freq2) {
         Vector<String> keys = new Vector<String>();
 
@@ -1038,8 +1040,8 @@ public class duel1bot extends SubspaceBot {
     }
 
     /** Removes all challenges involving a specific freq
-
-        @param freq */
+        @param freq int
+     */
     public void removeChalls(int freq) {
         Vector<String> keys = new Vector<String>();
 
@@ -1057,10 +1059,9 @@ public class duel1bot extends SubspaceBot {
     }
 
     /** Returns the division name for a given id
-
-        @param div
-                  division id number
-        @return division String name */
+        @param div division id number
+        @return division String name
+     */
     public String getDivision(int div) {
         if (div == 1)
             return "Warbird";
@@ -1076,7 +1077,10 @@ public class duel1bot extends SubspaceBot {
             return "Unknown";
     }
 
-    /** @return current game id */
+    /**
+       @param ranked boolean
+       @return current game id
+     */
     public int getID(boolean ranked) {
         if (ranked) {
             gameID++;
@@ -1088,9 +1092,7 @@ public class duel1bot extends SubspaceBot {
     }
 
     /** Checks to see if a DuelBox is open for a given division
-
-        @param division
-                  the division id number
+        @param division the division id number
         @return true if an open box exists
     */
     private boolean getBoxOpen(int division) {
@@ -1232,7 +1234,9 @@ public class duel1bot extends SubspaceBot {
         }
     }
 
-    /** Debug message handler */
+    /** Debug message handler
+       @param msg String
+     */
     public void debug(String msg) {
         if (DEBUG) ba.sendSmartPrivateMessage(debugger, "[DEBUG] " + msg);
     }

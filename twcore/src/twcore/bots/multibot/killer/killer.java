@@ -100,7 +100,7 @@ public class killer extends MultiModule {
 
 
 
-    /** Initializes number of lives & starting killer, gives rules, 10
+    /** Initializes number of lives and starting killer, gives rules, 10
         second warning, and starts game.
         @param lives Number of lives to spec players at.
         @param killerName Name of player to be the starting Killer.  If

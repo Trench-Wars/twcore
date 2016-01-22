@@ -15,9 +15,8 @@ import twcore.core.util.Tools;
 /**
     twbotstandard.java - a general utility module for event refs, haphazardly-arranged.
     Contains some unlisted commands for controlling bot in-game (with some problems).
-    <revision date='December 19, 2007 2:25 PM' by='Pio'>
-    - Added a few confirmation messages for commands (e.g. !dolock, !dounlock)
-    </revision>
+    revised December 19, 2007 2:25 PM by Pio
+        - Added a few confirmation messages for commands (e.g. !dolock, !dounlock)
     @author  harvey
     @version 1.1
 

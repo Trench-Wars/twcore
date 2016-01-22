@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x08) Event fired when a player receives a prize. <code><pre>
+    (S2C 0x08) Event fired when a player receives a prize. <code>
 
     +------------------------+
     |Field Length Description|
@@ -14,7 +14,7 @@ import twcore.core.util.ByteArray;
     |7        2    Y Tiles   |
     |9        2    Prize     |
     |11       2    Player ID |
-    +-------------------------+</code></pre>
+    +-------------------------+</code>
 */
 public class Prize extends SubspaceEvent {
     static final int RECHARGE_PRIZE = 1;

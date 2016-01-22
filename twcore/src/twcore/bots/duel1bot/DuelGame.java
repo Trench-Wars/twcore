@@ -115,17 +115,23 @@ public class DuelGame {
             return new DuelPlayer[] { player2, player1 };
     }
 
-    /** Returns game state */
+    /** Returns game state
+       @return int state
+     */
     public int getState() {
         return state;
     }
 
-    /** Returns a String describing the score of the duel */
+    /** Returns a String describing the score of the duel
+     * @return String score
+     * */
     public String getScore() {
         return "" + score[0] + "-" + score[1] + " : " + player1.name + " vs " + player2.name;
     }
 
-    /** Converts the division ID into a String */
+    /** Converts the division ID into a String
+     * @return String division
+     * */
     public String getDivision() {
         if (div == 1)
             return "Warbird";
@@ -290,7 +296,9 @@ public class DuelGame {
         box.toggleUse();
     }
 
-    /** Cancels the duel and notifies the name given */
+    /** Cancels the duel and notifies the name given
+     * @param name String
+     * */
     public void cancelDuel(String name) {
         String msg = "Duel canceled " + (name != null ? "by " + name : "") + " and is declared void.";
 
@@ -318,7 +326,9 @@ public class DuelGame {
 
     // handle player position
     // call Player to warp
-    /** Reports a player removal and then updates scores */
+    /** Reports a player removal and then updates scores
+     * @param player DuelPlayer
+     * */
     public void playerOut(DuelPlayer player) {
         bot.laggers.remove(player.getName().toLowerCase());
         int why = player.getReason();
@@ -350,8 +360,8 @@ public class DuelGame {
 
     /**
         Helper method adds spaces in front of a number to fit a certain length
-        @param n
-        @param length
+        @param n int
+        @param length int
         @return String of length with spaces preceeding a number
     */
     public String padNum(int n, int length) {
@@ -372,7 +382,14 @@ public class DuelGame {
         return str.substring(0, length);
     }
 
-    /** Records the duel results in the database */
+    /** Records the duel results in the database
+     * @param win DuelPlayer
+     * @param loss DuelPlayer
+     * @param winBefore int
+     * @param winAfter int
+     * @param lossBefore int
+     * @param lossAfter int
+     * */
     public void sql_storeGame(DuelPlayer win, DuelPlayer loss, int winBefore, int winAfter, int lossBefore, int lossAfter) {
         //TODO:
         String query = "INSERT INTO tblDuel1__match (fnSeason, fnDivision, fcWiner, fcLoser, fnWinnerID, fnLoserID, fnWinnerScore, fnLoserScore, fnWinnerRatingBefore, fnWinnerRatingAfter, fnLoserRatingBefore, fnLoserRatingAfter) " +

@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x38) Event called when a ship is damaged and has *watchdamage on.<code><pre>
+    (S2C 0x38) Event called when a ship is damaged and has *watchdamage on.<code>
     +--------------------------------+
     | Offset  Length  Description    |
     +--------------------------------+
@@ -16,7 +16,7 @@ import twcore.core.util.ByteArray;
     | 11      2       Old energy     |
     | 13      2       Energy lost    |
     | 15      1       ?              |
-    +--------------------------------+</code></pre>
+    +--------------------------------+</code>
 
     To fire this event, send *watchdamage to players on which you wish to watch damage.
     Preferably this should be done when PlayerEntered is fired.  Remember that you must

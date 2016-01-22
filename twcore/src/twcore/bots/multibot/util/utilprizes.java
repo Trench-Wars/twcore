@@ -143,7 +143,7 @@ public class utilprizes extends MultiUtil
 
     /**
         Handles all message events sent to the bot.  Only private messages sent by
-        <ER>s or higher will be processed.
+        ERs or higher will be processed.
 
         @param event is the message to process.
     */
@@ -234,7 +234,7 @@ public class utilprizes extends MultiUtil
     /**
         Gets the prize number from a string.
 
-        @Param prizeString is the string to process.
+        @param prizeString is the string to process.
         @throws IllegalArgumentException if the prize number is invalid.
     */
     public int getPrizeNumber(String prizeString, boolean override)
@@ -270,7 +270,7 @@ public class utilprizes extends MultiUtil
     /**
         Gets the interval between prizing from a string in seconds.
 
-        @Param intervalString is the string to process.
+        @param intervalString is the string to process.
         @throws IllegalArgumentException if the interval is smaller than the
                minimum interval (MIN_INTERVAL) or is equal or less than 0.
     */
@@ -291,7 +291,7 @@ public class utilprizes extends MultiUtil
     /**
         Gets the freq to prize from a string.
 
-        @Param freqString is the string to process.
+        @param freqString is the string to process.
         @throws IllegalArgumentException if the freq is smaller than 0 or greater
                than 9999.
     */
@@ -309,7 +309,7 @@ public class utilprizes extends MultiUtil
     /**
         Gets the ship type to prize from a string.
 
-        @Param shipString is the string to process.
+        @param shipString is the string to process.
         @throws IllegalArgumentException if the ship is less than 1 or greater than
                8.
     */
@@ -327,7 +327,7 @@ public class utilprizes extends MultiUtil
     /**
         Gets the player name from a string.
 
-        @Param nameString is the string to process.
+        @param nameString is the string to process.
         @throws IllegalArgumentException if player name is not found.
     */
 
@@ -357,9 +357,9 @@ public class utilprizes extends MultiUtil
     /**
         Adds a PrizeTask to the list of timer tasks.
 
-        @Param sender is the user of the bot
+        @param sender is the user of the bot
         @param prizeTask is the PrizeTask to add
-        @interval is the interval between prizes in seconds.
+        @param interval is the interval between prizes in seconds.
     */
 
     public void addPrizeTask(String sender, PrizeTask prizeTask, double interval)
@@ -376,7 +376,7 @@ public class utilprizes extends MultiUtil
         Argument 1: The prize number.
         Argument 2: The interval between prizing.
 
-        @Param sender is the user of the bot
+        @param sender is the user of the bot
         @param argString is the string containing the arguments for the command.
     */
 
@@ -428,7 +428,7 @@ public class utilprizes extends MultiUtil
         Argument 2: The freq to prize to.
         Argument 3: The interval between prizes.
 
-        @Param sender is the user of the bot
+        @param sender is the user of the bot
         @param argString is the string containing the arguments for the command.
     */
 
@@ -483,7 +483,7 @@ public class utilprizes extends MultiUtil
         Argument 2: The ship to prize to.
         Argument 3: The interval between prizes.
 
-        @Param sender is the user of the bot
+        @param sender is the user of the bot
         @param argString is the string containing the arguments for the command.
     */
 
@@ -537,7 +537,7 @@ public class utilprizes extends MultiUtil
         Argument 2: The player to prize.
         Argument 3: The interval between prizes.
 
-        @Param sender is the user of the bot
+        @param sender is the user of the bot
         @param argString is the string containing the arguments for the command.
     */
 
@@ -583,7 +583,7 @@ public class utilprizes extends MultiUtil
     }
 
     /** prizes the turret or anchor on attach pending wither the
-        second argument is >=1 <0 (turret) or 0 (anchor);
+        second argument is &gt;=1 &lt;0 (turret) or 0 (anchor);
         @param sender is the user of the bot
         @param argString is the string containing the arguments of the command.
     */
@@ -670,7 +670,7 @@ public class utilprizes extends MultiUtil
         Deletes a prize from the timerTask list.
 
         @param sender is the person using the bot.
-        @argString is the string containing the arguments for the command.
+        @param argString is the string containing the arguments for the command.
     */
 
     public void doPrizeDel(String sender, String argString)
@@ -900,7 +900,7 @@ public class utilprizes extends MultiUtil
         Prizes a specific player.
 
         @param name is the name of the player to prize.
-        @prizeNum is the prize number to prize.
+        @param prizeNum is the prize number to prize.
     */
 
     public void prizePlayer(String name, int prizeNum)
@@ -912,7 +912,7 @@ public class utilprizes extends MultiUtil
         Prizes a specific player.
 
         @param playerID is the name of the player to prize.
-        @prizeNum is the prize number to prize.
+        @param prizeNum is the prize number to prize.
     */
 
     public void prizePlayer(int playerID, int prizeNum)
@@ -924,7 +924,7 @@ public class utilprizes extends MultiUtil
         Prizes a specific freq.
 
         @param freqID is the freq to prize.
-        @prizeNum is the prize number to prize.
+        @param prizeNum is the prize number to prize.
     */
 
     public void prizeFreq(int freqID, int prizeNum)
@@ -951,7 +951,7 @@ public class utilprizes extends MultiUtil
         Prizes a specific ship type.
 
         @param ship is the ship type to prize
-        @prizeNum is the prize number to prize.
+        @param prizeNum is the prize number to prize.
     */
 
     public void prizeShip(int ship, int prizeNum)

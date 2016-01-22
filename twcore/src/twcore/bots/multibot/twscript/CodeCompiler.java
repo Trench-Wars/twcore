@@ -79,7 +79,6 @@ public final class CodeCompiler {
     /**
         Replaces key phrases for modules using custom unfiltered
         private messages.
-        @see twcore.bots.multibot.utils.custom and utilhotspots
         @param bot - The BotAction object for the module using this method.
         @param p - The Player object of the user receiving the message
         @param message - The original message to be changed

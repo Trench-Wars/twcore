@@ -540,6 +540,7 @@ public class distensionbot extends SubspaceBot {
     /**
         Constructor that accepts args.
         @param botAction Reference to available BotAction instantiation.
+        @param args args passed
     */
     public distensionbot(BotAction botAction, String[] args) {
         super(botAction);
@@ -1380,8 +1381,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Catches unlocking of arena and re-locks.
-        @param name
-        @param message
+        @param name String
+        @param message String
     */
     public void handleArenaMessage( String name, String message ) {
         // Beta should not be loaded w/o me; ?find dugwyler done at start to ensure this.
@@ -1398,8 +1399,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Display non-acceptance message for remote msgs.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void handleRemoteMessage( String name, String msg ) {
         m_botAction.sendSmartPrivateMessage( name, "Can't quite hear ya.  C'mere, and maybe I'll !help you."  );
@@ -1408,8 +1409,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Reset away timer whenever player speaks.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void handlePublicMessage( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -1423,8 +1424,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Display help based on access level.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdHelp( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -1525,8 +1526,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Display help for HighMod+ operators.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdModHelp( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -1569,8 +1570,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Display help for Tactical Ops players.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsHelp( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -1643,8 +1644,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Provides a brief introduction to the game for a player.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdIntro( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -1674,8 +1675,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Hides any of the screens displayed by !intro.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdHideIntro( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -1694,8 +1695,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows what prizes are associated with the basic upgrades.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdUpgInfo( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -1751,8 +1752,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Provides a brief introduction to the game for a player.  This should support
         the A1 LVZ help, and the F1 help.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdBeta( String name, String msg ) {
         if( !DEBUG )
@@ -2152,6 +2153,7 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Check if someone used =#, and spec if they did.
+        @param event FrequencyChange
     */
     public void handleEvent(FrequencyChange event) {
         DistensionPlayer p = m_players.get( m_botAction.getPlayerName( event.getPlayerID() ) );
@@ -2863,8 +2865,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Enlists in the supplied public army (or private army w/ pwd).  Those choosing default
         armies may receive an enistment bonus.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdEnlist( String name, String msg ) {
         if( msg == null )
@@ -2984,8 +2986,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Defects to another army.  This causes all ships to return to the start of the rank
         in terms of progress toward the next.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdDefect( String name, String msg ) {
         if( m_armySystem == ARMY_SYSTEM_NONSTATIC )
@@ -3091,8 +3093,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Wrapper for real !return.  Default; does not bypass waiting list checks.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdReturn( String name, String msg ) {
         if( name.equals("qan") )
@@ -3104,8 +3106,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Logs a player in / allows them to return to the game.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
         @param bypassChecks True if this player is being placed in by the automated waiting list.
     */
     public void cmdReturn( String name, String msg, boolean bypassChecks ) {
@@ -3222,9 +3224,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Logs a player in / allows them to return to the game.
-        @param name
-        @param msg
-        @param bypassChecks True if this player is being placed in by the automated waiting list.
+        @param name String
+        @param msg String
     */
     public void cmdQueue( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -3244,8 +3245,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Wrapper for cmdLeave when it has not been forced on a player.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdLeave( String name, String msg ) {
         cmdLeave(name, msg, false);
@@ -3254,8 +3255,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Logs a player out, saves their time information, and opens their slot for another player.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
         @param forced True if the leave has been forced.
     */
     public void cmdLeave( String name, String msg, boolean forced ) {
@@ -3293,8 +3294,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Mans Tactical Ops station.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdManOps( String name, String msg ) {
         cmdPilot( name, "9" );
@@ -3302,8 +3303,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         For players that are used to !pilot/!ship.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdPilotDefunct( String name, String msg ) {
         throw new TWCoreException( "You do not need to use !pilot anymore to get into a ship.  Just hit ESC+#.  Check your !hangar to see which ships are available." );
@@ -3311,8 +3312,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Enters a player as a given ship.  No longer accessible as !pilot.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdPilot( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -3547,8 +3548,10 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Support method for pilot and assist.  Checks if there are too many ships on a given team.
-        @param p
-        @return
+        @param p DistensionPlayer
+        @param armyIDtoCheck int
+        @param shipNumToChangeTo int
+        @return true if too many ships
     */
     public boolean checkForTooManyShips( DistensionPlayer p, int armyIDtoCheck, int shipNumToChangeTo ) {
         int friendly = 0;
@@ -3595,8 +3598,8 @@ public class distensionbot extends SubspaceBot {
         Docks player (that is, sends them to spectator mode -- not the sex act, or the TW sysop).
         This also saves ship data to the DB.  The command !dock is the same as just going to
         spectator mode the manual way.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdDock( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -3669,8 +3672,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows list of public armies with their current counts and enlistment bonuses.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdArmies( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -3727,8 +3730,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Shows the status of all ships available in the hangar, and costs for those
         not yet purchased, if they can be purchased.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdHangar( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -3804,8 +3807,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Wrapper for !status command.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdStatus( String name, String msg ) {
         cmdStatus( name, msg, null );
@@ -3813,8 +3816,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows current status of ship.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
         @param mod Mod to give info to (rather than player)
     */
     public void cmdStatus( String name, String msg, String mod ) {
@@ -3960,8 +3963,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Sends Ops single-line status msg about OP and comm auths.  In this section because it's
         more properly grouped as a status command (provides no additional info).
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsStatus( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -3979,6 +3982,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Wrapper for !progress.
+        @param name String
+        @param msg String
     */
     public void cmdProgress( String name, String msg ) {
         cmdProgress( name, msg, null );
@@ -3987,8 +3992,9 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Quick view of progress toward next advancement.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
+        @param mod String
     */
     public void cmdProgress( String name, String msg, String mod ) {
         DistensionPlayer p = m_players.get( name );
@@ -4035,8 +4041,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows upgrades available for purchase.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdArmory( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4142,8 +4148,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Upgrades a particular aspect of the current ship.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdUpgrade( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4234,8 +4240,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Runs many !upgrade commands at once.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdMassUpgrade( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4278,8 +4284,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Scraps a previously-installed upgrade.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdScrap( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4374,8 +4380,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Mass-scraps previously-installed upgrades.  Options are all of one slot (#),
         all maneuver upgrades (m), all special upgrades (s), and every upgrade on the ship (*).
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdScrapAll( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4445,8 +4451,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Specializes current ship into one of the available ship types.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdSpecialize( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4555,8 +4561,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows available ship types.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdShipTypes( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4617,8 +4623,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Toggles between the player waiting in the safe spawn area and respawning in the center
         after prizes are awarded.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdWarp( String name, String msg ) {
         DistensionPlayer player = m_players.get( name );
@@ -4642,8 +4648,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Toggles between the player warping to base at round start, or warping to spawn.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdBaseWarp( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4660,8 +4666,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Toggles sending kill messages or not.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdKillMsg( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4678,8 +4684,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows terriers on an army, and their last observed locations.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdTerr( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4708,8 +4714,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows last seen location of a given individual.  Wrapper.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdWhereIs( String name, String msg ) {
         cmdWhereIs( name, msg, m_botAction.getOperatorList().isHighmod(name) );
@@ -4718,8 +4724,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows last seen location of a given individual.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
         @param isStaff True if player is staff/can !whereis anyone
     */
     public void cmdWhereIs( String name, String msg, boolean isStaff ) {
@@ -4749,8 +4755,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Assists an army other than your own, if help is needed.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdAssist( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -4982,8 +4988,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows the team breakdown, including levels of players
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdTeam( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -5034,8 +5040,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Clears all of a player's mines, but only once per round.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdClearMines( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -5068,8 +5074,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Puts a player back into the game with participation bonus intact.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
         @return True if lagout succeeded
     */
     public boolean cmdLagout( String name, String msg ) {
@@ -5146,8 +5152,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows a player basic info on the current battle.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdBattleInfo( String name, String msg ) {
         if( flagTimeStarted )
@@ -5162,8 +5168,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Simple scorereset.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdScoreReset( String name, String msg ) {
         m_botAction.scoreReset( name );
@@ -5172,8 +5178,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Toggles summoning if not a Terr, and summons players if in a Terr.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdSummon( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -5264,8 +5270,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Uses energy tank ability, if available.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdEnergyTank( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -5287,8 +5293,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Uses Targeted EMP ability, if available.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdTargetedEMP( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -5359,8 +5365,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Uses JumpSpace ability, if available.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdJumpSpace( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -5465,8 +5471,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Uses Prismatic Array ability, if available.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdPrismaticArray( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -5527,8 +5533,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sends Ops to a particular spot on the map.
-        @param name
-        @param msg
+        @param name String
+        @param spot int
     */
     public void cmdOpsNav( String name, int spot ) {
         DistensionPlayer p = m_players.get( name );
@@ -5638,6 +5644,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Wrapper for cmdOpsMsg(String,String,int)
+        @param name String
+        @param msg String
     */
     public void cmdOpsMsg( String name, String msg ) {
         cmdOpsMsg( name, msg, -1 );
@@ -5645,8 +5653,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sends out a tactical ops msg via the bot.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
         @param armyIDSpoof Army ID to spoof; -1 if not sabotage
         @return True if the command was successful.
     */
@@ -5778,6 +5786,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Wrapper for cmdOpsPM(String,String,int)
+        @param name String
+        @param msg String
     */
     public void cmdOpsPM( String name, String msg ) {
         cmdOpsPM( name, msg, -1 );
@@ -5785,8 +5795,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sends out a tactical ops PM via the bot.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
         @param armyIDSpoof Army ID to spoof; -1 if not sabotage
         @return True if the command was successful.
     */
@@ -5946,8 +5956,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sends out a tactical ops sabotage msg via the bot.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsSab( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -5977,8 +5987,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sends out a radar sweep (shows ship breakdown).
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsRadar( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6084,8 +6094,8 @@ public class distensionbot extends SubspaceBot {
         Uses fast respawn ability, allowing entire team to respawn faster than the other
         team for a certain amount of time (unless, of course, the other team also uses
         the ability).
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsRearm( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6149,8 +6159,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Allows ops to control various doors on the map.  Tube or sides cost 1, FR entrance or flag cost 2,
         and all enemy doors cost 3 OP to close.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsDoor( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6273,8 +6283,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Allows Ops to deply cover at left, right, before FR, over the flag, in the tube, and at the
         lower base entrance.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsCover( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6348,9 +6358,9 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Allows Ops to deploy fake mines.
-        @param
-        @param
         @author Cheese (modifications by qan/dug)
+        @param name String
+        @param msg String
     */
     public void cmdOpsMine(String name, String msg) {
         DistensionPlayer p = m_players.get(name);
@@ -6508,8 +6518,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Ops ability to warp a specific player to various locations in the home base.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsWarp( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6633,8 +6643,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Ops ability to cover the enemy with an orb.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsOrb( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6716,8 +6726,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Ops ability to cover the enemy with shroud of darkness.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsDark( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6800,8 +6810,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Ops ability to blind all enemies completely for a short period of time.
         Does this by showing scary picture of MES from The Fall over a black backdrop.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsBlind( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6871,8 +6881,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Ops ability to place shields over one player, or all friendly players in base.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsShield( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6952,8 +6962,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         EMPs all enemies, reducing their energy to 0 and shutting down engines.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdOpsEMP( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -6993,8 +7003,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Save all player data.  Sends arena msgs.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdSaveData( String name, String msg ) {
         boolean autosave = ":autosave:".equals(name);
@@ -7057,8 +7067,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Kills the bot.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdDie( String name, String msg ) {
         if( !name.equals(m_botAction.getBotName()) ) {
@@ -7151,8 +7161,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Saves all data and then kills the bot on a delayed shutdown.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdSaveDie( String name, String msg ) {
         if( !name.equals(m_botAction.getBotName()) ) {
@@ -7174,8 +7184,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Starts a task to kill the bot at the end of the next round following a certain time limit.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdShutdown( String name, String msg ) {
         if( !name.equals(m_botAction.getBotName()) ) {
@@ -7260,8 +7270,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows time at which shutdown will occur, approximately.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdShutdownInfo( String name, String msg ) {
         if( !name.equals(m_botAction.getBotName()) ) {
@@ -7289,8 +7299,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Shows time at which shutdown will occur, approximately.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdSetMaxPlayers( String name, String msg ) {
         // Thanks to the classy person who commented out an entire method and didn't even leave a comment,
@@ -7339,8 +7349,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sets a temporary RP bonus, for when the bot crashes.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdRPBonus( String name, String msg ) {
         boolean isBot = name.equals(m_botAction.getBotName());
@@ -7376,8 +7386,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Bans a player from playing Distension.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdBan( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7417,8 +7427,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Unbans a player from playing Distension.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdUnban( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7455,8 +7465,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Checks info on a player by running !status as though from their computer,
         but printing the results to the mod.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdInfo( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7478,8 +7488,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Changes player's name in the database.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdDBChangeName( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7526,8 +7536,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Adds a ship to a player's profile in the DB.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdDBAddShip( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7576,8 +7586,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Removes a player's ship from the DB.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdDBWipeShip( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7626,8 +7636,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Wipes all traces of player from DB.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdDBWipePlayer( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7669,8 +7679,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Randomizes army for all players, accounting for battles won.  Rewrite by Raible.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdDBRandomArmies( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7744,8 +7754,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Randomizes army for all players (old version).
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     /*
         public void cmdDBRandomArmies( String name, String msg ) {
@@ -7794,8 +7804,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sets player to specified army.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdDBSetArmy( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7864,8 +7874,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Grants a player credits (only for debug mode).
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdGrant( String name, String msg ) {
         if( !( name.equals("qan") || name.equals("dugwyler")) )
@@ -7904,8 +7914,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sends a message to all beta-testers.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdMsgBeta( String name, String msg ) {
         if( !DEBUG && !( name.equals("qan") || name.equals("dugwyler") ) )
@@ -7946,8 +7956,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sets a variable.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdSetTimeout( String name, String msg ) {
         DistensionPlayer p = m_players.get( name );
@@ -7988,8 +7998,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Sets a variable.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdSetVar( String name, String msg ) {
         if( !( name.equals("qan") || name.equals("dugwyler") ) )
@@ -8035,8 +8045,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Gets an int variable.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdGetInt( String name, String msg ) {
         if( !( name.equals("qan") || name.equals("dugwyler") ) )
@@ -8062,8 +8072,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Gets a boolean variable.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdGetBool( String name, String msg ) {
         if( !( name.equals("qan") || name.equals("dugwyler") ) )
@@ -8090,8 +8100,8 @@ public class distensionbot extends SubspaceBot {
     /**
         Adds RP over which a percentage bonus (default 10%) will apply.  For example, 30000 would mean
         a 10% bonus over the next 30000RP earned by the player.
-        @param name
-        @param msg
+        @param name String
+        @param msg String
     */
     public void cmdAwardBonus( String name, String msg ) {
         if( name.equals("qan") || name.equals("dugwyler") ) {
@@ -8129,6 +8139,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Based on provided coords, returns location of player as a String.
+        @param p Player
+        @param isStaff boolean
         @return Last location recorded of player, as a String
     */
     public String getPlayerLocation( Player p, boolean isStaff ) {
@@ -8149,7 +8161,7 @@ public class distensionbot extends SubspaceBot {
         Gets String location name based on a Y coordinate.
         Use if not interested in using X coord.
         @param y Y tile coord to check.
-        @return
+        @return String location name
     */
     public String getLocation( int y ) {
         return getLocation( -1, y );
@@ -8159,7 +8171,7 @@ public class distensionbot extends SubspaceBot {
         Gets String location name based on an X and Y coordinate.
         @param x X tile coord to check.
         @param y Y tile coord to check.
-        @return
+        @return String location name
     */
     public String getLocation( int x, int y ) {
         if( y <= TOP_SAFE || y >= BOT_SAFE )
@@ -8209,7 +8221,7 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Makes a String with requested number of asterisks, padded with spaces.
-        If bars > length, number of bars in String == length.
+        If bars &gt; length, number of bars in String == length.
         @param bars Total number of bars requested
         @param length Total length of String
         @return Formatted String
@@ -8296,7 +8308,7 @@ public class distensionbot extends SubspaceBot {
     /**
         Based on number of players in the arena and whether the game is using one or
         two flags, return the time required for a flag win.
-        @return
+        @return int time required for a flag win
     */
     public int getActualTimeNeededForFlagWin() {
         int timeNeeded = 0;
@@ -8358,6 +8370,7 @@ public class distensionbot extends SubspaceBot {
     }
 
     /**
+        @param army DistensionArmy
         @return Enlistment bonus for a given default army, based on the size of other default armies.
     */
     public int calcEnlistmentBonus( DistensionArmy army ) {
@@ -8647,9 +8660,8 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Spams multiple players with single-line messages including a sound.
-        @param recipients Arena IDs of recipients of msgs
+        @param recipientIDs Arena IDs of recipients of msgs
         @param msgs Indexed messages matching arena IDs
-        @param sounds Indexed sounds matching arena IDs
     */
     public void spamManyPlayers( Vector<Integer> recipientIDs, Vector<String> msgs ) {
         if( recipientIDs.size() != msgs.size() )
@@ -8665,7 +8677,7 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Spams multiple players with single-line messages including a sound.
-        @param recipients Arena IDs of recipients of msgs
+        @param recipientIDs Arena IDs of recipients of msgs
         @param msgs Indexed messages matching arena IDs
         @param sounds Indexed sounds matching arena IDs
     */
@@ -8733,7 +8745,7 @@ public class distensionbot extends SubspaceBot {
 
     /**
         Spams a player with a LinkedList array based on a default delay.
-        @param arenaID ID of person to spam
+        @param playerName name of person to spam
         @param msgs LinkedList containing msgs to spam
     */
     public void spamWithDelay( String playerName, LinkedList<String> msgs ) {
@@ -8764,8 +8776,8 @@ public class distensionbot extends SubspaceBot {
         Prizes a player up using a delay, turns off an LVZ (the rearm), and
         warps the player when done prizing.  ***No longer used.**
         @param arenaID ID of person to prize
-        @param msgs Array of Strings to spam
-        @param delay Delay, in ms, to wait in between messages
+        @param prizes LinkedList (Integer) of prizes
+        @param warp boolean whether to warp
     */
     public void prizeSpam( int arenaID, LinkedList <Integer>prizes, boolean warp ) {
         PrizeSpamTask prizeSpamTask = new PrizeSpamTask();

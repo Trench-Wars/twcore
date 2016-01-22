@@ -3,14 +3,14 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x2A) Event fired when a compressed map file is received. <code><pre>
+    (S2C 0x2A) Event fired when a compressed map file is received. <code>
     +-----------------------------------------------------+
     | Offset  Length  Description                         |
     +-----------------------------------------------------+
     | 0       1       Type Byte                           |
     | 1       16      Map name                            |
     | 17      ...     Compressed map                      |
-    +-----------------------------------------------------+</code></pre>
+    +-----------------------------------------------------+</code>
 
     Original field research is credited to the folks from MervBot.
     Implementation idea is taken from the MervBot.

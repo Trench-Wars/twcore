@@ -2,7 +2,7 @@ package twcore.core.util.json;
 
 /**
     Beans that support customized output of JSON text shall implement this interface.
-    @author FangYidong<fangyidong@yahoo.com.cn>
+    @author <a href="mailto:fangyidong@yahoo.com.cn">FangYidong</a>
 */
 public interface JSONAware {
     /**

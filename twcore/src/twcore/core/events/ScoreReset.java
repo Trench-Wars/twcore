@@ -3,14 +3,14 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x1A) Event fired when a player's score is reset. <code><pre>
+    (S2C 0x1A) Event fired when a player's score is reset. <code>
 
     +--------------------------+
     |Offset Length Description |
     +--------------------------+
     |0        1    Type byte   |
     |1        2    Player ident|
-    +--------------------------+</code></pre>
+    +--------------------------+</code>
 
     If the PlayerID is 0xFFFF all players' scores were reset.
 */

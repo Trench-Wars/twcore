@@ -85,7 +85,9 @@ public class bwjsbot extends SubspaceBot {
     MobilePusher mobilePusherBase;
     long timeBetweenPushes = Tools.TimeInMillis.MINUTE * 30;
 
-    /** Class constructor */
+    /** Class constructor
+        @param botAction BotAction
+     */
     public bwjsbot(BotAction botAction) {
         super(botAction);
         initializeVariables();  //Initialize variables

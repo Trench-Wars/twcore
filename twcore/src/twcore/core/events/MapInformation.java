@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x29) Event fired when Map Information is received. <code><pre>
+    (S2C 0x29) Event fired when Map Information is received. <code>
     +-----------------------------------------------------+
     | Offset  Length  Description                         |
     +-----------------------------------------------------+
@@ -23,7 +23,7 @@ import twcore.core.util.ByteArray;
     | 25      16      LVZ name                            |
     | 41      4       LVZ checksum                        |
     | 45      4       LVZ size                            |
-    +-----------------------------------------------------+</code></pre>
+    +-----------------------------------------------------+</code>
 
     Original field research is credited to the folks from MervBot.
     Implementation idea is taken from the MervBot.

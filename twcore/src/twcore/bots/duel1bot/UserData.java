@@ -26,7 +26,10 @@ public class UserData {
 
     long lastQuery = 0;
 
-    /** Creates a new instance of DBPlayerData */
+    /** Creates a new instance of DBPlayerData
+     * @param conn BotAction
+     * @param connName String
+     * */
 
     public UserData(BotAction conn, String connName) {
         ba = conn;

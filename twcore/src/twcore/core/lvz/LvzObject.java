@@ -6,16 +6,16 @@ package twcore.core.lvz;
     <P>
     For in-depth help on any lvz property, see the documentation included with the LVZ toolkit
     <P>
-    <PRE>Data Layout
+    <code>Data Layout
     Field   Length  Description
         0        1      Update Flags
-        1        2      Object ID & Object Type
-        3        2      Location [& Type] (x coord)
-        5        2      Location [& Type] (y coord)
+        1        2      Object ID &amp; Object Type
+        3        2      Location [&amp; Type] (x coord)
+        5        2      Location [&amp; Type] (y coord)
         7        1      LVZ Image ID
         8        1      LVZ Layer
-        9        2      Display Time & Mode
-    </PRE>
+        9        2      Display Time &amp; Mode
+    </code>
     <p>
     <b>Breakdown of combined bytes</b><br>
     <i>Note:</i> This will be highly confusing. When data is spread over multiple bytes, the field order is as follows:<br>
@@ -29,12 +29,12 @@ package twcore.core.lvz;
         4        1      Update the display mode
         5        3      Reserved/unknown?
 
-    Object ID & Type
+    Object ID &amp; Type
     Field     Bits  Description
         0        1      0: Screen object; 1: Map object
         1       15      Object ID: 0~32,767
 
-    Location & Anchoring Screen objects
+    Location &amp; Anchoring Screen objects
     Field     Bits  Description
         0        4      Anchor point: 0~10 (See CoordType class)
         4       12      Coordinate offset: -2048~+2047
@@ -43,7 +43,7 @@ package twcore.core.lvz;
     Field     Bits  Description
         0       16      Map coordinate in pixels: 0~65,535
 
-    Display Time & Mode
+    Display Time &amp; Mode
     Field     Bits  Description
         0        4      Display mode: 0~5
         4       12      Display time: 0~4095

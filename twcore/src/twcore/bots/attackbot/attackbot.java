@@ -35,7 +35,7 @@ import twcore.core.util.Tools;
     four flags in the middle, the doors at the enemy goal will open. First team
     to 3 wins.
 
-    Made by fLaReD & WingZero.
+    Made by fLaReD and WingZero.
 */
 public class attackbot extends SubspaceBot {
     public BotAction ba;
@@ -93,6 +93,7 @@ public class attackbot extends SubspaceBot {
 
     /**
         Requests events, sets up bot.
+        @param botAction BotAction
     */
     public attackbot(BotAction botAction) {
         super(botAction);

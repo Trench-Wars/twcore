@@ -98,7 +98,7 @@ public class Arena {
 
     /**
         Gets a mapping of IDs to players in the arena.
-        @return Map (ID -> Player)
+        @return Map (ID -&gt; Player)
     */
     public Map<Integer, Player> getPlayerMap() {
         return m_playerList;

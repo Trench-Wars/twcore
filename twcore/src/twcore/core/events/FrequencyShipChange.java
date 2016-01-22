@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x1D) Event called when player changes ship (and possibly frequency) <code><pre>
+    (S2C 0x1D) Event called when player changes ship (and possibly frequency) <code>
     +------------------------------+
     | Offset  Length  Description  |
     +------------------------------+
@@ -11,7 +11,7 @@ import twcore.core.util.ByteArray;
     | 1       1       Ship Type    |
     | 2       2       Player ID    |
     | 4       2       Frequency    |
-    +------------------------------+</code></pre>
+    +------------------------------+</code>
 
     Since this is the only packet associated with ship changing, getting this
     doesn't necessarily mean that they changed frequency too.

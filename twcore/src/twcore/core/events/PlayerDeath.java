@@ -3,7 +3,7 @@ package twcore.core.events;
 import twcore.core.util.ByteArray;
 
 /**
-    (S2C 0x06) Event fired when a player dies. <code><pre>
+    (S2C 0x06) Event fired when a player dies. <code>
     +------------------------------+
     | Offset  Length  Description  |
     +------------------------------+
@@ -13,7 +13,7 @@ import twcore.core.util.ByteArray;
     | 4       2       Killee ident |
     | 6       2       Bounty       |
     | 8       2       Flags        |
-    +------------------------------+</code></pre>
+    +------------------------------+</code>
 
     The death green is the ID of the green that is left by this players death.
     The bounty, along with the other kill score modifiers in settings are added

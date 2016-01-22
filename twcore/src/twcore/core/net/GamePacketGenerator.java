@@ -636,7 +636,7 @@ public class GamePacketGenerator {
         @param messageType Type of message being sent -- public, error, etc. (0x00 to 0x09)
         @param soundCode Number of the sound attached to this message, if any
         @param userID For message types 0x04 and 0x05, player ID of target
-        @param prefix Any prefix that needs to be repeated for chopped up messages. (This comes down to ";#;", ":<name>:" and ":#<squadname>:")
+        @param prefix Any prefix that needs to be repeated for chopped up messages. (This comes down to ";#;", ":[name]:" and ":#[squadname]:")
         @param message Text to send
     */
     public void sendChatPacket( byte messageType, byte soundCode, short userID, String prefix, String message ) {
@@ -1210,7 +1210,7 @@ public class GamePacketGenerator {
 
     /**
         Adds one or more LVZ object ID states (whether to turn it on or off) to an object
-        toggle queue at once, using a HashMap with (Integer)ObjectID->(Boolean)Visible
+        toggle queue at once, using a HashMap with (Integer)ObjectID-&gt;(Boolean)Visible
         mappings.  Use {@link #sendLVZObjectCluster(int)} to send out a packet containing the
         toggling instructions.
         @param playerID ID of player to send to; use -1 for all players
@@ -1363,7 +1363,7 @@ public class GamePacketGenerator {
 
     /**
         Adds one or more modified LVZ object to an object modification queue at once,
-        using a LinkedList<LvzObject> as an array.
+        using a LinkedList[LvzObject] as an array.
         Use {@link #sendLVZObjectModCluster(int)} to send out a packet containing the
         modification instructions.
         @param playerID ID of player to send to; use -1 for all players.

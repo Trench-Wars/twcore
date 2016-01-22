@@ -72,7 +72,7 @@ public class twdopstats extends SubspaceBot {
         to repeat this each day
 
         @param event
-        @see twcore.core.SubspaceBot.handleEvent(LoggedOn event)
+        @see twcore.core.SubspaceBot#handleEvent(LoggedOn event)
     */
     public void handleEvent(LoggedOn event) {
         m_botAction.joinArena( "#robopark" );
@@ -87,7 +87,7 @@ public class twdopstats extends SubspaceBot {
     }
 
     /**
-        @see twcore.core.SubspaceBot.handleDisconnect()
+        @see twcore.core.SubspaceBot#handleDisconnect()
     */
     public void handleDisconnect() {
         m_botAction.cancelTask(this.updateOpsList);
@@ -106,7 +106,7 @@ public class twdopstats extends SubspaceBot {
     /**
         Handle the background sql process once it's finished
         and update the TWD Operator list
-        @see twcore.core.SubspaceBot.handleEvent(SQLResultEvent event)
+        @see twcore.core.SubspaceBot#handleEvent(SQLResultEvent event)
     */
     public void handleEvent( SQLResultEvent event) {
         if(event.getIdentifier().equals("TWDOpsUpdate")) {
@@ -137,7 +137,7 @@ public class twdopstats extends SubspaceBot {
         Handles any messages send to the bot.
         The bot triggers on the ?help alerts and "on it" in chat
 
-        @see twcore.core.SubspaceBot.handleEvent( Message event )
+        @see twcore.core.SubspaceBot#handleEvent( Message event )
     */
     public void handleEvent( Message event ) {
 
@@ -207,7 +207,7 @@ public class twdopstats extends SubspaceBot {
 
     /**
         Initiates TWD Operator list update on the !update command.
-        @param playerName the player who did !help
+        @param name the player who did !help
         @param message the message of the player (will always start with !update)
     */
     public void handleUpdateCommand( String name, String message) {
@@ -219,7 +219,7 @@ public class twdopstats extends SubspaceBot {
 
     /**
         Logs off the bot on the !die command.
-        @param playerName the player who did !help
+        @param name the player who did !help
         @param message the message of the player (will always start with !die)
     */
     public void handleDieCommand( String name, String message ) {
