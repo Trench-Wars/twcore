@@ -41,7 +41,6 @@
 			<include name="**/**.example.cfg"/>
 				<include name="**/**.xml"/>
 			</fileset>
-			<globmapper from="*.example.cfg" to="*.cfg"/>
 		</copy>
 	</target>
 
