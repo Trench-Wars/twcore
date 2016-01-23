@@ -281,18 +281,14 @@ public class PushbulletClient {
         @param msg The incoming websocket data
     */
     private void handleOnWebSocketMessage( String msg ) {
-        //LOGGER.info("1");
-
         StreamMessage smsg = null;
 
         try {
             smsg = JsonHelper.fromJson(msg, StreamMessage.class);
         } catch (PushbulletException ex) {
-            LOGGER.error("", ex);
+            LOGGER.error(ex.getMessage());
             return;
         }
-
-        //LOGGER.info("2");
 
         if( StreamMessage.TICKLE_TYPE.equals( smsg.type ) ) {
             if( StreamMessage.PUSH_SUBTYPE.equals( smsg.subtype ) ) {
@@ -302,9 +298,7 @@ public class PushbulletClient {
                     pushes = getNewPushes();
 
                     if( !pushes.isEmpty() ) {
-                        LOGGER.info("3");
                         firePushReceivedEvent( pushes );
-                        LOGGER.info("SUCCESS!");
                     }
                 } catch (PushbulletException ex) {
                     LOGGER.error("Error getting pushes: " + ex.getMessage());
@@ -1205,7 +1199,7 @@ public class PushbulletClient {
         try {
             post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
         } catch (UnsupportedEncodingException ex) {
-            LOGGER.error("", ex);
+            LOGGER.error(ex.getMessage());
             throw new PushbulletException( ex );
         }
 
@@ -1239,7 +1233,7 @@ public class PushbulletClient {
 
         try {
             HttpResponse response = httpClient.execute(request);
-            LOGGER.debug(response.getStatusLine().toString());
+            // LOGGER.debug(response.getStatusLine().toString());
             HttpEntity respEnt = response.getEntity();
 
             if( respEnt != null ) {
@@ -1253,7 +1247,7 @@ public class PushbulletClient {
                 br.close();
             }   // end if: got response
         }   catch (  IOException  ex) {
-            LOGGER.error("", ex);
+            LOGGER.error(ex.getMessage());
             throw new PushbulletException(ex);
         }
 

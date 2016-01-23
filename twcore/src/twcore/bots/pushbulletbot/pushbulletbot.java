@@ -527,7 +527,7 @@ public class pushbulletbot extends SubspaceBot {
         } catch (SQLException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-            m_botAction.sendPublicMessage(e.getMessage());
+            Tools.printLog(e.getMessage());
         }
     }
 
