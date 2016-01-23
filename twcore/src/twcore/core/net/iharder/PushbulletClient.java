@@ -281,7 +281,7 @@ public class PushbulletClient {
         @param msg The incoming websocket data
     */
     private void handleOnWebSocketMessage( String msg ) {
-        LOGGER.info("1");
+        //LOGGER.info("1");
 
         StreamMessage smsg = null;
 
@@ -292,7 +292,7 @@ public class PushbulletClient {
             return;
         }
 
-        LOGGER.info("2");
+        //LOGGER.info("2");
 
         if( StreamMessage.TICKLE_TYPE.equals( smsg.type ) ) {
             if( StreamMessage.PUSH_SUBTYPE.equals( smsg.subtype ) ) {
