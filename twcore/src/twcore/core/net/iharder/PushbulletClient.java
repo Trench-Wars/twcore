@@ -270,6 +270,7 @@ public class PushbulletClient{
      */
     private void handleOnWebSocketMessage( String msg ){
 //        LOGGER.info("1");
+    	  LOGGER.info("test");
         
     	StreamMessage smsg = null;
         try {
