@@ -95,44 +95,49 @@ public class ElimGame {
         @param shrap Shrap prized on spawn
     */
     public ElimGame(elim bot, ShipType type, int deaths, boolean shrap) {
-        this.bot = bot;
-        ba = bot.ba;
-        bot.checkStatements();
-        comp = new CompareAll();
-        compDeath = new CompareDeaths();
-        compName = new CompareNames();
-        rules = bot.rules;
-        ship = type;
-        freq = ship.getFreq();
-        this.goal = deaths;
-        this.shrap = shrap;
-        ratingCount = 0;
-        playerCount = 0;
-        state = GameState.NA;
-        winner = null;
-        mvp = null;
-        hiderFinder = null;
-        players = new HashMap<String, ElimPlayer>();
-        played = new HashMap<String, ElimPlayer>();
-        winners = new TreeSet<String>();
-        losers = new HashSet<String>();
-        loaded = new HashSet<String>();
-        laggers = new HashMap<String, Lagout>();
-        lagChecks = new Vector<String>();
-        lagCheck = null;
-        lagHandler = new LagHandler(ba, rules, this, "handleLagReport");
-        Iterator<Player> i = ba.getPlayingPlayerIterator();
-        currentSeason = rules.getInt("CurrentSeason");
+        try {
+            this.bot = bot;
+            ba = bot.ba;
+            bot.checkStatements();
+            comp = new CompareAll();
+            compDeath = new CompareDeaths();
+            compName = new CompareNames();
+            rules = bot.rules;
+            ship = type;
+            freq = ship.getFreq();
+            this.goal = deaths;
+            this.shrap = shrap;
+            ratingCount = 0;
+            playerCount = 0;
+            state = GameState.NA;
+            winner = null;
+            mvp = null;
+            hiderFinder = null;
+            players = new HashMap<String, ElimPlayer>();
+            played = new HashMap<String, ElimPlayer>();
+            winners = new TreeSet<String>();
+            losers = new HashSet<String>();
+            loaded = new HashSet<String>();
+            laggers = new HashMap<String, Lagout>();
+            lagChecks = new Vector<String>();
+            lagCheck = null;
+            lagHandler = new LagHandler(ba, rules, this, "handleLagReport");
+            Iterator<Player> i = ba.getPlayingPlayerIterator();
+            currentSeason = rules.getInt("CurrentSeason");
 
-        while (i.hasNext()) {
-            Player p = i.next();
-            String name = p.getPlayerName();
-            String low = name.toLowerCase();
-            winners.add(low);
-            lagChecks.add(low);
-            ElimPlayer ep = new ElimPlayer(ba, this, name, ship.getNum(), deaths);
-            ep.setFreq(p.getFrequency());
-            players.put(low, ep);
+            while (i.hasNext()) {
+                Player p = i.next();
+                String name = p.getPlayerName();
+                String low = name.toLowerCase();
+                winners.add(low);
+                lagChecks.add(low);
+                ElimPlayer ep = new ElimPlayer(ba, this, name, ship.getNum(), deaths);
+                ep.setFreq(p.getFrequency());
+                players.put(low, ep);
+            }
+        } catch (Exception e) {
+            Tools.printStackTrace(e);
+            bot.debug("Exception starting ElimGame: " + e.getMessage());
         }
     }
 

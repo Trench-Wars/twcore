@@ -1293,7 +1293,7 @@ public class elim extends SubspaceBot {
         lastAlert = 0;
         spy = new Spy(ba);
         DEBUG = true;
-        debugger = "ThePAP";
+        debugger = "qan";
         voteStats = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
         votes = new HashMap<String, Integer>();
         alerts = new HashSet<String>();
