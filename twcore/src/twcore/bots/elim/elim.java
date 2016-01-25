@@ -148,7 +148,7 @@ public class elim extends SubspaceBot {
     }
 
     public void checkStatements() {
-        if (!checkStatements(true)) {
+        if (!checkStatements(false)) {
             prepareStatements();
             debug("Statements were null or closed...");
         }
