@@ -119,7 +119,7 @@ public class ElimPlayer {
             saveLoss();
             ba.spec(name);
             ba.spec(name);
-            ba.sendArenaMessage(name + " is out. " + getScore());
+            ba.sendArenaMessage(name + " is out. " + getScore(), Tools.Sound.VICTORY_BELL);
             game.removePlayer(this);
             killer.handleKO();
         } else {
@@ -204,7 +204,7 @@ public class ElimPlayer {
                         status = Status.OUT;
                         ba.spec(name);
                         ba.spec(name);
-                        ba.sendArenaMessage(name + " is out. " + getScore() + " (Out of bounds abuse)");
+                        ba.sendArenaMessage(name + " is out. " + getScore() + " (Out of bounds abuse)", Tools.Sound.VICTORY_BELL);
                         remove();
                     }
                 } else
@@ -242,7 +242,7 @@ public class ElimPlayer {
             return false;
         } else {
             status = Status.OUT;
-            ba.sendArenaMessage(name + " is out. " + getScore() + " (lagout/spec)");
+            ba.sendArenaMessage(name + " is out. " + getScore() + " (lagout/spec)", Tools.Sound.VICTORY_BELL);
             saveLoss();
             return true;
         }
@@ -273,7 +273,7 @@ public class ElimPlayer {
         if (stats.getStat(StatType.DEATHS) >= specAt) {
             status = Status.OUT;
             ba.specWithoutLock(name);
-            ba.sendArenaMessage(name + " is out. " + getScore() + " (warp abuse)");
+            ba.sendArenaMessage(name + " is out. " + getScore() + " (warp abuse)", Tools.Sound.VICTORY_BELL);
             remove();
         } else {
             ba.sendPrivateMessage(name, "Warping is illegal! You gained a death as a result.");
@@ -522,7 +522,7 @@ public class ElimPlayer {
                 status = Status.OUT;
                 ba.spec(name);
                 ba.spec(name);
-                ba.sendArenaMessage(name + " is out. " + getScore() + " (Too long outside base)");
+                ba.sendArenaMessage(name + " is out. " + getScore() + " (Too long outside base)", Tools.Sound.VICTORY_BELL);
                 remove();
                 spawn = null;
             }
@@ -546,7 +546,7 @@ public class ElimPlayer {
                 status = Status.OUT;
                 ba.spec(name);
                 ba.spec(name);
-                ba.sendArenaMessage(name + " is out. " + getScore() + " (Too long outside base)");
+                ba.sendArenaMessage(name + " is out. " + getScore() + " (Too long outside base)", Tools.Sound.VICTORY_BELL);
                 remove();
             }
 
