@@ -49,7 +49,7 @@ public class ElimPlayer {
     public static final int STREAK_INIT = 5;
     public static final int STREAK_REPEAT = 2;
     public static final int MULTI_KILL_TIME = 5; // seconds
-    int kdNeededToLadder = 300;                  // Combined kills & deaths needed before being ranked
+    int kdNeededToLadder = 150;                  // Combined kills & deaths needed before being ranked
     int lateEntryDeaths = 0;                     // Extra deaths given for late entry (not counted in final score/ladder)
     public static final String db = "website";
     public Status status;

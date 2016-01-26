@@ -84,7 +84,7 @@ public class elim extends SubspaceBot {
     static final String db = "website";
     static final String pub = "pubstats";
     static final int INITIAL_RATING = 300;
-    int kdNeededToLadder = 300;            // Combined kills & deaths needed before being ranked
+    int kdNeededToLadder = 150;            // Combined kills & deaths needed before being ranked
     int lateEntrySeconds = 0;              // # seconds a player is allowed to late-enter; 0 if not allowed
     static final int MIN_ZONER = 10;       // The minimum amount of minutes in between zoners
     static final int ALERT_DELAY = 2;      // Minimum amount of time between alert messages
@@ -1910,7 +1910,7 @@ public class elim extends SubspaceBot {
     /** Executes the updateRank statement which adjusts the ranks of every elim player */
     private void updateRanks() {
         try {
-            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE (fnKills + fnDeaths) > " + kdNeededToLadder + " AND fnShip = " + shipType.getNum()
+            ResultSet rs = ba.SQLQuery(db, "SET @i=0; UPDATE tblElim__Player SET fnRank = (@i:=@i+1) WHERE (fnKills + fnDeaths) >= " + kdNeededToLadder + " AND fnShip = " + shipType.getNum()
                                        + " AND fnSeason = " + currentSeason + " ORDER BY fnAdjRating DESC");
             ba.SQLClose(rs);
         } catch (SQLException e) {
