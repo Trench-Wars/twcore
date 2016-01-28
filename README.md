@@ -24,6 +24,8 @@ The simplest way to build and run TWCore is with [ant][]. In the directory with 
 
     java -jar bin/twcore.jar bin/setup.cfg
 
+You can build the javadocs for the project with `ant javadoc`. See other build options with `ant -p`.
+
 For further information, please visit our [wiki][].
 
    [Subspace Continuum]: http://www.getcontinuum.com/
