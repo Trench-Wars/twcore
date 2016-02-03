@@ -1,0 +1,3 @@
+[submodule "src/twcore/bots/restricted"]
+	path = src/twcore/bots/restricted
+	url = restricted@trenchwars.org:restricted
