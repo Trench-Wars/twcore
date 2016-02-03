@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--
+This is a custom project build file to be used with Apache Ant
+
+By default the command `ant` executes the "all" target, which compiles all source files and creates a JAR.
+Other potential targets can be viewed on the command line with `ant -p`.
+
+Main targets:
+
+ all         Builds the entire TWCore distribution
+ bots        Builds the TWCore bots
+ clean       Deletes the jar and all class files
+ cfg         Copies all the .cfg files from the src directory to the bin directory if file doesn't exist
+ core        Builds the TWCore core
+ dir         Builds a specific directory. (e.g. ant dir -Ddir=bots/multibot)
+ jar         Creates JAR file
+ javadoc     Creates Java API Documentation
+ path        Prints TWCores classpath
+ restricted  Builds the restricted bots directory
+ run         Runs the TWCore JAR
+
+NOTE: The "restricted" target builds .class files in bin/ for bots that aren't open source
+Notice that the .class files are copied to their declared java import paths
+E.g. src/twcore/bots/restricted/staffbot/staffbot.java = bin/twcore/bots/staffbot/staffbot.class
+
+DEBUG: To compile the project with jdb debugging enabled use -Ddebug=true
+-->
+
 <project name="twcore" default="all" basedir=".">
 
 	<path id="classpath">
@@ -9,16 +36,12 @@
 
 	<property name="debug" value="off"/>
 
-	<target name="all" depends="clean,core,bots" description="Builds the entire TWCore distribution">
+	<target name="all" depends="clean,jar" description="Builds the entire TWCore distribution">
+		<echo>Project build complete</echo>
 	</target>
 
-	<target name="botdir" description="Builds a specific directory under twcore/bots. (e.g. ant botdir -Dbotdir=multibot)" depends="configCopy">
-		<echo>Compiling bot directory ${botdir}</echo>
-		<javac classpathref="classpath" srcdir="src/twcore/bots/${botdir}" destdir="bin" debug="${debug}" debuglevel="lines,vars,source" includeantruntime="false" />
-	</target>
-
-	<target name="bots" description="Builds the TWCore bots" depends="configCopy">
-		<echo>Compiling Bots (this may take a moment)</echo>
+	<target name="bots" description="Builds the TWCore bots">
+		<echo>Compiling Bots</echo>
 		<javac classpathref="classpath" srcdir="src/twcore/bots" destdir="bin" debug="${debug}" debuglevel="lines,vars,source" includeantruntime="false" />
 	</target>
 
@@ -34,22 +57,41 @@
 		</delete>
 	</target>
 
-	<target name="configCopy" description="Copies all the .cfg files from the src directory to the bin directory if file doesn't exist">
+	<target name="cfg" description="Copies all the .cfg files from the src directory to the bin directory if file doesn't exist">
 		<echo>Copying Bot configuration files</echo>
-		<copy todir="bin" overwrite="no">
+		<touch>
+			<fileset dir="bin">
+				<include name="**/**.cfg"/>
+				<include name="**/**.xml"/>
+			</fileset>
+		</touch>
+		<copy todir="bin">
 			<fileset dir="src">
-			<include name="**/**.example.cfg"/>
+				<exclude name="**/restricted/**"/>
+				<include name="**/**.cfg"/>
+				<include name="**/**.xml"/>
+			</fileset>
+		</copy>
+		<copy todir="bin/twcore/bots">
+			<fileset dir="src/twcore/bots/restricted">
+				<include name="**/**.cfg"/>
 				<include name="**/**.xml"/>
 			</fileset>
 		</copy>
 	</target>
 
-	<target name="core" description="Builds the TWCore core" depends="configCopy">
-		<echo>Compiling Core (this may take a moment)</echo>
+	<target name="core" description="Builds the TWCore core">
+		<echo>Compiling Core</echo>
+		<mkdir dir="bin"></mkdir>
 		<javac classpathref="classpath" srcdir="src/twcore/core" destdir="bin" includeantruntime="false" />
-		<javac classpathref="classpath" srcdir="src/twcore/bots" destdir="bin" debug="${debug}" debuglevel="lines,vars,source" includeantruntime="false">
-			<include name="**.java" />
-		</javac>
+	</target>
+
+	<target name="dir" description="Builds a specific directory. (e.g. ant dir -Ddir=bots/multibot)">
+		<echo>Compiling directory ${dir}</echo>
+		<javac classpathref="classpath" srcdir="src/twcore/${dir}" destdir="bin" debug="${debug}" debuglevel="lines,vars,source" includeantruntime="false" />
+	</target>
+
+	<target name="jar" description="Creates JAR file" depends="core,bots,restricted">
 		<echo>Creating Jar File</echo>
 		<manifestclasspath property="jar.classpath" jarfile="bin/twcore.jar">
 			<classpath refid="classpath" />
@@ -82,7 +124,12 @@
 			version="true"/>
 	</target>
 
-	<target name="run" description="Runs TWCore">
+	<target name="restricted" description="Builds the restricted bots directory">
+		<echo>Compiling Restricted Bots</echo>
+		<javac classpathref="classpath" srcdir="src/twcore/bots/restricted" destdir="bin" debug="${debug}" debuglevel="lines,vars,source" includeantruntime="false" />
+	</target>
+
+	<target name="run" description="Runs the TWCore JAR">
 		<java jar="bin/twcore.jar" fork="true">
 			<arg value="bin/setup.cfg"/>
 		</java>
