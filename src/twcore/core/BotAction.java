@@ -4099,14 +4099,14 @@ public class BotAction
     }
 
     /**
-        Returns the core CFG as a File. These are files located in the /corecfg folder.
-        @param filename Temporary filename to use for this File.
+        Returns the core CFG as a File. These are the configuration files located by default in the corecfg folder.
+        @param filetype CFG file type (e.g. SQLConfig, AutoloadConfig, ChildrenConfig, OperatorsConfig, RacismConfig)
         @return A File containing the core configuration.
     */
-    public File getCoreCfg(String filename)
+    public File getCoreCfg(String filetype)
     {
-        String location = getCoreData().getGeneralSettings().getString("Core Location");
-        return new File(location + File.separatorChar + "corecfg", filename);
+        BotSettings setupCFG = getCoreData().getGeneralSettings();
+        return new File(setupCFG.getString("Core Location") + File.separatorChar + setupCFG.getString(filetype));
     }
 
     /**

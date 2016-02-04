@@ -61,7 +61,7 @@ public class Spy {
         boolean loadWords = true;
 
         try {
-            reader = new FileReader(m_botAction.getCoreCfg("racism.cfg"));
+            reader = new FileReader(m_botAction.getCoreCfg("RacismConfig"));
             sr = new BufferedReader(reader);
 
             while((line = sr.readLine()) != null)

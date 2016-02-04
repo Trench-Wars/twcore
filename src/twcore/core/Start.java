@@ -52,19 +52,6 @@ public class Start {
         Tools.exceptionLogFilePath = generalSettings.getString( "Exception Log" );
         Tools.debugging = generalSettings.getInt( "DebugOutput" ) != 0;
 
-        /*  try {
-            //System.out.close();
-            System.err.close();
-            //File f1 = new File("currentOut.log");
-            File f2 = new File("currentErr.log");
-            //f1.delete();
-            f2.delete();
-            //f1.createNewFile();
-            f2.createNewFile();
-            //System.setOut(new PrintStream(new FileOutputStream(f1)));
-            System.setErr(new PrintStream(new FileOutputStream(f2)));
-            } catch(Exception e) {}*/
-
         while( true ) {
             System.out.println("=== Starting Hub ...   ===");
             Tools.printLog( "Attempting to connect to server at ss://" + coreData.getServerName() + ":" + coreData.getServerPort() );

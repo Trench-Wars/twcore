@@ -37,7 +37,7 @@ public class CoreData {
         m_comm = new InterProcessCommunicator();
         m_socketComm = new SocketCommunicator(m_generalSettings.getInt( "SocketPort" ));
         m_accessList = OperatorList.getInstance();
-        File sqlFile = new File( m_generalSettings.getString( "Core Location" ) + "/corecfg/sql.cfg" );
+        File sqlFile = new File( m_generalSettings.getString( "Core Location" ) + File.separatorChar +  m_generalSettings.getString("SQLConfig") );
         m_manager = new SQLManager( sqlFile );
     }
 

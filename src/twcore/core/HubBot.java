@@ -167,7 +167,7 @@ public class HubBot extends SubspaceBot {
     */
     private void autoSpawnBots(boolean checkAlreadySpawned) {
         try {
-            FileReader reader = new FileReader( m_botAction.getCoreCfg( "autoload.cfg" ) );
+            FileReader reader = new FileReader( m_botAction.getCoreCfg( "AutoloadConfig" ) );
             BufferedReader buffer = new BufferedReader( reader );
             LinkedHashMap<String, Integer> autoLoads = new LinkedHashMap<String, Integer>();
             // using LinkedHashMap implementation so the order of autoload.cfg is used when spawning bots
@@ -264,7 +264,7 @@ public class HubBot extends SubspaceBot {
 
         try {
             m_botAction.getOperatorList().clear();
-            m_botAction.getOperatorList().init( m_botAction.getCoreCfg("operators.cfg" ) );
+            m_botAction.getOperatorList().init( m_botAction.getCoreCfg( "OperatorsConfig" ) );
 
         } catch (IOException ioe) {
             System.err.println("FATAL: IO Exception occured while initializing operators from operators.cfg: " + ioe.getMessage());
@@ -296,7 +296,7 @@ public class HubBot extends SubspaceBot {
             ArrayList<String> children = new ArrayList<String>();
 
             try {
-                FileReader reader = new FileReader( m_botAction.getCoreCfg( "children.cfg" ) );
+                FileReader reader = new FileReader( m_botAction.getCoreCfg( "ChildrenConfig" ) );
                 BufferedReader buffer = new BufferedReader( reader );
 
                 String line = "";
