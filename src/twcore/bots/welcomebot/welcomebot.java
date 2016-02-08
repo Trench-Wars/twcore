@@ -240,10 +240,12 @@ public class welcomebot extends SubspaceBot {
             try {
                 int taken = -1;
 
+                /* Can't check isClosed() after recent core updates as it causes bots to hang.
                 if (psCheckAlerts.isClosed()) { // For some reason, this PS was getting closed, causing exceptions.
                     Tools.printLog("PreparedStatement attempting to be accessed in PlayerEntered event that is already closed. ?message WingZero or qan");
                     return;
                 }
+                */
 
                 psCheckAlerts.clearParameters();
                 psCheckAlerts.setString(1, name);
