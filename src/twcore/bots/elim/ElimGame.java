@@ -750,8 +750,21 @@ public class ElimGame {
             ba.sendPrivateMessage(player, "You have been forcibly removed from the game.");
             ba.sendPrivateMessage(name, player + " has been removed from the game.");
             checkWinner();
-        } else
-            ba.sendPrivateMessage(name, "Player '" + player + "' not found in the arena.");
+        } else {
+            ba.sendPrivateMessage(name, "Player '" + player + "' not found in the arena; attempting to remove manually, in cases of bugged players.");
+            winners.remove(low(player));
+            lagChecks.remove(low(player));
+            losers.remove(low(player));
+            played.remove(low(player));
+            ElimPlayer ep = players.remove(low(player));
+
+            if (ep != null)
+                ep.cancelTasks();
+
+            ba.sendPrivateMessage(player, "You have been forcibly removed from the game.");
+            ba.sendPrivateMessage(name, player + " has been removed from the game (if playing).");
+            checkWinner();
+        }
     }
 
     public void do_scorereset(ElimPlayer ep, int ship) {
@@ -917,7 +930,7 @@ public class ElimGame {
 
                 if (p.getFrequency() % 2 == ship.getFreq()) {
                     ba.setFreq(p.getPlayerName(), freq);
-                    ep.setFreq((int)p.getFrequency());
+                    ep.setFreq(p.getFrequency());
                     freq += 2;
                 }
             } else {
