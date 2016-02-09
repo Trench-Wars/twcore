@@ -1098,6 +1098,8 @@ public class elim extends SubspaceBot {
 
     /** Starting state creates new ElimGame and initiates player stat trackers */
     private void doStarting() {
+        sendZoner();
+
         game = new ElimGame(this, shipType, goal, shrap);
 
         if( lastGamePlayed + timeBetweenPushes < System.currentTimeMillis() ) {
@@ -1221,8 +1223,6 @@ public class elim extends SubspaceBot {
 
     /** Waiting state stalls until there are enough players to continue */
     private void doWaiting() {
-        sendZoner();
-
         if (ba.getNumPlaying() > 0) {
             sendAlerts();
             state = State.VOTING;
