@@ -42,7 +42,7 @@ public class ElimPlayer {
         "Unforeseeable paradoxes have ripped a hole in the fabric of the universe!"
     };
 
-    public static final int BOUNDARY = 222 * 16;
+    public static final int BOUNDARY = 183 * 16;
     public static final int BOUNDS_TIME = 20;
     public static final int SPAWN_TIME = 5;      // seconds until respawn after death
     public static final int SPAWN_BOUND = 10;    // seconds after spawn warning is sent
