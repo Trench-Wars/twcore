@@ -227,7 +227,6 @@ Host H0st Ho$t H0$t hozt h-o-s-t tsoh hist|Thank you for submitting your hosting
 &Help &Editor &Download|Download the F1 help editor here: http://www.trenchwars.org/downloads/editors/cF1Editor-v1.2beta4.zip
 
 
-
 # Chatting related tells.
 &Team &Talk &How -Another|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
 &Team &Chat &How -Another|To send a message to your whole team type <'> or <//> before your message.  The message should appear in yellow.  Example: 'Hello team!
@@ -647,7 +646,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 #          3. Pad spaces until you hit | on the ruler, including one space for the | itself
 #          4. Start new line at the same character position as the L of the Line#.
 #
-# EXAMPLE |..                     ;                                 __                                          .. /'\_/`\                                   __        /\ \                                         ../\      \     __     __  __     __   _ __ /\_\    ___\ \ \/'\                                     ..\ \ \__\ \  /'__`\  /\ \/\ \  /'__`\/\`'__\/\ \  /'___\ \ , <                                     .. \ \ \_/\ \/\ \L\.\_\ \ \_/ |/\  __/\ \ \/ \ \ \/\ \__/\ \ \\`\                                   ..  \ \_\\ \_\ \__/.\_\\ \___/ \ \____\\ \_\  \ \_\ \____\\ \_\ \_\                                 ..   \/_/ \/_/\/__/\/_/ \/__/   \/____/ \/_/   \/_/\/____/ \/_/\/_/
+# EXAMPLE |..                                                      __                                          .. /'\_/`\                                   __        /\ \                                         ../\      \     __     __  __     __   _ __ /\_\    ___\ \ \/'\                                     ..\ \ \__\ \  /'__`\  /\ \/\ \  /'__`\/\`'__\/\ \  /'___\ \ , <                                     .. \ \ \_/\ \/\ \L\.\_\ \ \_/ |/\  __/\ \ \/ \ \ \/\ \__/\ \ \\`\                                   ..  \ \_\\ \_\ \__/.\_\\ \___/ \ \____\\ \_\  \ \_\ \____\\ \_\ \_\                                 ..   \/_/ \/_/\/__/\/_/ \/__/   \/____/ \/_/   \/_/\/____/ \/_/\/_/
 #
 #         0         1         2         3         4        *5*        6         7         8         9         |
 #         |1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -732,6 +731,7 @@ NotTWRelated|Your question is not Trench Wars related and therefore Staff can't 
 &Shadowmere &Who|Who am I? I'm no one. Just a spy.
 &pod &Who|7:pod> some ppl take it so seriously as if they are a judge irl its like brasef this an online pew pew spaceship game
 &Lip &Shadow &Who|If you ever meet lip shadow, you won't forget his face. Even if you keep trying.
+&inmate &Who|I like seeing little kids in shopping carts. It's good practice for when they turn 18 & have to spend the rest of their lives in jail cells.
 
 
 # Silly tells. Please leave in unless you are even more serious than I am silly. -qan
