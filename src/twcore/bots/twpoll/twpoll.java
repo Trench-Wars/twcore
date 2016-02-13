@@ -395,8 +395,16 @@ public class twpoll extends SubspaceBot {
                 int pollID = rs.getInt("fnPollID");
 
                 if (!polls.containsKey(pollID)) {
-                    polls.put(rs.getInt("fnPollID"), new Poll(rs.getInt("fnPollID"), rs.getInt("fnUserPosterID"), rs.getString("fcUserName"),
-                              rs.getString("fcQuestion"), rs.getBoolean("fbMultiSelect"), rs.getInt("fnRequireTWD"), rs.getInt("fnIsPrivate"), rs.getDate("fdBegin"), rs.getDate("fdEnd"), rs.getDate("fdCreated")));
+                    String details = rs.getString("fcDetail");
+                    String[] detailArray;
+                    if (details.contains("\\n")) {
+                        detailArray = details.split("\\n");
+                        polls.put(rs.getInt("fnPollID"), new Poll(rs.getInt("fnPollID"), rs.getInt("fnUserPosterID"), rs.getString("fcUserName"),
+                                rs.getString("fcQuestion"), detailArray, rs.getBoolean("fbMultiSelect"), rs.getInt("fnRequireTWD"), rs.getInt("fnIsPrivate"), rs.getDate("fdBegin"), rs.getDate("fdEnd"), rs.getDate("fdCreated")));
+                    } else {
+                        polls.put(rs.getInt("fnPollID"), new Poll(rs.getInt("fnPollID"), rs.getInt("fnUserPosterID"), rs.getString("fcUserName"),
+                                rs.getString("fcQuestion"), new String[] {details}, rs.getBoolean("fbMultiSelect"), rs.getInt("fnRequireTWD"), rs.getInt("fnIsPrivate"), rs.getDate("fdBegin"), rs.getDate("fdEnd"), rs.getDate("fdCreated")));
+                    }
 
                     polls.get(pollID).addOption(rs.getInt("fnPollOptionID"), rs.getString("fcOption"));
                 } else {
@@ -618,6 +626,9 @@ public class twpoll extends SubspaceBot {
                 String pad = Tools.rightString("", ("(#" + poll.id + ") ").length(), ' ');
                 spam.add(pad + (++i) + ". " + option.option);
             }
+            
+            if (poll.detail[0] != "")
+                spam.addAll(Arrays.asList(poll.detail));
 
             spam.add(" ");
 
@@ -1115,13 +1126,15 @@ public class twpoll extends SubspaceBot {
         public Date begin;
         public Date end;
         //public Date created;
+        public String[] detail;
         public ArrayList<PollOption> options;
 
-        public Poll(int pollID, int posterID, String poster, String question, Boolean multi, int requireTWD, int isPrivate, Date begin, Date end, Date created) {
+        public Poll(int pollID, int posterID, String poster, String question, String[] detail, Boolean multi, int requireTWD, int isPrivate, Date begin, Date end, Date created) {
             this.id = pollID;
             //this.userPosterId = posterID;
             //this.userPoster = poster;
             this.question = question;
+            this.detail = detail;
             //this.multi = multi;
             this.requireTWD = requireTWD;
             this.isPrivate = isPrivate;
