@@ -889,11 +889,14 @@ public class ElimGame {
     /** Set all players to correct ship and distribute onto incrementing freqs */
     private void setShipFreqs() {
         if (ship == ShipType.WEASEL)
-            ba.setDoors(127);
+            //ba.setDoors(127);
+            ba.setDoors(255);
         else if (winners.size() > 15)
-            ba.setDoors(228);
+            //ba.setDoors(228);
+            ba.setDoors(0);
         else
-            ba.setDoors(127);
+            //ba.setDoors(127);
+            ba.setDoors(255);
 
         for (String name : winners) {
             getPlayer(name).setFreq(freq);
