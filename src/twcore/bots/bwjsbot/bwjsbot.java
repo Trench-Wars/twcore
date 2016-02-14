@@ -505,6 +505,8 @@ public class bwjsbot extends SubspaceBot {
                 cmd_overrideCmd(name, cmd);
             } else if (cmd.equals("!end")) {
                 cmd_end(name);
+            } else if (cmd.equals("!extras")) {
+                cmd_extras(name, cmd);
             }
         }
 
@@ -543,6 +545,46 @@ public class bwjsbot extends SubspaceBot {
             gameOver();
         } else
             m_botAction.sendPrivateMessage(name, "There is no game being played to end.");
+    }
+    
+    /**
+     * Sets the number of extra players allowed past the maximum defined in the arena cfg.
+     * @param name
+     * @param cmd
+     */
+    private void cmd_extras(String name, String cmd) {
+        int extra = 0;
+
+        //Separate the command from its arguments if applicable.
+        if(!cmd.isEmpty() && cmd.contains(" ")) {
+            int index = cmd.indexOf(" ");
+
+            if(cmd.length() > ++index)
+                cmd = cmd.substring(index).trim();
+
+            try {
+                extra = Integer.parseInt(cmd);
+            } catch (NumberFormatException e) {
+                m_botAction.sendPrivateMessage(name, "Error: please specify a number to allow extra. For example, !extras 2");
+                return;
+            }
+        } else {
+            m_botAction.sendPrivateMessage(name, "Error: please specify a number to allow extra. For example, !extras 2");
+            return;
+        }
+
+        if (extra < 0 || extra > 3) {
+            m_botAction.sendPrivateMessage(name, "Error: please specify a number between 0 and 3. (0=no extras allowed)");
+            return;
+        }
+
+        if (extra == 0) {
+            m_botAction.sendPrivateMessage(name, "Extras disabled.");
+        } else {
+            m_botAction.sendPrivateMessage(name, "Extra players allowed for next round: " + extra + "  Note that this will result in unusual end-round game scores, especially if there are no extra players. If you wish to play with extras next round, you must use this command again.");
+        }
+
+        cfg.extraPlayersAllowed = extra;
     }
 
     /** Handles the !add command */
@@ -1012,6 +1054,7 @@ public class bwjsbot extends SubspaceBot {
 
                 //help.add("!setcaptain <player>      -- Sets <player> to captain (short: !sc)");
                 help.add("!removecap                -- Removes the cap of team !t#");
+                help.add("!extras #                 -- Allows # extra players for this round only");
             }
         }
 
@@ -2840,6 +2883,7 @@ public class bwjsbot extends SubspaceBot {
         private int maxLagouts;
         private int maxSubs;
         private int maxPlayers;
+        private int extraPlayersAllowed;
         private int minPlayers;
         private int outOfBorderTime;
         private int time;
@@ -3120,7 +3164,7 @@ public class bwjsbot extends SubspaceBot {
             @return maximum amount of players allowed
         */
         private int getMaxPlayers() {
-            return maxPlayers;
+            return maxPlayers + extraPlayersAllowed;
         }
 
         /**
@@ -6396,6 +6440,8 @@ public class bwjsbot extends SubspaceBot {
                 reset();
                 unlockArena();
             }
+            
+            cfg.extraPlayersAllowed = 0;    // Reset after each game so as not to cause problems
         }
     }
 
