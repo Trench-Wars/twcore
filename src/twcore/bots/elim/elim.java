@@ -336,6 +336,7 @@ public class elim extends SubspaceBot {
                                       "| !deaths           - Lists current game most/least player death information              |",
                                       "| !scorereset <#>   - Resets all scores and statistics for the ship <#> specified (!sr)   |",
                                       "| !lagout           - Return to game after lagging out                                    |",
+                                      "| !late             - Enter a game after round has already started                        |",
                                       "| !lag <name>       - Checks the lag of player <name>                                     |",
                                       "| !alert            - Toggles new game private message alerts on or off                   |",
                                       "| !splash           - Shows the top 10 of Warbirds and Javelins                           |",
@@ -516,12 +517,13 @@ public class elim extends SubspaceBot {
             ElimPlayer ep = game.getPlayer(name);
 
             if (ep != null) {
-                ba.sendPrivateMessage(name, "You're already in this game.");
+                ba.sendPrivateMessage(name, "You're already registered as being in or having played in this game.");
             } else {
                 if (game.getState() == GameState.PLAYING) {
-                    // do late
+                    ba.sendPrivateMessage(name, "Attempting to add you to the game...");
+                    game.addLatePlayer(name);
                 } else {
-                    ba.sendPrivateMessage(name, "There is no game being played. Simply enter into a ship.");
+                    ba.sendPrivateMessage(name, "There is no game being played right now.");
                 }
             }
         } else
@@ -1389,8 +1391,8 @@ public class elim extends SubspaceBot {
                 cmd_lag(name, msg);
             else if (cmd.equals("!lagout"))
                 cmd_lagout(name);
-            //else if (cmd.equals("!late"))
-            //    cmd_late(name);
+            else if (cmd.equals("!late"))
+                cmd_late(name);
             else if (cmd.startsWith("!rank "))
                 cmd_rank(name, msg);
             else if (cmd.startsWith("!rec "))

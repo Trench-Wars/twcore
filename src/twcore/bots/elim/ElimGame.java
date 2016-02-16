@@ -454,6 +454,7 @@ public class ElimGame {
 
                 bot.state = State.PLAYING;
                 bot.lastGamePlayed = System.currentTimeMillis();
+                roundStartTime = System.currentTimeMillis();
                 state = GameState.PLAYING;
                 ba.sendArenaMessage("GO GO GO!!!", Tools.Sound.GOGOGO);
 
@@ -505,9 +506,14 @@ public class ElimGame {
     }
 
     /** Handles the !late entrance command
-        @param name String
-     * */
+     *  @param name String
+     */
     public void do_late(String name) {
+        if (roundStartTime + Tools.TimeInMillis.MINUTE < System.currentTimeMillis()) {
+            ba.sendPrivateMessage(name, "Too much time has passed to enter in late. You will need to wait until the next round.");
+            return;
+        }
+        
         String low = name.toLowerCase();
         ElimPlayer ep = new ElimPlayer(ba, this, name, ship.getNum(), goal);
         freq += 2;
@@ -517,35 +523,57 @@ public class ElimGame {
 
         ep.setFreq(freq);
         players.put(low, ep);
-        /*
-            TimerTask task = new TimerTask() {
-            final String name = low;
-            public void run() {
-                addLatePlayer(name);
-            }
-            };
-            ba.scheduleTask(task, 3000);
-        */
+        
+        TimerTask latetask = new LateTask(low);
+        ba.scheduleTask(latetask, 1000);
+    }
+
+    /**
+     * Late entrance task to account for time to load stats.
+     */
+    private class LateTask extends TimerTask {
+        final String name;
+
+        public LateTask(String name) {
+            this.name = name;
+        }
+        
+        public void run() {
+            addLatePlayer(name);
+        }
     }
 
     /** Handles late entrance after stats are loaded
-        @param name String
-     * */
+     * @param name String
+     */
     public void addLatePlayer(String name) {
-        String low = name.toLowerCase();
         ElimPlayer ep = getPlayer(name);
 
         if (ep == null || !ep.isLoaded()) {
-            ba.sendPrivateMessage(name, "Unable to load your stats. Please wait until next round to play.");
+            ba.sendPrivateMessage(name, "Unable to load your stats. Please wait until next round to play.");            
             return;
         }
-
-        // Check all other players' deaths and set specAt
-
+        
+        if (state != GameState.PLAYING) {
+            ba.sendPrivateMessage(name, "A game is not currently being played. Please wait until next round to play.");            
+            return;
+        }
+        
+        if (bot.gameType == elim.ELIM) {
+            // Check all other players' deaths and set specAt to highest deaths so far
+            int highestDeaths = 0;
+            for (ElimPlayer player : players.values()) {
+                if (player.getDeaths() > highestDeaths)
+                    highestDeaths = player.getDeaths();
+            }
+            ep.specAt = goal - highestDeaths;
+        } else {
+            // Killrace: at present, no free kills, as it would taint the record in a positive way and could be abused.
+        }
 
         // Do standard startround resetting
-        winners.add(low);
-        lagChecks.add(low);
+        winners.add(low(name));
+        lagChecks.add(low(name));
 
         if (shrap)
             ba.specificPrize(name, Tools.Prize.SHRAPNEL);
@@ -575,6 +603,8 @@ public class ElimGame {
         played.put(low(name), ep);
         playerCount++;
         ratingCount += ep.getRating();
+        
+        ba.sendPrivateMessage(name, "You have been added as a late entry to the game. You will be specced at " + ep.specAt + " deaths.");
     }
 
     /** Handles the !lagout player return command

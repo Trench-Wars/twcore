@@ -58,7 +58,8 @@ public class ElimPlayer {
     private Bounds bounds;
     private ElimStats stats;
     private ElimGame game;
-    private int ship, consecutiveKills, lagouts, freq, specAt, lastStreak;
+    private int ship, consecutiveKills, lagouts, freq, lastStreak;
+    int specAt;
     private long lastKill, lastDeath, lastShot;
     private int currentSeason;
     private Objset objset;
