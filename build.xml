@@ -36,7 +36,7 @@ DEBUG: To compile the project with jdb debugging enabled use -Ddebug=true
 
 	<property name="debug" value="off"/>
 
-	<target name="all" depends="clean,jar" description="Builds the entire TWCore distribution">
+	<target name="all" depends="clean,jar,bots" description="Builds the entire TWCore distribution">
 		<echo>Project build complete</echo>
 	</target>
 
@@ -91,7 +91,7 @@ DEBUG: To compile the project with jdb debugging enabled use -Ddebug=true
 		<javac classpathref="classpath" srcdir="src/twcore/${dir}" destdir="bin" debug="${debug}" debuglevel="lines,vars,source" includeantruntime="false" />
 	</target>
 
-	<target name="jar" description="Creates JAR file" depends="core,bots,restricted">
+	<target name="jar" description="Creates JAR file" depends="core">
 		<echo>Creating Jar File</echo>
 		<manifestclasspath property="jar.classpath" jarfile="bin/twcore.jar">
 			<classpath refid="classpath" />
