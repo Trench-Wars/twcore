@@ -1,5 +1,8 @@
 # TWCore
 
+# THIS REPOSITORY HAS BEEN ARCHIVED DUE TO THE MOVE TO GITLAB
+Please contact Trench Wars developers to gain access to this repository. This repository contains the most recent public code of TWCore as it has been available on twcore.org.
+
 ## About TWCore
 
 [Subspace Continuum][] is a 2D massive-multiplayer online game (MMOG) from the 90s that consists of a server and a client. Anyone can host their own [zone][Subspace Zone] (server) and allow clients to connect to it.
